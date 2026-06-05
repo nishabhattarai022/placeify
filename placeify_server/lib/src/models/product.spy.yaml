@@ -1,0 +1,17 @@
+### Furniture product listed by a vendor in the marketplace.
+class: Product
+table: product
+fields:
+  vendor: Vendor?, relation(onDelete=Cascade)
+  category: Category?, relation(optional)
+  name: String
+  description: String
+  price: double
+  model3dUrl: String?
+  thumbnailUrl: String?
+  status: ProductStatus, default=active
+  createdAt: DateTime, default=now
+
+indexes:
+  product_vendor_id:
+    fields: vendorId
