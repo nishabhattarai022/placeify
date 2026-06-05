@@ -1,0 +1,9 @@
+enum: OrderStatus
+serialized: byName
+default: pending
+values:
+  - pending
+  - confirmed
+  - shipped
+  - delivered
+  - cancelled

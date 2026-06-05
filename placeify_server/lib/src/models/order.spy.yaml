@@ -1,0 +1,14 @@
+### Order placed by a customer.
+class: Order
+table: order
+fields:
+  user: User?, relation(onDelete=Cascade)
+  status: OrderStatus, default=pending
+  totalAmount: double
+  shippingAddress: String
+  placedAt: DateTime, default=now
+  updatedAt: DateTime, default=now
+
+indexes:
+  order_user_id:
+    fields: userId

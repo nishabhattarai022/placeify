@@ -1,0 +1,16 @@
+### Vendor shop profile linked to a user account.
+class: Vendor
+table: vendor
+fields:
+  id: UuidValue?, defaultPersist=random_v7
+  user: User?, relation(onDelete=Cascade)
+  shopName: String
+  description: String?
+  logoUrl: String?
+  rating: double, default=0
+  createdAt: DateTime, default=now
+
+indexes:
+  vendor_user_id:
+    fields: userId
+    unique: true
