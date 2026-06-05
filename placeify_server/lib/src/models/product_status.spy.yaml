@@ -1,0 +1,6 @@
+enum: ProductStatus
+serialized: byName
+default: active
+values:
+  - active
+  - inactive
