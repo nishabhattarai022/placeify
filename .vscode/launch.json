@@ -15,9 +15,6 @@
             "type": "dart",
             "preLaunchTask": "docker_compose_up",
             "program": "bin/main.dart",
-            "env": {
-                "SERVERPOD_PASSWORD_database": "P-noAmM0ExkfSxz5pCS_iOnJ6SwkE71B"
-            },
             "args": [
                 "--apply-migrations"
             ]
