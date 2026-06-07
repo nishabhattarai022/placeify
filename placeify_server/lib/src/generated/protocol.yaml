@@ -9,5 +9,8 @@ emailIdp:
   - hasAccount:
 jwtRefresh:
   - refreshAccessToken:
+user:
+  - getCurrentUser:
+  - updateProfile:
 greeting:
   - hello:
