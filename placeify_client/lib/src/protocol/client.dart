@@ -16,8 +16,9 @@ import 'package:serverpod_client/serverpod_client.dart' as _i2;
 import 'dart:async' as _i3;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _i4;
-import 'package:placeify_client/src/protocol/greetings/greeting.dart' as _i5;
-import 'protocol.dart' as _i6;
+import 'package:placeify_client/src/protocol/user.dart' as _i5;
+import 'package:placeify_client/src/protocol/greetings/greeting.dart' as _i6;
+import 'protocol.dart' as _i7;
 
 /// By extending [EmailIdpBaseEndpoint], the email identity provider endpoints
 /// are made available on the server and enable the corresponding sign-in widget
@@ -240,6 +241,38 @@ class EndpointJwtRefresh extends _i4.EndpointRefreshJwtTokens {
   );
 }
 
+/// Endpoints for the Placeify application user profile linked to auth.
+/// {@category Endpoint}
+class EndpointUser extends _i2.EndpointRef {
+  EndpointUser(_i2.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'user';
+
+  /// Returns the logged-in user's Placeify profile, or null if not created yet.
+  _i3.Future<_i5.User?> getCurrentUser() =>
+      caller.callServerEndpoint<_i5.User?>(
+        'user',
+        'getCurrentUser',
+        {},
+      );
+
+  /// Creates or updates the Placeify profile for the logged-in user.
+  _i3.Future<_i5.User> updateProfile(
+    String name, {
+    String? phone,
+    String? address,
+  }) => caller.callServerEndpoint<_i5.User>(
+    'user',
+    'updateProfile',
+    {
+      'name': name,
+      'phone': phone,
+      'address': address,
+    },
+  );
+}
+
 /// This is an example endpoint that returns a greeting message through
 /// its [hello] method.
 /// {@category Endpoint}
@@ -250,8 +283,8 @@ class EndpointGreeting extends _i2.EndpointRef {
   String get name => 'greeting';
 
   /// Returns a personalized greeting message: "Hello {name}".
-  _i3.Future<_i5.Greeting> hello(String name) =>
-      caller.callServerEndpoint<_i5.Greeting>(
+  _i3.Future<_i6.Greeting> hello(String name) =>
+      caller.callServerEndpoint<_i6.Greeting>(
         'greeting',
         'hello',
         {'name': name},
@@ -289,7 +322,7 @@ class Client extends _i2.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i6.Protocol(),
+         _i7.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,
@@ -300,6 +333,7 @@ class Client extends _i2.ServerpodClientShared {
        ) {
     emailIdp = EndpointEmailIdp(this);
     jwtRefresh = EndpointJwtRefresh(this);
+    user = EndpointUser(this);
     greeting = EndpointGreeting(this);
     modules = Modules(this);
   }
@@ -307,6 +341,8 @@ class Client extends _i2.ServerpodClientShared {
   late final EndpointEmailIdp emailIdp;
 
   late final EndpointJwtRefresh jwtRefresh;
+
+  late final EndpointUser user;
 
   late final EndpointGreeting greeting;
 
@@ -316,6 +352,7 @@ class Client extends _i2.ServerpodClientShared {
   Map<String, _i2.EndpointRef> get endpointRefLookup => {
     'emailIdp': emailIdp,
     'jwtRefresh': jwtRefresh,
+    'user': user,
     'greeting': greeting,
   };
 
