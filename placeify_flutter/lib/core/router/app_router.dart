@@ -1,0 +1,281 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../constants/app_durations.dart';
+import '../../features/home/presentation/home_screen.dart';
+import '../../features/auth/presentation/login_screen.dart';
+import '../../features/auth/presentation/register_screen.dart';
+import '../../features/splash/presentation/splash_screen.dart';
+import '../../features/vendor/presentation/vendor_dashboard_screen.dart';
+import '../../features/home/presentation/bookmarks_screen.dart';
+import '../../data/furniture_categories.dart';
+import '../../screens/browse_screen.dart';
+import '../../screens/category_screen.dart';
+import '../../features/ar_hub/presentation/ar_powered_screen.dart';
+import '../../features/profile/presentation/profile_ar_history_screen.dart';
+import '../../features/profile/presentation/profile_home_screen.dart';
+import '../../features/profile/presentation/profile_notifications_screen.dart';
+import '../../features/profile/presentation/profile_orders_screen.dart';
+import '../../features/profile/presentation/profile_password_screen.dart';
+import '../../features/profile/presentation/profile_refund_screen.dart';
+import '../../features/profile/presentation/profile_wishlist_screen.dart';
+import '../../features/product_detail/presentation/product_detail_screen.dart';
+import '../../features/cart/presentation/cart_screen.dart';
+import 'main_shell.dart';
+
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+final shellNavigatorKey = GlobalKey<NavigatorState>();
+
+final appRouter = GoRouter(
+  navigatorKey: rootNavigatorKey,
+  initialLocation: '/splash',
+  debugLogDiagnostics: false,
+  routes: [
+    GoRoute(
+      path: '/splash',
+      name: 'splash',
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const SplashScreen(),
+        transitionsBuilder: _fadeTransition,
+        transitionDuration: AppDurations.slow,
+      ),
+    ),
+    GoRoute(
+      path: '/register',
+      name: 'register',
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const RegisterScreen(),
+        transitionsBuilder: _fadeTransition,
+        transitionDuration: AppDurations.slow,
+      ),
+    ),
+    GoRoute(
+      path: '/login',
+      name: 'login',
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const LoginScreen(),
+        transitionsBuilder: _fadeTransition,
+        transitionDuration: AppDurations.slow,
+      ),
+    ),
+    ShellRoute(
+      navigatorKey: shellNavigatorKey,
+      builder: (context, state, child) => MainShell(child: child),
+      routes: [
+        GoRoute(
+          path: '/home',
+          name: 'home',
+          pageBuilder: (context, state) => CustomTransitionPage(
+            key: state.pageKey,
+            child: const HomeScreen(),
+            transitionsBuilder: _fadeTransition,
+            transitionDuration: AppDurations.slow,
+          ),
+        ),
+        GoRoute(
+          path: '/browse',
+          name: 'browse',
+          pageBuilder: (context, state) => CustomTransitionPage(
+            key: state.pageKey,
+            child: const BrowseScreen(),
+            transitionsBuilder: _fadeTransition,
+            transitionDuration: AppDurations.slow,
+          ),
+          routes: [
+            GoRoute(
+              path: 'category/:categoryId',
+              name: 'browseCategory',
+              pageBuilder: (context, state) {
+                final categoryId = state.pathParameters['categoryId']!;
+                final category = furnitureCategoryById(categoryId);
+                if (category == null) {
+                  return CustomTransitionPage(
+                    key: state.pageKey,
+                    child: const BrowseScreen(),
+                    transitionsBuilder: _fadeTransition,
+                    transitionDuration: AppDurations.slow,
+                  );
+                }
+                return _slidePage(
+                  key: ValueKey<String>('browse-category-$categoryId'),
+                  child: CategoryScreen(category: category),
+                );
+              },
+            ),
+          ],
+        ),
+        GoRoute(
+          path: '/browse/chairs',
+          redirect: (_, __) => '/browse',
+        ),
+        GoRoute(
+          path: '/bookmarks',
+          name: 'bookmarks',
+          pageBuilder: (context, state) => CustomTransitionPage(
+            key: state.pageKey,
+            child: const BookmarksScreen(),
+            transitionsBuilder: _fadeTransition,
+            transitionDuration: AppDurations.slow,
+          ),
+        ),
+        GoRoute(
+          path: '/profile',
+          name: 'profile',
+          pageBuilder: (context, state) => CustomTransitionPage(
+            key: state.pageKey,
+            child: const ProfileHomeScreen(),
+            transitionsBuilder: _fadeTransition,
+            transitionDuration: AppDurations.slow,
+          ),
+        ),
+        GoRoute(
+          path: '/profile/orders',
+          name: 'profileOrders',
+          pageBuilder: (context, state) => _slidePage(
+            key: ValueKey<String>(state.uri.toString()),
+            child: const ProfileOrdersScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/profile/wishlist',
+          name: 'profileWishlist',
+          pageBuilder: (context, state) => _slidePage(
+            key: ValueKey<String>(state.uri.toString()),
+            child: const ProfileWishlistScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/profile/augmented-reality',
+          name: 'profileAugmentedReality',
+          pageBuilder: (context, state) => _slidePage(
+            key: ValueKey<String>(state.uri.toString()),
+            child: const ArPoweredScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/profile/ar-history',
+          name: 'profileArHistory',
+          pageBuilder: (context, state) => _slidePage(
+            key: ValueKey<String>(state.uri.toString()),
+            child: const ProfileArHistoryScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/profile/refund',
+          name: 'profileRefund',
+          pageBuilder: (context, state) => _slidePage(
+            key: ValueKey<String>(state.uri.toString()),
+            child: const ProfileRefundScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/profile/notifications',
+          name: 'profileNotifications',
+          pageBuilder: (context, state) => _slidePage(
+            key: ValueKey<String>(state.uri.toString()),
+            child: const ProfileNotificationsScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/profile/password',
+          name: 'profilePassword',
+          pageBuilder: (context, state) => _slidePage(
+            key: ValueKey<String>(state.uri.toString()),
+            child: const ProfilePasswordScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/cart',
+          name: 'cart',
+          pageBuilder: (context, state) => _slideUpPage(
+            key: ValueKey<String>(state.uri.toString()),
+            child: const CartScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/product/:productId',
+          name: 'productDetail',
+          pageBuilder: (context, state) {
+            final productId = state.pathParameters['productId']!;
+            return _slidePage(
+              key: ValueKey<String>('product-$productId'),
+              child: ProductDetailScreen(productId: productId),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/category/:categoryId',
+          redirect: (context, state) {
+            final categoryId = state.pathParameters['categoryId']!;
+            return '/browse/category/$categoryId';
+          },
+        ),
+        GoRoute(
+          path: '/vendor',
+          name: 'vendor',
+          pageBuilder: (context, state) => CustomTransitionPage(
+            key: state.pageKey,
+            child: const VendorDashboardScreen(),
+            transitionsBuilder: _fadeTransition,
+            transitionDuration: AppDurations.slow,
+          ),
+        ),
+      ],
+    ),
+  ],
+);
+
+Widget _fadeTransition(
+  BuildContext context,
+  Animation<double> animation,
+  Animation<double> secondaryAnimation,
+  Widget child,
+) {
+  return FadeTransition(opacity: animation, child: child);
+}
+
+CustomTransitionPage<void> _slidePage({
+  required LocalKey key,
+  required Widget child,
+}) {
+  return CustomTransitionPage<void>(
+    key: key,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 320),
+    reverseTransitionDuration: const Duration(milliseconds: 320),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final offset = Tween<Offset>(
+        begin: const Offset(1, 0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeInOut,
+      ));
+      return SlideTransition(position: offset, child: child);
+    },
+  );
+}
+
+CustomTransitionPage<void> _slideUpPage({
+  required LocalKey key,
+  required Widget child,
+}) {
+  return CustomTransitionPage<void>(
+    key: key,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 360),
+    reverseTransitionDuration: const Duration(milliseconds: 320),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final offset = Tween<Offset>(
+        begin: const Offset(0, 1),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+      ));
+      return SlideTransition(position: offset, child: child);
+    },
+  );
+}

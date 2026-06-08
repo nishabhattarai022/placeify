@@ -1,0 +1,7 @@
+### Paginated order history response.
+class: OrderPage
+fields:
+  items: List<Order>
+  total: int
+  page: int
+  pageSize: int

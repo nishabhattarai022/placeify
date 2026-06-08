@@ -1,0 +1,7 @@
+### Paginated wishlist response.
+class: WishlistPage
+fields:
+  items: List<WishlistItem>
+  total: int
+  page: int
+  pageSize: int

@@ -1,0 +1,6 @@
+### Application role for authorization.
+enum: UserRole
+values:
+  - consumer
+  - vendor
+  - admin

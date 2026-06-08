@@ -12,9 +12,10 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import 'user_role.dart' as _i2;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
-    as _i2;
-import 'package:placeify_server/src/generated/protocol.dart' as _i3;
+    as _i3;
+import 'package:placeify_server/src/generated/protocol.dart' as _i4;
 
 /// Application user account.
 abstract class User
@@ -26,16 +27,19 @@ abstract class User
     required this.name,
     this.phone,
     this.address,
+    _i2.UserRole? role,
     DateTime? createdAt,
-  }) : createdAt = createdAt ?? DateTime.now();
+  }) : role = role ?? _i2.UserRole.consumer,
+       createdAt = createdAt ?? DateTime.now();
 
   factory User({
     _i1.UuidValue? id,
     required _i1.UuidValue authUserId,
-    _i2.AuthUser? authUser,
+    _i3.AuthUser? authUser,
     required String name,
     String? phone,
     String? address,
+    _i2.UserRole? role,
     DateTime? createdAt,
   }) = _UserImpl;
 
@@ -49,12 +53,15 @@ abstract class User
       ),
       authUser: jsonSerialization['authUser'] == null
           ? null
-          : _i3.Protocol().deserialize<_i2.AuthUser>(
+          : _i4.Protocol().deserialize<_i3.AuthUser>(
               jsonSerialization['authUser'],
             ),
       name: jsonSerialization['name'] as String,
       phone: jsonSerialization['phone'] as String?,
       address: jsonSerialization['address'] as String?,
+      role: jsonSerialization['role'] == null
+          ? null
+          : _i2.UserRole.fromJson((jsonSerialization['role'] as String)),
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
@@ -70,13 +77,15 @@ abstract class User
 
   _i1.UuidValue authUserId;
 
-  _i2.AuthUser? authUser;
+  _i3.AuthUser? authUser;
 
   String name;
 
   String? phone;
 
   String? address;
+
+  _i2.UserRole role;
 
   DateTime createdAt;
 
@@ -89,10 +98,11 @@ abstract class User
   User copyWith({
     _i1.UuidValue? id,
     _i1.UuidValue? authUserId,
-    _i2.AuthUser? authUser,
+    _i3.AuthUser? authUser,
     String? name,
     String? phone,
     String? address,
+    _i2.UserRole? role,
     DateTime? createdAt,
   });
   @override
@@ -105,6 +115,7 @@ abstract class User
       'name': name,
       if (phone != null) 'phone': phone,
       if (address != null) 'address': address,
+      'role': role.toJson(),
       'createdAt': createdAt.toJson(),
     };
   }
@@ -119,11 +130,12 @@ abstract class User
       'name': name,
       if (phone != null) 'phone': phone,
       if (address != null) 'address': address,
+      'role': role.toJson(),
       'createdAt': createdAt.toJson(),
     };
   }
 
-  static UserInclude include({_i2.AuthUserInclude? authUser}) {
+  static UserInclude include({_i3.AuthUserInclude? authUser}) {
     return UserInclude._(authUser: authUser);
   }
 
@@ -159,10 +171,11 @@ class _UserImpl extends User {
   _UserImpl({
     _i1.UuidValue? id,
     required _i1.UuidValue authUserId,
-    _i2.AuthUser? authUser,
+    _i3.AuthUser? authUser,
     required String name,
     String? phone,
     String? address,
+    _i2.UserRole? role,
     DateTime? createdAt,
   }) : super._(
          id: id,
@@ -171,6 +184,7 @@ class _UserImpl extends User {
          name: name,
          phone: phone,
          address: address,
+         role: role,
          createdAt: createdAt,
        );
 
@@ -185,17 +199,19 @@ class _UserImpl extends User {
     String? name,
     Object? phone = _Undefined,
     Object? address = _Undefined,
+    _i2.UserRole? role,
     DateTime? createdAt,
   }) {
     return User(
       id: id is _i1.UuidValue? ? id : this.id,
       authUserId: authUserId ?? this.authUserId,
-      authUser: authUser is _i2.AuthUser?
+      authUser: authUser is _i3.AuthUser?
           ? authUser
           : this.authUser?.copyWith(),
       name: name ?? this.name,
       phone: phone is String? ? phone : this.phone,
       address: address is String? ? address : this.address,
+      role: role ?? this.role,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -226,6 +242,12 @@ class UserUpdateTable extends _i1.UpdateTable<UserTable> {
     value,
   );
 
+  _i1.ColumnValue<_i2.UserRole, _i2.UserRole> role(_i2.UserRole value) =>
+      _i1.ColumnValue(
+        table.role,
+        value,
+      );
+
   _i1.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
       _i1.ColumnValue(
         table.createdAt,
@@ -252,6 +274,12 @@ class UserTable extends _i1.Table<_i1.UuidValue?> {
       'address',
       this,
     );
+    role = _i1.ColumnEnum(
+      'role',
+      this,
+      _i1.EnumSerialization.byName,
+      hasDefault: true,
+    );
     createdAt = _i1.ColumnDateTime(
       'createdAt',
       this,
@@ -263,7 +291,7 @@ class UserTable extends _i1.Table<_i1.UuidValue?> {
 
   late final _i1.ColumnUuid authUserId;
 
-  _i2.AuthUserTable? _authUser;
+  _i3.AuthUserTable? _authUser;
 
   late final _i1.ColumnString name;
 
@@ -271,17 +299,19 @@ class UserTable extends _i1.Table<_i1.UuidValue?> {
 
   late final _i1.ColumnString address;
 
+  late final _i1.ColumnEnum<_i2.UserRole> role;
+
   late final _i1.ColumnDateTime createdAt;
 
-  _i2.AuthUserTable get authUser {
+  _i3.AuthUserTable get authUser {
     if (_authUser != null) return _authUser!;
     _authUser = _i1.createRelationTable(
       relationFieldName: 'authUser',
       field: User.t.authUserId,
-      foreignField: _i2.AuthUser.t.id,
+      foreignField: _i3.AuthUser.t.id,
       tableRelation: tableRelation,
       createTable: (foreignTableRelation) =>
-          _i2.AuthUserTable(tableRelation: foreignTableRelation),
+          _i3.AuthUserTable(tableRelation: foreignTableRelation),
     );
     return _authUser!;
   }
@@ -293,6 +323,7 @@ class UserTable extends _i1.Table<_i1.UuidValue?> {
     name,
     phone,
     address,
+    role,
     createdAt,
   ];
 
@@ -306,11 +337,11 @@ class UserTable extends _i1.Table<_i1.UuidValue?> {
 }
 
 class UserInclude extends _i1.IncludeObject {
-  UserInclude._({_i2.AuthUserInclude? authUser}) {
+  UserInclude._({_i3.AuthUserInclude? authUser}) {
     _authUser = authUser;
   }
 
-  _i2.AuthUserInclude? _authUser;
+  _i3.AuthUserInclude? _authUser;
 
   @override
   Map<String, _i1.Include?> get includes => {'authUser': _authUser};
@@ -642,7 +673,7 @@ class UserAttachRowRepository {
   Future<void> authUser(
     _i1.DatabaseSession session,
     User user,
-    _i2.AuthUser authUser, {
+    _i3.AuthUser authUser, {
     _i1.Transaction? transaction,
   }) async {
     if (user.id == null) {
