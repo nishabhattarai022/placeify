@@ -11,9 +11,10 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
+import 'user_role.dart' as _i2;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
-    as _i2;
-import 'package:placeify_client/src/protocol/protocol.dart' as _i3;
+    as _i3;
+import 'package:placeify_client/src/protocol/protocol.dart' as _i4;
 
 /// Application user account.
 abstract class User implements _i1.SerializableModel {
@@ -24,16 +25,19 @@ abstract class User implements _i1.SerializableModel {
     required this.name,
     this.phone,
     this.address,
+    _i2.UserRole? role,
     DateTime? createdAt,
-  }) : createdAt = createdAt ?? DateTime.now();
+  }) : role = role ?? _i2.UserRole.consumer,
+       createdAt = createdAt ?? DateTime.now();
 
   factory User({
     _i1.UuidValue? id,
     required _i1.UuidValue authUserId,
-    _i2.AuthUser? authUser,
+    _i3.AuthUser? authUser,
     required String name,
     String? phone,
     String? address,
+    _i2.UserRole? role,
     DateTime? createdAt,
   }) = _UserImpl;
 
@@ -47,12 +51,15 @@ abstract class User implements _i1.SerializableModel {
       ),
       authUser: jsonSerialization['authUser'] == null
           ? null
-          : _i3.Protocol().deserialize<_i2.AuthUser>(
+          : _i4.Protocol().deserialize<_i3.AuthUser>(
               jsonSerialization['authUser'],
             ),
       name: jsonSerialization['name'] as String,
       phone: jsonSerialization['phone'] as String?,
       address: jsonSerialization['address'] as String?,
+      role: jsonSerialization['role'] == null
+          ? null
+          : _i2.UserRole.fromJson((jsonSerialization['role'] as String)),
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
@@ -66,13 +73,15 @@ abstract class User implements _i1.SerializableModel {
 
   _i1.UuidValue authUserId;
 
-  _i2.AuthUser? authUser;
+  _i3.AuthUser? authUser;
 
   String name;
 
   String? phone;
 
   String? address;
+
+  _i2.UserRole role;
 
   DateTime createdAt;
 
@@ -82,10 +91,11 @@ abstract class User implements _i1.SerializableModel {
   User copyWith({
     _i1.UuidValue? id,
     _i1.UuidValue? authUserId,
-    _i2.AuthUser? authUser,
+    _i3.AuthUser? authUser,
     String? name,
     String? phone,
     String? address,
+    _i2.UserRole? role,
     DateTime? createdAt,
   });
   @override
@@ -98,6 +108,7 @@ abstract class User implements _i1.SerializableModel {
       'name': name,
       if (phone != null) 'phone': phone,
       if (address != null) 'address': address,
+      'role': role.toJson(),
       'createdAt': createdAt.toJson(),
     };
   }
@@ -114,10 +125,11 @@ class _UserImpl extends User {
   _UserImpl({
     _i1.UuidValue? id,
     required _i1.UuidValue authUserId,
-    _i2.AuthUser? authUser,
+    _i3.AuthUser? authUser,
     required String name,
     String? phone,
     String? address,
+    _i2.UserRole? role,
     DateTime? createdAt,
   }) : super._(
          id: id,
@@ -126,6 +138,7 @@ class _UserImpl extends User {
          name: name,
          phone: phone,
          address: address,
+         role: role,
          createdAt: createdAt,
        );
 
@@ -140,17 +153,19 @@ class _UserImpl extends User {
     String? name,
     Object? phone = _Undefined,
     Object? address = _Undefined,
+    _i2.UserRole? role,
     DateTime? createdAt,
   }) {
     return User(
       id: id is _i1.UuidValue? ? id : this.id,
       authUserId: authUserId ?? this.authUserId,
-      authUser: authUser is _i2.AuthUser?
+      authUser: authUser is _i3.AuthUser?
           ? authUser
           : this.authUser?.copyWith(),
       name: name ?? this.name,
       phone: phone is String? ? phone : this.phone,
       address: address is String? ? address : this.address,
+      role: role ?? this.role,
       createdAt: createdAt ?? this.createdAt,
     );
   }

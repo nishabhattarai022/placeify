@@ -17,8 +17,9 @@ import 'dart:async' as _i3;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _i4;
 import 'package:placeify_client/src/protocol/user.dart' as _i5;
-import 'package:placeify_client/src/protocol/greetings/greeting.dart' as _i6;
-import 'protocol.dart' as _i7;
+import 'package:placeify_client/src/protocol/user_role.dart' as _i6;
+import 'package:placeify_client/src/protocol/greetings/greeting.dart' as _i7;
+import 'protocol.dart' as _i8;
 
 /// By extending [EmailIdpBaseEndpoint], the email identity provider endpoints
 /// are made available on the server and enable the corresponding sign-in widget
@@ -241,9 +242,24 @@ class EndpointJwtRefresh extends _i4.EndpointRefreshJwtTokens {
   );
 }
 
+/// Base endpoint for authenticated Placeify APIs.
+///
+/// All user-specific endpoints (cart, orders, profile, vendor) should extend
+/// this class so [requireLogin] is enforced consistently.
+/// {@category Endpoint}
+abstract class EndpointPlaceifyAuthenticated extends _i2.EndpointRef {
+  EndpointPlaceifyAuthenticated(_i2.EndpointCaller caller) : super(caller);
+
+  /// Returns the Placeify profile for the authenticated user.
+  _i3.Future<_i5.User> requirePlaceifyUser();
+
+  /// Ensures the caller has one of [allowedRoles].
+  _i3.Future<_i5.User> requireRole(Set<_i6.UserRole> allowedRoles);
+}
+
 /// Endpoints for the Placeify application user profile linked to auth.
 /// {@category Endpoint}
-class EndpointUser extends _i2.EndpointRef {
+class EndpointUser extends EndpointPlaceifyAuthenticated {
   EndpointUser(_i2.EndpointCaller caller) : super(caller);
 
   @override
@@ -271,6 +287,31 @@ class EndpointUser extends _i2.EndpointRef {
       'address': address,
     },
   );
+
+  /// Promotes the current user to vendor role (after vendor onboarding).
+  _i3.Future<_i5.User> becomeVendor() => caller.callServerEndpoint<_i5.User>(
+    'user',
+    'becomeVendor',
+    {},
+  );
+
+  /// Returns the Placeify profile for the authenticated user.
+  @override
+  _i3.Future<_i5.User> requirePlaceifyUser() =>
+      caller.callServerEndpoint<_i5.User>(
+        'user',
+        'requirePlaceifyUser',
+        {},
+      );
+
+  /// Ensures the caller has one of [allowedRoles].
+  @override
+  _i3.Future<_i5.User> requireRole(Set<_i6.UserRole> allowedRoles) =>
+      caller.callServerEndpoint<_i5.User>(
+        'user',
+        'requireRole',
+        {'allowedRoles': allowedRoles},
+      );
 }
 
 /// This is an example endpoint that returns a greeting message through
@@ -283,8 +324,8 @@ class EndpointGreeting extends _i2.EndpointRef {
   String get name => 'greeting';
 
   /// Returns a personalized greeting message: "Hello {name}".
-  _i3.Future<_i6.Greeting> hello(String name) =>
-      caller.callServerEndpoint<_i6.Greeting>(
+  _i3.Future<_i7.Greeting> hello(String name) =>
+      caller.callServerEndpoint<_i7.Greeting>(
         'greeting',
         'hello',
         {'name': name},
@@ -322,7 +363,7 @@ class Client extends _i2.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i7.Protocol(),
+         _i8.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,
