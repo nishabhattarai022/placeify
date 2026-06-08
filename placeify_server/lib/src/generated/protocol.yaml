@@ -12,5 +12,8 @@ jwtRefresh:
 user:
   - getCurrentUser:
   - updateProfile:
+  - becomeVendor:
+  - requirePlaceifyUser:
+  - requireRole:
 greeting:
   - hello:

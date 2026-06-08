@@ -1,16 +1,13 @@
 import 'package:serverpod/serverpod.dart';
-import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 
 import '../generated/protocol.dart';
+import 'placeify_endpoint.dart';
 
 /// Endpoints for the Placeify application user profile linked to auth.
-class UserEndpoint extends Endpoint {
-  @override
-  bool get requireLogin => true;
-
+class UserEndpoint extends PlaceifyAuthenticatedEndpoint {
   /// Returns the logged-in user's Placeify profile, or null if not created yet.
   Future<User?> getCurrentUser(Session session) async {
-    final authUserId = session.authenticated!.authUserId;
+    final authUserId = UuidValue.fromString(session.authenticated!.userIdentifier);
     return User.db.findFirstRow(
       session,
       where: (user) => user.authUserId.equals(authUserId),
@@ -24,7 +21,7 @@ class UserEndpoint extends Endpoint {
     String? phone,
     String? address,
   }) async {
-    final authUserId = session.authenticated!.authUserId;
+    final authUserId = UuidValue.fromString(session.authenticated!.userIdentifier);
     final existing = await User.db.findFirstRow(
       session,
       where: (user) => user.authUserId.equals(authUserId),
@@ -38,6 +35,7 @@ class UserEndpoint extends Endpoint {
           name: name,
           phone: phone,
           address: address,
+          role: UserRole.consumer,
         ),
       );
     }
@@ -49,6 +47,18 @@ class UserEndpoint extends Endpoint {
         phone: phone,
         address: address,
       ),
+    );
+  }
+
+  /// Promotes the current user to vendor role (after vendor onboarding).
+  Future<User> becomeVendor(Session session) async {
+    final user = await requirePlaceifyUser(session);
+    if (user.role == UserRole.admin) {
+      return user;
+    }
+    return User.db.updateRow(
+      session,
+      user.copyWith(role: UserRole.vendor),
     );
   }
 }

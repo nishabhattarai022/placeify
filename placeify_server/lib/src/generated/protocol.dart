@@ -30,7 +30,9 @@ import 'product_status.dart' as _i15;
 import 'request_status.dart' as _i16;
 import 'review.dart' as _i17;
 import 'user.dart' as _i18;
-import 'vendor.dart' as _i19;
+import 'user_role.dart' as _i19;
+import 'vendor.dart' as _i20;
+import 'package:placeify_server/src/generated/user_role.dart' as _i21;
 export 'ar_session.dart';
 export 'cart.dart';
 export 'cart_item.dart';
@@ -45,6 +47,7 @@ export 'product_status.dart';
 export 'request_status.dart';
 export 'review.dart';
 export 'user.dart';
+export 'user_role.dart';
 export 'vendor.dart';
 
 class Protocol extends _i1.SerializationManagerServer {
@@ -1014,6 +1017,13 @@ class Protocol extends _i1.SerializationManagerServer {
           dartType: 'String?',
         ),
         _i2.ColumnDefinition(
+          name: 'role',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:UserRole',
+          columnDefault: '\'consumer\'::text',
+        ),
+        _i2.ColumnDefinition(
           name: 'createdAt',
           columnType: _i2.ColumnType.timestampWithoutTimeZone,
           isNullable: false,
@@ -1231,8 +1241,11 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i18.User) {
       return _i18.User.fromJson(data) as T;
     }
-    if (t == _i19.Vendor) {
-      return _i19.Vendor.fromJson(data) as T;
+    if (t == _i19.UserRole) {
+      return _i19.UserRole.fromJson(data) as T;
+    }
+    if (t == _i20.Vendor) {
+      return _i20.Vendor.fromJson(data) as T;
     }
     if (t == _i1.getType<_i5.ARSession?>()) {
       return (data != null ? _i5.ARSession.fromJson(data) : null) as T;
@@ -1277,8 +1290,15 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i1.getType<_i18.User?>()) {
       return (data != null ? _i18.User.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i19.Vendor?>()) {
-      return (data != null ? _i19.Vendor.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i19.UserRole?>()) {
+      return (data != null ? _i19.UserRole.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i20.Vendor?>()) {
+      return (data != null ? _i20.Vendor.fromJson(data) : null) as T;
+    }
+    if (t == Set<_i21.UserRole>) {
+      return (data as List).map((e) => deserialize<_i21.UserRole>(e)).toSet()
+          as T;
     }
     try {
       return _i3.Protocol().deserialize<T>(data, t);
@@ -1308,7 +1328,8 @@ class Protocol extends _i1.SerializationManagerServer {
       _i16.RequestStatus => 'RequestStatus',
       _i17.Review => 'Review',
       _i18.User => 'User',
-      _i19.Vendor => 'Vendor',
+      _i19.UserRole => 'UserRole',
+      _i20.Vendor => 'Vendor',
       _ => null,
     };
   }
@@ -1351,7 +1372,9 @@ class Protocol extends _i1.SerializationManagerServer {
         return 'Review';
       case _i18.User():
         return 'User';
-      case _i19.Vendor():
+      case _i19.UserRole():
+        return 'UserRole';
+      case _i20.Vendor():
         return 'Vendor';
     }
     className = _i2.Protocol().getClassNameForObject(data);
@@ -1417,8 +1440,11 @@ class Protocol extends _i1.SerializationManagerServer {
     if (dataClassName == 'User') {
       return deserialize<_i18.User>(data['data']);
     }
+    if (dataClassName == 'UserRole') {
+      return deserialize<_i19.UserRole>(data['data']);
+    }
     if (dataClassName == 'Vendor') {
-      return deserialize<_i19.Vendor>(data['data']);
+      return deserialize<_i20.Vendor>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
@@ -1476,8 +1502,8 @@ class Protocol extends _i1.SerializationManagerServer {
         return _i17.Review.t;
       case _i18.User:
         return _i18.User.t;
-      case _i19.Vendor:
-        return _i19.Vendor.t;
+      case _i20.Vendor:
+        return _i20.Vendor.t;
     }
     return null;
   }

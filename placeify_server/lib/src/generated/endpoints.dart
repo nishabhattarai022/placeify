@@ -15,10 +15,11 @@ import '../auth/email_idp_endpoint.dart' as _i2;
 import '../auth/jwt_refresh_endpoint.dart' as _i3;
 import '../auth/user_endpoint.dart' as _i4;
 import '../greetings/greeting_endpoint.dart' as _i5;
+import 'package:placeify_server/src/generated/user_role.dart' as _i6;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
-    as _i6;
-import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _i7;
+import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+    as _i8;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -298,6 +299,44 @@ class Endpoints extends _i1.EndpointDispatch {
                 address: params['address'],
               ),
         ),
+        'becomeVendor': _i1.MethodConnector(
+          name: 'becomeVendor',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['user'] as _i4.UserEndpoint).becomeVendor(session),
+        ),
+        'requirePlaceifyUser': _i1.MethodConnector(
+          name: 'requirePlaceifyUser',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['user'] as _i4.UserEndpoint)
+                  .requirePlaceifyUser(session),
+        ),
+        'requireRole': _i1.MethodConnector(
+          name: 'requireRole',
+          params: {
+            'allowedRoles': _i1.ParameterDescription(
+              name: 'allowedRoles',
+              type: _i1.getType<Set<_i6.UserRole>>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['user'] as _i4.UserEndpoint).requireRole(
+                session,
+                params['allowedRoles'],
+              ),
+        ),
       },
     );
     connectors['greeting'] = _i1.EndpointConnector(
@@ -324,9 +363,9 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
-    modules['serverpod_auth_core'] = _i6.Endpoints()
+    modules['serverpod_auth_core'] = _i7.Endpoints()
       ..initializeEndpoints(server);
-    modules['serverpod_auth_idp'] = _i7.Endpoints()
+    modules['serverpod_auth_idp'] = _i8.Endpoints()
       ..initializeEndpoints(server);
   }
 }

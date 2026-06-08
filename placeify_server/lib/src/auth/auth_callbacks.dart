@@ -23,6 +23,7 @@ Future<void> onAfterAccountCreated(
     User(
       authUserId: authUserId,
       name: name,
+      role: UserRole.consumer,
     ),
     transaction: transaction,
   );

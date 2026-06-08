@@ -7,6 +7,7 @@ fields:
   name: String
   phone: String?
   address: String?
+  role: UserRole, default=consumer
   createdAt: DateTime, default=now
 
 indexes:
