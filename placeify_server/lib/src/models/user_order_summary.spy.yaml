@@ -1,0 +1,10 @@
+### Order row for the customer profile orders list.
+class: UserOrderSummary
+fields:
+  id: int
+  orderNumber: String
+  status: OrderStatus
+  totalAmount: double
+  placedAt: DateTime
+  itemCount: int
+  primaryProductName: String?

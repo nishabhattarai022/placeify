@@ -1,0 +1,8 @@
+### Aggregated profile dashboard data for the logged-in customer.
+class: UserDashboard
+fields:
+  profile: User
+  orderCount: int
+  wishlistCount: int
+  arSessionCount: int
+  refundCount: int

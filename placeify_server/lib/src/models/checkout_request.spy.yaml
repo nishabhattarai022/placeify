@@ -1,0 +1,4 @@
+### Checkout payload from the cart screen.
+class: CheckoutRequest
+fields:
+  shippingAddress: String

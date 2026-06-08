@@ -16,8 +16,33 @@ import 'package:serverpod_client/serverpod_client.dart' as _i2;
 import 'dart:async' as _i3;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _i4;
-import 'package:placeify_client/src/protocol/greetings/greeting.dart' as _i5;
-import 'protocol.dart' as _i6;
+import 'package:placeify_client/src/protocol/user.dart' as _i5;
+import 'package:placeify_client/src/protocol/user_role.dart' as _i6;
+import 'package:placeify_client/src/protocol/user_dashboard.dart' as _i7;
+import 'package:placeify_client/src/protocol/user_order_summary.dart' as _i8;
+import 'package:placeify_client/src/protocol/order_status.dart' as _i9;
+import 'package:placeify_client/src/protocol/user_ar_session_summary.dart'
+    as _i10;
+import 'package:placeify_client/src/protocol/greetings/greeting.dart' as _i11;
+import 'package:placeify_client/src/protocol/ar_session.dart' as _i12;
+import 'package:placeify_client/src/protocol/cart_item.dart' as _i13;
+import 'package:placeify_client/src/protocol/checkout_result.dart' as _i14;
+import 'package:placeify_client/src/protocol/checkout_request.dart' as _i15;
+import 'package:placeify_client/src/protocol/notification_preference.dart'
+    as _i16;
+import 'package:placeify_client/src/protocol/order_page.dart' as _i17;
+import 'package:placeify_client/src/protocol/pagination_input.dart' as _i18;
+import 'package:placeify_client/src/protocol/order.dart' as _i19;
+import 'package:placeify_client/src/protocol/category.dart' as _i20;
+import 'package:placeify_client/src/protocol/product_page.dart' as _i21;
+import 'package:placeify_client/src/protocol/product_search_input.dart' as _i22;
+import 'package:placeify_client/src/protocol/product.dart' as _i23;
+import 'package:placeify_client/src/protocol/review.dart' as _i24;
+import 'package:placeify_client/src/protocol/vendor.dart' as _i25;
+import 'dart:typed_data' as _i26;
+import 'package:placeify_client/src/protocol/wishlist_page.dart' as _i27;
+import 'package:placeify_client/src/protocol/wishlist_item.dart' as _i28;
+import 'protocol.dart' as _i29;
 
 /// By extending [EmailIdpBaseEndpoint], the email identity provider endpoints
 /// are made available on the server and enable the corresponding sign-in widget
@@ -240,6 +265,101 @@ class EndpointJwtRefresh extends _i4.EndpointRefreshJwtTokens {
   );
 }
 
+/// Base endpoint for authenticated Placeify APIs.
+/// {@category Endpoint}
+abstract class EndpointPlaceifyAuthenticated extends _i2.EndpointRef {
+  EndpointPlaceifyAuthenticated(_i2.EndpointCaller caller) : super(caller);
+
+  _i3.Future<_i5.User> requirePlaceifyUser();
+
+  _i3.Future<_i5.User> requireRole(Set<_i6.UserRole> allowedRoles);
+}
+
+/// Profile and dashboard APIs for authenticated customers.
+/// {@category Endpoint}
+class EndpointUser extends EndpointPlaceifyAuthenticated {
+  EndpointUser(_i2.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'user';
+
+  _i3.Future<_i5.User?> getCurrentUser() =>
+      caller.callServerEndpoint<_i5.User?>(
+        'user',
+        'getCurrentUser',
+        {},
+      );
+
+  _i3.Future<_i5.User> updateProfile(
+    String name, {
+    String? phone,
+    String? address,
+  }) => caller.callServerEndpoint<_i5.User>(
+    'user',
+    'updateProfile',
+    {
+      'name': name,
+      'phone': phone,
+      'address': address,
+    },
+  );
+
+  _i3.Future<_i5.User> becomeVendor() => caller.callServerEndpoint<_i5.User>(
+    'user',
+    'becomeVendor',
+    {},
+  );
+
+  _i3.Future<_i7.UserDashboard> getDashboard() =>
+      caller.callServerEndpoint<_i7.UserDashboard>(
+        'user',
+        'getDashboard',
+        {},
+      );
+
+  _i3.Future<List<_i8.UserOrderSummary>> listMyOrders({
+    required int limit,
+    required int offset,
+    _i9.OrderStatus? status,
+  }) => caller.callServerEndpoint<List<_i8.UserOrderSummary>>(
+    'user',
+    'listMyOrders',
+    {
+      'limit': limit,
+      'offset': offset,
+      'status': status,
+    },
+  );
+
+  _i3.Future<List<_i10.UserArSessionSummary>> listMyArSessions({
+    required int limit,
+    required int offset,
+  }) => caller.callServerEndpoint<List<_i10.UserArSessionSummary>>(
+    'user',
+    'listMyArSessions',
+    {
+      'limit': limit,
+      'offset': offset,
+    },
+  );
+
+  @override
+  _i3.Future<_i5.User> requirePlaceifyUser() =>
+      caller.callServerEndpoint<_i5.User>(
+        'user',
+        'requirePlaceifyUser',
+        {},
+      );
+
+  @override
+  _i3.Future<_i5.User> requireRole(Set<_i6.UserRole> allowedRoles) =>
+      caller.callServerEndpoint<_i5.User>(
+        'user',
+        'requireRole',
+        {'allowedRoles': allowedRoles},
+      );
+}
+
 /// This is an example endpoint that returns a greeting message through
 /// its [hello] method.
 /// {@category Endpoint}
@@ -250,11 +370,402 @@ class EndpointGreeting extends _i2.EndpointRef {
   String get name => 'greeting';
 
   /// Returns a personalized greeting message: "Hello {name}".
-  _i3.Future<_i5.Greeting> hello(String name) =>
-      caller.callServerEndpoint<_i5.Greeting>(
+  _i3.Future<_i11.Greeting> hello(String name) =>
+      caller.callServerEndpoint<_i11.Greeting>(
         'greeting',
         'hello',
         {'name': name},
+      );
+}
+
+/// AR product viewing session tracking.
+/// {@category Endpoint}
+class EndpointAr extends _i2.EndpointRef {
+  EndpointAr(_i2.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'ar';
+
+  _i3.Future<_i12.ARSession> recordSession(
+    int productId, {
+    String? deviceInfo,
+    String? snapshotUrl,
+  }) => caller.callServerEndpoint<_i12.ARSession>(
+    'ar',
+    'recordSession',
+    {
+      'productId': productId,
+      'deviceInfo': deviceInfo,
+      'snapshotUrl': snapshotUrl,
+    },
+  );
+
+  _i3.Future<List<_i12.ARSession>> listMySessions({
+    required int limit,
+    required int offset,
+  }) => caller.callServerEndpoint<List<_i12.ARSession>>(
+    'ar',
+    'listMySessions',
+    {
+      'limit': limit,
+      'offset': offset,
+    },
+  );
+}
+
+/// Authenticated shopping cart operations.
+/// {@category Endpoint}
+class EndpointCart extends _i2.EndpointRef {
+  EndpointCart(_i2.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'cart';
+
+  _i3.Future<List<_i13.CartItem>> getCartItems() =>
+      caller.callServerEndpoint<List<_i13.CartItem>>(
+        'cart',
+        'getCartItems',
+        {},
+      );
+
+  _i3.Future<_i13.CartItem> addToCart(
+    int productId, {
+    required int quantity,
+  }) => caller.callServerEndpoint<_i13.CartItem>(
+    'cart',
+    'addToCart',
+    {
+      'productId': productId,
+      'quantity': quantity,
+    },
+  );
+
+  _i3.Future<_i13.CartItem> updateCartItemQuantity(
+    int productId,
+    int quantity,
+  ) => caller.callServerEndpoint<_i13.CartItem>(
+    'cart',
+    'updateCartItemQuantity',
+    {
+      'productId': productId,
+      'quantity': quantity,
+    },
+  );
+
+  _i3.Future<void> removeFromCart(int productId) =>
+      caller.callServerEndpoint<void>(
+        'cart',
+        'removeFromCart',
+        {'productId': productId},
+      );
+
+  _i3.Future<void> clearCart() => caller.callServerEndpoint<void>(
+    'cart',
+    'clearCart',
+    {},
+  );
+}
+
+/// Converts a cart into a persisted order.
+/// {@category Endpoint}
+class EndpointCheckout extends _i2.EndpointRef {
+  EndpointCheckout(_i2.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'checkout';
+
+  _i3.Future<_i14.CheckoutResult> checkout(_i15.CheckoutRequest request) =>
+      caller.callServerEndpoint<_i14.CheckoutResult>(
+        'checkout',
+        'checkout',
+        {'request': request},
+      );
+}
+
+/// Notification preference management for profile settings.
+/// {@category Endpoint}
+class EndpointNotification extends _i2.EndpointRef {
+  EndpointNotification(_i2.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'notification';
+
+  _i3.Future<_i16.NotificationPreference> getPreferences() =>
+      caller.callServerEndpoint<_i16.NotificationPreference>(
+        'notification',
+        'getPreferences',
+        {},
+      );
+
+  _i3.Future<_i16.NotificationPreference> updatePreferences({
+    bool? orderUpdates,
+    bool? refundStatus,
+    bool? arReminders,
+    bool? priceDropAlerts,
+    bool? vendorMessages,
+    bool? promotions,
+  }) => caller.callServerEndpoint<_i16.NotificationPreference>(
+    'notification',
+    'updatePreferences',
+    {
+      'orderUpdates': orderUpdates,
+      'refundStatus': refundStatus,
+      'arReminders': arReminders,
+      'priceDropAlerts': priceDropAlerts,
+      'vendorMessages': vendorMessages,
+      'promotions': promotions,
+    },
+  );
+}
+
+/// Order history for authenticated customers.
+/// {@category Endpoint}
+class EndpointOrder extends _i2.EndpointRef {
+  EndpointOrder(_i2.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'order';
+
+  _i3.Future<_i17.OrderPage> listMyOrders({
+    _i18.PaginationInput? pagination,
+    _i9.OrderStatus? status,
+  }) => caller.callServerEndpoint<_i17.OrderPage>(
+    'order',
+    'listMyOrders',
+    {
+      'pagination': pagination,
+      'status': status,
+    },
+  );
+
+  _i3.Future<_i19.Order?> getOrder(int orderId) =>
+      caller.callServerEndpoint<_i19.Order?>(
+        'order',
+        'getOrder',
+        {'orderId': orderId},
+      );
+}
+
+/// Product browsing, search, and filtering.
+/// {@category Endpoint}
+class EndpointProduct extends _i2.EndpointRef {
+  EndpointProduct(_i2.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'product';
+
+  _i3.Future<List<_i20.Category>> listCategories() =>
+      caller.callServerEndpoint<List<_i20.Category>>(
+        'product',
+        'listCategories',
+        {},
+      );
+
+  _i3.Future<_i21.ProductPage> searchProducts(_i22.ProductSearchInput input) =>
+      caller.callServerEndpoint<_i21.ProductPage>(
+        'product',
+        'searchProducts',
+        {'input': input},
+      );
+
+  _i3.Future<_i23.Product?> getProduct(int productId) =>
+      caller.callServerEndpoint<_i23.Product?>(
+        'product',
+        'getProduct',
+        {'productId': productId},
+      );
+
+  /// Backward-compatible list without pagination wrapper.
+  _i3.Future<List<_i23.Product>> listProducts({
+    String? categoryName,
+    int? limit,
+    int? offset,
+  }) => caller.callServerEndpoint<List<_i23.Product>>(
+    'product',
+    'listProducts',
+    {
+      'categoryName': categoryName,
+      'limit': limit,
+      'offset': offset,
+    },
+  );
+}
+
+/// Product reviews from verified purchasers.
+/// {@category Endpoint}
+class EndpointReview extends _i2.EndpointRef {
+  EndpointReview(_i2.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'review';
+
+  _i3.Future<_i24.Review> submitReview(
+    int productId,
+    int orderId,
+    int rating, {
+    String? comment,
+  }) => caller.callServerEndpoint<_i24.Review>(
+    'review',
+    'submitReview',
+    {
+      'productId': productId,
+      'orderId': orderId,
+      'rating': rating,
+      'comment': comment,
+    },
+  );
+
+  _i3.Future<List<_i24.Review>> listProductReviews(
+    int productId, {
+    required int limit,
+    required int offset,
+  }) => caller.callServerEndpoint<List<_i24.Review>>(
+    'review',
+    'listProductReviews',
+    {
+      'productId': productId,
+      'limit': limit,
+      'offset': offset,
+    },
+  );
+}
+
+/// Vendor shop and product management.
+/// {@category Endpoint}
+class EndpointVendor extends _i2.EndpointRef {
+  EndpointVendor(_i2.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'vendor';
+
+  _i3.Future<_i25.Vendor> getMyShop() => caller.callServerEndpoint<_i25.Vendor>(
+    'vendor',
+    'getMyShop',
+    {},
+  );
+
+  _i3.Future<_i25.Vendor> createShop(
+    String shopName, {
+    String? description,
+    String? logoUrl,
+  }) => caller.callServerEndpoint<_i25.Vendor>(
+    'vendor',
+    'createShop',
+    {
+      'shopName': shopName,
+      'description': description,
+      'logoUrl': logoUrl,
+    },
+  );
+
+  _i3.Future<_i25.Vendor> updateShop(
+    String shopName, {
+    String? description,
+    String? logoUrl,
+  }) => caller.callServerEndpoint<_i25.Vendor>(
+    'vendor',
+    'updateShop',
+    {
+      'shopName': shopName,
+      'description': description,
+      'logoUrl': logoUrl,
+    },
+  );
+
+  _i3.Future<List<_i23.Product>> listMyProducts() =>
+      caller.callServerEndpoint<List<_i23.Product>>(
+        'vendor',
+        'listMyProducts',
+        {},
+      );
+
+  _i3.Future<_i23.Product> createProduct(
+    String name,
+    String description,
+    double price, {
+    int? categoryId,
+    String? model3dUrl,
+    String? thumbnailUrl,
+  }) => caller.callServerEndpoint<_i23.Product>(
+    'vendor',
+    'createProduct',
+    {
+      'name': name,
+      'description': description,
+      'price': price,
+      'categoryId': categoryId,
+      'model3dUrl': model3dUrl,
+      'thumbnailUrl': thumbnailUrl,
+    },
+  );
+
+  _i3.Future<_i23.Product> updateProductThumbnail(
+    int productId,
+    String thumbnailUrl,
+  ) => caller.callServerEndpoint<_i23.Product>(
+    'vendor',
+    'updateProductThumbnail',
+    {
+      'productId': productId,
+      'thumbnailUrl': thumbnailUrl,
+    },
+  );
+
+  _i3.Future<String> uploadProductImage(
+    _i26.ByteData fileData,
+    String fileName,
+  ) => caller.callServerEndpoint<String>(
+    'vendor',
+    'uploadProductImage',
+    {
+      'fileData': fileData,
+      'fileName': fileName,
+    },
+  );
+}
+
+/// Wishlist management for authenticated customers.
+/// {@category Endpoint}
+class EndpointWishlist extends _i2.EndpointRef {
+  EndpointWishlist(_i2.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'wishlist';
+
+  _i3.Future<_i27.WishlistPage> listMyWishlist({
+    _i18.PaginationInput? pagination,
+  }) => caller.callServerEndpoint<_i27.WishlistPage>(
+    'wishlist',
+    'listMyWishlist',
+    {'pagination': pagination},
+  );
+
+  _i3.Future<_i28.WishlistItem> addToWishlist(int productId) =>
+      caller.callServerEndpoint<_i28.WishlistItem>(
+        'wishlist',
+        'addToWishlist',
+        {'productId': productId},
+      );
+
+  _i3.Future<void> removeFromWishlist(int productId) =>
+      caller.callServerEndpoint<void>(
+        'wishlist',
+        'removeFromWishlist',
+        {'productId': productId},
+      );
+
+  _i3.Future<bool> toggleWishlist(int productId) =>
+      caller.callServerEndpoint<bool>(
+        'wishlist',
+        'toggleWishlist',
+        {'productId': productId},
+      );
+
+  _i3.Future<bool> isWishlisted(int productId) =>
+      caller.callServerEndpoint<bool>(
+        'wishlist',
+        'isWishlisted',
+        {'productId': productId},
       );
 }
 
@@ -289,7 +800,7 @@ class Client extends _i2.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i6.Protocol(),
+         _i29.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,
@@ -300,7 +811,17 @@ class Client extends _i2.ServerpodClientShared {
        ) {
     emailIdp = EndpointEmailIdp(this);
     jwtRefresh = EndpointJwtRefresh(this);
+    user = EndpointUser(this);
     greeting = EndpointGreeting(this);
+    ar = EndpointAr(this);
+    cart = EndpointCart(this);
+    checkout = EndpointCheckout(this);
+    notification = EndpointNotification(this);
+    order = EndpointOrder(this);
+    product = EndpointProduct(this);
+    review = EndpointReview(this);
+    vendor = EndpointVendor(this);
+    wishlist = EndpointWishlist(this);
     modules = Modules(this);
   }
 
@@ -308,7 +829,27 @@ class Client extends _i2.ServerpodClientShared {
 
   late final EndpointJwtRefresh jwtRefresh;
 
+  late final EndpointUser user;
+
   late final EndpointGreeting greeting;
+
+  late final EndpointAr ar;
+
+  late final EndpointCart cart;
+
+  late final EndpointCheckout checkout;
+
+  late final EndpointNotification notification;
+
+  late final EndpointOrder order;
+
+  late final EndpointProduct product;
+
+  late final EndpointReview review;
+
+  late final EndpointVendor vendor;
+
+  late final EndpointWishlist wishlist;
 
   late final Modules modules;
 
@@ -316,7 +857,17 @@ class Client extends _i2.ServerpodClientShared {
   Map<String, _i2.EndpointRef> get endpointRefLookup => {
     'emailIdp': emailIdp,
     'jwtRefresh': jwtRefresh,
+    'user': user,
     'greeting': greeting,
+    'ar': ar,
+    'cart': cart,
+    'checkout': checkout,
+    'notification': notification,
+    'order': order,
+    'product': product,
+    'review': review,
+    'vendor': vendor,
+    'wishlist': wishlist,
   };
 
   @override

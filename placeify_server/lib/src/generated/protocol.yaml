@@ -9,5 +9,53 @@ emailIdp:
   - hasAccount:
 jwtRefresh:
   - refreshAccessToken:
+user:
+  - getCurrentUser:
+  - updateProfile:
+  - becomeVendor:
+  - getDashboard:
+  - listMyOrders:
+  - listMyArSessions:
+  - requirePlaceifyUser:
+  - requireRole:
 greeting:
   - hello:
+ar:
+  - recordSession:
+  - listMySessions:
+cart:
+  - getCartItems:
+  - addToCart:
+  - updateCartItemQuantity:
+  - removeFromCart:
+  - clearCart:
+checkout:
+  - checkout:
+notification:
+  - getPreferences:
+  - updatePreferences:
+order:
+  - listMyOrders:
+  - getOrder:
+product:
+  - listCategories:
+  - searchProducts:
+  - getProduct:
+  - listProducts:
+review:
+  - submitReview:
+  - listProductReviews:
+vendor:
+  - getMyShop:
+  - createShop:
+  - updateShop:
+  - listMyProducts:
+  - createProduct:
+  - updateProductThumbnail:
+  - uploadProductImage:
+wishlist:
+  - listMyWishlist:
+  - addToWishlist:
+  - removeFromWishlist:
+  - toggleWishlist:
+  - isWishlisted:
