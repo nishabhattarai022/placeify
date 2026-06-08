@@ -72,6 +72,10 @@ cd placeify_server
 docker compose down
 ```
 
+## Production / staging
+
+See [PRODUCTION_AUTH.md](PRODUCTION_AUTH.md) for environment variables, email (Resend), and deployment.
+
 ## Troubleshooting
 
 | Problem | Fix |
