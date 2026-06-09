@@ -15,10 +15,12 @@ import 'wishlist_sort.dart';
 /// Wishlist list — category-style rows with sort control.
 class WishlistGridView extends ConsumerWidget {
   const WishlistGridView({
+    this.searchQuery = '',
     this.showBottomPadding = true,
     super.key,
   });
 
+  final String searchQuery;
   final bool showBottomPadding;
 
   @override
@@ -28,7 +30,7 @@ class WishlistGridView extends ConsumerWidget {
     final byId = {
       for (final p in MockProductRepository.products) p.id: p,
     };
-    final products = sortWishlistProducts(
+    final sortedProducts = sortWishlistProducts(
       products: [
         for (final id in savedAt.keys)
           if (byId.containsKey(id)) byId[id]!,
@@ -37,8 +39,19 @@ class WishlistGridView extends ConsumerWidget {
       sort: sort,
     );
 
-    if (products.isEmpty) {
+    final query = searchQuery.trim().toLowerCase();
+    final products = query.isEmpty
+        ? sortedProducts
+        : sortedProducts
+            .where((p) => p.name.toLowerCase().contains(query))
+            .toList();
+
+    if (savedAt.isEmpty) {
       return const _WishlistEmptyState();
+    }
+
+    if (products.isEmpty) {
+      return _WishlistNoSearchResultsState(query: searchQuery.trim());
     }
 
     final bottom = showBottomPadding
@@ -210,6 +223,51 @@ class _WishlistSortTile extends StatelessWidget {
           ? const Icon(Icons.check_rounded, size: 20, color: Colors.black87)
           : null,
       onTap: onTap,
+    );
+  }
+}
+
+class _WishlistNoSearchResultsState extends StatelessWidget {
+  const _WishlistNoSearchResultsState({required this.query});
+
+  final String query;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.search_off_rounded,
+              size: 40,
+              color: AppColors.textMuted.withValues(alpha: 0.7),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No results for "$query"',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.dmSans(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.espresso,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Try a different product name.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.dmSans(
+                fontSize: 14,
+                color: AppColors.textMuted,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
