@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../core/constants/app_spacing.dart';
+import '../core/services/haptic_service.dart';
+import '../core/widgets/placeify_bottom_sheet.dart';
 import '../data/furniture_categories.dart';
 import '../features/home/data/mock_product_repository.dart';
 import '../features/home/domain/models/product.dart';
@@ -42,59 +45,45 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   void _openSortSheet() {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Sort by',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _SortTile(
-                  label: 'Featured',
-                  selected: _sort == _SortOption.featured,
-                  onTap: () => _applySort(_SortOption.featured),
-                ),
-                _SortTile(
-                  label: 'Price: Low to High',
-                  selected: _sort == _SortOption.priceAsc,
-                  onTap: () => _applySort(_SortOption.priceAsc),
-                ),
-                _SortTile(
-                  label: 'Price: High to Low',
-                  selected: _sort == _SortOption.priceDesc,
-                  onTap: () => _applySort(_SortOption.priceDesc),
-                ),
-                _SortTile(
-                  label: 'Name: A to Z',
-                  selected: _sort == _SortOption.nameAsc,
-                  onTap: () => _applySort(_SortOption.nameAsc),
-                ),
-              ],
+    HapticService.light();
+    PlaceifyBottomSheet.show<void>(
+      context,
+      builder: (sheetContext) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const PlaceifyBottomSheetHeader(title: 'Sort by'),
+            const SizedBox(height: AppSpacing.md),
+            PlaceifySelectTile(
+              label: 'Featured',
+              selected: _sort == _SortOption.featured,
+              onTap: () => _applySort(sheetContext, _SortOption.featured),
             ),
-          ),
+            PlaceifySelectTile(
+              label: 'Price: Low to High',
+              selected: _sort == _SortOption.priceAsc,
+              onTap: () => _applySort(sheetContext, _SortOption.priceAsc),
+            ),
+            PlaceifySelectTile(
+              label: 'Price: High to Low',
+              selected: _sort == _SortOption.priceDesc,
+              onTap: () => _applySort(sheetContext, _SortOption.priceDesc),
+            ),
+            PlaceifySelectTile(
+              label: 'Name: A to Z',
+              selected: _sort == _SortOption.nameAsc,
+              onTap: () => _applySort(sheetContext, _SortOption.nameAsc),
+            ),
+          ],
         );
       },
     );
   }
 
-  void _applySort(_SortOption option) {
-    Navigator.pop(context);
+  void _applySort(BuildContext sheetContext, _SortOption option) {
+    HapticService.selection();
+    Navigator.pop(sheetContext);
     setState(() => _sort = option);
   }
 
@@ -242,37 +231,6 @@ class _Breadcrumb extends StatelessWidget {
         Text(' / ', style: separatorStyle),
         Text(categoryDisplayName(category), style: currentStyle),
       ],
-    );
-  }
-}
-
-class _SortTile extends StatelessWidget {
-  const _SortTile({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(
-        label,
-        style: GoogleFonts.dmSans(
-          fontSize: 14,
-          fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-          color: Colors.black87,
-        ),
-      ),
-      trailing: selected
-          ? const Icon(Icons.check_rounded, size: 20, color: Colors.black87)
-          : null,
-      onTap: onTap,
     );
   }
 }

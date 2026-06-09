@@ -7,6 +7,7 @@ import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/services/haptic_service.dart';
 import '../../../../../core/widgets/placeify_bottom_sheet.dart';
 import 'wishlist_sort.dart';
+import 'wishlist_sort_provider.dart';
 
 const _sortGroups = [
   WishlistSortGroup.dateAdded,
@@ -54,8 +55,9 @@ abstract final class WishlistSortSheet {
                         selected: current == option,
                         onTap: () {
                           HapticService.selection();
-                          ref.read(wishlistSortProvider.notifier).state =
-                              option;
+                          ref
+                              .read(wishlistSortNotifierProvider.notifier)
+                              .select(option);
                           Navigator.pop(sheetContext);
                         },
                       ),

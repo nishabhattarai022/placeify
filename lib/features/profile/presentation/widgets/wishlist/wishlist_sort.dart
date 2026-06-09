@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/legacy.dart';
 
 import '../../../../home/domain/models/product.dart';
 
@@ -64,10 +63,6 @@ extension WishlistSortMeta on WishlistSort {
         WishlistSort.nameAsc => 'A to Z',
       };
 }
-
-final wishlistSortProvider = StateProvider<WishlistSort>(
-  (ref) => WishlistSort.newestFirst,
-);
 
 List<Product> sortWishlistProducts({
   required List<Product> products,

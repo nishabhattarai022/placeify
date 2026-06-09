@@ -11,6 +11,7 @@ import '../../../../../core/services/haptic_service.dart';
 import '../../../../../core/widgets/placeify_bottom_nav.dart';
 import '../../../../../screens/widgets/category_product_list_tile.dart';
 import 'wishlist_sort.dart';
+import 'wishlist_sort_provider.dart';
 import 'wishlist_sort_sheet.dart';
 
 /// Wishlist list — category-style rows with sort control.
@@ -27,7 +28,7 @@ class WishlistGridView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final savedAt = ref.watch(wishlistProvider);
-    final sort = ref.watch(wishlistSortProvider);
+    final sort = ref.watch(wishlistSortNotifierProvider);
     final byId = {
       for (final p in MockProductRepository.products) p.id: p,
     };
@@ -52,7 +53,28 @@ class WishlistGridView extends ConsumerWidget {
     }
 
     if (products.isEmpty) {
-      return _WishlistNoSearchResultsState(query: searchQuery.trim());
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.screenPadding,
+              8,
+              AppSpacing.screenPadding,
+              12,
+            ),
+            child: _WishlistSortBar(
+              sort: sort,
+              onTap: () => WishlistSortSheet.show(context, ref, sort),
+            ),
+          ),
+          Expanded(
+            child: _WishlistNoSearchResultsState(
+              query: searchQuery.trim(),
+            ),
+          ),
+        ],
+      );
     }
 
     final bottom = showBottomPadding
