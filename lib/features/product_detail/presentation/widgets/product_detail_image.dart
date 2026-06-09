@@ -15,14 +15,27 @@ class ProductDetailImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Widget image;
     if (_isAsset) {
-      return Image.asset(imageUrl, fit: fit);
+      image = Image.asset(
+        imageUrl,
+        fit: fit,
+        alignment: Alignment.center,
+      );
+    } else {
+      image = CachedNetworkImage(
+        imageUrl: imageUrl,
+        fit: fit,
+        alignment: Alignment.center,
+        placeholder: (_, __) => const ColoredBox(color: Color(0xFFF3F3F3)),
+        errorWidget: (_, __, ___) =>
+            const ColoredBox(color: Color(0xFFF3F3F3)),
+      );
     }
-    return CachedNetworkImage(
-      imageUrl: imageUrl,
-      fit: fit,
-      placeholder: (_, __) => const ColoredBox(color: Color(0xFFF3F3F3)),
-      errorWidget: (_, __, ___) => const ColoredBox(color: Color(0xFFF3F3F3)),
-    );
+
+    if (fit == BoxFit.cover) {
+      return SizedBox.expand(child: image);
+    }
+    return image;
   }
 }

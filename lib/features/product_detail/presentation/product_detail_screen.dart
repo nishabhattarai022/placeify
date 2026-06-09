@@ -183,6 +183,9 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                 opacity: _cartBarOpacity,
                 child: ProductDetailCartBar(
                   totalPrice: displayPrice,
+                  onTryInMyRoom: () {
+                    context.push('/profile/augmented-reality');
+                  },
                   onAddToCart: () {
                     ref
                         .read(cartProvider.notifier)
