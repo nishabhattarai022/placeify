@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:placeify_client/placeify_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/demo_credentials.dart';
@@ -80,6 +81,27 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<AppUser> becomeVendor() async {
+    final user = await getCurrentUser();
+    if (user == null) {
+      throw AuthException('Sign in to continue');
+    }
+    if (!user.hasVendorShop) {
+      throw AuthException('Register your shop first to switch to vendor mode.');
+    }
+    return user.copyWith(role: UserRole.vendor);
+  }
+
+  @override
+  Future<AppUser> becomeConsumer() async {
+    final user = await getCurrentUser();
+    if (user == null) {
+      throw AuthException('Sign in to continue');
+    }
+    return user.copyWith(role: UserRole.consumer);
+  }
+
+  @override
   Future<void> signOut() async {
     await _prefs.remove(_sessionEmailKey);
   }
@@ -138,6 +160,7 @@ class _StoredUser {
         id: id,
         fullName: fullName,
         email: email,
+        role: UserRole.consumer,
       );
 
   Map<String, dynamic> toJson() => {

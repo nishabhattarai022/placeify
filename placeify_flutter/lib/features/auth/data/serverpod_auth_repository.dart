@@ -99,44 +99,143 @@ class ServerpodAuthRepository implements AuthRepository {
     await _prefs.remove(_sessionEmailKey);
   }
 
+  @override
+  Future<AppUser> becomeVendor() async {
+    _requireAuthenticated();
+    try {
+      final profile = await client.user.becomeVendor();
+      final email = _prefs.getString(_sessionEmailKey);
+      if (email == null) {
+        throw AuthException('User profile not found');
+      }
+      return _toAppUser(profile, email, hasVendorShop: true);
+    } catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
+  Future<AppUser> becomeConsumer() async {
+    _requireAuthenticated();
+    try {
+      final profile = await client.user.becomeConsumer();
+      final email = _prefs.getString(_sessionEmailKey);
+      if (email == null) {
+        throw AuthException('User profile not found');
+      }
+      final hasVendorShop = await _loadHasVendorShop();
+      return _toAppUser(profile, email, hasVendorShop: hasVendorShop);
+    } catch (error) {
+      throw _mapError(error);
+    }
+  }
+
   Future<AppUser> _loadAppUser(String email) async {
     final profile = await client.user.getCurrentUser();
     if (profile == null) {
       throw AuthException('User profile not found');
     }
-    return _toAppUser(profile, email);
+    final hasVendorShop = await _loadHasVendorShop();
+    return _toAppUser(
+      profile,
+      email,
+      hasVendorShop: hasVendorShop,
+    );
   }
 
-  AppUser _toAppUser(User profile, String email) {
+  Future<bool> _loadHasVendorShop() async {
+    try {
+      return await client.vendor.hasShop();
+    } catch (_) {
+      return false;
+    }
+  }
+
+  AppUser _toAppUser(
+    User profile,
+    String email, {
+    bool? hasVendorShop,
+  }) {
     return AppUser(
       id: profile.id.toString(),
       fullName: profile.name,
       email: email,
+      role: profile.role,
+      phone: profile.phone,
+      address: profile.address,
+      hasVendorShop: hasVendorShop ?? false,
     );
+  }
+
+  void _requireAuthenticated() {
+    if (!client.auth.isAuthenticated) {
+      throw AuthException('Sign in to continue');
+    }
   }
 
   AuthException _mapError(Object error) {
     if (error is AuthException) return error;
 
-    if (error is ServerpodClientException) {
-      final message = error.message.toLowerCase();
-      if (message.contains('password') &&
-          (message.contains('invalid') || message.contains('incorrect'))) {
-        return AuthException('Incorrect password');
-      }
-      if (message.contains('not found') ||
-          message.contains('no account') ||
-          message.contains('unknown user')) {
-        return AuthException('No account found for this email');
-      }
-      if (message.contains('already') && message.contains('email')) {
-        return AuthException('An account with this email already exists');
-      }
-      if (error.message.isNotEmpty) {
-        return AuthException(error.message);
-      }
+    final rawMessage = error is ServerpodClientException
+        ? error.message
+        : error.toString();
+    final message = rawMessage.toLowerCase();
+
+    if (_isConnectionError(message)) {
+      return AuthException(
+        'Cannot reach the server. Start placeify_server and try again.',
+      );
+    }
+    if (message.contains('password') &&
+        (message.contains('invalid') || message.contains('incorrect'))) {
+      return AuthException('Incorrect password');
+    }
+    if (message.contains('not found') ||
+        message.contains('no account') ||
+        message.contains('unknown user')) {
+      return AuthException('No account found for this email');
+    }
+    if (message.contains('already') && message.contains('email')) {
+      return AuthException('An account with this email already exists');
+    }
+    if (message.contains('profile not found')) {
+      return AuthException('User profile not found. Try registering again.');
+    }
+    if (message.contains('shop_not_found') ||
+        message.contains('complete vendor registration')) {
+      return AuthException(
+        'Register your shop first to switch to vendor mode.',
+      );
+    }
+    if (message.contains('invalid_shop_name')) {
+      return AuthException('Enter a shop name.');
+    }
+    if (message.contains('invalid_shop_description')) {
+      return AuthException('Enter a shop description.');
+    }
+    if (message.contains('invalid_phone')) {
+      return AuthException('Enter a phone number.');
+    }
+    if (message.contains('invalid_address')) {
+      return AuthException('Enter your shop address.');
+    }
+    if (message.contains('vendor_exists')) {
+      return AuthException('You already have a registered shop.');
+    }
+    if (rawMessage.isNotEmpty && rawMessage != 'Exception') {
+      return AuthException(rawMessage);
     }
 
     return AuthException('Something went wrong. Please try again.');
+  }
+
+  bool _isConnectionError(String message) {
+    return message.contains('socketexception') ||
+        message.contains('connection refused') ||
+        message.contains('connection reset') ||
+        message.contains('failed host lookup') ||
+        message.contains('network is unreachable') ||
+        message.contains('timed out') ||
+        message.contains('no route to host');
   }
 }

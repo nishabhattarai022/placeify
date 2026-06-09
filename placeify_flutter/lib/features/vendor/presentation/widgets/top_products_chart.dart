@@ -3,15 +3,32 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radii.dart';
 import '../../../../core/constants/app_typography.dart';
-import '../../data/mock_vendor_repository.dart';
 import '../../domain/models/vendor_metric.dart';
 
 class TopProductsChart extends StatelessWidget {
-  const TopProductsChart({super.key});
+  const TopProductsChart({required this.products, super.key});
+
+  final List<TopProductStat> products;
 
   @override
   Widget build(BuildContext context) {
-    final products = MockVendorRepository.topProducts;
+    if (products.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+        decoration: BoxDecoration(
+          color: AppColors.warmWhite,
+          border: Border.all(color: AppColors.creamDark, width: 1.5),
+          borderRadius: AppRadii.md,
+        ),
+        child: Text(
+          'Top products will appear here once you start selling.',
+          style: AppTypography.metricLabel.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+      );
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),

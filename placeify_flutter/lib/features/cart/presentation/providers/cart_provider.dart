@@ -3,6 +3,7 @@ import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 import '../../../../main.dart' show client;
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../home/presentation/providers/catalog_provider.dart';
 import '../../../home/presentation/providers/category_provider.dart';
 import '../../data/cart_display_config.dart';
 import '../../data/serverpod_cart_repository.dart';
@@ -28,6 +29,7 @@ final _cartRepository = ServerpodCartRepository();
 class Cart extends _$Cart {
   @override
   List<CartLineItem> build() {
+    ref.watch(catalogIndexProvider);
     ref.listen(currentUserProvider, (previous, next) {
       next.whenData((user) {
         if (user != null) {

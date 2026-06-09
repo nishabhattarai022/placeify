@@ -30,6 +30,10 @@ class UserEndpoint extends PlaceifyAuthenticatedEndpoint {
     return _service.becomeVendor(session);
   }
 
+  Future<User> becomeConsumer(Session session) {
+    return _service.becomeConsumer(session);
+  }
+
   Future<UserDashboard> getDashboard(Session session) {
     return _service.getDashboard(session);
   }

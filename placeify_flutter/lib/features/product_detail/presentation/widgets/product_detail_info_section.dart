@@ -15,6 +15,7 @@ class ProductDetailInfoSection extends StatelessWidget {
     required this.specs,
     required this.careInstructions,
     required this.warranty,
+    this.shopName,
     super.key,
   });
 
@@ -27,6 +28,7 @@ class ProductDetailInfoSection extends StatelessWidget {
   final List<ProductSpec> specs;
   final List<String> careInstructions;
   final String? warranty;
+  final String? shopName;
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +56,33 @@ class ProductDetailInfoSection extends StatelessWidget {
                 height: 1.2,
               ),
             ),
+            if (shopName != null && shopName!.trim().isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Icon(
+                    Icons.storefront_outlined,
+                    size: 16,
+                    color: ProductDetailTokens.textPrimary.withValues(
+                      alpha: 0.55,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Sold by $shopName',
+                      style: AppFonts.dmSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: ProductDetailTokens.textPrimary.withValues(
+                          alpha: 0.72,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 14),
             AnimatedSize(
               duration: const Duration(milliseconds: 240),

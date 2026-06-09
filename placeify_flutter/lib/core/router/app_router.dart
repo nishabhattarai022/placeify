@@ -5,7 +5,10 @@ import '../../features/home/presentation/home_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
+import '../../features/vendor/presentation/add_product_screen.dart';
 import '../../features/vendor/presentation/vendor_dashboard_screen.dart';
+import '../../features/vendor/presentation/vendor_order_detail_screen.dart';
+import '../../features/vendor/presentation/vendor_orders_screen.dart';
 import '../../features/home/presentation/bookmarks_screen.dart';
 import '../../data/furniture_categories.dart';
 import '../../screens/browse_screen.dart';
@@ -221,6 +224,42 @@ final appRouter = GoRouter(
             transitionsBuilder: _fadeTransition,
             transitionDuration: AppDurations.slow,
           ),
+          routes: [
+            GoRoute(
+              path: 'add-product',
+              name: 'vendorAddProduct',
+              parentNavigatorKey: rootNavigatorKey,
+              pageBuilder: (context, state) => _slidePage(
+                key: ValueKey<String>(state.uri.toString()),
+                child: const AddProductScreen(),
+              ),
+            ),
+            GoRoute(
+              path: 'orders',
+              name: 'vendorOrders',
+              parentNavigatorKey: rootNavigatorKey,
+              pageBuilder: (context, state) => _slidePage(
+                key: ValueKey<String>(state.uri.toString()),
+                child: const VendorOrdersScreen(),
+              ),
+              routes: [
+                GoRoute(
+                  path: ':orderId',
+                  name: 'vendorOrderDetail',
+                  parentNavigatorKey: rootNavigatorKey,
+                  pageBuilder: (context, state) {
+                    final orderId = int.parse(
+                      state.pathParameters['orderId']!,
+                    );
+                    return _slidePage(
+                      key: ValueKey<String>(state.uri.toString()),
+                      child: VendorOrderDetailScreen(orderId: orderId),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
         ),
       ],
     ),

@@ -8,12 +8,14 @@ enum OrderStatus { pending, shipped, customRequest }
 abstract class Order with _$Order {
   const factory Order({
     required String id,
+    required int shopOrderId,
     required String orderNumber,
     required String productName,
     required String productSvgIconPath,
     required int quantity,
     required DateTime date,
     required OrderStatus status,
+    String? customerName,
     String? requestMeta,
   }) = _Order;
 

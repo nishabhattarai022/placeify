@@ -12,6 +12,7 @@ class AuthTextField extends StatefulWidget {
     this.showVisibilityToggle = false,
     this.textInputAction,
     this.validator,
+    this.maxLines = 1,
     super.key,
   });
 
@@ -23,6 +24,7 @@ class AuthTextField extends StatefulWidget {
   final bool showVisibilityToggle;
   final TextInputAction? textInputAction;
   final String? Function(String?)? validator;
+  final int maxLines;
 
   @override
   State<AuthTextField> createState() => _AuthTextFieldState();
@@ -138,6 +140,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
           child: TextFormField(
             controller: widget.controller,
             keyboardType: widget.keyboardType,
+            maxLines: widget.maxLines,
             obscureText: widget.showVisibilityToggle
                 ? _obscured
                 : widget.obscureText,

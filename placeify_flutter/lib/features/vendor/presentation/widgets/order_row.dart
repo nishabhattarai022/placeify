@@ -7,9 +7,10 @@ import '../../../../core/utils/formatters.dart';
 import '../../domain/models/order.dart';
 
 class OrderRow extends StatefulWidget {
-  const OrderRow({required this.order, super.key});
+  const OrderRow({required this.order, this.onTap, super.key});
 
   final Order order;
+  final VoidCallback? onTap;
 
   @override
   State<OrderRow> createState() => _OrderRowState();
@@ -27,6 +28,7 @@ class _OrderRowState extends State<OrderRow> {
         : Formatters.orderMeta(order.orderNumber, order.date);
 
     return GestureDetector(
+      onTap: widget.onTap,
       onTapDown: (_) => setState(() => _translateX = 5),
       onTapUp: (_) => setState(() => _translateX = 0),
       onTapCancel: () => setState(() => _translateX = 0),

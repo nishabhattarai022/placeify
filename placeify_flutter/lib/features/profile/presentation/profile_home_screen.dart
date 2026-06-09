@@ -7,7 +7,9 @@ import '../../../core/constants/app_colors.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import '../../../core/widgets/placeify_bottom_nav.dart';
 import '../../../core/widgets/toast_overlay.dart';
+import '../../auth/presentation/account_mode_actions.dart';
 import '../data/profile_menu_config.dart';
+import 'widgets/account_mode_card.dart';
 import 'widgets/profile_hero.dart';
 import 'widgets/profile_menu_tile.dart';
 
@@ -46,15 +48,17 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.storefront_outlined),
-              title: const Text(
-                'Vendor dashboard',
-                style: TextStyle(
+              title: Text(
+                ref.watch(currentUserProvider).value?.hasVendorShop == true
+                    ? 'Vendor dashboard'
+                    : 'Register as vendor',
+                style: const TextStyle(
                   fontWeight: FontWeight.w600,
                 ),
               ),
               onTap: () {
                 Navigator.pop(context);
-                context.go('/vendor');
+                openVendorExperience(context, ref);
               },
             ),
             ListTile(
@@ -160,6 +164,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
                         BottomNavTokens.scrollBottomPadding + bottomInset,
                       ),
                       children: [
+                        const AccountModeCard(),
                         for (var i = 0;
                             i < ProfileMenuItems.accountOverview.length;
                             i++) ...[

@@ -19,26 +19,18 @@ class ProductDetailContent {
     this.specs = const [],
     this.careInstructions = const [],
     this.warranty,
+    this.shopName,
   });
 
   final String description;
   final String? extendedDescription;
   final List<String> galleryImages;
-
-  /// Optional marketing title override (e.g. mockup "Crimson Comfort").
   final String? displayTitle;
-
-  /// Bulleted list of materials (e.g. "Solid oak frame", "Linen upholstery").
   final List<String> materials;
-
-  /// Labeled spec rows (Dimensions, Weight, Seat Height, etc.).
   final List<ProductSpec> specs;
-
-  /// Care/maintenance tips shown in expanded view.
   final List<String> careInstructions;
-
-  /// Warranty / origin note shown at the bottom of the expanded view.
   final String? warranty;
+  final String? shopName;
 
   String get shortDescription {
     if (description.length <= 160) return description;
@@ -56,8 +48,6 @@ abstract final class ProductDetailContentRepository {
 
   static ProductDetailContent forProduct(Product product) {
     final mapped = _byProductId[product.id];
-    final defaultSpecs = _defaultSpecs(product);
-
     if (mapped != null) {
       return ProductDetailContent(
         displayTitle: mapped.displayTitle,
@@ -67,9 +57,34 @@ abstract final class ProductDetailContentRepository {
             ? mapped.galleryImages
             : _galleryFor(product),
         materials: mapped.materials,
-        specs: mapped.specs.isNotEmpty ? mapped.specs : defaultSpecs,
+        specs: mapped.specs.isNotEmpty ? mapped.specs : _defaultSpecs(product),
         careInstructions: mapped.careInstructions,
         warranty: mapped.warranty,
+        shopName: product.shopName.isNotEmpty ? product.shopName : product.brand,
+      );
+    }
+
+    final vendorMaterials = _lines(product.materials);
+    final vendorCare = _lines(product.careInstructions);
+    final hasVendorDetails =
+        vendorMaterials.isNotEmpty || vendorCare.isNotEmpty;
+
+    if (hasVendorDetails || product.description.trim().isNotEmpty) {
+      return ProductDetailContent(
+        description: product.description.trim().isNotEmpty
+            ? product.description.trim()
+            : product.name,
+        extendedDescription: product.description.trim(),
+        galleryImages: _galleryFor(product),
+        materials: vendorMaterials,
+        specs: _vendorSpecs(product),
+        careInstructions: vendorCare,
+        warranty: product.warranty ??
+            (product.shopName.isNotEmpty
+                ? 'Sold and fulfilled by ${product.shopName}'
+                : null),
+        shopName:
+            product.shopName.isNotEmpty ? product.shopName : product.brand,
       );
     }
 
@@ -86,32 +101,70 @@ abstract final class ProductDetailContentRepository {
         'High-density foam cushioning',
         'Performance-grade upholstery',
       ],
-      specs: defaultSpecs,
+      specs: _defaultSpecs(product),
       careInstructions: const [
         'Spot clean with a soft, damp cloth.',
         'Avoid direct sunlight to preserve fabric colour.',
         'Vacuum upholstery weekly with a soft brush.',
       ],
       warranty: '2-year limited warranty • Ships in 5–7 business days',
+      shopName:
+          product.shopName.isNotEmpty ? product.shopName : product.brand,
     );
   }
 
-  static List<ProductSpec> _defaultSpecs(Product product) {
+  static List<String> _lines(String text) {
+    if (text.trim().isEmpty) return const [];
+    return text
+        .split('\n')
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toList();
+  }
+
+  static List<ProductSpec> _vendorSpecs(Product product) {
     final dims = product.dimensions;
     String fmt(double v) => v.toStringAsFixed(v % 1 == 0 ? 0 : 1);
-    return [
+
+    final specs = <ProductSpec>[
       ProductSpec(
         label: 'Dimensions',
         value:
             'W${fmt(dims.widthCm)} × D${fmt(dims.depthCm)} × H${fmt(dims.heightCm)} cm',
       ),
-      const ProductSpec(label: 'Weight', value: '12 kg'),
-      const ProductSpec(label: 'Assembly', value: 'Minimal (legs only)'),
-      const ProductSpec(label: 'Origin', value: 'Designed in Kathmandu'),
     ];
+
+    if (product.weightKg != null && product.weightKg! > 0) {
+      specs.add(
+        ProductSpec(
+          label: 'Weight',
+          value: '${fmt(product.weightKg!)} kg',
+        ),
+      );
+    }
+
+    if (product.assemblyNote != null && product.assemblyNote!.trim().isNotEmpty) {
+      specs.add(
+        ProductSpec(label: 'Assembly', value: product.assemblyNote!.trim()),
+      );
+    }
+
+    return specs;
+  }
+
+  static List<ProductSpec> _defaultSpecs(Product product) {
+    final specs = _vendorSpecs(product);
+    if (product.shopName.isNotEmpty) {
+      specs.add(ProductSpec(label: 'Sold by', value: product.shopName));
+    }
+    return specs;
   }
 
   static List<String> _galleryFor(Product product) {
+    if (!product.imageUrl.startsWith('assets/')) {
+      return [product.imageUrl];
+    }
+
     final images = <String>[product.imageUrl];
     for (final asset in _sharedAngles) {
       if (asset != product.imageUrl && !images.contains(asset)) {
@@ -133,97 +186,20 @@ abstract final class ProductDetailContentRepository {
       galleryImages: [
         'assets/images/splash/Tola_Lounge_Chair_Venice_Vegan_Suede_Sage_1_0.jpg',
         'assets/images/splash/pexels-suhailat-35160826.jpg',
-        'assets/images/splash/462222_1_800.jpg',
-        'assets/images/splash/Diane_Sofa_Venice_Vegan_Suede_Sage_1.jpg',
-        'assets/images/splash/Tola_Lounge_Chair_Venice_Vegan_Suede_Sage_1_0.jpg',
       ],
       materials: [
-        'Solid ash hardwood frame',
-        'Vegan suede upholstery (Venice, Sage)',
-        'High-resilience foam cushioning',
-        'Solid oak tapered legs with matte finish',
+        'Solid oak frame',
+        'High-density foam seat',
+        'Linen-blend upholstery',
       ],
       specs: [
-        ProductSpec(label: 'Dimensions', value: 'W62 × D58 × H78 cm'),
-        ProductSpec(label: 'Seat Height', value: '44 cm'),
-        ProductSpec(label: 'Weight', value: '9.4 kg'),
-        ProductSpec(label: 'Assembly', value: 'Tool-free legs (5 min)'),
-        ProductSpec(label: 'Origin', value: 'Crafted in Pokhara'),
+        ProductSpec(label: 'Dimensions', value: 'W72 × D65 × H85 cm'),
+        ProductSpec(label: 'Weight', value: '12 kg'),
+        ProductSpec(label: 'Assembly', value: 'Minimal (legs only)'),
       ],
       careInstructions: [
-        'Spot clean upholstery with a damp microfibre cloth.',
-        'Buff legs monthly with a soft, dry cloth.',
-        'Keep away from radiators and direct sunlight.',
-      ],
-      warranty: '3-year structural warranty • 30-day returns',
-    ),
-    'p4': ProductDetailContent(
-      displayTitle: 'Verruna Luxe Sofa',
-      description:
-          'The Crimson Comfort chair boasts a sturdy, hand-carved frame, ensuring durability '
-          'while adding a touch of classical charm to your interior.',
-      extendedDescription:
-          'Its generous seat and balanced proportions make it ideal for lounges, '
-          'studios, and open-plan spaces where comfort meets timeless design.',
-      galleryImages: [
-        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800',
-        'assets/images/splash/pexels-suhailat-35160826.jpg',
-        'assets/images/splash/Tola_Lounge_Chair_Venice_Vegan_Suede_Sage_1_0.jpg',
-        'assets/images/splash/462222_1_800.jpg',
-        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400',
-      ],
-      materials: [
-        'Hand-carved beech wood frame',
-        'Italian boucle upholstery',
-        'Memory-foam seat with sinuous spring base',
-        'Brushed steel internal supports',
-      ],
-      specs: [
-        ProductSpec(label: 'Dimensions', value: 'W68 × D72 × H82 cm'),
-        ProductSpec(label: 'Seat Height', value: '46 cm'),
-        ProductSpec(label: 'Weight', value: '14.2 kg'),
-        ProductSpec(label: 'Max Load', value: '150 kg'),
-        ProductSpec(label: 'Assembly', value: 'Fully assembled'),
-        ProductSpec(label: 'Origin', value: 'Designed in Kathmandu'),
-      ],
-      careInstructions: [
-        'Vacuum boucle weekly with an upholstery brush.',
-        'Blot spills immediately; never rub the fabric.',
-        'Rotate seat cushion monthly to even out wear.',
-      ],
-      warranty: '5-year frame warranty • Free returns within 14 days',
-    ),
-    'p5': ProductDetailContent(
-      description:
-          'The Brixon chair blends soft upholstery with a warm wooden base, '
-          'creating a welcoming seat for dining and conversation.',
-      extendedDescription:
-          'Designed for daily use, its supportive back and refined silhouette suit '
-          'both minimalist and rustic interior styles.',
-      galleryImages: [
-        'assets/images/splash/pexels-suhailat-35160826.jpg',
-        'assets/images/splash/Tola_Lounge_Chair_Venice_Vegan_Suede_Sage_1_0.jpg',
-        'assets/images/splash/Diane_Sofa_Venice_Vegan_Suede_Sage_1.jpg',
-        'assets/images/splash/462222_1_800.jpg',
-        'assets/images/splash/pexels-suhailat-35160826.jpg',
-      ],
-      materials: [
-        'Solid walnut hardwood base',
-        'Recycled wool blend upholstery',
-        'Plywood seat shell with natural veneer',
-        'Eco-friendly water-based finish',
-      ],
-      specs: [
-        ProductSpec(label: 'Dimensions', value: 'W56 × D60 × H80 cm'),
-        ProductSpec(label: 'Seat Height', value: '45 cm'),
-        ProductSpec(label: 'Weight', value: '7.8 kg'),
-        ProductSpec(label: 'Assembly', value: 'Tool-free legs (3 min)'),
-        ProductSpec(label: 'Origin', value: 'Made in Bhaktapur'),
-      ],
-      careInstructions: [
-        'Wipe wooden base with a slightly damp cloth.',
-        'Vacuum wool upholstery on a low setting.',
-        'Avoid placing directly under air conditioners.',
+        'Spot clean with a soft, damp cloth.',
+        'Avoid direct sunlight to preserve fabric colour.',
       ],
       warranty: '2-year limited warranty • Ships in 5–7 business days',
     ),
