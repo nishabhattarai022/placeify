@@ -1,6 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
 import '../../../../home/domain/models/product.dart';
+
+enum WishlistSortGroup { dateAdded, price, name }
 
 enum WishlistSort {
   newestFirst,
@@ -25,6 +28,40 @@ extension WishlistSortLabel on WishlistSort {
         WishlistSort.priceAsc => 'Price ↑',
         WishlistSort.priceDesc => 'Price ↓',
         WishlistSort.nameAsc => 'Name A–Z',
+      };
+}
+
+extension WishlistSortGroupLabel on WishlistSortGroup {
+  String get sectionLabel => switch (this) {
+        WishlistSortGroup.dateAdded => 'Date added',
+        WishlistSortGroup.price => 'Price',
+        WishlistSortGroup.name => 'Alphabetical',
+      };
+}
+
+extension WishlistSortMeta on WishlistSort {
+  WishlistSortGroup get group => switch (this) {
+        WishlistSort.newestFirst || WishlistSort.oldestFirst =>
+          WishlistSortGroup.dateAdded,
+        WishlistSort.priceAsc || WishlistSort.priceDesc =>
+          WishlistSortGroup.price,
+        WishlistSort.nameAsc => WishlistSortGroup.name,
+      };
+
+  IconData get icon => switch (this) {
+        WishlistSort.newestFirst => Icons.calendar_today_outlined,
+        WishlistSort.oldestFirst => Icons.event_outlined,
+        WishlistSort.priceAsc => Icons.attach_money,
+        WishlistSort.priceDesc => Icons.attach_money,
+        WishlistSort.nameAsc => Icons.sort_by_alpha,
+      };
+
+  String get tileLabel => switch (this) {
+        WishlistSort.newestFirst => 'Newest',
+        WishlistSort.oldestFirst => 'Oldest',
+        WishlistSort.priceAsc => 'Low to High',
+        WishlistSort.priceDesc => 'High to Low',
+        WishlistSort.nameAsc => 'A to Z',
       };
 }
 
