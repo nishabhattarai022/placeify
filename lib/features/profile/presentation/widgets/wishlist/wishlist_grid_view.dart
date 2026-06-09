@@ -11,6 +11,7 @@ import '../../../../../core/services/haptic_service.dart';
 import '../../../../../core/widgets/placeify_bottom_nav.dart';
 import '../../../../../screens/widgets/category_product_list_tile.dart';
 import 'wishlist_sort.dart';
+import 'wishlist_sort_sheet.dart';
 
 /// Wishlist list — category-style rows with sort control.
 class WishlistGridView extends ConsumerWidget {
@@ -71,7 +72,7 @@ class WishlistGridView extends ConsumerWidget {
           ),
           child: _WishlistSortBar(
             sort: sort,
-            onTap: () => _openSortSheet(context, ref, sort),
+            onTap: () => WishlistSortSheet.show(context, ref, sort),
           ),
         ),
         Expanded(
@@ -96,52 +97,6 @@ class WishlistGridView extends ConsumerWidget {
           ),
         ),
       ],
-    );
-  }
-
-  void _openSortSheet(
-    BuildContext context,
-    WidgetRef ref,
-    WishlistSort current,
-  ) {
-    HapticService.light();
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Sort by',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                for (final option in WishlistSort.values)
-                  _WishlistSortTile(
-                    label: option.menuLabel,
-                    selected: current == option,
-                    onTap: () {
-                      ref.read(wishlistSortProvider.notifier).state = option;
-                      Navigator.pop(sheetContext);
-                    },
-                  ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }
@@ -192,37 +147,6 @@ class _WishlistSortBar extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _WishlistSortTile extends StatelessWidget {
-  const _WishlistSortTile({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(
-        label,
-        style: GoogleFonts.dmSans(
-          fontSize: 14,
-          fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-          color: Colors.black87,
-        ),
-      ),
-      trailing: selected
-          ? const Icon(Icons.check_rounded, size: 20, color: Colors.black87)
-          : null,
-      onTap: onTap,
     );
   }
 }
