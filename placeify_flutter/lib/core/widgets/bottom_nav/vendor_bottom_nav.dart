@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../features/auth/presentation/account_mode_actions.dart';
 import '../../services/haptic_service.dart';
 import '../toast_overlay.dart';
 import 'bottom_nav_tokens.dart';
@@ -16,11 +18,11 @@ class _VendorTab {
 
   final String icon;
   final String label;
-  final void Function(BuildContext context) onTap;
+  final void Function(BuildContext context, WidgetRef ref) onTap;
 }
 
 /// Full-width pill bar with 5 labeled tabs (no protruding circle).
-class VendorBottomNav extends StatelessWidget {
+class VendorBottomNav extends ConsumerWidget {
   const VendorBottomNav({
     required this.activeIndex,
     super.key,
@@ -28,7 +30,7 @@ class VendorBottomNav extends StatelessWidget {
 
   final int activeIndex;
 
-  static const _tabs = [
+  static final _tabs = [
     _VendorTab(
       icon: 'assets/icons/ic_grid.svg',
       label: 'Dashboard',
@@ -41,8 +43,8 @@ class VendorBottomNav extends StatelessWidget {
     ),
     _VendorTab(
       icon: 'assets/icons/ic_home.svg',
-      label: 'Store',
-      onTap: _store,
+      label: 'Shop',
+      onTap: _shop,
     ),
     _VendorTab(
       icon: 'assets/icons/ic_message_circle.svg',
@@ -56,17 +58,18 @@ class VendorBottomNav extends StatelessWidget {
     ),
   ];
 
-  static void _noop(BuildContext context) {}
-  static void _products(BuildContext context) =>
+  static void _noop(BuildContext context, WidgetRef ref) {}
+  static void _products(BuildContext context, WidgetRef ref) =>
       PlaceifyToast.show(context, 'Products');
-  static void _store(BuildContext context) => context.go('/home');
-  static void _messages(BuildContext context) =>
+  static void _shop(BuildContext context, WidgetRef ref) =>
+      openConsumerExperience(context, ref);
+  static void _messages(BuildContext context, WidgetRef ref) =>
       PlaceifyToast.show(context, 'Messages');
-  static void _profile(BuildContext context) =>
-      PlaceifyToast.show(context, 'Profile');
+  static void _profile(BuildContext context, WidgetRef ref) =>
+      context.go('/profile');
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final active = activeIndex.clamp(0, _tabs.length - 1);
 
     return Padding(
@@ -91,7 +94,7 @@ class VendorBottomNav extends StatelessWidget {
                   isActive: i == active,
                   onTap: () {
                     HapticService.light();
-                    _tabs[i].onTap(context);
+                    _tabs[i].onTap(context, ref);
                   },
                 ),
               ),

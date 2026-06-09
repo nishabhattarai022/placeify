@@ -378,6 +378,17 @@ class Endpoints extends _i1.EndpointDispatch {
               ) async =>
                   (endpoints['user'] as _i4.UserEndpoint).becomeVendor(session),
         ),
+        'becomeConsumer': _i1.MethodConnector(
+          name: 'becomeConsumer',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['user'] as _i4.UserEndpoint).becomeConsumer(
+                session,
+              ),
+        ),
         'getDashboard': _i1.MethodConnector(
           name: 'getDashboard',
           params: {},
@@ -963,6 +974,26 @@ class Endpoints extends _i1.EndpointDispatch {
                 session,
               ),
         ),
+        'getDashboard': _i1.MethodConnector(
+          name: 'getDashboard',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['vendor'] as _i13.VendorEndpoint)
+                  .getDashboard(session),
+        ),
+        'hasShop': _i1.MethodConnector(
+          name: 'hasShop',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i13.VendorEndpoint).hasShop(session),
+        ),
         'createShop': _i1.MethodConnector(
           name: 'createShop',
           params: {
@@ -981,6 +1012,16 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<String?>(),
               nullable: true,
             ),
+            'phone': _i1.ParameterDescription(
+              name: 'phone',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'address': _i1.ParameterDescription(
+              name: 'address',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -992,6 +1033,8 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['shopName'],
                     description: params['description'],
                     logoUrl: params['logoUrl'],
+                    phone: params['phone'],
+                    address: params['address'],
                   ),
         ),
         'updateShop': _i1.MethodConnector(
@@ -1058,6 +1101,46 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<int?>(),
               nullable: true,
             ),
+            'materials': _i1.ParameterDescription(
+              name: 'materials',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'widthCm': _i1.ParameterDescription(
+              name: 'widthCm',
+              type: _i1.getType<double?>(),
+              nullable: true,
+            ),
+            'depthCm': _i1.ParameterDescription(
+              name: 'depthCm',
+              type: _i1.getType<double?>(),
+              nullable: true,
+            ),
+            'heightCm': _i1.ParameterDescription(
+              name: 'heightCm',
+              type: _i1.getType<double?>(),
+              nullable: true,
+            ),
+            'weightKg': _i1.ParameterDescription(
+              name: 'weightKg',
+              type: _i1.getType<double?>(),
+              nullable: true,
+            ),
+            'assemblyNote': _i1.ParameterDescription(
+              name: 'assemblyNote',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'careInstructions': _i1.ParameterDescription(
+              name: 'careInstructions',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'warranty': _i1.ParameterDescription(
+              name: 'warranty',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
             'model3dUrl': _i1.ParameterDescription(
               name: 'model3dUrl',
               type: _i1.getType<String?>(),
@@ -1080,6 +1163,14 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['description'],
                     params['price'],
                     categoryId: params['categoryId'],
+                    materials: params['materials'],
+                    widthCm: params['widthCm'],
+                    depthCm: params['depthCm'],
+                    heightCm: params['heightCm'],
+                    weightKg: params['weightKg'],
+                    assemblyNote: params['assemblyNote'],
+                    careInstructions: params['careInstructions'],
+                    warranty: params['warranty'],
                     model3dUrl: params['model3dUrl'],
                     thumbnailUrl: params['thumbnailUrl'],
                   ),
@@ -1132,6 +1223,56 @@ class Endpoints extends _i1.EndpointDispatch {
                     session,
                     params['fileData'],
                     params['fileName'],
+                  ),
+        ),
+        'listShopOrders': _i1.MethodConnector(
+          name: 'listShopOrders',
+          params: {
+            'limit': _i1.ParameterDescription(
+              name: 'limit',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'offset': _i1.ParameterDescription(
+              name: 'offset',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'status': _i1.ParameterDescription(
+              name: 'status',
+              type: _i1.getType<_i15.OrderStatus?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i13.VendorEndpoint).listShopOrders(
+                    session,
+                    limit: params['limit'],
+                    offset: params['offset'],
+                    status: params['status'],
+                  ),
+        ),
+        'getShopOrder': _i1.MethodConnector(
+          name: 'getShopOrder',
+          params: {
+            'orderId': _i1.ParameterDescription(
+              name: 'orderId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i13.VendorEndpoint).getShopOrder(
+                    session,
+                    params['orderId'],
                   ),
         ),
       },

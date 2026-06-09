@@ -1,0 +1,7 @@
+### Product sales aggregate for the vendor dashboard.
+class: VendorProductStat
+fields:
+  productId: int
+  name: String
+  unitsSold: int
+  revenue: double

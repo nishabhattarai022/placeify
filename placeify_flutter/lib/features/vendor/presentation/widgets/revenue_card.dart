@@ -5,11 +5,15 @@ import '../../../../core/constants/app_durations.dart';
 import '../../../../core/constants/app_radii.dart';
 import '../../../../core/constants/app_typography.dart';
 import '../../../../core/utils/formatters.dart';
-import '../../../vendor/data/mock_vendor_repository.dart';
 import 'mini_bar_chart.dart';
 
 class RevenueCard extends StatefulWidget {
-  const RevenueCard({super.key});
+  const RevenueCard({
+    required this.revenue,
+    super.key,
+  });
+
+  final double revenue;
 
   @override
   State<RevenueCard> createState() => _RevenueCardState();
@@ -45,7 +49,7 @@ class _RevenueCardState extends State<RevenueCard> {
           ),
           const SizedBox(height: 8),
           TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0, end: _animate ? MockVendorRepository.revenue : 0),
+            tween: Tween(begin: 0, end: _animate ? widget.revenue : 0),
             duration: AppDurations.countUp,
             curve: Curves.easeOutCubic,
             builder: (context, value, _) {
@@ -58,7 +62,7 @@ class _RevenueCardState extends State<RevenueCard> {
           const SizedBox(height: 6),
           _TrendRow(
             iconPath: 'assets/icons/ic_trending_up.svg',
-            label: '+18% this week',
+            label: widget.revenue > 0 ? 'Total sales' : 'No sales yet',
             color: AppColors.accentLight,
           ),
           const SizedBox(height: 12),

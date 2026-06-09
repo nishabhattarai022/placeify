@@ -3,9 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../home/domain/models/product.dart';
 import '../../cart/data/cart_display_config.dart';
 import '../../cart/presentation/providers/cart_provider.dart';
-import '../../home/presentation/providers/category_provider.dart';
+import '../../home/presentation/providers/catalog_provider.dart';
 import '../../../core/services/haptic_service.dart';
 import '../data/product_detail_content.dart';
 import 'product_detail_tokens.dart';
@@ -81,10 +82,14 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
 
   @override
   Widget build(BuildContext context) {
-    final product = ref.watch(productByIdProvider(widget.productId));
+    final productAsync = ref.watch(productDetailProvider(widget.productId));
 
-    if (product == null) {
-      return Scaffold(
+    return productAsync.when(
+      loading: () => const Scaffold(
+        backgroundColor: ProductDetailTokens.screenBg,
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (_, __) => Scaffold(
         backgroundColor: ProductDetailTokens.screenBg,
         body: Center(
           child: TextButton(
@@ -92,9 +97,26 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
             child: const Text('Product not found'),
           ),
         ),
-      );
-    }
+      ),
+      data: (product) {
+        if (product == null) {
+          return Scaffold(
+            backgroundColor: ProductDetailTokens.screenBg,
+            body: Center(
+              child: TextButton(
+                onPressed: () => context.pop(),
+                child: const Text('Product not found'),
+              ),
+            ),
+          );
+        }
 
+        return _buildProductDetail(context, product);
+      },
+    );
+  }
+
+  Widget _buildProductDetail(BuildContext context, Product product) {
     final content = ProductDetailContentRepository.forProduct(product);
     final displayPrice =
         CartDisplayConfig.priceFor(product.id, product.price);
@@ -136,6 +158,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                     opacity: _infoOpacity,
                     child: ProductDetailInfoSection(
                       title: content.displayTitle ?? product.name,
+                      shopName: content.shopName,
                       shortDescription: content.shortDescription,
                       fullDescription:
                           content.extendedDescription ?? content.description,

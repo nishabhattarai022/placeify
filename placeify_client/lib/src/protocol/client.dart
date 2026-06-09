@@ -39,10 +39,12 @@ import 'package:placeify_client/src/protocol/product_search_input.dart' as _i22;
 import 'package:placeify_client/src/protocol/product.dart' as _i23;
 import 'package:placeify_client/src/protocol/review.dart' as _i24;
 import 'package:placeify_client/src/protocol/vendor.dart' as _i25;
-import 'dart:typed_data' as _i26;
-import 'package:placeify_client/src/protocol/wishlist_page.dart' as _i27;
-import 'package:placeify_client/src/protocol/wishlist_item.dart' as _i28;
-import 'protocol.dart' as _i29;
+import 'package:placeify_client/src/protocol/vendor_dashboard.dart' as _i26;
+import 'dart:typed_data' as _i27;
+import 'package:placeify_client/src/protocol/vendor_shop_order.dart' as _i28;
+import 'package:placeify_client/src/protocol/wishlist_page.dart' as _i29;
+import 'package:placeify_client/src/protocol/wishlist_item.dart' as _i30;
+import 'protocol.dart' as _i31;
 
 /// By extending [EmailIdpBaseEndpoint], the email identity provider endpoints
 /// are made available on the server and enable the corresponding sign-in widget
@@ -307,6 +309,12 @@ class EndpointUser extends EndpointPlaceifyAuthenticated {
   _i3.Future<_i5.User> becomeVendor() => caller.callServerEndpoint<_i5.User>(
     'user',
     'becomeVendor',
+    {},
+  );
+
+  _i3.Future<_i5.User> becomeConsumer() => caller.callServerEndpoint<_i5.User>(
+    'user',
+    'becomeConsumer',
     {},
   );
 
@@ -644,10 +652,25 @@ class EndpointVendor extends _i2.EndpointRef {
     {},
   );
 
+  _i3.Future<_i26.VendorDashboard> getDashboard() =>
+      caller.callServerEndpoint<_i26.VendorDashboard>(
+        'vendor',
+        'getDashboard',
+        {},
+      );
+
+  _i3.Future<bool> hasShop() => caller.callServerEndpoint<bool>(
+    'vendor',
+    'hasShop',
+    {},
+  );
+
   _i3.Future<_i25.Vendor> createShop(
     String shopName, {
     String? description,
     String? logoUrl,
+    String? phone,
+    String? address,
   }) => caller.callServerEndpoint<_i25.Vendor>(
     'vendor',
     'createShop',
@@ -655,6 +678,8 @@ class EndpointVendor extends _i2.EndpointRef {
       'shopName': shopName,
       'description': description,
       'logoUrl': logoUrl,
+      'phone': phone,
+      'address': address,
     },
   );
 
@@ -684,6 +709,14 @@ class EndpointVendor extends _i2.EndpointRef {
     String description,
     double price, {
     int? categoryId,
+    String? materials,
+    double? widthCm,
+    double? depthCm,
+    double? heightCm,
+    double? weightKg,
+    String? assemblyNote,
+    String? careInstructions,
+    String? warranty,
     String? model3dUrl,
     String? thumbnailUrl,
   }) => caller.callServerEndpoint<_i23.Product>(
@@ -694,6 +727,14 @@ class EndpointVendor extends _i2.EndpointRef {
       'description': description,
       'price': price,
       'categoryId': categoryId,
+      'materials': materials,
+      'widthCm': widthCm,
+      'depthCm': depthCm,
+      'heightCm': heightCm,
+      'weightKg': weightKg,
+      'assemblyNote': assemblyNote,
+      'careInstructions': careInstructions,
+      'warranty': warranty,
       'model3dUrl': model3dUrl,
       'thumbnailUrl': thumbnailUrl,
     },
@@ -712,7 +753,7 @@ class EndpointVendor extends _i2.EndpointRef {
   );
 
   _i3.Future<String> uploadProductImage(
-    _i26.ByteData fileData,
+    _i27.ByteData fileData,
     String fileName,
   ) => caller.callServerEndpoint<String>(
     'vendor',
@@ -722,6 +763,27 @@ class EndpointVendor extends _i2.EndpointRef {
       'fileName': fileName,
     },
   );
+
+  _i3.Future<List<_i28.VendorShopOrder>> listShopOrders({
+    required int limit,
+    required int offset,
+    _i9.OrderStatus? status,
+  }) => caller.callServerEndpoint<List<_i28.VendorShopOrder>>(
+    'vendor',
+    'listShopOrders',
+    {
+      'limit': limit,
+      'offset': offset,
+      'status': status,
+    },
+  );
+
+  _i3.Future<_i28.VendorShopOrder> getShopOrder(int orderId) =>
+      caller.callServerEndpoint<_i28.VendorShopOrder>(
+        'vendor',
+        'getShopOrder',
+        {'orderId': orderId},
+      );
 }
 
 /// Wishlist management for authenticated customers.
@@ -732,16 +794,16 @@ class EndpointWishlist extends _i2.EndpointRef {
   @override
   String get name => 'wishlist';
 
-  _i3.Future<_i27.WishlistPage> listMyWishlist({
+  _i3.Future<_i29.WishlistPage> listMyWishlist({
     _i18.PaginationInput? pagination,
-  }) => caller.callServerEndpoint<_i27.WishlistPage>(
+  }) => caller.callServerEndpoint<_i29.WishlistPage>(
     'wishlist',
     'listMyWishlist',
     {'pagination': pagination},
   );
 
-  _i3.Future<_i28.WishlistItem> addToWishlist(int productId) =>
-      caller.callServerEndpoint<_i28.WishlistItem>(
+  _i3.Future<_i30.WishlistItem> addToWishlist(int productId) =>
+      caller.callServerEndpoint<_i30.WishlistItem>(
         'wishlist',
         'addToWishlist',
         {'productId': productId},
@@ -800,7 +862,7 @@ class Client extends _i2.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i29.Protocol(),
+         _i31.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,

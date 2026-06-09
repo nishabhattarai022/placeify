@@ -42,17 +42,23 @@ import 'user_dashboard.dart' as _i27;
 import 'user_order_summary.dart' as _i28;
 import 'user_role.dart' as _i29;
 import 'vendor.dart' as _i30;
-import 'wishlist_item.dart' as _i31;
-import 'wishlist_page.dart' as _i32;
-import 'package:placeify_server/src/generated/user_role.dart' as _i33;
-import 'package:placeify_server/src/generated/user_order_summary.dart' as _i34;
+import 'vendor_dashboard.dart' as _i31;
+import 'vendor_order_line_item.dart' as _i32;
+import 'vendor_order_summary.dart' as _i33;
+import 'vendor_product_stat.dart' as _i34;
+import 'vendor_shop_order.dart' as _i35;
+import 'wishlist_item.dart' as _i36;
+import 'wishlist_page.dart' as _i37;
+import 'package:placeify_server/src/generated/user_role.dart' as _i38;
+import 'package:placeify_server/src/generated/user_order_summary.dart' as _i39;
 import 'package:placeify_server/src/generated/user_ar_session_summary.dart'
-    as _i35;
-import 'package:placeify_server/src/generated/ar_session.dart' as _i36;
-import 'package:placeify_server/src/generated/cart_item.dart' as _i37;
-import 'package:placeify_server/src/generated/category.dart' as _i38;
-import 'package:placeify_server/src/generated/product.dart' as _i39;
-import 'package:placeify_server/src/generated/review.dart' as _i40;
+    as _i40;
+import 'package:placeify_server/src/generated/ar_session.dart' as _i41;
+import 'package:placeify_server/src/generated/cart_item.dart' as _i42;
+import 'package:placeify_server/src/generated/category.dart' as _i43;
+import 'package:placeify_server/src/generated/product.dart' as _i44;
+import 'package:placeify_server/src/generated/review.dart' as _i45;
+import 'package:placeify_server/src/generated/vendor_shop_order.dart' as _i46;
 export 'ar_session.dart';
 export 'cart.dart';
 export 'cart_item.dart';
@@ -79,6 +85,11 @@ export 'user_dashboard.dart';
 export 'user_order_summary.dart';
 export 'user_role.dart';
 export 'vendor.dart';
+export 'vendor_dashboard.dart';
+export 'vendor_order_line_item.dart';
+export 'vendor_order_summary.dart';
+export 'vendor_product_stat.dart';
+export 'vendor_shop_order.dart';
 export 'wishlist_item.dart';
 export 'wishlist_page.dart';
 
@@ -911,6 +922,54 @@ class Protocol extends _i1.SerializationManagerServer {
           dartType: 'double',
         ),
         _i2.ColumnDefinition(
+          name: 'materials',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'widthCm',
+          columnType: _i2.ColumnType.doublePrecision,
+          isNullable: true,
+          dartType: 'double?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'depthCm',
+          columnType: _i2.ColumnType.doublePrecision,
+          isNullable: true,
+          dartType: 'double?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'heightCm',
+          columnType: _i2.ColumnType.doublePrecision,
+          isNullable: true,
+          dartType: 'double?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'weightKg',
+          columnType: _i2.ColumnType.doublePrecision,
+          isNullable: true,
+          dartType: 'double?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'assemblyNote',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'careInstructions',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'warranty',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
           name: 'model3dUrl',
           columnType: _i2.ColumnType.text,
           isNullable: true,
@@ -1510,11 +1569,26 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i30.Vendor) {
       return _i30.Vendor.fromJson(data) as T;
     }
-    if (t == _i31.WishlistItem) {
-      return _i31.WishlistItem.fromJson(data) as T;
+    if (t == _i31.VendorDashboard) {
+      return _i31.VendorDashboard.fromJson(data) as T;
     }
-    if (t == _i32.WishlistPage) {
-      return _i32.WishlistPage.fromJson(data) as T;
+    if (t == _i32.VendorOrderLineItem) {
+      return _i32.VendorOrderLineItem.fromJson(data) as T;
+    }
+    if (t == _i33.VendorOrderSummary) {
+      return _i33.VendorOrderSummary.fromJson(data) as T;
+    }
+    if (t == _i34.VendorProductStat) {
+      return _i34.VendorProductStat.fromJson(data) as T;
+    }
+    if (t == _i35.VendorShopOrder) {
+      return _i35.VendorShopOrder.fromJson(data) as T;
+    }
+    if (t == _i36.WishlistItem) {
+      return _i36.WishlistItem.fromJson(data) as T;
+    }
+    if (t == _i37.WishlistPage) {
+      return _i37.WishlistPage.fromJson(data) as T;
     }
     if (t == _i1.getType<_i5.ARSession?>()) {
       return (data != null ? _i5.ARSession.fromJson(data) : null) as T;
@@ -1598,11 +1672,28 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i1.getType<_i30.Vendor?>()) {
       return (data != null ? _i30.Vendor.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i31.WishlistItem?>()) {
-      return (data != null ? _i31.WishlistItem.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i31.VendorDashboard?>()) {
+      return (data != null ? _i31.VendorDashboard.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i32.WishlistPage?>()) {
-      return (data != null ? _i32.WishlistPage.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i32.VendorOrderLineItem?>()) {
+      return (data != null ? _i32.VendorOrderLineItem.fromJson(data) : null)
+          as T;
+    }
+    if (t == _i1.getType<_i33.VendorOrderSummary?>()) {
+      return (data != null ? _i33.VendorOrderSummary.fromJson(data) : null)
+          as T;
+    }
+    if (t == _i1.getType<_i34.VendorProductStat?>()) {
+      return (data != null ? _i34.VendorProductStat.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i35.VendorShopOrder?>()) {
+      return (data != null ? _i35.VendorShopOrder.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i36.WishlistItem?>()) {
+      return (data != null ? _i36.WishlistItem.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i37.WishlistPage?>()) {
+      return (data != null ? _i37.WishlistPage.fromJson(data) : null) as T;
     }
     if (t == List<_i14.Order>) {
       return (data as List).map((e) => deserialize<_i14.Order>(e)).toList()
@@ -1612,46 +1703,70 @@ class Protocol extends _i1.SerializationManagerServer {
       return (data as List).map((e) => deserialize<_i19.Product>(e)).toList()
           as T;
     }
-    if (t == List<_i31.WishlistItem>) {
+    if (t == List<_i33.VendorOrderSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i31.WishlistItem>(e))
+              .map((e) => deserialize<_i33.VendorOrderSummary>(e))
               .toList()
           as T;
     }
-    if (t == Set<_i33.UserRole>) {
-      return (data as List).map((e) => deserialize<_i33.UserRole>(e)).toSet()
-          as T;
-    }
-    if (t == List<_i34.UserOrderSummary>) {
+    if (t == List<_i34.VendorProductStat>) {
       return (data as List)
-              .map((e) => deserialize<_i34.UserOrderSummary>(e))
+              .map((e) => deserialize<_i34.VendorProductStat>(e))
               .toList()
           as T;
     }
-    if (t == List<_i35.UserArSessionSummary>) {
+    if (t == List<_i32.VendorOrderLineItem>) {
       return (data as List)
-              .map((e) => deserialize<_i35.UserArSessionSummary>(e))
+              .map((e) => deserialize<_i32.VendorOrderLineItem>(e))
               .toList()
           as T;
     }
-    if (t == List<_i36.ARSession>) {
-      return (data as List).map((e) => deserialize<_i36.ARSession>(e)).toList()
+    if (t == List<_i36.WishlistItem>) {
+      return (data as List)
+              .map((e) => deserialize<_i36.WishlistItem>(e))
+              .toList()
           as T;
     }
-    if (t == List<_i37.CartItem>) {
-      return (data as List).map((e) => deserialize<_i37.CartItem>(e)).toList()
+    if (t == Set<_i38.UserRole>) {
+      return (data as List).map((e) => deserialize<_i38.UserRole>(e)).toSet()
           as T;
     }
-    if (t == List<_i38.Category>) {
-      return (data as List).map((e) => deserialize<_i38.Category>(e)).toList()
+    if (t == List<_i39.UserOrderSummary>) {
+      return (data as List)
+              .map((e) => deserialize<_i39.UserOrderSummary>(e))
+              .toList()
           as T;
     }
-    if (t == List<_i39.Product>) {
-      return (data as List).map((e) => deserialize<_i39.Product>(e)).toList()
+    if (t == List<_i40.UserArSessionSummary>) {
+      return (data as List)
+              .map((e) => deserialize<_i40.UserArSessionSummary>(e))
+              .toList()
           as T;
     }
-    if (t == List<_i40.Review>) {
-      return (data as List).map((e) => deserialize<_i40.Review>(e)).toList()
+    if (t == List<_i41.ARSession>) {
+      return (data as List).map((e) => deserialize<_i41.ARSession>(e)).toList()
+          as T;
+    }
+    if (t == List<_i42.CartItem>) {
+      return (data as List).map((e) => deserialize<_i42.CartItem>(e)).toList()
+          as T;
+    }
+    if (t == List<_i43.Category>) {
+      return (data as List).map((e) => deserialize<_i43.Category>(e)).toList()
+          as T;
+    }
+    if (t == List<_i44.Product>) {
+      return (data as List).map((e) => deserialize<_i44.Product>(e)).toList()
+          as T;
+    }
+    if (t == List<_i45.Review>) {
+      return (data as List).map((e) => deserialize<_i45.Review>(e)).toList()
+          as T;
+    }
+    if (t == List<_i46.VendorShopOrder>) {
+      return (data as List)
+              .map((e) => deserialize<_i46.VendorShopOrder>(e))
+              .toList()
           as T;
     }
     try {
@@ -1694,8 +1809,13 @@ class Protocol extends _i1.SerializationManagerServer {
       _i28.UserOrderSummary => 'UserOrderSummary',
       _i29.UserRole => 'UserRole',
       _i30.Vendor => 'Vendor',
-      _i31.WishlistItem => 'WishlistItem',
-      _i32.WishlistPage => 'WishlistPage',
+      _i31.VendorDashboard => 'VendorDashboard',
+      _i32.VendorOrderLineItem => 'VendorOrderLineItem',
+      _i33.VendorOrderSummary => 'VendorOrderSummary',
+      _i34.VendorProductStat => 'VendorProductStat',
+      _i35.VendorShopOrder => 'VendorShopOrder',
+      _i36.WishlistItem => 'WishlistItem',
+      _i37.WishlistPage => 'WishlistPage',
       _ => null,
     };
   }
@@ -1762,9 +1882,19 @@ class Protocol extends _i1.SerializationManagerServer {
         return 'UserRole';
       case _i30.Vendor():
         return 'Vendor';
-      case _i31.WishlistItem():
+      case _i31.VendorDashboard():
+        return 'VendorDashboard';
+      case _i32.VendorOrderLineItem():
+        return 'VendorOrderLineItem';
+      case _i33.VendorOrderSummary():
+        return 'VendorOrderSummary';
+      case _i34.VendorProductStat():
+        return 'VendorProductStat';
+      case _i35.VendorShopOrder():
+        return 'VendorShopOrder';
+      case _i36.WishlistItem():
         return 'WishlistItem';
-      case _i32.WishlistPage():
+      case _i37.WishlistPage():
         return 'WishlistPage';
     }
     className = _i2.Protocol().getClassNameForObject(data);
@@ -1866,11 +1996,26 @@ class Protocol extends _i1.SerializationManagerServer {
     if (dataClassName == 'Vendor') {
       return deserialize<_i30.Vendor>(data['data']);
     }
+    if (dataClassName == 'VendorDashboard') {
+      return deserialize<_i31.VendorDashboard>(data['data']);
+    }
+    if (dataClassName == 'VendorOrderLineItem') {
+      return deserialize<_i32.VendorOrderLineItem>(data['data']);
+    }
+    if (dataClassName == 'VendorOrderSummary') {
+      return deserialize<_i33.VendorOrderSummary>(data['data']);
+    }
+    if (dataClassName == 'VendorProductStat') {
+      return deserialize<_i34.VendorProductStat>(data['data']);
+    }
+    if (dataClassName == 'VendorShopOrder') {
+      return deserialize<_i35.VendorShopOrder>(data['data']);
+    }
     if (dataClassName == 'WishlistItem') {
-      return deserialize<_i31.WishlistItem>(data['data']);
+      return deserialize<_i36.WishlistItem>(data['data']);
     }
     if (dataClassName == 'WishlistPage') {
-      return deserialize<_i32.WishlistPage>(data['data']);
+      return deserialize<_i37.WishlistPage>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
@@ -1932,8 +2077,8 @@ class Protocol extends _i1.SerializationManagerServer {
         return _i25.User.t;
       case _i30.Vendor:
         return _i30.Vendor.t;
-      case _i31.WishlistItem:
-        return _i31.WishlistItem.t;
+      case _i36.WishlistItem:
+        return _i36.WishlistItem.t;
     }
     return null;
   }

@@ -1,7 +1,9 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
 import '../../data/mock_product_repository.dart';
 import '../../domain/models/category.dart';
 import '../../domain/models/product.dart';
+import 'catalog_provider.dart';
 
 part 'category_provider.g.dart';
 
@@ -20,22 +22,20 @@ List<ProductCategory> categories(Ref ref) =>
 @riverpod
 List<Product> filteredProducts(Ref ref) {
   final categoryId = ref.watch(selectedCategoryProvider);
-  return MockProductRepository.products
-      .where((p) => p.categoryId == categoryId)
-      .toList();
+  final all = ref.watch(catalogProductsProvider);
+  final filtered =
+      all.where((product) => product.categoryId == categoryId).toList();
+  if (filtered.isNotEmpty) return filtered;
+  return all;
 }
 
 @riverpod
 Product? productById(Ref ref, String id) {
-  try {
-    return MockProductRepository.products.firstWhere((p) => p.id == id);
-  } catch (_) {
-    return null;
-  }
+  return ref.watch(catalogIndexProvider).value?[id];
 }
 
 String categoryTitle(String categoryId) {
   return MockProductRepository.categories
-          .firstWhere((c) => c.id == categoryId)
-          .label;
+      .firstWhere((c) => c.id == categoryId)
+      .label;
 }

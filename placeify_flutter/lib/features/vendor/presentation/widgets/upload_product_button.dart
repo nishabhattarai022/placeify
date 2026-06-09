@@ -4,10 +4,10 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radii.dart';
 import '../../../../core/constants/app_shadows.dart';
 import '../../../../core/widgets/animated_scale_tap.dart';
-import '../../../../core/widgets/toast_overlay.dart';
-
 class UploadProductButton extends StatefulWidget {
-  const UploadProductButton({super.key});
+  const UploadProductButton({required this.onTap, super.key});
+
+  final VoidCallback onTap;
 
   @override
   State<UploadProductButton> createState() => _UploadProductButtonState();
@@ -20,7 +20,7 @@ class _UploadProductButtonState extends State<UploadProductButton> {
   Widget build(BuildContext context) {
     return AnimatedScaleTap(
       pressScale: 0.97,
-      onTap: () => PlaceifyToast.show(context, 'Upload product'),
+      onTap: widget.onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),

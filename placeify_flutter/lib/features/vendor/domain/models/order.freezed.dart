@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Order {
 
- String get id; String get orderNumber; String get productName; String get productSvgIconPath; int get quantity; DateTime get date; OrderStatus get status; String? get requestMeta;
+ String get id; int get shopOrderId; String get orderNumber; String get productName; String get productSvgIconPath; int get quantity; DateTime get date; OrderStatus get status; String? get customerName; String? get requestMeta;
 /// Create a copy of Order
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $OrderCopyWith<Order> get copyWith => _$OrderCopyWithImpl<Order>(this as Order, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Order&&(identical(other.id, id) || other.id == id)&&(identical(other.orderNumber, orderNumber) || other.orderNumber == orderNumber)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.productSvgIconPath, productSvgIconPath) || other.productSvgIconPath == productSvgIconPath)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.date, date) || other.date == date)&&(identical(other.status, status) || other.status == status)&&(identical(other.requestMeta, requestMeta) || other.requestMeta == requestMeta));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Order&&(identical(other.id, id) || other.id == id)&&(identical(other.shopOrderId, shopOrderId) || other.shopOrderId == shopOrderId)&&(identical(other.orderNumber, orderNumber) || other.orderNumber == orderNumber)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.productSvgIconPath, productSvgIconPath) || other.productSvgIconPath == productSvgIconPath)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.date, date) || other.date == date)&&(identical(other.status, status) || other.status == status)&&(identical(other.customerName, customerName) || other.customerName == customerName)&&(identical(other.requestMeta, requestMeta) || other.requestMeta == requestMeta));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,orderNumber,productName,productSvgIconPath,quantity,date,status,requestMeta);
+int get hashCode => Object.hash(runtimeType,id,shopOrderId,orderNumber,productName,productSvgIconPath,quantity,date,status,customerName,requestMeta);
 
 @override
 String toString() {
-  return 'Order(id: $id, orderNumber: $orderNumber, productName: $productName, productSvgIconPath: $productSvgIconPath, quantity: $quantity, date: $date, status: $status, requestMeta: $requestMeta)';
+  return 'Order(id: $id, shopOrderId: $shopOrderId, orderNumber: $orderNumber, productName: $productName, productSvgIconPath: $productSvgIconPath, quantity: $quantity, date: $date, status: $status, customerName: $customerName, requestMeta: $requestMeta)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $OrderCopyWith<$Res>  {
   factory $OrderCopyWith(Order value, $Res Function(Order) _then) = _$OrderCopyWithImpl;
 @useResult
 $Res call({
- String id, String orderNumber, String productName, String productSvgIconPath, int quantity, DateTime date, OrderStatus status, String? requestMeta
+ String id, int shopOrderId, String orderNumber, String productName, String productSvgIconPath, int quantity, DateTime date, OrderStatus status, String? customerName, String? requestMeta
 });
 
 
@@ -62,16 +62,18 @@ class _$OrderCopyWithImpl<$Res>
 
 /// Create a copy of Order
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? orderNumber = null,Object? productName = null,Object? productSvgIconPath = null,Object? quantity = null,Object? date = null,Object? status = null,Object? requestMeta = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? shopOrderId = null,Object? orderNumber = null,Object? productName = null,Object? productSvgIconPath = null,Object? quantity = null,Object? date = null,Object? status = null,Object? customerName = freezed,Object? requestMeta = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,orderNumber: null == orderNumber ? _self.orderNumber : orderNumber // ignore: cast_nullable_to_non_nullable
+as String,shopOrderId: null == shopOrderId ? _self.shopOrderId : shopOrderId // ignore: cast_nullable_to_non_nullable
+as int,orderNumber: null == orderNumber ? _self.orderNumber : orderNumber // ignore: cast_nullable_to_non_nullable
 as String,productName: null == productName ? _self.productName : productName // ignore: cast_nullable_to_non_nullable
 as String,productSvgIconPath: null == productSvgIconPath ? _self.productSvgIconPath : productSvgIconPath // ignore: cast_nullable_to_non_nullable
 as String,quantity: null == quantity ? _self.quantity : quantity // ignore: cast_nullable_to_non_nullable
 as int,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as DateTime,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as OrderStatus,requestMeta: freezed == requestMeta ? _self.requestMeta : requestMeta // ignore: cast_nullable_to_non_nullable
+as OrderStatus,customerName: freezed == customerName ? _self.customerName : customerName // ignore: cast_nullable_to_non_nullable
+as String?,requestMeta: freezed == requestMeta ? _self.requestMeta : requestMeta // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -157,10 +159,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String orderNumber,  String productName,  String productSvgIconPath,  int quantity,  DateTime date,  OrderStatus status,  String? requestMeta)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  int shopOrderId,  String orderNumber,  String productName,  String productSvgIconPath,  int quantity,  DateTime date,  OrderStatus status,  String? customerName,  String? requestMeta)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Order() when $default != null:
-return $default(_that.id,_that.orderNumber,_that.productName,_that.productSvgIconPath,_that.quantity,_that.date,_that.status,_that.requestMeta);case _:
+return $default(_that.id,_that.shopOrderId,_that.orderNumber,_that.productName,_that.productSvgIconPath,_that.quantity,_that.date,_that.status,_that.customerName,_that.requestMeta);case _:
   return orElse();
 
 }
@@ -178,10 +180,10 @@ return $default(_that.id,_that.orderNumber,_that.productName,_that.productSvgIco
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String orderNumber,  String productName,  String productSvgIconPath,  int quantity,  DateTime date,  OrderStatus status,  String? requestMeta)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  int shopOrderId,  String orderNumber,  String productName,  String productSvgIconPath,  int quantity,  DateTime date,  OrderStatus status,  String? customerName,  String? requestMeta)  $default,) {final _that = this;
 switch (_that) {
 case _Order():
-return $default(_that.id,_that.orderNumber,_that.productName,_that.productSvgIconPath,_that.quantity,_that.date,_that.status,_that.requestMeta);case _:
+return $default(_that.id,_that.shopOrderId,_that.orderNumber,_that.productName,_that.productSvgIconPath,_that.quantity,_that.date,_that.status,_that.customerName,_that.requestMeta);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -198,10 +200,10 @@ return $default(_that.id,_that.orderNumber,_that.productName,_that.productSvgIco
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String orderNumber,  String productName,  String productSvgIconPath,  int quantity,  DateTime date,  OrderStatus status,  String? requestMeta)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  int shopOrderId,  String orderNumber,  String productName,  String productSvgIconPath,  int quantity,  DateTime date,  OrderStatus status,  String? customerName,  String? requestMeta)?  $default,) {final _that = this;
 switch (_that) {
 case _Order() when $default != null:
-return $default(_that.id,_that.orderNumber,_that.productName,_that.productSvgIconPath,_that.quantity,_that.date,_that.status,_that.requestMeta);case _:
+return $default(_that.id,_that.shopOrderId,_that.orderNumber,_that.productName,_that.productSvgIconPath,_that.quantity,_that.date,_that.status,_that.customerName,_that.requestMeta);case _:
   return null;
 
 }
@@ -213,16 +215,18 @@ return $default(_that.id,_that.orderNumber,_that.productName,_that.productSvgIco
 
 
 class _Order extends Order {
-  const _Order({required this.id, required this.orderNumber, required this.productName, required this.productSvgIconPath, required this.quantity, required this.date, required this.status, this.requestMeta}): super._();
+  const _Order({required this.id, required this.shopOrderId, required this.orderNumber, required this.productName, required this.productSvgIconPath, required this.quantity, required this.date, required this.status, this.customerName, this.requestMeta}): super._();
   
 
 @override final  String id;
+@override final  int shopOrderId;
 @override final  String orderNumber;
 @override final  String productName;
 @override final  String productSvgIconPath;
 @override final  int quantity;
 @override final  DateTime date;
 @override final  OrderStatus status;
+@override final  String? customerName;
 @override final  String? requestMeta;
 
 /// Create a copy of Order
@@ -235,16 +239,16 @@ _$OrderCopyWith<_Order> get copyWith => __$OrderCopyWithImpl<_Order>(this, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Order&&(identical(other.id, id) || other.id == id)&&(identical(other.orderNumber, orderNumber) || other.orderNumber == orderNumber)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.productSvgIconPath, productSvgIconPath) || other.productSvgIconPath == productSvgIconPath)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.date, date) || other.date == date)&&(identical(other.status, status) || other.status == status)&&(identical(other.requestMeta, requestMeta) || other.requestMeta == requestMeta));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Order&&(identical(other.id, id) || other.id == id)&&(identical(other.shopOrderId, shopOrderId) || other.shopOrderId == shopOrderId)&&(identical(other.orderNumber, orderNumber) || other.orderNumber == orderNumber)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.productSvgIconPath, productSvgIconPath) || other.productSvgIconPath == productSvgIconPath)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.date, date) || other.date == date)&&(identical(other.status, status) || other.status == status)&&(identical(other.customerName, customerName) || other.customerName == customerName)&&(identical(other.requestMeta, requestMeta) || other.requestMeta == requestMeta));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,orderNumber,productName,productSvgIconPath,quantity,date,status,requestMeta);
+int get hashCode => Object.hash(runtimeType,id,shopOrderId,orderNumber,productName,productSvgIconPath,quantity,date,status,customerName,requestMeta);
 
 @override
 String toString() {
-  return 'Order(id: $id, orderNumber: $orderNumber, productName: $productName, productSvgIconPath: $productSvgIconPath, quantity: $quantity, date: $date, status: $status, requestMeta: $requestMeta)';
+  return 'Order(id: $id, shopOrderId: $shopOrderId, orderNumber: $orderNumber, productName: $productName, productSvgIconPath: $productSvgIconPath, quantity: $quantity, date: $date, status: $status, customerName: $customerName, requestMeta: $requestMeta)';
 }
 
 
@@ -255,7 +259,7 @@ abstract mixin class _$OrderCopyWith<$Res> implements $OrderCopyWith<$Res> {
   factory _$OrderCopyWith(_Order value, $Res Function(_Order) _then) = __$OrderCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String orderNumber, String productName, String productSvgIconPath, int quantity, DateTime date, OrderStatus status, String? requestMeta
+ String id, int shopOrderId, String orderNumber, String productName, String productSvgIconPath, int quantity, DateTime date, OrderStatus status, String? customerName, String? requestMeta
 });
 
 
@@ -272,16 +276,18 @@ class __$OrderCopyWithImpl<$Res>
 
 /// Create a copy of Order
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? orderNumber = null,Object? productName = null,Object? productSvgIconPath = null,Object? quantity = null,Object? date = null,Object? status = null,Object? requestMeta = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? shopOrderId = null,Object? orderNumber = null,Object? productName = null,Object? productSvgIconPath = null,Object? quantity = null,Object? date = null,Object? status = null,Object? customerName = freezed,Object? requestMeta = freezed,}) {
   return _then(_Order(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,orderNumber: null == orderNumber ? _self.orderNumber : orderNumber // ignore: cast_nullable_to_non_nullable
+as String,shopOrderId: null == shopOrderId ? _self.shopOrderId : shopOrderId // ignore: cast_nullable_to_non_nullable
+as int,orderNumber: null == orderNumber ? _self.orderNumber : orderNumber // ignore: cast_nullable_to_non_nullable
 as String,productName: null == productName ? _self.productName : productName // ignore: cast_nullable_to_non_nullable
 as String,productSvgIconPath: null == productSvgIconPath ? _self.productSvgIconPath : productSvgIconPath // ignore: cast_nullable_to_non_nullable
 as String,quantity: null == quantity ? _self.quantity : quantity // ignore: cast_nullable_to_non_nullable
 as int,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as DateTime,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as OrderStatus,requestMeta: freezed == requestMeta ? _self.requestMeta : requestMeta // ignore: cast_nullable_to_non_nullable
+as OrderStatus,customerName: freezed == customerName ? _self.customerName : customerName // ignore: cast_nullable_to_non_nullable
+as String?,requestMeta: freezed == requestMeta ? _self.requestMeta : requestMeta // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

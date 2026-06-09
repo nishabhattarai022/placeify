@@ -17,6 +17,13 @@ abstract class Product with _$Product {
     @Default(false) bool isWishlisted,
     required String categoryId,
     required ProductDimensions dimensions,
+    @Default('') String description,
+    @Default('') String materials,
+    @Default('') String careInstructions,
+    String? warranty,
+    String? assemblyNote,
+    double? weightKg,
+    @Default('') String shopName,
   }) = _Product;
 
   const Product._();

@@ -15,6 +15,10 @@ abstract interface class AuthRepository {
 
   Future<AppUser?> getCurrentUser();
 
+  Future<AppUser> becomeVendor();
+
+  Future<AppUser> becomeConsumer();
+
   Future<void> signOut();
 }
 

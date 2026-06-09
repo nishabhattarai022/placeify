@@ -25,6 +25,7 @@ abstract final class MockVendorRepository {
   static final orders = [
     Order(
       id: 'o1',
+      shopOrderId: 4821,
       orderNumber: '4821',
       productName: 'Astra Chair',
       productSvgIconPath: 'assets/icons/ic_chair.svg',
@@ -34,6 +35,7 @@ abstract final class MockVendorRepository {
     ),
     Order(
       id: 'o2',
+      shopOrderId: 4820,
       orderNumber: '4820',
       productName: 'Brixon Chair',
       productSvgIconPath: 'assets/icons/ic_sofa.svg',
@@ -43,6 +45,7 @@ abstract final class MockVendorRepository {
     ),
     Order(
       id: 'o3',
+      shopOrderId: 0,
       orderNumber: '',
       productName: 'Custom Walnut Desk',
       productSvgIconPath: 'assets/icons/ic_table.svg',
@@ -53,6 +56,7 @@ abstract final class MockVendorRepository {
     ),
     Order(
       id: 'o4',
+      shopOrderId: 4819,
       orderNumber: '4819',
       productName: 'Odin 75',
       productSvgIconPath: 'assets/icons/ic_chair.svg',

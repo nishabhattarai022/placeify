@@ -1,0 +1,10 @@
+### Aggregated vendor dashboard data for the logged-in seller.
+class: VendorDashboard
+fields:
+  shop: Vendor
+  productCount: int
+  activeProductCount: int
+  orderCount: int
+  revenue: double
+  recentOrders: List<VendorOrderSummary>
+  topProducts: List<VendorProductStat>

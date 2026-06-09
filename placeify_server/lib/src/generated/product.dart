@@ -29,6 +29,14 @@ abstract class Product
     required this.name,
     required this.description,
     required this.price,
+    this.materials,
+    this.widthCm,
+    this.depthCm,
+    this.heightCm,
+    this.weightKg,
+    this.assemblyNote,
+    this.careInstructions,
+    this.warranty,
     this.model3dUrl,
     this.thumbnailUrl,
     _i2.ProductStatus? status,
@@ -45,6 +53,14 @@ abstract class Product
     required String name,
     required String description,
     required double price,
+    String? materials,
+    double? widthCm,
+    double? depthCm,
+    double? heightCm,
+    double? weightKg,
+    String? assemblyNote,
+    String? careInstructions,
+    String? warranty,
     String? model3dUrl,
     String? thumbnailUrl,
     _i2.ProductStatus? status,
@@ -69,6 +85,14 @@ abstract class Product
       name: jsonSerialization['name'] as String,
       description: jsonSerialization['description'] as String,
       price: (jsonSerialization['price'] as num).toDouble(),
+      materials: jsonSerialization['materials'] as String?,
+      widthCm: (jsonSerialization['widthCm'] as num?)?.toDouble(),
+      depthCm: (jsonSerialization['depthCm'] as num?)?.toDouble(),
+      heightCm: (jsonSerialization['heightCm'] as num?)?.toDouble(),
+      weightKg: (jsonSerialization['weightKg'] as num?)?.toDouble(),
+      assemblyNote: jsonSerialization['assemblyNote'] as String?,
+      careInstructions: jsonSerialization['careInstructions'] as String?,
+      warranty: jsonSerialization['warranty'] as String?,
       model3dUrl: jsonSerialization['model3dUrl'] as String?,
       thumbnailUrl: jsonSerialization['thumbnailUrl'] as String?,
       status: jsonSerialization['status'] == null
@@ -101,6 +125,22 @@ abstract class Product
 
   double price;
 
+  String? materials;
+
+  double? widthCm;
+
+  double? depthCm;
+
+  double? heightCm;
+
+  double? weightKg;
+
+  String? assemblyNote;
+
+  String? careInstructions;
+
+  String? warranty;
+
   String? model3dUrl;
 
   String? thumbnailUrl;
@@ -124,6 +164,14 @@ abstract class Product
     String? name,
     String? description,
     double? price,
+    String? materials,
+    double? widthCm,
+    double? depthCm,
+    double? heightCm,
+    double? weightKg,
+    String? assemblyNote,
+    String? careInstructions,
+    String? warranty,
     String? model3dUrl,
     String? thumbnailUrl,
     _i2.ProductStatus? status,
@@ -141,6 +189,14 @@ abstract class Product
       'name': name,
       'description': description,
       'price': price,
+      if (materials != null) 'materials': materials,
+      if (widthCm != null) 'widthCm': widthCm,
+      if (depthCm != null) 'depthCm': depthCm,
+      if (heightCm != null) 'heightCm': heightCm,
+      if (weightKg != null) 'weightKg': weightKg,
+      if (assemblyNote != null) 'assemblyNote': assemblyNote,
+      if (careInstructions != null) 'careInstructions': careInstructions,
+      if (warranty != null) 'warranty': warranty,
       if (model3dUrl != null) 'model3dUrl': model3dUrl,
       if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
       'status': status.toJson(),
@@ -160,6 +216,14 @@ abstract class Product
       'name': name,
       'description': description,
       'price': price,
+      if (materials != null) 'materials': materials,
+      if (widthCm != null) 'widthCm': widthCm,
+      if (depthCm != null) 'depthCm': depthCm,
+      if (heightCm != null) 'heightCm': heightCm,
+      if (weightKg != null) 'weightKg': weightKg,
+      if (assemblyNote != null) 'assemblyNote': assemblyNote,
+      if (careInstructions != null) 'careInstructions': careInstructions,
+      if (warranty != null) 'warranty': warranty,
       if (model3dUrl != null) 'model3dUrl': model3dUrl,
       if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
       'status': status.toJson(),
@@ -215,6 +279,14 @@ class _ProductImpl extends Product {
     required String name,
     required String description,
     required double price,
+    String? materials,
+    double? widthCm,
+    double? depthCm,
+    double? heightCm,
+    double? weightKg,
+    String? assemblyNote,
+    String? careInstructions,
+    String? warranty,
     String? model3dUrl,
     String? thumbnailUrl,
     _i2.ProductStatus? status,
@@ -228,6 +300,14 @@ class _ProductImpl extends Product {
          name: name,
          description: description,
          price: price,
+         materials: materials,
+         widthCm: widthCm,
+         depthCm: depthCm,
+         heightCm: heightCm,
+         weightKg: weightKg,
+         assemblyNote: assemblyNote,
+         careInstructions: careInstructions,
+         warranty: warranty,
          model3dUrl: model3dUrl,
          thumbnailUrl: thumbnailUrl,
          status: status,
@@ -247,6 +327,14 @@ class _ProductImpl extends Product {
     String? name,
     String? description,
     double? price,
+    Object? materials = _Undefined,
+    Object? widthCm = _Undefined,
+    Object? depthCm = _Undefined,
+    Object? heightCm = _Undefined,
+    Object? weightKg = _Undefined,
+    Object? assemblyNote = _Undefined,
+    Object? careInstructions = _Undefined,
+    Object? warranty = _Undefined,
     Object? model3dUrl = _Undefined,
     Object? thumbnailUrl = _Undefined,
     _i2.ProductStatus? status,
@@ -263,6 +351,16 @@ class _ProductImpl extends Product {
       name: name ?? this.name,
       description: description ?? this.description,
       price: price ?? this.price,
+      materials: materials is String? ? materials : this.materials,
+      widthCm: widthCm is double? ? widthCm : this.widthCm,
+      depthCm: depthCm is double? ? depthCm : this.depthCm,
+      heightCm: heightCm is double? ? heightCm : this.heightCm,
+      weightKg: weightKg is double? ? weightKg : this.weightKg,
+      assemblyNote: assemblyNote is String? ? assemblyNote : this.assemblyNote,
+      careInstructions: careInstructions is String?
+          ? careInstructions
+          : this.careInstructions,
+      warranty: warranty is String? ? warranty : this.warranty,
       model3dUrl: model3dUrl is String? ? model3dUrl : this.model3dUrl,
       thumbnailUrl: thumbnailUrl is String? ? thumbnailUrl : this.thumbnailUrl,
       status: status ?? this.status,
@@ -297,6 +395,48 @@ class ProductUpdateTable extends _i1.UpdateTable<ProductTable> {
 
   _i1.ColumnValue<double, double> price(double value) => _i1.ColumnValue(
     table.price,
+    value,
+  );
+
+  _i1.ColumnValue<String, String> materials(String? value) => _i1.ColumnValue(
+    table.materials,
+    value,
+  );
+
+  _i1.ColumnValue<double, double> widthCm(double? value) => _i1.ColumnValue(
+    table.widthCm,
+    value,
+  );
+
+  _i1.ColumnValue<double, double> depthCm(double? value) => _i1.ColumnValue(
+    table.depthCm,
+    value,
+  );
+
+  _i1.ColumnValue<double, double> heightCm(double? value) => _i1.ColumnValue(
+    table.heightCm,
+    value,
+  );
+
+  _i1.ColumnValue<double, double> weightKg(double? value) => _i1.ColumnValue(
+    table.weightKg,
+    value,
+  );
+
+  _i1.ColumnValue<String, String> assemblyNote(String? value) =>
+      _i1.ColumnValue(
+        table.assemblyNote,
+        value,
+      );
+
+  _i1.ColumnValue<String, String> careInstructions(String? value) =>
+      _i1.ColumnValue(
+        table.careInstructions,
+        value,
+      );
+
+  _i1.ColumnValue<String, String> warranty(String? value) => _i1.ColumnValue(
+    table.warranty,
     value,
   );
 
@@ -348,6 +488,38 @@ class ProductTable extends _i1.Table<int?> {
       'price',
       this,
     );
+    materials = _i1.ColumnString(
+      'materials',
+      this,
+    );
+    widthCm = _i1.ColumnDouble(
+      'widthCm',
+      this,
+    );
+    depthCm = _i1.ColumnDouble(
+      'depthCm',
+      this,
+    );
+    heightCm = _i1.ColumnDouble(
+      'heightCm',
+      this,
+    );
+    weightKg = _i1.ColumnDouble(
+      'weightKg',
+      this,
+    );
+    assemblyNote = _i1.ColumnString(
+      'assemblyNote',
+      this,
+    );
+    careInstructions = _i1.ColumnString(
+      'careInstructions',
+      this,
+    );
+    warranty = _i1.ColumnString(
+      'warranty',
+      this,
+    );
     model3dUrl = _i1.ColumnString(
       'model3dUrl',
       this,
@@ -384,6 +556,22 @@ class ProductTable extends _i1.Table<int?> {
   late final _i1.ColumnString description;
 
   late final _i1.ColumnDouble price;
+
+  late final _i1.ColumnString materials;
+
+  late final _i1.ColumnDouble widthCm;
+
+  late final _i1.ColumnDouble depthCm;
+
+  late final _i1.ColumnDouble heightCm;
+
+  late final _i1.ColumnDouble weightKg;
+
+  late final _i1.ColumnString assemblyNote;
+
+  late final _i1.ColumnString careInstructions;
+
+  late final _i1.ColumnString warranty;
 
   late final _i1.ColumnString model3dUrl;
 
@@ -427,6 +615,14 @@ class ProductTable extends _i1.Table<int?> {
     name,
     description,
     price,
+    materials,
+    widthCm,
+    depthCm,
+    heightCm,
+    weightKg,
+    assemblyNote,
+    careInstructions,
+    warranty,
     model3dUrl,
     thumbnailUrl,
     status,

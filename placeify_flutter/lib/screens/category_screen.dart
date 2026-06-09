@@ -1,31 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../data/furniture_categories.dart';
-import '../features/home/data/mock_product_repository.dart';
 import '../features/home/domain/models/product.dart';
+import '../features/home/presentation/providers/catalog_provider.dart';
 import 'widgets/category_product_list_tile.dart';
 
 enum _SortOption { featured, priceAsc, priceDesc, nameAsc }
 
-class CategoryScreen extends StatefulWidget {
+class CategoryScreen extends ConsumerStatefulWidget {
   const CategoryScreen({required this.category, super.key});
 
   final FurnitureCategory category;
 
   @override
-  State<CategoryScreen> createState() => _CategoryScreenState();
+  ConsumerState<CategoryScreen> createState() => _CategoryScreenState();
 }
 
-class _CategoryScreenState extends State<CategoryScreen> {
+class _CategoryScreenState extends ConsumerState<CategoryScreen> {
   _SortOption _sort = _SortOption.featured;
 
-  List<Product> get _products {
-    final list = MockProductRepository.products
-        .where((p) => p.categoryId == widget.category.id)
-        .toList();
-
+  List<Product> _sorted(List<Product> list) {
     switch (_sort) {
       case _SortOption.featured:
         return list;
@@ -100,113 +97,147 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final products = _products;
-    final count = products.length;
+    final productsAsync =
+        ref.watch(catalogProductsByCategoryProvider(widget.category.id));
     final displayName = categoryDisplayName(widget.category);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9F8F4),
       body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          onPressed: () => context.pop(),
-                          icon: const Icon(
-                            Icons.arrow_back_ios_new_rounded,
-                            size: 20,
-                            color: Colors.black87,
-                          ),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(
-                            minWidth: 40,
-                            minHeight: 40,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      '$displayName ($count)',
-                      style: GoogleFonts.dmSans(
-                        fontSize: 34,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black87,
-                        letterSpacing: -0.5,
-                        height: 1.05,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(child: _Breadcrumb(category: widget.category)),
-                        GestureDetector(
-                          onTap: _openSortSheet,
-                          behavior: HitTestBehavior.opaque,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Sort by',
-                                style: GoogleFonts.dmSans(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              const Icon(
-                                Icons.unfold_more_rounded,
-                                size: 18,
-                                color: Colors.black54,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                ),
+        child: productsAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, __) => _CategoryScaffold(
+            displayName: displayName,
+            category: widget.category,
+            child: Center(
+              child: Text(
+                'Could not load products',
+                style: GoogleFonts.dmSans(color: Colors.black38),
               ),
             ),
-            if (products.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: _EmptyCategoryState(
-                  categoryName: displayName,
-                  onBrowse: () => context.go('/browse'),
-                ),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final product = products[index];
-                      return Padding(
-                        padding: EdgeInsets.only(
-                          bottom: index < products.length - 1 ? 32 : 0,
-                        ),
-                        child: CategoryProductListTile(product: product),
-                      );
-                    },
-                    childCount: products.length,
-                  ),
-                ),
-              ),
-          ],
+          ),
+          data: (List<Product> products) {
+            final sorted = _sorted(products);
+            final count = sorted.length;
+
+            return _CategoryScaffold(
+              displayName: '$displayName ($count)',
+              category: widget.category,
+              onSortTap: _openSortSheet,
+              child: sorted.isEmpty
+                  ? _EmptyCategoryState(
+                      categoryName: displayName,
+                      onBrowse: () => context.go('/browse'),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: sorted.length,
+                      itemBuilder: (context, index) {
+                        final product = sorted[index];
+                        return Padding(
+                          padding: EdgeInsets.only(
+                            bottom: index < sorted.length - 1 ? 32 : 0,
+                          ),
+                          child: CategoryProductListTile(product: product),
+                        );
+                      },
+                    ),
+            );
+          },
         ),
       ),
+    );
+  }
+}
+
+class _CategoryScaffold extends StatelessWidget {
+  const _CategoryScaffold({
+    required this.displayName,
+    required this.category,
+    required this.child,
+    this.onSortTap,
+  });
+
+  final String displayName;
+  final FurnitureCategory category;
+  final Widget child;
+  final VoidCallback? onSortTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () => context.pop(),
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      size: 20,
+                      color: Colors.black87,
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 40,
+                      minHeight: 40,
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                displayName,
+                style: GoogleFonts.dmSans(
+                  fontSize: 34,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                  letterSpacing: -0.5,
+                  height: 1.05,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(child: _Breadcrumb(category: category)),
+                  if (onSortTap != null)
+                    GestureDetector(
+                      onTap: onSortTap,
+                      behavior: HitTestBehavior.opaque,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Sort by',
+                            style: GoogleFonts.dmSans(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(
+                            Icons.unfold_more_rounded,
+                            size: 18,
+                            color: Colors.black54,
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+        Expanded(child: child),
+      ],
     );
   }
 }

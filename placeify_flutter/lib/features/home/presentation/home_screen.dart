@@ -3,8 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/widgets/bottom_nav/bottom_nav_tokens.dart';
-import 'data/home_categories_config.dart';
-import 'providers/home_room_provider.dart';
+import 'providers/catalog_provider.dart';
 import 'theme/home_screen_tokens.dart';
 import 'widgets/ambient_strip.dart';
 import 'widgets/home_category_filter_chips.dart';
@@ -14,7 +13,7 @@ import 'widgets/stats_bar.dart';
 import 'widgets/home_about_us_section.dart';
 import 'widgets/home_suppliers_section.dart';
 import 'widgets/home_recommend_header.dart';
-import 'widgets/home_recommend_product_card.dart';
+import 'widgets/home_live_products_row.dart';
 import 'widgets/home_showcase_section.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -28,6 +27,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(catalogIndexProvider.notifier).refresh();
+    });
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -38,9 +40,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final roomId = ref.watch(selectedRoomProvider);
-    final products = HomeCategoriesConfig.forRoom(roomId);
-
     return Scaffold(
       backgroundColor: HomeScreenTokens.homeBg,
       body: SingleChildScrollView(
@@ -64,22 +63,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   const SizedBox(height: HomeScreenTokens.sectionSpacing),
                   const HomeCategoryFilterChips(),
                   const SizedBox(height: HomeScreenTokens.sectionSpacing),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      for (var i = 0; i < products.length; i++) ...[
-                        if (i > 0)
-                          const SizedBox(
-                            width: HomeScreenTokens.productGap,
-                          ),
-                        Expanded(
-                          child: HomeRecommendProductCard(
-                            product: products[i],
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+                  const HomeLiveProductsRow(),
                   const SizedBox(height: 28),
                   const AmbientStrip(
                     imagePath:

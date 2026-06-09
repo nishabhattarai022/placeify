@@ -58,4 +58,16 @@ class CurrentUser extends _$CurrentUser {
       return repo.getCurrentUser();
     });
   }
+
+  Future<void> switchToVendorMode() async {
+    final repo = await ref.read(authRepositoryProvider.future);
+    state = await AsyncValue.guard(() => repo.becomeVendor());
+    if (state.hasError) throw state.error!;
+  }
+
+  Future<void> switchToConsumerMode() async {
+    final repo = await ref.read(authRepositoryProvider.future);
+    state = await AsyncValue.guard(() => repo.becomeConsumer());
+    if (state.hasError) throw state.error!;
+  }
 }
