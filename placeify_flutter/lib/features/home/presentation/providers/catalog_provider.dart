@@ -1,6 +1,7 @@
 import 'package:placeify_client/placeify_client.dart' hide Product;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../cart/data/product_id_codec.dart';
 import '../../data/catalog_product_mapper.dart';
 import '../../data/serverpod_product_repository.dart';
 import '../../domain/models/product.dart';
@@ -45,7 +46,7 @@ List<Product> catalogProducts(Ref ref) {
   final index = ref.watch(catalogIndexProvider).value;
   if (index == null) return const [];
   final products = index.values.toList()
-    ..sort((a, b) => b.id.compareTo(a.id));
+    ..sort((a, b) => ProductIdCodec.compareNewestFirst(a.id, b.id));
   return products;
 }
 

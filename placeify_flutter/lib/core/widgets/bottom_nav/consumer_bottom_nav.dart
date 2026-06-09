@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../features/home/presentation/providers/catalog_provider.dart';
 import '../../services/haptic_service.dart';
 import '../../theme/app_fonts.dart';
 import 'bottom_nav_tokens.dart';
 
 /// Floating black pill nav: white "Home" chip + 3 dark circular icon buttons.
-class ConsumerBottomNav extends StatelessWidget {
+class ConsumerBottomNav extends ConsumerWidget {
   const ConsumerBottomNav({
     required this.activeIndex,
     super.key,
@@ -14,14 +16,17 @@ class ConsumerBottomNav extends StatelessWidget {
 
   final int activeIndex;
 
-  static void _goHome(BuildContext context) => context.go('/home');
+  void _goHome(BuildContext context, WidgetRef ref) {
+    ref.read(catalogIndexProvider.notifier).refresh();
+    context.go('/home');
+  }
   static void _goBrowse(BuildContext context) => context.go('/browse');
   static void _goBookmarks(BuildContext context) => context.go('/bookmarks');
   static void _goProfile(BuildContext context) => context.go('/profile');
   static void _goVendor(BuildContext context) => context.go('/vendor');
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final index = activeIndex;
 
     return Container(
@@ -51,7 +56,7 @@ class ConsumerBottomNav extends StatelessWidget {
               isSelected: index == 0,
               onTap: () {
                 HapticService.light();
-                _goHome(context);
+                _goHome(context, ref);
               },
             ),
             const SizedBox(width: BottomNavTokens.navItemGap),

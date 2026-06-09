@@ -5,8 +5,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/utils/formatters.dart';
-import '../../../../core/widgets/toast_overlay.dart';
-import '../../../cart/presentation/providers/cart_provider.dart';
 import '../../domain/models/product.dart';
 import '../providers/catalog_provider.dart';
 import '../theme/home_screen_tokens.dart';
@@ -24,9 +22,8 @@ class HomeLiveProductsRow extends ConsumerWidget {
         child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       ),
       error: (_, __) => const SizedBox.shrink(),
-      data: (index) {
-        final products = index.values.toList()
-          ..sort((a, b) => b.id.compareTo(a.id));
+      data: (_) {
+        final products = ref.watch(catalogProductsProvider);
         final featured = products.take(2).toList();
         if (featured.isEmpty) return const SizedBox.shrink();
 
@@ -44,13 +41,13 @@ class HomeLiveProductsRow extends ConsumerWidget {
   }
 }
 
-class _CatalogProductCard extends ConsumerWidget {
+class _CatalogProductCard extends StatelessWidget {
   const _CatalogProductCard({required this.product});
 
   final Product product;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final isAsset = product.imageUrl.startsWith('assets/');
 
     return GestureDetector(
@@ -101,40 +98,12 @@ class _CatalogProductCard extends ConsumerWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              product.brand,
+              product.shopName.isNotEmpty ? product.shopName : product.brand,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.black.withValues(alpha: 0.45),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Align(
-              alignment: Alignment.centerRight,
-              child: GestureDetector(
-                onTap: () {
-                  HapticService.medium();
-                  ref.read(cartProvider.notifier).addProduct(product.id);
-                  PlaceifyToast.show(
-                    context,
-                    '${product.name} added to cart',
-                  );
-                },
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: const BoxDecoration(
-                    color: Colors.black,
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: const Icon(
-                    Icons.add,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-                ),
               ),
             ),
           ],
