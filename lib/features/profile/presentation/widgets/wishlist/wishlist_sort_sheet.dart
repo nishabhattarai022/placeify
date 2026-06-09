@@ -29,46 +29,57 @@ abstract final class WishlistSortSheet {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const PlaceifyBottomSheetHeader(title: 'Sort by'),
-            const SizedBox(height: AppSpacing.md),
+            const PlaceifyBottomSheetHeader(
+              title: 'Sort by',
+              subtitle: 'Choose how items are ordered',
+            ),
+            const SizedBox(height: AppSpacing.lg),
             for (var i = 0; i < _sortGroups.length; i++) ...[
               if (i > 0)
-                const Divider(
-                  color: AppColors.creamDark,
-                  height: 1,
-                  thickness: 1,
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  child: Divider(
+                    color: AppColors.creamDark,
+                    height: 1,
+                    thickness: 1,
+                  ),
                 ),
-              Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.sm),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _WishlistSortSectionHeader(
-                      label: _sortGroups[i].sectionLabel,
-                    ),
-                    for (final option in WishlistSort.values
-                        .where((sort) => sort.group == _sortGroups[i]))
-                      _WishlistSortOptionTile(
-                        sectionLabel: _sortGroups[i].sectionLabel,
-                        label: option.tileLabel,
-                        icon: option.icon,
-                        selected: current == option,
-                        onTap: () {
-                          HapticService.selection();
-                          ref
-                              .read(wishlistSortNotifierProvider.notifier)
-                              .select(option);
-                          Navigator.pop(sheetContext);
-                        },
-                      ),
-                  ],
-                ),
+              _WishlistSortSectionHeader(
+                label: _sortGroups[i].sectionLabel,
               ),
+              for (final option in WishlistSort.values
+                  .where((sort) => sort.group == _sortGroups[i]))
+                PlaceifySelectTile(
+                  label: option.tileLabel,
+                  icon: option.icon,
+                  selected: current == option,
+                  semanticsLabel:
+                      '${_sortGroups[i].sectionLabel}: ${option.tileLabel}',
+                  onTap: () => _selectSort(
+                    sheetContext,
+                    ref,
+                    current,
+                    option,
+                  ),
+                ),
             ],
           ],
         );
       },
     );
+  }
+
+  static void _selectSort(
+    BuildContext sheetContext,
+    WidgetRef ref,
+    WishlistSort current,
+    WishlistSort option,
+  ) {
+    if (current != option) {
+      HapticService.selection();
+      ref.read(wishlistSortNotifierProvider.notifier).select(option);
+    }
+    Navigator.pop(sheetContext);
   }
 }
 
@@ -80,7 +91,10 @@ class _WishlistSortSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+      padding: const EdgeInsets.only(
+        top: AppSpacing.xs,
+        bottom: AppSpacing.xs,
+      ),
       child: Text(
         label.toUpperCase(),
         style: GoogleFonts.dmSans(
@@ -88,99 +102,6 @@ class _WishlistSortSectionHeader extends StatelessWidget {
           fontWeight: FontWeight.w600,
           color: AppColors.textMuted,
           letterSpacing: 0.8,
-        ),
-      ),
-    );
-  }
-}
-
-class _WishlistSortOptionTile extends StatelessWidget {
-  const _WishlistSortOptionTile({
-    required this.sectionLabel,
-    required this.label,
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String sectionLabel;
-  final String label;
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-
-  String get _semanticLabel =>
-      selected ? '$sectionLabel: $label, selected' : '$sectionLabel: $label';
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: _semanticLabel,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            curve: Curves.easeOut,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: selected ? AppColors.cream : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  icon,
-                  size: 20,
-                  color: AppColors.textSecondary,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      fontWeight:
-                          selected ? FontWeight.w600 : FontWeight.w400,
-                      color: selected
-                          ? AppColors.espresso
-                          : AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 150),
-                  switchInCurve: Curves.easeOut,
-                  switchOutCurve: Curves.easeIn,
-                  transitionBuilder: (child, animation) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: ScaleTransition(
-                        scale: animation,
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: selected
-                      ? const Icon(
-                          Icons.check_rounded,
-                          key: ValueKey('check'),
-                          size: 20,
-                          color: AppColors.espresso,
-                        )
-                      : const SizedBox(
-                          key: ValueKey('no-check'),
-                          width: 20,
-                          height: 20,
-                        ),
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );

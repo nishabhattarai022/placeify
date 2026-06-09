@@ -48,10 +48,10 @@ extension WishlistSortMeta on WishlistSort {
       };
 
   IconData get icon => switch (this) {
-        WishlistSort.newestFirst => Icons.calendar_today_outlined,
-        WishlistSort.oldestFirst => Icons.event_outlined,
-        WishlistSort.priceAsc => Icons.attach_money,
-        WishlistSort.priceDesc => Icons.attach_money,
+        WishlistSort.newestFirst => Icons.schedule_outlined,
+        WishlistSort.oldestFirst => Icons.history_outlined,
+        WishlistSort.priceAsc => Icons.arrow_downward_rounded,
+        WishlistSort.priceDesc => Icons.arrow_upward_rounded,
         WishlistSort.nameAsc => Icons.sort_by_alpha,
       };
 

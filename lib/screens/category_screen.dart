@@ -53,8 +53,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const PlaceifyBottomSheetHeader(title: 'Sort by'),
-            const SizedBox(height: AppSpacing.md),
+            const PlaceifyBottomSheetHeader(
+              title: 'Sort by',
+              subtitle: 'Choose how items are ordered',
+            ),
+            const SizedBox(height: AppSpacing.lg),
             PlaceifySelectTile(
               label: 'Featured',
               selected: _sort == _SortOption.featured,
@@ -82,9 +85,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   void _applySort(BuildContext sheetContext, _SortOption option) {
-    HapticService.selection();
+    if (_sort != option) {
+      HapticService.selection();
+      setState(() => _sort = option);
+    }
     Navigator.pop(sheetContext);
-    setState(() => _sort = option);
   }
 
   @override

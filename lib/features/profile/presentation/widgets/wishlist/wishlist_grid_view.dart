@@ -8,6 +8,7 @@ import '../../../../home/presentation/providers/wishlist_provider.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/services/haptic_service.dart';
+import '../../../../../core/widgets/animated_scale_tap.dart';
 import '../../../../../core/widgets/placeify_bottom_nav.dart';
 import '../../../../../screens/widgets/category_product_list_tile.dart';
 import 'wishlist_sort.dart';
@@ -56,17 +57,9 @@ class WishlistGridView extends ConsumerWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.screenPadding,
-              8,
-              AppSpacing.screenPadding,
-              12,
-            ),
-            child: _WishlistSortBar(
-              sort: sort,
-              onTap: () => WishlistSortSheet.show(context, ref, sort),
-            ),
+          _WishlistSortBarSection(
+            sort: sort,
+            onTap: () => WishlistSortSheet.show(context, ref, sort),
           ),
           Expanded(
             child: _WishlistNoSearchResultsState(
@@ -85,17 +78,9 @@ class WishlistGridView extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.screenPadding,
-            8,
-            AppSpacing.screenPadding,
-            12,
-          ),
-          child: _WishlistSortBar(
-            sort: sort,
-            onTap: () => WishlistSortSheet.show(context, ref, sort),
-          ),
+        _WishlistSortBarSection(
+          sort: sort,
+          onTap: () => WishlistSortSheet.show(context, ref, sort),
         ),
         Expanded(
           child: AnimatedSwitcher(
@@ -129,6 +114,29 @@ class WishlistGridView extends ConsumerWidget {
   }
 }
 
+class _WishlistSortBarSection extends StatelessWidget {
+  const _WishlistSortBarSection({
+    required this.sort,
+    required this.onTap,
+  });
+
+  final WishlistSort sort;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.screenPadding,
+        8,
+        AppSpacing.screenPadding,
+        12,
+      ),
+      child: _WishlistSortBar(sort: sort, onTap: onTap),
+    );
+  }
+}
+
 class _WishlistSortBar extends StatelessWidget {
   const _WishlistSortBar({
     required this.sort,
@@ -142,6 +150,12 @@ class _WishlistSortBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
+        Icon(
+          sort.icon,
+          size: 16,
+          color: AppColors.textMuted,
+        ),
+        const SizedBox(width: 6),
         Text(
           sort.barLabel,
           style: GoogleFonts.dmSans(
@@ -151,27 +165,34 @@ class _WishlistSortBar extends StatelessWidget {
           ),
         ),
         const Spacer(),
-        GestureDetector(
+        AnimatedScaleTap(
           onTap: onTap,
-          behavior: HitTestBehavior.opaque,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Sort by',
-                style: GoogleFonts.dmSans(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              color: AppColors.warmWhite,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: AppColors.creamDark),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Sort by',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.espresso,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(
+                  Icons.unfold_more_rounded,
+                  size: 18,
                   color: AppColors.espresso,
                 ),
-              ),
-              const SizedBox(width: 4),
-              const Icon(
-                Icons.unfold_more_rounded,
-                size: 18,
-                color: AppColors.espresso,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
