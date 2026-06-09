@@ -7,6 +7,7 @@ import '../../../../home/presentation/providers/wishlist_provider.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/services/haptic_service.dart';
+import '../../../../../core/widgets/superscript_count_title.dart';
 import 'wishlist_grid_view.dart';
 import 'wishlist_search_field.dart';
 
@@ -90,12 +91,18 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: _WishlistTitle(count: visibleCount),
+                          child: SuperscriptCountTitle(
+                            title: 'Wishlist',
+                            count: visibleCount,
+                          ),
                         ),
                       ],
                     )
                   else
-                    _WishlistTitle(count: visibleCount),
+                    SuperscriptCountTitle(
+                      title: 'Wishlist',
+                      count: visibleCount,
+                    ),
                   const SizedBox(height: 16),
                   WishlistSearchField(
                     onChanged: (query) => setState(() => _searchQuery = query),
@@ -116,51 +123,3 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
   }
 }
 
-class _WishlistTitle extends StatelessWidget {
-  const _WishlistTitle({required this.count});
-
-  final int count;
-
-  static const _titleStyle = TextStyle(
-    fontFamily: 'Fraunces',
-    fontSize: 28,
-    fontWeight: FontWeight.w600,
-    color: AppColors.espresso,
-    height: 1.1,
-  );
-
-  static String _toSuperscript(int value) {
-    const digits = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'];
-    return value
-        .toString()
-        .split('')
-        .map((char) => digits[int.parse(char)])
-        .join();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Text.rich(
-      TextSpan(
-        children: [
-          const TextSpan(text: 'Wishlist', style: _titleStyle),
-          WidgetSpan(
-            alignment: PlaceholderAlignment.top,
-            baseline: TextBaseline.alphabetic,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 3),
-              child: Text(
-                _toSuperscript(count),
-                style: _titleStyle.copyWith(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  height: 1,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
