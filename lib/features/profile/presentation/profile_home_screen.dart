@@ -94,7 +94,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
       case ProfileMenuRoute.orders:
         context.pushNamed('cart');
       case ProfileMenuRoute.wishlist:
-        context.pushNamed('profileWishlist');
+        context.go('/bookmarks');
       case ProfileMenuRoute.augmentedReality:
         context.pushNamed('profileAugmentedReality');
       case ProfileMenuRoute.refund:

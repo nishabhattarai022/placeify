@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Pill search bar for the wishlist hero (white field on dark header).
+/// Pill search bar for the wishlist screen.
 class WishlistSearchField extends StatelessWidget {
   const WishlistSearchField({
     required this.onChanged,
@@ -17,13 +17,9 @@ class WishlistSearchField extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(40),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(
+          color: Colors.black.withValues(alpha: 0.08),
+        ),
       ),
       child: TextField(
         onChanged: onChanged,
