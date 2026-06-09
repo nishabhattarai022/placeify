@@ -48,10 +48,12 @@ abstract final class WishlistSortSheet {
                     for (final option in WishlistSort.values
                         .where((sort) => sort.group == _sortGroups[i]))
                       _WishlistSortOptionTile(
+                        sectionLabel: _sortGroups[i].sectionLabel,
                         label: option.tileLabel,
                         icon: option.icon,
                         selected: current == option,
                         onTap: () {
+                          HapticService.selection();
                           ref.read(wishlistSortProvider.notifier).state =
                               option;
                           Navigator.pop(sheetContext);
@@ -92,58 +94,90 @@ class _WishlistSortSectionHeader extends StatelessWidget {
 
 class _WishlistSortOptionTile extends StatelessWidget {
   const _WishlistSortOptionTile({
+    required this.sectionLabel,
     required this.label,
     required this.icon,
     required this.selected,
     required this.onTap,
   });
 
+  final String sectionLabel;
   final String label;
   final IconData icon;
   final bool selected;
   final VoidCallback onTap;
 
+  String get _semanticLabel =>
+      selected ? '$sectionLabel: $label, selected' : '$sectionLabel: $label';
+
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.cream : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                size: 20,
-                color: AppColors.textSecondary,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  label,
-                  style: GoogleFonts.dmSans(
-                    fontSize: 14,
-                    fontWeight:
-                        selected ? FontWeight.w600 : FontWeight.w400,
-                    color: selected
-                        ? AppColors.espresso
-                        : AppColors.textPrimary,
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: _semanticLabel,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOut,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: selected ? AppColors.cream : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 20,
+                  color: AppColors.textSecondary,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 14,
+                      fontWeight:
+                          selected ? FontWeight.w600 : FontWeight.w400,
+                      color: selected
+                          ? AppColors.espresso
+                          : AppColors.textPrimary,
+                    ),
                   ),
                 ),
-              ),
-              if (selected)
-                const Icon(
-                  Icons.check_rounded,
-                  size: 20,
-                  color: AppColors.espresso,
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 150),
+                  switchInCurve: Curves.easeOut,
+                  switchOutCurve: Curves.easeIn,
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: ScaleTransition(
+                        scale: animation,
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: selected
+                      ? const Icon(
+                          Icons.check_rounded,
+                          key: ValueKey('check'),
+                          size: 20,
+                          color: AppColors.espresso,
+                        )
+                      : const SizedBox(
+                          key: ValueKey('no-check'),
+                          width: 20,
+                          height: 20,
+                        ),
                 ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

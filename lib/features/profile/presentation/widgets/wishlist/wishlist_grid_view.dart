@@ -76,24 +76,30 @@ class WishlistGridView extends ConsumerWidget {
           ),
         ),
         Expanded(
-          child: ListView.separated(
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.screenPadding,
-              0,
-              AppSpacing.screenPadding,
-              bottom,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            child: ListView.separated(
+              key: ValueKey(sort.name),
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.screenPadding,
+                0,
+                AppSpacing.screenPadding,
+                bottom,
+              ),
+              itemCount: products.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 32),
+              itemBuilder: (context, index) {
+                final product = products[index];
+                return CategoryProductListTile(
+                  product: product,
+                  onRemoveFromWishlist: () {
+                    ref.read(wishlistProvider.notifier).toggle(product.id);
+                  },
+                );
+              },
             ),
-            itemCount: products.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 32),
-            itemBuilder: (context, index) {
-              final product = products[index];
-              return CategoryProductListTile(
-                product: product,
-                onRemoveFromWishlist: () {
-                  ref.read(wishlistProvider.notifier).toggle(product.id);
-                },
-              );
-            },
           ),
         ),
       ],
