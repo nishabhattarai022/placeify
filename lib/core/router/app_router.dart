@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:placeify/features/auth/presentation/providers/auth_provider.dart';
+import 'package:placeify/features/vendor/presentation/guards/vendor_auth_guard.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../constants/app_durations.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
@@ -22,14 +25,31 @@ import '../../features/product_detail/presentation/product_detail_screen.dart';
 import '../../features/cart/presentation/cart_screen.dart';
 import 'main_shell.dart';
 
+part 'app_router.g.dart';
+
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 final shellNavigatorKey = GlobalKey<NavigatorState>();
 
-final appRouter = GoRouter(
-  navigatorKey: rootNavigatorKey,
-  initialLocation: '/splash',
-  debugLogDiagnostics: false,
-  routes: [
+@Riverpod(keepAlive: true)
+GoRouter appRouter(Ref ref) {
+  final userAsync = ref.watch(currentUserProvider);
+
+  return GoRouter(
+    navigatorKey: rootNavigatorKey,
+    initialLocation: '/splash',
+    debugLogDiagnostics: false,
+    redirect: (context, state) {
+      if (userAsync.isLoading) return null;
+      return VendorAuthGuard.redirect(
+        location: state.matchedLocation,
+        user: userAsync.value,
+      );
+    },
+    routes: _appRoutes,
+  );
+}
+
+List<RouteBase> get _appRoutes => [
     GoRoute(
       path: '/splash',
       name: 'splash',
@@ -224,8 +244,7 @@ final appRouter = GoRouter(
         ),
       ],
     ),
-  ],
-);
+  ];
 
 Widget _fadeTransition(
   BuildContext context,
