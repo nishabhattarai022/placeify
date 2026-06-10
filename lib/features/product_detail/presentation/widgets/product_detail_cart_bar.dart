@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/theme/app_fonts.dart';
+import '../../../../core/widgets/animated_scale_tap.dart';
 import '../product_detail_tokens.dart';
 
 class _ActionIconChip extends StatelessWidget {
@@ -34,7 +35,7 @@ class _ActionIconChip extends StatelessWidget {
   }
 }
 
-class ProductDetailPillButton extends StatefulWidget {
+class ProductDetailPillButton extends StatelessWidget {
   const ProductDetailPillButton({
     required this.label,
     required this.leadingIcon,
@@ -47,25 +48,16 @@ class ProductDetailPillButton extends StatefulWidget {
   final VoidCallback onTap;
 
   @override
-  State<ProductDetailPillButton> createState() => _ProductDetailPillButtonState();
-}
-
-class _ProductDetailPillButtonState extends State<ProductDetailPillButton> {
-  bool _pressed = false;
-
-  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTap: () {
-        HapticService.medium();
-        widget.onTap();
-      },
-      child: AnimatedScale(
-        scale: _pressed ? 0.98 : 1,
-        duration: const Duration(milliseconds: 140),
+    return Semantics(
+      button: true,
+      label: label,
+      child: AnimatedScaleTap(
+        pressScale: 0.98,
+        onTap: () {
+          HapticService.medium();
+          onTap();
+        },
         child: Container(
           height: ProductDetailTokens.cartBarActionHeight,
           padding: const EdgeInsets.symmetric(
@@ -85,7 +77,7 @@ class _ProductDetailPillButtonState extends State<ProductDetailPillButton> {
           child: Row(
             children: [
               _ActionIconChip(
-                icon: widget.leadingIcon,
+                icon: leadingIcon,
                 size: ProductDetailTokens.cartBarActionIconChipSize,
                 iconSize: 16,
               ),
@@ -96,7 +88,7 @@ class _ProductDetailPillButtonState extends State<ProductDetailPillButton> {
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.center,
                     child: Text(
-                      widget.label,
+                      label,
                       textAlign: TextAlign.center,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
