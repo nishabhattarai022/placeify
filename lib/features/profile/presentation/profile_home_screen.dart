@@ -56,7 +56,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
               ),
               onTap: () {
                 Navigator.pop(context);
-                PlaceifyToast.show(context, 'Settings');
+                context.pushNamed('profileSettings');
               },
             ),
           ],
@@ -106,7 +106,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
       case VendorStatus.pending:
         PlaceifyToast.show(context, 'Application under review');
       case VendorStatus.none:
-        PlaceifyToast.show(context, 'Registration coming soon');
+        context.push(VendorRoutes.register);
       case VendorStatus.suspended:
         PlaceifyToast.show(context, 'Contact support');
     }

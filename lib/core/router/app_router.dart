@@ -22,6 +22,7 @@ import '../../features/profile/presentation/profile_notifications_screen.dart';
 import '../../features/profile/presentation/profile_orders_screen.dart';
 import '../../features/profile/presentation/profile_password_screen.dart';
 import '../../features/profile/presentation/profile_refund_screen.dart';
+import '../../features/profile/presentation/profile_settings_screen.dart';
 import '../../features/profile/presentation/profile_wishlist_screen.dart';
 import '../../features/product_detail/presentation/product_detail_screen.dart';
 import '../../features/cart/presentation/cart_screen.dart';
@@ -222,6 +223,14 @@ List<RouteBase> get _appRoutes => [
           pageBuilder: (context, state) => _slidePage(
             key: ValueKey<String>(state.uri.toString()),
             child: const ProfilePasswordScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/profile/settings',
+          name: 'profileSettings',
+          pageBuilder: (context, state) => _slidePage(
+            key: ValueKey<String>(state.uri.toString()),
+            child: const ProfileSettingsScreen(),
           ),
         ),
         GoRoute(
