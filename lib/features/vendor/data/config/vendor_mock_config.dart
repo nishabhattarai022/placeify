@@ -98,7 +98,11 @@ abstract final class VendorMockConfig {
     ),
   ];
 
-  static const barHeights = [0.38, 0.52, 0.33, 0.68, 0.58, 0.75, 1.0];
+  /// Normalized 7-day revenue sparkline (oldest → newest).
+  static const revenueSeries = [0.38, 0.52, 0.33, 0.68, 0.58, 0.75, 1.0];
+
+  /// @deprecated Use [revenueSeries].
+  static const barHeights = revenueSeries;
 
   static final profile = VendorProfile(
     id: demoVendorId,
@@ -275,6 +279,18 @@ abstract final class VendorMockConfig {
   static List<VendorProduct> productsFor(String vendorId) {
     if (!isKnownVendor(vendorId)) return [];
     return products;
+  }
+
+  static List<double> revenueSeriesFor(String vendorId) {
+    if (!isKnownVendor(vendorId)) {
+      return List<double>.filled(revenueSeries.length, 0);
+    }
+    return revenueSeries;
+  }
+
+  static List<TopProductStat> topProductsFor(String vendorId) {
+    if (!isKnownVendor(vendorId)) return [];
+    return topProducts;
   }
 
   static VendorProduct? productById(String productId) {

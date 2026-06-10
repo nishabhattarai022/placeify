@@ -18,7 +18,7 @@ class MockVendorRepository implements VendorRepository {
 
   static const topProducts = VendorMockConfig.topProducts;
 
-  static const barHeights = VendorMockConfig.barHeights;
+  static const barHeights = VendorMockConfig.revenueSeries;
 
   @override
   Future<VendorProfile?> getProfile(String vendorId) async {
