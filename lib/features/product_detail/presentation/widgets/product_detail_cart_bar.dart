@@ -11,6 +11,7 @@ class ProductDetailPillButton extends StatefulWidget {
     required this.leadingIcon,
     required this.onTap,
     this.trailingText,
+    this.compact = false,
     super.key,
   });
 
@@ -18,6 +19,7 @@ class ProductDetailPillButton extends StatefulWidget {
   final IconData leadingIcon;
   final VoidCallback onTap;
   final String? trailingText;
+  final bool compact;
 
   @override
   State<ProductDetailPillButton> createState() => _ProductDetailPillButtonState();
@@ -28,6 +30,19 @@ class _ProductDetailPillButtonState extends State<ProductDetailPillButton> {
 
   @override
   Widget build(BuildContext context) {
+    final compact = widget.compact;
+    final height = compact
+        ? ProductDetailTokens.cartBarActionHeight
+        : ProductDetailTokens.cartBarHeight;
+    final horizontalPadding = compact
+        ? ProductDetailTokens.cartBarActionInnerPadding
+        : ProductDetailTokens.cartBarInnerPadding;
+    final iconChipSize = compact
+        ? ProductDetailTokens.cartBarActionIconChipSize
+        : ProductDetailTokens.cartBarIconChipSize;
+    final iconSize = compact ? 16.0 : 18.0;
+    final labelFontSize = compact ? 14.0 : 15.0;
+
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
       onTapUp: (_) => setState(() => _pressed = false),
@@ -40,10 +55,8 @@ class _ProductDetailPillButtonState extends State<ProductDetailPillButton> {
         scale: _pressed ? 0.98 : 1,
         duration: const Duration(milliseconds: 140),
         child: Container(
-          height: ProductDetailTokens.cartBarHeight,
-          padding: const EdgeInsets.symmetric(
-            horizontal: ProductDetailTokens.cartBarInnerPadding,
-          ),
+          height: height,
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
           decoration: BoxDecoration(
             color: ProductDetailTokens.cartBarBg,
             borderRadius: BorderRadius.circular(999),
@@ -56,10 +69,12 @@ class _ProductDetailPillButtonState extends State<ProductDetailPillButton> {
             ],
           ),
           child: Row(
+            mainAxisAlignment:
+                compact ? MainAxisAlignment.center : MainAxisAlignment.start,
             children: [
               Container(
-                width: ProductDetailTokens.cartBarIconChipSize,
-                height: ProductDetailTokens.cartBarIconChipSize,
+                width: iconChipSize,
+                height: iconChipSize,
                 decoration: const BoxDecoration(
                   color: ProductDetailTokens.cartBarIconChip,
                   shape: BoxShape.circle,
@@ -67,47 +82,63 @@ class _ProductDetailPillButtonState extends State<ProductDetailPillButton> {
                 alignment: Alignment.center,
                 child: Icon(
                   widget.leadingIcon,
-                  size: 18,
+                  size: iconSize,
                   color: Colors.white,
                 ),
               ),
               const SizedBox(width: 12),
-              Text(
-                widget.label,
-                style: AppFonts.dmSans(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                  letterSpacing: -0.2,
-                ),
-              ),
-              const Spacer(),
-              if (widget.trailingText != null) ...[
+              if (compact)
+                Flexible(
+                  child: Text(
+                    widget.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppFonts.dmSans(
+                      fontSize: labelFontSize,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                )
+              else ...[
                 Text(
-                  widget.trailingText!,
+                  widget.label,
                   style: AppFonts.dmSans(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
+                    fontSize: labelFontSize,
+                    fontWeight: FontWeight.w600,
                     color: Colors.white,
                     letterSpacing: -0.2,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const Spacer(),
+                if (widget.trailingText != null) ...[
+                  Text(
+                    widget.trailingText!,
+                    style: AppFonts.dmSans(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                ],
+                Container(
+                  width: ProductDetailTokens.cartBarTrailingArrowSize,
+                  height: ProductDetailTokens.cartBarTrailingArrowSize,
+                  decoration: const BoxDecoration(
+                    color: ProductDetailTokens.cartBarIconChip,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(
+                    Icons.arrow_forward,
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                ),
               ],
-              Container(
-                width: ProductDetailTokens.cartBarTrailingArrowSize,
-                height: ProductDetailTokens.cartBarTrailingArrowSize,
-                decoration: const BoxDecoration(
-                  color: ProductDetailTokens.cartBarIconChip,
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: const Icon(
-                  Icons.arrow_forward,
-                  size: 16,
-                  color: Colors.white,
-                ),
-              ),
             ],
           ),
         ),

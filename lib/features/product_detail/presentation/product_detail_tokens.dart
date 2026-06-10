@@ -42,8 +42,11 @@ abstract final class ProductDetailTokens {
   static const double cartBarHorizontalPadding = 20;
   static const double cartBarBottomPadding = 20;
   static const double cartBarHeight = 64;
+  static const double cartBarActionHeight = 52;
   static const double cartBarInnerPadding = 8;
+  static const double cartBarActionInnerPadding = 12;
   static const double cartBarIconChipSize = 40;
+  static const double cartBarActionIconChipSize = 32;
   static const double cartBarTrailingArrowSize = 36;
   static const double cartBarGap = 12;
   static const double cartBarBottomSpacer = 186;
