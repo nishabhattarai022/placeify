@@ -49,7 +49,7 @@ final class VendorRepositoryProvider extends $FunctionalProvider<
   }
 }
 
-String _$vendorRepositoryHash() => r'723b36fb7e8bbb0e971b06fa963894989a36e71a';
+String _$vendorRepositoryHash() => r'6627c117a7259da0574a776b4f8036cdfeb4be9c';
 
 @ProviderFor(VendorProfile)
 final vendorProfileProvider = VendorProfileProvider._();

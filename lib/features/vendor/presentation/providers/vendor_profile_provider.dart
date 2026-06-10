@@ -10,7 +10,7 @@ part 'vendor_profile_provider.g.dart';
 
 @Riverpod(keepAlive: true)
 VendorRepository vendorRepository(Ref ref) {
-  return const MockVendorRepository();
+  return MockVendorRepository();
 }
 
 @riverpod

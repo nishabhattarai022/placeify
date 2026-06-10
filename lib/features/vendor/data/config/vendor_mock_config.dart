@@ -463,6 +463,15 @@ abstract final class VendorMockConfig {
     return null;
   }
 
+  static VendorOrder? updateOrderStatus(String orderId, OrderStatus status) {
+    final index = orders.indexWhere((order) => order.id == orderId);
+    if (index < 0) return null;
+
+    final updated = orders[index].copyWith(status: status);
+    orders[index] = updated;
+    return updated;
+  }
+
   static List<DeliveryUpdate> deliveryUpdatesFor(String orderId) {
     return deliveryUpdates
         .where((update) => update.orderId == orderId)

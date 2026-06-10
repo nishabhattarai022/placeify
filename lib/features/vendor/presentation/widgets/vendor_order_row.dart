@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
@@ -7,19 +8,21 @@ import '../../domain/constants/vendor_routes.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radii.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../domain/enums/order_status.dart';
 import '../../domain/models/vendor_order.dart';
+import 'order_action_sheet.dart';
 import 'order_status_chip.dart';
 
-class VendorOrderRow extends StatefulWidget {
+class VendorOrderRow extends ConsumerStatefulWidget {
   const VendorOrderRow({required this.order, super.key});
 
   final VendorOrder order;
 
   @override
-  State<VendorOrderRow> createState() => _VendorOrderRowState();
+  ConsumerState<VendorOrderRow> createState() => _VendorOrderRowState();
 }
 
-class _VendorOrderRowState extends State<VendorOrderRow> {
+class _VendorOrderRowState extends ConsumerState<VendorOrderRow> {
   double _translateX = 0;
 
   @override
@@ -93,6 +96,26 @@ class _VendorOrderRowState extends State<VendorOrderRow> {
               ),
             ),
             OrderStatusChip(status: order.status, label: order.statusLabel),
+            if (order.status == OrderStatus.pending) ...[
+              const SizedBox(width: 4),
+              IconButton(
+                onPressed: () {
+                  HapticService.light();
+                  OrderActionSheet.show(context, ref, order);
+                },
+                icon: const Icon(
+                  Icons.more_horiz_rounded,
+                  size: 22,
+                  color: AppColors.textSecondary,
+                ),
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(
+                  minWidth: 32,
+                  minHeight: 32,
+                ),
+                visualDensity: VisualDensity.compact,
+              ),
+            ],
           ],
         ),
       ),

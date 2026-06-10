@@ -14,6 +14,14 @@ abstract interface class VendorRepository {
 
   Future<VendorOrder?> getOrder(String vendorId, String orderId);
 
+  Future<VendorOrder> acceptOrder(String vendorId, String orderId);
+
+  Future<VendorOrder> rejectOrder(
+    String vendorId,
+    String orderId, {
+    required String reason,
+  });
+
   Future<List<DeliveryUpdate>> getDeliveryUpdates(String orderId);
 
   Future<List<VendorNotification>> getNotifications(String vendorId);

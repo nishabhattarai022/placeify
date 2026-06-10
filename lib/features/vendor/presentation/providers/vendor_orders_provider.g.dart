@@ -33,7 +33,7 @@ final class VendorOrdersProvider
   VendorOrders create() => VendorOrders();
 }
 
-String _$vendorOrdersHash() => r'cd580b16fe76926290371c17a63c13e0c6ea6d9b';
+String _$vendorOrdersHash() => r'84861d8ff1da9e87fe12edc9ee77ae2062d739d6';
 
 abstract class _$VendorOrders extends $AsyncNotifier<List<VendorOrder>> {
   FutureOr<List<VendorOrder>> build();

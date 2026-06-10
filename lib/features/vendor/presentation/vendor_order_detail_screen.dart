@@ -6,12 +6,16 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_radii.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_typography.dart';
+import '../../../core/services/haptic_service.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/shimmer_loader.dart';
 import '../../profile/presentation/widgets/profile_sub_hero.dart';
+import '../../profile/presentation/widgets/shared/profile_submit_button.dart';
+import '../domain/enums/order_status.dart';
 import '../domain/models/delivery_update.dart';
 import '../domain/models/vendor_order.dart';
 import 'providers/vendor_order_detail_provider.dart';
+import 'widgets/order_action_sheet.dart';
 import 'widgets/order_status_chip.dart';
 import 'widgets/order_timeline_widget.dart';
 
@@ -48,7 +52,7 @@ class VendorOrderDetailScreen extends ConsumerWidget {
   }
 }
 
-class _OrderDetailBody extends StatelessWidget {
+class _OrderDetailBody extends ConsumerWidget {
   const _OrderDetailBody({
     required this.order,
     required this.deliveryUpdates,
@@ -58,10 +62,11 @@ class _OrderDetailBody extends StatelessWidget {
   final List<DeliveryUpdate> deliveryUpdates;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final unitPrice = order.quantity > 0
         ? order.totalAmount / order.quantity
         : order.totalAmount;
+    final isPending = order.status == OrderStatus.pending;
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(
@@ -180,6 +185,16 @@ class _OrderDetailBody extends StatelessWidget {
                   deliveryUpdates: deliveryUpdates,
                 ),
               ),
+              if (isPending) ...[
+                const SizedBox(height: 20),
+                ProfileSubmitButton(
+                  label: 'Accept or reject order',
+                  onPressed: () {
+                    HapticService.light();
+                    OrderActionSheet.show(context, ref, order);
+                  },
+                ),
+              ],
             ]),
           ),
         ),
