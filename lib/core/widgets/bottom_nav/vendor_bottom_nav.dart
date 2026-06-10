@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:placeify/features/vendor/domain/constants/vendor_routes.dart';
 
 import '../../services/haptic_service.dart';
-import '../toast_overlay.dart';
 import 'bottom_nav_tokens.dart';
 import 'nav_icon_tap.dart';
 
@@ -28,42 +28,43 @@ class VendorBottomNav extends StatelessWidget {
 
   final int activeIndex;
 
+  static void _goDashboard(BuildContext context) =>
+      context.go(VendorRoutes.dashboard);
+  static void _goOrders(BuildContext context) => context.go(VendorRoutes.orders);
+  static void _goProducts(BuildContext context) =>
+      context.go(VendorRoutes.products);
+  static void _goPayments(BuildContext context) =>
+      context.go(VendorRoutes.payments);
+  static void _goProfile(BuildContext context) =>
+      context.go(VendorRoutes.profile);
+
   static const _tabs = [
     _VendorTab(
       icon: 'assets/icons/ic_grid.svg',
       label: 'Dashboard',
-      onTap: _noop,
+      onTap: _goDashboard,
+    ),
+    _VendorTab(
+      icon: 'assets/icons/ic_box.svg',
+      label: 'Orders',
+      onTap: _goOrders,
     ),
     _VendorTab(
       icon: 'assets/icons/ic_package.svg',
       label: 'Products',
-      onTap: _products,
+      onTap: _goProducts,
     ),
     _VendorTab(
-      icon: 'assets/icons/ic_home.svg',
-      label: 'Store',
-      onTap: _store,
-    ),
-    _VendorTab(
-      icon: 'assets/icons/ic_message_circle.svg',
-      label: 'Messages',
-      onTap: _messages,
+      icon: 'assets/icons/ic_trending_up.svg',
+      label: 'Payments',
+      onTap: _goPayments,
     ),
     _VendorTab(
       icon: 'assets/icons/ic_user.svg',
       label: 'Profile',
-      onTap: _profile,
+      onTap: _goProfile,
     ),
   ];
-
-  static void _noop(BuildContext context) {}
-  static void _products(BuildContext context) =>
-      PlaceifyToast.show(context, 'Products');
-  static void _store(BuildContext context) => context.go('/home');
-  static void _messages(BuildContext context) =>
-      PlaceifyToast.show(context, 'Messages');
-  static void _profile(BuildContext context) =>
-      PlaceifyToast.show(context, 'Profile');
 
   @override
   Widget build(BuildContext context) {

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:placeify/features/vendor/domain/constants/vendor_routes.dart';
+
 import '../widgets/placeify_bottom_nav.dart';
 
 class MainShell extends StatelessWidget {
@@ -23,7 +25,14 @@ class MainShell extends StatelessWidget {
   }
 
   int _vendorActiveIndex(String location) {
-    if (location.startsWith('/vendor')) return 0;
+    if (location.startsWith('${VendorRoutes.prefix}/orders')) return 1;
+    if (location.startsWith('${VendorRoutes.prefix}/products')) return 2;
+    if (location.startsWith('${VendorRoutes.prefix}/payments')) return 3;
+    if (location.startsWith('${VendorRoutes.prefix}/profile')) return 4;
+    if (location == VendorRoutes.dashboard ||
+        location.startsWith(VendorRoutes.prefix)) {
+      return 0;
+    }
     return 0;
   }
 

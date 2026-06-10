@@ -11,6 +11,13 @@ import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/vendor/presentation/registration/vendor_registration_screen.dart';
 import '../../features/vendor/presentation/registration/vendor_registration_success_screen.dart';
 import '../../features/vendor/presentation/vendor_dashboard_screen.dart';
+import '../../features/vendor/presentation/vendor_orders_screen.dart';
+import '../../features/vendor/presentation/vendor_products_screen.dart';
+import '../../features/vendor/presentation/vendor_payments_screen.dart';
+import '../../features/vendor/presentation/vendor_profile_screen.dart';
+import '../../features/vendor/presentation/vendor_shell.dart';
+import '../../features/vendor/presentation/widgets/vendor_tab_scaffold.dart';
+import '../../features/vendor/domain/constants/vendor_routes.dart';
 import '../../features/home/presentation/bookmarks_screen.dart';
 import '../../data/furniture_categories.dart';
 import '../../screens/browse_screen.dart';
@@ -32,6 +39,16 @@ part 'app_router.g.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 final shellNavigatorKey = GlobalKey<NavigatorState>();
+final vendorDashboardNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'vendorDashboard');
+final vendorOrdersNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'vendorOrders');
+final vendorProductsNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'vendorProducts');
+final vendorPaymentsNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'vendorPayments');
+final vendorProfileNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'vendorProfile');
 
 @Riverpod(keepAlive: true)
 GoRouter appRouter(Ref ref) {
@@ -259,15 +276,76 @@ List<RouteBase> get _appRoutes => [
             return '/browse/category/$categoryId';
           },
         ),
-        GoRoute(
-          path: '/vendor',
-          name: 'vendor',
-          pageBuilder: (context, state) => CustomTransitionPage(
-            key: state.pageKey,
-            child: const VendorDashboardScreen(),
-            transitionsBuilder: _fadeTransition,
-            transitionDuration: AppDurations.slow,
-          ),
+        StatefulShellRoute.indexedStack(
+          builder: (context, state, navigationShell) =>
+              VendorShell(navigationShell: navigationShell),
+          branches: [
+            StatefulShellBranch(
+              navigatorKey: vendorDashboardNavigatorKey,
+              routes: [
+                GoRoute(
+                  path: VendorRoutes.dashboard,
+                  name: 'vendor',
+                  pageBuilder: (context, state) => _vendorTabPage(
+                    state: state,
+                    child: const VendorDashboardScreen(),
+                  ),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              navigatorKey: vendorOrdersNavigatorKey,
+              routes: [
+                GoRoute(
+                  path: VendorRoutes.orders,
+                  name: 'vendorOrders',
+                  pageBuilder: (context, state) => _vendorTabPage(
+                    state: state,
+                    child: const VendorOrdersScreen(),
+                  ),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              navigatorKey: vendorProductsNavigatorKey,
+              routes: [
+                GoRoute(
+                  path: VendorRoutes.products,
+                  name: 'vendorProducts',
+                  pageBuilder: (context, state) => _vendorTabPage(
+                    state: state,
+                    child: const VendorProductsScreen(),
+                  ),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              navigatorKey: vendorPaymentsNavigatorKey,
+              routes: [
+                GoRoute(
+                  path: VendorRoutes.payments,
+                  name: 'vendorPayments',
+                  pageBuilder: (context, state) => _vendorTabPage(
+                    state: state,
+                    child: const VendorPaymentsScreen(),
+                  ),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              navigatorKey: vendorProfileNavigatorKey,
+              routes: [
+                GoRoute(
+                  path: VendorRoutes.profile,
+                  name: 'vendorProfile',
+                  pageBuilder: (context, state) => _vendorTabPage(
+                    state: state,
+                    child: const VendorProfileScreen(),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ],
     ),
@@ -280,6 +358,18 @@ Widget _fadeTransition(
   Widget child,
 ) {
   return FadeTransition(opacity: animation, child: child);
+}
+
+CustomTransitionPage<void> _vendorTabPage({
+  required GoRouterState state,
+  required Widget child,
+}) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: VendorTabScaffold(child: child),
+    transitionsBuilder: _fadeTransition,
+    transitionDuration: AppDurations.slow,
+  );
 }
 
 CustomTransitionPage<void> _slidePage({
