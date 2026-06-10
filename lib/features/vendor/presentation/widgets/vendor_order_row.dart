@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radii.dart';
-import '../../../../core/constants/app_typography.dart';
 import '../../../../core/utils/formatters.dart';
-import '../../domain/enums/order_status.dart';
 import '../../domain/models/vendor_order.dart';
+import 'order_status_chip.dart';
 
 class VendorOrderRow extends StatefulWidget {
   const VendorOrderRow({required this.order, super.key});
@@ -85,7 +84,7 @@ class _VendorOrderRowState extends State<VendorOrderRow> {
                 ],
               ),
             ),
-            _StatusPill(status: order.status, label: order.statusLabel),
+            OrderStatusChip(status: order.status, label: order.statusLabel),
           ],
         ),
       ),
@@ -99,45 +98,5 @@ class _VendorOrderRowState extends State<VendorOrderRow> {
       return 'assets/icons/ic_table.svg';
     }
     return 'assets/icons/ic_chair.svg';
-  }
-}
-
-class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.status, required this.label});
-  final OrderStatus status;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final (bg, fg) = switch (status) {
-      OrderStatus.pending => (
-          AppColors.accent.withValues(alpha: 0.14),
-          AppColors.accent,
-        ),
-      OrderStatus.accepted || OrderStatus.processing => (
-          AppColors.sage.withValues(alpha: 0.14),
-          AppColors.sage,
-        ),
-      OrderStatus.shipped || OrderStatus.delivered => (
-          AppColors.sage.withValues(alpha: 0.14),
-          AppColors.sage,
-        ),
-      OrderStatus.rejected || OrderStatus.cancelled => (
-          AppColors.rust.withValues(alpha: 0.12),
-          AppColors.rust,
-        ),
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: AppRadii.pill,
-      ),
-      child: Text(
-        label,
-        style: AppTypography.statusPill.copyWith(color: fg),
-      ),
-    );
   }
 }
