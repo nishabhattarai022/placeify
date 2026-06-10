@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/theme/app_fonts.dart';
-import '../../../../core/utils/formatters.dart';
 import '../product_detail_tokens.dart';
 
 class ProductDetailPillButton extends StatefulWidget {
@@ -149,13 +148,11 @@ class _ProductDetailPillButtonState extends State<ProductDetailPillButton> {
 
 class ProductDetailCartBar extends StatelessWidget {
   const ProductDetailCartBar({
-    required this.totalPrice,
     required this.onTryInMyRoom,
     required this.onAddToCart,
     super.key,
   });
 
-  final double totalPrice;
   final VoidCallback onTryInMyRoom;
   final VoidCallback onAddToCart;
 
@@ -170,20 +167,24 @@ class ProductDetailCartBar extends StatelessWidget {
         ProductDetailTokens.cartBarHorizontalPadding,
         bottom + ProductDetailTokens.cartBarBottomPadding,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
         children: [
-          ProductDetailPillButton(
-            label: 'Try in my room',
-            leadingIcon: Icons.view_in_ar_outlined,
-            onTap: onTryInMyRoom,
+          Expanded(
+            child: ProductDetailPillButton(
+              label: 'Try in my room',
+              leadingIcon: Icons.view_in_ar_outlined,
+              onTap: onTryInMyRoom,
+              compact: true,
+            ),
           ),
-          const SizedBox(height: ProductDetailTokens.cartBarGap),
-          ProductDetailPillButton(
-            label: 'Add To Cart',
-            leadingIcon: Icons.shopping_bag_outlined,
-            trailingText: Formatters.currencyDecimal(totalPrice),
-            onTap: onAddToCart,
+          const SizedBox(width: ProductDetailTokens.cartBarGap),
+          Expanded(
+            child: ProductDetailPillButton(
+              label: 'Add to cart',
+              leadingIcon: Icons.shopping_bag_outlined,
+              onTap: onAddToCart,
+              compact: true,
+            ),
           ),
         ],
       ),

@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../cart/data/cart_display_config.dart';
 import '../../cart/presentation/providers/cart_provider.dart';
 import '../../home/presentation/providers/category_provider.dart';
 import '../../../core/services/haptic_service.dart';
@@ -96,8 +95,6 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
     }
 
     final content = ProductDetailContentRepository.forProduct(product);
-    final displayPrice =
-        CartDisplayConfig.priceFor(product.id, product.price);
     final top = MediaQuery.paddingOf(context).top;
 
     return Scaffold(
@@ -182,7 +179,6 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
               child: FadeTransition(
                 opacity: _cartBarOpacity,
                 child: ProductDetailCartBar(
-                  totalPrice: displayPrice,
                   onTryInMyRoom: () {
                     context.push('/profile/augmented-reality');
                   },
