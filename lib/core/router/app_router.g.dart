@@ -12,8 +12,9 @@ part of 'app_router.dart';
 @ProviderFor(appRouter)
 final appRouterProvider = AppRouterProvider._();
 
-final class AppRouterProvider extends $FunctionalProvider<GoRouter, GoRouter,
-    GoRouter> with $Provider<GoRouter> {
+final class AppRouterProvider
+    extends $FunctionalProvider<GoRouter, GoRouter, GoRouter>
+    with $Provider<GoRouter> {
   AppRouterProvider._()
       : super(
           from: null,
@@ -47,4 +48,4 @@ final class AppRouterProvider extends $FunctionalProvider<GoRouter, GoRouter,
   }
 }
 
-String _$appRouterHash() => r'a1b2c3d4e5f6789012345678appRouter';
+String _$appRouterHash() => r'91fec941ab23c8fffe471db7e65be71302f8af34';

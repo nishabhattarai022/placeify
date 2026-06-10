@@ -77,7 +77,7 @@ abstract final class WishlistSortSheet {
   ) {
     if (current != option) {
       HapticService.selection();
-      ref.read(wishlistSortNotifierProvider.notifier).select(option);
+      ref.read(wishlistSortProvider.notifier).select(option);
     }
     Navigator.pop(sheetContext);
   }

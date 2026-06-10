@@ -32,8 +32,7 @@ final class VendorRepositoryProvider extends $FunctionalProvider<
 
   @$internal
   @override
-  $ProviderElement<VendorRepository> $createElement(
-          $ProviderPointer pointer) =>
+  $ProviderElement<VendorRepository> $createElement($ProviderPointer pointer) =>
       $ProviderElement(pointer);
 
   @override
@@ -50,13 +49,13 @@ final class VendorRepositoryProvider extends $FunctionalProvider<
   }
 }
 
-String _$vendorRepositoryHash() => r'b2c3d4e5f6789012345678vendorRepository';
+String _$vendorRepositoryHash() => r'723b36fb7e8bbb0e971b06fa963894989a36e71a';
 
 @ProviderFor(VendorProfile)
 final vendorProfileProvider = VendorProfileProvider._();
 
-final class VendorProfileProvider extends $AsyncNotifierProvider<VendorProfile,
-    models.VendorProfile?> {
+final class VendorProfileProvider
+    extends $AsyncNotifierProvider<VendorProfile, models.VendorProfile?> {
   VendorProfileProvider._()
       : super(
           from: null,
@@ -76,15 +75,15 @@ final class VendorProfileProvider extends $AsyncNotifierProvider<VendorProfile,
   VendorProfile create() => VendorProfile();
 }
 
-String _$vendorProfileHash() => r'c3d4e5f6789012345678vendorProfile';
+String _$vendorProfileHash() => r'694106b408a666d9ebd7655e2834f71bce0324e9';
 
 abstract class _$VendorProfile extends $AsyncNotifier<models.VendorProfile?> {
   FutureOr<models.VendorProfile?> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<models.VendorProfile?>,
-        models.VendorProfile?>;
+    final ref = this.ref
+        as $Ref<AsyncValue<models.VendorProfile?>, models.VendorProfile?>;
     final element = ref.element as $ClassProviderElement<
         AnyNotifier<AsyncValue<models.VendorProfile?>, models.VendorProfile?>,
         AsyncValue<models.VendorProfile?>,

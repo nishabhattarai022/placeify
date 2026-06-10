@@ -10,7 +10,7 @@ part of 'wishlist_sort_provider.dart';
 // ignore_for_file: type=lint, type=warning
 
 @ProviderFor(WishlistSortNotifier)
-final wishlistSortNotifierProvider = WishlistSortNotifierProvider._();
+final wishlistSortProvider = WishlistSortNotifierProvider._();
 
 final class WishlistSortNotifierProvider
     extends $NotifierProvider<WishlistSortNotifier, WishlistSort> {
@@ -19,7 +19,7 @@ final class WishlistSortNotifierProvider
           from: null,
           argument: null,
           retry: null,
-          name: r'wishlistSortNotifierProvider',
+          name: r'wishlistSortProvider',
           isAutoDispose: false,
           dependencies: null,
           $allTransitiveDependencies: null,
@@ -41,7 +41,8 @@ final class WishlistSortNotifierProvider
   }
 }
 
-String _$wishlistSortNotifierHash() => r'b7e3d9a41c02f8e6wishlistSortNotifier';
+String _$wishlistSortNotifierHash() =>
+    r'2c4da472b976489f1b854c7c332b8c2fe2c80829';
 
 abstract class _$WishlistSortNotifier extends $Notifier<WishlistSort> {
   WishlistSort build();

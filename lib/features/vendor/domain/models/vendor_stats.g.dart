@@ -7,13 +7,13 @@ part of 'vendor_stats.dart';
 // **************************************************************************
 
 _VendorStats _$VendorStatsFromJson(Map<String, dynamic> json) => _VendorStats(
-  revenue: (json['revenue'] as num).toDouble(),
-  orderCount: (json['orderCount'] as num).toInt(),
-  productCount: (json['productCount'] as num).toInt(),
-  viewCount: (json['viewCount'] as num).toInt(),
-  conversionRate: (json['conversionRate'] as num).toDouble(),
-  periodLabel: json['periodLabel'] as String,
-);
+      revenue: (json['revenue'] as num).toDouble(),
+      orderCount: (json['orderCount'] as num).toInt(),
+      productCount: (json['productCount'] as num).toInt(),
+      viewCount: (json['viewCount'] as num).toInt(),
+      conversionRate: (json['conversionRate'] as num).toDouble(),
+      periodLabel: json['periodLabel'] as String,
+    );
 
 Map<String, dynamic> _$VendorStatsToJson(_VendorStats instance) =>
     <String, dynamic>{

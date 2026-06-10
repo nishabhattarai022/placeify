@@ -29,7 +29,7 @@ class WishlistGridView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final savedAt = ref.watch(wishlistProvider);
-    final sort = ref.watch(wishlistSortNotifierProvider);
+    final sort = ref.watch(wishlistSortProvider);
     final byId = {
       for (final p in MockProductRepository.products) p.id: p,
     };

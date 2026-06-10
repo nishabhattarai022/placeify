@@ -8,14 +8,18 @@ part of 'shared_preferences_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// Overridden in [main] after [SharedPreferences.getInstance].
 
 @ProviderFor(sharedPreferences)
 final sharedPreferencesProvider = SharedPreferencesProvider._();
+
+/// Overridden in [main] after [SharedPreferences.getInstance].
 
 final class SharedPreferencesProvider extends $FunctionalProvider<
     SharedPreferences,
     SharedPreferences,
     SharedPreferences> with $Provider<SharedPreferences> {
+  /// Overridden in [main] after [SharedPreferences.getInstance].
   SharedPreferencesProvider._()
       : super(
           from: null,
@@ -50,4 +54,4 @@ final class SharedPreferencesProvider extends $FunctionalProvider<
   }
 }
 
-String _$sharedPreferencesHash() => r'c4f8a1e92d03b6f7sharedPreferences';
+String _$sharedPreferencesHash() => r'98f63376f52c5d86a41d57af2db15810d27f528b';

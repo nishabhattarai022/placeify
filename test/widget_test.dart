@@ -5,7 +5,7 @@ import 'package:placeify/features/vendor/data/mock_vendor_repository.dart';
 void main() {
   test('mock product repository has catalog data', () {
     expect(MockProductRepository.categories.length, 6);
-    expect(MockProductRepository.products.length, 4);
+    expect(MockProductRepository.products.length, 18);
     expect(
       MockProductRepository.products.firstWhere((p) => p.id == 'p4').name,
       'Harmony Chair',
