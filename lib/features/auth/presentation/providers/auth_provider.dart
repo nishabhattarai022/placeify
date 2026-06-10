@@ -1,3 +1,4 @@
+import 'package:placeify/features/vendor/domain/enums/vendor_status.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/mock_auth_repository.dart';
@@ -57,5 +58,15 @@ class CurrentUser extends _$CurrentUser {
       final repo = await ref.read(authRepositoryProvider.future);
       return repo.getCurrentUser();
     });
+  }
+
+  /// Updates vendor onboarding status and refreshes auth state for router/profile UI.
+  Future<void> updateVendorStatus({
+    required VendorStatus status,
+    String? vendorId,
+  }) async {
+    final repo = await ref.read(authRepositoryProvider.future);
+    await repo.updateVendorStatus(status: status, vendorId: vendorId);
+    ref.invalidateSelf();
   }
 }

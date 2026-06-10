@@ -85,7 +85,7 @@ class MockAuthRepository implements AuthRepository {
     await _prefs.remove(_sessionEmailKey);
   }
 
-  /// Updates vendor fields for the active session user (Phase 2 dev toggle).
+  @override
   Future<void> updateVendorStatus({
     required VendorStatus status,
     String? vendorId,
