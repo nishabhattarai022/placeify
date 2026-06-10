@@ -47,6 +47,10 @@ redis:
 
 maxRequestSize: 10485760 # 10 MB — allows vendor product photo uploads
 
+# Vendor product photos: set PLACEIFY_REMOVEBG_API_KEY in the shell before
+# starting the server to enable background removal (https://www.remove.bg/api).
+# Example: export PLACEIFY_REMOVEBG_API_KEY=your_key_here
+
 sessionLogs:
   persistentEnabled: true
   consoleEnabled: true
