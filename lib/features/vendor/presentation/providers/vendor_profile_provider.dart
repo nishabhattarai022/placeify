@@ -1,8 +1,10 @@
 import 'package:placeify/features/auth/presentation/providers/auth_provider.dart';
+import 'package:placeify/features/vendor/data/mock_vendor_product_repository.dart';
 import 'package:placeify/features/vendor/data/mock_vendor_repository.dart';
 import 'package:placeify/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_profile.dart'
     as models;
+import 'package:placeify/features/vendor/domain/repositories/vendor_product_repository.dart';
 import 'package:placeify/features/vendor/domain/repositories/vendor_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -11,6 +13,11 @@ part 'vendor_profile_provider.g.dart';
 @Riverpod(keepAlive: true)
 VendorRepository vendorRepository(Ref ref) {
   return MockVendorRepository();
+}
+
+@Riverpod(keepAlive: true)
+VendorProductRepository vendorProductRepository(Ref ref) {
+  return const MockVendorProductRepository();
 }
 
 @riverpod

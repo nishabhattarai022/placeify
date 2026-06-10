@@ -51,6 +51,50 @@ final class VendorRepositoryProvider extends $FunctionalProvider<
 
 String _$vendorRepositoryHash() => r'6627c117a7259da0574a776b4f8036cdfeb4be9c';
 
+@ProviderFor(vendorProductRepository)
+final vendorProductRepositoryProvider = VendorProductRepositoryProvider._();
+
+final class VendorProductRepositoryProvider extends $FunctionalProvider<
+    VendorProductRepository,
+    VendorProductRepository,
+    VendorProductRepository> with $Provider<VendorProductRepository> {
+  VendorProductRepositoryProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'vendorProductRepositoryProvider',
+          isAutoDispose: false,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$vendorProductRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<VendorProductRepository> $createElement(
+          $ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  VendorProductRepository create(Ref ref) {
+    return vendorProductRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(VendorProductRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<VendorProductRepository>(value),
+    );
+  }
+}
+
+String _$vendorProductRepositoryHash() =>
+    r'c6c80b869d1df9f67803a5ead9cf3a28c487b08d';
+
 @ProviderFor(VendorProfile)
 final vendorProfileProvider = VendorProfileProvider._();
 

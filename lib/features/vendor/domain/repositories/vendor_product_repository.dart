@@ -4,4 +4,6 @@ abstract interface class VendorProductRepository {
   Future<List<VendorProduct>> getProducts(String vendorId);
 
   Future<VendorProduct?> getProductById(String productId);
+
+  Future<void> deleteProducts(String vendorId, List<String> productIds);
 }

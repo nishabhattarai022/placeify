@@ -159,6 +159,63 @@ abstract final class VendorMockConfig {
       categoryId: 'chairs',
       createdAt: DateTime(2026, 2, 20),
     ),
+    VendorProduct(
+      id: 'p4',
+      vendorId: demoVendorId,
+      name: 'Odin Desk',
+      sku: 'HH-TBL-001',
+      price: 28500,
+      stock: 6,
+      imageUrls: const [],
+      categoryId: 'tables',
+      createdAt: DateTime(2026, 3, 8),
+    ),
+    VendorProduct(
+      id: 'p5',
+      vendorId: demoVendorId,
+      name: 'Luna Sofa',
+      sku: 'HH-SOF-001',
+      price: 42000,
+      stock: 4,
+      imageUrls: const [],
+      categoryId: 'sofas',
+      isActive: false,
+      createdAt: DateTime(2026, 3, 22),
+    ),
+    VendorProduct(
+      id: 'p6',
+      vendorId: demoVendorId,
+      name: 'Nordic Lamp',
+      sku: 'HH-LGT-001',
+      price: 4500,
+      stock: 22,
+      imageUrls: const [],
+      categoryId: 'lights',
+      createdAt: DateTime(2026, 4, 2),
+    ),
+    VendorProduct(
+      id: 'p7',
+      vendorId: demoVendorId,
+      name: 'Oslo Bed',
+      sku: 'HH-BED-001',
+      price: 56000,
+      stock: 3,
+      imageUrls: const [],
+      categoryId: 'beds',
+      createdAt: DateTime(2026, 4, 18),
+    ),
+    VendorProduct(
+      id: 'p8',
+      vendorId: demoVendorId,
+      name: 'Ceramic Vase Set',
+      sku: 'HH-DEC-001',
+      price: 3200,
+      stock: 15,
+      imageUrls: const [],
+      categoryId: 'decor',
+      isActive: false,
+      createdAt: DateTime(2026, 5, 1),
+    ),
   ];
 
   static final orders = [
@@ -511,5 +568,12 @@ abstract final class VendorMockConfig {
       if (product.id == productId) return product;
     }
     return null;
+  }
+
+  static int deleteProducts(List<String> productIds) {
+    final ids = productIds.toSet();
+    final before = products.length;
+    products.removeWhere((product) => ids.contains(product.id));
+    return before - products.length;
   }
 }
