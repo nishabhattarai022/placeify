@@ -9,16 +9,12 @@ class ProductDetailPillButton extends StatefulWidget {
     required this.label,
     required this.leadingIcon,
     required this.onTap,
-    this.trailingText,
-    this.compact = false,
     super.key,
   });
 
   final String label;
   final IconData leadingIcon;
   final VoidCallback onTap;
-  final String? trailingText;
-  final bool compact;
 
   @override
   State<ProductDetailPillButton> createState() => _ProductDetailPillButtonState();
@@ -29,19 +25,6 @@ class _ProductDetailPillButtonState extends State<ProductDetailPillButton> {
 
   @override
   Widget build(BuildContext context) {
-    final compact = widget.compact;
-    final height = compact
-        ? ProductDetailTokens.cartBarActionHeight
-        : ProductDetailTokens.cartBarHeight;
-    final horizontalPadding = compact
-        ? ProductDetailTokens.cartBarActionInnerPadding
-        : ProductDetailTokens.cartBarInnerPadding;
-    final iconChipSize = compact
-        ? ProductDetailTokens.cartBarActionIconChipSize
-        : ProductDetailTokens.cartBarIconChipSize;
-    final iconSize = compact ? 16.0 : 18.0;
-    final labelFontSize = compact ? 14.0 : 15.0;
-
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
       onTapUp: (_) => setState(() => _pressed = false),
@@ -54,8 +37,10 @@ class _ProductDetailPillButtonState extends State<ProductDetailPillButton> {
         scale: _pressed ? 0.98 : 1,
         duration: const Duration(milliseconds: 140),
         child: Container(
-          height: height,
-          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+          height: ProductDetailTokens.cartBarActionHeight,
+          padding: const EdgeInsets.symmetric(
+            horizontal: ProductDetailTokens.cartBarActionInnerPadding,
+          ),
           decoration: BoxDecoration(
             color: ProductDetailTokens.cartBarBg,
             borderRadius: BorderRadius.circular(999),
@@ -68,12 +53,11 @@ class _ProductDetailPillButtonState extends State<ProductDetailPillButton> {
             ],
           ),
           child: Row(
-            mainAxisAlignment:
-                compact ? MainAxisAlignment.center : MainAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: iconChipSize,
-                height: iconChipSize,
+                width: ProductDetailTokens.cartBarActionIconChipSize,
+                height: ProductDetailTokens.cartBarActionIconChipSize,
                 decoration: const BoxDecoration(
                   color: ProductDetailTokens.cartBarIconChip,
                   shape: BoxShape.circle,
@@ -81,63 +65,24 @@ class _ProductDetailPillButtonState extends State<ProductDetailPillButton> {
                 alignment: Alignment.center,
                 child: Icon(
                   widget.leadingIcon,
-                  size: iconSize,
+                  size: 16,
                   color: Colors.white,
                 ),
               ),
-              const SizedBox(width: 12),
-              if (compact)
-                Flexible(
-                  child: Text(
-                    widget.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppFonts.dmSans(
-                      fontSize: labelFontSize,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                )
-              else ...[
-                Text(
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
                   widget.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppFonts.dmSans(
-                    fontSize: labelFontSize,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
                     letterSpacing: -0.2,
                   ),
                 ),
-                const Spacer(),
-                if (widget.trailingText != null) ...[
-                  Text(
-                    widget.trailingText!,
-                    style: AppFonts.dmSans(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                ],
-                Container(
-                  width: ProductDetailTokens.cartBarTrailingArrowSize,
-                  height: ProductDetailTokens.cartBarTrailingArrowSize,
-                  decoration: const BoxDecoration(
-                    color: ProductDetailTokens.cartBarIconChip,
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: const Icon(
-                    Icons.arrow_forward,
-                    size: 16,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
+              ),
             ],
           ),
         ),
@@ -174,7 +119,6 @@ class ProductDetailCartBar extends StatelessWidget {
               label: 'Try in my room',
               leadingIcon: Icons.view_in_ar_outlined,
               onTap: onTryInMyRoom,
-              compact: true,
             ),
           ),
           const SizedBox(width: ProductDetailTokens.cartBarGap),
@@ -183,7 +127,6 @@ class ProductDetailCartBar extends StatelessWidget {
               label: 'Add to cart',
               leadingIcon: Icons.shopping_bag_outlined,
               onTap: onAddToCart,
-              compact: true,
             ),
           ),
         ],
