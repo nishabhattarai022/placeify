@@ -18,7 +18,6 @@ class ConsumerBottomNav extends StatelessWidget {
   static void _goBrowse(BuildContext context) => context.go('/browse');
   static void _goBookmarks(BuildContext context) => context.go('/bookmarks');
   static void _goProfile(BuildContext context) => context.go('/profile');
-  static void _goVendor(BuildContext context) => context.go('/vendor');
 
   @override
   Widget build(BuildContext context) {
@@ -62,10 +61,6 @@ class ConsumerBottomNav extends StatelessWidget {
               onTap: () {
                 HapticService.light();
                 _goBrowse(context);
-              },
-              onLongPress: () {
-                HapticService.medium();
-                _goVendor(context);
               },
             ),
             const SizedBox(width: BottomNavTokens.navItemGap),
@@ -164,14 +159,12 @@ class _NavIconButton extends StatefulWidget {
     required this.isSelected,
     required this.semanticLabel,
     required this.onTap,
-    this.onLongPress,
   });
 
   final IconData icon;
   final bool isSelected;
   final String semanticLabel;
   final VoidCallback onTap;
-  final VoidCallback? onLongPress;
 
   @override
   State<_NavIconButton> createState() => _NavIconButtonState();
@@ -190,7 +183,6 @@ class _NavIconButtonState extends State<_NavIconButton> {
       selected: isSelected,
       child: GestureDetector(
         onTap: widget.onTap,
-        onLongPress: widget.onLongPress,
         onTapDown: (_) => setState(() => _pressed = true),
         onTapUp: (_) => setState(() => _pressed = false),
         onTapCancel: () => setState(() => _pressed = false),

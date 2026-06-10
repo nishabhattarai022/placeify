@@ -23,6 +23,8 @@ abstract final class AppColors {
   static const Color rust = Color(0xFF9B4A2A);
 
   static const Color forest = Color(0xFF1E4D2B);
+  static const Color vendorForest = Color(0xFF1A3C34);
+  static const Color vendorForestBg = Color(0x1F1A3C34);
   static const Color coral = Color(0xFFE07B5F);
   static const Color coralBg = Color(0x1FE07B5F);
   static const Color lavender = Color(0xFF8B7EC8);

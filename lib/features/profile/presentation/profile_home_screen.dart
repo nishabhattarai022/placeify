@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../auth/presentation/providers/auth_provider.dart';
 import '../../../core/widgets/placeify_bottom_nav.dart';
 import '../../../core/widgets/toast_overlay.dart';
+import '../../auth/presentation/providers/auth_provider.dart';
+import '../../vendor/domain/constants/vendor_routes.dart';
+import '../../vendor/domain/enums/vendor_status.dart';
 import '../data/profile_menu_config.dart';
 import 'widgets/profile_hero.dart';
 import 'widgets/profile_menu_tile.dart';
@@ -44,19 +46,6 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: const Icon(Icons.storefront_outlined),
-              title: const Text(
-                'Vendor dashboard',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                context.go('/vendor');
-              },
-            ),
             ListTile(
               leading: const Icon(Icons.settings_outlined),
               title: const Text(
@@ -103,8 +92,23 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
         context.pushNamed('profileNotifications');
       case ProfileMenuRoute.password:
         context.pushNamed('profilePassword');
+      case ProfileMenuRoute.vendor:
+        break;
       case ProfileMenuRoute.signOut:
         _signOut();
+    }
+  }
+
+  void _onVendorTileTap(VendorStatus status) {
+    switch (status) {
+      case VendorStatus.approved:
+        context.go(VendorRoutes.dashboard);
+      case VendorStatus.pending:
+        PlaceifyToast.show(context, 'Application under review');
+      case VendorStatus.none:
+        PlaceifyToast.show(context, 'Registration coming soon');
+      case VendorStatus.suspended:
+        PlaceifyToast.show(context, 'Contact support');
     }
   }
 
@@ -118,6 +122,9 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final userAsync = ref.watch(currentUserProvider);
+    final vendorStatus = userAsync.value?.vendorStatus ?? VendorStatus.none;
+    final vendorTile = ProfileMenuItems.vendorTile(vendorStatus);
 
     return Scaffold(
       backgroundColor: AppColors.cream,
@@ -163,7 +170,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
                         for (var i = 0;
                             i < ProfileMenuItems.accountOverview.length;
                             i++) ...[
-                          if (i == 4 || i == 6)
+                          if (i == 4)
                             const Divider(
                               height: 16,
                               color: AppColors.creamDark,
@@ -175,6 +182,22 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
                             ),
                           ),
                         ],
+                        const Divider(
+                          height: 16,
+                          color: AppColors.creamDark,
+                        ),
+                        ProfileMenuTile(
+                          item: vendorTile,
+                          onTap: () => _onVendorTileTap(vendorStatus),
+                        ),
+                        const Divider(
+                          height: 16,
+                          color: AppColors.creamDark,
+                        ),
+                        ProfileMenuTile(
+                          item: ProfileMenuItems.signOut,
+                          onTap: () => _onMenuTap(ProfileMenuRoute.signOut),
+                        ),
                       ],
                     ),
                   ),

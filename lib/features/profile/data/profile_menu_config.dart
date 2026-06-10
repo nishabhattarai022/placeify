@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../vendor/domain/enums/vendor_status.dart';
 
 /// Profile screen layout constants and menu definitions.
 abstract final class ProfileMenuConfig {
@@ -24,6 +25,7 @@ enum ProfileMenuRoute {
   refund,
   notifications,
   password,
+  vendor,
   signOut,
 }
 
@@ -100,14 +102,55 @@ abstract final class ProfileMenuItems {
       backgroundColor: AppColors.coralBg,
       route: ProfileMenuRoute.password,
     ),
-    ProfileMenuItemData(
-      title: 'Sign Out',
-      subtitle: 'See you next time',
-      icon: Icons.logout_rounded,
-      iconColor: AppColors.rust,
-      backgroundColor: Color(0x1A9B4A2A),
-      route: ProfileMenuRoute.signOut,
-      isDanger: true,
-    ),
   ];
+
+  static const ProfileMenuItemData signOut = ProfileMenuItemData(
+    title: 'Sign Out',
+    subtitle: 'See you next time',
+    icon: Icons.logout_rounded,
+    iconColor: AppColors.rust,
+    backgroundColor: Color(0x1A9B4A2A),
+    route: ProfileMenuRoute.signOut,
+    isDanger: true,
+  );
+
+  static ProfileMenuItemData vendorTile(VendorStatus status) {
+    return switch (status) {
+      VendorStatus.none => const ProfileMenuItemData(
+          title: 'Become a Vendor',
+          subtitle: 'Start selling on Placeify',
+          icon: Icons.storefront_outlined,
+          iconColor: AppColors.vendorForest,
+          backgroundColor: AppColors.vendorForestBg,
+          route: ProfileMenuRoute.vendor,
+        ),
+      VendorStatus.pending => const ProfileMenuItemData(
+          title: 'Become a Vendor',
+          subtitle: 'Application under review',
+          icon: Icons.storefront_outlined,
+          iconColor: AppColors.vendorForest,
+          backgroundColor: AppColors.vendorForestBg,
+          route: ProfileMenuRoute.vendor,
+          badge: 'Pending',
+        ),
+      VendorStatus.approved => const ProfileMenuItemData(
+          title: 'Vendor Dashboard',
+          subtitle: 'Manage orders & products',
+          icon: Icons.storefront_outlined,
+          iconColor: AppColors.vendorForest,
+          backgroundColor: AppColors.vendorForestBg,
+          route: ProfileMenuRoute.vendor,
+          badge: 'Live',
+        ),
+      VendorStatus.suspended => const ProfileMenuItemData(
+          title: 'Vendor Account',
+          subtitle: 'Contact support',
+          icon: Icons.storefront_outlined,
+          iconColor: AppColors.textMuted,
+          backgroundColor: AppColors.creamDark,
+          route: ProfileMenuRoute.vendor,
+          badge: 'Suspended',
+        ),
+    };
+  }
 }
