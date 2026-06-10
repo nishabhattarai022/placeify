@@ -4,6 +4,36 @@ import '../../../../core/services/haptic_service.dart';
 import '../../../../core/theme/app_fonts.dart';
 import '../product_detail_tokens.dart';
 
+class _ActionIconChip extends StatelessWidget {
+  const _ActionIconChip({
+    required this.icon,
+    required this.size,
+    required this.iconSize,
+  });
+
+  final IconData icon;
+  final double size;
+  final double iconSize;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: const BoxDecoration(
+        color: ProductDetailTokens.cartBarIconChip,
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: Icon(
+        icon,
+        size: iconSize,
+        color: Colors.white,
+      ),
+    );
+  }
+}
+
 class ProductDetailPillButton extends StatefulWidget {
   const ProductDetailPillButton({
     required this.label,
@@ -53,35 +83,37 @@ class _ProductDetailPillButtonState extends State<ProductDetailPillButton> {
             ],
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: ProductDetailTokens.cartBarActionIconChipSize,
-                height: ProductDetailTokens.cartBarActionIconChipSize,
-                decoration: const BoxDecoration(
-                  color: ProductDetailTokens.cartBarIconChip,
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Icon(
-                  widget.leadingIcon,
-                  size: 16,
-                  color: Colors.white,
-                ),
+              _ActionIconChip(
+                icon: widget.leadingIcon,
+                size: ProductDetailTokens.cartBarActionIconChipSize,
+                iconSize: 16,
               ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  widget.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppFonts.dmSans(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                    letterSpacing: -0.2,
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.center,
+                    child: Text(
+                      widget.label,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppFonts.dmSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
                   ),
                 ),
+              ),
+              _ActionIconChip(
+                icon: Icons.arrow_forward,
+                size: ProductDetailTokens.cartBarActionIconChipSize,
+                iconSize: 14,
               ),
             ],
           ),
