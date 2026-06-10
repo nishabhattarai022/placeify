@@ -576,4 +576,16 @@ abstract final class VendorMockConfig {
     products.removeWhere((product) => ids.contains(product.id));
     return before - products.length;
   }
+
+  static VendorProduct upsertProduct(VendorProduct product) {
+    final index = products.indexWhere((entry) => entry.id == product.id);
+    if (index >= 0) {
+      products[index] = product;
+    } else {
+      products.add(product);
+    }
+    return product;
+  }
+
+  static String nextProductId() => 'p${products.length + 1}';
 }

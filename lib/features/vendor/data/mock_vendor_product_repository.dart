@@ -46,4 +46,41 @@ class MockVendorProductRepository implements VendorProductRepository {
       throw VendorProductActionException('Products could not be deleted.');
     }
   }
+
+  @override
+  Future<VendorProduct> createProduct(
+    String vendorId,
+    VendorProduct product,
+  ) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+
+    if (!VendorMockConfig.isKnownVendor(vendorId)) {
+      throw VendorProductActionException('Vendor account not found.');
+    }
+
+    final created = product.copyWith(
+      id: product.id.isEmpty ? VendorMockConfig.nextProductId() : product.id,
+      vendorId: vendorId,
+    );
+
+    return VendorMockConfig.upsertProduct(created);
+  }
+
+  @override
+  Future<VendorProduct> updateProduct(
+    String vendorId,
+    VendorProduct product,
+  ) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+
+    if (!VendorMockConfig.isKnownVendor(vendorId)) {
+      throw VendorProductActionException('Vendor account not found.');
+    }
+
+    if (VendorMockConfig.productById(product.id) == null) {
+      throw VendorProductActionException('Product not found.');
+    }
+
+    return VendorMockConfig.upsertProduct(product);
+  }
 }

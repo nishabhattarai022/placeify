@@ -13,7 +13,7 @@ import '../../features/vendor/presentation/registration/vendor_registration_succ
 import '../../features/vendor/presentation/vendor_dashboard_screen.dart';
 import '../../features/vendor/presentation/vendor_order_detail_screen.dart';
 import '../../features/vendor/presentation/vendor_orders_screen.dart';
-import '../../features/vendor/presentation/vendor_product_upload_screen.dart';
+import '../../features/vendor/presentation/vendor_product_form_screen.dart';
 import '../../features/vendor/presentation/vendor_products_screen.dart';
 import '../../features/vendor/presentation/vendor_payments_screen.dart';
 import '../../features/vendor/presentation/vendor_profile_screen.dart';
@@ -336,7 +336,17 @@ List<RouteBase> get _appRoutes => [
                       name: 'vendorProductUpload',
                       pageBuilder: (context, state) => _slidePage(
                         key: ValueKey<String>(state.uri.toString()),
-                        child: const VendorProductUploadScreen(),
+                        child: const VendorProductFormScreen(),
+                      ),
+                    ),
+                    GoRoute(
+                      path: ':productId/edit',
+                      name: 'vendorProductEdit',
+                      pageBuilder: (context, state) => _slidePage(
+                        key: ValueKey<String>(state.uri.toString()),
+                        child: VendorProductFormScreen(
+                          productId: state.pathParameters['productId'],
+                        ),
                       ),
                     ),
                   ],

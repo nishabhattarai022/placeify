@@ -107,7 +107,7 @@ class _VendorProductsScreenState extends ConsumerState<VendorProductsScreen> {
       _toggleSelected(product.id);
       return;
     }
-    // Detail/edit routes ship in a later phase.
+    context.push(VendorRoutes.productEdit(product.id));
   }
 
   Future<void> _openSortSheet() async {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../../core/constants/app_colors.dart';
 
@@ -43,6 +44,9 @@ class ProfileTextInput extends StatelessWidget {
     this.obscureText = false,
     this.onChanged,
     this.suffix,
+    this.keyboardType,
+    this.maxLines = 1,
+    this.inputFormatters,
     super.key,
   });
 
@@ -51,6 +55,9 @@ class ProfileTextInput extends StatelessWidget {
   final bool obscureText;
   final ValueChanged<String>? onChanged;
   final Widget? suffix;
+  final TextInputType? keyboardType;
+  final int maxLines;
+  final List<TextInputFormatter>? inputFormatters;
 
   @override
   Widget build(BuildContext context) {
@@ -58,6 +65,9 @@ class ProfileTextInput extends StatelessWidget {
       controller: controller,
       obscureText: obscureText,
       onChanged: onChanged,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      inputFormatters: inputFormatters,
       style: const TextStyle(
         fontSize: 14,
         color: AppColors.espresso,

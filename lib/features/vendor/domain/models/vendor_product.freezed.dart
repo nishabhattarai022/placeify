@@ -24,6 +24,16 @@ mixin _$VendorProduct {
   String get categoryId;
   bool get isActive;
   DateTime get createdAt;
+  String get description;
+  String get brand;
+  double? get originalPrice;
+  String get offerLabel;
+  double get widthCm;
+  double get depthCm;
+  double get heightCm;
+  double get weightKg;
+  bool get hasArView;
+  String get materials;
 
   /// Create a copy of VendorProduct
   /// with the given fields replaced by the non-null parameter values.
@@ -54,27 +64,55 @@ mixin _$VendorProduct {
             (identical(other.isActive, isActive) ||
                 other.isActive == isActive) &&
             (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt));
+                other.createdAt == createdAt) &&
+            (identical(other.description, description) ||
+                other.description == description) &&
+            (identical(other.brand, brand) || other.brand == brand) &&
+            (identical(other.originalPrice, originalPrice) ||
+                other.originalPrice == originalPrice) &&
+            (identical(other.offerLabel, offerLabel) ||
+                other.offerLabel == offerLabel) &&
+            (identical(other.widthCm, widthCm) || other.widthCm == widthCm) &&
+            (identical(other.depthCm, depthCm) || other.depthCm == depthCm) &&
+            (identical(other.heightCm, heightCm) ||
+                other.heightCm == heightCm) &&
+            (identical(other.weightKg, weightKg) ||
+                other.weightKg == weightKg) &&
+            (identical(other.hasArView, hasArView) ||
+                other.hasArView == hasArView) &&
+            (identical(other.materials, materials) ||
+                other.materials == materials));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      vendorId,
-      name,
-      sku,
-      price,
-      stock,
-      const DeepCollectionEquality().hash(imageUrls),
-      categoryId,
-      isActive,
-      createdAt);
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        id,
+        vendorId,
+        name,
+        sku,
+        price,
+        stock,
+        const DeepCollectionEquality().hash(imageUrls),
+        categoryId,
+        isActive,
+        createdAt,
+        description,
+        brand,
+        originalPrice,
+        offerLabel,
+        widthCm,
+        depthCm,
+        heightCm,
+        weightKg,
+        hasArView,
+        materials
+      ]);
 
   @override
   String toString() {
-    return 'VendorProduct(id: $id, vendorId: $vendorId, name: $name, sku: $sku, price: $price, stock: $stock, imageUrls: $imageUrls, categoryId: $categoryId, isActive: $isActive, createdAt: $createdAt)';
+    return 'VendorProduct(id: $id, vendorId: $vendorId, name: $name, sku: $sku, price: $price, stock: $stock, imageUrls: $imageUrls, categoryId: $categoryId, isActive: $isActive, createdAt: $createdAt, description: $description, brand: $brand, originalPrice: $originalPrice, offerLabel: $offerLabel, widthCm: $widthCm, depthCm: $depthCm, heightCm: $heightCm, weightKg: $weightKg, hasArView: $hasArView, materials: $materials)';
   }
 }
 
@@ -94,7 +132,17 @@ abstract mixin class $VendorProductCopyWith<$Res> {
       List<String> imageUrls,
       String categoryId,
       bool isActive,
-      DateTime createdAt});
+      DateTime createdAt,
+      String description,
+      String brand,
+      double? originalPrice,
+      String offerLabel,
+      double widthCm,
+      double depthCm,
+      double heightCm,
+      double weightKg,
+      bool hasArView,
+      String materials});
 }
 
 /// @nodoc
@@ -120,6 +168,16 @@ class _$VendorProductCopyWithImpl<$Res>
     Object? categoryId = null,
     Object? isActive = null,
     Object? createdAt = null,
+    Object? description = null,
+    Object? brand = null,
+    Object? originalPrice = freezed,
+    Object? offerLabel = null,
+    Object? widthCm = null,
+    Object? depthCm = null,
+    Object? heightCm = null,
+    Object? weightKg = null,
+    Object? hasArView = null,
+    Object? materials = null,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -162,6 +220,46 @@ class _$VendorProductCopyWithImpl<$Res>
           ? _self.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      description: null == description
+          ? _self.description
+          : description // ignore: cast_nullable_to_non_nullable
+              as String,
+      brand: null == brand
+          ? _self.brand
+          : brand // ignore: cast_nullable_to_non_nullable
+              as String,
+      originalPrice: freezed == originalPrice
+          ? _self.originalPrice
+          : originalPrice // ignore: cast_nullable_to_non_nullable
+              as double?,
+      offerLabel: null == offerLabel
+          ? _self.offerLabel
+          : offerLabel // ignore: cast_nullable_to_non_nullable
+              as String,
+      widthCm: null == widthCm
+          ? _self.widthCm
+          : widthCm // ignore: cast_nullable_to_non_nullable
+              as double,
+      depthCm: null == depthCm
+          ? _self.depthCm
+          : depthCm // ignore: cast_nullable_to_non_nullable
+              as double,
+      heightCm: null == heightCm
+          ? _self.heightCm
+          : heightCm // ignore: cast_nullable_to_non_nullable
+              as double,
+      weightKg: null == weightKg
+          ? _self.weightKg
+          : weightKg // ignore: cast_nullable_to_non_nullable
+              as double,
+      hasArView: null == hasArView
+          ? _self.hasArView
+          : hasArView // ignore: cast_nullable_to_non_nullable
+              as bool,
+      materials: null == materials
+          ? _self.materials
+          : materials // ignore: cast_nullable_to_non_nullable
+              as String,
     ));
   }
 }
@@ -269,7 +367,17 @@ extension VendorProductPatterns on VendorProduct {
             List<String> imageUrls,
             String categoryId,
             bool isActive,
-            DateTime createdAt)?
+            DateTime createdAt,
+            String description,
+            String brand,
+            double? originalPrice,
+            String offerLabel,
+            double widthCm,
+            double depthCm,
+            double heightCm,
+            double weightKg,
+            bool hasArView,
+            String materials)?
         $default, {
     required TResult orElse(),
   }) {
@@ -286,7 +394,17 @@ extension VendorProductPatterns on VendorProduct {
             _that.imageUrls,
             _that.categoryId,
             _that.isActive,
-            _that.createdAt);
+            _that.createdAt,
+            _that.description,
+            _that.brand,
+            _that.originalPrice,
+            _that.offerLabel,
+            _that.widthCm,
+            _that.depthCm,
+            _that.heightCm,
+            _that.weightKg,
+            _that.hasArView,
+            _that.materials);
       case _:
         return orElse();
     }
@@ -317,7 +435,17 @@ extension VendorProductPatterns on VendorProduct {
             List<String> imageUrls,
             String categoryId,
             bool isActive,
-            DateTime createdAt)
+            DateTime createdAt,
+            String description,
+            String brand,
+            double? originalPrice,
+            String offerLabel,
+            double widthCm,
+            double depthCm,
+            double heightCm,
+            double weightKg,
+            bool hasArView,
+            String materials)
         $default,
   ) {
     final _that = this;
@@ -333,7 +461,17 @@ extension VendorProductPatterns on VendorProduct {
             _that.imageUrls,
             _that.categoryId,
             _that.isActive,
-            _that.createdAt);
+            _that.createdAt,
+            _that.description,
+            _that.brand,
+            _that.originalPrice,
+            _that.offerLabel,
+            _that.widthCm,
+            _that.depthCm,
+            _that.heightCm,
+            _that.weightKg,
+            _that.hasArView,
+            _that.materials);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -363,7 +501,17 @@ extension VendorProductPatterns on VendorProduct {
             List<String> imageUrls,
             String categoryId,
             bool isActive,
-            DateTime createdAt)?
+            DateTime createdAt,
+            String description,
+            String brand,
+            double? originalPrice,
+            String offerLabel,
+            double widthCm,
+            double depthCm,
+            double heightCm,
+            double weightKg,
+            bool hasArView,
+            String materials)?
         $default,
   ) {
     final _that = this;
@@ -379,7 +527,17 @@ extension VendorProductPatterns on VendorProduct {
             _that.imageUrls,
             _that.categoryId,
             _that.isActive,
-            _that.createdAt);
+            _that.createdAt,
+            _that.description,
+            _that.brand,
+            _that.originalPrice,
+            _that.offerLabel,
+            _that.widthCm,
+            _that.depthCm,
+            _that.heightCm,
+            _that.weightKg,
+            _that.hasArView,
+            _that.materials);
       case _:
         return null;
     }
@@ -388,7 +546,7 @@ extension VendorProductPatterns on VendorProduct {
 
 /// @nodoc
 @JsonSerializable()
-class _VendorProduct implements VendorProduct {
+class _VendorProduct extends VendorProduct {
   const _VendorProduct(
       {required this.id,
       required this.vendorId,
@@ -399,8 +557,19 @@ class _VendorProduct implements VendorProduct {
       final List<String> imageUrls = const [],
       required this.categoryId,
       this.isActive = true,
-      required this.createdAt})
-      : _imageUrls = imageUrls;
+      required this.createdAt,
+      this.description = '',
+      this.brand = '',
+      this.originalPrice,
+      this.offerLabel = '',
+      this.widthCm = 0,
+      this.depthCm = 0,
+      this.heightCm = 0,
+      this.weightKg = 0,
+      this.hasArView = false,
+      this.materials = ''})
+      : _imageUrls = imageUrls,
+        super._();
   factory _VendorProduct.fromJson(Map<String, dynamic> json) =>
       _$VendorProductFromJson(json);
 
@@ -432,6 +601,35 @@ class _VendorProduct implements VendorProduct {
   final bool isActive;
   @override
   final DateTime createdAt;
+  @override
+  @JsonKey()
+  final String description;
+  @override
+  @JsonKey()
+  final String brand;
+  @override
+  final double? originalPrice;
+  @override
+  @JsonKey()
+  final String offerLabel;
+  @override
+  @JsonKey()
+  final double widthCm;
+  @override
+  @JsonKey()
+  final double depthCm;
+  @override
+  @JsonKey()
+  final double heightCm;
+  @override
+  @JsonKey()
+  final double weightKg;
+  @override
+  @JsonKey()
+  final bool hasArView;
+  @override
+  @JsonKey()
+  final String materials;
 
   /// Create a copy of VendorProduct
   /// with the given fields replaced by the non-null parameter values.
@@ -467,27 +665,55 @@ class _VendorProduct implements VendorProduct {
             (identical(other.isActive, isActive) ||
                 other.isActive == isActive) &&
             (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt));
+                other.createdAt == createdAt) &&
+            (identical(other.description, description) ||
+                other.description == description) &&
+            (identical(other.brand, brand) || other.brand == brand) &&
+            (identical(other.originalPrice, originalPrice) ||
+                other.originalPrice == originalPrice) &&
+            (identical(other.offerLabel, offerLabel) ||
+                other.offerLabel == offerLabel) &&
+            (identical(other.widthCm, widthCm) || other.widthCm == widthCm) &&
+            (identical(other.depthCm, depthCm) || other.depthCm == depthCm) &&
+            (identical(other.heightCm, heightCm) ||
+                other.heightCm == heightCm) &&
+            (identical(other.weightKg, weightKg) ||
+                other.weightKg == weightKg) &&
+            (identical(other.hasArView, hasArView) ||
+                other.hasArView == hasArView) &&
+            (identical(other.materials, materials) ||
+                other.materials == materials));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      vendorId,
-      name,
-      sku,
-      price,
-      stock,
-      const DeepCollectionEquality().hash(_imageUrls),
-      categoryId,
-      isActive,
-      createdAt);
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        id,
+        vendorId,
+        name,
+        sku,
+        price,
+        stock,
+        const DeepCollectionEquality().hash(_imageUrls),
+        categoryId,
+        isActive,
+        createdAt,
+        description,
+        brand,
+        originalPrice,
+        offerLabel,
+        widthCm,
+        depthCm,
+        heightCm,
+        weightKg,
+        hasArView,
+        materials
+      ]);
 
   @override
   String toString() {
-    return 'VendorProduct(id: $id, vendorId: $vendorId, name: $name, sku: $sku, price: $price, stock: $stock, imageUrls: $imageUrls, categoryId: $categoryId, isActive: $isActive, createdAt: $createdAt)';
+    return 'VendorProduct(id: $id, vendorId: $vendorId, name: $name, sku: $sku, price: $price, stock: $stock, imageUrls: $imageUrls, categoryId: $categoryId, isActive: $isActive, createdAt: $createdAt, description: $description, brand: $brand, originalPrice: $originalPrice, offerLabel: $offerLabel, widthCm: $widthCm, depthCm: $depthCm, heightCm: $heightCm, weightKg: $weightKg, hasArView: $hasArView, materials: $materials)';
   }
 }
 
@@ -509,7 +735,17 @@ abstract mixin class _$VendorProductCopyWith<$Res>
       List<String> imageUrls,
       String categoryId,
       bool isActive,
-      DateTime createdAt});
+      DateTime createdAt,
+      String description,
+      String brand,
+      double? originalPrice,
+      String offerLabel,
+      double widthCm,
+      double depthCm,
+      double heightCm,
+      double weightKg,
+      bool hasArView,
+      String materials});
 }
 
 /// @nodoc
@@ -535,6 +771,16 @@ class __$VendorProductCopyWithImpl<$Res>
     Object? categoryId = null,
     Object? isActive = null,
     Object? createdAt = null,
+    Object? description = null,
+    Object? brand = null,
+    Object? originalPrice = freezed,
+    Object? offerLabel = null,
+    Object? widthCm = null,
+    Object? depthCm = null,
+    Object? heightCm = null,
+    Object? weightKg = null,
+    Object? hasArView = null,
+    Object? materials = null,
   }) {
     return _then(_VendorProduct(
       id: null == id
@@ -577,6 +823,46 @@ class __$VendorProductCopyWithImpl<$Res>
           ? _self.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      description: null == description
+          ? _self.description
+          : description // ignore: cast_nullable_to_non_nullable
+              as String,
+      brand: null == brand
+          ? _self.brand
+          : brand // ignore: cast_nullable_to_non_nullable
+              as String,
+      originalPrice: freezed == originalPrice
+          ? _self.originalPrice
+          : originalPrice // ignore: cast_nullable_to_non_nullable
+              as double?,
+      offerLabel: null == offerLabel
+          ? _self.offerLabel
+          : offerLabel // ignore: cast_nullable_to_non_nullable
+              as String,
+      widthCm: null == widthCm
+          ? _self.widthCm
+          : widthCm // ignore: cast_nullable_to_non_nullable
+              as double,
+      depthCm: null == depthCm
+          ? _self.depthCm
+          : depthCm // ignore: cast_nullable_to_non_nullable
+              as double,
+      heightCm: null == heightCm
+          ? _self.heightCm
+          : heightCm // ignore: cast_nullable_to_non_nullable
+              as double,
+      weightKg: null == weightKg
+          ? _self.weightKg
+          : weightKg // ignore: cast_nullable_to_non_nullable
+              as double,
+      hasArView: null == hasArView
+          ? _self.hasArView
+          : hasArView // ignore: cast_nullable_to_non_nullable
+              as bool,
+      materials: null == materials
+          ? _self.materials
+          : materials // ignore: cast_nullable_to_non_nullable
+              as String,
     ));
   }
 }

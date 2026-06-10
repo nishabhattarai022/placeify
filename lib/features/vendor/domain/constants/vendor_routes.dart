@@ -6,6 +6,8 @@ abstract final class VendorRoutes {
   static String orderDetail(String orderId) => '$orders/$orderId';
   static const products = '/vendor/products';
   static const productsUpload = '/vendor/products/upload';
+
+  static String productEdit(String productId) => '$products/$productId/edit';
   static const payments = '/vendor/payments';
   static const profile = '/vendor/profile';
   static const register = '/vendor/register';

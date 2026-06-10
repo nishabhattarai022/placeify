@@ -16,7 +16,26 @@ abstract class VendorProduct with _$VendorProduct {
     required String categoryId,
     @Default(true) bool isActive,
     required DateTime createdAt,
+    @Default('') String description,
+    @Default('') String brand,
+    double? originalPrice,
+    @Default('') String offerLabel,
+    @Default(0) double widthCm,
+    @Default(0) double depthCm,
+    @Default(0) double heightCm,
+    @Default(0) double weightKg,
+    @Default(false) bool hasArView,
+    @Default('') String materials,
   }) = _VendorProduct;
+
+  const VendorProduct._();
+
+  bool get isOnSale =>
+      originalPrice != null && originalPrice! > price;
+
+  double get discountPercent => isOnSale
+      ? ((originalPrice! - price) / originalPrice! * 100).roundToDouble()
+      : 0;
 
   factory VendorProduct.fromJson(Map<String, dynamic> json) =>
       _$VendorProductFromJson(json);
