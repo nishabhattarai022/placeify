@@ -1,0 +1,7 @@
+import 'package:placeify/features/vendor/domain/models/vendor_product.dart';
+
+abstract interface class VendorProductRepository {
+  Future<List<VendorProduct>> getProducts(String vendorId);
+
+  Future<VendorProduct?> getProductById(String productId);
+}
