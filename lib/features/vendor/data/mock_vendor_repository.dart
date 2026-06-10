@@ -1,4 +1,5 @@
 import 'package:placeify/features/vendor/data/config/vendor_mock_config.dart';
+import 'package:placeify/features/vendor/domain/models/delivery_update.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_notification.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_order.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_payout.dart';
@@ -36,6 +37,18 @@ class MockVendorRepository implements VendorRepository {
   Future<List<VendorOrder>> getOrders(String vendorId, {int limit = 20}) async {
     await Future<void>.delayed(const Duration(milliseconds: 150));
     return VendorMockConfig.ordersFor(vendorId, limit: limit);
+  }
+
+  @override
+  Future<VendorOrder?> getOrder(String vendorId, String orderId) async {
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    return VendorMockConfig.orderById(vendorId, orderId);
+  }
+
+  @override
+  Future<List<DeliveryUpdate>> getDeliveryUpdates(String orderId) async {
+    await Future<void>.delayed(const Duration(milliseconds: 80));
+    return VendorMockConfig.deliveryUpdatesFor(orderId);
   }
 
   @override

@@ -1,6 +1,8 @@
 import 'package:placeify/core/constants/app_colors.dart';
+import 'package:placeify/features/vendor/domain/enums/delivery_stage.dart';
 import 'package:placeify/features/vendor/domain/enums/notification_type.dart';
 import 'package:placeify/features/vendor/domain/enums/order_status.dart';
+import 'package:placeify/features/vendor/domain/models/delivery_update.dart';
 import 'package:placeify/features/vendor/domain/enums/payment_status.dart';
 import 'package:placeify/features/vendor/domain/models/order.dart' as legacy;
 import 'package:placeify/features/vendor/domain/models/vendor_metric.dart';
@@ -270,6 +272,121 @@ abstract final class VendorMockConfig {
     ),
   ];
 
+  static final deliveryUpdates = [
+    DeliveryUpdate(
+      id: 'du1',
+      orderId: 'vo5',
+      stage: DeliveryStage.orderPlaced,
+      note: 'Order confirmed by vendor.',
+      updatedAt: DateTime(2026, 6, 8, 11, 30),
+    ),
+    DeliveryUpdate(
+      id: 'du2',
+      orderId: 'vo6',
+      stage: DeliveryStage.orderPlaced,
+      note: 'Order accepted and queued for packing.',
+      updatedAt: DateTime(2026, 6, 7, 17, 0),
+    ),
+    DeliveryUpdate(
+      id: 'du3',
+      orderId: 'vo6',
+      stage: DeliveryStage.packed,
+      note: 'Items packed and ready for dispatch.',
+      updatedAt: DateTime(2026, 6, 8, 9, 15),
+    ),
+    DeliveryUpdate(
+      id: 'du4',
+      orderId: 'vo2',
+      stage: DeliveryStage.orderPlaced,
+      note: 'Order placed and accepted.',
+      updatedAt: DateTime(2026, 6, 5, 10, 45),
+    ),
+    DeliveryUpdate(
+      id: 'du5',
+      orderId: 'vo2',
+      stage: DeliveryStage.packed,
+      note: 'Packed with protective wrapping.',
+      updatedAt: DateTime(2026, 6, 6, 8, 0),
+    ),
+    DeliveryUpdate(
+      id: 'du6',
+      orderId: 'vo2',
+      stage: DeliveryStage.shipped,
+      note: 'Handed to courier — tracking #PKT-8821.',
+      updatedAt: DateTime(2026, 6, 7, 14, 20),
+    ),
+    DeliveryUpdate(
+      id: 'du7',
+      orderId: 'vo3',
+      stage: DeliveryStage.orderPlaced,
+      note: 'Order received.',
+      updatedAt: DateTime(2026, 5, 28, 13, 30),
+    ),
+    DeliveryUpdate(
+      id: 'du8',
+      orderId: 'vo3',
+      stage: DeliveryStage.packed,
+      note: 'Packed for delivery.',
+      updatedAt: DateTime(2026, 5, 29, 10, 0),
+    ),
+    DeliveryUpdate(
+      id: 'du9',
+      orderId: 'vo3',
+      stage: DeliveryStage.shipped,
+      note: 'Shipped from warehouse.',
+      updatedAt: DateTime(2026, 5, 30, 9, 45),
+    ),
+    DeliveryUpdate(
+      id: 'du10',
+      orderId: 'vo3',
+      stage: DeliveryStage.outForDelivery,
+      note: 'Out for delivery in Kathmandu.',
+      updatedAt: DateTime(2026, 5, 31, 11, 0),
+    ),
+    DeliveryUpdate(
+      id: 'du11',
+      orderId: 'vo3',
+      stage: DeliveryStage.delivered,
+      note: 'Delivered and signed by customer.',
+      updatedAt: DateTime(2026, 6, 1, 16, 30),
+    ),
+    DeliveryUpdate(
+      id: 'du12',
+      orderId: 'vo7',
+      stage: DeliveryStage.orderPlaced,
+      note: 'Order received.',
+      updatedAt: DateTime(2026, 5, 20, 9, 30),
+    ),
+    DeliveryUpdate(
+      id: 'du13',
+      orderId: 'vo7',
+      stage: DeliveryStage.packed,
+      note: 'Packed for delivery.',
+      updatedAt: DateTime(2026, 5, 21, 10, 0),
+    ),
+    DeliveryUpdate(
+      id: 'du14',
+      orderId: 'vo7',
+      stage: DeliveryStage.shipped,
+      note: 'Shipped from warehouse.',
+      updatedAt: DateTime(2026, 5, 22, 9, 0),
+    ),
+    DeliveryUpdate(
+      id: 'du15',
+      orderId: 'vo7',
+      stage: DeliveryStage.outForDelivery,
+      note: 'Courier en route.',
+      updatedAt: DateTime(2026, 5, 23, 11, 30),
+    ),
+    DeliveryUpdate(
+      id: 'du16',
+      orderId: 'vo7',
+      stage: DeliveryStage.delivered,
+      note: 'Delivered successfully.',
+      updatedAt: DateTime(2026, 5, 24, 14, 0),
+    ),
+  ];
+
   static final notifications = [
     VendorNotification(
       id: 'n1',
@@ -336,6 +453,21 @@ abstract final class VendorMockConfig {
   static List<VendorOrder> ordersFor(String vendorId, {int limit = 20}) {
     if (!isKnownVendor(vendorId)) return [];
     return orders.take(limit).toList();
+  }
+
+  static VendorOrder? orderById(String vendorId, String orderId) {
+    if (!isKnownVendor(vendorId)) return null;
+    for (final order in orders) {
+      if (order.id == orderId) return order;
+    }
+    return null;
+  }
+
+  static List<DeliveryUpdate> deliveryUpdatesFor(String orderId) {
+    return deliveryUpdates
+        .where((update) => update.orderId == orderId)
+        .toList()
+      ..sort((a, b) => a.updatedAt.compareTo(b.updatedAt));
   }
 
   static List<VendorNotification> notificationsFor(String vendorId) {

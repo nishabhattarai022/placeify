@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../core/services/haptic_service.dart';
+import '../../domain/constants/vendor_routes.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radii.dart';
 import '../../../../core/utils/formatters.dart';
@@ -24,6 +28,10 @@ class _VendorOrderRowState extends State<VendorOrderRow> {
     final meta = Formatters.orderMeta(order.orderNumber, order.orderedAt);
 
     return GestureDetector(
+      onTap: () {
+        HapticService.light();
+        context.push(VendorRoutes.orderDetail(order.id));
+      },
       onTapDown: (_) => setState(() => _translateX = 5),
       onTapUp: (_) => setState(() => _translateX = 0),
       onTapCancel: () => setState(() => _translateX = 0),
