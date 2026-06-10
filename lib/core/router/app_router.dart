@@ -8,6 +8,8 @@ import '../../features/home/presentation/home_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
+import '../../features/vendor/presentation/registration/vendor_registration_screen.dart';
+import '../../features/vendor/presentation/registration/vendor_registration_success_screen.dart';
 import '../../features/vendor/presentation/vendor_dashboard_screen.dart';
 import '../../features/home/presentation/bookmarks_screen.dart';
 import '../../data/furniture_categories.dart';
@@ -78,6 +80,22 @@ List<RouteBase> get _appRoutes => [
         child: const LoginScreen(),
         transitionsBuilder: _fadeTransition,
         transitionDuration: AppDurations.slow,
+      ),
+    ),
+    GoRoute(
+      path: '/vendor/register',
+      name: 'vendorRegister',
+      pageBuilder: (context, state) => _slidePage(
+        key: ValueKey<String>(state.uri.toString()),
+        child: const VendorRegistrationScreen(),
+      ),
+    ),
+    GoRoute(
+      path: '/vendor/register/success',
+      name: 'vendorRegisterSuccess',
+      pageBuilder: (context, state) => _slidePage(
+        key: ValueKey<String>(state.uri.toString()),
+        child: const VendorRegistrationSuccessScreen(),
       ),
     ),
     ShellRoute(
