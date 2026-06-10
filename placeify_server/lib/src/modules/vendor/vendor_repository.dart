@@ -6,6 +6,7 @@ import 'package:serverpod/serverpod.dart' hide Order;
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
+import 'product_image_processor.dart';
 
 class VendorStore {
   Future<VendorDashboard> getDashboard(Session session) async {
@@ -419,15 +420,23 @@ class VendorStore {
       );
     }
 
+    final processor = ProductImageProcessor();
+    final processed = await processor.processForCatalog(
+      session,
+      bytes,
+      sanitized,
+    );
+
     final uploadsDir = Directory('web/static/uploads');
     if (!uploadsDir.existsSync()) {
       uploadsDir.createSync(recursive: true);
     }
 
+    final baseName = sanitized.replaceAll(RegExp(r'\.[^.]+$'), '');
     final storedName =
-        '${DateTime.now().millisecondsSinceEpoch}_${sanitized.replaceAll(RegExp(r'\.[^.]+$'), '')}$extension';
+        '${DateTime.now().millisecondsSinceEpoch}_$baseName$processed.extension';
     final file = File('web/static/uploads/$storedName');
-    await file.writeAsBytes(bytes);
+    await file.writeAsBytes(processed.bytes);
     return '/uploads/$storedName';
   }
 

@@ -11,6 +11,7 @@ class ProductPhotoPicker extends StatelessWidget {
     required this.onTakePhoto,
     required this.onChooseGallery,
     required this.onRemove,
+    this.cameraAvailable = true,
     super.key,
   });
 
@@ -18,6 +19,7 @@ class ProductPhotoPicker extends StatelessWidget {
   final VoidCallback onTakePhoto;
   final VoidCallback onChooseGallery;
   final VoidCallback onRemove;
+  final bool cameraAvailable;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +47,7 @@ class ProductPhotoPicker extends StatelessWidget {
             clipBehavior: Clip.antiAlias,
             child: imageBytes == null
                 ? _EmptyPhotoState(
+                    cameraAvailable: cameraAvailable,
                     onTakePhoto: onTakePhoto,
                     onChooseGallery: onChooseGallery,
                   )
@@ -73,18 +76,20 @@ class ProductPhotoPicker extends StatelessWidget {
                         bottom: 12,
                         child: Row(
                           children: [
-                            Expanded(
-                              child: _PhotoActionButton(
-                                icon: Icons.photo_camera_outlined,
-                                label: 'Retake',
-                                onTap: onTakePhoto,
+                            if (cameraAvailable) ...[
+                              Expanded(
+                                child: _PhotoActionButton(
+                                  icon: Icons.photo_camera_outlined,
+                                  label: 'Retake',
+                                  onTap: onTakePhoto,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 10),
+                              const SizedBox(width: 10),
+                            ],
                             Expanded(
                               child: _PhotoActionButton(
                                 icon: Icons.photo_library_outlined,
-                                label: 'Gallery',
+                                label: cameraAvailable ? 'Gallery' : 'Replace',
                                 onTap: onChooseGallery,
                               ),
                             ),
@@ -102,10 +107,12 @@ class ProductPhotoPicker extends StatelessWidget {
 
 class _EmptyPhotoState extends StatelessWidget {
   const _EmptyPhotoState({
+    required this.cameraAvailable,
     required this.onTakePhoto,
     required this.onChooseGallery,
   });
 
+  final bool cameraAvailable;
   final VoidCallback onTakePhoto;
   final VoidCallback onChooseGallery;
 
@@ -117,51 +124,66 @@ class _EmptyPhotoState extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.add_a_photo_outlined,
+            cameraAvailable
+                ? Icons.add_a_photo_outlined
+                : Icons.photo_library_outlined,
             size: 40,
             color: AppColors.textMuted.withValues(alpha: 0.8),
           ),
           const SizedBox(height: 10),
-          const Text(
-            'Add a photo of your product',
+          Text(
+            cameraAvailable
+                ? 'Add a photo of your product'
+                : 'Choose a product photo',
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
-            'Take a picture or choose from your gallery',
+          Text(
+            cameraAvailable
+                ? 'Take a picture or choose from your gallery'
+                : 'No camera on this device — pick an image from your files',
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12,
               color: AppColors.textMuted,
             ),
           ),
           const SizedBox(height: 18),
-          Row(
-            children: [
-              Expanded(
-                child: _PhotoActionButton(
-                  icon: Icons.photo_camera_outlined,
-                  label: 'Camera',
-                  onTap: onTakePhoto,
-                  filled: true,
+          if (cameraAvailable)
+            Row(
+              children: [
+                Expanded(
+                  child: _PhotoActionButton(
+                    icon: Icons.photo_camera_outlined,
+                    label: 'Camera',
+                    onTap: onTakePhoto,
+                    filled: true,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _PhotoActionButton(
-                  icon: Icons.photo_library_outlined,
-                  label: 'Gallery',
-                  onTap: onChooseGallery,
-                  filled: true,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _PhotoActionButton(
+                    icon: Icons.photo_library_outlined,
+                    label: 'Gallery',
+                    onTap: onChooseGallery,
+                    filled: true,
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            )
+          else
+            _PhotoActionButton(
+              icon: Icons.photo_library_outlined,
+              label: 'Choose from gallery',
+              onTap: onChooseGallery,
+              filled: true,
+              expanded: true,
+            ),
         ],
       ),
     );
@@ -174,16 +196,18 @@ class _PhotoActionButton extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.filled = false,
+    this.expanded = false,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
   final bool filled;
+  final bool expanded;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
+    final button = Material(
       color: filled ? AppColors.espresso : Colors.black54,
       borderRadius: AppRadii.pill,
       child: InkWell(
@@ -196,12 +220,15 @@ class _PhotoActionButton extends StatelessWidget {
             children: [
               Icon(icon, size: 18, color: Colors.white),
               const SizedBox(width: 6),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ],
@@ -209,5 +236,10 @@ class _PhotoActionButton extends StatelessWidget {
         ),
       ),
     );
+
+    if (expanded) {
+      return SizedBox(width: double.infinity, child: button);
+    }
+    return button;
   }
 }

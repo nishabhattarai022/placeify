@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_radii.dart';
@@ -41,10 +42,12 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   String? _imageFileName;
   bool _isSubmitting = false;
   bool _showPhotoError = false;
+  bool _cameraAvailable = true;
 
   @override
   void initState() {
     super.initState();
+    _loadCameraAvailability();
     for (final controller in [
       _nameController,
       _descriptionController,
@@ -60,6 +63,19 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   }
 
   void _onFieldChanged() => setState(() {});
+
+  void _loadCameraAvailability() {
+    final available = _imageService.supportsCamera();
+    if (mounted) setState(() => _cameraAvailable = available);
+  }
+
+  void _applyPickedImage(PickedProductImage picked) {
+    setState(() {
+      _imageBytes = picked.bytes;
+      _imageFileName = picked.fileName;
+      _showPhotoError = false;
+    });
+  }
 
   @override
   void dispose() {
@@ -84,28 +100,71 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   }
 
   Future<void> _pickFromCamera() async {
+    if (!_cameraAvailable) {
+      if (mounted) {
+        PlaceifyToast.show(
+          context,
+          'No camera on this device — use Gallery to pick a photo',
+        );
+      }
+      return;
+    }
+
     try {
       final picked = await _imageService.pickFromCamera();
       if (picked == null || !mounted) return;
-      setState(() {
-        _imageBytes = picked.bytes;
-        _imageFileName = picked.fileName;
-        _showPhotoError = false;
-      });
+      _applyPickedImage(picked);
+    } on CameraPermissionException catch (error) {
+      if (!mounted) return;
+      if (error.permanentlyDenied) {
+        final openSettings = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Camera access needed'),
+            content: const Text(
+              'Allow camera access in Settings to photograph your products.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Open Settings'),
+              ),
+            ],
+          ),
+        );
+        if (openSettings == true) {
+          await openAppSettings();
+        }
+      } else {
+        PlaceifyToast.show(context, 'Camera permission is required to take photos');
+      }
     } catch (_) {
-      if (mounted) PlaceifyToast.show(context, 'Could not open camera');
+      if (mounted) {
+        PlaceifyToast.show(
+          context,
+          'Could not open camera. Try again or use Gallery.',
+        );
+      }
     }
   }
 
   Future<void> _pickFromGallery() async {
     try {
+      final gallerySupported = _imageService.supportsGallery();
+      if (!gallerySupported) {
+        if (mounted) {
+          PlaceifyToast.show(context, 'Photo picker is not available on this device');
+        }
+        return;
+      }
+
       final picked = await _imageService.pickFromGallery();
       if (picked == null || !mounted) return;
-      setState(() {
-        _imageBytes = picked.bytes;
-        _imageFileName = picked.fileName;
-        _showPhotoError = false;
-      });
+      _applyPickedImage(picked);
     } catch (_) {
       if (mounted) PlaceifyToast.show(context, 'Could not open gallery');
     }
@@ -266,6 +325,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                             ),
                             child: ProductPhotoPicker(
                               imageBytes: _imageBytes,
+                              cameraAvailable: _cameraAvailable,
                               onTakePhoto: _pickFromCamera,
                               onChooseGallery: _pickFromGallery,
                               onRemove: _removeImage,
