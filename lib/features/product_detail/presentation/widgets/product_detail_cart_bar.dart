@@ -79,7 +79,7 @@ class ProductDetailPillButton extends StatelessWidget {
               _ActionIconChip(
                 icon: leadingIcon,
                 size: ProductDetailTokens.cartBarActionIconChipSize,
-                iconSize: 16,
+                iconSize: ProductDetailTokens.cartBarActionLeadingIconSize,
               ),
               Expanded(
                 child: Padding(
@@ -105,7 +105,7 @@ class ProductDetailPillButton extends StatelessWidget {
               _ActionIconChip(
                 icon: Icons.arrow_forward,
                 size: ProductDetailTokens.cartBarActionIconChipSize,
-                iconSize: 14,
+                iconSize: ProductDetailTokens.cartBarActionArrowIconSize,
               ),
             ],
           ),
