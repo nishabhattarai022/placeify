@@ -13,7 +13,7 @@ void main() {
   });
 
   test('mock vendor repository has dashboard data', () {
-    expect(MockVendorRepository.orders.length, 4);
+    expect(MockVendorRepository.orders.length, 9);
     expect(MockVendorRepository.topProducts.length, 3);
     expect(MockVendorRepository.revenue, 8400);
   });

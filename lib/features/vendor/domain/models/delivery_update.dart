@@ -12,6 +12,7 @@ abstract class DeliveryUpdate with _$DeliveryUpdate {
     required DeliveryStage stage,
     required String note,
     required DateTime updatedAt,
+    String? photoProofPath,
   }) = _DeliveryUpdate;
 
   factory DeliveryUpdate.fromJson(Map<String, dynamic> json) =>

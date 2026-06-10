@@ -1,9 +1,11 @@
+import 'package:placeify/core/services/background_removal_service.dart';
 import 'package:placeify/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_product.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_product_form_state.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_product_image_item.dart';
 import 'package:placeify/features/vendor/presentation/providers/vendor_products_provider.dart';
 import 'package:placeify/features/vendor/presentation/providers/vendor_profile_provider.dart';
+import 'package:placeify/features/vendor/presentation/providers/background_removal_cache_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'vendor_product_form_provider.g.dart';
@@ -123,6 +125,90 @@ class VendorProductForm extends _$VendorProductForm {
     final index = state.images.indexWhere((image) => image.id == imageId);
     if (index <= 0) return;
     reorderImages(index, 0);
+  }
+
+  void _updateImage(String imageId, VendorProductImageItem Function(VendorProductImageItem) updater) {
+    final images = state.images.map((image) {
+      if (image.id != imageId) return image;
+      return updater(image);
+    }).toList();
+    state = state.copyWith(images: images);
+  }
+
+  Future<String?> removeBackground(String imageId) async {
+    final index = state.images.indexWhere((i) => i.id == imageId);
+    if (index == -1) return 'Image not found.';
+    final image = state.images[index];
+    if (!image.isLocal || image.localPath == null) {
+      return 'Only local photos support background removal.';
+    }
+
+    final cache = ref.read(backgroundRemovalCacheProvider.notifier);
+    final cached = cache.getProcessedPath(imageId);
+    if (cached != null) {
+      _updateImage(
+        imageId,
+        (item) => item.copyWith(processedLocalPath: cached, clearBgError: true),
+      );
+      return null;
+    }
+
+    _updateImage(
+      imageId,
+      (item) => item.copyWith(isProcessingBg: true, clearBgError: true),
+    );
+
+    final service = BackgroundRemovalService();
+    try {
+      final result = await service.removeBackground(sourcePath: image.localPath!);
+      cache.cache(imageId, result.processedPath);
+      _updateImage(
+        imageId,
+        (item) => item.copyWith(
+          processedLocalPath: result.processedPath,
+          isProcessingBg: false,
+        ),
+      );
+      return null;
+    } on BackgroundRemovalException catch (e) {
+      _updateImage(
+        imageId,
+        (item) => item.copyWith(
+          isProcessingBg: false,
+          bgRemovalError: e.message,
+        ),
+      );
+      return e.message;
+    } catch (_) {
+      _updateImage(
+        imageId,
+        (item) => item.copyWith(
+          isProcessingBg: false,
+          bgRemovalError: 'Background removal failed.',
+        ),
+      );
+      return 'Background removal failed.';
+    }
+  }
+
+  void cancelBackgroundRemoval(String imageId) {
+    ref.read(backgroundRemovalCacheProvider.notifier).remove(imageId);
+    _updateImage(
+      imageId,
+      (item) => item.copyWith(clearProcessedPath: true, clearBgError: true),
+    );
+  }
+
+  void restoreCachedBackgroundRemovals() {
+    final cache = ref.read(backgroundRemovalCacheProvider);
+    if (cache.isEmpty) return;
+
+    final images = state.images.map((image) {
+      final cached = cache[image.id];
+      if (cached == null) return image;
+      return image.copyWith(processedLocalPath: cached);
+    }).toList();
+    state = state.copyWith(images: images);
   }
 
   void toggleDimensionUnit() {

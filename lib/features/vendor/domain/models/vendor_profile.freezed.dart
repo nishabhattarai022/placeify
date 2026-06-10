@@ -21,6 +21,11 @@ mixin _$VendorProfile {
   String get address;
   String get category;
   String? get logoUrl;
+  String get bio;
+  String? get bannerUrl;
+  String get instagramHandle;
+  String get facebookHandle;
+  String get operatingHours;
   DateTime get createdAt;
 
   /// Create a copy of VendorProfile
@@ -48,18 +53,40 @@ mixin _$VendorProfile {
             (identical(other.category, category) ||
                 other.category == category) &&
             (identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl) &&
+            (identical(other.bio, bio) || other.bio == bio) &&
+            (identical(other.bannerUrl, bannerUrl) ||
+                other.bannerUrl == bannerUrl) &&
+            (identical(other.instagramHandle, instagramHandle) ||
+                other.instagramHandle == instagramHandle) &&
+            (identical(other.facebookHandle, facebookHandle) ||
+                other.facebookHandle == facebookHandle) &&
+            (identical(other.operatingHours, operatingHours) ||
+                other.operatingHours == operatingHours) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, businessName, email, phone,
-      address, category, logoUrl, createdAt);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      businessName,
+      email,
+      phone,
+      address,
+      category,
+      logoUrl,
+      bio,
+      bannerUrl,
+      instagramHandle,
+      facebookHandle,
+      operatingHours,
+      createdAt);
 
   @override
   String toString() {
-    return 'VendorProfile(id: $id, businessName: $businessName, email: $email, phone: $phone, address: $address, category: $category, logoUrl: $logoUrl, createdAt: $createdAt)';
+    return 'VendorProfile(id: $id, businessName: $businessName, email: $email, phone: $phone, address: $address, category: $category, logoUrl: $logoUrl, bio: $bio, bannerUrl: $bannerUrl, instagramHandle: $instagramHandle, facebookHandle: $facebookHandle, operatingHours: $operatingHours, createdAt: $createdAt)';
   }
 }
 
@@ -77,6 +104,11 @@ abstract mixin class $VendorProfileCopyWith<$Res> {
       String address,
       String category,
       String? logoUrl,
+      String bio,
+      String? bannerUrl,
+      String instagramHandle,
+      String facebookHandle,
+      String operatingHours,
       DateTime createdAt});
 }
 
@@ -100,6 +132,11 @@ class _$VendorProfileCopyWithImpl<$Res>
     Object? address = null,
     Object? category = null,
     Object? logoUrl = freezed,
+    Object? bio = null,
+    Object? bannerUrl = freezed,
+    Object? instagramHandle = null,
+    Object? facebookHandle = null,
+    Object? operatingHours = null,
     Object? createdAt = null,
   }) {
     return _then(_self.copyWith(
@@ -131,6 +168,26 @@ class _$VendorProfileCopyWithImpl<$Res>
           ? _self.logoUrl
           : logoUrl // ignore: cast_nullable_to_non_nullable
               as String?,
+      bio: null == bio
+          ? _self.bio
+          : bio // ignore: cast_nullable_to_non_nullable
+              as String,
+      bannerUrl: freezed == bannerUrl
+          ? _self.bannerUrl
+          : bannerUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      instagramHandle: null == instagramHandle
+          ? _self.instagramHandle
+          : instagramHandle // ignore: cast_nullable_to_non_nullable
+              as String,
+      facebookHandle: null == facebookHandle
+          ? _self.facebookHandle
+          : facebookHandle // ignore: cast_nullable_to_non_nullable
+              as String,
+      operatingHours: null == operatingHours
+          ? _self.operatingHours
+          : operatingHours // ignore: cast_nullable_to_non_nullable
+              as String,
       createdAt: null == createdAt
           ? _self.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -240,6 +297,11 @@ extension VendorProfilePatterns on VendorProfile {
             String address,
             String category,
             String? logoUrl,
+            String bio,
+            String? bannerUrl,
+            String instagramHandle,
+            String facebookHandle,
+            String operatingHours,
             DateTime createdAt)?
         $default, {
     required TResult orElse(),
@@ -247,8 +309,20 @@ extension VendorProfilePatterns on VendorProfile {
     final _that = this;
     switch (_that) {
       case _VendorProfile() when $default != null:
-        return $default(_that.id, _that.businessName, _that.email, _that.phone,
-            _that.address, _that.category, _that.logoUrl, _that.createdAt);
+        return $default(
+            _that.id,
+            _that.businessName,
+            _that.email,
+            _that.phone,
+            _that.address,
+            _that.category,
+            _that.logoUrl,
+            _that.bio,
+            _that.bannerUrl,
+            _that.instagramHandle,
+            _that.facebookHandle,
+            _that.operatingHours,
+            _that.createdAt);
       case _:
         return orElse();
     }
@@ -277,14 +351,31 @@ extension VendorProfilePatterns on VendorProfile {
             String address,
             String category,
             String? logoUrl,
+            String bio,
+            String? bannerUrl,
+            String instagramHandle,
+            String facebookHandle,
+            String operatingHours,
             DateTime createdAt)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _VendorProfile():
-        return $default(_that.id, _that.businessName, _that.email, _that.phone,
-            _that.address, _that.category, _that.logoUrl, _that.createdAt);
+        return $default(
+            _that.id,
+            _that.businessName,
+            _that.email,
+            _that.phone,
+            _that.address,
+            _that.category,
+            _that.logoUrl,
+            _that.bio,
+            _that.bannerUrl,
+            _that.instagramHandle,
+            _that.facebookHandle,
+            _that.operatingHours,
+            _that.createdAt);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -312,14 +403,31 @@ extension VendorProfilePatterns on VendorProfile {
             String address,
             String category,
             String? logoUrl,
+            String bio,
+            String? bannerUrl,
+            String instagramHandle,
+            String facebookHandle,
+            String operatingHours,
             DateTime createdAt)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _VendorProfile() when $default != null:
-        return $default(_that.id, _that.businessName, _that.email, _that.phone,
-            _that.address, _that.category, _that.logoUrl, _that.createdAt);
+        return $default(
+            _that.id,
+            _that.businessName,
+            _that.email,
+            _that.phone,
+            _that.address,
+            _that.category,
+            _that.logoUrl,
+            _that.bio,
+            _that.bannerUrl,
+            _that.instagramHandle,
+            _that.facebookHandle,
+            _that.operatingHours,
+            _that.createdAt);
       case _:
         return null;
     }
@@ -337,6 +445,11 @@ class _VendorProfile implements VendorProfile {
       required this.address,
       required this.category,
       this.logoUrl,
+      this.bio = '',
+      this.bannerUrl,
+      this.instagramHandle = '',
+      this.facebookHandle = '',
+      this.operatingHours = '',
       required this.createdAt});
   factory _VendorProfile.fromJson(Map<String, dynamic> json) =>
       _$VendorProfileFromJson(json);
@@ -355,6 +468,20 @@ class _VendorProfile implements VendorProfile {
   final String category;
   @override
   final String? logoUrl;
+  @override
+  @JsonKey()
+  final String bio;
+  @override
+  final String? bannerUrl;
+  @override
+  @JsonKey()
+  final String instagramHandle;
+  @override
+  @JsonKey()
+  final String facebookHandle;
+  @override
+  @JsonKey()
+  final String operatingHours;
   @override
   final DateTime createdAt;
 
@@ -387,18 +514,40 @@ class _VendorProfile implements VendorProfile {
             (identical(other.category, category) ||
                 other.category == category) &&
             (identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl) &&
+            (identical(other.bio, bio) || other.bio == bio) &&
+            (identical(other.bannerUrl, bannerUrl) ||
+                other.bannerUrl == bannerUrl) &&
+            (identical(other.instagramHandle, instagramHandle) ||
+                other.instagramHandle == instagramHandle) &&
+            (identical(other.facebookHandle, facebookHandle) ||
+                other.facebookHandle == facebookHandle) &&
+            (identical(other.operatingHours, operatingHours) ||
+                other.operatingHours == operatingHours) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, businessName, email, phone,
-      address, category, logoUrl, createdAt);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      businessName,
+      email,
+      phone,
+      address,
+      category,
+      logoUrl,
+      bio,
+      bannerUrl,
+      instagramHandle,
+      facebookHandle,
+      operatingHours,
+      createdAt);
 
   @override
   String toString() {
-    return 'VendorProfile(id: $id, businessName: $businessName, email: $email, phone: $phone, address: $address, category: $category, logoUrl: $logoUrl, createdAt: $createdAt)';
+    return 'VendorProfile(id: $id, businessName: $businessName, email: $email, phone: $phone, address: $address, category: $category, logoUrl: $logoUrl, bio: $bio, bannerUrl: $bannerUrl, instagramHandle: $instagramHandle, facebookHandle: $facebookHandle, operatingHours: $operatingHours, createdAt: $createdAt)';
   }
 }
 
@@ -418,6 +567,11 @@ abstract mixin class _$VendorProfileCopyWith<$Res>
       String address,
       String category,
       String? logoUrl,
+      String bio,
+      String? bannerUrl,
+      String instagramHandle,
+      String facebookHandle,
+      String operatingHours,
       DateTime createdAt});
 }
 
@@ -441,6 +595,11 @@ class __$VendorProfileCopyWithImpl<$Res>
     Object? address = null,
     Object? category = null,
     Object? logoUrl = freezed,
+    Object? bio = null,
+    Object? bannerUrl = freezed,
+    Object? instagramHandle = null,
+    Object? facebookHandle = null,
+    Object? operatingHours = null,
     Object? createdAt = null,
   }) {
     return _then(_VendorProfile(
@@ -472,6 +631,26 @@ class __$VendorProfileCopyWithImpl<$Res>
           ? _self.logoUrl
           : logoUrl // ignore: cast_nullable_to_non_nullable
               as String?,
+      bio: null == bio
+          ? _self.bio
+          : bio // ignore: cast_nullable_to_non_nullable
+              as String,
+      bannerUrl: freezed == bannerUrl
+          ? _self.bannerUrl
+          : bannerUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      instagramHandle: null == instagramHandle
+          ? _self.instagramHandle
+          : instagramHandle // ignore: cast_nullable_to_non_nullable
+              as String,
+      facebookHandle: null == facebookHandle
+          ? _self.facebookHandle
+          : facebookHandle // ignore: cast_nullable_to_non_nullable
+              as String,
+      operatingHours: null == operatingHours
+          ? _self.operatingHours
+          : operatingHours // ignore: cast_nullable_to_non_nullable
+              as String,
       createdAt: null == createdAt
           ? _self.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable

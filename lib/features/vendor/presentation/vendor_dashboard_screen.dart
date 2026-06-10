@@ -11,6 +11,7 @@ import 'package:placeify/core/widgets/shimmer_loader.dart';
 import 'package:placeify/features/vendor/domain/constants/vendor_routes.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_dashboard_data.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_metric.dart';
+import 'package:placeify/features/vendor/presentation/providers/vendor_notification_badge_provider.dart';
 import 'package:placeify/features/vendor/presentation/providers/vendor_profile_provider.dart';
 import 'package:placeify/features/vendor/presentation/providers/vendor_stats_provider.dart';
 import 'package:placeify/features/vendor/presentation/widgets/metric_card.dart';
@@ -18,7 +19,9 @@ import 'package:placeify/features/vendor/presentation/widgets/revenue_card.dart'
 import 'package:placeify/features/vendor/presentation/widgets/top_products_chart.dart';
 import 'package:placeify/features/vendor/presentation/widgets/upload_product_button.dart';
 import 'package:placeify/features/vendor/presentation/widgets/vendor_dashboard_fab.dart';
+import 'package:placeify/features/vendor/presentation/widgets/vendor_onboarding_checklist.dart';
 import 'package:placeify/features/vendor/presentation/widgets/vendor_order_row.dart';
+import 'package:placeify/features/vendor/presentation/widgets/vendor_reviews_section.dart';
 
 class VendorDashboardScreen extends ConsumerStatefulWidget {
   const VendorDashboardScreen({super.key});
@@ -115,18 +118,26 @@ class _VendorDashboardScreenState extends ConsumerState<VendorDashboardScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 14, 24, 8),
-              child: Column(
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Good morning, ${_greetingName(profileAsync.value?.businessName)}',
-                    style: AppTypography.vendorGreeting,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Good morning, ${_greetingName(profileAsync.value?.businessName)}',
+                          style: AppTypography.vendorGreeting,
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Vendor Dashboard',
+                          style: AppTypography.sectionTitle,
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Vendor Dashboard',
-                    style: AppTypography.sectionTitle,
-                  ),
+                  const _DashboardNotificationButton(),
                 ],
               ),
             ),
@@ -208,6 +219,18 @@ class _DashboardBody extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
+          const VendorOnboardingChecklist(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Insights', style: AppTypography.sectionTitle),
+              GestureDetector(
+                onTap: () => context.push(VendorRoutes.analytics),
+                child: const Text('Analytics', style: AppTypography.seeAll),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
           const UploadProductButton(),
           const SizedBox(height: 20),
           Row(
@@ -233,6 +256,8 @@ class _DashboardBody extends StatelessWidget {
             )
           else
             ...data.recentOrders.map((order) => VendorOrderRow(order: order)),
+          const SizedBox(height: 20),
+          const VendorReviewsSection(),
           const SizedBox(height: 20),
           TopProductsChart(products: data.topProducts),
           const SizedBox(height: BottomNavTokens.scrollBottomPadding),
@@ -327,6 +352,64 @@ class _DashboardError extends StatelessWidget {
             TextButton(onPressed: onRetry, child: const Text('Retry')),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _DashboardNotificationButton extends ConsumerWidget {
+  const _DashboardNotificationButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final badgeCount = ref.watch(vendorNotificationBadgeCountProvider);
+
+    return GestureDetector(
+      onTap: () => context.push(VendorRoutes.notifications),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: AppColors.warmWhite,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.creamDark, width: 1.5),
+            ),
+            alignment: Alignment.center,
+            child: const Icon(
+              Icons.notifications_outlined,
+              size: 22,
+              color: AppColors.vendorForest,
+            ),
+          ),
+          if (badgeCount > 0)
+            Positioned(
+              top: -2,
+              right: -2,
+              child: Container(
+                constraints: const BoxConstraints(minWidth: 18),
+                padding: const EdgeInsets.symmetric(horizontal: 5),
+                height: 18,
+                decoration: BoxDecoration(
+                  color: AppColors.coral,
+                  borderRadius: BorderRadius.circular(9),
+                  border: Border.all(color: AppColors.cream, width: 1.5),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  badgeCount > 9 ? '9+' : badgeCount.toString(),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    height: 1,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

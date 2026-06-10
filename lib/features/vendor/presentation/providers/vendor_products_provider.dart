@@ -105,6 +105,34 @@ class VendorProducts extends _$VendorProducts {
     }
   }
 
+  Future<String?> applyBulkDiscount(
+    List<String> productIds,
+    double discountPercent,
+  ) async {
+    if (productIds.isEmpty) return 'No products selected.';
+
+    final products = state.value;
+    if (products == null) return 'Products are still loading.';
+
+    final ids = productIds.toSet();
+    final targets = products.where((product) => ids.contains(product.id));
+    if (targets.isEmpty) return 'Selected products not found.';
+
+    for (final product in targets) {
+      final listPrice = product.originalPrice ?? product.price;
+      final salePrice = listPrice * (1 - discountPercent / 100);
+      final updated = product.copyWith(
+        price: salePrice,
+        originalPrice: listPrice,
+        offerLabel: '${discountPercent.round()}% off',
+      );
+      final error = await updateProduct(updated);
+      if (error != null) return error;
+    }
+
+    return null;
+  }
+
   Future<String?> deleteProducts(List<String> productIds) async {
     if (productIds.isEmpty) return 'No products selected.';
 

@@ -1,4 +1,5 @@
 import 'package:placeify/features/vendor/data/config/vendor_mock_config.dart';
+import 'package:placeify/features/vendor/domain/enums/delivery_stage.dart';
 import 'package:placeify/features/vendor/domain/enums/order_status.dart';
 import 'package:placeify/features/vendor/domain/models/delivery_update.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_notification.dart';
@@ -20,12 +21,11 @@ class MockVendorRepository implements VendorRepository {
   /// When true, [acceptOrder] and [rejectOrder] throw after the network delay.
   bool simulateOrderActionError = false;
 
-  /// Legacy dashboard static data — retained for backward compatibility.
   static const revenue = VendorMockConfig.revenue;
 
   static const metrics = VendorMockConfig.metrics;
 
-  static final orders = VendorMockConfig.legacyOrders;
+  static final orders = VendorMockConfig.orders;
 
   static const topProducts = VendorMockConfig.topProducts;
 
@@ -35,6 +35,24 @@ class MockVendorRepository implements VendorRepository {
   Future<VendorProfile?> getProfile(String vendorId) async {
     await Future<void>.delayed(const Duration(milliseconds: 200));
     return VendorMockConfig.profileFor(vendorId);
+  }
+
+  /// When true, [updateProfile] throws after the network delay.
+  bool simulateProfileUpdateError = false;
+
+  @override
+  Future<VendorProfile> updateProfile(VendorProfile profile) async {
+    await Future<void>.delayed(const Duration(milliseconds: 350));
+
+    if (simulateProfileUpdateError) {
+      throw Exception('Could not save profile. Check your connection and try again.');
+    }
+
+    final updated = VendorMockConfig.updateProfile(profile);
+    if (updated == null) {
+      throw Exception('Vendor profile not found.');
+    }
+    return updated;
   }
 
   @override
@@ -119,6 +137,74 @@ class MockVendorRepository implements VendorRepository {
   Future<List<DeliveryUpdate>> getDeliveryUpdates(String orderId) async {
     await Future<void>.delayed(const Duration(milliseconds: 80));
     return VendorMockConfig.deliveryUpdatesFor(orderId);
+  }
+
+  @override
+  Future<DeliveryUpdate> submitDeliveryUpdate(
+    String vendorId,
+    String orderId, {
+    required DeliveryStage stage,
+    String? note,
+    String? photoProofPath,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+
+    final order = VendorMockConfig.orderById(vendorId, orderId);
+    if (order == null) {
+      throw VendorOrderActionException('Order not found.');
+    }
+
+    if (order.status == OrderStatus.pending) {
+      throw VendorOrderActionException(
+        'Accept the order before posting delivery updates.',
+      );
+    }
+
+    if (order.status == OrderStatus.rejected ||
+        order.status == OrderStatus.cancelled) {
+      throw VendorOrderActionException(
+        'Delivery updates are not available for this order.',
+      );
+    }
+
+    if (order.status == OrderStatus.delivered) {
+      throw VendorOrderActionException('This order is already delivered.');
+    }
+
+    final expected = VendorMockConfig.nextDeliveryStage(orderId);
+    if (expected == null) {
+      throw VendorOrderActionException('All delivery stages are complete.');
+    }
+
+    if (stage != expected) {
+      throw VendorOrderActionException(
+        'Updates must advance one stage at a time. Next stage: ${_stageLabel(expected)}.',
+      );
+    }
+
+    final update = VendorMockConfig.submitDeliveryUpdate(
+      vendorId: vendorId,
+      orderId: orderId,
+      stage: stage,
+      note: note,
+      photoProofPath: photoProofPath,
+    );
+
+    if (update == null) {
+      throw VendorOrderActionException('Could not save delivery update.');
+    }
+
+    return update;
+  }
+
+  static String _stageLabel(DeliveryStage stage) {
+    return switch (stage) {
+      DeliveryStage.orderPlaced => 'Order Placed',
+      DeliveryStage.packed => 'Packed',
+      DeliveryStage.shipped => 'Shipped',
+      DeliveryStage.outForDelivery => 'Out for Delivery',
+      DeliveryStage.delivered => 'Delivered',
+    };
   }
 
   @override

@@ -43,6 +43,7 @@ class ProfileTextInput extends StatelessWidget {
     this.hint,
     this.obscureText = false,
     this.onChanged,
+    this.onEditingComplete,
     this.suffix,
     this.keyboardType,
     this.maxLines = 1,
@@ -54,6 +55,7 @@ class ProfileTextInput extends StatelessWidget {
   final String? hint;
   final bool obscureText;
   final ValueChanged<String>? onChanged;
+  final VoidCallback? onEditingComplete;
   final Widget? suffix;
   final TextInputType? keyboardType;
   final int maxLines;
@@ -65,6 +67,7 @@ class ProfileTextInput extends StatelessWidget {
       controller: controller,
       obscureText: obscureText,
       onChanged: onChanged,
+      onEditingComplete: onEditingComplete,
       keyboardType: keyboardType,
       maxLines: maxLines,
       inputFormatters: inputFormatters,

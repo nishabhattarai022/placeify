@@ -13,6 +13,7 @@ import '../../../core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import '../../../core/widgets/shimmer_loader.dart';
 import '../domain/models/vendor_product.dart';
 import 'providers/vendor_products_provider.dart';
+import 'widgets/bulk_discount_sheet.dart';
 import 'widgets/vendor_product_category_filter_sheet.dart';
 import 'widgets/vendor_product_delete_sheet.dart';
 import 'widgets/vendor_product_grid_tile.dart';
@@ -136,6 +137,18 @@ class _VendorProductsScreenState extends ConsumerState<VendorProductsScreen> {
       count: _selectedIds.length,
       productIds: _selectedIds.toList(),
       onDeleted: _exitSelectionMode,
+    );
+  }
+
+  Future<void> _applyBulkDiscount() async {
+    if (_selectedIds.isEmpty) return;
+
+    await BulkDiscountSheet.show(
+      context,
+      ref,
+      count: _selectedIds.length,
+      productIds: _selectedIds.toList(),
+      onApplied: _exitSelectionMode,
     );
   }
 
@@ -281,6 +294,7 @@ class _VendorProductsScreenState extends ConsumerState<VendorProductsScreen> {
             if (_selectionMode)
               _BulkActionBar(
                 count: _selectedIds.length,
+                onDiscount: _applyBulkDiscount,
                 onDelete: _confirmDelete,
               ),
           ],
@@ -599,14 +613,18 @@ class _ActiveFilterChip extends StatelessWidget {
 class _BulkActionBar extends StatelessWidget {
   const _BulkActionBar({
     required this.count,
+    required this.onDiscount,
     required this.onDelete,
   });
 
   final int count;
+  final VoidCallback onDiscount;
   final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
+    final enabled = count > 0;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
       decoration: BoxDecoration(
@@ -624,31 +642,66 @@ class _BulkActionBar extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        child: GestureDetector(
-          onTap: count == 0
-              ? null
-              : () {
-                  HapticService.medium();
-                  onDelete();
-                },
-          child: Container(
-            height: 48,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: count == 0
-                  ? AppColors.rust.withValues(alpha: 0.35)
-                  : AppColors.rust,
-              borderRadius: AppRadii.pill,
-            ),
-            child: Text(
-              count == 0 ? 'Select products to delete' : 'Delete selected',
-              style: GoogleFonts.dmSans(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.warmWhite,
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: enabled
+                    ? () {
+                        HapticService.medium();
+                        onDiscount();
+                      }
+                    : null,
+                child: Container(
+                  height: 48,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: enabled
+                        ? AppColors.accent
+                        : AppColors.accent.withValues(alpha: 0.35),
+                    borderRadius: AppRadii.pill,
+                  ),
+                  child: Text(
+                    'Apply discount',
+                    style: GoogleFonts.dmSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.warmWhite,
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: GestureDetector(
+                onTap: enabled
+                    ? () {
+                        HapticService.medium();
+                        onDelete();
+                      }
+                    : null,
+                child: Container(
+                  height: 48,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: enabled
+                        ? AppColors.rust
+                        : AppColors.rust.withValues(alpha: 0.35),
+                    borderRadius: AppRadii.pill,
+                  ),
+                  child: Text(
+                    'Delete',
+                    style: GoogleFonts.dmSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.warmWhite,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

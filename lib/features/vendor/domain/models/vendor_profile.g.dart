@@ -15,6 +15,11 @@ _VendorProfile _$VendorProfileFromJson(Map<String, dynamic> json) =>
       address: json['address'] as String,
       category: json['category'] as String,
       logoUrl: json['logoUrl'] as String?,
+      bio: json['bio'] as String? ?? '',
+      bannerUrl: json['bannerUrl'] as String?,
+      instagramHandle: json['instagramHandle'] as String? ?? '',
+      facebookHandle: json['facebookHandle'] as String? ?? '',
+      operatingHours: json['operatingHours'] as String? ?? '',
       createdAt: DateTime.parse(json['createdAt'] as String),
     );
 
@@ -27,5 +32,10 @@ Map<String, dynamic> _$VendorProfileToJson(_VendorProfile instance) =>
       'address': instance.address,
       'category': instance.category,
       'logoUrl': instance.logoUrl,
+      'bio': instance.bio,
+      'bannerUrl': instance.bannerUrl,
+      'instagramHandle': instance.instagramHandle,
+      'facebookHandle': instance.facebookHandle,
+      'operatingHours': instance.operatingHours,
       'createdAt': instance.createdAt.toIso8601String(),
     };

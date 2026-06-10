@@ -7,26 +7,18 @@ import '../../../../core/constants/app_radii.dart';
 import '../../../../core/constants/app_shadows.dart';
 import '../../../../core/widgets/animated_scale_tap.dart';
 
-class UploadProductButton extends StatefulWidget {
+class UploadProductButton extends StatelessWidget {
   const UploadProductButton({super.key});
-
-  @override
-  State<UploadProductButton> createState() => _UploadProductButtonState();
-}
-
-class _UploadProductButtonState extends State<UploadProductButton> {
-  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
     return AnimatedScaleTap(
       pressScale: 0.97,
       onTap: () => context.push(VendorRoutes.productsUpload),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+      child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         decoration: BoxDecoration(
-          color: _pressed ? const Color(0xFF3D2215) : AppColors.espresso,
+          color: AppColors.espresso,
           borderRadius: AppRadii.md,
           boxShadow: AppShadows.soft,
         ),

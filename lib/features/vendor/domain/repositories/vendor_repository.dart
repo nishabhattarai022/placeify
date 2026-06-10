@@ -1,3 +1,4 @@
+import 'package:placeify/features/vendor/domain/enums/delivery_stage.dart';
 import 'package:placeify/features/vendor/domain/models/delivery_update.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_notification.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_order.dart';
@@ -7,6 +8,8 @@ import 'package:placeify/features/vendor/domain/models/vendor_stats.dart';
 
 abstract interface class VendorRepository {
   Future<VendorProfile?> getProfile(String vendorId);
+
+  Future<VendorProfile> updateProfile(VendorProfile profile);
 
   Future<VendorStats> getStats(String vendorId);
 
@@ -23,6 +26,14 @@ abstract interface class VendorRepository {
   });
 
   Future<List<DeliveryUpdate>> getDeliveryUpdates(String orderId);
+
+  Future<DeliveryUpdate> submitDeliveryUpdate(
+    String vendorId,
+    String orderId, {
+    required DeliveryStage stage,
+    String? note,
+    String? photoProofPath,
+  });
 
   Future<List<VendorNotification>> getNotifications(String vendorId);
 

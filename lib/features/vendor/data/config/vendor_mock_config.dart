@@ -4,7 +4,6 @@ import 'package:placeify/features/vendor/domain/enums/notification_type.dart';
 import 'package:placeify/features/vendor/domain/enums/order_status.dart';
 import 'package:placeify/features/vendor/domain/models/delivery_update.dart';
 import 'package:placeify/features/vendor/domain/enums/payment_status.dart';
-import 'package:placeify/features/vendor/domain/models/order.dart' as legacy;
 import 'package:placeify/features/vendor/domain/models/vendor_metric.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_notification.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_order.dart';
@@ -33,46 +32,6 @@ abstract final class VendorMockConfig {
       trendLabel: 'Active',
       trendColor: AppColors.sage,
       iconPath: 'assets/icons/ic_check_circle.svg',
-    ),
-  ];
-
-  static final legacyOrders = [
-    legacy.Order(
-      id: 'o1',
-      orderNumber: '4821',
-      productName: 'Astra Chair',
-      productSvgIconPath: 'assets/icons/ic_chair.svg',
-      quantity: 2,
-      date: DateTime(2026, 5, 15),
-      status: legacy.OrderStatus.pending,
-    ),
-    legacy.Order(
-      id: 'o2',
-      orderNumber: '4820',
-      productName: 'Brixon Chair',
-      productSvgIconPath: 'assets/icons/ic_sofa.svg',
-      quantity: 1,
-      date: DateTime(2026, 5, 14),
-      status: legacy.OrderStatus.shipped,
-    ),
-    legacy.Order(
-      id: 'o3',
-      orderNumber: '',
-      productName: 'Custom Walnut Desk',
-      productSvgIconPath: 'assets/icons/ic_table.svg',
-      quantity: 1,
-      date: DateTime(2026, 5, 14),
-      status: legacy.OrderStatus.customRequest,
-      requestMeta: 'Request · Anisha J.',
-    ),
-    legacy.Order(
-      id: 'o4',
-      orderNumber: '4819',
-      productName: 'Odin 75',
-      productSvgIconPath: 'assets/icons/ic_chair.svg',
-      quantity: 4,
-      date: DateTime(2026, 5, 13),
-      status: legacy.OrderStatus.shipped,
     ),
   ];
 
@@ -106,13 +65,19 @@ abstract final class VendorMockConfig {
   /// @deprecated Use [revenueSeries].
   static const barHeights = revenueSeries;
 
-  static final profile = VendorProfile(
+  static var profile = VendorProfile(
     id: demoVendorId,
     businessName: 'Harmony Home Furnishings',
     email: 'vendor@placeify.demo',
     phone: '+977 9800000000',
     address: 'Lazimpat, Kathmandu',
     category: 'Furniture',
+    bio:
+        'Curated modern furniture and decor for Nepali homes. Custom orders welcome.',
+    bannerUrl: null,
+    instagramHandle: 'harmonyhome.np',
+    facebookHandle: 'harmonyhomefurnishings',
+    operatingHours: 'Sun–Fri 10:00–18:00, Sat 11:00–16:00',
     createdAt: DateTime(2025, 11, 1),
   );
 
@@ -450,11 +415,28 @@ abstract final class VendorMockConfig {
       type: NotificationType.order,
       title: 'New order received',
       body: 'Order #4821 for 2× Astra Chair is awaiting confirmation.',
-      createdAt: DateTime(2026, 5, 15, 9, 30),
+      createdAt: DateTime(2026, 6, 10, 9, 30),
       relatedId: 'vo1',
     ),
     VendorNotification(
       id: 'n2',
+      type: NotificationType.order,
+      title: 'Order accepted reminder',
+      body: 'Order #4822 from Priya Karki is still pending your response.',
+      createdAt: DateTime(2026, 6, 9, 16, 45),
+      relatedId: 'vo4',
+    ),
+    VendorNotification(
+      id: 'n3',
+      type: NotificationType.order,
+      title: 'Order shipped',
+      body: 'Order #4820 for Brixon Chair has been marked as shipped.',
+      isRead: true,
+      createdAt: DateTime(2026, 6, 5, 11, 0),
+      relatedId: 'vo2',
+    ),
+    VendorNotification(
+      id: 'n4',
       type: NotificationType.payment,
       title: 'Payout processed',
       body: 'NPR 42,000 has been transferred to your account.',
@@ -463,12 +445,67 @@ abstract final class VendorMockConfig {
       relatedId: 'pay1',
     ),
     VendorNotification(
-      id: 'n3',
+      id: 'n5',
+      type: NotificationType.payment,
+      title: 'Payout pending',
+      body: 'NPR 18,500 payout is queued for the next transfer cycle.',
+      createdAt: DateTime(2026, 6, 8, 10, 15),
+      relatedId: 'pay2',
+    ),
+    VendorNotification(
+      id: 'n6',
+      type: NotificationType.payment,
+      title: 'Payment received',
+      body: 'Customer payment confirmed for Order #4819.',
+      createdAt: DateTime(2026, 5, 28, 15, 30),
+      relatedId: 'vo3',
+    ),
+    VendorNotification(
+      id: 'n7',
       type: NotificationType.product,
       title: 'Low stock alert',
       body: 'Astra Chair is down to 9 units.',
-      createdAt: DateTime(2026, 5, 12, 11, 15),
+      createdAt: DateTime(2026, 6, 7, 11, 15),
       relatedId: 'p3',
+    ),
+    VendorNotification(
+      id: 'n8',
+      type: NotificationType.product,
+      title: 'Product approved',
+      body: 'Harmony Chair listing is now live in the catalog.',
+      isRead: true,
+      createdAt: DateTime(2026, 6, 1, 9, 0),
+      relatedId: 'p1',
+    ),
+    VendorNotification(
+      id: 'n9',
+      type: NotificationType.product,
+      title: 'Listing inactive',
+      body: 'Odin 75 has been deactivated due to missing images.',
+      createdAt: DateTime(2026, 5, 22, 13, 40),
+      relatedId: 'p4',
+    ),
+    VendorNotification(
+      id: 'n10',
+      type: NotificationType.system,
+      title: 'Profile verification complete',
+      body: 'Your vendor profile has been verified. You can now receive orders.',
+      isRead: true,
+      createdAt: DateTime(2026, 4, 20, 10, 0),
+    ),
+    VendorNotification(
+      id: 'n11',
+      type: NotificationType.system,
+      title: 'Scheduled maintenance',
+      body: 'Placeify vendor portal will be offline Jun 12, 2–4 AM NPT.',
+      createdAt: DateTime(2026, 6, 6, 8, 0),
+    ),
+    VendorNotification(
+      id: 'n12',
+      type: NotificationType.system,
+      title: 'New feature: payment updates',
+      body: 'You can now manually update payment status from the Payments tab.',
+      createdAt: DateTime(2026, 5, 30, 12, 0),
     ),
   ];
 
@@ -492,6 +529,12 @@ abstract final class VendorMockConfig {
 
   static VendorProfile? profileFor(String vendorId) =>
       isKnownVendor(vendorId) ? profile : null;
+
+  static VendorProfile? updateProfile(VendorProfile updated) {
+    if (!isKnownVendor(updated.id)) return null;
+    profile = updated;
+    return profile;
+  }
 
   static VendorStats statsFor(String vendorId) {
     if (!isKnownVendor(vendorId)) {
@@ -534,6 +577,75 @@ abstract final class VendorMockConfig {
         .where((update) => update.orderId == orderId)
         .toList()
       ..sort((a, b) => a.updatedAt.compareTo(b.updatedAt));
+  }
+
+  static int _stageIndex(DeliveryStage stage) =>
+      DeliveryStage.values.indexOf(stage);
+
+  static DeliveryStage? nextDeliveryStage(String orderId) {
+    final existing = deliveryUpdatesFor(orderId);
+    if (existing.isEmpty) return DeliveryStage.orderPlaced;
+
+    var maxIndex = -1;
+    for (final update in existing) {
+      final index = _stageIndex(update.stage);
+      if (index > maxIndex) maxIndex = index;
+    }
+
+    final nextIndex = maxIndex + 1;
+    if (nextIndex >= DeliveryStage.values.length) return null;
+    return DeliveryStage.values[nextIndex];
+  }
+
+  static OrderStatus _statusForStage(DeliveryStage stage) {
+    return switch (stage) {
+      DeliveryStage.orderPlaced => OrderStatus.accepted,
+      DeliveryStage.packed => OrderStatus.processing,
+      DeliveryStage.shipped => OrderStatus.shipped,
+      DeliveryStage.outForDelivery => OrderStatus.shipped,
+      DeliveryStage.delivered => OrderStatus.delivered,
+    };
+  }
+
+  static DeliveryUpdate? submitDeliveryUpdate({
+    required String vendorId,
+    required String orderId,
+    required DeliveryStage stage,
+    String? note,
+    String? photoProofPath,
+  }) {
+    if (!isKnownVendor(vendorId)) return null;
+
+    final order = orderById(vendorId, orderId);
+    if (order == null) return null;
+
+    if (order.status == OrderStatus.pending) return null;
+    if (order.status == OrderStatus.rejected ||
+        order.status == OrderStatus.cancelled ||
+        order.status == OrderStatus.delivered) {
+      return null;
+    }
+
+    final expected = nextDeliveryStage(orderId);
+    if (expected == null || stage != expected) return null;
+
+    if (deliveryUpdates.any(
+      (update) => update.orderId == orderId && update.stage == stage,
+    )) {
+      return null;
+    }
+
+    final update = DeliveryUpdate(
+      id: 'du${deliveryUpdates.length + 1}',
+      orderId: orderId,
+      stage: stage,
+      note: note?.trim() ?? '',
+      updatedAt: DateTime.now(),
+      photoProofPath: photoProofPath,
+    );
+    deliveryUpdates.add(update);
+    updateOrderStatus(orderId, _statusForStage(stage));
+    return update;
   }
 
   static List<VendorNotification> notificationsFor(String vendorId) {

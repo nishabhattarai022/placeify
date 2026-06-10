@@ -13,6 +13,7 @@ _DeliveryUpdate _$DeliveryUpdateFromJson(Map<String, dynamic> json) =>
       stage: $enumDecode(_$DeliveryStageEnumMap, json['stage']),
       note: json['note'] as String,
       updatedAt: DateTime.parse(json['updatedAt'] as String),
+      photoProofPath: json['photoProofPath'] as String?,
     );
 
 Map<String, dynamic> _$DeliveryUpdateToJson(_DeliveryUpdate instance) =>
@@ -22,6 +23,7 @@ Map<String, dynamic> _$DeliveryUpdateToJson(_DeliveryUpdate instance) =>
       'stage': _$DeliveryStageEnumMap[instance.stage]!,
       'note': instance.note,
       'updatedAt': instance.updatedAt.toIso8601String(),
+      'photoProofPath': instance.photoProofPath,
     };
 
 const _$DeliveryStageEnumMap = {

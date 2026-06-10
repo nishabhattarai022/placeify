@@ -7,6 +7,8 @@ import 'package:placeify/features/vendor/domain/models/vendor_product_form_state
 import 'package:placeify/features/vendor/domain/models/vendor_product_image_item.dart';
 import 'package:placeify/features/vendor/presentation/providers/vendor_product_form_provider.dart';
 
+import 'background_removal_sheet.dart';
+
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radii.dart';
 import '../../../../core/services/haptic_service.dart';
@@ -24,6 +26,12 @@ class ProductImagePickerGrid extends ConsumerWidget {
     final notifier = ref.read(vendorProductFormProvider.notifier);
     final images = form.images;
     final canAddMore = images.length < VendorProductFormState.maxImages;
+
+    ref.listen(vendorProductFormProvider, (previous, next) {
+      if (previous?.images.length != next.images.length) {
+        notifier.restoreCachedBackgroundRemovals();
+      }
+    });
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,6 +116,13 @@ class ProductImagePickerGrid extends ConsumerWidget {
                                   ? null
                                   : () =>
                                       notifier.setPrimaryImage(images[i].id),
+                              onRemoveBg: images[i].isLocal
+                                  ? () => BackgroundRemovalSheet.show(
+                                        context,
+                                        ref,
+                                        item: images[i],
+                                      )
+                                  : null,
                             ),
                         ],
                       ),
@@ -210,12 +225,14 @@ class _ImageTile extends StatelessWidget {
     required this.item,
     required this.onRemove,
     this.onSetPrimary,
+    this.onRemoveBg,
   });
 
   final int index;
   final VendorProductImageItem item;
   final VoidCallback onRemove;
   final VoidCallback? onSetPrimary;
+  final VoidCallback? onRemoveBg;
 
   @override
   Widget build(BuildContext context) {
@@ -233,7 +250,26 @@ class _ImageTile extends StatelessWidget {
                 child: SizedBox(
                   width: ProductImagePickerGrid._tileSize,
                   height: ProductImagePickerGrid._tileSize,
-                  child: _ProductImagePreview(source: item.displaySource),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      _ProductImagePreview(source: item.displaySource),
+                      if (item.isProcessingBg)
+                        Container(
+                          color: Colors.black.withValues(alpha: 0.35),
+                          child: const Center(
+                            child: SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
               if (index == 0)
@@ -258,6 +294,15 @@ class _ImageTile extends StatelessWidget {
                         letterSpacing: 0.04 * 9,
                       ),
                     ),
+                  ),
+                ),
+              if (onRemoveBg != null)
+                Positioned(
+                  left: 4,
+                  top: 4,
+                  child: _CircleIconButton(
+                    icon: Icons.auto_fix_high,
+                    onTap: onRemoveBg!,
                   ),
                 ),
               Positioned(

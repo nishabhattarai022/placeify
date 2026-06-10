@@ -20,6 +20,7 @@ class VendorProductFormState {
     this.depth = '',
     this.weight = '',
     this.stock = '',
+    this.lowStockThreshold = '5',
     this.dimensionUnit = VendorProductDimensionUnit.cm,
     this.hasArView = false,
     this.isActive = true,
@@ -47,6 +48,7 @@ class VendorProductFormState {
   final String depth;
   final String weight;
   final String stock;
+  final String lowStockThreshold;
   final VendorProductDimensionUnit dimensionUnit;
   final bool hasArView;
   final bool isActive;
@@ -89,6 +91,7 @@ class VendorProductFormState {
     String? depth,
     String? weight,
     String? stock,
+    String? lowStockThreshold,
     VendorProductDimensionUnit? dimensionUnit,
     bool? hasArView,
     bool? isActive,
@@ -115,6 +118,7 @@ class VendorProductFormState {
       depth: depth ?? this.depth,
       weight: weight ?? this.weight,
       stock: stock ?? this.stock,
+      lowStockThreshold: lowStockThreshold ?? this.lowStockThreshold,
       dimensionUnit: dimensionUnit ?? this.dimensionUnit,
       hasArView: hasArView ?? this.hasArView,
       isActive: isActive ?? this.isActive,

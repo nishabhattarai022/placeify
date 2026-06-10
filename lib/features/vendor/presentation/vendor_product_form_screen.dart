@@ -43,6 +43,7 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
   late final TextEditingController _depth;
   late final TextEditingController _weight;
   late final TextEditingController _stock;
+  late final TextEditingController _lowStockThreshold;
 
   @override
   void initState() {
@@ -61,6 +62,7 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     _depth = TextEditingController(text: form.depth);
     _weight = TextEditingController(text: form.weight);
     _stock = TextEditingController(text: form.stock);
+    _lowStockThreshold = TextEditingController(text: form.lowStockThreshold);
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await ref
@@ -87,6 +89,7 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     _depth.dispose();
     _weight.dispose();
     _stock.dispose();
+    _lowStockThreshold.dispose();
     super.dispose();
   }
 
@@ -113,6 +116,7 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     setIfDifferent(_depth, form.depth);
     setIfDifferent(_weight, form.weight);
     setIfDifferent(_stock, form.stock);
+    setIfDifferent(_lowStockThreshold, form.lowStockThreshold);
   }
 
   Future<void> _submit() async {
@@ -454,6 +458,18 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     onChanged: (value) => notifier.update(
                       (state) => state.copyWith(stock: value),
+                    ),
+                  ),
+                ),
+                ProfileFormField(
+                  label: 'Low Stock Threshold',
+                  child: ProfileTextInput(
+                    controller: _lowStockThreshold,
+                    hint: '5',
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    onChanged: (value) => notifier.update(
+                      (state) => state.copyWith(lowStockThreshold: value),
                     ),
                   ),
                 ),

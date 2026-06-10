@@ -13,6 +13,11 @@ abstract class VendorProfile with _$VendorProfile {
     required String address,
     required String category,
     String? logoUrl,
+    @Default('') String bio,
+    String? bannerUrl,
+    @Default('') String instagramHandle,
+    @Default('') String facebookHandle,
+    @Default('') String operatingHours,
     required DateTime createdAt,
   }) = _VendorProfile;
 

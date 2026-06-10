@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_radii.dart';
@@ -11,6 +12,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/shimmer_loader.dart';
 import '../../profile/presentation/widgets/profile_sub_hero.dart';
 import '../../profile/presentation/widgets/shared/profile_submit_button.dart';
+import '../domain/constants/vendor_routes.dart';
 import '../domain/enums/order_status.dart';
 import '../domain/models/delivery_update.dart';
 import '../domain/models/vendor_order.dart';
@@ -67,6 +69,10 @@ class _OrderDetailBody extends ConsumerWidget {
         ? order.totalAmount / order.quantity
         : order.totalAmount;
     final isPending = order.status == OrderStatus.pending;
+    final canUpdateDelivery = !isPending &&
+        order.status != OrderStatus.rejected &&
+        order.status != OrderStatus.cancelled &&
+        order.status != OrderStatus.delivered;
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(
@@ -183,8 +189,19 @@ class _OrderDetailBody extends ConsumerWidget {
                 child: OrderTimelineWidget(
                   status: order.status,
                   deliveryUpdates: deliveryUpdates,
+                  vendorEditable: true,
                 ),
               ),
+              if (canUpdateDelivery) ...[
+                const SizedBox(height: 20),
+                ProfileSubmitButton(
+                  label: 'Post delivery update',
+                  onPressed: () {
+                    HapticService.light();
+                    context.push(VendorRoutes.deliveryUpdate(order.id));
+                  },
+                ),
+              ],
               if (isPending) ...[
                 const SizedBox(height: 20),
                 ProfileSubmitButton(

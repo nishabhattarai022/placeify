@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
@@ -13,11 +15,13 @@ class OrderTimelineWidget extends StatelessWidget {
   const OrderTimelineWidget({
     required this.status,
     this.deliveryUpdates = const [],
+    this.vendorEditable = false,
     super.key,
   });
 
   final OrderStatus status;
   final List<DeliveryUpdate> deliveryUpdates;
+  final bool vendorEditable;
 
   static const _stages = DeliveryStage.values;
 
@@ -41,6 +45,7 @@ class OrderTimelineWidget extends StatelessWidget {
             ),
             update: _updateForStage(_stages[i]),
             isLast: i == _stages.length - 1,
+            showPhotoProof: vendorEditable,
           ),
         if (isTerminalFailure) ...[
           const SizedBox(height: 4),
@@ -112,12 +117,14 @@ class _TimelineStep extends StatelessWidget {
     required this.state,
     required this.update,
     required this.isLast,
+    this.showPhotoProof = false,
   });
 
   final String label;
   final _TimelineStepState state;
   final DeliveryUpdate? update;
   final bool isLast;
+  final bool showPhotoProof;
 
   @override
   Widget build(BuildContext context) {
@@ -195,6 +202,20 @@ class _TimelineStep extends StatelessWidget {
                           fontSize: 12,
                           color: AppColors.textSecondary,
                           height: 1.35,
+                        ),
+                      ),
+                    ],
+                    if (showPhotoProof &&
+                        update!.photoProofPath != null &&
+                        update!.photoProofPath!.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: AppRadii.sm,
+                        child: Image.file(
+                          File(update!.photoProofPath!),
+                          width: 72,
+                          height: 72,
+                          fit: BoxFit.cover,
                         ),
                       ),
                     ],

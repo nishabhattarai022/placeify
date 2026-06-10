@@ -8,17 +8,13 @@ part of 'vendor_notification_badge_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Stub unread notification count until Phase 8 wires [VendorNotificationsNotifier].
 
 @ProviderFor(vendorNotificationBadgeCount)
 final vendorNotificationBadgeCountProvider =
     VendorNotificationBadgeCountProvider._();
 
-/// Stub unread notification count until Phase 8 wires [VendorNotificationsNotifier].
-
 final class VendorNotificationBadgeCountProvider
     extends $FunctionalProvider<int, int, int> with $Provider<int> {
-  /// Stub unread notification count until Phase 8 wires [VendorNotificationsNotifier].
   VendorNotificationBadgeCountProvider._()
       : super(
           from: null,
@@ -53,4 +49,4 @@ final class VendorNotificationBadgeCountProvider
 }
 
 String _$vendorNotificationBadgeCountHash() =>
-    r'd6cabc80ca7ee4fff5be1061ff5da533872e8c02';
+    r'f4b1145aa284629c2370102dae226703b4ca7e4a';

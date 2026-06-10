@@ -19,6 +19,7 @@ mixin _$DeliveryUpdate {
   DeliveryStage get stage;
   String get note;
   DateTime get updatedAt;
+  String? get photoProofPath;
 
   /// Create a copy of DeliveryUpdate
   /// with the given fields replaced by the non-null parameter values.
@@ -41,17 +42,19 @@ mixin _$DeliveryUpdate {
             (identical(other.stage, stage) || other.stage == stage) &&
             (identical(other.note, note) || other.note == note) &&
             (identical(other.updatedAt, updatedAt) ||
-                other.updatedAt == updatedAt));
+                other.updatedAt == updatedAt) &&
+            (identical(other.photoProofPath, photoProofPath) ||
+                other.photoProofPath == photoProofPath));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, orderId, stage, note, updatedAt);
+  int get hashCode => Object.hash(
+      runtimeType, id, orderId, stage, note, updatedAt, photoProofPath);
 
   @override
   String toString() {
-    return 'DeliveryUpdate(id: $id, orderId: $orderId, stage: $stage, note: $note, updatedAt: $updatedAt)';
+    return 'DeliveryUpdate(id: $id, orderId: $orderId, stage: $stage, note: $note, updatedAt: $updatedAt, photoProofPath: $photoProofPath)';
   }
 }
 
@@ -66,7 +69,8 @@ abstract mixin class $DeliveryUpdateCopyWith<$Res> {
       String orderId,
       DeliveryStage stage,
       String note,
-      DateTime updatedAt});
+      DateTime updatedAt,
+      String? photoProofPath});
 }
 
 /// @nodoc
@@ -87,6 +91,7 @@ class _$DeliveryUpdateCopyWithImpl<$Res>
     Object? stage = null,
     Object? note = null,
     Object? updatedAt = null,
+    Object? photoProofPath = freezed,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -109,6 +114,10 @@ class _$DeliveryUpdateCopyWithImpl<$Res>
           ? _self.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      photoProofPath: freezed == photoProofPath
+          ? _self.photoProofPath
+          : photoProofPath // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -207,15 +216,15 @@ extension DeliveryUpdatePatterns on DeliveryUpdate {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
     TResult Function(String id, String orderId, DeliveryStage stage,
-            String note, DateTime updatedAt)?
+            String note, DateTime updatedAt, String? photoProofPath)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _DeliveryUpdate() when $default != null:
-        return $default(
-            _that.id, _that.orderId, _that.stage, _that.note, _that.updatedAt);
+        return $default(_that.id, _that.orderId, _that.stage, _that.note,
+            _that.updatedAt, _that.photoProofPath);
       case _:
         return orElse();
     }
@@ -237,14 +246,14 @@ extension DeliveryUpdatePatterns on DeliveryUpdate {
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
     TResult Function(String id, String orderId, DeliveryStage stage,
-            String note, DateTime updatedAt)
+            String note, DateTime updatedAt, String? photoProofPath)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _DeliveryUpdate():
-        return $default(
-            _that.id, _that.orderId, _that.stage, _that.note, _that.updatedAt);
+        return $default(_that.id, _that.orderId, _that.stage, _that.note,
+            _that.updatedAt, _that.photoProofPath);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -265,14 +274,14 @@ extension DeliveryUpdatePatterns on DeliveryUpdate {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
     TResult? Function(String id, String orderId, DeliveryStage stage,
-            String note, DateTime updatedAt)?
+            String note, DateTime updatedAt, String? photoProofPath)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _DeliveryUpdate() when $default != null:
-        return $default(
-            _that.id, _that.orderId, _that.stage, _that.note, _that.updatedAt);
+        return $default(_that.id, _that.orderId, _that.stage, _that.note,
+            _that.updatedAt, _that.photoProofPath);
       case _:
         return null;
     }
@@ -287,7 +296,8 @@ class _DeliveryUpdate implements DeliveryUpdate {
       required this.orderId,
       required this.stage,
       required this.note,
-      required this.updatedAt});
+      required this.updatedAt,
+      this.photoProofPath});
   factory _DeliveryUpdate.fromJson(Map<String, dynamic> json) =>
       _$DeliveryUpdateFromJson(json);
 
@@ -301,6 +311,8 @@ class _DeliveryUpdate implements DeliveryUpdate {
   final String note;
   @override
   final DateTime updatedAt;
+  @override
+  final String? photoProofPath;
 
   /// Create a copy of DeliveryUpdate
   /// with the given fields replaced by the non-null parameter values.
@@ -327,17 +339,19 @@ class _DeliveryUpdate implements DeliveryUpdate {
             (identical(other.stage, stage) || other.stage == stage) &&
             (identical(other.note, note) || other.note == note) &&
             (identical(other.updatedAt, updatedAt) ||
-                other.updatedAt == updatedAt));
+                other.updatedAt == updatedAt) &&
+            (identical(other.photoProofPath, photoProofPath) ||
+                other.photoProofPath == photoProofPath));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, orderId, stage, note, updatedAt);
+  int get hashCode => Object.hash(
+      runtimeType, id, orderId, stage, note, updatedAt, photoProofPath);
 
   @override
   String toString() {
-    return 'DeliveryUpdate(id: $id, orderId: $orderId, stage: $stage, note: $note, updatedAt: $updatedAt)';
+    return 'DeliveryUpdate(id: $id, orderId: $orderId, stage: $stage, note: $note, updatedAt: $updatedAt, photoProofPath: $photoProofPath)';
   }
 }
 
@@ -354,7 +368,8 @@ abstract mixin class _$DeliveryUpdateCopyWith<$Res>
       String orderId,
       DeliveryStage stage,
       String note,
-      DateTime updatedAt});
+      DateTime updatedAt,
+      String? photoProofPath});
 }
 
 /// @nodoc
@@ -375,6 +390,7 @@ class __$DeliveryUpdateCopyWithImpl<$Res>
     Object? stage = null,
     Object? note = null,
     Object? updatedAt = null,
+    Object? photoProofPath = freezed,
   }) {
     return _then(_DeliveryUpdate(
       id: null == id
@@ -397,6 +413,10 @@ class __$DeliveryUpdateCopyWithImpl<$Res>
           ? _self.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      photoProofPath: freezed == photoProofPath
+          ? _self.photoProofPath
+          : photoProofPath // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }

@@ -80,7 +80,7 @@ final class VendorProductsProvider
   VendorProducts create() => VendorProducts();
 }
 
-String _$vendorProductsHash() => r'd887897d810f5db31304f71748fade55a0e36452';
+String _$vendorProductsHash() => r'd0c3676215de850fb8b2729d86a3a433d20b3f6d';
 
 abstract class _$VendorProducts extends $AsyncNotifier<List<VendorProduct>> {
   FutureOr<List<VendorProduct>> build();
