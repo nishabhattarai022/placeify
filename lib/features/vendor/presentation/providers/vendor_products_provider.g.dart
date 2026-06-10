@@ -9,6 +9,53 @@ part of 'vendor_products_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
+@ProviderFor(VendorProductsSaving)
+final vendorProductsSavingProvider = VendorProductsSavingProvider._();
+
+final class VendorProductsSavingProvider
+    extends $NotifierProvider<VendorProductsSaving, bool> {
+  VendorProductsSavingProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'vendorProductsSavingProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$vendorProductsSavingHash();
+
+  @$internal
+  @override
+  VendorProductsSaving create() => VendorProductsSaving();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$vendorProductsSavingHash() =>
+    r'a30580437f004949cf9aa30ad4afb0955571f9b4';
+
+abstract class _$VendorProductsSaving extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<bool, bool>, bool, Object?, Object?>;
+    element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(VendorProducts)
 final vendorProductsProvider = VendorProductsProvider._();
 
@@ -33,7 +80,7 @@ final class VendorProductsProvider
   VendorProducts create() => VendorProducts();
 }
 
-String _$vendorProductsHash() => r'29642a3793f6d8b6ed4b305b9f7ba70aaf113efa';
+String _$vendorProductsHash() => r'd887897d810f5db31304f71748fade55a0e36452';
 
 abstract class _$VendorProducts extends $AsyncNotifier<List<VendorProduct>> {
   FutureOr<List<VendorProduct>> build();

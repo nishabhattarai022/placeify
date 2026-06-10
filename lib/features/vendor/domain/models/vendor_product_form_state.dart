@@ -1,3 +1,5 @@
+import 'vendor_product_image_item.dart';
+
 enum VendorProductDimensionUnit { cm, inch }
 
 /// Draft state for the vendor product upload/edit form.
@@ -23,6 +25,7 @@ class VendorProductFormState {
     this.isActive = true,
     this.isSubmitting = false,
     this.submitError,
+    this.images = const [],
   });
 
   factory VendorProductFormState.initial() => const VendorProductFormState();
@@ -49,6 +52,9 @@ class VendorProductFormState {
   final bool isActive;
   final bool isSubmitting;
   final String? submitError;
+  final List<VendorProductImageItem> images;
+
+  static const maxImages = 8;
 
   bool get isEditing => editingProductId != null;
 
@@ -89,6 +95,7 @@ class VendorProductFormState {
     bool? isSubmitting,
     String? submitError,
     bool clearSubmitError = false,
+    List<VendorProductImageItem>? images,
   }) {
     return VendorProductFormState(
       editingProductId: clearEditingProductId
@@ -113,6 +120,7 @@ class VendorProductFormState {
       isActive: isActive ?? this.isActive,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       submitError: clearSubmitError ? null : (submitError ?? this.submitError),
+      images: images ?? this.images,
     );
   }
 

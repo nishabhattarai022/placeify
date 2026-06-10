@@ -1,7 +1,7 @@
 import 'package:placeify/features/auth/presentation/providers/auth_provider.dart';
-import 'package:placeify/features/vendor/data/mock_vendor_product_repository.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_product.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_product_form_state.dart';
+import 'package:placeify/features/vendor/domain/models/vendor_product_image_item.dart';
 import 'package:placeify/features/vendor/presentation/providers/vendor_products_provider.dart';
 import 'package:placeify/features/vendor/presentation/providers/vendor_profile_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -72,7 +72,57 @@ class VendorProductForm extends _$VendorProductForm {
       stock: product.stock.toString(),
       hasArView: product.hasArView,
       isActive: product.isActive,
+      images: product.imageUrls
+          .map(VendorProductImageItem.fromRemoteUrl)
+          .toList(),
     );
+  }
+
+  void addLocalImages(List<String> paths) {
+    if (paths.isEmpty) return;
+
+    final remaining = VendorProductFormState.maxImages - state.images.length;
+    if (remaining <= 0) return;
+
+    final additions = paths
+        .take(remaining)
+        .map(VendorProductImageItem.fromLocalPath)
+        .toList();
+
+    state = state.copyWith(images: [...state.images, ...additions]);
+  }
+
+  void removeImage(String imageId) {
+    state = state.copyWith(
+      images: state.images.where((image) => image.id != imageId).toList(),
+    );
+  }
+
+  void reorderImages(int oldIndex, int newIndex) {
+    if (oldIndex == newIndex) return;
+
+    var targetIndex = newIndex;
+    if (oldIndex < newIndex) {
+      targetIndex -= 1;
+    }
+
+    final images = List<VendorProductImageItem>.from(state.images);
+    if (oldIndex < 0 ||
+        oldIndex >= images.length ||
+        targetIndex < 0 ||
+        targetIndex >= images.length) {
+      return;
+    }
+
+    final item = images.removeAt(oldIndex);
+    images.insert(targetIndex, item);
+    state = state.copyWith(images: images);
+  }
+
+  void setPrimaryImage(String imageId) {
+    final index = state.images.indexWhere((image) => image.id == imageId);
+    if (index <= 0) return;
+    reorderImages(index, 0);
   }
 
   void toggleDimensionUnit() {
@@ -160,26 +210,29 @@ class VendorProductForm extends _$VendorProductForm {
         return false;
       }
 
-      final repo = ref.read(vendorProductRepositoryProvider);
       VendorProduct? existing;
       if (state.isEditing) {
+        final repo = ref.read(vendorProductRepositoryProvider);
         existing = await repo.getProductById(state.editingProductId!);
       }
 
       final product = _buildProduct(vendorId, existing: existing);
+      final productsNotifier = ref.read(vendorProductsProvider.notifier);
 
+      final String? error;
       if (state.isEditing) {
-        await repo.updateProduct(vendorId, product);
+        error = await productsNotifier.updateProduct(product);
       } else {
-        await repo.createProduct(vendorId, product);
+        error = await productsNotifier.createProduct(product);
       }
 
-      ref.invalidate(vendorProductsProvider);
+      if (error != null) {
+        state = state.copyWith(isSubmitting: false, submitError: error);
+        return false;
+      }
+
       state = VendorProductFormState.initial();
       return true;
-    } on VendorProductActionException catch (e) {
-      state = state.copyWith(isSubmitting: false, submitError: e.message);
-      return false;
     } catch (_) {
       state = state.copyWith(
         isSubmitting: false,
@@ -213,7 +266,7 @@ class VendorProductForm extends _$VendorProductForm {
       hasArView: state.hasArView,
       isActive: state.isActive,
       materials: state.materials.trim(),
-      imageUrls: existing?.imageUrls ?? const [],
+      imageUrls: state.images.map((image) => image.displaySource).toList(),
       createdAt: existing?.createdAt ?? DateTime.now(),
     );
   }

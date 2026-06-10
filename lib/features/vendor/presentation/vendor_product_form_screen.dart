@@ -7,6 +7,7 @@ import 'package:placeify/features/profile/presentation/widgets/shared/profile_fo
 import 'package:placeify/features/profile/presentation/widgets/shared/profile_submit_button.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_product_form_state.dart';
 import 'package:placeify/features/vendor/presentation/providers/vendor_product_form_provider.dart';
+import 'package:placeify/features/vendor/presentation/widgets/product_image_picker_grid.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_radii.dart';
@@ -188,6 +189,8 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                     height: 1.45,
                   ),
                 ),
+                const SizedBox(height: 20),
+                const ProductImagePickerGrid(),
                 const SizedBox(height: 20),
                 ProfileFormField(
                   label: 'Product Name',
