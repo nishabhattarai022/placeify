@@ -17,6 +17,7 @@ import 'package:placeify/features/vendor/presentation/widgets/metric_card.dart';
 import 'package:placeify/features/vendor/presentation/widgets/revenue_card.dart';
 import 'package:placeify/features/vendor/presentation/widgets/top_products_chart.dart';
 import 'package:placeify/features/vendor/presentation/widgets/upload_product_button.dart';
+import 'package:placeify/features/vendor/presentation/widgets/vendor_dashboard_fab.dart';
 import 'package:placeify/features/vendor/presentation/widgets/vendor_order_row.dart';
 
 class VendorDashboardScreen extends ConsumerStatefulWidget {
@@ -30,6 +31,7 @@ class VendorDashboardScreen extends ConsumerStatefulWidget {
 class _VendorDashboardScreenState extends ConsumerState<VendorDashboardScreen> {
   bool _hasLoaded = false;
   VendorDashboardData? _cachedData;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -40,6 +42,12 @@ class _VendorDashboardScreenState extends ConsumerState<VendorDashboardScreen> {
         statusBarIconBrightness: Brightness.dark,
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _onRefresh() async {
@@ -99,6 +107,8 @@ class _VendorDashboardScreenState extends ConsumerState<VendorDashboardScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.cream,
+      floatingActionButton: const VendorDashboardFab(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,6 +143,7 @@ class _VendorDashboardScreenState extends ConsumerState<VendorDashboardScreen> {
                               child: _DashboardBody(
                                 data: data,
                                 metrics: _metricsFor(data),
+                                scrollController: _scrollController,
                               ),
                             ),
             ),
@@ -147,10 +158,12 @@ class _DashboardBody extends StatelessWidget {
   const _DashboardBody({
     required this.data,
     required this.metrics,
+    required this.scrollController,
   });
 
   final VendorDashboardData data;
   final List<VendorMetric> metrics;
+  final ScrollController scrollController;
 
   @override
   Widget build(BuildContext context) {
@@ -159,6 +172,8 @@ class _DashboardBody extends StatelessWidget {
         '${(stats.conversionRate * 100).toStringAsFixed(1)}% conversion · ${stats.periodLabel}';
 
     return SingleChildScrollView(
+      key: const PageStorageKey<String>('vendor_dashboard_scroll'),
+      controller: scrollController,
       physics: const AlwaysScrollableScrollPhysics(
         parent: BouncingScrollPhysics(),
       ),

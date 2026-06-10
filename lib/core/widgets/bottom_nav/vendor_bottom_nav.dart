@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:placeify/core/constants/app_colors.dart';
 import 'package:placeify/features/vendor/domain/constants/vendor_routes.dart';
+import 'package:placeify/features/vendor/presentation/providers/vendor_notification_badge_provider.dart';
 
 import '../../services/haptic_service.dart';
 import 'bottom_nav_tokens.dart';
@@ -12,15 +15,17 @@ class _VendorTab {
     required this.icon,
     required this.label,
     required this.onTap,
+    this.showNotificationBadge = false,
   });
 
   final String icon;
   final String label;
   final void Function(BuildContext context) onTap;
+  final bool showNotificationBadge;
 }
 
 /// Full-width pill bar with 5 labeled tabs (no protruding circle).
-class VendorBottomNav extends StatelessWidget {
+class VendorBottomNav extends ConsumerWidget {
   const VendorBottomNav({
     required this.activeIndex,
     super.key,
@@ -48,6 +53,7 @@ class VendorBottomNav extends StatelessWidget {
       icon: 'assets/icons/ic_box.svg',
       label: 'Orders',
       onTap: _goOrders,
+      showNotificationBadge: true,
     ),
     _VendorTab(
       icon: 'assets/icons/ic_package.svg',
@@ -67,8 +73,9 @@ class VendorBottomNav extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final active = activeIndex.clamp(0, _tabs.length - 1);
+    final notificationBadgeCount = ref.watch(vendorNotificationBadgeCountProvider);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -90,6 +97,9 @@ class VendorBottomNav extends StatelessWidget {
                 child: _VendorTabButton(
                   tab: _tabs[i],
                   isActive: i == active,
+                  badgeCount: _tabs[i].showNotificationBadge
+                      ? notificationBadgeCount
+                      : 0,
                   onTap: () {
                     HapticService.light();
                     _tabs[i].onTap(context);
@@ -107,11 +117,13 @@ class _VendorTabButton extends StatelessWidget {
   const _VendorTabButton({
     required this.tab,
     required this.isActive,
+    required this.badgeCount,
     required this.onTap,
   });
 
   final _VendorTab tab;
   final bool isActive;
+  final int badgeCount;
   final VoidCallback onTap;
 
   @override
@@ -135,11 +147,22 @@ class _VendorTabButton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SvgPicture.asset(
-                tab.icon,
-                width: BottomNavTokens.iconSizeVendor,
-                height: BottomNavTokens.iconSizeVendor,
-                colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  SvgPicture.asset(
+                    tab.icon,
+                    width: BottomNavTokens.iconSizeVendor,
+                    height: BottomNavTokens.iconSizeVendor,
+                    colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+                  ),
+                  if (badgeCount > 0)
+                    Positioned(
+                      top: -4,
+                      right: -6,
+                      child: _NotificationBadge(count: badgeCount),
+                    ),
+                ],
               ),
               const SizedBox(height: 3),
               Text(
@@ -152,6 +175,38 @@ class _VendorTabButton extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NotificationBadge extends StatelessWidget {
+  const _NotificationBadge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = count > 9 ? '9+' : count.toString();
+
+    return Container(
+      constraints: const BoxConstraints(minWidth: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      height: 16,
+      decoration: BoxDecoration(
+        color: AppColors.coral,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: BottomNavTokens.pillColor, width: 1.5),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+          height: 1,
         ),
       ),
     );

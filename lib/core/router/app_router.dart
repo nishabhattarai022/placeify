@@ -12,6 +12,7 @@ import '../../features/vendor/presentation/registration/vendor_registration_scre
 import '../../features/vendor/presentation/registration/vendor_registration_success_screen.dart';
 import '../../features/vendor/presentation/vendor_dashboard_screen.dart';
 import '../../features/vendor/presentation/vendor_orders_screen.dart';
+import '../../features/vendor/presentation/vendor_product_upload_screen.dart';
 import '../../features/vendor/presentation/vendor_products_screen.dart';
 import '../../features/vendor/presentation/vendor_payments_screen.dart';
 import '../../features/vendor/presentation/vendor_profile_screen.dart';
@@ -316,6 +317,16 @@ List<RouteBase> get _appRoutes => [
                     state: state,
                     child: const VendorProductsScreen(),
                   ),
+                  routes: [
+                    GoRoute(
+                      path: 'upload',
+                      name: 'vendorProductUpload',
+                      pageBuilder: (context, state) => _slidePage(
+                        key: ValueKey<String>(state.uri.toString()),
+                        child: const VendorProductUploadScreen(),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

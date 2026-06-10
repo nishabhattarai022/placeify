@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
+import 'package:placeify/features/vendor/domain/constants/vendor_routes.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radii.dart';
 import '../../../../core/constants/app_shadows.dart';
 import '../../../../core/widgets/animated_scale_tap.dart';
-import '../../../../core/widgets/toast_overlay.dart';
 
 class UploadProductButton extends StatefulWidget {
   const UploadProductButton({super.key});
@@ -20,7 +21,7 @@ class _UploadProductButtonState extends State<UploadProductButton> {
   Widget build(BuildContext context) {
     return AnimatedScaleTap(
       pressScale: 0.97,
-      onTap: () => PlaceifyToast.show(context, 'Upload product'),
+      onTap: () => context.push(VendorRoutes.productsUpload),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),

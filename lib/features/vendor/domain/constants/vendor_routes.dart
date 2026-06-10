@@ -3,6 +3,7 @@ abstract final class VendorRoutes {
   static const dashboard = '/vendor';
   static const orders = '/vendor/orders';
   static const products = '/vendor/products';
+  static const productsUpload = '/vendor/products/upload';
   static const payments = '/vendor/payments';
   static const profile = '/vendor/profile';
   static const register = '/vendor/register';
