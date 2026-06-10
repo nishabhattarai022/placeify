@@ -39,6 +39,15 @@ class _SuppliersNameMarqueeState extends State<SuppliersNameMarquee>
     WidgetsBinding.instance.addPostFrameCallback((_) => _measureLoop());
   }
 
+  @override
+  void didUpdateWidget(covariant SuppliersNameMarquee oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.suppliers != widget.suppliers) {
+      _loopWidth = 0;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _measureLoop());
+    }
+  }
+
   void _measureLoop() {
     if (!mounted || _items.isEmpty) return;
 
@@ -49,9 +58,10 @@ class _SuppliersNameMarqueeState extends State<SuppliersNameMarquee>
       return;
     }
 
-    setState(() {
-      _loopWidth = box.size.width;
-    });
+    final measured = box.size.width;
+    if (measured != _loopWidth) {
+      setState(() => _loopWidth = measured);
+    }
     if (!_controller.isAnimating) {
       _controller.repeat();
     }
@@ -87,7 +97,19 @@ class _SuppliersNameMarqueeState extends State<SuppliersNameMarquee>
     return SizedBox(
       height: _marqueeHeight,
       child: Stack(
+        clipBehavior: Clip.hardEdge,
         children: [
+          // Measure one loop off-screen so the animated row is not width-constrained.
+          Positioned(
+            left: -10000,
+            top: 0,
+            child: Opacity(
+              opacity: 0,
+              child: IgnorePointer(
+                child: _supplierLoop(key: _loopMeasureKey),
+              ),
+            ),
+          ),
           ClipRect(
             child: AnimatedBuilder(
               animation: _controller,
@@ -100,13 +122,17 @@ class _SuppliersNameMarqueeState extends State<SuppliersNameMarquee>
                   child: child,
                 );
               },
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _supplierLoop(key: _loopMeasureKey),
-                  const SizedBox(width: _chipGap),
-                  _supplierLoop(),
-                ],
+              child: OverflowBox(
+                maxWidth: double.infinity,
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _supplierLoop(),
+                    const SizedBox(width: _chipGap),
+                    _supplierLoop(),
+                  ],
+                ),
               ),
             ),
           ),
