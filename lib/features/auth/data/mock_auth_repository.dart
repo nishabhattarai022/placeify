@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:placeify/features/vendor/domain/enums/vendor_status.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/demo_credentials.dart';
@@ -84,6 +85,26 @@ class MockAuthRepository implements AuthRepository {
     await _prefs.remove(_sessionEmailKey);
   }
 
+  /// Updates vendor fields for the active session user (Phase 2 dev toggle).
+  Future<void> updateVendorStatus({
+    required VendorStatus status,
+    String? vendorId,
+  }) async {
+    final email = _prefs.getString(_sessionEmailKey);
+    if (email == null) return;
+
+    final users = await _loadUsers();
+    final index = users.indexWhere((u) => u.email == email);
+    if (index == -1) return;
+
+    final current = users[index];
+    users[index] = current.copyWith(
+      vendorStatus: status,
+      vendorId: vendorId,
+    );
+    await _saveUsers(users);
+  }
+
   Future<List<_StoredUser>> _loadUsers() async {
     final raw = _prefs.getString(_usersKey);
     var users = <_StoredUser>[];
@@ -127,17 +148,37 @@ class _StoredUser {
     required this.fullName,
     required this.email,
     required this.password,
+    this.vendorStatus = VendorStatus.none,
+    this.vendorId,
   });
 
   final String id;
   final String fullName;
   final String email;
   final String password;
+  final VendorStatus vendorStatus;
+  final String? vendorId;
+
+  _StoredUser copyWith({
+    VendorStatus? vendorStatus,
+    String? vendorId,
+  }) {
+    return _StoredUser(
+      id: id,
+      fullName: fullName,
+      email: email,
+      password: password,
+      vendorStatus: vendorStatus ?? this.vendorStatus,
+      vendorId: vendorId ?? this.vendorId,
+    );
+  }
 
   AppUser toAppUser() => AppUser(
         id: id,
         fullName: fullName,
         email: email,
+        vendorStatus: vendorStatus,
+        vendorId: vendorId,
       );
 
   Map<String, dynamic> toJson() => {
@@ -145,6 +186,8 @@ class _StoredUser {
         'fullName': fullName,
         'email': email,
         'password': password,
+        'vendorStatus': vendorStatus.name,
+        if (vendorId != null) 'vendorId': vendorId,
       };
 
   factory _StoredUser.fromJson(Map<String, dynamic> json) {
@@ -153,6 +196,10 @@ class _StoredUser {
       fullName: json['fullName'] as String,
       email: json['email'] as String,
       password: json['password'] as String,
+      vendorStatus: json['vendorStatus'] != null
+          ? VendorStatus.values.byName(json['vendorStatus'] as String)
+          : VendorStatus.none,
+      vendorId: json['vendorId'] as String?,
     );
   }
 }
