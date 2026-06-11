@@ -94,7 +94,7 @@ class _VendorStatusGateSheetBody extends StatelessWidget {
                     border: Border.all(color: AppColors.creamDark, width: 1.5),
                   ),
                   child: Text(
-                    'Dismiss',
+                    VendorStrings.dismiss,
                     style: GoogleFonts.dmSans(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,

@@ -38,4 +38,5 @@ abstract final class VendorStrings {
       'Contact support or submit an appeal if you believe this was a mistake.';
   static const appealCta = 'Submit an Appeal';
   static const keepEditing = 'Keep Editing';
+  static const dismiss = 'Dismiss';
 }

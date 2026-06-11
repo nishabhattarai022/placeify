@@ -8,6 +8,7 @@ import 'package:placeify/features/profile/presentation/widgets/shared/profile_fo
 import 'package:placeify/features/vendor/domain/models/vendor_product_form_state.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_product_image_item.dart';
 import 'package:placeify/features/vendor/presentation/providers/vendor_product_form_provider.dart';
+import 'package:placeify/features/vendor/domain/constants/vendor_strings.dart';
 import 'package:placeify/features/vendor/presentation/widgets/product_image_picker_grid.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -206,7 +207,7 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
 
   Future<void> _onSaveChanges() async {
     if (!_isDirty) {
-      PlaceifyToast.show(context, 'No changes to save');
+      PlaceifyToast.show(context, VendorStrings.noChangesToSave);
       return;
     }
     _flushControllersToNotifier();
