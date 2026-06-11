@@ -30,7 +30,13 @@ Future<void> openVendorExperience(
     }
   }
 
-  if (context.mounted) context.go('/vendor');
+  if (!context.mounted) return;
+
+  if (user.hasVendorShop) {
+    context.go('/vendor');
+  } else {
+    context.push('/vendor/register');
+  }
 }
 
 Future<void> openConsumerExperience(

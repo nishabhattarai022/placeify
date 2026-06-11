@@ -15,17 +15,15 @@ class TopProductsChart extends StatelessWidget {
     if (products.isEmpty) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         decoration: BoxDecoration(
           color: AppColors.warmWhite,
           border: Border.all(color: AppColors.creamDark, width: 1.5),
           borderRadius: AppRadii.md,
         ),
         child: Text(
-          'Top products will appear here once you start selling.',
-          style: AppTypography.metricLabel.copyWith(
-            color: AppColors.textSecondary,
-          ),
+          'No product sales yet',
+          style: AppTypography.metricLabel.copyWith(color: AppColors.textMuted),
         ),
       );
     }

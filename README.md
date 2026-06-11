@@ -88,6 +88,22 @@ flutter run --dart-define=SERVER_URL=http://192.168.1.10:8080/
 | Login on physical Android phone | Set `physicalApiUrl` in `assets/config.json` to your Mac's LAN IP |
 | Demo account | `demo@placeify.app` / `demo1234` (tap "Try demo account" on login — registers on first use) |
 
+## Vendor dashboard (Nishabhattarai branch UI)
+
+The full vendor frontend from the [`Nishabhattarai`](https://github.com/nishabhattarai022/placeify/tree/Nishabhattarai) branch lives under `placeify_flutter/lib/features/vendor/`.
+
+- **Tabs:** Dashboard, Orders, Products, Payments, Profile (`/vendor`, `/vendor/orders`, etc.)
+- **Registration:** `/vendor/register` (multi-step vendor onboarding)
+- **Data:** Uses mock repositories with demo seed data (`demo-vendor` id) for now
+- **Open from profile:** Switch to vendor mode, or register if you have no shop yet
+
+After pulling vendor UI changes, regenerate Riverpod/Freezed code:
+
+```bash
+cd placeify_flutter
+dart run build_runner build
+```
+
 ## Regenerate client after server model changes
 
 ```bash

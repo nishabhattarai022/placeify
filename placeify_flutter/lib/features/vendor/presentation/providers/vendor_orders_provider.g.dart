@@ -9,128 +9,47 @@ part of 'vendor_orders_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(VendorShopOrders)
-final vendorShopOrdersProvider = VendorShopOrdersProvider._();
+@ProviderFor(VendorOrders)
+final vendorOrdersProvider = VendorOrdersProvider._();
 
-final class VendorShopOrdersProvider
-    extends $AsyncNotifierProvider<VendorShopOrders, List<VendorShopOrder>> {
-  VendorShopOrdersProvider._()
+final class VendorOrdersProvider
+    extends $AsyncNotifierProvider<VendorOrders, List<VendorOrder>> {
+  VendorOrdersProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'vendorShopOrdersProvider',
-        isAutoDispose: false,
+        name: r'vendorOrdersProvider',
+        isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$vendorShopOrdersHash();
+  String debugGetCreateSourceHash() => _$vendorOrdersHash();
 
   @$internal
   @override
-  VendorShopOrders create() => VendorShopOrders();
+  VendorOrders create() => VendorOrders();
 }
 
-String _$vendorShopOrdersHash() => r'57afe425e0d1a1aadb30893267ac5992eb9f63a9';
+String _$vendorOrdersHash() => r'84861d8ff1da9e87fe12edc9ee77ae2062d739d6';
 
-abstract class _$VendorShopOrders
-    extends $AsyncNotifier<List<VendorShopOrder>> {
-  FutureOr<List<VendorShopOrder>> build();
+abstract class _$VendorOrders extends $AsyncNotifier<List<VendorOrder>> {
+  FutureOr<List<VendorOrder>> build();
   @$mustCallSuper
   @override
   void runBuild() {
     final ref =
-        this.ref
-            as $Ref<AsyncValue<List<VendorShopOrder>>, List<VendorShopOrder>>;
+        this.ref as $Ref<AsyncValue<List<VendorOrder>>, List<VendorOrder>>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<
-                AsyncValue<List<VendorShopOrder>>,
-                List<VendorShopOrder>
-              >,
-              AsyncValue<List<VendorShopOrder>>,
+              AnyNotifier<AsyncValue<List<VendorOrder>>, List<VendorOrder>>,
+              AsyncValue<List<VendorOrder>>,
               Object?,
               Object?
             >;
     element.handleCreate(ref, build);
   }
-}
-
-@ProviderFor(vendorShopOrderDetail)
-final vendorShopOrderDetailProvider = VendorShopOrderDetailFamily._();
-
-final class VendorShopOrderDetailProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<VendorShopOrder>,
-          VendorShopOrder,
-          FutureOr<VendorShopOrder>
-        >
-    with $FutureModifier<VendorShopOrder>, $FutureProvider<VendorShopOrder> {
-  VendorShopOrderDetailProvider._({
-    required VendorShopOrderDetailFamily super.from,
-    required int super.argument,
-  }) : super(
-         retry: null,
-         name: r'vendorShopOrderDetailProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
-
-  @override
-  String debugGetCreateSourceHash() => _$vendorShopOrderDetailHash();
-
-  @override
-  String toString() {
-    return r'vendorShopOrderDetailProvider'
-        ''
-        '($argument)';
-  }
-
-  @$internal
-  @override
-  $FutureProviderElement<VendorShopOrder> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<VendorShopOrder> create(Ref ref) {
-    final argument = this.argument as int;
-    return vendorShopOrderDetail(ref, argument);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is VendorShopOrderDetailProvider && other.argument == argument;
-  }
-
-  @override
-  int get hashCode {
-    return argument.hashCode;
-  }
-}
-
-String _$vendorShopOrderDetailHash() =>
-    r'ad15317f9377d9a7999508e93991bf805155d624';
-
-final class VendorShopOrderDetailFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<VendorShopOrder>, int> {
-  VendorShopOrderDetailFamily._()
-    : super(
-        retry: null,
-        name: r'vendorShopOrderDetailProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
-        isAutoDispose: true,
-      );
-
-  VendorShopOrderDetailProvider call(int orderId) =>
-      VendorShopOrderDetailProvider._(argument: orderId, from: this);
-
-  @override
-  String toString() => r'vendorShopOrderDetailProvider';
 }

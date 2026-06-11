@@ -5,6 +5,7 @@ import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/config/placeify_server_client.dart';
+import '../../vendor/domain/enums/vendor_status.dart';
 import '../constants/demo_credentials.dart';
 import '../domain/models/app_user.dart';
 import '../domain/repositories/auth_repository.dart';
@@ -16,6 +17,8 @@ class ServerpodAuthRepository implements AuthRepository {
   final SharedPreferences _prefs;
 
   static const _sessionEmailKey = 'placeify_auth_session_email';
+  static const _vendorStatusKey = 'placeify_vendor_status';
+  static const _vendorIdKey = 'placeify_vendor_id';
   static const _devVerificationCode = '123456';
 
   static Future<ServerpodAuthRepository> create() async {
@@ -141,9 +144,28 @@ class ServerpodAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<AppUser> updateVendorStatus({
+    required VendorStatus status,
+    String? vendorId,
+  }) async {
+    _requireAuthenticated();
+    await _prefs.setString(_vendorStatusKey, status.name);
+    if (vendorId != null) {
+      await _prefs.setString(_vendorIdKey, vendorId);
+    }
+    final email = _prefs.getString(_sessionEmailKey);
+    if (email == null) {
+      throw AuthException('User profile not found');
+    }
+    return _loadAppUser(email);
+  }
+
+  @override
   Future<void> signOut() async {
     await client.auth.signOutDevice();
     await _prefs.remove(_sessionEmailKey);
+    await _prefs.remove(_vendorStatusKey);
+    await _prefs.remove(_vendorIdKey);
   }
 
   @override
@@ -211,7 +233,15 @@ class ServerpodAuthRepository implements AuthRepository {
       phone: profile.phone,
       address: profile.address,
       hasVendorShop: hasVendorShop ?? false,
+      registeredVendorStatus: _readVendorStatus(),
+      registeredVendorId: _prefs.getString(_vendorIdKey),
     );
+  }
+
+  VendorStatus? _readVendorStatus() {
+    final raw = _prefs.getString(_vendorStatusKey);
+    if (raw == null) return null;
+    return VendorStatus.values.asNameMap()[raw];
   }
 
   void _requireAuthenticated() {
