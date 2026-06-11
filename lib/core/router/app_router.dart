@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:placeify/features/auth/presentation/providers/auth_provider.dart';
+import 'package:placeify/core/widgets/toast_overlay.dart';
 import 'package:placeify/features/vendor/presentation/guards/vendor_auth_guard.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../constants/app_durations.dart';
@@ -67,10 +68,19 @@ GoRouter appRouter(Ref ref) {
     debugLogDiagnostics: false,
     redirect: (context, state) {
       if (userAsync.isLoading) return null;
-      return VendorAuthGuard.redirect(
+      final redirect = VendorAuthGuard.evaluate(
         location: state.matchedLocation,
         user: userAsync.value,
       );
+      if (redirect?.toastMessage != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final ctx = rootNavigatorKey.currentContext;
+          if (ctx != null) {
+            PlaceifyToast.show(ctx, redirect!.toastMessage!);
+          }
+        });
+      }
+      return redirect?.location;
     },
     routes: _appRoutes,
   );
