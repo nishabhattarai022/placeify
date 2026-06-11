@@ -2,11 +2,28 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "placeify_flutter",
+            "name": "placeify_flutter (Chrome)",
             "cwd": "${workspaceFolder}/placeify_flutter",
             "request": "launch",
             "type": "dart",
-            "program": "lib/main.dart"
+            "program": "lib/main.dart",
+            "deviceId": "chrome"
+        },
+        {
+            "name": "placeify_flutter (Android)",
+            "cwd": "${workspaceFolder}/placeify_flutter",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "android"
+        },
+        {
+            "name": "placeify_flutter (macOS — requires Xcode)",
+            "cwd": "${workspaceFolder}/placeify_flutter",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "macos"
         },
         {
             "name": "placeify_server",
@@ -28,7 +45,7 @@
             "name": "placeify (full stack)",
             "configurations": [
                 "placeify_server",
-                "placeify_flutter"
+                "placeify_flutter (Chrome)"
             ],
             "presentation": {
                 "order": 1
