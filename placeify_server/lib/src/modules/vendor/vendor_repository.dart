@@ -5,7 +5,10 @@ import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
+import '../../shared/server_static_paths.dart';
 import '../../shared/session_service.dart';
+import 'product_3d/product_3d_generation_result.dart';
+import 'product_3d/product_3d_generator.dart';
 import 'product_image_processor.dart';
 
 class VendorStore {
@@ -16,8 +19,7 @@ class VendorStore {
       where: (row) => row.userId.equals(user.id!),
     );
     if (vendor == null) {
-      throw PlaceifyException(
-        'Shop not found.',
+      throw PlaceifyException(message: 'Shop not found.',
         code: 'SHOP_NOT_FOUND',
       );
     }
@@ -143,8 +145,7 @@ class VendorStore {
       where: (row) => row.userId.equals(user.id!),
     );
     if (vendor == null) {
-      throw PlaceifyException(
-        'Vendor profile not found.',
+      throw PlaceifyException(message: 'Vendor profile not found.',
         code: 'VENDOR_NOT_FOUND',
       );
     }
@@ -160,8 +161,7 @@ class VendorStore {
       where: (row) => row.userId.equals(user.id!),
     );
     if (vendor == null) {
-      throw PlaceifyException(
-        'Shop not found.',
+      throw PlaceifyException(message: 'Shop not found.',
         code: 'SHOP_NOT_FOUND',
       );
     }
@@ -199,8 +199,7 @@ class VendorStore {
       where: (row) => row.userId.equals(user.id!),
     );
     if (existing != null) {
-      throw PlaceifyException(
-        'Vendor shop already exists.',
+      throw PlaceifyException(message: 'Vendor shop already exists.',
         code: 'VENDOR_EXISTS',
       );
     }
@@ -208,30 +207,26 @@ class VendorStore {
     final trimmedName = shopName.trim();
     final trimmedDescription = description?.trim();
     if (trimmedName.isEmpty) {
-      throw PlaceifyException(
-        'Shop name is required.',
+      throw PlaceifyException(message: 'Shop name is required.',
         code: 'INVALID_SHOP_NAME',
       );
     }
     if (trimmedDescription == null || trimmedDescription.isEmpty) {
-      throw PlaceifyException(
-        'Shop description is required.',
+      throw PlaceifyException(message: 'Shop description is required.',
         code: 'INVALID_SHOP_DESCRIPTION',
       );
     }
 
     final trimmedPhone = phone?.trim();
     if (trimmedPhone == null || trimmedPhone.isEmpty) {
-      throw PlaceifyException(
-        'Phone number is required.',
+      throw PlaceifyException(message: 'Phone number is required.',
         code: 'INVALID_PHONE',
       );
     }
 
     final trimmedAddress = address?.trim();
     if (trimmedAddress == null || trimmedAddress.isEmpty) {
-      throw PlaceifyException(
-        'Shop address is required.',
+      throw PlaceifyException(message: 'Shop address is required.',
         code: 'INVALID_ADDRESS',
       );
     }
@@ -303,40 +298,35 @@ class VendorStore {
   }) async {
     final vendor = await requireOwnedVendor(session);
     if (name.trim().isEmpty || description.trim().isEmpty) {
-      throw PlaceifyException(
-        'Name and description are required.',
+      throw PlaceifyException(message: 'Name and description are required.',
         code: 'INVALID_PRODUCT',
       );
     }
     if (price <= 0) {
-      throw PlaceifyException('Price must be positive.', code: 'INVALID_PRICE');
+      throw PlaceifyException(message: 'Price must be positive.', code: 'INVALID_PRICE');
     }
 
     final trimmedMaterials = materials?.trim();
     if (trimmedMaterials == null || trimmedMaterials.isEmpty) {
-      throw PlaceifyException(
-        'Materials are required.',
+      throw PlaceifyException(message: 'Materials are required.',
         code: 'INVALID_MATERIALS',
       );
     }
 
     if (widthCm == null || depthCm == null || heightCm == null) {
-      throw PlaceifyException(
-        'Product dimensions are required.',
+      throw PlaceifyException(message: 'Product dimensions are required.',
         code: 'INVALID_DIMENSIONS',
       );
     }
     if (widthCm <= 0 || depthCm <= 0 || heightCm <= 0) {
-      throw PlaceifyException(
-        'Dimensions must be positive.',
+      throw PlaceifyException(message: 'Dimensions must be positive.',
         code: 'INVALID_DIMENSIONS',
       );
     }
 
     final trimmedCare = careInstructions?.trim();
     if (trimmedCare == null || trimmedCare.isEmpty) {
-      throw PlaceifyException(
-        'Care instructions are required.',
+      throw PlaceifyException(message: 'Care instructions are required.',
         code: 'INVALID_CARE',
       );
     }
@@ -350,7 +340,7 @@ class VendorStore {
       resolvedCategoryId = defaultCategory?.id;
     }
 
-    return Product.db.insertRow(
+    final product = await Product.db.insertRow(
       session,
       Product(
         vendorId: vendor.id!,
@@ -371,6 +361,88 @@ class VendorStore {
         status: ProductStatus.active,
       ),
     );
+
+    return _generateAndStoreModel3d(session, product);
+  }
+
+  Future<Product> _generateAndStoreModel3d(
+    Session session,
+    Product product, {
+    bool skipIfExists = true,
+    bool throwOnFailure = false,
+  }) async {
+    if (skipIfExists &&
+        product.model3dUrl != null &&
+        product.model3dUrl!.trim().isNotEmpty) {
+      return product;
+    }
+
+    final categoryName = await _categoryNameForProduct(session, product);
+    final generator = const Product3dGenerator();
+    final result = await generator.generateForProduct(
+      session,
+      product: product,
+      categoryName: categoryName,
+    );
+
+    if (result is Product3dGenerationSuccess) {
+      return Product.db.updateRow(
+        session,
+        product.copyWith(model3dUrl: result.modelUrl),
+      );
+    }
+    if (result is Product3dGenerationFailure) {
+      if (throwOnFailure) {
+        throw PlaceifyException(
+          message: result.message,
+          code: result.code,
+        );
+      }
+      session.log(
+        '3D generation skipped for product ${product.id}: ${result.code}',
+        level: LogLevel.warning,
+      );
+      return product;
+    }
+
+    if (throwOnFailure) {
+      throw PlaceifyException(
+        message: '3D model generation returned an unknown result.',
+        code: 'MODEL3D_GENERATION_FAILED',
+      );
+    }
+    return product;
+  }
+
+  Future<String> _categoryNameForProduct(
+    Session session,
+    Product product,
+  ) async {
+    final categoryId = product.categoryId;
+    if (categoryId == null) return 'chairs';
+    final category = await Category.db.findById(session, categoryId);
+    return category?.name ?? 'chairs';
+  }
+
+  /// Rebuilds the GLB for an existing vendor product from its thumbnail.
+  Future<Product> regenerateProductModel3d(
+    Session session,
+    int productId,
+  ) async {
+    final vendor = await requireOwnedVendor(session);
+    final product = await Product.db.findById(session, productId);
+    if (product == null || product.vendorId != vendor.id) {
+      throw PlaceifyException(
+        message: 'Product not found.',
+        code: 'PRODUCT_NOT_FOUND',
+      );
+    }
+    return _generateAndStoreModel3d(
+      session,
+      product,
+      skipIfExists: false,
+      throwOnFailure: true,
+    );
   }
 
   Future<Product> updateProductThumbnail(
@@ -381,7 +453,7 @@ class VendorStore {
     final vendor = await requireVendorProfile(session);
     final product = await Product.db.findById(session, productId);
     if (product == null || product.vendorId != vendor.id) {
-      throw PlaceifyException('Product not found.', code: 'PRODUCT_NOT_FOUND');
+      throw PlaceifyException(message: 'Product not found.', code: 'PRODUCT_NOT_FOUND');
     }
 
     return Product.db.updateRow(
@@ -402,20 +474,20 @@ class VendorStore {
       fileData.lengthInBytes,
     );
     if (bytes.isEmpty) {
-      throw PlaceifyException('Image file is empty.', code: 'INVALID_FILE');
+      throw PlaceifyException(message: 'Image file is empty.', code: 'INVALID_FILE');
     }
     if (bytes.length > 8 * 1024 * 1024) {
-      throw PlaceifyException(
-        'Image must be 8 MB or smaller.',
+      throw PlaceifyException(message: 'Image must be 8 MB or smaller.',
         code: 'FILE_TOO_LARGE',
       );
     }
 
     final sanitized = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
-    final extension = _imageExtension(sanitized);
+    final extension =
+        _imageExtension(sanitized) ?? _imageExtensionFromBytes(bytes);
     if (extension == null) {
       throw PlaceifyException(
-        'Use a JPG, PNG, or WEBP image.',
+        message: 'Use a JPG, PNG, or WEBP image.',
         code: 'INVALID_FILE_TYPE',
       );
     }
@@ -427,15 +499,17 @@ class VendorStore {
       sanitized,
     );
 
-    final uploadsDir = Directory('web/static/uploads');
+    final uploadsDir = Directory(ServerStaticPaths.uploadsDir());
     if (!uploadsDir.existsSync()) {
       uploadsDir.createSync(recursive: true);
     }
 
     final baseName = sanitized.replaceAll(RegExp(r'\.[^.]+$'), '');
     final storedName =
-        '${DateTime.now().millisecondsSinceEpoch}_$baseName$processed.extension';
-    final file = File('web/static/uploads/$storedName');
+        '${DateTime.now().millisecondsSinceEpoch}_$baseName${processed.extension}';
+    final file = File(
+      '${uploadsDir.path}${Platform.pathSeparator}$storedName',
+    );
     await file.writeAsBytes(processed.bytes);
     return '/uploads/$storedName';
   }
@@ -446,6 +520,34 @@ class VendorStore {
     if (lower.endsWith('.png')) return '.png';
     if (lower.endsWith('.webp')) return '.webp';
     if (lower.endsWith('.heic')) return '.heic';
+    return null;
+  }
+
+  String? _imageExtensionFromBytes(Uint8List bytes) {
+    if (bytes.length >= 3 &&
+        bytes[0] == 0xFF &&
+        bytes[1] == 0xD8 &&
+        bytes[2] == 0xFF) {
+      return '.jpg';
+    }
+    if (bytes.length >= 4 &&
+        bytes[0] == 0x89 &&
+        bytes[1] == 0x50 &&
+        bytes[2] == 0x4E &&
+        bytes[3] == 0x47) {
+      return '.png';
+    }
+    if (bytes.length >= 12 &&
+        bytes[0] == 0x52 &&
+        bytes[1] == 0x49 &&
+        bytes[2] == 0x46 &&
+        bytes[3] == 0x46 &&
+        bytes[8] == 0x57 &&
+        bytes[9] == 0x45 &&
+        bytes[10] == 0x42 &&
+        bytes[11] == 0x50) {
+      return '.webp';
+    }
     return null;
   }
 
@@ -485,12 +587,12 @@ class VendorStore {
     );
 
     if (orderItems.isEmpty) {
-      throw PlaceifyException('Order not found.', code: 'ORDER_NOT_FOUND');
+      throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
     }
 
     final orders = _groupVendorShopOrders(orderItems);
     if (orders.isEmpty) {
-      throw PlaceifyException('Order not found.', code: 'ORDER_NOT_FOUND');
+      throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
     }
     return orders.first;
   }

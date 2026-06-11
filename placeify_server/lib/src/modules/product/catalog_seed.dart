@@ -97,8 +97,7 @@ abstract final class CatalogSeed {
       orderBy: (row) => row.createdAt,
     );
     if (owner == null) {
-      throw PlaceifyException(
-        'Register at least one user before loading the catalog.',
+      throw PlaceifyException(message: 'Register at least one user before loading the catalog.',
         code: 'CATALOG_SEED_REQUIRES_USER',
       );
     }

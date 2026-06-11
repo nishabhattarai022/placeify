@@ -1225,6 +1225,25 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['fileName'],
                   ),
         ),
+        'regenerateProductModel3d': _i1.MethodConnector(
+          name: 'regenerateProductModel3d',
+          params: {
+            'productId': _i1.ParameterDescription(
+              name: 'productId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['vendor'] as _i13.VendorEndpoint)
+                  .regenerateProductModel3d(
+                    session,
+                    params['productId'],
+                  ),
+        ),
         'listShopOrders': _i1.MethodConnector(
           name: 'listShopOrders',
           params: {

@@ -104,14 +104,12 @@ class ProductImageProcessor {
         : body.body;
 
     if (body.statusCode == 402 || body.statusCode == 403) {
-      throw PlaceifyException(
-        'Background removal quota or API key issue.',
+      throw PlaceifyException(message: 'Background removal quota or API key issue.',
         code: 'BG_REMOVAL_AUTH',
       );
     }
 
-    throw PlaceifyException(
-      'Background removal service error (${body.statusCode}): $detail',
+    throw PlaceifyException(message: 'Background removal service error (${body.statusCode}): $detail',
       code: 'BG_REMOVAL_FAILED',
     );
   }
@@ -119,8 +117,7 @@ class ProductImageProcessor {
   Uint8List _compositeOnWhite(Uint8List cutoutPngBytes) {
     final decoded = img.decodeImage(cutoutPngBytes);
     if (decoded == null) {
-      throw PlaceifyException(
-        'Could not decode cutout image.',
+      throw PlaceifyException(message: 'Could not decode cutout image.',
         code: 'IMAGE_DECODE_FAILED',
       );
     }
