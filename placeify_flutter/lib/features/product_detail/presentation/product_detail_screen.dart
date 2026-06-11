@@ -142,6 +142,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                   child: FadeTransition(
                     opacity: _galleryOpacity,
                     child: ProductDetailGallery(
+                      product: product,
                       images: content.galleryImages,
                       selectedIndex: _selectedImageIndex,
                       onSelected: (i) =>

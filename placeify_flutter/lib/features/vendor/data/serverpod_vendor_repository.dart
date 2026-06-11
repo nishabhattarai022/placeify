@@ -86,6 +86,7 @@ class ServerpodVendorRepository implements VendorRepository {
     required String name,
     required String description,
     required double price,
+    required int categoryId,
     required String materials,
     required double widthCm,
     required double depthCm,
@@ -108,6 +109,7 @@ class ServerpodVendorRepository implements VendorRepository {
         name,
         description,
         price,
+        categoryId: categoryId,
         materials: materials,
         widthCm: widthCm,
         depthCm: depthCm,
@@ -118,6 +120,16 @@ class ServerpodVendorRepository implements VendorRepository {
         warranty: warranty,
         thumbnailUrl: thumbnailUrl,
       );
+    } catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
+  Future<Product> regenerateProductModel3d(int productId) async {
+    _requireAuthenticated();
+    try {
+      return await client.vendor.regenerateProductModel3d(productId);
     } catch (error) {
       throw _mapError(error);
     }
@@ -134,9 +146,27 @@ class ServerpodVendorRepository implements VendorRepository {
 
   VendorRepositoryException _mapError(Object error) {
     if (error is VendorRepositoryException) return error;
+    if (error is PlaceifyException) {
+      return _fromPlaceifyException(error);
+    }
     final message = error is ServerpodClientException
         ? error.message
         : error.toString();
+    if (message.contains('NoSuchMethodError') &&
+        message.contains('regenerateProductModel3d')) {
+      return VendorRepositoryException(
+        'App is out of date. Stop Flutter and run `flutter run` again (not hot reload).',
+        code: 'CLIENT_OUT_OF_DATE',
+      );
+    }
+    if (message.contains('Not found') ||
+        message.contains('No method') ||
+        message.contains('Method not found')) {
+      return VendorRepositoryException(
+        'Server is missing Build 3D. Run `serverpod generate` in placeify_server, then restart the server.',
+        code: 'SERVER_OUT_OF_DATE',
+      );
+    }
     if (message.contains('SHOP_NOT_FOUND') ||
         message.contains('Vendor profile not found')) {
       return VendorRepositoryException(
@@ -217,6 +247,67 @@ class ServerpodVendorRepository implements VendorRepository {
         code: 'INVALID_FILE_TYPE',
       );
     }
+    if (message.contains('INVALID_FILE')) {
+      return VendorRepositoryException(
+        'Add a product photo before publishing.',
+        code: 'INVALID_FILE',
+      );
+    }
+    if (message.contains('INVALID_PRICE')) {
+      return VendorRepositoryException(
+        'Enter a price greater than zero.',
+        code: 'INVALID_PRICE',
+      );
+    }
+    if (message.contains('INVALID_PRODUCT')) {
+      return VendorRepositoryException(
+        'Enter a product name and description.',
+        code: 'INVALID_PRODUCT',
+      );
+    }
+    if (message.contains('MODEL3D_NO_THUMBNAIL')) {
+      return VendorRepositoryException(
+        'Add a product photo before building a 3D preview.',
+        code: 'MODEL3D_NO_THUMBNAIL',
+      );
+    }
+    if (message.contains('MODEL3D_NO_DIMENSIONS')) {
+      return VendorRepositoryException(
+        'Enter valid width, depth, and height for this product.',
+        code: 'MODEL3D_NO_DIMENSIONS',
+      );
+    }
+    if (message.contains('MODEL3D_THUMBNAIL_MISSING')) {
+      return VendorRepositoryException(
+        'Product photo file is missing on the server. Re-upload the photo, then try Build 3D again.',
+        code: 'MODEL3D_THUMBNAIL_MISSING',
+      );
+    }
+    if (message.contains('MODEL3D_TEMPLATE_MISSING')) {
+      return VendorRepositoryException(
+        '3D templates are missing on the server. Restart placeify_server from the placeify_server folder.',
+        code: 'MODEL3D_TEMPLATE_MISSING',
+      );
+    }
+    if (message.contains('MODEL3D_GENERATION_FAILED')) {
+      return VendorRepositoryException(
+        '3D model could not be generated. Re-upload the photo and try again.',
+        code: 'MODEL3D_GENERATION_FAILED',
+      );
+    }
+    if (message.contains('PRODUCT_NOT_FOUND')) {
+      return VendorRepositoryException(
+        'Product not found.',
+        code: 'PRODUCT_NOT_FOUND',
+      );
+    }
+    if (message.contains('Method not found') ||
+        message.contains('regenerateProductModel3d')) {
+      return VendorRepositoryException(
+        'Server is out of date. Restart placeify_server after pulling the latest code.',
+        code: 'SERVER_OUT_OF_DATE',
+      );
+    }
     if (message.contains('SocketException') ||
         message.contains('Connection refused') ||
         message.contains('Failed host lookup')) {
@@ -229,5 +320,9 @@ class ServerpodVendorRepository implements VendorRepository {
       return VendorRepositoryException(message);
     }
     return VendorRepositoryException('Something went wrong. Try again.');
+  }
+
+  VendorRepositoryException _fromPlaceifyException(PlaceifyException error) {
+    return _mapError('${error.code}: ${error.message}');
   }
 }
