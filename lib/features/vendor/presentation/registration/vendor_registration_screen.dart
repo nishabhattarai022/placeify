@@ -4,9 +4,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_durations.dart';
+import '../../../../core/services/haptic_service.dart';
 import '../../../../core/widgets/toast_overlay.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../profile/presentation/widgets/shared/profile_submit_button.dart';
 import '../../domain/constants/vendor_routes.dart';
+import '../../domain/constants/vendor_strings.dart';
 import '../providers/vendor_registration_provider.dart';
 import 'steps/address_step.dart';
 import 'steps/bank_details_step.dart';
@@ -56,6 +59,8 @@ class _VendorRegistrationScreenState
   }
 
   Future<void> _onPrimaryAction() async {
+    HapticService.light();
+
     final notifier = ref.read(vendorRegistrationProvider.notifier);
     final uiState = ref.read(vendorRegistrationProvider);
 
@@ -63,15 +68,20 @@ class _VendorRegistrationScreenState
       final vendorId = await notifier.submit();
       if (!mounted) return;
 
-      if (vendorId != null) {
-        context.push(VendorRoutes.registerSuccess);
+      if (vendorId == null) {
+        final error = ref.read(vendorRegistrationProvider).submitError;
+        if (error != null) {
+          PlaceifyToast.show(context, error);
+        }
         return;
       }
 
-      final error = ref.read(vendorRegistrationProvider).submitError;
-      if (error != null) {
-        PlaceifyToast.show(context, error);
-      }
+      await ref.read(currentUserProvider.notifier).refresh();
+      if (!mounted) return;
+
+      HapticService.medium();
+      PlaceifyToast.show(context, VendorStrings.applicationSubmitted);
+      context.go(VendorRoutes.profileFallback);
       return;
     }
 
