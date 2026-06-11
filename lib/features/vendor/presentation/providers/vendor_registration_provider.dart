@@ -1,3 +1,4 @@
+import 'package:placeify/core/constants/country_phone_codes.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_registration.dart';
 import 'package:placeify/features/vendor/domain/repositories/vendor_registration_repository.dart';
 import 'package:placeify/features/vendor/presentation/providers/vendor_registration_repository_provider.dart';
@@ -94,9 +95,8 @@ class VendorRegistrationNotifier extends _$VendorRegistrationNotifier {
         if (b.email.trim().isEmpty || !_isValidEmail(b.email)) {
           return 'Enter a valid email address';
         }
-        if (b.phone.trim().length < 7) {
-          return 'Enter a valid phone number';
-        }
+        final phoneError = CountryPhoneCodes.validatePhone(b.phone);
+        if (phoneError != null) return phoneError;
         if (b.taxId.trim().isEmpty) {
           return 'Enter your tax ID';
         }
@@ -133,7 +133,7 @@ class VendorRegistrationNotifier extends _$VendorRegistrationNotifier {
           return 'Enter a valid account number';
         }
         if (bank.routingNumber.trim().length < 6) {
-          return 'Enter a valid routing number';
+          return 'Enter a valid branch / SWIFT code';
         }
         return null;
       case 5:

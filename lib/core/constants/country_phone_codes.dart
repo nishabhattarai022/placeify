@@ -133,4 +133,50 @@ abstract final class CountryPhoneCodes {
     unitedKingdom,
     unitedStates,
   ];
+
+  /// Longest-match dial-code scan; falls back to [defaultCountry].
+  static ({CountryPhoneCode country, String local}) parsePhone(String? raw) {
+    if (raw == null || raw.trim().isEmpty) {
+      return (country: defaultCountry, local: '');
+    }
+
+    final normalized = raw.replaceAll(RegExp(r'[\s\-().]'), '');
+    if (!normalized.startsWith('+')) {
+      final digits = normalized.replaceAll(RegExp(r'\D'), '');
+      return (country: defaultCountry, local: digits);
+    }
+
+    final byDialLength = [...all]
+      ..sort((a, b) => b.dialCode.length.compareTo(a.dialCode.length));
+
+    for (final country in byDialLength) {
+      if (normalized.startsWith(country.dialCode)) {
+        final local = normalized
+            .substring(country.dialCode.length)
+            .replaceAll(RegExp(r'\D'), '');
+        return (country: country, local: local);
+      }
+    }
+
+    final fallbackLocal = normalized.replaceAll(RegExp(r'\D'), '');
+    return (country: defaultCountry, local: fallbackLocal);
+  }
+
+  /// Returns an error message when invalid, otherwise null.
+  static String? validatePhone(String raw) {
+    final parsed = parsePhone(raw);
+    if (parsed.local.length < 7) {
+      return 'Enter a valid phone number';
+    }
+
+    if (parsed.country.isoCode == nepal.isoCode) {
+      final isNepalMobile = parsed.local.length == 10 &&
+          (parsed.local.startsWith('97') || parsed.local.startsWith('98'));
+      if (!isNepalMobile) {
+        return 'Enter a valid Nepal mobile number (10 digits starting with 97 or 98)';
+      }
+    }
+
+    return null;
+  }
 }

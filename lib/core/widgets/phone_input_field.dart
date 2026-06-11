@@ -35,7 +35,7 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
   @override
   void initState() {
     super.initState();
-    final parsed = _parsePhone(widget.initialPhone);
+    final parsed = CountryPhoneCodes.parsePhone(widget.initialPhone);
     _selectedCountry = parsed.country;
     _localController = TextEditingController(text: parsed.local);
     _lastEmitted = _formatFull(_selectedCountry, parsed.local);
@@ -46,7 +46,7 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
     super.didUpdateWidget(oldWidget);
     if (widget.initialPhone != oldWidget.initialPhone &&
         widget.initialPhone != _lastEmitted) {
-      _applyParsed(_parsePhone(widget.initialPhone));
+      _applyParsed(CountryPhoneCodes.parsePhone(widget.initialPhone));
     }
   }
 
@@ -230,34 +230,6 @@ class _CountryChip extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Longest-match dial-code scan; falls back to [CountryPhoneCodes.defaultCountry].
-({CountryPhoneCode country, String local}) _parsePhone(String? raw) {
-  if (raw == null || raw.trim().isEmpty) {
-    return (country: CountryPhoneCodes.defaultCountry, local: '');
-  }
-
-  final normalized = raw.replaceAll(RegExp(r'[\s\-().]'), '');
-  if (!normalized.startsWith('+')) {
-    final digits = normalized.replaceAll(RegExp(r'\D'), '');
-    return (country: CountryPhoneCodes.defaultCountry, local: digits);
-  }
-
-  final byDialLength = [...CountryPhoneCodes.all]
-    ..sort((a, b) => b.dialCode.length.compareTo(a.dialCode.length));
-
-  for (final country in byDialLength) {
-    if (normalized.startsWith(country.dialCode)) {
-      final local = normalized
-          .substring(country.dialCode.length)
-          .replaceAll(RegExp(r'\D'), '');
-      return (country: country, local: local);
-    }
-  }
-
-  final fallbackLocal = normalized.replaceAll(RegExp(r'\D'), '');
-  return (country: CountryPhoneCodes.defaultCountry, local: fallbackLocal);
 }
 
 String _formatFull(CountryPhoneCode country, String local) {

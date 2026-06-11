@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:placeify/core/widgets/phone_input_field.dart';
 
 import '../../../../profile/presentation/widgets/shared/profile_form_field.dart';
+import '../../../domain/constants/vendor_strings.dart';
 import '../../../domain/models/vendor_registration.dart';
 import '../../providers/vendor_registration_provider.dart';
 
@@ -69,7 +70,7 @@ class _BusinessInfoStepState extends ConsumerState<BusinessInfoStep> {
           label: 'Business Name',
           child: ProfileTextInput(
             controller: _businessName,
-            hint: 'e.g. Oak & Linen Co.',
+            hint: VendorFormStrings.businessNameHint,
             onChanged: (v) => _sync(
               ref.read(vendorRegistrationProvider).form.business
                   .copyWith(businessName: v),
@@ -80,7 +81,7 @@ class _BusinessInfoStepState extends ConsumerState<BusinessInfoStep> {
           label: 'Contact Name',
           child: ProfileTextInput(
             controller: _contactName,
-            hint: 'Primary contact person',
+            hint: VendorFormStrings.contactNameHint,
             onChanged: (v) => _sync(
               ref.read(vendorRegistrationProvider).form.business
                   .copyWith(contactName: v),
@@ -109,10 +110,10 @@ class _BusinessInfoStepState extends ConsumerState<BusinessInfoStep> {
           ),
         ),
         ProfileFormField(
-          label: 'Tax ID',
+          label: VendorFormStrings.taxIdLabel,
           child: ProfileTextInput(
             controller: _taxId,
-            hint: 'EIN or VAT number',
+            hint: VendorFormStrings.taxIdHint,
             onChanged: (v) => _sync(
               ref.read(vendorRegistrationProvider).form.business
                   .copyWith(taxId: v),
