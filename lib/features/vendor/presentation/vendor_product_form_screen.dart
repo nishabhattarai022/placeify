@@ -31,6 +31,8 @@ class VendorProductFormScreen extends ConsumerStatefulWidget {
 }
 
 class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScreen> {
+  bool _isDirty = false;
+
   final _formKey = GlobalKey<FormState>();
   final _nameKey = GlobalKey<FormFieldState<String>>();
   final _skuKey = GlobalKey<FormFieldState<String>>();
@@ -615,9 +617,12 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
             ),
           ),
           _UploadBottomBar(
-            label: isEditing ? 'Save Changes' : 'Upload Product',
+            label: isEditing
+                ? (_isDirty ? 'Save Changes' : 'No Changes')
+                : 'Upload Product',
+            muted: isEditing && !_isDirty,
             isLoading: form.isSubmitting,
-            onUpload: form.isSubmitting ? null : _onUpload,
+            onTap: form.isSubmitting ? null : _onUpload,
           ),
         ],
       ),
@@ -629,47 +634,51 @@ class _UploadBottomBar extends StatelessWidget {
   const _UploadBottomBar({
     required this.label,
     required this.isLoading,
-    this.onUpload,
+    this.muted = false,
+    this.onTap,
   });
 
   final String label;
   final bool isLoading;
-  final VoidCallback? onUpload;
+  final bool muted;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final pill = Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        color: AppColors.vendorForest,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      alignment: Alignment.center,
+      child: isLoading
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2,
+              ),
+            )
+          : Text(
+              label,
+              style: GoogleFonts.dmSans(
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+                color: Colors.white,
+              ),
+            ),
+    );
+
     return Container(
       color: AppColors.cream,
       padding: EdgeInsets.fromLTRB(18, 8, 18, 24 + bottomInset),
       child: AnimatedScaleTap(
-        onTap: onUpload,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: AppColors.vendorForest,
-            borderRadius: BorderRadius.circular(999),
-          ),
-          alignment: Alignment.center,
-          child: isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
-                  ),
-                )
-              : Text(
-                  label,
-                  style: GoogleFonts.dmSans(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                    color: Colors.white,
-                  ),
-                ),
-        ),
+        onTap: onTap,
+        child: muted ? Opacity(opacity: 0.5, child: pill) : pill,
       ),
     );
   }
