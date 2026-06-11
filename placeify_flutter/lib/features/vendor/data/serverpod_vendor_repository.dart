@@ -271,27 +271,27 @@ class ServerpodVendorRepository implements VendorRepository {
         code: 'MODEL3D_NO_THUMBNAIL',
       );
     }
-    if (message.contains('MODEL3D_NO_DIMENSIONS')) {
-      return VendorRepositoryException(
-        'Enter valid width, depth, and height for this product.',
-        code: 'MODEL3D_NO_DIMENSIONS',
-      );
-    }
     if (message.contains('MODEL3D_THUMBNAIL_MISSING')) {
       return VendorRepositoryException(
         'Product photo file is missing on the server. Re-upload the photo, then try Build 3D again.',
         code: 'MODEL3D_THUMBNAIL_MISSING',
       );
     }
-    if (message.contains('MODEL3D_TEMPLATE_MISSING')) {
+    if (message.contains('MODEL3D_TRIPO_FAILED')) {
+      final detail = message.split(': ').skip(1).join(': ').trim();
       return VendorRepositoryException(
-        '3D templates are missing on the server. Restart placeify_server from the placeify_server folder.',
-        code: 'MODEL3D_TEMPLATE_MISSING',
+        detail.isNotEmpty
+            ? detail
+            : '3D generation failed. Add your Tripo key to config/tripo_api_key.yaml on the server.',
+        code: 'MODEL3D_TRIPO_FAILED',
       );
     }
     if (message.contains('MODEL3D_GENERATION_FAILED')) {
+      final detail = message.split(': ').skip(1).join(': ').trim();
       return VendorRepositoryException(
-        '3D model could not be generated. Re-upload the photo and try again.',
+        detail.isNotEmpty
+            ? detail
+            : '3D model could not be generated. Re-upload the photo and try again.',
         code: 'MODEL3D_GENERATION_FAILED',
       );
     }

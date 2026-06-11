@@ -66,7 +66,6 @@ flutter:
     - assets/images/special_offers/
     - assets/lottie/
     - assets/video/
-    - assets/models/
 
 dependency_overrides:
   flutter_secure_storage: ^10.0.0

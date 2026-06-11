@@ -1,4 +1,4 @@
-/// Outcome of building a per-product GLB from a template + photo.
+/// Outcome of Tripo-based 3D model generation for a product.
 sealed class Product3dGenerationResult {
   const Product3dGenerationResult();
 

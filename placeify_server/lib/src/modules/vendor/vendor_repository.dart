@@ -340,7 +340,7 @@ class VendorStore {
       resolvedCategoryId = defaultCategory?.id;
     }
 
-    final product = await Product.db.insertRow(
+    return Product.db.insertRow(
       session,
       Product(
         vendorId: vendor.id!,
@@ -361,8 +361,6 @@ class VendorStore {
         status: ProductStatus.active,
       ),
     );
-
-    return _generateAndStoreModel3d(session, product);
   }
 
   Future<Product> _generateAndStoreModel3d(
@@ -377,12 +375,10 @@ class VendorStore {
       return product;
     }
 
-    final categoryName = await _categoryNameForProduct(session, product);
     final generator = const Product3dGenerator();
     final result = await generator.generateForProduct(
       session,
       product: product,
-      categoryName: categoryName,
     );
 
     if (result is Product3dGenerationSuccess) {
@@ -414,17 +410,7 @@ class VendorStore {
     return product;
   }
 
-  Future<String> _categoryNameForProduct(
-    Session session,
-    Product product,
-  ) async {
-    final categoryId = product.categoryId;
-    if (categoryId == null) return 'chairs';
-    final category = await Category.db.findById(session, categoryId);
-    return category?.name ?? 'chairs';
-  }
-
-  /// Rebuilds the GLB for an existing vendor product from its thumbnail.
+  /// Generates a 3D model for an existing vendor product via Tripo API.
   Future<Product> regenerateProductModel3d(
     Session session,
     int productId,
