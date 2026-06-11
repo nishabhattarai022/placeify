@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:placeify_client/placeify_client.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../main.dart' show client;
+import '../../../core/config/placeify_server_client.dart';
+import '../constants/demo_credentials.dart';
 import '../domain/models/app_user.dart';
 import '../domain/repositories/auth_repository.dart';
 
@@ -26,6 +29,20 @@ class ServerpodAuthRepository implements AuthRepository {
     required String email,
     required String password,
   }) async {
+    return _withConnectionRetry(
+      () => _register(
+        fullName: fullName,
+        email: email,
+        password: password,
+      ),
+    );
+  }
+
+  Future<AppUser> _register({
+    required String fullName,
+    required String email,
+    required String password,
+  }) async {
     final normalizedEmail = email.trim().toLowerCase();
 
     try {
@@ -42,22 +59,52 @@ class ServerpodAuthRepository implements AuthRepository {
       );
       await client.auth.updateSignedInUser(authSuccess);
 
-      final profile = await client.user.updateProfile(
+      await client.user.updateProfile(
         fullName.trim(),
         phone: null,
         address: null,
       );
 
-      await client.auth.signOutDevice();
-
-      return _toAppUser(profile, normalizedEmail);
+      await _prefs.setString(_sessionEmailKey, normalizedEmail);
+      return _loadAppUser(normalizedEmail);
     } catch (error) {
       throw _mapError(error);
     }
   }
 
+  /// Signs in with the built-in demo account, registering it first if needed.
+  Future<AppUser> signInWithDemoCredentials() async {
+    try {
+      return await signIn(
+        email: DemoCredentials.email,
+        password: DemoCredentials.password,
+      );
+    } on AuthException catch (error) {
+      if (!_isMissingAccountError(error.message)) rethrow;
+
+      await register(
+        fullName: DemoCredentials.fullName,
+        email: DemoCredentials.email,
+        password: DemoCredentials.password,
+      );
+      return signIn(
+        email: DemoCredentials.email,
+        password: DemoCredentials.password,
+      );
+    }
+  }
+
   @override
   Future<AppUser> signIn({
+    required String email,
+    required String password,
+  }) async {
+    return _withConnectionRetry(
+      () => _signIn(email: email, password: password),
+    );
+  }
+
+  Future<AppUser> _signIn({
     required String email,
     required String password,
   }) async {
@@ -173,18 +220,72 @@ class ServerpodAuthRepository implements AuthRepository {
     }
   }
 
+  Future<T> _withConnectionRetry<T>(Future<T> Function() action) async {
+    try {
+      return await action();
+    } catch (error) {
+      if (!_looksLikeConnectionError(error)) rethrow;
+      await reconnectPlaceifyClient(forceRefresh: true);
+      try {
+        return await action();
+      } catch (retryError) {
+        throw _mapError(retryError);
+      }
+    }
+  }
+
   AuthException _mapError(Object error) {
     if (error is AuthException) return error;
+
+    final errorText = error.toString();
+
+    if (errorText.contains('EmailAccountLoginException')) {
+      if (errorText.contains('invalidCredentials')) {
+        return AuthException(
+          'No account found for this email, or the password is wrong.',
+        );
+      }
+      if (errorText.contains('tooManyAttempts')) {
+        return AuthException(
+          'Too many failed attempts. Wait a moment and try again.',
+        );
+      }
+    }
+
+    if (errorText.contains('EmailAccountRequestException')) {
+      if (errorText.contains('policyViolation') ||
+          errorText.contains('EmailPasswordPolicyViolationException')) {
+        return AuthException(
+          'Password is too weak. Use at least 8 characters with letters and numbers.',
+        );
+      }
+      if (errorText.contains('tooManyAttempts')) {
+        return AuthException(
+          'Too many verification attempts. Wait a moment and try again.',
+        );
+      }
+      if (errorText.contains('expired')) {
+        return AuthException(
+          'Verification code expired. Go back and start registration again.',
+        );
+      }
+      return AuthException(
+        'Could not verify email. If you already have an account, try logging in instead.',
+      );
+    }
+
+    if (errorText.contains('EmailAccountAlreadyRegisteredException') ||
+        (errorText.contains('already') && errorText.contains('email'))) {
+      return AuthException('An account with this email already exists. Try logging in.');
+    }
 
     final rawMessage = error is ServerpodClientException
         ? error.message
         : error.toString();
     final message = rawMessage.toLowerCase();
 
-    if (_isConnectionError(message)) {
-      return AuthException(
-        'Cannot reach the server. Start placeify_server and try again.',
-      );
+    if (_isConnectionError(message) || _looksLikeConnectionError(error)) {
+      return AuthException(_connectionHelpMessage());
     }
     if (message.contains('password') &&
         (message.contains('invalid') || message.contains('incorrect'))) {
@@ -229,6 +330,13 @@ class ServerpodAuthRepository implements AuthRepository {
     return AuthException('Something went wrong. Please try again.');
   }
 
+  bool _isMissingAccountError(String message) {
+    final normalized = message.toLowerCase();
+    return normalized.contains('no account') ||
+        normalized.contains('password is wrong') ||
+        normalized.contains('invalidcredentials');
+  }
+
   bool _isConnectionError(String message) {
     return message.contains('socketexception') ||
         message.contains('connection refused') ||
@@ -236,6 +344,31 @@ class ServerpodAuthRepository implements AuthRepository {
         message.contains('failed host lookup') ||
         message.contains('network is unreachable') ||
         message.contains('timed out') ||
-        message.contains('no route to host');
+        message.contains('no route to host') ||
+        message.contains('connection closed') ||
+        message.contains('handshake') ||
+        message.contains('network error');
+  }
+
+  bool _looksLikeConnectionError(Object error) {
+    if (error is ServerpodClientException) {
+      final message = error.message.toLowerCase();
+      return _isConnectionError(message);
+    }
+    return _isConnectionError(error.toString().toLowerCase());
+  }
+
+  String _connectionHelpMessage() {
+    final base =
+        'Cannot reach the server at $serverUrl. '
+        'Start it with: cd placeify_server && dart bin/main.dart --apply-migrations';
+
+    if (Platform.isAndroid) {
+      return '$base\n\n'
+          'On a physical Android phone, set your Mac IP in '
+          'placeify_flutter/assets/config.json → physicalApiUrl.';
+    }
+
+    return base;
   }
 }

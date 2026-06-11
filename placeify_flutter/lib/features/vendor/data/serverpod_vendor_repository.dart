@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:placeify_client/placeify_client.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
-import '../../../../main.dart' show client;
+import '../../../core/config/placeify_server_client.dart';
 import '../domain/repositories/vendor_repository.dart';
 
 class ServerpodVendorRepository implements VendorRepository {
