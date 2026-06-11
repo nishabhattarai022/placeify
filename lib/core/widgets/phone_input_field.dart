@@ -15,11 +15,13 @@ class PhoneInputField extends StatefulWidget {
   const PhoneInputField({
     this.initialPhone,
     this.onChanged,
+    this.onEditingComplete,
     super.key,
   });
 
   final String? initialPhone;
   final ValueChanged<String>? onChanged;
+  final VoidCallback? onEditingComplete;
 
   @override
   State<PhoneInputField> createState() => _PhoneInputFieldState();
@@ -176,6 +178,7 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
                 focusedBorder: InputBorder.none,
               ),
               onChanged: (_) => _emit(),
+              onEditingComplete: widget.onEditingComplete,
             ),
           ),
         ],

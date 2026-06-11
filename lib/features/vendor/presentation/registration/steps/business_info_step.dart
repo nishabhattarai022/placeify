@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:placeify/core/widgets/phone_input_field.dart';
 
 import '../../../../profile/presentation/widgets/shared/profile_form_field.dart';
 import '../../../domain/models/vendor_registration.dart';
@@ -16,7 +17,6 @@ class _BusinessInfoStepState extends ConsumerState<BusinessInfoStep> {
   late final TextEditingController _businessName;
   late final TextEditingController _contactName;
   late final TextEditingController _email;
-  late final TextEditingController _phone;
   late final TextEditingController _taxId;
 
   @override
@@ -26,7 +26,6 @@ class _BusinessInfoStepState extends ConsumerState<BusinessInfoStep> {
     _businessName = TextEditingController(text: business.businessName);
     _contactName = TextEditingController(text: business.contactName);
     _email = TextEditingController(text: business.email);
-    _phone = TextEditingController(text: business.phone);
     _taxId = TextEditingController(text: business.taxId);
   }
 
@@ -35,7 +34,6 @@ class _BusinessInfoStepState extends ConsumerState<BusinessInfoStep> {
     _businessName.dispose();
     _contactName.dispose();
     _email.dispose();
-    _phone.dispose();
     _taxId.dispose();
     super.dispose();
   }
@@ -102,12 +100,11 @@ class _BusinessInfoStepState extends ConsumerState<BusinessInfoStep> {
         ),
         ProfileFormField(
           label: 'Phone',
-          child: ProfileTextInput(
-            controller: _phone,
-            hint: '+1 (555) 000-0000',
-            onChanged: (v) => _sync(
+          child: PhoneInputField(
+            initialPhone: ref.watch(vendorRegistrationProvider).form.business.phone,
+            onChanged: (full) => _sync(
               ref.read(vendorRegistrationProvider).form.business
-                  .copyWith(phone: v),
+                  .copyWith(phone: full),
             ),
           ),
         ),
