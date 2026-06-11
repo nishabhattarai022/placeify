@@ -12,10 +12,12 @@ import 'package:placeify/features/vendor/presentation/widgets/product_image_pick
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_radii.dart';
+import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/animated_scale_tap.dart';
+import '../../../core/widgets/placeify_bottom_sheet.dart';
 import '../../../core/widgets/toast_overlay.dart';
 
 class VendorProductFormScreen extends ConsumerStatefulWidget {
@@ -230,6 +232,87 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     }
   }
 
+  Future<bool> _confirmDiscardChanges() async {
+    if (!_isDirty) return true;
+
+    final shouldDiscard = await PlaceifyBottomSheet.show<bool>(
+      context,
+      builder: (sheetContext) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const PlaceifyBottomSheetHeader(
+              title: 'Discard changes?',
+              subtitle:
+                  'Your unsaved edits will be lost if you leave this screen.',
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticService.light();
+                      Navigator.pop(sheetContext, false);
+                    },
+                    child: Container(
+                      height: 48,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.cream,
+                        borderRadius: AppRadii.pill,
+                        border: Border.all(
+                          color: AppColors.creamDark,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Text(
+                        'Keep Editing',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticService.medium();
+                      Navigator.pop(sheetContext, true);
+                    },
+                    child: Container(
+                      height: 48,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.rust,
+                        borderRadius: AppRadii.pill,
+                      ),
+                      child: Text(
+                        'Discard',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.warmWhite,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+
+    return shouldDiscard == true;
+  }
+
   @override
   Widget build(BuildContext context) {
     final form = ref.watch(vendorProductFormProvider);
@@ -255,7 +338,7 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     final unitLabel =
         form.dimensionUnit == VendorProductDimensionUnit.cm ? 'cm' : 'in';
 
-    return Scaffold(
+    final scaffold = Scaffold(
       backgroundColor: AppColors.cream,
       appBar: AppBar(
         backgroundColor: AppColors.cream,
@@ -263,7 +346,7 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
           color: AppColors.espresso,
-          onPressed: () => context.pop(),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
           isEditing ? 'Edit Product' : 'Upload Product',
@@ -706,6 +789,20 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
           ),
         ],
       ),
+    );
+
+    if (!isEditing) return scaffold;
+
+    return PopScope(
+      canPop: !_isDirty,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final shouldPop = await _confirmDiscardChanges();
+        if (shouldPop && context.mounted) {
+          context.pop();
+        }
+      },
+      child: scaffold,
     );
   }
 }
