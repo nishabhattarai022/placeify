@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:placeify/features/home/data/mock_product_repository.dart';
 import 'package:placeify/features/profile/presentation/widgets/shared/profile_form_field.dart';
-import 'package:placeify/features/profile/presentation/widgets/shared/profile_submit_button.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_product_form_state.dart';
 import 'package:placeify/features/vendor/presentation/providers/vendor_product_form_provider.dart';
 import 'package:placeify/features/vendor/presentation/widgets/product_image_picker_grid.dart';
@@ -14,6 +14,7 @@ import '../../../core/constants/app_radii.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/animated_scale_tap.dart';
 import '../../../core/widgets/toast_overlay.dart';
 
 class VendorProductFormScreen extends ConsumerStatefulWidget {
@@ -30,6 +31,13 @@ class VendorProductFormScreen extends ConsumerStatefulWidget {
 }
 
 class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameKey = GlobalKey<FormFieldState<String>>();
+  final _skuKey = GlobalKey<FormFieldState<String>>();
+  final _categoryKey = GlobalKey<FormFieldState<String>>();
+  final _listPriceKey = GlobalKey<FormFieldState<String>>();
+  final _stockKey = GlobalKey<FormFieldState<String>>();
+
   late final TextEditingController _name;
   late final TextEditingController _description;
   late final TextEditingController _brand;
@@ -119,14 +127,65 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     setIfDifferent(_lowStockThreshold, form.lowStockThreshold);
   }
 
-  Future<void> _submit() async {
+  void _flushControllersToNotifier() {
+    final notifier = ref.read(vendorProductFormProvider.notifier);
+    notifier.update(
+      (state) => state.copyWith(
+        name: _name.text,
+        description: _description.text,
+        brand: _brand.text,
+        sku: _sku.text,
+        materials: _materials.text,
+        listPrice: _listPrice.text,
+        discountPercent: _discountPercent.text,
+        offerLabel: _offerLabel.text,
+        width: _width.text,
+        height: _height.text,
+        depth: _depth.text,
+        weight: _weight.text,
+        stock: _stock.text,
+        lowStockThreshold: _lowStockThreshold.text,
+      ),
+    );
+  }
+
+  void _scrollToFirstError() {
+    final keys = [
+      _nameKey,
+      _skuKey,
+      _categoryKey,
+      _listPriceKey,
+      _stockKey,
+    ];
+    for (final key in keys) {
+      final fieldState = key.currentState;
+      if (fieldState != null && fieldState.hasError) {
+        Scrollable.ensureVisible(
+          fieldState.context,
+          alignment: 0.2,
+          duration: const Duration(milliseconds: 300),
+        );
+        return;
+      }
+    }
+  }
+
+  Future<void> _onUpload() async {
+    _flushControllersToNotifier();
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      _scrollToFirstError();
+      return;
+    }
+
     final success = await ref.read(vendorProductFormProvider.notifier).submit();
     if (!mounted) return;
 
     if (success) {
       PlaceifyToast.show(
         context,
-        widget.productId == null ? 'Product published ✓' : 'Product updated ✓',
+        widget.productId == null
+            ? 'Product uploaded successfully'
+            : 'Product updated successfully',
       );
       context.pop();
       return;
@@ -169,12 +228,17 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
           style: AppTypography.sectionTitle,
         ),
       ),
+      resizeToAvoidBottomInset: true,
       body: Column(
         children: [
           Expanded(
-            child: ListView(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(18, 8, 18, 24),
-              children: [
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                 const Text(
                   'Product details',
                   style: TextStyle(
@@ -199,8 +263,13 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                 ProfileFormField(
                   label: 'Product Name',
                   child: ProfileTextInput(
+                    fieldKey: _nameKey,
                     controller: _name,
                     hint: 'e.g. Harmony Chair',
+                    validator: (value) =>
+                        value == null || value.trim().isEmpty
+                            ? 'Enter a product name'
+                            : null,
                     onChanged: (value) => notifier.update(
                       (state) => state.copyWith(name: value),
                     ),
@@ -230,8 +299,11 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                 ProfileFormField(
                   label: 'SKU',
                   child: ProfileTextInput(
+                    fieldKey: _skuKey,
                     controller: _sku,
                     hint: 'HH-CHR-001',
+                    validator: (value) =>
+                        value == null || value.trim().isEmpty ? 'Enter a SKU' : null,
                     onChanged: (value) => notifier.update(
                       (state) => state.copyWith(sku: value),
                     ),
@@ -239,10 +311,36 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                 ),
                 ProfileFormField(
                   label: 'Category',
-                  child: _CategoryPicker(
-                    categoryId: form.categoryId,
-                    onChanged: (categoryId) => notifier.update(
-                      (state) => state.copyWith(categoryId: categoryId),
+                  child: FormField<String>(
+                    key: _categoryKey,
+                    validator: (_) => ref.read(vendorProductFormProvider).categoryId.isEmpty
+                        ? 'Select a category'
+                        : null,
+                    builder: (field) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _CategoryPicker(
+                          categoryId: form.categoryId,
+                          hasError: field.hasError,
+                          onChanged: (categoryId) {
+                            field.didChange(categoryId);
+                            notifier.update(
+                              (state) => state.copyWith(categoryId: categoryId),
+                            );
+                          },
+                        ),
+                        if (field.hasError)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6, left: 4),
+                            child: Text(
+                              field.errorText!,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),
@@ -269,6 +367,7 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                 ProfileFormField(
                   label: 'List Price (NPR)',
                   child: ProfileTextInput(
+                    fieldKey: _listPriceKey,
                     controller: _listPrice,
                     hint: '12500',
                     keyboardType: const TextInputType.numberWithOptions(
@@ -277,6 +376,16 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                     ],
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Enter a list price';
+                      }
+                      final parsed = double.tryParse(value.trim());
+                      if (parsed == null || parsed <= 0) {
+                        return 'Enter a valid list price';
+                      }
+                      return null;
+                    },
                     onChanged: (value) => notifier.update(
                       (state) => state.copyWith(listPrice: value),
                     ),
@@ -452,10 +561,21 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                 ProfileFormField(
                   label: 'Stock Quantity',
                   child: ProfileTextInput(
+                    fieldKey: _stockKey,
                     controller: _stock,
                     hint: '0',
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Enter a stock quantity';
+                      }
+                      final parsed = int.tryParse(value.trim());
+                      if (parsed == null || parsed < 0) {
+                        return 'Enter a valid stock quantity';
+                      }
+                      return null;
+                    },
                     onChanged: (value) => notifier.update(
                       (state) => state.copyWith(stock: value),
                     ),
@@ -489,28 +609,67 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                     (state) => state.copyWith(isActive: value),
                   ),
                 ),
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
-          Container(
-            color: AppColors.cream,
-            padding: const EdgeInsets.fromLTRB(18, 8, 18, 24),
-            child: form.isSubmitting
-                ? const SizedBox(
-                    height: 52,
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.espresso,
-                        strokeWidth: 2,
-                      ),
-                    ),
-                  )
-                : ProfileSubmitButton(
-                    label: isEditing ? 'Save Changes' : 'Publish Product',
-                    onPressed: _submit,
-                  ),
+          _UploadBottomBar(
+            label: isEditing ? 'Save Changes' : 'Upload Product',
+            isLoading: form.isSubmitting,
+            onUpload: form.isSubmitting ? null : _onUpload,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _UploadBottomBar extends StatelessWidget {
+  const _UploadBottomBar({
+    required this.label,
+    required this.isLoading,
+    this.onUpload,
+  });
+
+  final String label;
+  final bool isLoading;
+  final VoidCallback? onUpload;
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    return Container(
+      color: AppColors.cream,
+      padding: EdgeInsets.fromLTRB(18, 8, 18, 24 + bottomInset),
+      child: AnimatedScaleTap(
+        onTap: onUpload,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: AppColors.vendorForest,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          alignment: Alignment.center,
+          child: isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+              : Text(
+                  label,
+                  style: GoogleFonts.dmSans(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    color: Colors.white,
+                  ),
+                ),
+        ),
       ),
     );
   }
@@ -520,10 +679,12 @@ class _CategoryPicker extends StatelessWidget {
   const _CategoryPicker({
     required this.categoryId,
     required this.onChanged,
+    this.hasError = false,
   });
 
   final String categoryId;
   final ValueChanged<String> onChanged;
+  final bool hasError;
 
   String get _label {
     if (categoryId.isEmpty) return 'Select a category';
@@ -588,7 +749,10 @@ class _CategoryPicker extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.cream,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.creamDark, width: 1.5),
+          border: Border.all(
+            color: hasError ? Colors.red : AppColors.creamDark,
+            width: 1.5,
+          ),
         ),
         child: Row(
           children: [
