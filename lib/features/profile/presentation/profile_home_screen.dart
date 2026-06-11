@@ -9,6 +9,7 @@ import '../../../core/widgets/toast_overlay.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import '../../vendor/domain/constants/vendor_routes.dart';
 import '../../vendor/domain/enums/vendor_status.dart';
+import '../../vendor/presentation/widgets/vendor_status_gate_sheets.dart';
 import '../data/profile_menu_config.dart';
 import 'widgets/profile_hero.dart';
 import 'widgets/profile_menu_tile.dart';
@@ -101,14 +102,14 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
 
   void _onVendorTileTap(VendorStatus status) {
     switch (status) {
-      case VendorStatus.approved:
-        context.go(VendorRoutes.dashboard);
-      case VendorStatus.pending:
-        PlaceifyToast.show(context, 'Application under review');
       case VendorStatus.none:
         context.push(VendorRoutes.register);
+      case VendorStatus.pending:
+        VendorStatusGateSheets.showPending(context);
+      case VendorStatus.approved:
+        context.push(VendorRoutes.dashboard);
       case VendorStatus.suspended:
-        PlaceifyToast.show(context, 'Contact support');
+        VendorStatusGateSheets.showSuspended(context);
     }
   }
 
