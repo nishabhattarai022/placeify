@@ -9,7 +9,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/widgets/placeify_bottom_nav.dart';
-import '../../../main.dart' show client;
+import '../../../core/config/placeify_server_client.dart';
 import '../../auth/presentation/account_mode_actions.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import '../data/vendor_mappers.dart';

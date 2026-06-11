@@ -47,9 +47,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _signInWithDemo() async {
-    _emailController.text = DemoCredentials.email;
-    _passwordController.text = DemoCredentials.password;
-    await _submit();
+    if (_isSubmitting) return;
+
+    setState(() => _isSubmitting = true);
+    await HapticService.heavy();
+
+    try {
+      await ref.read(currentUserProvider.notifier).signInWithDemoCredentials();
+      if (!mounted) return;
+      context.go('/home');
+    } on AuthException catch (e) {
+      if (mounted) PlaceifyToast.show(context, e.message);
+    } catch (error) {
+      if (mounted) {
+        PlaceifyToast.show(context, _loginErrorMessage(error));
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   Future<void> _submit() async {
@@ -68,11 +83,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       context.go('/home');
     } on AuthException catch (e) {
       if (mounted) PlaceifyToast.show(context, e.message);
-    } catch (_) {
-      if (mounted) PlaceifyToast.show(context, 'Log in failed. Try again.');
+    } catch (error) {
+      if (mounted) {
+        PlaceifyToast.show(context, _loginErrorMessage(error));
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
+  }
+
+  String _loginErrorMessage(Object error) {
+    if (error is AuthException) return error.message;
+    return 'Log in failed. Check your email and password.';
   }
 
   String? _required(String? value, String message) {

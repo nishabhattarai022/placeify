@@ -2,7 +2,7 @@ import 'package:placeify_client/placeify_client.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
-import '../../../../main.dart' show client;
+import '../../../../core/config/placeify_server_client.dart';
 import 'vendor_dashboard_provider.dart';
 
 part 'vendor_orders_provider.g.dart';

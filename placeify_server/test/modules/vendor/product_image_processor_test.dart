@@ -9,8 +9,6 @@ void main() {
     test('composites transparent PNG onto white JPEG', () {
       final cutout = img.Image(width: 4, height: 4, numChannels: 4);
       img.fill(cutout, color: img.ColorRgba8(255, 0, 0, 128));
-      final pngBytes = img.encodePng(cutout);
-
       final canvas = img.Image(width: cutout.width, height: cutout.height);
       img.fill(canvas, color: img.ColorRgb8(255, 255, 255));
       img.compositeImage(canvas, cutout);

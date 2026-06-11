@@ -1,6 +1,6 @@
 import 'package:placeify_client/placeify_client.dart';
 
-import '../../../main.dart' show client;
+import '../../../core/config/placeify_server_client.dart';
 import '../../cart/data/product_id_codec.dart';
 
 /// Serverpod product catalog API (data layer only).
