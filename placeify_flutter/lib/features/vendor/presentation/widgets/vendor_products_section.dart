@@ -9,6 +9,7 @@ import '../../../../core/constants/app_radii.dart';
 import '../../../../core/constants/app_typography.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/toast_overlay.dart';
+import '../../../home/presentation/providers/catalog_provider.dart';
 import '../../domain/repositories/vendor_repository.dart';
 import '../providers/vendor_dashboard_provider.dart';
 
@@ -72,12 +73,13 @@ class VendorProductsSection extends ConsumerWidget {
       if (context.mounted) {
         try {
           ref.invalidate(vendorProductsProvider);
+          ref.read(catalogIndexProvider.notifier).refresh();
         } catch (_) {
           // Provider may already be rebuilding; 3D is saved on the server.
         }
         PlaceifyToast.show(
           context,
-          '3D preview built from your product photo',
+          '3D preview generated — buyers can view it on the product page',
         );
       }
     } on VendorRepositoryException catch (error) {
@@ -210,7 +212,7 @@ class _ProductCard extends StatelessWidget {
                             size: 16,
                           ),
                           label: Text(
-                            _hasModel3d ? 'Rebuild 3D' : 'Build 3D',
+                            _hasModel3d ? 'Regenerate 3D' : 'Build 3D',
                             style: const TextStyle(fontSize: 12),
                           ),
                         ),

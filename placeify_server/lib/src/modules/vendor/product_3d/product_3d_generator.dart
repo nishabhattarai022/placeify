@@ -1,77 +1,33 @@
 import 'dart:io';
 
+import 'package:http/http.dart' as http;
 import 'package:serverpod/serverpod.dart';
 
 import '../../../generated/protocol.dart';
 import '../../../shared/server_static_paths.dart';
-import 'furniture_template_registry.dart';
-import 'glb_customizer.dart';
 import 'product_3d_generation_result.dart';
+import 'tripo_client.dart';
 
-/// Builds a per-product GLB from a category template, vendor dimensions,
-/// and the catalog product photo.
+/// Generates a per-product GLB via the Tripo image-to-model API.
 class Product3dGenerator {
   const Product3dGenerator();
 
   Future<Product3dGenerationResult> generateForProduct(
     Session session, {
     required Product product,
-    required String categoryName,
   }) async {
     final thumbnail = product.thumbnailUrl?.trim();
     if (thumbnail == null || thumbnail.isEmpty) {
-      session.log(
-        'Skipping 3D generation for product ${product.id}: no thumbnail',
-        level: LogLevel.warning,
-      );
       return Product3dGenerationResult.failure(
         code: 'MODEL3D_NO_THUMBNAIL',
         message: 'Add a product photo before building a 3D preview.',
       );
     }
 
-    final widthCm = product.widthCm;
-    final depthCm = product.depthCm;
-    final heightCm = product.heightCm;
-    if (widthCm == null ||
-        depthCm == null ||
-        heightCm == null ||
-        widthCm <= 0 ||
-        depthCm <= 0 ||
-        heightCm <= 0) {
-      session.log(
-        'Skipping 3D generation for product ${product.id}: invalid dimensions',
-        level: LogLevel.warning,
-      );
-      return Product3dGenerationResult.failure(
-        code: 'MODEL3D_NO_DIMENSIONS',
-        message: 'Enter valid width, depth, and height for this product.',
-      );
-    }
-
-    final templatePath =
-        ServerStaticPaths.templatePath(
-      FurnitureTemplateRegistry.templateFileForCategory(categoryName),
-    );
-    final templateFile = File(templatePath);
-    if (!templateFile.existsSync()) {
-      session.log(
-        '3D template missing at $templatePath for category $categoryName',
-        level: LogLevel.warning,
-      );
-      return Product3dGenerationResult.failure(
-        code: 'MODEL3D_TEMPLATE_MISSING',
-        message:
-            '3D template for "$categoryName" is missing on the server. '
-            'Restart the server from placeify_server after pulling updates.',
-      );
-    }
-
     final textureFile = ServerStaticPaths.fileFromUrlPath(thumbnail);
     if (!textureFile.existsSync()) {
       session.log(
-        'Thumbnail file missing for 3D generation: ${textureFile.path} '
-        '(thumbnailUrl=$thumbnail)',
+        'Thumbnail file missing for 3D generation: ${textureFile.path}',
         level: LogLevel.warning,
       );
       return Product3dGenerationResult.failure(
@@ -91,42 +47,74 @@ class Product3dGenerator {
     }
 
     try {
-      final templateBytes = await templateFile.readAsBytes();
-      final textureBytes = await textureFile.readAsBytes();
-      final customized = GlbCustomizer.customize(
-        templateBytes: templateBytes,
-        textureJpegBytes: textureBytes,
-        widthCm: widthCm,
-        depthCm: depthCm,
-        heightCm: heightCm,
-      );
-
-      final outputDir = Directory(ServerStaticPaths.uploadsModelsDir());
-      if (!outputDir.existsSync()) {
-        outputDir.createSync(recursive: true);
+      final imageBytes = await textureFile.readAsBytes();
+      final imageFormat = TripoClient.detectImageFormat(imageBytes);
+      if (imageFormat == null) {
+        return Product3dGenerationResult.failure(
+          code: 'MODEL3D_INVALID_IMAGE',
+          message: 'Product photo must be JPG, PNG, or WEBP.',
+        );
       }
 
-      final outputPath =
-          '${outputDir.path}${Platform.pathSeparator}product_$productId.glb';
-      await File(outputPath).writeAsBytes(customized);
+      final remoteModelUrl = await TripoClient.generateModelFromImage(
+        session,
+        imageBytes: imageBytes,
+        imageFormat: imageFormat,
+      );
+
+      final glbBytes = await _downloadGlb(remoteModelUrl);
+      final localUrl = await _storeGlb(productId, glbBytes);
+
       session.log(
-        'Generated 3D model for product $productId at $outputPath',
+        'Tripo 3D model saved for product $productId at $localUrl',
         level: LogLevel.info,
       );
-      return Product3dGenerationResult.success(
-        '/uploads/models/product_$productId.glb',
+      return Product3dGenerationResult.success(localUrl);
+    } on TripoClientException catch (error) {
+      session.log(
+        'Tripo 3D generation failed for product $productId: $error',
+        level: LogLevel.warning,
+      );
+      return Product3dGenerationResult.failure(
+        code: 'MODEL3D_TRIPO_FAILED',
+        message: error.message,
       );
     } catch (error, stackTrace) {
       session.log(
-        '3D generation failed for product ${product.id}: $error',
+        '3D generation failed for product $productId: $error',
         exception: error,
         stackTrace: stackTrace,
         level: LogLevel.warning,
       );
       return Product3dGenerationResult.failure(
         code: 'MODEL3D_GENERATION_FAILED',
-        message: '3D model could not be generated. Try again or re-upload the photo.',
+        message: '3D model could not be generated: $error',
       );
     }
+  }
+
+  Future<List<int>> _downloadGlb(String url) async {
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw TripoClientException(
+        'Failed to download model from Tripo (${response.statusCode}).',
+      );
+    }
+    if (response.bodyBytes.isEmpty) {
+      throw TripoClientException('Downloaded model file is empty.');
+    }
+    return response.bodyBytes;
+  }
+
+  Future<String> _storeGlb(int productId, List<int> bytes) async {
+    final outputDir = Directory(ServerStaticPaths.uploadsModelsDir());
+    if (!outputDir.existsSync()) {
+      outputDir.createSync(recursive: true);
+    }
+
+    final outputPath =
+        '${outputDir.path}${Platform.pathSeparator}product_$productId.glb';
+    await File(outputPath).writeAsBytes(bytes);
+    return '/uploads/models/product_$productId.glb';
   }
 }

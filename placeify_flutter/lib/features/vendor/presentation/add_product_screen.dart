@@ -261,7 +261,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       if (!mounted) return;
       PlaceifyToast.show(
         context,
-        'Product published — 3D preview generated from your photo',
+        'Product published — tap Build 3D in your dashboard to create a preview',
       );
       context.pop();
     } on VendorRepositoryException catch (error) {
@@ -338,7 +338,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                         title: 'Product photo',
                         subtitle:
                             'Show one item, front or 3/4 angle, on a plain background. '
-                            'We use this photo to build your 3D preview.',
+                            'We use this photo to generate your 3D preview when you tap Build 3D.',
                         children: [
                           DecoratedBox(
                             decoration: BoxDecoration(

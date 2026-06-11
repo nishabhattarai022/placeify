@@ -10,7 +10,7 @@ import 'product_model_3d_urls.dart';
 
 
 
-/// Resolves server-generated per-product GLB URLs for 3D preview.
+/// Resolves Tripo-generated per-product GLB URLs for 3D preview.
 
 abstract final class Product3dModelResolver {
 
