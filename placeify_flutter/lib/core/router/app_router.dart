@@ -5,10 +5,23 @@ import '../../features/home/presentation/home_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
-import '../../features/vendor/presentation/add_product_screen.dart';
+import '../../features/vendor/domain/constants/vendor_routes.dart';
+import '../../features/vendor/presentation/delivery_update_screen.dart';
+import '../../features/vendor/presentation/registration/vendor_registration_screen.dart';
+import '../../features/vendor/presentation/registration/vendor_registration_success_screen.dart';
+import '../../features/vendor/presentation/vendor_analytics_screen.dart';
 import '../../features/vendor/presentation/vendor_dashboard_screen.dart';
+import '../../features/vendor/presentation/vendor_notifications_screen.dart';
 import '../../features/vendor/presentation/vendor_order_detail_screen.dart';
 import '../../features/vendor/presentation/vendor_orders_screen.dart';
+import '../../features/vendor/presentation/vendor_payments_screen.dart';
+import '../../features/vendor/presentation/vendor_product_form_screen.dart';
+import '../../features/vendor/presentation/vendor_products_screen.dart';
+import '../../features/vendor/presentation/vendor_profile_screen.dart';
+import '../../features/vendor/presentation/vendor_reviews_screen.dart';
+import '../../features/vendor/presentation/vendor_settings_screen.dart';
+import '../../features/vendor/presentation/vendor_shell.dart';
+import '../../features/vendor/presentation/widgets/vendor_tab_scaffold.dart';
 import '../../features/home/presentation/bookmarks_screen.dart';
 import '../../data/furniture_categories.dart';
 import '../../screens/browse_screen.dart';
@@ -27,6 +40,16 @@ import 'main_shell.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 final shellNavigatorKey = GlobalKey<NavigatorState>();
+final vendorDashboardNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'vendorDashboard');
+final vendorOrdersNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'vendorOrders');
+final vendorProductsNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'vendorProducts');
+final vendorPaymentsNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'vendorPayments');
+final vendorProfileNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'vendorProfile');
 
 final appRouter = GoRouter(
   navigatorKey: rootNavigatorKey,
@@ -61,6 +84,30 @@ final appRouter = GoRouter(
         child: const LoginScreen(),
         transitionsBuilder: _fadeTransition,
         transitionDuration: AppDurations.slow,
+      ),
+    ),
+    GoRoute(
+      path: VendorRoutes.register,
+      name: 'vendorRegister',
+      pageBuilder: (context, state) => _slidePage(
+        key: ValueKey<String>(state.uri.toString()),
+        child: const VendorRegistrationScreen(),
+      ),
+    ),
+    GoRoute(
+      path: VendorRoutes.registerSuccess,
+      name: 'vendorRegisterSuccess',
+      pageBuilder: (context, state) => _slidePage(
+        key: ValueKey<String>(state.uri.toString()),
+        child: const VendorRegistrationSuccessScreen(),
+      ),
+    ),
+    GoRoute(
+      path: VendorRoutes.notifications,
+      name: 'vendorNotifications',
+      pageBuilder: (context, state) => _slidePage(
+        key: ValueKey<String>(state.uri.toString()),
+        child: const VendorNotificationsScreen(),
       ),
     ),
     ShellRoute(
@@ -215,47 +262,142 @@ final appRouter = GoRouter(
             return '/browse/category/$categoryId';
           },
         ),
-        GoRoute(
-          path: '/vendor',
-          name: 'vendor',
-          pageBuilder: (context, state) => CustomTransitionPage(
-            key: state.pageKey,
-            child: const VendorDashboardScreen(),
-            transitionsBuilder: _fadeTransition,
-            transitionDuration: AppDurations.slow,
-          ),
-          routes: [
-            GoRoute(
-              path: 'add-product',
-              name: 'vendorAddProduct',
-              parentNavigatorKey: rootNavigatorKey,
-              pageBuilder: (context, state) => _slidePage(
-                key: ValueKey<String>(state.uri.toString()),
-                child: const AddProductScreen(),
-              ),
-            ),
-            GoRoute(
-              path: 'orders',
-              name: 'vendorOrders',
-              parentNavigatorKey: rootNavigatorKey,
-              pageBuilder: (context, state) => _slidePage(
-                key: ValueKey<String>(state.uri.toString()),
-                child: const VendorOrdersScreen(),
-              ),
+        StatefulShellRoute.indexedStack(
+          builder: (context, state, navigationShell) =>
+              VendorShell(navigationShell: navigationShell),
+          branches: [
+            StatefulShellBranch(
+              navigatorKey: vendorDashboardNavigatorKey,
               routes: [
                 GoRoute(
-                  path: ':orderId',
-                  name: 'vendorOrderDetail',
-                  parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (context, state) {
-                    final orderId = int.parse(
-                      state.pathParameters['orderId']!,
-                    );
-                    return _slidePage(
-                      key: ValueKey<String>(state.uri.toString()),
-                      child: VendorOrderDetailScreen(orderId: orderId),
-                    );
-                  },
+                  path: VendorRoutes.dashboard,
+                  name: 'vendor',
+                  pageBuilder: (context, state) => _vendorTabPage(
+                    state: state,
+                    child: const VendorDashboardScreen(),
+                  ),
+                  routes: [
+                    GoRoute(
+                      path: 'analytics',
+                      name: 'vendorAnalytics',
+                      pageBuilder: (context, state) => _slidePage(
+                        key: ValueKey<String>(state.uri.toString()),
+                        child: const VendorAnalyticsScreen(),
+                      ),
+                    ),
+                    GoRoute(
+                      path: 'reviews',
+                      name: 'vendorReviews',
+                      pageBuilder: (context, state) => _slidePage(
+                        key: ValueKey<String>(state.uri.toString()),
+                        child: const VendorReviewsScreen(),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              navigatorKey: vendorOrdersNavigatorKey,
+              routes: [
+                GoRoute(
+                  path: VendorRoutes.orders,
+                  name: 'vendorOrders',
+                  pageBuilder: (context, state) => _vendorTabPage(
+                    state: state,
+                    child: const VendorOrdersScreen(),
+                  ),
+                  routes: [
+                    GoRoute(
+                      path: ':orderId',
+                      name: 'vendorOrderDetail',
+                      pageBuilder: (context, state) => _slidePage(
+                        key: ValueKey<String>(state.uri.toString()),
+                        child: VendorOrderDetailScreen(
+                          orderId: state.pathParameters['orderId']!,
+                        ),
+                      ),
+                      routes: [
+                        GoRoute(
+                          path: 'delivery-update',
+                          name: 'vendorDeliveryUpdate',
+                          pageBuilder: (context, state) => _slidePage(
+                            key: ValueKey<String>(state.uri.toString()),
+                            child: DeliveryUpdateScreen(
+                              orderId: state.pathParameters['orderId']!,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              navigatorKey: vendorProductsNavigatorKey,
+              routes: [
+                GoRoute(
+                  path: VendorRoutes.products,
+                  name: 'vendorProducts',
+                  pageBuilder: (context, state) => _vendorTabPage(
+                    state: state,
+                    child: const VendorProductsScreen(),
+                  ),
+                  routes: [
+                    GoRoute(
+                      path: 'upload',
+                      name: 'vendorProductUpload',
+                      pageBuilder: (context, state) => _slidePage(
+                        key: ValueKey<String>(state.uri.toString()),
+                        child: const VendorProductFormScreen(),
+                      ),
+                    ),
+                    GoRoute(
+                      path: ':productId/edit',
+                      name: 'vendorProductEdit',
+                      pageBuilder: (context, state) => _slidePage(
+                        key: ValueKey<String>(state.uri.toString()),
+                        child: VendorProductFormScreen(
+                          productId: state.pathParameters['productId'],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              navigatorKey: vendorPaymentsNavigatorKey,
+              routes: [
+                GoRoute(
+                  path: VendorRoutes.payments,
+                  name: 'vendorPayments',
+                  pageBuilder: (context, state) => _vendorTabPage(
+                    state: state,
+                    child: const VendorPaymentsScreen(),
+                  ),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              navigatorKey: vendorProfileNavigatorKey,
+              routes: [
+                GoRoute(
+                  path: VendorRoutes.profile,
+                  name: 'vendorProfile',
+                  pageBuilder: (context, state) => _vendorTabPage(
+                    state: state,
+                    child: const VendorProfileScreen(),
+                  ),
+                ),
+                GoRoute(
+                  path: VendorRoutes.settings,
+                  name: 'vendorSettings',
+                  pageBuilder: (context, state) => _slidePage(
+                    key: ValueKey<String>(state.uri.toString()),
+                    child: const VendorSettingsScreen(),
+                  ),
                 ),
               ],
             ),
@@ -273,6 +415,18 @@ Widget _fadeTransition(
   Widget child,
 ) {
   return FadeTransition(opacity: animation, child: child);
+}
+
+CustomTransitionPage<void> _vendorTabPage({
+  required GoRouterState state,
+  required Widget child,
+}) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: VendorTabScaffold(child: child),
+    transitionsBuilder: _fadeTransition,
+    transitionDuration: AppDurations.slow,
+  );
 }
 
 CustomTransitionPage<void> _slidePage({

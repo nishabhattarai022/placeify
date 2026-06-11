@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:placeify_client/placeify_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../vendor/domain/enums/vendor_status.dart';
 import '../constants/demo_credentials.dart';
 import '../domain/models/app_user.dart';
 import '../domain/repositories/auth_repository.dart';
@@ -15,6 +16,8 @@ class MockAuthRepository implements AuthRepository {
 
   static const _usersKey = 'placeify_auth_users';
   static const _sessionEmailKey = 'placeify_auth_session_email';
+  static const _vendorStatusKey = 'placeify_vendor_status';
+  static const _vendorIdKey = 'placeify_vendor_id';
 
   static Future<MockAuthRepository> create() async {
     final prefs = await SharedPreferences.getInstance();
@@ -77,7 +80,24 @@ class MockAuthRepository implements AuthRepository {
 
     final users = await _loadUsers();
     final match = users.where((u) => u.email == email).firstOrNull;
-    return match?.toAppUser();
+    final user = match?.toAppUser();
+    return user == null ? null : _withVendorOverrides(user);
+  }
+
+  @override
+  Future<AppUser> updateVendorStatus({
+    required VendorStatus status,
+    String? vendorId,
+  }) async {
+    final user = await getCurrentUser();
+    if (user == null) {
+      throw AuthException('Sign in to continue');
+    }
+    await _prefs.setString(_vendorStatusKey, status.name);
+    if (vendorId != null) {
+      await _prefs.setString(_vendorIdKey, vendorId);
+    }
+    return _withVendorOverrides(user);
   }
 
   @override
@@ -104,6 +124,19 @@ class MockAuthRepository implements AuthRepository {
   @override
   Future<void> signOut() async {
     await _prefs.remove(_sessionEmailKey);
+    await _prefs.remove(_vendorStatusKey);
+    await _prefs.remove(_vendorIdKey);
+  }
+
+  AppUser _withVendorOverrides(AppUser user) {
+    final statusRaw = _prefs.getString(_vendorStatusKey);
+    final status = statusRaw == null
+        ? null
+        : VendorStatus.values.asNameMap()[statusRaw];
+    return user.copyWith(
+      registeredVendorStatus: status,
+      registeredVendorId: _prefs.getString(_vendorIdKey),
+    );
   }
 
   Future<List<_StoredUser>> _loadUsers() async {

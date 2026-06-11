@@ -1,3 +1,4 @@
+import '../../../vendor/domain/enums/vendor_status.dart';
 import '../models/app_user.dart';
 
 /// Auth API contract (mock implementation persists locally until a real API exists).
@@ -18,6 +19,11 @@ abstract interface class AuthRepository {
   Future<AppUser> becomeVendor();
 
   Future<AppUser> becomeConsumer();
+
+  Future<AppUser> updateVendorStatus({
+    required VendorStatus status,
+    String? vendorId,
+  });
 
   Future<void> signOut();
 }

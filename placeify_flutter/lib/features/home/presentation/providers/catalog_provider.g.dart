@@ -150,7 +150,7 @@ final class CatalogProductsProvider
   }
 }
 
-String _$catalogProductsHash() => r'283296878c158ba6b102176831c4e2561d6fd1d7';
+String _$catalogProductsHash() => r'556e262b0a75cc7700d80152588aef53744c6401';
 
 @ProviderFor(catalogProductsByCategory)
 final catalogProductsByCategoryProvider = CatalogProductsByCategoryFamily._();

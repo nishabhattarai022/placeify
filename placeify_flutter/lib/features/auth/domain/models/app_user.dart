@@ -1,5 +1,7 @@
 import 'package:placeify_client/placeify_client.dart';
 
+import '../../../vendor/domain/enums/vendor_status.dart';
+
 /// Authenticated Placeify user returned from the auth backend.
 class AppUser {
   const AppUser({
@@ -10,6 +12,8 @@ class AppUser {
     this.phone,
     this.address,
     this.hasVendorShop = false,
+    this.registeredVendorStatus,
+    this.registeredVendorId,
   });
 
   final String id;
@@ -19,10 +23,25 @@ class AppUser {
   final String? phone;
   final String? address;
   final bool hasVendorShop;
+  final VendorStatus? registeredVendorStatus;
+  final String? registeredVendorId;
 
   bool get isVendorMode => role == UserRole.vendor;
 
   bool get canOpenVendorDashboard => hasVendorShop;
+
+  /// Maps serverpod shop state to the Nishabhattarai vendor UI model.
+  VendorStatus get vendorStatus {
+    if (registeredVendorStatus != null) return registeredVendorStatus!;
+    if (!hasVendorShop) return VendorStatus.none;
+    return VendorStatus.approved;
+  }
+
+  /// Mock vendor frontend uses a fixed demo vendor id for seed data.
+  String? get vendorId {
+    if (registeredVendorId != null) return registeredVendorId;
+    return hasVendorShop ? 'demo-vendor' : null;
+  }
 
   AppUser copyWith({
     String? id,
@@ -32,6 +51,8 @@ class AppUser {
     String? phone,
     String? address,
     bool? hasVendorShop,
+    VendorStatus? registeredVendorStatus,
+    String? registeredVendorId,
   }) {
     return AppUser(
       id: id ?? this.id,
@@ -41,6 +62,9 @@ class AppUser {
       phone: phone ?? this.phone,
       address: address ?? this.address,
       hasVendorShop: hasVendorShop ?? this.hasVendorShop,
+      registeredVendorStatus:
+          registeredVendorStatus ?? this.registeredVendorStatus,
+      registeredVendorId: registeredVendorId ?? this.registeredVendorId,
     );
   }
 
