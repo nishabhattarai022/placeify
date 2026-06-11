@@ -26,9 +26,12 @@ abstract class VendorProduct with _$VendorProduct {
     @Default(0) double weightKg,
     @Default(false) bool hasArView,
     @Default('') String materials,
+    @Default(5) int lowStockThreshold,
   }) = _VendorProduct;
 
   const VendorProduct._();
+
+  bool get isLowStock => stock <= lowStockThreshold;
 
   bool get isOnSale =>
       originalPrice != null && originalPrice! > price;

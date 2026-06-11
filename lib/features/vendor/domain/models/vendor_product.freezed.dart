@@ -34,6 +34,7 @@ mixin _$VendorProduct {
   double get weightKg;
   bool get hasArView;
   String get materials;
+  int get lowStockThreshold;
 
   /// Create a copy of VendorProduct
   /// with the given fields replaced by the non-null parameter values.
@@ -81,7 +82,9 @@ mixin _$VendorProduct {
             (identical(other.hasArView, hasArView) ||
                 other.hasArView == hasArView) &&
             (identical(other.materials, materials) ||
-                other.materials == materials));
+                other.materials == materials) &&
+            (identical(other.lowStockThreshold, lowStockThreshold) ||
+                other.lowStockThreshold == lowStockThreshold));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -107,12 +110,13 @@ mixin _$VendorProduct {
         heightCm,
         weightKg,
         hasArView,
-        materials
+        materials,
+        lowStockThreshold
       ]);
 
   @override
   String toString() {
-    return 'VendorProduct(id: $id, vendorId: $vendorId, name: $name, sku: $sku, price: $price, stock: $stock, imageUrls: $imageUrls, categoryId: $categoryId, isActive: $isActive, createdAt: $createdAt, description: $description, brand: $brand, originalPrice: $originalPrice, offerLabel: $offerLabel, widthCm: $widthCm, depthCm: $depthCm, heightCm: $heightCm, weightKg: $weightKg, hasArView: $hasArView, materials: $materials)';
+    return 'VendorProduct(id: $id, vendorId: $vendorId, name: $name, sku: $sku, price: $price, stock: $stock, imageUrls: $imageUrls, categoryId: $categoryId, isActive: $isActive, createdAt: $createdAt, description: $description, brand: $brand, originalPrice: $originalPrice, offerLabel: $offerLabel, widthCm: $widthCm, depthCm: $depthCm, heightCm: $heightCm, weightKg: $weightKg, hasArView: $hasArView, materials: $materials, lowStockThreshold: $lowStockThreshold)';
   }
 }
 
@@ -142,7 +146,8 @@ abstract mixin class $VendorProductCopyWith<$Res> {
       double heightCm,
       double weightKg,
       bool hasArView,
-      String materials});
+      String materials,
+      int lowStockThreshold});
 }
 
 /// @nodoc
@@ -178,6 +183,7 @@ class _$VendorProductCopyWithImpl<$Res>
     Object? weightKg = null,
     Object? hasArView = null,
     Object? materials = null,
+    Object? lowStockThreshold = null,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -260,6 +266,10 @@ class _$VendorProductCopyWithImpl<$Res>
           ? _self.materials
           : materials // ignore: cast_nullable_to_non_nullable
               as String,
+      lowStockThreshold: null == lowStockThreshold
+          ? _self.lowStockThreshold
+          : lowStockThreshold // ignore: cast_nullable_to_non_nullable
+              as int,
     ));
   }
 }
@@ -377,7 +387,8 @@ extension VendorProductPatterns on VendorProduct {
             double heightCm,
             double weightKg,
             bool hasArView,
-            String materials)?
+            String materials,
+            int lowStockThreshold)?
         $default, {
     required TResult orElse(),
   }) {
@@ -404,7 +415,8 @@ extension VendorProductPatterns on VendorProduct {
             _that.heightCm,
             _that.weightKg,
             _that.hasArView,
-            _that.materials);
+            _that.materials,
+            _that.lowStockThreshold);
       case _:
         return orElse();
     }
@@ -445,7 +457,8 @@ extension VendorProductPatterns on VendorProduct {
             double heightCm,
             double weightKg,
             bool hasArView,
-            String materials)
+            String materials,
+            int lowStockThreshold)
         $default,
   ) {
     final _that = this;
@@ -471,7 +484,8 @@ extension VendorProductPatterns on VendorProduct {
             _that.heightCm,
             _that.weightKg,
             _that.hasArView,
-            _that.materials);
+            _that.materials,
+            _that.lowStockThreshold);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -511,7 +525,8 @@ extension VendorProductPatterns on VendorProduct {
             double heightCm,
             double weightKg,
             bool hasArView,
-            String materials)?
+            String materials,
+            int lowStockThreshold)?
         $default,
   ) {
     final _that = this;
@@ -537,7 +552,8 @@ extension VendorProductPatterns on VendorProduct {
             _that.heightCm,
             _that.weightKg,
             _that.hasArView,
-            _that.materials);
+            _that.materials,
+            _that.lowStockThreshold);
       case _:
         return null;
     }
@@ -567,7 +583,8 @@ class _VendorProduct extends VendorProduct {
       this.heightCm = 0,
       this.weightKg = 0,
       this.hasArView = false,
-      this.materials = ''})
+      this.materials = '',
+      this.lowStockThreshold = 5})
       : _imageUrls = imageUrls,
         super._();
   factory _VendorProduct.fromJson(Map<String, dynamic> json) =>
@@ -630,6 +647,9 @@ class _VendorProduct extends VendorProduct {
   @override
   @JsonKey()
   final String materials;
+  @override
+  @JsonKey()
+  final int lowStockThreshold;
 
   /// Create a copy of VendorProduct
   /// with the given fields replaced by the non-null parameter values.
@@ -682,7 +702,9 @@ class _VendorProduct extends VendorProduct {
             (identical(other.hasArView, hasArView) ||
                 other.hasArView == hasArView) &&
             (identical(other.materials, materials) ||
-                other.materials == materials));
+                other.materials == materials) &&
+            (identical(other.lowStockThreshold, lowStockThreshold) ||
+                other.lowStockThreshold == lowStockThreshold));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -708,12 +730,13 @@ class _VendorProduct extends VendorProduct {
         heightCm,
         weightKg,
         hasArView,
-        materials
+        materials,
+        lowStockThreshold
       ]);
 
   @override
   String toString() {
-    return 'VendorProduct(id: $id, vendorId: $vendorId, name: $name, sku: $sku, price: $price, stock: $stock, imageUrls: $imageUrls, categoryId: $categoryId, isActive: $isActive, createdAt: $createdAt, description: $description, brand: $brand, originalPrice: $originalPrice, offerLabel: $offerLabel, widthCm: $widthCm, depthCm: $depthCm, heightCm: $heightCm, weightKg: $weightKg, hasArView: $hasArView, materials: $materials)';
+    return 'VendorProduct(id: $id, vendorId: $vendorId, name: $name, sku: $sku, price: $price, stock: $stock, imageUrls: $imageUrls, categoryId: $categoryId, isActive: $isActive, createdAt: $createdAt, description: $description, brand: $brand, originalPrice: $originalPrice, offerLabel: $offerLabel, widthCm: $widthCm, depthCm: $depthCm, heightCm: $heightCm, weightKg: $weightKg, hasArView: $hasArView, materials: $materials, lowStockThreshold: $lowStockThreshold)';
   }
 }
 
@@ -745,7 +768,8 @@ abstract mixin class _$VendorProductCopyWith<$Res>
       double heightCm,
       double weightKg,
       bool hasArView,
-      String materials});
+      String materials,
+      int lowStockThreshold});
 }
 
 /// @nodoc
@@ -781,6 +805,7 @@ class __$VendorProductCopyWithImpl<$Res>
     Object? weightKg = null,
     Object? hasArView = null,
     Object? materials = null,
+    Object? lowStockThreshold = null,
   }) {
     return _then(_VendorProduct(
       id: null == id
@@ -863,6 +888,10 @@ class __$VendorProductCopyWithImpl<$Res>
           ? _self.materials
           : materials // ignore: cast_nullable_to_non_nullable
               as String,
+      lowStockThreshold: null == lowStockThreshold
+          ? _self.lowStockThreshold
+          : lowStockThreshold // ignore: cast_nullable_to_non_nullable
+              as int,
     ));
   }
 }
