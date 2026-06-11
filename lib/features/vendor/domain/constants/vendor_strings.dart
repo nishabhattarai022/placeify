@@ -40,3 +40,19 @@ abstract final class VendorStrings {
   static const keepEditing = 'Keep Editing';
   static const dismiss = 'Dismiss';
 }
+
+/// Nepal-first placeholders and labels for vendor registration and profile forms.
+abstract final class VendorFormStrings {
+  static const businessNameHint = 'e.g. Himalayan Home Crafts';
+  static const contactNameHint = 'e.g. Sita Sharma';
+  static const taxIdLabel = 'PAN / VAT Number';
+  static const taxIdHint = 'e.g. 123456789';
+  static const streetHint = 'e.g. Thamel, Kathmandu';
+  static const cityHint = 'Kathmandu';
+  static const stateHint = 'Bagmati';
+  static const postalCodeHint = '44600';
+  static const countryHint = 'Nepal';
+  static const bankNameHint = 'e.g. Nabil Bank, NIC Asia';
+  static const branchSwiftLabel = 'Branch / SWIFT Code';
+  static const branchSwiftHint = 'e.g. NIBLNPKT';
+}
