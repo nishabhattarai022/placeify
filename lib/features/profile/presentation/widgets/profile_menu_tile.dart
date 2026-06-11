@@ -68,15 +68,15 @@ class ProfileMenuTile extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: AppColors.rust,
+                    color: item.badgeBackgroundColor,
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
                     item.badge!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                      color: item.badgeForegroundColor,
                     ),
                   ),
                 ),
