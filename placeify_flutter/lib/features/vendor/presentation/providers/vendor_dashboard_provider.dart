@@ -51,6 +51,8 @@ class VendorDashboardState extends _$VendorDashboardState {
     if (!client.auth.isAuthenticated) return null;
     final repo = ref.read(vendorRepositoryProvider);
     try {
+      final hasShop = await repo.hasShop();
+      if (!hasShop) return null;
       return await repo.getDashboard();
     } on VendorRepositoryException catch (error) {
       if (error.isShopNotFound) return null;
@@ -97,6 +99,7 @@ class VendorDashboardState extends _$VendorDashboardState {
     required String name,
     required String description,
     required double price,
+    required int categoryId,
     required String materials,
     required double widthCm,
     required double depthCm,
@@ -113,6 +116,7 @@ class VendorDashboardState extends _$VendorDashboardState {
       name: name,
       description: description,
       price: price,
+      categoryId: categoryId,
       materials: materials,
       widthCm: widthCm,
       depthCm: depthCm,
@@ -127,4 +131,5 @@ class VendorDashboardState extends _$VendorDashboardState {
     await ref.read(catalogIndexProvider.notifier).refresh();
     await refresh();
   }
+
 }

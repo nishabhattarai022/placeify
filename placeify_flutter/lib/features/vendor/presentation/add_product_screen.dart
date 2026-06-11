@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:placeify_client/placeify_client.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../home/presentation/providers/catalog_provider.dart';
 import '../../../core/constants/app_radii.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/widgets/form_text_field.dart';
@@ -42,7 +44,10 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   String? _imageFileName;
   bool _isSubmitting = false;
   bool _showPhotoError = false;
+  bool _showCategoryError = false;
   bool _cameraAvailable = true;
+  int? _selectedCategoryId;
+  Future<List<Category>>? _categoriesFuture;
 
   @override
   void initState() {
@@ -67,6 +72,13 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   void _loadCameraAvailability() {
     final available = _imageService.supportsCamera();
     if (mounted) setState(() => _cameraAvailable = available);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _categoriesFuture ??=
+        ref.read(catalogRepositoryProvider).listCategories();
   }
 
   void _applyPickedImage(PickedProductImage picked) {
@@ -179,6 +191,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
 
   bool get _hasPhoto => _imageBytes != null;
 
+  bool get _hasCategory => _selectedCategoryId != null;
+
   bool get _hasBasics =>
       _nameController.text.trim().isNotEmpty &&
       _descriptionController.text.trim().isNotEmpty;
@@ -208,6 +222,12 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       return;
     }
 
+    if (!_hasCategory) {
+      setState(() => _showCategoryError = true);
+      PlaceifyToast.show(context, 'Select a furniture category');
+      return;
+    }
+
     final price = double.parse(_priceController.text.trim());
     final width = _parseDimension(_widthController.text)!;
     final depth = _parseDimension(_depthController.text)!;
@@ -222,6 +242,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
             name: _nameController.text.trim(),
             description: _descriptionController.text.trim(),
             price: price,
+            categoryId: _selectedCategoryId!,
             materials: _materialsController.text.trim(),
             widthCm: width,
             depthCm: depth,
@@ -238,7 +259,10 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                 : _warrantyController.text.trim(),
           );
       if (!mounted) return;
-      PlaceifyToast.show(context, 'Product published to your shop');
+      PlaceifyToast.show(
+        context,
+        'Product published — 3D preview generated from your photo',
+      );
       context.pop();
     } on VendorRepositoryException catch (error) {
       if (mounted) PlaceifyToast.show(context, error.message);
@@ -302,6 +326,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                       VendorFormChecklist(
                         items: [
                           (label: 'Photo', done: _hasPhoto),
+                          (label: 'Category', done: _hasCategory),
                           (label: 'Basics', done: _hasBasics && _hasValidPrice),
                           (label: 'Specs', done: _hasSpecs),
                           (label: 'Care', done: _hasCare),
@@ -311,7 +336,9 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                       VendorFormSection(
                         step: 1,
                         title: 'Product photo',
-                        subtitle: 'Use good lighting and show the full item.',
+                        subtitle:
+                            'Show one item, front or 3/4 angle, on a plain background. '
+                            'We use this photo to build your 3D preview.',
                         children: [
                           DecoratedBox(
                             decoration: BoxDecoration(
@@ -347,6 +374,85 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                       const SizedBox(height: 16),
                       VendorFormSection(
                         step: 2,
+                        title: 'Furniture type',
+                        subtitle:
+                            'Pick the category that best matches your item. '
+                            'This selects the 3D shape we scale to your dimensions.',
+                        children: [
+                          FutureBuilder<List<Category>>(
+                            future: _categoriesFuture,
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 12),
+                                  child: Center(
+                                    child: SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+                              if (snapshot.hasError || !snapshot.hasData) {
+                                return const Text(
+                                  'Could not load categories. Try again later.',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.rust,
+                                  ),
+                                );
+                              }
+                              final categories = List<Category>.from(
+                                snapshot.data!,
+                              )..sort((a, b) => a.name.compareTo(b.name));
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      for (final category in categories)
+                                        if (category.id != null)
+                                          _CategoryChip(
+                                            label: _categoryLabel(category.name),
+                                            selected:
+                                                _selectedCategoryId ==
+                                                    category.id,
+                                            onTap: () {
+                                              setState(() {
+                                                _selectedCategoryId =
+                                                    category.id;
+                                                _showCategoryError = false;
+                                              });
+                                            },
+                                          ),
+                                    ],
+                                  ),
+                                  if (_showCategoryError) ...[
+                                    const SizedBox(height: 8),
+                                    const Text(
+                                      'Select a category',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.rust,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      VendorFormSection(
+                        step: 3,
                         title: 'Listing basics',
                         subtitle: 'Name, overview, and price.',
                         children: [
@@ -404,7 +510,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                       ),
                       const SizedBox(height: 16),
                       VendorFormSection(
-                        step: 3,
+                        step: 4,
                         title: 'Materials & specifications',
                         subtitle:
                             'Real details customers see on the product page.',
@@ -499,7 +605,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                       ),
                       const SizedBox(height: 16),
                       VendorFormSection(
-                        step: 4,
+                        step: 5,
                         title: 'Care & warranty',
                         subtitle: 'Help customers look after the product.',
                         children: [
@@ -578,5 +684,49 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       return 'Invalid $label';
     }
     return null;
+  }
+
+  String _categoryLabel(String name) {
+    if (name.isEmpty) return 'Other';
+    return name[0].toUpperCase() + name.substring(1);
+  }
+}
+
+class _CategoryChip extends StatelessWidget {
+  const _CategoryChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.sage.withValues(alpha: 0.18) : Colors.white,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: selected ? AppColors.sage : AppColors.creamDark,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            color: selected ? AppColors.espresso : AppColors.textSecondary,
+          ),
+        ),
+      ),
+    );
   }
 }

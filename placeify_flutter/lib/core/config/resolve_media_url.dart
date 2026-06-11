@@ -13,11 +13,14 @@ Future<String> resolveMediaUrl(String? path) async {
   final webHost = apiUri.host;
   final scheme = apiUri.scheme;
 
-  final normalizedPath = path.startsWith('/') ? path : '/$path';
+  final segments = path
+      .split('/')
+      .where((segment) => segment.isNotEmpty)
+      .toList();
   return Uri(
     scheme: scheme,
     host: webHost,
     port: _webServerPort,
-    path: normalizedPath,
+    pathSegments: segments,
   ).toString();
 }

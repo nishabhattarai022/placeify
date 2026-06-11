@@ -16,6 +16,7 @@ abstract class VendorRepository {
     required String name,
     required String description,
     required double price,
+    required int categoryId,
     required String materials,
     required double widthCm,
     required double depthCm,
@@ -29,6 +30,8 @@ abstract class VendorRepository {
   });
 
   Future<List<Product>> listMyProducts();
+
+  Future<Product> regenerateProductModel3d(int productId);
 
   Future<List<VendorShopOrder>> listShopOrders({OrderStatus? status});
 
