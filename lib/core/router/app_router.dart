@@ -60,13 +60,21 @@ final vendorProfileNavigatorKey =
 
 @Riverpod(keepAlive: true)
 GoRouter appRouter(Ref ref) {
-  final userAsync = ref.watch(currentUserProvider);
+  // Re-evaluate redirects on auth changes without recreating GoRouter — recreating
+  // the router resets navigation to initialLocation and breaks login.
+  final refreshListenable = ValueNotifier<int>(0);
+  ref.onDispose(refreshListenable.dispose);
+  ref.listen(currentUserProvider, (_, __) {
+    refreshListenable.value++;
+  });
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
     debugLogDiagnostics: false,
+    refreshListenable: refreshListenable,
     redirect: (context, state) {
+      final userAsync = ref.read(currentUserProvider);
       if (userAsync.isLoading) return null;
       final redirect = VendorAuthGuard.evaluate(
         location: state.matchedLocation,
