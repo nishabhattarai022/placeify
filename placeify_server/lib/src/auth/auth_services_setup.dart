@@ -8,6 +8,8 @@ import '../email/email_service.dart';
 /// Registers JWT + email identity provider auth on [pod].
 /// Called from [run] and from integration tests.
 void setupPlaceifyAuthServices(Serverpod pod, {List<String> args = const []}) {
+  final fixedVerificationCode = verificationCodeGenerator(pod, args);
+
   pod.initializeAuthServices(
     tokenManagerBuilders: [
       JwtConfigFromPasswords(),
@@ -17,16 +19,16 @@ void setupPlaceifyAuthServices(Serverpod pod, {List<String> args = const []}) {
         sendRegistrationVerificationCode: sendRegistrationVerificationCode,
         sendPasswordResetVerificationCode: sendPasswordResetVerificationCode,
         onAfterAccountCreated: onAfterAccountCreated,
-        registrationVerificationCodeGenerator: verificationCodeGenerator(args),
-        passwordResetVerificationCodeGenerator: verificationCodeGenerator(args),
+        registrationVerificationCodeGenerator: fixedVerificationCode,
+        passwordResetVerificationCodeGenerator: fixedVerificationCode,
       ),
     ],
   );
 }
 
-/// Fixed codes in test mode so integration tests can complete registration.
-String Function() verificationCodeGenerator(List<String> args) {
-  if (_isTestMode(args)) {
+/// Fixed codes in test/development so registration works without a verification UI.
+String Function() verificationCodeGenerator(Serverpod pod, List<String> args) {
+  if (_isTestMode(args) || pod.runMode == ServerpodRunMode.development) {
     return () => '123456';
   }
   return defaultVerificationCodeGenerator;

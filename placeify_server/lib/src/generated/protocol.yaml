@@ -13,7 +13,54 @@ user:
   - getCurrentUser:
   - updateProfile:
   - becomeVendor:
+  - becomeConsumer:
+  - getDashboard:
+  - listMyOrders:
+  - listMyArSessions:
   - requirePlaceifyUser:
   - requireRole:
 greeting:
   - hello:
+ar:
+  - recordSession:
+  - listMySessions:
+cart:
+  - getCartItems:
+  - addToCart:
+  - updateCartItemQuantity:
+  - removeFromCart:
+  - clearCart:
+checkout:
+  - checkout:
+notification:
+  - getPreferences:
+  - updatePreferences:
+order:
+  - listMyOrders:
+  - getOrder:
+product:
+  - listCategories:
+  - searchProducts:
+  - getProduct:
+  - listProducts:
+review:
+  - submitReview:
+  - listProductReviews:
+vendor:
+  - getMyShop:
+  - getDashboard:
+  - hasShop:
+  - createShop:
+  - updateShop:
+  - listMyProducts:
+  - createProduct:
+  - updateProductThumbnail:
+  - uploadProductImage:
+  - listShopOrders:
+  - getShopOrder:
+wishlist:
+  - listMyWishlist:
+  - addToWishlist:
+  - removeFromWishlist:
+  - toggleWishlist:
+  - isWishlisted:

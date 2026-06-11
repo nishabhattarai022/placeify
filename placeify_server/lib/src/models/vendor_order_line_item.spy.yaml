@@ -1,0 +1,10 @@
+### Product line in a customer order for one vendor shop.
+class: VendorOrderLineItem
+fields:
+  orderItemId: int
+  productId: int
+  productName: String
+  quantity: int
+  unitPrice: double
+  lineTotal: double
+  thumbnailUrl: String?

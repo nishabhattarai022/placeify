@@ -1,64 +1,132 @@
-import 'package:serverpod/serverpod.dart';
+import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../generated/protocol.dart';
+import '../modules/user/user_service.dart';
 import 'placeify_endpoint.dart';
 
-/// Endpoints for the Placeify application user profile linked to auth.
+/// Profile and dashboard APIs for authenticated customers.
 class UserEndpoint extends PlaceifyAuthenticatedEndpoint {
-  /// Returns the logged-in user's Placeify profile, or null if not created yet.
-  Future<User?> getCurrentUser(Session session) async {
-    final authUserId = UuidValue.fromString(session.authenticated!.userIdentifier);
-    return User.db.findFirstRow(
-      session,
-      where: (user) => user.authUserId.equals(authUserId),
-    );
+  final _service = UserService();
+
+  Future<User?> getCurrentUser(Session session) {
+    return _service.getCurrentUser(session);
   }
 
-  /// Creates or updates the Placeify profile for the logged-in user.
   Future<User> updateProfile(
     Session session,
     String name, {
     String? phone,
     String? address,
-  }) async {
-    final authUserId = UuidValue.fromString(session.authenticated!.userIdentifier);
-    final existing = await User.db.findFirstRow(
+  }) {
+    return _service.updateProfile(
       session,
-      where: (user) => user.authUserId.equals(authUserId),
+      name,
+      phone: phone,
+      address: address,
+    );
+  }
+
+  Future<User> becomeVendor(Session session) {
+    return _service.becomeVendor(session);
+  }
+
+  Future<User> becomeConsumer(Session session) {
+    return _service.becomeConsumer(session);
+  }
+
+  Future<UserDashboard> getDashboard(Session session) {
+    return _service.getDashboard(session);
+  }
+
+  Future<List<UserOrderSummary>> listMyOrders(
+    Session session, {
+    int limit = 20,
+    int offset = 0,
+    OrderStatus? status,
+  }) async {
+    final user = await requirePlaceifyUser(session);
+
+    final orders = await Order.db.find(
+      session,
+      where: (order) {
+        var expression = order.userId.equals(user.id!);
+        if (status != null) {
+          expression = expression & order.status.equals(status);
+        }
+        return expression;
+      },
+      orderBy: (order) => order.placedAt,
+      orderDescending: true,
+      limit: limit,
+      offset: offset,
     );
 
-    if (existing == null) {
-      return User.db.insertRow(
+    final summaries = <UserOrderSummary>[];
+    for (final order in orders) {
+      final orderId = order.id;
+      if (orderId == null) continue;
+
+      final items = await OrderItem.db.find(
         session,
-        User(
-          authUserId: authUserId,
-          name: name,
-          phone: phone,
-          address: address,
-          role: UserRole.consumer,
+        where: (item) => item.orderId.equals(orderId),
+        include: OrderItem.include(product: Product.include()),
+      );
+
+      final primaryName = items.isEmpty
+          ? null
+          : items.first.product?.name ?? 'Order item';
+      final totalQuantity =
+          items.fold<int>(0, (sum, item) => sum + item.quantity);
+      final displayName = primaryName == null
+          ? null
+          : totalQuantity > 1
+              ? '$primaryName × $totalQuantity'
+              : primaryName;
+
+      summaries.add(
+        UserOrderSummary(
+          id: orderId,
+          orderNumber: orderId.toString().padLeft(5, '0'),
+          status: order.status,
+          totalAmount: order.totalAmount,
+          placedAt: order.placedAt,
+          itemCount: totalQuantity,
+          primaryProductName: displayName,
         ),
       );
     }
 
-    return User.db.updateRow(
-      session,
-      existing.copyWith(
-        name: name,
-        phone: phone,
-        address: address,
-      ),
-    );
+    return summaries;
   }
 
-  /// Promotes the current user to vendor role (after vendor onboarding).
-  Future<User> becomeVendor(Session session) async {
+  Future<List<UserArSessionSummary>> listMyArSessions(
+    Session session, {
+    int limit = 20,
+    int offset = 0,
+  }) async {
     final user = await requirePlaceifyUser(session);
-    if (user.role == UserRole.admin) {
-      return user;
-    }
-    return User.db.updateRow(
+
+    final sessions = await ARSession.db.find(
       session,
-      user.copyWith(role: UserRole.vendor),
+      where: (row) => row.userId.equals(user.id!),
+      include: ARSession.include(product: Product.include()),
+      orderBy: (row) => row.startedAt,
+      orderDescending: true,
+      limit: limit,
+      offset: offset,
     );
+
+    return [
+      for (final row in sessions)
+        if (row.id != null)
+          UserArSessionSummary(
+            id: row.id!,
+            productId: row.productId,
+            productName: row.product?.name ?? 'Product',
+            startedAt: row.startedAt,
+            deviceInfo: row.deviceInfo,
+            snapshotUrl: row.snapshotUrl,
+          ),
+    ];
   }
 }

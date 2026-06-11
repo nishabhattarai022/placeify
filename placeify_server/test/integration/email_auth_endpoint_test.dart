@@ -2,7 +2,6 @@ import 'package:placeify_server/src/auth/auth_callbacks.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
-import 'package:serverpod_test/serverpod_test.dart';
 import 'package:test/test.dart';
 
 import 'test_tools/serverpod_test_tools.dart';

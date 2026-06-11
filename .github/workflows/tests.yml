@@ -13,10 +13,6 @@ jobs:
       VERSION: '3.4.8'
       SERVERPOD_PASSWORD_database: 'ajzc6u1uPyDjeg0SXp61RXK22hm7mqsJ'
       SERVERPOD_PASSWORD_redis: 'Ae3cNAo_yL9CdlS4MIJa_DycO050OwG6'
-      SERVERPOD_PASSWORD_serviceSecret: 'placeify_test_service_secret'
-      SERVERPOD_PASSWORD_emailSecretHashPepper: 'placeify_test_email_pepper'
-      SERVERPOD_PASSWORD_jwtRefreshTokenHashPepper: 'placeify_test_refresh_pepper'
-      SERVERPOD_PASSWORD_jwtHmacSha512PrivateKey: 'placeify_test_jwt_private_key'
 
     steps:
       - uses: actions/checkout@v4

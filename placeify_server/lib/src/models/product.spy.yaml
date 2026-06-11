@@ -7,6 +7,14 @@ fields:
   name: String
   description: String
   price: double
+  materials: String?
+  widthCm: double?
+  depthCm: double?
+  heightCm: double?
+  weightKg: double?
+  assemblyNote: String?
+  careInstructions: String?
+  warranty: String?
   model3dUrl: String?
   thumbnailUrl: String?
   status: ProductStatus, default=active

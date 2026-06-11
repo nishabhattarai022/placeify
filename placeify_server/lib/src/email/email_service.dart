@@ -164,15 +164,12 @@ abstract final class EmailService {
 
     final port = int.tryParse(portStr) ?? 587;
 
-    // Minimal SMTP send via external relay API pattern — use Resend in production.
-    // For SMTP, log instructions; full SMTP requires mailer package.
     session.log(
       'SMTP provider selected but use Resend for production. '
       'Attempting basic SMTP to $host:$port for $to',
       level: LogLevel.warning,
     );
 
-    // Delegate to Resend if smtp is selected but resend key exists (migration path).
     final resendKey = _password(session, 'resendApiKey');
     if (resendKey != null && resendKey.isNotEmpty) {
       await _sendViaResend(

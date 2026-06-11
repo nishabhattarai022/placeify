@@ -11,6 +11,10 @@ web/app
 # Directory created by dartdoc
 doc/api/
 
+# Runtime product image uploads (generated locally)
+web/static/uploads/*
+!web/static/uploads/.gitkeep
+
 # Passwords file
 config/passwords.yaml
 
