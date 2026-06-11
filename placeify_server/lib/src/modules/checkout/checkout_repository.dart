@@ -11,8 +11,7 @@ class CheckoutStore {
   ) async {
     final address = request.shippingAddress.trim();
     if (address.isEmpty) {
-      throw PlaceifyException(
-        'Shipping address is required.',
+      throw PlaceifyException(message: 'Shipping address is required.',
         code: 'INVALID_ADDRESS',
       );
     }
@@ -27,7 +26,7 @@ class CheckoutStore {
     );
 
     if (cartItems.isEmpty) {
-      throw PlaceifyException('Your cart is empty.', code: 'CART_EMPTY');
+      throw PlaceifyException(message: 'Your cart is empty.', code: 'CART_EMPTY');
     }
 
     final totalAmount = cartItems.fold<double>(
@@ -52,8 +51,7 @@ class CheckoutStore {
       for (final item in cartItems) {
         final product = item.product;
         if (product == null || product.id == null) {
-          throw PlaceifyException(
-            'A cart item references a missing product.',
+          throw PlaceifyException(message: 'A cart item references a missing product.',
             code: 'PRODUCT_NOT_FOUND',
           );
         }

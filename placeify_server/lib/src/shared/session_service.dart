@@ -8,7 +8,7 @@ abstract final class SessionService {
   static Future<User> requireUser(Session session) async {
     final auth = session.authenticated;
     if (auth == null) {
-      throw PlaceifyException('Authentication required.', code: 'AUTH_REQUIRED');
+      throw PlaceifyException(message: 'Authentication required.', code: 'AUTH_REQUIRED');
     }
 
     final authUserId = UuidValue.fromString(auth.userIdentifier);
@@ -17,7 +17,7 @@ abstract final class SessionService {
       where: (row) => row.authUserId.equals(authUserId),
     );
     if (user == null) {
-      throw PlaceifyException('User profile not found.', code: 'PROFILE_NOT_FOUND');
+      throw PlaceifyException(message: 'User profile not found.', code: 'PROFILE_NOT_FOUND');
     }
     return user;
   }
@@ -35,8 +35,7 @@ abstract final class SessionService {
   static Future<User> requireRole(Session session, Set<UserRole> roles) async {
     final user = await requireUser(session);
     if (!roles.contains(user.role)) {
-      throw PlaceifyException(
-        'You do not have permission to perform this action.',
+      throw PlaceifyException(message: 'You do not have permission to perform this action.',
         code: 'FORBIDDEN',
       );
     }

@@ -49,8 +49,7 @@ class UserService {
       where: (row) => row.userId.equals(user.id!),
     );
     if (shop == null) {
-      throw PlaceifyException(
-        'Complete vendor registration before switching to vendor mode.',
+      throw PlaceifyException(message: 'Complete vendor registration before switching to vendor mode.',
         code: 'SHOP_NOT_FOUND',
       );
     }

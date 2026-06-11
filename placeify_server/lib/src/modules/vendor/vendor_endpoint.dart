@@ -112,6 +112,13 @@ class VendorEndpoint extends Endpoint {
     return _service.uploadProductImage(session, fileData, fileName);
   }
 
+  Future<Product> regenerateProductModel3d(
+    Session session,
+    int productId,
+  ) {
+    return _service.regenerateProductModel3d(session, productId);
+  }
+
   Future<List<VendorShopOrder>> listShopOrders(
     Session session, {
     int limit = 50,
