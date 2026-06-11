@@ -277,7 +277,7 @@ class VendorProductForm extends _$VendorProductForm {
     return null;
   }
 
-  Future<bool> submit() async {
+  Future<bool> submit({bool resetOnSuccess = true}) async {
     final validationError = validate();
     if (validationError != null) {
       state = state.copyWith(submitError: validationError);
@@ -318,7 +318,11 @@ class VendorProductForm extends _$VendorProductForm {
         return false;
       }
 
-      state = VendorProductFormState.initial();
+      if (resetOnSuccess) {
+        state = VendorProductFormState.initial();
+      } else {
+        state = state.copyWith(isSubmitting: false, clearSubmitError: true);
+      }
       return true;
     } catch (_) {
       state = state.copyWith(

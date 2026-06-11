@@ -191,13 +191,36 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     if (!mounted) return;
 
     if (success) {
-      PlaceifyToast.show(
-        context,
-        widget.productId == null
-            ? 'Product uploaded successfully'
-            : 'Product updated successfully',
-      );
+      PlaceifyToast.show(context, 'Product uploaded successfully');
       context.pop();
+      return;
+    }
+
+    final error = ref.read(vendorProductFormProvider).submitError;
+    if (error != null) {
+      PlaceifyToast.show(context, error);
+    }
+  }
+
+  Future<void> _onSaveChanges() async {
+    if (!_isDirty) {
+      PlaceifyToast.show(context, 'No changes to save');
+      return;
+    }
+    _flushControllersToNotifier();
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      _scrollToFirstError();
+      return;
+    }
+
+    final success = await ref
+        .read(vendorProductFormProvider.notifier)
+        .submit(resetOnSuccess: false);
+    if (!mounted) return;
+
+    if (success) {
+      PlaceifyToast.show(context, 'Changes saved');
+      setState(() => _isDirty = false);
       return;
     }
 
@@ -677,7 +700,9 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                 : 'Upload Product',
             muted: isEditing && !_isDirty,
             isLoading: form.isSubmitting,
-            onTap: form.isSubmitting ? null : _onUpload,
+            onTap: form.isSubmitting
+                ? null
+                : (isEditing ? _onSaveChanges : _onUpload),
           ),
         ],
       ),
