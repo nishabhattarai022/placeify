@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:placeify/features/admin/data/config/admin_seed_data.dart';
 import 'package:placeify/features/admin/domain/enums/application_decision.dart';
+import 'package:placeify/features/admin/domain/enums/vendor_application_list_filter.dart';
 import 'package:placeify/features/admin/domain/models/admin_audit_log_entry.dart';
 import 'package:placeify/features/admin/domain/models/vendor_application.dart';
 import 'package:placeify/features/admin/domain/repositories/vendor_application_repository.dart';
@@ -21,9 +22,13 @@ class MockVendorApplicationRepository implements VendorApplicationRepository {
 
   @override
   Future<List<VendorApplication>> listApplications({
-    VendorStatus? filter,
+    VendorApplicationListFilter? filter,
   }) async {
     await AdminSeedData.ensureSeeded(_prefs);
+
+    if (filter == VendorApplicationListFilter.declined) {
+      return _listDeclinedApplications();
+    }
 
     final users = await _authRepository.getAllUsers();
     final registrations = _loadRegistrations();
@@ -38,9 +43,19 @@ class MockVendorApplicationRepository implements VendorApplicationRepository {
       if (regData == null) continue;
 
       final application = _mapToApplication(user, regData);
-      if (filter == null || application.status == filter) {
+      if (filter == null) {
         applications.add(application);
+        continue;
       }
+
+      final matches = switch (filter) {
+        VendorApplicationListFilter.pending =>
+          application.status == VendorStatus.pending,
+        VendorApplicationListFilter.approved =>
+          application.status == VendorStatus.approved,
+        VendorApplicationListFilter.declined => false,
+      };
+      if (matches) applications.add(application);
     }
 
     applications.sort((a, b) => b.submittedAt.compareTo(a.submittedAt));
@@ -51,14 +66,19 @@ class MockVendorApplicationRepository implements VendorApplicationRepository {
   Future<VendorApplication?> getByVendorId(String vendorId) async {
     await AdminSeedData.ensureSeeded(_prefs);
 
-    final users = await _authRepository.getAllUsers();
-    final user = users.where((u) => u.vendorId == vendorId).firstOrNull;
-    if (user == null) return null;
-
     final regData = _loadRegistrations()[vendorId];
     if (regData == null) return null;
 
-    return _mapToApplication(user, regData);
+    final users = await _authRepository.getAllUsers();
+    final user = users.where((u) => u.vendorId == vendorId).firstOrNull ??
+        _findUserForRegistration(users, regData);
+    if (user == null) return null;
+
+    return _mapToApplication(
+      user,
+      regData,
+      vendorId: vendorId,
+    );
   }
 
   @override
@@ -100,10 +120,59 @@ class MockVendorApplicationRepository implements VendorApplicationRepository {
     );
   }
 
-  VendorApplication _mapToApplication(
-    AppUser user,
+  Future<List<VendorApplication>> _listDeclinedApplications() async {
+    final users = await _authRepository.getAllUsers();
+    final registrations = _loadRegistrations();
+    final declinedUserIds = _loadAuditLog()
+        .where((entry) {
+          final action = entry.action;
+          return action is ApplicationAuditAction &&
+              action.decision == ApplicationDecision.declined;
+        })
+        .map((entry) => entry.targetUserId)
+        .toSet();
+
+    final applications = <VendorApplication>[];
+    for (final userId in declinedUserIds) {
+      final user = users.where((u) => u.id == userId).firstOrNull;
+      if (user == null) continue;
+
+      final registrationEntry = registrations.entries.where((entry) {
+        final email = entry.value['business']?['email'] as String?;
+        return email != null && email == user.email;
+      }).firstOrNull;
+      if (registrationEntry == null) continue;
+
+      applications.add(
+        _mapToApplication(
+          user,
+          registrationEntry.value,
+          vendorId: registrationEntry.key,
+          status: VendorStatus.none,
+        ),
+      );
+    }
+
+    applications.sort((a, b) => b.submittedAt.compareTo(a.submittedAt));
+    return applications;
+  }
+
+  AppUser? _findUserForRegistration(
+    List<AppUser> users,
     Map<String, dynamic> regData,
   ) {
+    final business = regData['business'] as Map<String, dynamic>?;
+    final email = business?['email'] as String?;
+    if (email == null || email.isEmpty) return null;
+    return users.where((user) => user.email == email).firstOrNull;
+  }
+
+  VendorApplication _mapToApplication(
+    AppUser user,
+    Map<String, dynamic> regData, {
+    String? vendorId,
+    VendorStatus? status,
+  }) {
     final registration = VendorRegistration.fromJson(
       Map<String, dynamic>.from(regData)..remove('vendorId')..remove('submittedAt'),
     );
@@ -113,13 +182,13 @@ class MockVendorApplicationRepository implements VendorApplicationRepository {
         : DateTime.now();
 
     return VendorApplication(
-      vendorId: user.vendorId!,
+      vendorId: vendorId ?? user.vendorId!,
       userId: user.id,
       businessName: registration.business.businessName,
       contactEmail: registration.business.email,
       submittedAt: submittedAt,
       registration: registration,
-      status: user.vendorStatus,
+      status: status ?? user.vendorStatus,
     );
   }
 
