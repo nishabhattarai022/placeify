@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:placeify/features/admin/presentation/admin_placeholder_screen.dart';
+import 'package:placeify/features/admin/domain/constants/admin_routes.dart';
+import 'package:placeify/features/admin/presentation/dashboard/admin_dashboard_screen.dart';
 import 'package:placeify/features/admin/presentation/guards/admin_auth_guard.dart';
+import 'package:placeify/features/admin/presentation/notifications/admin_notifications_screen.dart';
+import 'package:placeify/features/admin/presentation/settings/admin_settings_screen.dart';
+import 'package:placeify/features/admin/presentation/shell/admin_shell.dart';
+import 'package:placeify/features/admin/presentation/users/admin_users_screen.dart';
+import 'package:placeify/features/admin/presentation/vendor_approvals/vendor_application_detail_screen.dart';
+import 'package:placeify/features/admin/presentation/vendor_approvals/vendor_applications_screen.dart';
+import 'package:placeify/features/admin/presentation/vendors/admin_vendor_detail_screen.dart';
+import 'package:placeify/features/admin/presentation/vendors/admin_vendors_screen.dart';
+import 'package:placeify/features/admin/presentation/widgets/admin_tab_scaffold.dart';
 import 'package:placeify/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify/core/widgets/toast_overlay.dart';
 import 'package:placeify/features/vendor/presentation/guards/vendor_auth_guard.dart';
@@ -59,6 +69,14 @@ final vendorPaymentsNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'vendorPayments');
 final vendorProfileNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'vendorProfile');
+final adminDashboardNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'adminDashboard');
+final adminApplicationsNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'adminApplications');
+final adminVendorsNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'adminVendors');
+final adminUsersNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'adminUsers');
 
 @Riverpod(keepAlive: true)
 GoRouter appRouter(Ref ref) {
@@ -130,16 +148,6 @@ List<RouteBase> get _appRoutes => [
       pageBuilder: (context, state) => CustomTransitionPage(
         key: state.pageKey,
         child: const LoginScreen(),
-        transitionsBuilder: _fadeTransition,
-        transitionDuration: AppDurations.slow,
-      ),
-    ),
-    GoRoute(
-      path: '/admin',
-      name: 'admin',
-      pageBuilder: (context, state) => CustomTransitionPage(
-        key: state.pageKey,
-        child: const AdminPlaceholderScreen(),
         transitionsBuilder: _fadeTransition,
         transitionDuration: AppDurations.slow,
       ),
@@ -330,6 +338,104 @@ List<RouteBase> get _appRoutes => [
         ),
         StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell) =>
+              AdminShell(navigationShell: navigationShell),
+          branches: [
+            StatefulShellBranch(
+              navigatorKey: adminDashboardNavigatorKey,
+              routes: [
+                GoRoute(
+                  path: AdminRoutes.dashboard,
+                  name: 'admin',
+                  pageBuilder: (context, state) => _adminTabPage(
+                    state: state,
+                    child: const AdminDashboardScreen(),
+                  ),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              navigatorKey: adminApplicationsNavigatorKey,
+              routes: [
+                GoRoute(
+                  path: AdminRoutes.applications,
+                  name: 'adminApplications',
+                  pageBuilder: (context, state) => _adminTabPage(
+                    state: state,
+                    child: const VendorApplicationsScreen(),
+                  ),
+                  routes: [
+                    GoRoute(
+                      path: ':vendorId',
+                      name: 'adminApplicationDetail',
+                      pageBuilder: (context, state) => _slidePage(
+                        key: ValueKey<String>(state.uri.toString()),
+                        child: VendorApplicationDetailScreen(
+                          vendorId: state.pathParameters['vendorId']!,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              navigatorKey: adminVendorsNavigatorKey,
+              routes: [
+                GoRoute(
+                  path: AdminRoutes.vendors,
+                  name: 'adminVendors',
+                  pageBuilder: (context, state) => _adminTabPage(
+                    state: state,
+                    child: const AdminVendorsScreen(),
+                  ),
+                  routes: [
+                    GoRoute(
+                      path: ':vendorId',
+                      name: 'adminVendorDetail',
+                      pageBuilder: (context, state) => _slidePage(
+                        key: ValueKey<String>(state.uri.toString()),
+                        child: AdminVendorDetailScreen(
+                          vendorId: state.pathParameters['vendorId']!,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              navigatorKey: adminUsersNavigatorKey,
+              routes: [
+                GoRoute(
+                  path: AdminRoutes.users,
+                  name: 'adminUsers',
+                  pageBuilder: (context, state) => _adminTabPage(
+                    state: state,
+                    child: const AdminUsersScreen(),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        GoRoute(
+          path: AdminRoutes.notifications,
+          name: 'adminNotifications',
+          pageBuilder: (context, state) => _slidePage(
+            key: ValueKey<String>(state.uri.toString()),
+            child: const AdminNotificationsScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AdminRoutes.settings,
+          name: 'adminSettings',
+          pageBuilder: (context, state) => _slidePage(
+            key: ValueKey<String>(state.uri.toString()),
+            child: const AdminSettingsScreen(),
+          ),
+        ),
+        StatefulShellRoute.indexedStack(
+          builder: (context, state, navigationShell) =>
               VendorShell(navigationShell: navigationShell),
           branches: [
             StatefulShellBranch(
@@ -489,6 +595,18 @@ CustomTransitionPage<void> _vendorTabPage({
   return CustomTransitionPage<void>(
     key: state.pageKey,
     child: VendorTabScaffold(child: child),
+    transitionsBuilder: _fadeTransition,
+    transitionDuration: AppDurations.slow,
+  );
+}
+
+CustomTransitionPage<void> _adminTabPage({
+  required GoRouterState state,
+  required Widget child,
+}) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: AdminTabScaffold(child: child),
     transitionsBuilder: _fadeTransition,
     transitionDuration: AppDurations.slow,
   );

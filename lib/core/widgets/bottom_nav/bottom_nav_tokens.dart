@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:placeify/core/constants/app_colors.dart';
 
-/// Dimensions and colors for the consumer/vendor bottom navigation bars.
+/// Dimensions and colors for the consumer/vendor/admin bottom navigation bars.
 abstract final class BottomNavTokens {
   static const double horizontalPadding = 24;
   static const double bottomPadding = 16;
@@ -32,4 +33,11 @@ abstract final class BottomNavTokens {
   static const double vendorLabelSize = 10;
 
   static const double scrollBottomPadding = 100;
+
+  // Admin pill — espresso/forest palette (distinct from vendor black pill).
+  static const Color adminPillColor = AppColors.espresso;
+  static const Color adminIconActive = AppColors.warmWhite;
+  static const Color adminIconInactive = Color(0x99FEFCF8);
+  static const Color adminLabelActive = Color(0xD1FEFCF8);
+  static const Color adminLabelInactive = Color(0x61FEFCF8);
 }

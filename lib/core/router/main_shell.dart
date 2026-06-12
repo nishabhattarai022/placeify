@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:placeify/features/admin/domain/constants/admin_routes.dart';
 import 'package:placeify/features/vendor/domain/constants/vendor_routes.dart';
 
 import '../widgets/placeify_bottom_nav.dart';
@@ -36,7 +37,19 @@ class MainShell extends StatelessWidget {
     return 0;
   }
 
+  int _adminActiveIndex(String location) {
+    if (location.startsWith(AdminRoutes.applications)) return 1;
+    if (location.startsWith(AdminRoutes.vendors)) return 2;
+    if (location.startsWith(AdminRoutes.users)) return 3;
+    if (location == AdminRoutes.dashboard ||
+        location.startsWith(AdminRoutes.prefix)) {
+      return 0;
+    }
+    return 0;
+  }
+
   bool _showConsumerNav(String location) {
+    if (location.startsWith(AdminRoutes.prefix)) return false;
     if (location.startsWith('/vendor')) return false;
     if (location.startsWith('/product/')) return false;
     if (location.startsWith('/browse/category')) return false;
@@ -52,11 +65,18 @@ class MainShell extends StatelessWidget {
     return VendorRoutes.tabRoots.contains(location);
   }
 
+  /// Admin bottom nav only on tab roots — hide on pushed routes (detail, settings).
+  bool _showAdminNav(String location) {
+    if (!location.startsWith(AdminRoutes.prefix)) return false;
+    return AdminRoutes.tabRoots.contains(location);
+  }
+
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
     final showConsumerNav = _showConsumerNav(location);
     final showVendorNav = _showVendorNav(location);
+    final showAdminNav = _showAdminNav(location);
 
     return Scaffold(
       extendBody: true,
@@ -77,7 +97,15 @@ class MainShell extends StatelessWidget {
                     mode: PlaceifyBottomNavMode.vendor,
                   ),
                 )
-              : null,
+              : showAdminNav
+                  ? SafeArea(
+                      top: false,
+                      child: PlaceifyBottomNav(
+                        activeIndex: _adminActiveIndex(location),
+                        mode: PlaceifyBottomNavMode.admin,
+                      ),
+                    )
+                  : null,
     );
   }
 }
