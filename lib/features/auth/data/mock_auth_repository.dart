@@ -72,6 +72,12 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<List<AppUser>> getAllUsers() async {
+    final users = await _loadUsers();
+    return users.map((u) => u.toAppUser()).toList();
+  }
+
+  @override
   Future<AppUser?> getCurrentUser() async {
     final email = _prefs.getString(_sessionEmailKey);
     if (email == null) return null;

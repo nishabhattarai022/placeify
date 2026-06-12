@@ -17,6 +17,9 @@ abstract interface class AuthRepository {
 
   Future<AppUser?> getCurrentUser();
 
+  /// All registered users (admin user-management and application joins).
+  Future<List<AppUser>> getAllUsers();
+
   Future<void> signOut();
 
   /// Updates vendor onboarding status for the active session user.
