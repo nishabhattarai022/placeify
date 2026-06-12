@@ -764,6 +764,13 @@ class EndpointVendor extends _i2.EndpointRef {
     },
   );
 
+  _i3.Future<_i23.Product> regenerateProductModel3d(int productId) =>
+      caller.callServerEndpoint<_i23.Product>(
+        'vendor',
+        'regenerateProductModel3d',
+        {'productId': productId},
+      );
+
   _i3.Future<List<_i28.VendorShopOrder>> listShopOrders({
     required int limit,
     required int offset,

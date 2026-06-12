@@ -115,6 +115,13 @@ class VendorService {
     return _repository.uploadProductImage(session, fileData, fileName);
   }
 
+  Future<Product> regenerateProductModel3d(
+    Session session,
+    int productId,
+  ) {
+    return _repository.regenerateProductModel3d(session, productId);
+  }
+
   Future<List<VendorShopOrder>> listShopOrders(
     Session session, {
     int limit = 50,
