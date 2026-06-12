@@ -101,7 +101,7 @@ final class VendorProductRepositoryProvider
 }
 
 String _$vendorProductRepositoryHash() =>
-    r'c6c80b869d1df9f67803a5ead9cf3a28c487b08d';
+    r'c61fc4bd6f6648603bdcbea608f1a1b0982431b9';
 
 @ProviderFor(VendorProfile)
 final vendorProfileProvider = VendorProfileProvider._();

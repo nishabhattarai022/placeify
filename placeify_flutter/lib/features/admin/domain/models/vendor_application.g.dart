@@ -14,7 +14,8 @@ _VendorApplication _$VendorApplicationFromJson(Map<String, dynamic> json) =>
       contactEmail: json['contactEmail'] as String,
       submittedAt: DateTime.parse(json['submittedAt'] as String),
       registration: VendorRegistration.fromJson(
-          json['registration'] as Map<String, dynamic>),
+        json['registration'] as Map<String, dynamic>,
+      ),
       status: $enumDecode(_$VendorStatusEnumMap, json['status']),
     );
 

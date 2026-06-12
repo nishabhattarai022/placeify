@@ -242,6 +242,12 @@ class VendorProductForm extends _$VendorProductForm {
     if (state.name.trim().isEmpty) return 'Enter a product name';
     if (state.sku.trim().isEmpty) return 'Enter a SKU';
     if (state.categoryId.trim().isEmpty) return 'Select a category';
+    if (state.description.trim().isEmpty) return 'Enter a description';
+    if (state.materials.trim().isEmpty) return 'Enter materials';
+
+    if (!state.isEditing && state.images.isEmpty) {
+      return 'Add at least one product photo';
+    }
 
     final listPrice = state.parsedListPrice;
     if (listPrice == null || listPrice <= 0) {
@@ -267,9 +273,12 @@ class VendorProductForm extends _$VendorProductForm {
       (state.weight, 'weight'),
     ]) {
       final value = field.$1.trim();
-      if (value.isEmpty) continue;
+      if (value.isEmpty) {
+        if (field.$2 == 'weight') continue;
+        return 'Enter ${field.$2}';
+      }
       final parsed = double.tryParse(value);
-      if (parsed == null || parsed < 0) {
+      if (parsed == null || parsed <= 0) {
         return 'Enter a valid ${field.$2}';
       }
     }
@@ -288,7 +297,7 @@ class VendorProductForm extends _$VendorProductForm {
 
     try {
       final user = await ref.read(currentUserProvider.future);
-      final vendorId = user?.vendorId;
+      final vendorId = user?.vendorId ?? user?.id;
       if (vendorId == null) {
         state = state.copyWith(
           isSubmitting: false,
