@@ -15,6 +15,7 @@ import 'package:serverpod_client/serverpod_client.dart' as _i1;
 /// Metadata for creating a vendor product with an uploaded photo.
 abstract class VendorProductUploadInput implements _i1.SerializableModel {
   VendorProductUploadInput._({
+    this.productId,
     required this.name,
     required this.description,
     required this.price,
@@ -28,9 +29,12 @@ abstract class VendorProductUploadInput implements _i1.SerializableModel {
     this.assemblyNote,
     this.warranty,
     bool? generateModel3d,
-  }) : generateModel3d = generateModel3d ?? false;
+    bool? isActive,
+  }) : generateModel3d = generateModel3d ?? false,
+       isActive = isActive ?? true;
 
   factory VendorProductUploadInput({
+    int? productId,
     required String name,
     required String description,
     required double price,
@@ -44,12 +48,14 @@ abstract class VendorProductUploadInput implements _i1.SerializableModel {
     String? assemblyNote,
     String? warranty,
     bool? generateModel3d,
+    bool? isActive,
   }) = _VendorProductUploadInputImpl;
 
   factory VendorProductUploadInput.fromJson(
     Map<String, dynamic> jsonSerialization,
   ) {
     return VendorProductUploadInput(
+      productId: jsonSerialization['productId'] as int?,
       name: jsonSerialization['name'] as String,
       description: jsonSerialization['description'] as String,
       price: (jsonSerialization['price'] as num).toDouble(),
@@ -67,8 +73,13 @@ abstract class VendorProductUploadInput implements _i1.SerializableModel {
           : _i1.BoolJsonExtension.fromJson(
               jsonSerialization['generateModel3d'],
             ),
+      isActive: jsonSerialization['isActive'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['isActive']),
     );
   }
+
+  int? productId;
 
   String name;
 
@@ -96,10 +107,13 @@ abstract class VendorProductUploadInput implements _i1.SerializableModel {
 
   bool generateModel3d;
 
+  bool isActive;
+
   /// Returns a shallow copy of this [VendorProductUploadInput]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
   VendorProductUploadInput copyWith({
+    int? productId,
     String? name,
     String? description,
     double? price,
@@ -113,11 +127,13 @@ abstract class VendorProductUploadInput implements _i1.SerializableModel {
     String? assemblyNote,
     String? warranty,
     bool? generateModel3d,
+    bool? isActive,
   });
   @override
   Map<String, dynamic> toJson() {
     return {
       '__className__': 'VendorProductUploadInput',
+      if (productId != null) 'productId': productId,
       'name': name,
       'description': description,
       'price': price,
@@ -131,6 +147,7 @@ abstract class VendorProductUploadInput implements _i1.SerializableModel {
       if (assemblyNote != null) 'assemblyNote': assemblyNote,
       if (warranty != null) 'warranty': warranty,
       'generateModel3d': generateModel3d,
+      'isActive': isActive,
     };
   }
 
@@ -144,6 +161,7 @@ class _Undefined {}
 
 class _VendorProductUploadInputImpl extends VendorProductUploadInput {
   _VendorProductUploadInputImpl({
+    int? productId,
     required String name,
     required String description,
     required double price,
@@ -157,7 +175,9 @@ class _VendorProductUploadInputImpl extends VendorProductUploadInput {
     String? assemblyNote,
     String? warranty,
     bool? generateModel3d,
+    bool? isActive,
   }) : super._(
+         productId: productId,
          name: name,
          description: description,
          price: price,
@@ -171,6 +191,7 @@ class _VendorProductUploadInputImpl extends VendorProductUploadInput {
          assemblyNote: assemblyNote,
          warranty: warranty,
          generateModel3d: generateModel3d,
+         isActive: isActive,
        );
 
   /// Returns a shallow copy of this [VendorProductUploadInput]
@@ -178,6 +199,7 @@ class _VendorProductUploadInputImpl extends VendorProductUploadInput {
   @_i1.useResult
   @override
   VendorProductUploadInput copyWith({
+    Object? productId = _Undefined,
     String? name,
     String? description,
     double? price,
@@ -191,8 +213,10 @@ class _VendorProductUploadInputImpl extends VendorProductUploadInput {
     Object? assemblyNote = _Undefined,
     Object? warranty = _Undefined,
     bool? generateModel3d,
+    bool? isActive,
   }) {
     return VendorProductUploadInput(
+      productId: productId is int? ? productId : this.productId,
       name: name ?? this.name,
       description: description ?? this.description,
       price: price ?? this.price,
@@ -206,6 +230,7 @@ class _VendorProductUploadInputImpl extends VendorProductUploadInput {
       assemblyNote: assemblyNote is String? ? assemblyNote : this.assemblyNote,
       warranty: warranty is String? ? warranty : this.warranty,
       generateModel3d: generateModel3d ?? this.generateModel3d,
+      isActive: isActive ?? this.isActive,
     );
   }
 }

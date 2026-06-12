@@ -43,11 +43,10 @@ import 'package:placeify_client/src/protocol/vendor_dashboard.dart' as _i26;
 import 'package:placeify_client/src/protocol/vendor_product_upload_input.dart'
     as _i27;
 import 'dart:typed_data' as _i28;
-import 'package:placeify_client/src/protocol/product_status.dart' as _i29;
-import 'package:placeify_client/src/protocol/vendor_shop_order.dart' as _i30;
-import 'package:placeify_client/src/protocol/wishlist_page.dart' as _i31;
-import 'package:placeify_client/src/protocol/wishlist_item.dart' as _i32;
-import 'protocol.dart' as _i33;
+import 'package:placeify_client/src/protocol/vendor_shop_order.dart' as _i29;
+import 'package:placeify_client/src/protocol/wishlist_page.dart' as _i30;
+import 'package:placeify_client/src/protocol/wishlist_item.dart' as _i31;
+import 'protocol.dart' as _i32;
 
 /// By extending [EmailIdpBaseEndpoint], the email identity provider endpoints
 /// are made available on the server and enable the corresponding sign-in widget
@@ -758,20 +757,6 @@ class EndpointVendor extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<_i23.Product> updateProduct(
-    int productId,
-    _i27.VendorProductUploadInput input, {
-    _i29.ProductStatus? status,
-  }) => caller.callServerEndpoint<_i23.Product>(
-    'vendor',
-    'updateProduct',
-    {
-      'productId': productId,
-      'input': input,
-      'status': status,
-    },
-  );
-
   _i3.Future<_i23.Product> updateProductThumbnail(
     int productId,
     String thumbnailUrl,
@@ -803,11 +788,11 @@ class EndpointVendor extends _i2.EndpointRef {
         {'productId': productId},
       );
 
-  _i3.Future<List<_i30.VendorShopOrder>> listShopOrders({
+  _i3.Future<List<_i29.VendorShopOrder>> listShopOrders({
     required int limit,
     required int offset,
     _i9.OrderStatus? status,
-  }) => caller.callServerEndpoint<List<_i30.VendorShopOrder>>(
+  }) => caller.callServerEndpoint<List<_i29.VendorShopOrder>>(
     'vendor',
     'listShopOrders',
     {
@@ -817,8 +802,8 @@ class EndpointVendor extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<_i30.VendorShopOrder> getShopOrder(int orderId) =>
-      caller.callServerEndpoint<_i30.VendorShopOrder>(
+  _i3.Future<_i29.VendorShopOrder> getShopOrder(int orderId) =>
+      caller.callServerEndpoint<_i29.VendorShopOrder>(
         'vendor',
         'getShopOrder',
         {'orderId': orderId},
@@ -833,16 +818,16 @@ class EndpointWishlist extends _i2.EndpointRef {
   @override
   String get name => 'wishlist';
 
-  _i3.Future<_i31.WishlistPage> listMyWishlist({
+  _i3.Future<_i30.WishlistPage> listMyWishlist({
     _i18.PaginationInput? pagination,
-  }) => caller.callServerEndpoint<_i31.WishlistPage>(
+  }) => caller.callServerEndpoint<_i30.WishlistPage>(
     'wishlist',
     'listMyWishlist',
     {'pagination': pagination},
   );
 
-  _i3.Future<_i32.WishlistItem> addToWishlist(int productId) =>
-      caller.callServerEndpoint<_i32.WishlistItem>(
+  _i3.Future<_i31.WishlistItem> addToWishlist(int productId) =>
+      caller.callServerEndpoint<_i31.WishlistItem>(
         'wishlist',
         'addToWishlist',
         {'productId': productId},
@@ -901,7 +886,7 @@ class Client extends _i2.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i33.Protocol(),
+         _i32.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,
