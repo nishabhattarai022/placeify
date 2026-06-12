@@ -247,6 +247,28 @@ class ServerpodVendorRepository implements VendorRepository {
         code: 'INVALID_FILE_TYPE',
       );
     }
+    if (message.contains('BG_REMOVAL_NOT_CONFIGURED')) {
+      return VendorRepositoryException(
+        'Photo processing is not set up on the server. '
+        'Add a remove.bg API key to config/removebg_api_key.yaml.',
+        code: 'BG_REMOVAL_NOT_CONFIGURED',
+      );
+    }
+    if (message.contains('BG_REMOVAL_AUTH')) {
+      return VendorRepositoryException(
+        'Background removal quota or API key issue. Check your remove.bg account.',
+        code: 'BG_REMOVAL_AUTH',
+      );
+    }
+    if (message.contains('BG_REMOVAL_FAILED')) {
+      final detail = message.split(': ').skip(1).join(': ').trim();
+      return VendorRepositoryException(
+        detail.isNotEmpty
+            ? detail
+            : 'Could not process the photo background. Try another image.',
+        code: 'BG_REMOVAL_FAILED',
+      );
+    }
     if (message.contains('INVALID_FILE')) {
       return VendorRepositoryException(
         'Add a product photo before publishing.',

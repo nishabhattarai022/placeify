@@ -171,9 +171,9 @@ class _ProductDetailGalleryState extends State<ProductDetailGallery> {
           ),
         ] else
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+            padding: const EdgeInsets.fromLTRB(24, 4, 24, 0),
             child: Text(
-              'Scaled to your dimensions • Textured from your photo',
+              'Drag to rotate • Pinch to zoom',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,
