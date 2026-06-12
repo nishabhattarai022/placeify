@@ -117,9 +117,80 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     String vendorId,
     VendorProduct product,
   ) async {
-    throw VendorProductActionException(
-      'Editing products on the server is not supported yet.',
+    await _ensureShopReady();
+
+    final dbId = ProductIdCodec.toDatabaseId(product.id);
+    if (dbId == null) {
+      throw VendorProductActionException('Product not found.');
+    }
+
+    if (product.widthCm <= 0 ||
+        product.depthCm <= 0 ||
+        product.heightCm <= 0) {
+      throw VendorProductActionException(
+        'Enter valid width, depth, and height.',
+      );
+    }
+
+    final materials = product.materials.trim();
+    if (materials.isEmpty) {
+      throw VendorProductActionException('Enter product materials.');
+    }
+
+    final description = product.description.trim().isNotEmpty
+        ? product.description.trim()
+        : product.name.trim();
+
+    final input = VendorProductUploadInput(
+      name: product.name.trim(),
+      description: description,
+      price: product.price,
+      materials: materials,
+      widthCm: product.widthCm,
+      depthCm: product.depthCm,
+      heightCm: product.heightCm,
+      careInstructions: 'See product description for care details.',
+      categoryId: await _resolveCategoryId(product.categoryId),
+      weightKg: product.weightKg > 0 ? product.weightKg : null,
+      assemblyNote: product.brand.trim().isNotEmpty ? product.brand.trim() : null,
+      warranty: product.offerLabel.trim().isNotEmpty
+          ? product.offerLabel.trim()
+          : null,
+      generateModel3d: product.hasArView,
     );
+
+    try {
+      var updated = await client.vendor.updateProduct(
+        dbId,
+        input,
+        status: product.isActive
+            ? ProductStatus.active
+            : ProductStatus.inactive,
+      );
+
+      final imagePath = _firstUploadableImagePath(product.imageUrls);
+      if (imagePath != null) {
+        final file = File(imagePath);
+        if (await file.exists()) {
+          final bytes = await file.readAsBytes();
+          final thumbnailUrl = await client.vendor.uploadProductImage(
+            bytes.buffer.asByteData(),
+            _fileNameFromPath(imagePath),
+          );
+          updated = await client.vendor.updateProductThumbnail(
+            dbId,
+            thumbnailUrl,
+          );
+        }
+      }
+
+      return VendorProductMapper.fromApiProduct(
+        updated,
+        vendorId: vendorId,
+      );
+    } catch (error) {
+      throw VendorProductActionException(_mapError(error));
+    }
   }
 
   @override
@@ -220,6 +291,9 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
 
     if (raw.contains('SHOP_NOT_FOUND')) {
       return 'Create your vendor shop before uploading products.';
+    }
+    if (raw.contains('PRODUCT_NOT_FOUND')) {
+      return 'Product not found.';
     }
     if (raw.contains('INVALID_FILE') || raw.contains('INVALID_FILE_TYPE')) {
       return 'Use a JPG, PNG, or WEBP photo under 8 MB.';

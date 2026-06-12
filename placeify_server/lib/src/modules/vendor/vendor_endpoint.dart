@@ -111,6 +111,20 @@ class VendorEndpoint extends Endpoint {
     );
   }
 
+  Future<Product> updateProduct(
+    Session session,
+    int productId,
+    VendorProductUploadInput input, {
+    ProductStatus? status,
+  }) {
+    return _service.updateProduct(
+      session,
+      productId,
+      input,
+      status: status,
+    );
+  }
+
   Future<Product> updateProductThumbnail(
     Session session,
     int productId,
