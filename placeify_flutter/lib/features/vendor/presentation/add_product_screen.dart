@@ -337,8 +337,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                         step: 1,
                         title: 'Product photo',
                         subtitle:
-                            'Show one item, front or 3/4 angle, on a plain background. '
-                            'We use this photo to generate your 3D preview when you tap Build 3D.',
+                            'Show one item, front or 3/4 angle. We remove the background '
+                            'and place it on white for listings and 3D generation.',
                         children: [
                           DecoratedBox(
                             decoration: BoxDecoration(
