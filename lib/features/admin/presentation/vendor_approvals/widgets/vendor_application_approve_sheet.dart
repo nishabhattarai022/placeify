@@ -7,6 +7,7 @@ import 'package:placeify/core/constants/app_spacing.dart';
 import 'package:placeify/core/services/haptic_service.dart';
 import 'package:placeify/core/widgets/placeify_bottom_sheet.dart';
 import 'package:placeify/core/widgets/toast_overlay.dart';
+import 'package:placeify/features/admin/domain/constants/admin_strings.dart';
 import 'package:placeify/features/admin/domain/models/vendor_application.dart';
 import 'package:placeify/features/admin/presentation/providers/vendor_applications_provider.dart';
 
@@ -77,7 +78,7 @@ class _VendorApplicationApproveSheetBodyState
     }
 
     widget.onApproved();
-    PlaceifyToast.show(widget.parentContext, 'Vendor approved ✓');
+    PlaceifyToast.show(widget.parentContext, AdminStrings.vendorApproved);
   }
 
   @override

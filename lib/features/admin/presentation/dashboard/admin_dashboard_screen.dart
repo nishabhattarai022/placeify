@@ -10,6 +10,7 @@ import 'package:placeify/core/services/haptic_service.dart';
 import 'package:placeify/core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import 'package:placeify/core/widgets/shimmer_loader.dart';
 import 'package:placeify/features/admin/domain/constants/admin_routes.dart';
+import 'package:placeify/features/admin/domain/constants/admin_strings.dart';
 import 'package:placeify/features/admin/domain/models/admin_stats.dart' as models;
 import 'package:placeify/features/admin/presentation/providers/admin_notification_badge_provider.dart';
 import 'package:placeify/features/admin/presentation/providers/admin_notifications_provider.dart';
@@ -106,13 +107,20 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                         ),
                         const SizedBox(height: 4),
                         const Text(
-                          'Admin Overview',
+                          AdminStrings.adminOverview,
                           style: AppTypography.sectionTitle,
                         ),
                       ],
                     ),
                   ),
-                  const _DashboardNotificationButton(),
+                  const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _DashboardNotificationButton(),
+                      SizedBox(width: 10),
+                      _DashboardSettingsButton(),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -166,9 +174,9 @@ class _DashboardBody extends StatelessWidget {
               children: [
                 Expanded(
                   child: AdminStatCard(
-                    label: 'Pending',
+                    label: AdminStrings.pendingLabel,
                     value: stats.pendingCount.toString(),
-                    subtitle: 'Awaiting review',
+                    subtitle: AdminStrings.pendingSubtitle,
                     accentColor: AppColors.accentLight,
                     highlighted: true,
                   ),
@@ -179,18 +187,18 @@ class _DashboardBody extends StatelessWidget {
                     children: [
                       Expanded(
                         child: AdminStatCard(
-                          label: 'Approved',
+                          label: AdminStrings.approvedLabel,
                           value: stats.approvedCount.toString(),
-                          subtitle: 'Active vendors',
+                          subtitle: AdminStrings.approvedSubtitle,
                           accentColor: AppColors.sage,
                         ),
                       ),
                       const SizedBox(height: 12),
                       Expanded(
                         child: AdminStatCard(
-                          label: 'Suspended',
+                          label: AdminStrings.suspendedLabel,
                           value: stats.suspendedCount.toString(),
-                          subtitle: 'Restricted access',
+                          subtitle: AdminStrings.suspendedSubtitle,
                           accentColor: AppColors.rust,
                         ),
                       ),
@@ -202,9 +210,9 @@ class _DashboardBody extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           AdminStatCard(
-            label: 'Total users',
+            label: AdminStrings.totalUsersLabel,
             value: stats.totalUsers.toString(),
-            subtitle: 'Registered on platform',
+            subtitle: AdminStrings.totalUsersSubtitle,
             accentColor: AppColors.bark,
           ),
           const SizedBox(height: 20),
@@ -212,7 +220,7 @@ class _DashboardBody extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Recent Applications',
+                AdminStrings.recentApplications,
                 style: AppTypography.sectionTitle,
               ),
               GestureDetector(
@@ -220,14 +228,14 @@ class _DashboardBody extends StatelessWidget {
                   HapticService.light();
                   context.go(AdminRoutes.applications);
                 },
-                child: const Text('See all', style: AppTypography.seeAll),
+                child: const Text(AdminStrings.seeAll, style: AppTypography.seeAll),
               ),
             ],
           ),
           const SizedBox(height: 12),
           if (stats.recentApplications.isEmpty)
             const AdminEmptyState(
-              message: 'No vendor applications yet',
+              message: AdminStrings.noApplicationsYet,
               icon: Icons.storefront_outlined,
             )
           else
@@ -316,12 +324,44 @@ class _DashboardError extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
-              'Could not load dashboard',
+              AdminStrings.dashboardLoadError,
               style: AppTypography.sectionTitle,
             ),
             const SizedBox(height: 12),
-            TextButton(onPressed: onRetry, child: const Text('Retry')),
+            TextButton(
+              onPressed: onRetry,
+              child: const Text(AdminStrings.retry),
+            ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DashboardSettingsButton extends StatelessWidget {
+  const _DashboardSettingsButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        HapticService.light();
+        context.push(AdminRoutes.settings);
+      },
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: AppColors.warmWhite,
+          shape: BoxShape.circle,
+          border: Border.all(color: AppColors.creamDark, width: 1.5),
+        ),
+        alignment: Alignment.center,
+        child: const Icon(
+          Icons.settings_outlined,
+          size: 22,
+          color: AppColors.espresso,
         ),
       ),
     );

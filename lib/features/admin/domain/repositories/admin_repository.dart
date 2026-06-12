@@ -13,6 +13,10 @@ abstract interface class AdminRepository {
 
   Future<List<AdminNotification>> getNotifications();
 
+  Future<void> markNotificationRead(String notificationId);
+
+  Future<void> markAllNotificationsRead();
+
   Future<void> suspendVendor(String userId);
 
   Future<void> reinstateVendor(String userId);

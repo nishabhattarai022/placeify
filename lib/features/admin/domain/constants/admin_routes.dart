@@ -6,6 +6,7 @@ abstract final class AdminRoutes {
   static const users = '/admin/users';
   static const notifications = '/admin/notifications';
   static const settings = '/admin/settings';
+  static const auditLog = '/admin/audit-log';
 
   static String applicationDetail(String vendorId) => '$applications/$vendorId';
 

@@ -4,6 +4,7 @@ import 'package:placeify/features/admin/domain/constants/admin_routes.dart';
 import 'package:placeify/features/admin/presentation/dashboard/admin_dashboard_screen.dart';
 import 'package:placeify/features/admin/presentation/guards/admin_auth_guard.dart';
 import 'package:placeify/features/admin/presentation/notifications/admin_notifications_screen.dart';
+import 'package:placeify/features/admin/presentation/settings/admin_audit_log_screen.dart';
 import 'package:placeify/features/admin/presentation/settings/admin_settings_screen.dart';
 import 'package:placeify/features/admin/presentation/shell/admin_shell.dart';
 import 'package:placeify/features/admin/presentation/users/admin_users_screen.dart';
@@ -432,6 +433,14 @@ List<RouteBase> get _appRoutes => [
           pageBuilder: (context, state) => _slidePage(
             key: ValueKey<String>(state.uri.toString()),
             child: const AdminSettingsScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AdminRoutes.auditLog,
+          name: 'adminAuditLog',
+          pageBuilder: (context, state) => _slidePage(
+            key: ValueKey<String>(state.uri.toString()),
+            child: const AdminAuditLogScreen(),
           ),
         ),
         StatefulShellRoute.indexedStack(

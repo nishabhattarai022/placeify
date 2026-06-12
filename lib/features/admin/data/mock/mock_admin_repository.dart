@@ -85,6 +85,24 @@ class MockAdminRepository implements AdminRepository {
   }
 
   @override
+  Future<void> markNotificationRead(String notificationId) async {
+    final notifications = _loadNotifications();
+    final index = notifications.indexWhere((n) => n.id == notificationId);
+    if (index == -1) return;
+
+    notifications[index] = notifications[index].copyWith(read: true);
+    await _saveNotifications(notifications);
+  }
+
+  @override
+  Future<void> markAllNotificationsRead() async {
+    final notifications = _loadNotifications()
+        .map((n) => n.copyWith(read: true))
+        .toList();
+    await _saveNotifications(notifications);
+  }
+
+  @override
   Future<void> suspendVendor(String userId) async {
     final user = await _findUser(userId);
     if (user?.vendorId == null) return;
@@ -155,6 +173,13 @@ class MockAdminRepository implements AdminRepository {
     return list
         .map((e) => AdminNotification.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  Future<void> _saveNotifications(List<AdminNotification> notifications) async {
+    await _prefs.setString(
+      AdminSeedData.notificationsKey,
+      jsonEncode(notifications.map((n) => n.toJson()).toList()),
+    );
   }
 
   Future<void> _appendAuditLog({
