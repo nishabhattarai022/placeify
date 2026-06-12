@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:placeify_flutter/features/home/data/mock_product_repository.dart';
 import 'package:placeify_flutter/features/profile/presentation/widgets/shared/profile_form_field.dart';
+import 'package:placeify_flutter/features/vendor/domain/constants/vendor_routes.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_form_state.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_image_item.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_product_form_provider.dart';
@@ -229,7 +230,7 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     if (success) {
       HapticService.medium();
       PlaceifyToast.show(context, VendorStrings.changesSaved);
-      setState(() => _isDirty = false);
+      context.go(VendorRoutes.products);
       return;
     }
 
