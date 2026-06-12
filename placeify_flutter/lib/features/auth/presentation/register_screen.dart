@@ -63,16 +63,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             password: _passwordController.text,
           );
       if (!mounted) return;
-      PlaceifyToast.show(context, 'Welcome to Placeify!');
-      context.go('/home');
+      PlaceifyToast.show(context, 'Account created — sign in to continue');
+      context.go('/login');
     } on AuthException catch (e) {
       if (mounted) PlaceifyToast.show(context, e.message);
-    } catch (error) {
+    } catch (_) {
       if (mounted) {
-        PlaceifyToast.show(
-          context,
-          error is AuthException ? error.message : 'Could not create account. Try again.',
-        );
+        PlaceifyToast.show(context, 'Could not create account. Try again.');
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);

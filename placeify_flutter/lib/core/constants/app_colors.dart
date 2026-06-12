@@ -13,6 +13,10 @@ abstract final class AppColors {
   /// Quantity selector pill on cart rows.
   static const Color cartQtyPill = Color(0xFFF0F0F0);
   static const Color espresso = Color(0xFF2C1810);
+
+  /// Super admin shell — deep navy/slate (distinct from vendor forest green).
+  static const Color adminSlate = Color(0xFF2A3540);
+  static const Color adminSlateBg = Color(0x1F2A3540);
   static const Color charcoal = Color(0xFF1A1A1A);
   static const Color warmWhite = Color(0xFFFEFCF8);
 

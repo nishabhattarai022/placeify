@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../profile/presentation/widgets/shared/profile_form_field.dart';
+import '../../../domain/constants/vendor_strings.dart';
 import '../../../domain/models/vendor_registration.dart';
 import '../../providers/vendor_registration_provider.dart';
 
@@ -79,7 +80,7 @@ class _BankDetailsStepState extends ConsumerState<BankDetailsStep> {
           label: 'Bank Name',
           child: ProfileTextInput(
             controller: _bankName,
-            hint: 'e.g. Chase, Wells Fargo',
+            hint: VendorFormStrings.bankNameHint,
             onChanged: (v) => _sync(
               ref.read(vendorRegistrationProvider).form.bank
                   .copyWith(bankName: v),
@@ -98,10 +99,10 @@ class _BankDetailsStepState extends ConsumerState<BankDetailsStep> {
           ),
         ),
         ProfileFormField(
-          label: 'Routing Number',
+          label: VendorFormStrings.branchSwiftLabel,
           child: ProfileTextInput(
             controller: _routingNumber,
-            hint: '9-digit routing number',
+            hint: VendorFormStrings.branchSwiftHint,
             onChanged: (v) => _sync(
               ref.read(vendorRegistrationProvider).form.bank
                   .copyWith(routingNumber: v),

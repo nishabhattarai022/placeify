@@ -9,6 +9,7 @@ import 'package:placeify_flutter/core/constants/app_radii.dart';
 import 'package:placeify_flutter/core/constants/app_typography.dart';
 import 'package:placeify_flutter/core/services/haptic_service.dart';
 import 'package:placeify_flutter/core/widgets/bottom_nav/bottom_nav_tokens.dart';
+import 'package:placeify_flutter/core/widgets/phone_input_field.dart';
 import 'package:placeify_flutter/core/widgets/shimmer_loader.dart';
 import 'package:placeify_flutter/core/widgets/toast_overlay.dart';
 import 'package:placeify_flutter/data/furniture_categories.dart';
@@ -29,7 +30,6 @@ class VendorProfileScreen extends ConsumerStatefulWidget {
 class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
   late final TextEditingController _businessName;
   late final TextEditingController _email;
-  late final TextEditingController _phone;
   late final TextEditingController _address;
   late final TextEditingController _bio;
   late final TextEditingController _instagram;
@@ -45,7 +45,6 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
     final draft = ref.read(vendorProfileEditorProvider).draft;
     _businessName = TextEditingController(text: draft?.businessName ?? '');
     _email = TextEditingController(text: draft?.email ?? '');
-    _phone = TextEditingController(text: draft?.phone ?? '');
     _address = TextEditingController(text: draft?.address ?? '');
     _bio = TextEditingController(text: draft?.bio ?? '');
     _instagram = TextEditingController(text: draft?.instagramHandle ?? '');
@@ -59,7 +58,6 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
   void dispose() {
     _businessName.dispose();
     _email.dispose();
-    _phone.dispose();
     _address.dispose();
     _bio.dispose();
     _instagram.dispose();
@@ -80,7 +78,6 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
 
     setIfDifferent(_businessName, profile.businessName);
     setIfDifferent(_email, profile.email);
-    setIfDifferent(_phone, profile.phone);
     setIfDifferent(_address, profile.address);
     setIfDifferent(_bio, profile.bio);
     setIfDifferent(_instagram, profile.instagramHandle);
@@ -297,11 +294,9 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
         ),
         ProfileFormField(
           label: 'Phone',
-          child: ProfileTextInput(
-            controller: _phone,
-            hint: '+977 98XXXXXXXX',
-            keyboardType: TextInputType.phone,
-            onChanged: (v) => _updateDraft((p) => p.copyWith(phone: v)),
+          child: PhoneInputField(
+            initialPhone: draft.phone,
+            onChanged: (full) => _updateDraft((p) => p.copyWith(phone: full)),
             onEditingComplete: _saveOnBlur,
           ),
         ),

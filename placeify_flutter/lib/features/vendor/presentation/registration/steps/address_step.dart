@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../profile/presentation/widgets/shared/profile_form_field.dart';
+import '../../../domain/constants/vendor_strings.dart';
 import '../../../domain/models/vendor_registration.dart';
 import '../../providers/vendor_registration_provider.dart';
 
@@ -27,7 +28,15 @@ class _AddressStepState extends ConsumerState<AddressStep> {
     _city = TextEditingController(text: address.city);
     _state = TextEditingController(text: address.state);
     _postalCode = TextEditingController(text: address.postalCode);
-    _country = TextEditingController(text: address.country);
+    final country = address.country.isEmpty
+        ? VendorFormStrings.countryHint
+        : address.country;
+    _country = TextEditingController(text: country);
+    if (address.country.isEmpty) {
+      ref
+          .read(vendorRegistrationProvider.notifier)
+          .updateAddress(address.copyWith(country: VendorFormStrings.countryHint));
+    }
   }
 
   @override
@@ -71,7 +80,7 @@ class _AddressStepState extends ConsumerState<AddressStep> {
           label: 'Street Address',
           child: ProfileTextInput(
             controller: _street,
-            hint: '123 Market Street',
+            hint: VendorFormStrings.streetHint,
             onChanged: (v) => _sync(
               ref.read(vendorRegistrationProvider).form.address
                   .copyWith(street: v),
@@ -82,7 +91,7 @@ class _AddressStepState extends ConsumerState<AddressStep> {
           label: 'City',
           child: ProfileTextInput(
             controller: _city,
-            hint: 'San Francisco',
+            hint: VendorFormStrings.cityHint,
             onChanged: (v) => _sync(
               ref.read(vendorRegistrationProvider).form.address
                   .copyWith(city: v),
@@ -93,7 +102,7 @@ class _AddressStepState extends ConsumerState<AddressStep> {
           label: 'State / Province',
           child: ProfileTextInput(
             controller: _state,
-            hint: 'CA',
+            hint: VendorFormStrings.stateHint,
             onChanged: (v) => _sync(
               ref.read(vendorRegistrationProvider).form.address
                   .copyWith(state: v),
@@ -104,7 +113,7 @@ class _AddressStepState extends ConsumerState<AddressStep> {
           label: 'Postal Code',
           child: ProfileTextInput(
             controller: _postalCode,
-            hint: '94103',
+            hint: VendorFormStrings.postalCodeHint,
             onChanged: (v) => _sync(
               ref.read(vendorRegistrationProvider).form.address
                   .copyWith(postalCode: v),
@@ -115,7 +124,7 @@ class _AddressStepState extends ConsumerState<AddressStep> {
           label: 'Country',
           child: ProfileTextInput(
             controller: _country,
-            hint: 'United States',
+            hint: VendorFormStrings.countryHint,
             onChanged: (v) => _sync(
               ref.read(vendorRegistrationProvider).form.address
                   .copyWith(country: v),

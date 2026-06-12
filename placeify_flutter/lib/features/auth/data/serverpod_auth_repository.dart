@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/config/placeify_server_client.dart';
 import '../../vendor/domain/enums/vendor_status.dart';
 import '../constants/demo_credentials.dart';
+import '../data/mock_auth_repository.dart';
 import '../domain/models/app_user.dart';
 import '../domain/repositories/auth_repository.dart';
 
@@ -166,6 +167,24 @@ class ServerpodAuthRepository implements AuthRepository {
     await _prefs.remove(_sessionEmailKey);
     await _prefs.remove(_vendorStatusKey);
     await _prefs.remove(_vendorIdKey);
+  }
+
+  @override
+  Future<List<AppUser>> getAllUsers() async {
+    return MockAuthRepository(_prefs).getAllUsers();
+  }
+
+  @override
+  Future<void> updateVendorStatusForUser({
+    required String userId,
+    required VendorStatus status,
+    String? vendorId,
+  }) async {
+    await MockAuthRepository(_prefs).updateVendorStatusForUser(
+      userId: userId,
+      status: status,
+      vendorId: vendorId,
+    );
   }
 
   @override

@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../../core/services/haptic_service.dart';
-import '../../../splash/presentation/models/onboarding_slide.dart';
 
 /// "See It In Motion" video showcase with an Apple-style expanding pill
 /// toggle that morphs between a 60px circle (paused) and a 330px now-playing
@@ -18,7 +17,8 @@ class HomeShowcaseSection extends StatefulWidget {
 }
 
 class _HomeShowcaseSectionState extends State<HomeShowcaseSection> {
-  static const String _videoAsset = SplashAssets.getStartedVideo;
+  static const String _videoAsset =
+      'assets/video/7281029-uhd_2160_4096_25fps.mp4';
 
   late final VideoPlayerController _controller;
   bool _initialized = false;

@@ -11,47 +11,54 @@ part of 'category.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
+
 /// @nodoc
 mixin _$ProductCategory {
+  String get id;
+  String get label;
+  String get svgIconAssetPath;
+  bool get isActive;
 
- String get id; String get label; String get svgIconAssetPath; bool get isActive;
-/// Create a copy of ProductCategory
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$ProductCategoryCopyWith<ProductCategory> get copyWith => _$ProductCategoryCopyWithImpl<ProductCategory>(this as ProductCategory, _$identity);
+  /// Create a copy of ProductCategory
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $ProductCategoryCopyWith<ProductCategory> get copyWith =>
+      _$ProductCategoryCopyWithImpl<ProductCategory>(
+          this as ProductCategory, _$identity);
 
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is ProductCategory &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.label, label) || other.label == label) &&
+            (identical(other.svgIconAssetPath, svgIconAssetPath) ||
+                other.svgIconAssetPath == svgIconAssetPath) &&
+            (identical(other.isActive, isActive) ||
+                other.isActive == isActive));
+  }
 
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, id, label, svgIconAssetPath, isActive);
 
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProductCategory&&(identical(other.id, id) || other.id == id)&&(identical(other.label, label) || other.label == label)&&(identical(other.svgIconAssetPath, svgIconAssetPath) || other.svgIconAssetPath == svgIconAssetPath)&&(identical(other.isActive, isActive) || other.isActive == isActive));
-}
-
-
-@override
-int get hashCode => Object.hash(runtimeType,id,label,svgIconAssetPath,isActive);
-
-@override
-String toString() {
-  return 'ProductCategory(id: $id, label: $label, svgIconAssetPath: $svgIconAssetPath, isActive: $isActive)';
-}
-
-
+  @override
+  String toString() {
+    return 'ProductCategory(id: $id, label: $label, svgIconAssetPath: $svgIconAssetPath, isActive: $isActive)';
+  }
 }
 
 /// @nodoc
-abstract mixin class $ProductCategoryCopyWith<$Res>  {
-  factory $ProductCategoryCopyWith(ProductCategory value, $Res Function(ProductCategory) _then) = _$ProductCategoryCopyWithImpl;
-@useResult
-$Res call({
- String id, String label, String svgIconAssetPath, bool isActive
-});
-
-
-
-
+abstract mixin class $ProductCategoryCopyWith<$Res> {
+  factory $ProductCategoryCopyWith(
+          ProductCategory value, $Res Function(ProductCategory) _then) =
+      _$ProductCategoryCopyWithImpl;
+  @useResult
+  $Res call({String id, String label, String svgIconAssetPath, bool isActive});
 }
+
 /// @nodoc
 class _$ProductCategoryCopyWithImpl<$Res>
     implements $ProductCategoryCopyWith<$Res> {
@@ -60,200 +67,264 @@ class _$ProductCategoryCopyWithImpl<$Res>
   final ProductCategory _self;
   final $Res Function(ProductCategory) _then;
 
-/// Create a copy of ProductCategory
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? label = null,Object? svgIconAssetPath = null,Object? isActive = null,}) {
-  return _then(_self.copyWith(
-id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
-as String,svgIconAssetPath: null == svgIconAssetPath ? _self.svgIconAssetPath : svgIconAssetPath // ignore: cast_nullable_to_non_nullable
-as String,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
-as bool,
-  ));
+  /// Create a copy of ProductCategory
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? label = null,
+    Object? svgIconAssetPath = null,
+    Object? isActive = null,
+  }) {
+    return _then(_self.copyWith(
+      id: null == id
+          ? _self.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      label: null == label
+          ? _self.label
+          : label // ignore: cast_nullable_to_non_nullable
+              as String,
+      svgIconAssetPath: null == svgIconAssetPath
+          ? _self.svgIconAssetPath
+          : svgIconAssetPath // ignore: cast_nullable_to_non_nullable
+              as String,
+      isActive: null == isActive
+          ? _self.isActive
+          : isActive // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ));
+  }
 }
-
-}
-
 
 /// Adds pattern-matching-related methods to [ProductCategory].
 extension ProductCategoryPatterns on ProductCategory {
-/// A variant of `map` that fallback to returning `orElse`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ProductCategory value)?  $default,{required TResult orElse(),}){
-final _that = this;
-switch (_that) {
-case _ProductCategory() when $default != null:
-return $default(_that);case _:
-  return orElse();
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_ProductCategory value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _ProductCategory() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
 
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// Callbacks receives the raw object, upcasted.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case final Subclass2 value:
-///     return ...;
-/// }
-/// ```
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ProductCategory value)  $default,){
-final _that = this;
-switch (_that) {
-case _ProductCategory():
-return $default(_that);case _:
-  throw StateError('Unexpected subclass');
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_ProductCategory value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _ProductCategory():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
 
-}
-}
-/// A variant of `map` that fallback to returning `null`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ProductCategory value)?  $default,){
-final _that = this;
-switch (_that) {
-case _ProductCategory() when $default != null:
-return $default(_that);case _:
-  return null;
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_ProductCategory value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _ProductCategory() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
 
-}
-}
-/// A variant of `when` that fallback to an `orElse` callback.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String label,  String svgIconAssetPath,  bool isActive)?  $default,{required TResult orElse(),}) {final _that = this;
-switch (_that) {
-case _ProductCategory() when $default != null:
-return $default(_that.id,_that.label,_that.svgIconAssetPath,_that.isActive);case _:
-  return orElse();
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(
+            String id, String label, String svgIconAssetPath, bool isActive)?
+        $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _ProductCategory() when $default != null:
+        return $default(
+            _that.id, _that.label, _that.svgIconAssetPath, _that.isActive);
+      case _:
+        return orElse();
+    }
+  }
 
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// As opposed to `map`, this offers destructuring.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case Subclass2(:final field2):
-///     return ...;
-/// }
-/// ```
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String label,  String svgIconAssetPath,  bool isActive)  $default,) {final _that = this;
-switch (_that) {
-case _ProductCategory():
-return $default(_that.id,_that.label,_that.svgIconAssetPath,_that.isActive);case _:
-  throw StateError('Unexpected subclass');
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(
+            String id, String label, String svgIconAssetPath, bool isActive)
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _ProductCategory():
+        return $default(
+            _that.id, _that.label, _that.svgIconAssetPath, _that.isActive);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
 
-}
-}
-/// A variant of `when` that fallback to returning `null`
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String label,  String svgIconAssetPath,  bool isActive)?  $default,) {final _that = this;
-switch (_that) {
-case _ProductCategory() when $default != null:
-return $default(_that.id,_that.label,_that.svgIconAssetPath,_that.isActive);case _:
-  return null;
-
-}
-}
-
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(
+            String id, String label, String svgIconAssetPath, bool isActive)?
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _ProductCategory() when $default != null:
+        return $default(
+            _that.id, _that.label, _that.svgIconAssetPath, _that.isActive);
+      case _:
+        return null;
+    }
+  }
 }
 
 /// @nodoc
-
 
 class _ProductCategory implements ProductCategory {
-  const _ProductCategory({required this.id, required this.label, required this.svgIconAssetPath, this.isActive = false});
-  
+  const _ProductCategory(
+      {required this.id,
+      required this.label,
+      required this.svgIconAssetPath,
+      this.isActive = false});
 
-@override final  String id;
-@override final  String label;
-@override final  String svgIconAssetPath;
-@override@JsonKey() final  bool isActive;
+  @override
+  final String id;
+  @override
+  final String label;
+  @override
+  final String svgIconAssetPath;
+  @override
+  @JsonKey()
+  final bool isActive;
 
-/// Create a copy of ProductCategory
-/// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-_$ProductCategoryCopyWith<_ProductCategory> get copyWith => __$ProductCategoryCopyWithImpl<_ProductCategory>(this, _$identity);
+  /// Create a copy of ProductCategory
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$ProductCategoryCopyWith<_ProductCategory> get copyWith =>
+      __$ProductCategoryCopyWithImpl<_ProductCategory>(this, _$identity);
 
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _ProductCategory &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.label, label) || other.label == label) &&
+            (identical(other.svgIconAssetPath, svgIconAssetPath) ||
+                other.svgIconAssetPath == svgIconAssetPath) &&
+            (identical(other.isActive, isActive) ||
+                other.isActive == isActive));
+  }
 
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, id, label, svgIconAssetPath, isActive);
 
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProductCategory&&(identical(other.id, id) || other.id == id)&&(identical(other.label, label) || other.label == label)&&(identical(other.svgIconAssetPath, svgIconAssetPath) || other.svgIconAssetPath == svgIconAssetPath)&&(identical(other.isActive, isActive) || other.isActive == isActive));
-}
-
-
-@override
-int get hashCode => Object.hash(runtimeType,id,label,svgIconAssetPath,isActive);
-
-@override
-String toString() {
-  return 'ProductCategory(id: $id, label: $label, svgIconAssetPath: $svgIconAssetPath, isActive: $isActive)';
-}
-
-
+  @override
+  String toString() {
+    return 'ProductCategory(id: $id, label: $label, svgIconAssetPath: $svgIconAssetPath, isActive: $isActive)';
+  }
 }
 
 /// @nodoc
-abstract mixin class _$ProductCategoryCopyWith<$Res> implements $ProductCategoryCopyWith<$Res> {
-  factory _$ProductCategoryCopyWith(_ProductCategory value, $Res Function(_ProductCategory) _then) = __$ProductCategoryCopyWithImpl;
-@override @useResult
-$Res call({
- String id, String label, String svgIconAssetPath, bool isActive
-});
-
-
-
-
+abstract mixin class _$ProductCategoryCopyWith<$Res>
+    implements $ProductCategoryCopyWith<$Res> {
+  factory _$ProductCategoryCopyWith(
+          _ProductCategory value, $Res Function(_ProductCategory) _then) =
+      __$ProductCategoryCopyWithImpl;
+  @override
+  @useResult
+  $Res call({String id, String label, String svgIconAssetPath, bool isActive});
 }
+
 /// @nodoc
 class __$ProductCategoryCopyWithImpl<$Res>
     implements _$ProductCategoryCopyWith<$Res> {
@@ -262,19 +333,35 @@ class __$ProductCategoryCopyWithImpl<$Res>
   final _ProductCategory _self;
   final $Res Function(_ProductCategory) _then;
 
-/// Create a copy of ProductCategory
-/// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? label = null,Object? svgIconAssetPath = null,Object? isActive = null,}) {
-  return _then(_ProductCategory(
-id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
-as String,svgIconAssetPath: null == svgIconAssetPath ? _self.svgIconAssetPath : svgIconAssetPath // ignore: cast_nullable_to_non_nullable
-as String,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
-as bool,
-  ));
-}
-
-
+  /// Create a copy of ProductCategory
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+    Object? label = null,
+    Object? svgIconAssetPath = null,
+    Object? isActive = null,
+  }) {
+    return _then(_ProductCategory(
+      id: null == id
+          ? _self.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      label: null == label
+          ? _self.label
+          : label // ignore: cast_nullable_to_non_nullable
+              as String,
+      svgIconAssetPath: null == svgIconAssetPath
+          ? _self.svgIconAssetPath
+          : svgIconAssetPath // ignore: cast_nullable_to_non_nullable
+              as String,
+      isActive: null == isActive
+          ? _self.isActive
+          : isActive // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ));
+  }
 }
 
 // dart format on

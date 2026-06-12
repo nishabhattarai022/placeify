@@ -29,9 +29,24 @@ class ProductDetailGallery extends StatelessWidget {
       children: [
         SizedBox(
           height: heroHeight,
+          width: double.infinity,
           child: Stack(
+            fit: StackFit.expand,
             children: [
-              // Soft elliptical floor shadow grounds the chair.
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 280),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: (child, animation) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                child: ProductDetailImage(
+                  key: ValueKey<String>(images[safeIndex]),
+                  imageUrl: images[safeIndex],
+                  fit: BoxFit.cover,
+                ),
+              ),
+              // Soft elliptical floor shadow grounds the product.
               Positioned(
                 left: 60,
                 right: 60,
@@ -50,36 +65,6 @@ class ProductDetailGallery extends StatelessWidget {
                         stops: const [0, 0.55, 1],
                       ),
                     ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  ProductDetailTokens.heroPaddingH,
-                  ProductDetailTokens.heroPaddingTop,
-                  ProductDetailTokens.heroPaddingH,
-                  ProductDetailTokens.heroPaddingBottom,
-                ),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 280),
-                  switchInCurve: Curves.easeOutCubic,
-                  switchOutCurve: Curves.easeInCubic,
-                  transitionBuilder: (child, animation) {
-                    final scale = Tween<double>(begin: 0.96, end: 1).animate(
-                      CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOutCubic,
-                      ),
-                    );
-                    return FadeTransition(
-                      opacity: animation,
-                      child: ScaleTransition(scale: scale, child: child),
-                    );
-                  },
-                  child: ProductDetailImage(
-                    key: ValueKey<String>(images[safeIndex]),
-                    imageUrl: images[safeIndex],
-                    fit: BoxFit.contain,
                   ),
                 ),
               ),

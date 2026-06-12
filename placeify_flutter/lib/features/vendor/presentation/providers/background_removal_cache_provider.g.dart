@@ -18,15 +18,15 @@ final class BackgroundRemovalCacheProvider
     extends $NotifierProvider<BackgroundRemovalCache, Map<String, String>> {
   /// Caches processed image paths by source image id to avoid re-processing on rebuild.
   BackgroundRemovalCacheProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'backgroundRemovalCacheProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'backgroundRemovalCacheProvider',
+          isAutoDispose: false,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
 
   @override
   String debugGetCreateSourceHash() => _$backgroundRemovalCacheHash();
@@ -55,14 +55,11 @@ abstract class _$BackgroundRemovalCache extends $Notifier<Map<String, String>> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<Map<String, String>, Map<String, String>>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<Map<String, String>, Map<String, String>>,
-              Map<String, String>,
-              Object?,
-              Object?
-            >;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<Map<String, String>, Map<String, String>>,
+        Map<String, String>,
+        Object?,
+        Object?>;
     element.handleCreate(ref, build);
   }
 }

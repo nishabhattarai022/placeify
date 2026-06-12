@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../vendor/domain/constants/vendor_strings.dart';
+import '../../vendor/domain/enums/vendor_status.dart';
 
 /// Profile screen layout constants and menu definitions.
 abstract final class ProfileMenuConfig {
@@ -24,6 +26,7 @@ enum ProfileMenuRoute {
   refund,
   notifications,
   password,
+  vendor,
   signOut,
 }
 
@@ -36,6 +39,8 @@ class ProfileMenuItemData {
     required this.backgroundColor,
     required this.route,
     this.badge,
+    this.badgeBackgroundColor = AppColors.rust,
+    this.badgeForegroundColor = Colors.white,
     this.isDanger = false,
   });
 
@@ -46,6 +51,8 @@ class ProfileMenuItemData {
   final Color backgroundColor;
   final ProfileMenuRoute route;
   final String? badge;
+  final Color badgeBackgroundColor;
+  final Color badgeForegroundColor;
   final bool isDanger;
 }
 
@@ -100,14 +107,54 @@ abstract final class ProfileMenuItems {
       backgroundColor: AppColors.coralBg,
       route: ProfileMenuRoute.password,
     ),
-    ProfileMenuItemData(
-      title: 'Sign Out',
-      subtitle: 'See you next time',
-      icon: Icons.logout_rounded,
-      iconColor: AppColors.rust,
-      backgroundColor: Color(0x1A9B4A2A),
-      route: ProfileMenuRoute.signOut,
-      isDanger: true,
-    ),
   ];
+
+  static const ProfileMenuItemData signOut = ProfileMenuItemData(
+    title: 'Sign Out',
+    subtitle: 'See you next time',
+    icon: Icons.logout_rounded,
+    iconColor: AppColors.rust,
+    backgroundColor: Color(0x1A9B4A2A),
+    route: ProfileMenuRoute.signOut,
+    isDanger: true,
+  );
+
+  static ProfileMenuItemData vendorTile(VendorStatus status) {
+    return switch (status) {
+      VendorStatus.none => const ProfileMenuItemData(
+          title: VendorStrings.becomeVendorTitle,
+          subtitle: VendorStrings.becomeVendorSubtitle,
+          icon: Icons.store_outlined,
+          iconColor: AppColors.vendorForest,
+          backgroundColor: AppColors.vendorForestBg,
+          route: ProfileMenuRoute.vendor,
+        ),
+      VendorStatus.pending => const ProfileMenuItemData(
+          title: VendorStrings.applicationPendingTitle,
+          subtitle: VendorStrings.applicationPendingSubtitle,
+          icon: Icons.hourglass_top_outlined,
+          iconColor: AppColors.vendorForest,
+          backgroundColor: AppColors.vendorForestBg,
+          route: ProfileMenuRoute.vendor,
+        ),
+      VendorStatus.approved => const ProfileMenuItemData(
+          title: VendorStrings.vendorDashboardTitle,
+          subtitle: VendorStrings.vendorDashboardSubtitle,
+          icon: Icons.dashboard_outlined,
+          iconColor: AppColors.vendorForest,
+          backgroundColor: AppColors.vendorForestBg,
+          route: ProfileMenuRoute.vendor,
+          badge: VendorStrings.activeBadge,
+          badgeBackgroundColor: AppColors.sage,
+        ),
+      VendorStatus.suspended => const ProfileMenuItemData(
+          title: VendorStrings.storeSuspendedTitle,
+          subtitle: VendorStrings.storeSuspendedSubtitle,
+          icon: Icons.block_outlined,
+          iconColor: AppColors.textMuted,
+          backgroundColor: AppColors.creamDark,
+          route: ProfileMenuRoute.vendor,
+        ),
+    };
+  }
 }
