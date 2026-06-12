@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:placeify_client/placeify_client.dart';
 
@@ -142,6 +143,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
         : product.name.trim();
 
     final input = VendorProductUploadInput(
+      productId: dbId,
       name: product.name.trim(),
       description: description,
       price: product.price,
@@ -157,32 +159,28 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
           ? product.offerLabel.trim()
           : null,
       generateModel3d: product.hasArView,
+      isActive: product.isActive,
     );
 
     try {
-      var updated = await client.vendor.updateProduct(
-        dbId,
-        input,
-        status: product.isActive
-            ? ProductStatus.active
-            : ProductStatus.inactive,
-      );
-
       final imagePath = _firstUploadableImagePath(product.imageUrls);
+      ByteData imageData = ByteData(0);
+      var imageFileName = '';
+
       if (imagePath != null) {
         final file = File(imagePath);
         if (await file.exists()) {
           final bytes = await file.readAsBytes();
-          final thumbnailUrl = await client.vendor.uploadProductImage(
-            bytes.buffer.asByteData(),
-            _fileNameFromPath(imagePath),
-          );
-          updated = await client.vendor.updateProductThumbnail(
-            dbId,
-            thumbnailUrl,
-          );
+          imageData = bytes.buffer.asByteData();
+          imageFileName = _fileNameFromPath(imagePath);
         }
       }
+
+      final updated = await client.vendor.uploadProduct(
+        input,
+        imageData,
+        imageFileName,
+      );
 
       return VendorProductMapper.fromApiProduct(
         updated,

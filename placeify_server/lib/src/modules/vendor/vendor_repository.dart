@@ -376,8 +376,9 @@ class VendorStore {
     );
   }
 
-  /// Creates a product and stores [imageData] as the catalog thumbnail in one
-  /// request. Optionally kicks off Tripo 3D generation when configured.
+  /// Creates or updates a product. When [input.productId] is set, updates that
+  /// product; a photo is optional on update (empty [imageData] keeps the current
+  /// thumbnail). New products require a photo.
   Future<Product> uploadProduct(
     Session session,
     VendorProductUploadInput input,
@@ -385,6 +386,17 @@ class VendorStore {
     String imageFileName,
   ) async {
     await requireOwnedVendor(session);
+
+    final existingProductId = input.productId;
+    if (existingProductId != null) {
+      return _updateExistingProduct(
+        session,
+        existingProductId,
+        input,
+        imageData,
+        imageFileName,
+      );
+    }
 
     if (imageData.lengthInBytes == 0) {
       throw PlaceifyException(
@@ -425,24 +437,16 @@ class VendorStore {
       );
     }
 
-    final productId = product.id;
-    if (productId == null) return product;
-
-    final loaded = await Product.db.findById(
-      session,
-      productId,
-      include: Product.include(category: Category.include()),
-    );
-    return loaded ?? product;
+    return _loadProductWithCategory(session, product);
   }
 
-  /// Updates an existing vendor product owned by the signed-in user.
-  Future<Product> updateProduct(
+  Future<Product> _updateExistingProduct(
     Session session,
     int productId,
-    VendorProductUploadInput input, {
-    ProductStatus? status,
-  }) async {
+    VendorProductUploadInput input,
+    ByteData imageData,
+    String imageFileName,
+  ) async {
     final vendor = await requireOwnedVendor(session);
     final product = await Product.db.findById(session, productId);
     if (product == null || product.vendorId != vendor.id) {
@@ -494,6 +498,15 @@ class VendorStore {
       resolvedCategoryId = defaultCategory?.id;
     }
 
+    var thumbnailUrl = product.thumbnailUrl;
+    if (imageData.lengthInBytes > 0) {
+      thumbnailUrl = await _persistProductImage(
+        session,
+        imageData,
+        imageFileName,
+      );
+    }
+
     var updated = await Product.db.updateRow(
       session,
       product.copyWith(
@@ -509,7 +522,8 @@ class VendorStore {
         assemblyNote: input.assemblyNote?.trim(),
         careInstructions: trimmedCare,
         warranty: input.warranty?.trim(),
-        status: status ?? product.status,
+        thumbnailUrl: thumbnailUrl?.trim(),
+        status: input.isActive ? ProductStatus.active : ProductStatus.inactive,
       ),
     );
 
@@ -522,15 +536,22 @@ class VendorStore {
       );
     }
 
-    final updatedId = updated.id;
-    if (updatedId == null) return updated;
+    return _loadProductWithCategory(session, updated);
+  }
+
+  Future<Product> _loadProductWithCategory(
+    Session session,
+    Product product,
+  ) async {
+    final productId = product.id;
+    if (productId == null) return product;
 
     final loaded = await Product.db.findById(
       session,
-      updatedId,
+      productId,
       include: Product.include(category: Category.include()),
     );
-    return loaded ?? updated;
+    return loaded ?? product;
   }
 
   Future<Product> _generateAndStoreModel3d(

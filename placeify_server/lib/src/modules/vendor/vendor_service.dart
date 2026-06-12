@@ -109,20 +109,6 @@ class VendorService {
     );
   }
 
-  Future<Product> updateProduct(
-    Session session,
-    int productId,
-    VendorProductUploadInput input, {
-    ProductStatus? status,
-  }) {
-    return _repository.updateProduct(
-      session,
-      productId,
-      input,
-      status: status,
-    );
-  }
-
   Future<Product> updateProductThumbnail(
     Session session,
     int productId,
