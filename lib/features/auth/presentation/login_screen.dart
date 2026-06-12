@@ -49,10 +49,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _signInWithDemo() async {
     _emailController.text = DemoCredentials.email;
     _passwordController.text = DemoCredentials.password;
-    await _submit();
+    await _submit(destination: '/home');
   }
 
-  Future<void> _submit() async {
+  Future<void> _signInWithDemoAdmin() async {
+    _emailController.text = DemoCredentials.adminEmail;
+    _passwordController.text = DemoCredentials.adminPassword;
+    await _submit(destination: '/admin');
+  }
+
+  Future<void> _submit({required String destination}) async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_isSubmitting) return;
 
@@ -65,7 +71,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             password: _passwordController.text,
           );
       if (!mounted) return;
-      context.go('/home');
+      context.go(destination);
     } on AuthException catch (e) {
       if (mounted) PlaceifyToast.show(context, e.message);
     } catch (_) {
@@ -209,7 +215,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           const SizedBox(height: 32),
                           PrimaryCtaButton(
                             label: _isSubmitting ? 'Logging in...' : 'Log In',
-                            onTap: _submit,
+                            onTap: () => _submit(destination: '/home'),
                           ),
                           const SizedBox(height: 12),
                           Center(
@@ -226,6 +232,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.onboardingAmber,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Center(
+                            child: TextButton(
+                              onPressed: _isSubmitting
+                                  ? null
+                                  : () {
+                                      HapticService.light();
+                                      _signInWithDemoAdmin();
+                                    },
+                              child: Text(
+                                'Demo Admin Access',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.onboardingTextBody.withValues(
+                                    alpha: 0.65,
+                                  ),
                                 ),
                               ),
                             ),

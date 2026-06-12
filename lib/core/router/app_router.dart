@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:placeify/features/admin/presentation/admin_placeholder_screen.dart';
+import 'package:placeify/features/admin/presentation/guards/admin_auth_guard.dart';
 import 'package:placeify/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify/core/widgets/toast_overlay.dart';
 import 'package:placeify/features/vendor/presentation/guards/vendor_auth_guard.dart';
@@ -76,6 +78,13 @@ GoRouter appRouter(Ref ref) {
     redirect: (context, state) {
       final userAsync = ref.read(currentUserProvider);
       if (userAsync.isLoading) return null;
+
+      final adminRedirect = AdminAuthGuard.evaluate(
+        location: state.matchedLocation,
+        user: userAsync.value,
+      );
+      if (adminRedirect != null) return adminRedirect;
+
       final redirect = VendorAuthGuard.evaluate(
         location: state.matchedLocation,
         user: userAsync.value,
@@ -121,6 +130,16 @@ List<RouteBase> get _appRoutes => [
       pageBuilder: (context, state) => CustomTransitionPage(
         key: state.pageKey,
         child: const LoginScreen(),
+        transitionsBuilder: _fadeTransition,
+        transitionDuration: AppDurations.slow,
+      ),
+    ),
+    GoRoute(
+      path: '/admin',
+      name: 'admin',
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const AdminPlaceholderScreen(),
         transitionsBuilder: _fadeTransition,
         transitionDuration: AppDurations.slow,
       ),

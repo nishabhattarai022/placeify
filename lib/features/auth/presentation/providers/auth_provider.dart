@@ -69,4 +69,23 @@ class CurrentUser extends _$CurrentUser {
     await repo.updateVendorStatus(status: status, vendorId: vendorId);
     ref.invalidateSelf();
   }
+
+  /// Updates vendor status for any user; refreshes session state when the target is
+  /// the logged-in user.
+  Future<void> updateVendorStatusForUser({
+    required String userId,
+    required VendorStatus status,
+    String? vendorId,
+  }) async {
+    final repo = await ref.read(authRepositoryProvider.future);
+    await repo.updateVendorStatusForUser(
+      userId: userId,
+      status: status,
+      vendorId: vendorId,
+    );
+    final current = state.value;
+    if (current?.id == userId) {
+      ref.invalidateSelf();
+    }
+  }
 }

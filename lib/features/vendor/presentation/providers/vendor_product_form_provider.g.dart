@@ -41,7 +41,7 @@ final class VendorProductFormProvider
   }
 }
 
-String _$vendorProductFormHash() => r'90974f988d0b5c4e10965f1acddef92f1db6adc0';
+String _$vendorProductFormHash() => r'd9fefa4b04d41e206a8b0962fadb0f21fa231e43';
 
 abstract class _$VendorProductForm extends $Notifier<VendorProductFormState> {
   VendorProductFormState build();

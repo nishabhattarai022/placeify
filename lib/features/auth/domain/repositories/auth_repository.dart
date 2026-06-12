@@ -24,6 +24,13 @@ abstract interface class AuthRepository {
     required VendorStatus status,
     String? vendorId,
   });
+
+  /// Updates vendor onboarding status for any user (admin cross-user writes).
+  Future<void> updateVendorStatusForUser({
+    required String userId,
+    required VendorStatus status,
+    String? vendorId,
+  });
 }
 
 class AuthException implements Exception {

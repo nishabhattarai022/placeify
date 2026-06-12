@@ -184,6 +184,8 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
   }
 
   Future<void> _onUpload() async {
+    await HapticService.light();
+    if (!mounted) return;
     _flushControllersToNotifier();
     if (!(_formKey.currentState?.validate() ?? false)) {
       _scrollToFirstError();
@@ -194,7 +196,8 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     if (!mounted) return;
 
     if (success) {
-      PlaceifyToast.show(context, 'Product uploaded successfully');
+      HapticService.medium();
+      PlaceifyToast.show(context, VendorStrings.productSaved);
       context.pop();
       return;
     }
@@ -206,6 +209,8 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
   }
 
   Future<void> _onSaveChanges() async {
+    await HapticService.light();
+    if (!mounted) return;
     if (!_isDirty) {
       PlaceifyToast.show(context, VendorStrings.noChangesToSave);
       return;
@@ -222,7 +227,8 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     if (!mounted) return;
 
     if (success) {
-      PlaceifyToast.show(context, 'Changes saved');
+      HapticService.medium();
+      PlaceifyToast.show(context, VendorStrings.changesSaved);
       setState(() => _isDirty = false);
       return;
     }
@@ -338,6 +344,12 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     final isEditing = form.isEditing;
     final unitLabel =
         form.dimensionUnit == VendorProductDimensionUnit.cm ? 'cm' : 'in';
+    final saveLabel = isEditing
+        ? (_isDirty ? VendorStrings.saveChanges : VendorStrings.noChangesLabel)
+        : VendorStrings.saveProduct;
+    final onSave = form.isSubmitting
+        ? null
+        : (isEditing ? _onSaveChanges : _onUpload);
 
     final scaffold = Scaffold(
       backgroundColor: AppColors.cream,
@@ -353,6 +365,36 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
           isEditing ? 'Edit Product' : 'Upload Product',
           style: AppTypography.sectionTitle,
         ),
+        actions: [
+          if (form.isSubmitting)
+            const Padding(
+              padding: EdgeInsets.only(right: 16),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.vendorForest,
+                  ),
+                ),
+              ),
+            )
+          else
+            TextButton(
+              onPressed: onSave,
+              child: Text(
+                'Save',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: isEditing && !_isDirty
+                      ? AppColors.textMuted
+                      : AppColors.vendorForest,
+                ),
+              ),
+            ),
+        ],
       ),
       resizeToAvoidBottomInset: true,
       body: Column(
@@ -779,14 +821,10 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
             ),
           ),
           _UploadBottomBar(
-            label: isEditing
-                ? (_isDirty ? 'Save Changes' : 'No Changes')
-                : 'Upload Product',
+            label: saveLabel,
             muted: isEditing && !_isDirty,
             isLoading: form.isSubmitting,
-            onTap: form.isSubmitting
-                ? null
-                : (isEditing ? _onSaveChanges : _onUpload),
+            onTap: onSave,
           ),
         ],
       ),
@@ -823,7 +861,8 @@ class _UploadBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+    final safeBottom = MediaQuery.paddingOf(context).bottom;
     final pill = Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -853,7 +892,7 @@ class _UploadBottomBar extends StatelessWidget {
 
     return Container(
       color: AppColors.cream,
-      padding: EdgeInsets.fromLTRB(18, 8, 18, 24 + bottomInset),
+      padding: EdgeInsets.fromLTRB(18, 8, 18, 24 + keyboardInset + safeBottom),
       child: AnimatedScaleTap(
         onTap: onTap,
         child: muted ? Opacity(opacity: 0.5, child: pill) : pill,

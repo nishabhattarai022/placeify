@@ -45,11 +45,18 @@ class MainShell extends StatelessWidget {
     return true;
   }
 
+  /// Vendor bottom nav only on tab roots — hide on pushed routes (upload, edit, etc.)
+  /// so full-screen actions like Save are not covered.
+  bool _showVendorNav(String location) {
+    if (!location.startsWith(VendorRoutes.prefix)) return false;
+    return VendorRoutes.tabRoots.contains(location);
+  }
+
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
     final showConsumerNav = _showConsumerNav(location);
-    final showVendorNav = location.startsWith('/vendor');
+    final showVendorNav = _showVendorNav(location);
 
     return Scaffold(
       extendBody: true,

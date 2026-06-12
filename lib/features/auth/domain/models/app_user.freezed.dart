@@ -17,6 +17,7 @@ mixin _$AppUser {
   String get id;
   String get fullName;
   String get email;
+  UserRole get role;
   VendorStatus get vendorStatus;
   String? get vendorId;
 
@@ -39,6 +40,7 @@ mixin _$AppUser {
             (identical(other.fullName, fullName) ||
                 other.fullName == fullName) &&
             (identical(other.email, email) || other.email == email) &&
+            (identical(other.role, role) || other.role == role) &&
             (identical(other.vendorStatus, vendorStatus) ||
                 other.vendorStatus == vendorStatus) &&
             (identical(other.vendorId, vendorId) ||
@@ -47,12 +49,12 @@ mixin _$AppUser {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, fullName, email, vendorStatus, vendorId);
+  int get hashCode => Object.hash(
+      runtimeType, id, fullName, email, role, vendorStatus, vendorId);
 
   @override
   String toString() {
-    return 'AppUser(id: $id, fullName: $fullName, email: $email, vendorStatus: $vendorStatus, vendorId: $vendorId)';
+    return 'AppUser(id: $id, fullName: $fullName, email: $email, role: $role, vendorStatus: $vendorStatus, vendorId: $vendorId)';
   }
 }
 
@@ -65,6 +67,7 @@ abstract mixin class $AppUserCopyWith<$Res> {
       {String id,
       String fullName,
       String email,
+      UserRole role,
       VendorStatus vendorStatus,
       String? vendorId});
 }
@@ -84,6 +87,7 @@ class _$AppUserCopyWithImpl<$Res> implements $AppUserCopyWith<$Res> {
     Object? id = null,
     Object? fullName = null,
     Object? email = null,
+    Object? role = null,
     Object? vendorStatus = null,
     Object? vendorId = freezed,
   }) {
@@ -100,6 +104,10 @@ class _$AppUserCopyWithImpl<$Res> implements $AppUserCopyWith<$Res> {
           ? _self.email
           : email // ignore: cast_nullable_to_non_nullable
               as String,
+      role: null == role
+          ? _self.role
+          : role // ignore: cast_nullable_to_non_nullable
+              as UserRole,
       vendorStatus: null == vendorStatus
           ? _self.vendorStatus
           : vendorStatus // ignore: cast_nullable_to_non_nullable
@@ -205,7 +213,7 @@ extension AppUserPatterns on AppUser {
 
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
-    TResult Function(String id, String fullName, String email,
+    TResult Function(String id, String fullName, String email, UserRole role,
             VendorStatus vendorStatus, String? vendorId)?
         $default, {
     required TResult orElse(),
@@ -213,7 +221,7 @@ extension AppUserPatterns on AppUser {
     final _that = this;
     switch (_that) {
       case _AppUser() when $default != null:
-        return $default(_that.id, _that.fullName, _that.email,
+        return $default(_that.id, _that.fullName, _that.email, _that.role,
             _that.vendorStatus, _that.vendorId);
       case _:
         return orElse();
@@ -235,14 +243,14 @@ extension AppUserPatterns on AppUser {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(String id, String fullName, String email,
+    TResult Function(String id, String fullName, String email, UserRole role,
             VendorStatus vendorStatus, String? vendorId)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _AppUser():
-        return $default(_that.id, _that.fullName, _that.email,
+        return $default(_that.id, _that.fullName, _that.email, _that.role,
             _that.vendorStatus, _that.vendorId);
       case _:
         throw StateError('Unexpected subclass');
@@ -263,14 +271,14 @@ extension AppUserPatterns on AppUser {
 
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(String id, String fullName, String email,
+    TResult? Function(String id, String fullName, String email, UserRole role,
             VendorStatus vendorStatus, String? vendorId)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _AppUser() when $default != null:
-        return $default(_that.id, _that.fullName, _that.email,
+        return $default(_that.id, _that.fullName, _that.email, _that.role,
             _that.vendorStatus, _that.vendorId);
       case _:
         return null;
@@ -285,6 +293,7 @@ class _AppUser implements AppUser {
       {required this.id,
       required this.fullName,
       required this.email,
+      this.role = UserRole.customer,
       this.vendorStatus = VendorStatus.none,
       this.vendorId});
   factory _AppUser.fromJson(Map<String, dynamic> json) =>
@@ -296,6 +305,9 @@ class _AppUser implements AppUser {
   final String fullName;
   @override
   final String email;
+  @override
+  @JsonKey()
+  final UserRole role;
   @override
   @JsonKey()
   final VendorStatus vendorStatus;
@@ -326,6 +338,7 @@ class _AppUser implements AppUser {
             (identical(other.fullName, fullName) ||
                 other.fullName == fullName) &&
             (identical(other.email, email) || other.email == email) &&
+            (identical(other.role, role) || other.role == role) &&
             (identical(other.vendorStatus, vendorStatus) ||
                 other.vendorStatus == vendorStatus) &&
             (identical(other.vendorId, vendorId) ||
@@ -334,12 +347,12 @@ class _AppUser implements AppUser {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, fullName, email, vendorStatus, vendorId);
+  int get hashCode => Object.hash(
+      runtimeType, id, fullName, email, role, vendorStatus, vendorId);
 
   @override
   String toString() {
-    return 'AppUser(id: $id, fullName: $fullName, email: $email, vendorStatus: $vendorStatus, vendorId: $vendorId)';
+    return 'AppUser(id: $id, fullName: $fullName, email: $email, role: $role, vendorStatus: $vendorStatus, vendorId: $vendorId)';
   }
 }
 
@@ -353,6 +366,7 @@ abstract mixin class _$AppUserCopyWith<$Res> implements $AppUserCopyWith<$Res> {
       {String id,
       String fullName,
       String email,
+      UserRole role,
       VendorStatus vendorStatus,
       String? vendorId});
 }
@@ -372,6 +386,7 @@ class __$AppUserCopyWithImpl<$Res> implements _$AppUserCopyWith<$Res> {
     Object? id = null,
     Object? fullName = null,
     Object? email = null,
+    Object? role = null,
     Object? vendorStatus = null,
     Object? vendorId = freezed,
   }) {
@@ -388,6 +403,10 @@ class __$AppUserCopyWithImpl<$Res> implements _$AppUserCopyWith<$Res> {
           ? _self.email
           : email // ignore: cast_nullable_to_non_nullable
               as String,
+      role: null == role
+          ? _self.role
+          : role // ignore: cast_nullable_to_non_nullable
+              as UserRole,
       vendorStatus: null == vendorStatus
           ? _self.vendorStatus
           : vendorStatus // ignore: cast_nullable_to_non_nullable

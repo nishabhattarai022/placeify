@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:placeify/features/admin/domain/enums/user_role.dart';
 import 'package:placeify/features/vendor/domain/enums/vendor_status.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -98,10 +99,30 @@ class MockAuthRepository implements AuthRepository {
     if (index == -1) return;
 
     final current = users[index];
-    users[index] = current.copyWith(
-      vendorStatus: status,
-      vendorId: vendorId,
-    );
+    users[index] = vendorId != null
+        ? current.copyWith(vendorStatus: status, vendorId: vendorId)
+        : current.copyWith(vendorStatus: status);
+    await _saveUsers(users);
+  }
+
+  @override
+  Future<void> updateVendorStatusForUser({
+    required String userId,
+    required VendorStatus status,
+    String? vendorId,
+  }) async {
+    final users = await _loadUsers();
+    final index = users.indexWhere((u) => u.id == userId);
+    if (index == -1) return;
+
+    final current = users[index];
+    final updated = switch ((vendorId, status)) {
+      (final id?, _) => current.copyWith(vendorStatus: status, vendorId: id),
+      (null, VendorStatus.none) =>
+        current.copyWith(vendorStatus: status, clearVendorId: true),
+      _ => current.copyWith(vendorStatus: status),
+    };
+    users[index] = updated;
     await _saveUsers(users);
   }
 
@@ -116,24 +137,46 @@ class MockAuthRepository implements AuthRepository {
           .toList();
     }
 
-    return _ensureDemoUser(users);
+    return _ensureDemoUsers(users);
   }
 
-  Future<List<_StoredUser>> _ensureDemoUser(List<_StoredUser> users) async {
-    final demoEmail = DemoCredentials.email.toLowerCase();
-    if (users.any((u) => u.email == demoEmail)) return users;
+  Future<List<_StoredUser>> _ensureDemoUsers(List<_StoredUser> users) async {
+    var updated = users;
+    var changed = false;
 
-    final withDemo = [
-      _StoredUser(
-        id: 'demo-user',
-        fullName: DemoCredentials.fullName,
-        email: demoEmail,
-        password: DemoCredentials.password,
-      ),
-      ...users,
-    ];
-    await _saveUsers(withDemo);
-    return withDemo;
+    final demoEmail = DemoCredentials.email.toLowerCase();
+    if (!updated.any((u) => u.email == demoEmail)) {
+      updated = [
+        _StoredUser(
+          id: 'demo-user',
+          fullName: DemoCredentials.fullName,
+          email: demoEmail,
+          password: DemoCredentials.password,
+        ),
+        ...updated,
+      ];
+      changed = true;
+    }
+
+    final adminEmail = DemoCredentials.adminEmail.toLowerCase();
+    if (!updated.any((u) => u.email == adminEmail)) {
+      updated = [
+        _StoredUser(
+          id: 'demo-admin',
+          fullName: DemoCredentials.adminFullName,
+          email: adminEmail,
+          password: DemoCredentials.adminPassword,
+          role: UserRole.admin,
+        ),
+        ...updated,
+      ];
+      changed = true;
+    }
+
+    if (changed) {
+      await _saveUsers(updated);
+    }
+    return updated;
   }
 
   Future<void> _saveUsers(List<_StoredUser> users) async {
@@ -148,6 +191,7 @@ class _StoredUser {
     required this.fullName,
     required this.email,
     required this.password,
+    this.role = UserRole.customer,
     this.vendorStatus = VendorStatus.none,
     this.vendorId,
   });
@@ -156,20 +200,24 @@ class _StoredUser {
   final String fullName;
   final String email;
   final String password;
+  final UserRole role;
   final VendorStatus vendorStatus;
   final String? vendorId;
 
   _StoredUser copyWith({
+    UserRole? role,
     VendorStatus? vendorStatus,
     String? vendorId,
+    bool clearVendorId = false,
   }) {
     return _StoredUser(
       id: id,
       fullName: fullName,
       email: email,
       password: password,
+      role: role ?? this.role,
       vendorStatus: vendorStatus ?? this.vendorStatus,
-      vendorId: vendorId ?? this.vendorId,
+      vendorId: clearVendorId ? null : (vendorId ?? this.vendorId),
     );
   }
 
@@ -177,6 +225,7 @@ class _StoredUser {
         id: id,
         fullName: fullName,
         email: email,
+        role: role,
         vendorStatus: vendorStatus,
         vendorId: vendorId,
       );
@@ -186,6 +235,7 @@ class _StoredUser {
         'fullName': fullName,
         'email': email,
         'password': password,
+        'role': role.name,
         'vendorStatus': vendorStatus.name,
         if (vendorId != null) 'vendorId': vendorId,
       };
@@ -196,6 +246,9 @@ class _StoredUser {
       fullName: json['fullName'] as String,
       email: json['email'] as String,
       password: json['password'] as String,
+      role: json['role'] != null
+          ? UserRole.values.byName(json['role'] as String)
+          : UserRole.customer,
       vendorStatus: json['vendorStatus'] != null
           ? VendorStatus.values.byName(json['vendorStatus'] as String)
           : VendorStatus.none,

@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:placeify/features/admin/domain/enums/user_role.dart';
 import 'package:placeify/features/vendor/domain/enums/vendor_status.dart';
 
 part 'app_user.freezed.dart';
@@ -11,6 +12,7 @@ abstract class AppUser with _$AppUser {
     required String id,
     required String fullName,
     required String email,
+    @Default(UserRole.customer) UserRole role,
     @Default(VendorStatus.none) VendorStatus vendorStatus,
     String? vendorId,
   }) = _AppUser;

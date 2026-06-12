@@ -39,6 +39,13 @@ abstract final class VendorStrings {
   static const appealCta = 'Submit an Appeal';
   static const keepEditing = 'Keep Editing';
   static const dismiss = 'Dismiss';
+
+  // Product form
+  static const saveProduct = 'Save Product';
+  static const saveChanges = 'Save Changes';
+  static const noChangesLabel = 'No Changes';
+  static const productSaved = 'Product saved successfully';
+  static const changesSaved = 'Changes saved';
 }
 
 /// Nepal-first placeholders and labels for vendor registration and profile forms.
