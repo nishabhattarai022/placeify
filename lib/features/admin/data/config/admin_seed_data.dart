@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:placeify/features/admin/domain/enums/user_role.dart';
+import 'package:placeify/features/admin/domain/enums/admin_notification_type.dart';
 import 'package:placeify/features/admin/domain/models/admin_notification.dart';
 import 'package:placeify/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_registration.dart';
@@ -296,12 +297,16 @@ abstract final class AdminSeedData {
         title: 'New vendor application',
         body: 'Kathmandu Crafts Co. submitted a registration request.',
         createdAt: DateTime(2026, 6, 8, 10, 40),
+        type: AdminNotificationType.newApplication,
+        linkedVendorId: pendingVendor1Id,
       ),
       AdminNotification(
         id: 'admin-n2',
         title: 'New vendor application',
         body: 'Nepal Nest Furniture is awaiting review.',
         createdAt: DateTime(2026, 6, 7, 14, 25),
+        type: AdminNotificationType.newApplication,
+        linkedVendorId: pendingVendor2Id,
       ),
       AdminNotification(
         id: 'admin-n3',
@@ -309,6 +314,8 @@ abstract final class AdminSeedData {
         body: 'Legacy Imports was suspended for policy review.',
         createdAt: DateTime(2026, 5, 28, 9, 0),
         read: true,
+        type: AdminNotificationType.vendorFlagged,
+        linkedVendorId: suspendedVendorId,
       ),
     ];
 

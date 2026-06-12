@@ -21,7 +21,15 @@ class AdminVendorsScreen extends ConsumerStatefulWidget {
 
 class _AdminVendorsScreenState extends ConsumerState<AdminVendorsScreen> {
   AdminVendorListFilter _filter = AdminVendorListFilter.all;
+  String _searchQuery = '';
   bool _hasLoaded = false;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   Future<void> _onRefresh() async {
     await ref.read(adminVendorsListProvider(_filter).notifier).refresh();
@@ -62,6 +70,13 @@ class _AdminVendorsScreenState extends ConsumerState<AdminVendorsScreen> {
                 style: AppTypography.sectionTitle,
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+              child: _VendorsSearchField(
+                controller: _searchController,
+                onChanged: (value) => setState(() => _searchQuery = value),
+              ),
+            ),
             VendorFilterChips(
               selected: _filter,
               onSelected: (filter) {
@@ -76,7 +91,17 @@ class _AdminVendorsScreenState extends ConsumerState<AdminVendorsScreen> {
                       loading: () => const _VendorsShimmer(),
                       error: (_, __) => _VendorsError(onRetry: _onRefresh),
                       data: (vendors) {
-                        if (vendors.isEmpty) {
+                        final query = _searchQuery.trim().toLowerCase();
+                        final filtered = query.isEmpty
+                            ? vendors
+                            : vendors
+                                .where(
+                                  (v) => v.businessName
+                                      .toLowerCase()
+                                      .contains(query),
+                                )
+                                .toList();
+                        if (filtered.isEmpty) {
                           return RefreshIndicator(
                             color: AppColors.espresso,
                             onRefresh: _onRefresh,
@@ -107,9 +132,9 @@ class _AdminVendorsScreenState extends ConsumerState<AdminVendorsScreen> {
                               AppSpacing.screenPadding,
                               BottomNavTokens.scrollBottomPadding,
                             ),
-                            itemCount: vendors.length,
+                            itemCount: filtered.length,
                             itemBuilder: (context, index) {
-                              return AdminVendorRow(vendor: vendors[index]);
+                              return AdminVendorRow(vendor: filtered[index]);
                             },
                           ),
                         );
@@ -118,6 +143,48 @@ class _AdminVendorsScreenState extends ConsumerState<AdminVendorsScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _VendorsSearchField extends StatelessWidget {
+  const _VendorsSearchField({
+    required this.controller,
+    required this.onChanged,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: AppColors.warmWhite,
+        borderRadius: AppRadii.pill,
+        border: Border.all(color: AppColors.creamDark, width: 1.5),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: Row(
+        children: [
+          const Icon(Icons.search_rounded, size: 20, color: AppColors.textMuted),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              onChanged: onChanged,
+              decoration: const InputDecoration(
+                hintText: 'Search by store name',
+                hintStyle: TextStyle(fontSize: 14, color: AppColors.textMuted),
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

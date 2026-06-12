@@ -1,3 +1,4 @@
+import 'package:placeify/features/admin/domain/enums/user_role.dart';
 import 'package:placeify/features/admin/domain/models/admin_audit_log_entry.dart';
 import 'package:placeify/features/admin/domain/models/admin_notification.dart';
 import 'package:placeify/features/admin/domain/models/admin_stats.dart';
@@ -7,7 +8,7 @@ import 'package:placeify/features/admin/domain/models/platform_user.dart';
 abstract interface class AdminRepository {
   Future<AdminStats> getStats();
 
-  Future<List<PlatformUser>> listUsers({String? query});
+  Future<List<PlatformUser>> listUsers({String? query, UserRole? role});
 
   Future<List<AdminAuditLogEntry>> getAuditLog({int limit = 50});
 
@@ -17,7 +18,7 @@ abstract interface class AdminRepository {
 
   Future<void> markAllNotificationsRead();
 
-  Future<void> suspendVendor(String userId);
+  Future<void> suspendVendor(String userId, {String? reason});
 
   Future<void> reinstateVendor(String userId);
 }

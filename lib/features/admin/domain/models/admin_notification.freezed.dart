@@ -19,6 +19,8 @@ mixin _$AdminNotification {
   String get body;
   DateTime get createdAt;
   bool get read;
+  AdminNotificationType get type;
+  String? get linkedVendorId;
 
   /// Create a copy of AdminNotification
   /// with the given fields replaced by the non-null parameter values.
@@ -41,17 +43,20 @@ mixin _$AdminNotification {
             (identical(other.body, body) || other.body == body) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
-            (identical(other.read, read) || other.read == read));
+            (identical(other.read, read) || other.read == read) &&
+            (identical(other.type, type) || other.type == type) &&
+            (identical(other.linkedVendorId, linkedVendorId) ||
+                other.linkedVendorId == linkedVendorId));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, title, body, createdAt, read);
+  int get hashCode => Object.hash(
+      runtimeType, id, title, body, createdAt, read, type, linkedVendorId);
 
   @override
   String toString() {
-    return 'AdminNotification(id: $id, title: $title, body: $body, createdAt: $createdAt, read: $read)';
+    return 'AdminNotification(id: $id, title: $title, body: $body, createdAt: $createdAt, read: $read, type: $type, linkedVendorId: $linkedVendorId)';
   }
 }
 
@@ -62,7 +67,13 @@ abstract mixin class $AdminNotificationCopyWith<$Res> {
       _$AdminNotificationCopyWithImpl;
   @useResult
   $Res call(
-      {String id, String title, String body, DateTime createdAt, bool read});
+      {String id,
+      String title,
+      String body,
+      DateTime createdAt,
+      bool read,
+      AdminNotificationType type,
+      String? linkedVendorId});
 }
 
 /// @nodoc
@@ -83,6 +94,8 @@ class _$AdminNotificationCopyWithImpl<$Res>
     Object? body = null,
     Object? createdAt = null,
     Object? read = null,
+    Object? type = null,
+    Object? linkedVendorId = freezed,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -105,6 +118,14 @@ class _$AdminNotificationCopyWithImpl<$Res>
           ? _self.read
           : read // ignore: cast_nullable_to_non_nullable
               as bool,
+      type: null == type
+          ? _self.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as AdminNotificationType,
+      linkedVendorId: freezed == linkedVendorId
+          ? _self.linkedVendorId
+          : linkedVendorId // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -203,15 +224,15 @@ extension AdminNotificationPatterns on AdminNotification {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
     TResult Function(String id, String title, String body, DateTime createdAt,
-            bool read)?
+            bool read, AdminNotificationType type, String? linkedVendorId)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _AdminNotification() when $default != null:
-        return $default(
-            _that.id, _that.title, _that.body, _that.createdAt, _that.read);
+        return $default(_that.id, _that.title, _that.body, _that.createdAt,
+            _that.read, _that.type, _that.linkedVendorId);
       case _:
         return orElse();
     }
@@ -232,15 +253,15 @@ extension AdminNotificationPatterns on AdminNotification {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(
-            String id, String title, String body, DateTime createdAt, bool read)
+    TResult Function(String id, String title, String body, DateTime createdAt,
+            bool read, AdminNotificationType type, String? linkedVendorId)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _AdminNotification():
-        return $default(
-            _that.id, _that.title, _that.body, _that.createdAt, _that.read);
+        return $default(_that.id, _that.title, _that.body, _that.createdAt,
+            _that.read, _that.type, _that.linkedVendorId);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -261,14 +282,14 @@ extension AdminNotificationPatterns on AdminNotification {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
     TResult? Function(String id, String title, String body, DateTime createdAt,
-            bool read)?
+            bool read, AdminNotificationType type, String? linkedVendorId)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _AdminNotification() when $default != null:
-        return $default(
-            _that.id, _that.title, _that.body, _that.createdAt, _that.read);
+        return $default(_that.id, _that.title, _that.body, _that.createdAt,
+            _that.read, _that.type, _that.linkedVendorId);
       case _:
         return null;
     }
@@ -283,7 +304,9 @@ class _AdminNotification implements AdminNotification {
       required this.title,
       required this.body,
       required this.createdAt,
-      this.read = false});
+      this.read = false,
+      this.type = AdminNotificationType.systemAlert,
+      this.linkedVendorId});
   factory _AdminNotification.fromJson(Map<String, dynamic> json) =>
       _$AdminNotificationFromJson(json);
 
@@ -298,6 +321,11 @@ class _AdminNotification implements AdminNotification {
   @override
   @JsonKey()
   final bool read;
+  @override
+  @JsonKey()
+  final AdminNotificationType type;
+  @override
+  final String? linkedVendorId;
 
   /// Create a copy of AdminNotification
   /// with the given fields replaced by the non-null parameter values.
@@ -324,17 +352,20 @@ class _AdminNotification implements AdminNotification {
             (identical(other.body, body) || other.body == body) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
-            (identical(other.read, read) || other.read == read));
+            (identical(other.read, read) || other.read == read) &&
+            (identical(other.type, type) || other.type == type) &&
+            (identical(other.linkedVendorId, linkedVendorId) ||
+                other.linkedVendorId == linkedVendorId));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, title, body, createdAt, read);
+  int get hashCode => Object.hash(
+      runtimeType, id, title, body, createdAt, read, type, linkedVendorId);
 
   @override
   String toString() {
-    return 'AdminNotification(id: $id, title: $title, body: $body, createdAt: $createdAt, read: $read)';
+    return 'AdminNotification(id: $id, title: $title, body: $body, createdAt: $createdAt, read: $read, type: $type, linkedVendorId: $linkedVendorId)';
   }
 }
 
@@ -347,7 +378,13 @@ abstract mixin class _$AdminNotificationCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String id, String title, String body, DateTime createdAt, bool read});
+      {String id,
+      String title,
+      String body,
+      DateTime createdAt,
+      bool read,
+      AdminNotificationType type,
+      String? linkedVendorId});
 }
 
 /// @nodoc
@@ -368,6 +405,8 @@ class __$AdminNotificationCopyWithImpl<$Res>
     Object? body = null,
     Object? createdAt = null,
     Object? read = null,
+    Object? type = null,
+    Object? linkedVendorId = freezed,
   }) {
     return _then(_AdminNotification(
       id: null == id
@@ -390,6 +429,14 @@ class __$AdminNotificationCopyWithImpl<$Res>
           ? _self.read
           : read // ignore: cast_nullable_to_non_nullable
               as bool,
+      type: null == type
+          ? _self.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as AdminNotificationType,
+      linkedVendorId: freezed == linkedVendorId
+          ? _self.linkedVendorId
+          : linkedVendorId // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }

@@ -65,10 +65,11 @@ class AdminVendorActions extends _$AdminVendorActions {
   Future<String?> suspend({
     required String userId,
     required String vendorId,
+    String? reason,
   }) async {
     final repo = await ref.read(adminRepositoryProvider.future);
     try {
-      await repo.suspendVendor(userId);
+      await repo.suspendVendor(userId, reason: reason);
       _invalidateAfterAction(vendorId);
       return null;
     } catch (_) {

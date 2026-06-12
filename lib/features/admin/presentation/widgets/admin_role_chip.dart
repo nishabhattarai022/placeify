@@ -31,8 +31,8 @@ class AdminRoleChip extends StatelessWidget {
           AppColors.sage,
         ),
       UserRole.admin => (
-          AppColors.espresso.withValues(alpha: 0.12),
-          AppColors.espresso,
+          AppColors.adminSlateBg,
+          AppColors.adminSlate,
         ),
     };
 

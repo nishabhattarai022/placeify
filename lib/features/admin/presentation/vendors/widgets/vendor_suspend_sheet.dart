@@ -8,6 +8,7 @@ import 'package:placeify/core/services/haptic_service.dart';
 import 'package:placeify/core/widgets/placeify_bottom_sheet.dart';
 import 'package:placeify/core/widgets/toast_overlay.dart';
 import 'package:placeify/features/admin/domain/constants/admin_strings.dart';
+import 'package:placeify/features/admin/domain/enums/decline_reason.dart';
 import 'package:placeify/features/admin/domain/models/vendor_application.dart';
 import 'package:placeify/features/admin/presentation/providers/admin_vendors_provider.dart';
 
@@ -53,19 +54,37 @@ class _VendorSuspendSheetBody extends StatefulWidget {
 
 class _VendorSuspendSheetBodyState extends State<_VendorSuspendSheetBody> {
   bool _isSubmitting = false;
+  DeclineReason? _selectedReason;
+  final _otherController = TextEditingController();
+
+  @override
+  void dispose() {
+    _otherController.dispose();
+    super.dispose();
+  }
+
+  bool get _canSubmit {
+    if (_selectedReason == null) return false;
+    if (_selectedReason == DeclineReason.other) {
+      return _otherController.text.trim().isNotEmpty;
+    }
+    return true;
+  }
 
   Future<void> _confirmSuspend() async {
-    if (_isSubmitting) return;
+    if (!_canSubmit || _isSubmitting) return;
 
     setState(() => _isSubmitting = true);
     HapticService.medium();
     Navigator.pop(widget.sheetContext);
 
+    final reason = _selectedReason!.formatNote(otherDetail: _otherController.text);
     final error = await widget.ref
         .read(adminVendorActionsProvider.notifier)
         .suspend(
           userId: widget.vendor.userId,
           vendorId: widget.vendor.vendorId,
+          reason: reason,
         );
 
     if (!widget.parentContext.mounted) return;
@@ -90,59 +109,85 @@ class _VendorSuspendSheetBodyState extends State<_VendorSuspendSheetBody> {
           subtitle:
               'This vendor will lose access to the vendor dashboard until reinstated.',
         ),
+        const SizedBox(height: AppSpacing.md),
+        Text(
+          AdminStrings.suspendReasonLabel,
+          style: GoogleFonts.dmSans(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: AppColors.cream,
+            borderRadius: AppRadii.md,
+            border: Border.all(color: AppColors.creamDark, width: 1.5),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<DeclineReason>(
+              isExpanded: true,
+              value: _selectedReason,
+              hint: Text(
+                AdminStrings.selectReason,
+                style: GoogleFonts.dmSans(
+                  fontSize: 14,
+                  color: AppColors.textMuted,
+                ),
+              ),
+              items: DeclineReason.values
+                  .map(
+                    (reason) => DropdownMenuItem(
+                      value: reason,
+                      child: Text(reason.label),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) => setState(() => _selectedReason = value),
+            ),
+          ),
+        ),
+        if (_selectedReason == DeclineReason.other) ...[
+          const SizedBox(height: 12),
+          TextField(
+            controller: _otherController,
+            onChanged: (_) => setState(() {}),
+            maxLines: 2,
+            decoration: InputDecoration(
+              hintText: AdminStrings.declineOtherHint,
+              filled: true,
+              fillColor: AppColors.cream,
+              border: OutlineInputBorder(
+                borderRadius: AppRadii.md,
+                borderSide: const BorderSide(color: AppColors.creamDark),
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: AppSpacing.xl),
-        Row(
-          children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: _isSubmitting
-                    ? null
-                    : () {
-                        HapticService.light();
-                        Navigator.pop(widget.sheetContext);
-                      },
-                child: Container(
-                  height: 48,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppColors.cream,
-                    borderRadius: AppRadii.pill,
-                    border: Border.all(color: AppColors.creamDark, width: 1.5),
-                  ),
-                  child: Text(
-                    'Cancel',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
+        SizedBox(
+          width: double.infinity,
+          child: GestureDetector(
+            onTap: _canSubmit && !_isSubmitting ? _confirmSuspend : null,
+            child: Container(
+              height: 48,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: _canSubmit ? AppColors.rust : AppColors.creamDark,
+                borderRadius: AppRadii.pill,
+              ),
+              child: Text(
+                _isSubmitting ? 'Suspending…' : AdminStrings.confirmSuspend,
+                style: GoogleFonts.dmSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: _canSubmit ? AppColors.warmWhite : AppColors.textMuted,
                 ),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: GestureDetector(
-                onTap: _isSubmitting ? null : _confirmSuspend,
-                child: Container(
-                  height: 48,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppColors.rust,
-                    borderRadius: AppRadii.pill,
-                  ),
-                  child: Text(
-                    _isSubmitting ? 'Suspending…' : 'Suspend',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.warmWhite,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ],
     );

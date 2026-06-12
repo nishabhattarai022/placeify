@@ -26,13 +26,16 @@ class _AdminApplicationRowState extends State<AdminApplicationRow> {
   @override
   Widget build(BuildContext context) {
     final application = widget.application;
+    final isNew = DateTime.now().difference(application.submittedAt).inHours < 24;
+    final applicant = application.registration.business.contactName;
+    final category = application.registration.category.category;
     final meta =
-        '${application.contactEmail} · ${Formatters.shortDate(application.submittedAt)}';
+        '$applicant · $category · ${Formatters.shortDate(application.submittedAt)}';
 
     return GestureDetector(
       onTap: () {
         HapticService.light();
-        context.push(AdminRoutes.applicationDetail(application.vendorId));
+        context.push(AdminRoutes.approvalDetail(application.vendorId));
       },
       onTapDown: (_) => setState(() => _translateX = 5),
       onTapUp: (_) => setState(() => _translateX = 0),
@@ -95,7 +98,24 @@ class _AdminApplicationRowState extends State<AdminApplicationRow> {
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            if (isNew) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.accentBg,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: const Text(
+                  'New',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.accent,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+            ],
             AdminStatusChip(status: application.status),
           ],
         ),

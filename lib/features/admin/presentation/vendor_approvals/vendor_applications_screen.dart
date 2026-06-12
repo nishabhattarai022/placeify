@@ -6,7 +6,9 @@ import 'package:placeify/core/constants/app_spacing.dart';
 import 'package:placeify/core/constants/app_typography.dart';
 import 'package:placeify/core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import 'package:placeify/core/widgets/shimmer_loader.dart';
+import 'package:placeify/features/admin/domain/constants/admin_strings.dart';
 import 'package:placeify/features/admin/domain/enums/vendor_application_list_filter.dart';
+import 'package:placeify/features/admin/presentation/providers/admin_stats_provider.dart';
 import 'package:placeify/features/admin/presentation/providers/vendor_applications_provider.dart';
 import 'package:placeify/features/admin/presentation/vendor_approvals/widgets/application_filter_chips.dart';
 import 'package:placeify/features/admin/presentation/widgets/admin_application_row.dart';
@@ -33,7 +35,7 @@ class _VendorApplicationsScreenState
 
   String _emptyMessage() {
     return switch (_filter) {
-      VendorApplicationListFilter.pending => 'No pending applications',
+      VendorApplicationListFilter.pending => AdminStrings.allCaughtUpPending,
       VendorApplicationListFilter.approved => 'No approved applications',
       VendorApplicationListFilter.declined => 'No declined applications',
     };
@@ -42,6 +44,8 @@ class _VendorApplicationsScreenState
   @override
   Widget build(BuildContext context) {
     final applicationsAsync = ref.watch(vendorApplicationsListProvider(_filter));
+    final statsAsync = ref.watch(adminStatsProvider);
+    final stats = statsAsync.value;
 
     applicationsAsync.whenData((_) {
       if (!_hasLoaded) {
@@ -62,12 +66,15 @@ class _VendorApplicationsScreenState
             const Padding(
               padding: EdgeInsets.fromLTRB(24, 14, 24, 4),
               child: Text(
-                'Applications',
+                AdminStrings.approvalsTitle,
                 style: AppTypography.sectionTitle,
               ),
             ),
             ApplicationFilterChips(
               selected: _filter,
+              pendingCount: stats?.pendingCount ?? 0,
+              approvedCount: stats?.approvedCount ?? 0,
+              declinedCount: stats?.declinedCount ?? 0,
               onSelected: (filter) {
                 if (filter == _filter) return;
                 setState(() => _filter = filter);

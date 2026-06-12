@@ -38,9 +38,9 @@ class MainShell extends StatelessWidget {
   }
 
   int _adminActiveIndex(String location) {
-    if (location.startsWith(AdminRoutes.applications)) return 1;
+    if (location.startsWith(AdminRoutes.approvals)) return 1;
     if (location.startsWith(AdminRoutes.vendors)) return 2;
-    if (location.startsWith(AdminRoutes.users)) return 3;
+    if (location == AdminRoutes.settings) return 3;
     if (location == AdminRoutes.dashboard ||
         location.startsWith(AdminRoutes.prefix)) {
       return 0;

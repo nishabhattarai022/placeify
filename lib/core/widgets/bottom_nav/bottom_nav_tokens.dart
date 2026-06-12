@@ -34,8 +34,8 @@ abstract final class BottomNavTokens {
 
   static const double scrollBottomPadding = 100;
 
-  // Admin pill — espresso/forest palette (distinct from vendor black pill).
-  static const Color adminPillColor = AppColors.espresso;
+  // Admin pill — navy slate palette (distinct from vendor forest green).
+  static const Color adminPillColor = AppColors.adminSlate;
   static const Color adminIconActive = AppColors.warmWhite;
   static const Color adminIconInactive = Color(0x99FEFCF8);
   static const Color adminLabelActive = Color(0xD1FEFCF8);

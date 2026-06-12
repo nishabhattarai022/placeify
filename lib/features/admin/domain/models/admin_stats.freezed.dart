@@ -14,10 +14,15 @@ T _$identity<T>(T value) => value;
 
 /// @nodoc
 mixin _$AdminStats {
+  int get totalVendors;
   int get pendingCount;
-  int get approvedCount;
-  int get suspendedCount;
   int get totalUsers;
+  double get platformGmv;
+  int get approvedCount;
+  int get declinedCount;
+  int get suspendedCount;
+  List<AdminAuditLogEntry> get recentActivity;
+  List<double> get signupSeries;
   List<VendorApplication> get recentApplications;
 
   /// Create a copy of AdminStats
@@ -35,14 +40,24 @@ mixin _$AdminStats {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is AdminStats &&
+            (identical(other.totalVendors, totalVendors) ||
+                other.totalVendors == totalVendors) &&
             (identical(other.pendingCount, pendingCount) ||
                 other.pendingCount == pendingCount) &&
-            (identical(other.approvedCount, approvedCount) ||
-                other.approvedCount == approvedCount) &&
-            (identical(other.suspendedCount, suspendedCount) ||
-                other.suspendedCount == suspendedCount) &&
             (identical(other.totalUsers, totalUsers) ||
                 other.totalUsers == totalUsers) &&
+            (identical(other.platformGmv, platformGmv) ||
+                other.platformGmv == platformGmv) &&
+            (identical(other.approvedCount, approvedCount) ||
+                other.approvedCount == approvedCount) &&
+            (identical(other.declinedCount, declinedCount) ||
+                other.declinedCount == declinedCount) &&
+            (identical(other.suspendedCount, suspendedCount) ||
+                other.suspendedCount == suspendedCount) &&
+            const DeepCollectionEquality()
+                .equals(other.recentActivity, recentActivity) &&
+            const DeepCollectionEquality()
+                .equals(other.signupSeries, signupSeries) &&
             const DeepCollectionEquality()
                 .equals(other.recentApplications, recentApplications));
   }
@@ -51,15 +66,20 @@ mixin _$AdminStats {
   @override
   int get hashCode => Object.hash(
       runtimeType,
+      totalVendors,
       pendingCount,
-      approvedCount,
-      suspendedCount,
       totalUsers,
+      platformGmv,
+      approvedCount,
+      declinedCount,
+      suspendedCount,
+      const DeepCollectionEquality().hash(recentActivity),
+      const DeepCollectionEquality().hash(signupSeries),
       const DeepCollectionEquality().hash(recentApplications));
 
   @override
   String toString() {
-    return 'AdminStats(pendingCount: $pendingCount, approvedCount: $approvedCount, suspendedCount: $suspendedCount, totalUsers: $totalUsers, recentApplications: $recentApplications)';
+    return 'AdminStats(totalVendors: $totalVendors, pendingCount: $pendingCount, totalUsers: $totalUsers, platformGmv: $platformGmv, approvedCount: $approvedCount, declinedCount: $declinedCount, suspendedCount: $suspendedCount, recentActivity: $recentActivity, signupSeries: $signupSeries, recentApplications: $recentApplications)';
   }
 }
 
@@ -70,10 +90,15 @@ abstract mixin class $AdminStatsCopyWith<$Res> {
       _$AdminStatsCopyWithImpl;
   @useResult
   $Res call(
-      {int pendingCount,
-      int approvedCount,
-      int suspendedCount,
+      {int totalVendors,
+      int pendingCount,
       int totalUsers,
+      double platformGmv,
+      int approvedCount,
+      int declinedCount,
+      int suspendedCount,
+      List<AdminAuditLogEntry> recentActivity,
+      List<double> signupSeries,
       List<VendorApplication> recentApplications});
 }
 
@@ -89,29 +114,54 @@ class _$AdminStatsCopyWithImpl<$Res> implements $AdminStatsCopyWith<$Res> {
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? totalVendors = null,
     Object? pendingCount = null,
-    Object? approvedCount = null,
-    Object? suspendedCount = null,
     Object? totalUsers = null,
+    Object? platformGmv = null,
+    Object? approvedCount = null,
+    Object? declinedCount = null,
+    Object? suspendedCount = null,
+    Object? recentActivity = null,
+    Object? signupSeries = null,
     Object? recentApplications = null,
   }) {
     return _then(_self.copyWith(
+      totalVendors: null == totalVendors
+          ? _self.totalVendors
+          : totalVendors // ignore: cast_nullable_to_non_nullable
+              as int,
       pendingCount: null == pendingCount
           ? _self.pendingCount
           : pendingCount // ignore: cast_nullable_to_non_nullable
-              as int,
-      approvedCount: null == approvedCount
-          ? _self.approvedCount
-          : approvedCount // ignore: cast_nullable_to_non_nullable
-              as int,
-      suspendedCount: null == suspendedCount
-          ? _self.suspendedCount
-          : suspendedCount // ignore: cast_nullable_to_non_nullable
               as int,
       totalUsers: null == totalUsers
           ? _self.totalUsers
           : totalUsers // ignore: cast_nullable_to_non_nullable
               as int,
+      platformGmv: null == platformGmv
+          ? _self.platformGmv
+          : platformGmv // ignore: cast_nullable_to_non_nullable
+              as double,
+      approvedCount: null == approvedCount
+          ? _self.approvedCount
+          : approvedCount // ignore: cast_nullable_to_non_nullable
+              as int,
+      declinedCount: null == declinedCount
+          ? _self.declinedCount
+          : declinedCount // ignore: cast_nullable_to_non_nullable
+              as int,
+      suspendedCount: null == suspendedCount
+          ? _self.suspendedCount
+          : suspendedCount // ignore: cast_nullable_to_non_nullable
+              as int,
+      recentActivity: null == recentActivity
+          ? _self.recentActivity
+          : recentActivity // ignore: cast_nullable_to_non_nullable
+              as List<AdminAuditLogEntry>,
+      signupSeries: null == signupSeries
+          ? _self.signupSeries
+          : signupSeries // ignore: cast_nullable_to_non_nullable
+              as List<double>,
       recentApplications: null == recentApplications
           ? _self.recentApplications
           : recentApplications // ignore: cast_nullable_to_non_nullable
@@ -213,16 +263,34 @@ extension AdminStatsPatterns on AdminStats {
 
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
-    TResult Function(int pendingCount, int approvedCount, int suspendedCount,
-            int totalUsers, List<VendorApplication> recentApplications)?
+    TResult Function(
+            int totalVendors,
+            int pendingCount,
+            int totalUsers,
+            double platformGmv,
+            int approvedCount,
+            int declinedCount,
+            int suspendedCount,
+            List<AdminAuditLogEntry> recentActivity,
+            List<double> signupSeries,
+            List<VendorApplication> recentApplications)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _AdminStats() when $default != null:
-        return $default(_that.pendingCount, _that.approvedCount,
-            _that.suspendedCount, _that.totalUsers, _that.recentApplications);
+        return $default(
+            _that.totalVendors,
+            _that.pendingCount,
+            _that.totalUsers,
+            _that.platformGmv,
+            _that.approvedCount,
+            _that.declinedCount,
+            _that.suspendedCount,
+            _that.recentActivity,
+            _that.signupSeries,
+            _that.recentApplications);
       case _:
         return orElse();
     }
@@ -243,15 +311,33 @@ extension AdminStatsPatterns on AdminStats {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(int pendingCount, int approvedCount, int suspendedCount,
-            int totalUsers, List<VendorApplication> recentApplications)
+    TResult Function(
+            int totalVendors,
+            int pendingCount,
+            int totalUsers,
+            double platformGmv,
+            int approvedCount,
+            int declinedCount,
+            int suspendedCount,
+            List<AdminAuditLogEntry> recentActivity,
+            List<double> signupSeries,
+            List<VendorApplication> recentApplications)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _AdminStats():
-        return $default(_that.pendingCount, _that.approvedCount,
-            _that.suspendedCount, _that.totalUsers, _that.recentApplications);
+        return $default(
+            _that.totalVendors,
+            _that.pendingCount,
+            _that.totalUsers,
+            _that.platformGmv,
+            _that.approvedCount,
+            _that.declinedCount,
+            _that.suspendedCount,
+            _that.recentActivity,
+            _that.signupSeries,
+            _that.recentApplications);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -271,15 +357,33 @@ extension AdminStatsPatterns on AdminStats {
 
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(int pendingCount, int approvedCount, int suspendedCount,
-            int totalUsers, List<VendorApplication> recentApplications)?
+    TResult? Function(
+            int totalVendors,
+            int pendingCount,
+            int totalUsers,
+            double platformGmv,
+            int approvedCount,
+            int declinedCount,
+            int suspendedCount,
+            List<AdminAuditLogEntry> recentActivity,
+            List<double> signupSeries,
+            List<VendorApplication> recentApplications)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _AdminStats() when $default != null:
-        return $default(_that.pendingCount, _that.approvedCount,
-            _that.suspendedCount, _that.totalUsers, _that.recentApplications);
+        return $default(
+            _that.totalVendors,
+            _that.pendingCount,
+            _that.totalUsers,
+            _that.platformGmv,
+            _that.approvedCount,
+            _that.declinedCount,
+            _that.suspendedCount,
+            _that.recentActivity,
+            _that.signupSeries,
+            _that.recentApplications);
       case _:
         return null;
     }
@@ -290,24 +394,56 @@ extension AdminStatsPatterns on AdminStats {
 @JsonSerializable()
 class _AdminStats implements AdminStats {
   const _AdminStats(
-      {required this.pendingCount,
-      required this.approvedCount,
-      required this.suspendedCount,
+      {required this.totalVendors,
+      required this.pendingCount,
       required this.totalUsers,
+      required this.platformGmv,
+      required this.approvedCount,
+      required this.declinedCount,
+      required this.suspendedCount,
+      final List<AdminAuditLogEntry> recentActivity =
+          const <AdminAuditLogEntry>[],
+      final List<double> signupSeries = const <double>[],
       final List<VendorApplication> recentApplications =
           const <VendorApplication>[]})
-      : _recentApplications = recentApplications;
+      : _recentActivity = recentActivity,
+        _signupSeries = signupSeries,
+        _recentApplications = recentApplications;
   factory _AdminStats.fromJson(Map<String, dynamic> json) =>
       _$AdminStatsFromJson(json);
 
   @override
+  final int totalVendors;
+  @override
   final int pendingCount;
+  @override
+  final int totalUsers;
+  @override
+  final double platformGmv;
   @override
   final int approvedCount;
   @override
-  final int suspendedCount;
+  final int declinedCount;
   @override
-  final int totalUsers;
+  final int suspendedCount;
+  final List<AdminAuditLogEntry> _recentActivity;
+  @override
+  @JsonKey()
+  List<AdminAuditLogEntry> get recentActivity {
+    if (_recentActivity is EqualUnmodifiableListView) return _recentActivity;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_recentActivity);
+  }
+
+  final List<double> _signupSeries;
+  @override
+  @JsonKey()
+  List<double> get signupSeries {
+    if (_signupSeries is EqualUnmodifiableListView) return _signupSeries;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_signupSeries);
+  }
+
   final List<VendorApplication> _recentApplications;
   @override
   @JsonKey()
@@ -338,14 +474,24 @@ class _AdminStats implements AdminStats {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _AdminStats &&
+            (identical(other.totalVendors, totalVendors) ||
+                other.totalVendors == totalVendors) &&
             (identical(other.pendingCount, pendingCount) ||
                 other.pendingCount == pendingCount) &&
-            (identical(other.approvedCount, approvedCount) ||
-                other.approvedCount == approvedCount) &&
-            (identical(other.suspendedCount, suspendedCount) ||
-                other.suspendedCount == suspendedCount) &&
             (identical(other.totalUsers, totalUsers) ||
                 other.totalUsers == totalUsers) &&
+            (identical(other.platformGmv, platformGmv) ||
+                other.platformGmv == platformGmv) &&
+            (identical(other.approvedCount, approvedCount) ||
+                other.approvedCount == approvedCount) &&
+            (identical(other.declinedCount, declinedCount) ||
+                other.declinedCount == declinedCount) &&
+            (identical(other.suspendedCount, suspendedCount) ||
+                other.suspendedCount == suspendedCount) &&
+            const DeepCollectionEquality()
+                .equals(other._recentActivity, _recentActivity) &&
+            const DeepCollectionEquality()
+                .equals(other._signupSeries, _signupSeries) &&
             const DeepCollectionEquality()
                 .equals(other._recentApplications, _recentApplications));
   }
@@ -354,15 +500,20 @@ class _AdminStats implements AdminStats {
   @override
   int get hashCode => Object.hash(
       runtimeType,
+      totalVendors,
       pendingCount,
-      approvedCount,
-      suspendedCount,
       totalUsers,
+      platformGmv,
+      approvedCount,
+      declinedCount,
+      suspendedCount,
+      const DeepCollectionEquality().hash(_recentActivity),
+      const DeepCollectionEquality().hash(_signupSeries),
       const DeepCollectionEquality().hash(_recentApplications));
 
   @override
   String toString() {
-    return 'AdminStats(pendingCount: $pendingCount, approvedCount: $approvedCount, suspendedCount: $suspendedCount, totalUsers: $totalUsers, recentApplications: $recentApplications)';
+    return 'AdminStats(totalVendors: $totalVendors, pendingCount: $pendingCount, totalUsers: $totalUsers, platformGmv: $platformGmv, approvedCount: $approvedCount, declinedCount: $declinedCount, suspendedCount: $suspendedCount, recentActivity: $recentActivity, signupSeries: $signupSeries, recentApplications: $recentApplications)';
   }
 }
 
@@ -375,10 +526,15 @@ abstract mixin class _$AdminStatsCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {int pendingCount,
-      int approvedCount,
-      int suspendedCount,
+      {int totalVendors,
+      int pendingCount,
       int totalUsers,
+      double platformGmv,
+      int approvedCount,
+      int declinedCount,
+      int suspendedCount,
+      List<AdminAuditLogEntry> recentActivity,
+      List<double> signupSeries,
       List<VendorApplication> recentApplications});
 }
 
@@ -394,29 +550,54 @@ class __$AdminStatsCopyWithImpl<$Res> implements _$AdminStatsCopyWith<$Res> {
   @override
   @pragma('vm:prefer-inline')
   $Res call({
+    Object? totalVendors = null,
     Object? pendingCount = null,
-    Object? approvedCount = null,
-    Object? suspendedCount = null,
     Object? totalUsers = null,
+    Object? platformGmv = null,
+    Object? approvedCount = null,
+    Object? declinedCount = null,
+    Object? suspendedCount = null,
+    Object? recentActivity = null,
+    Object? signupSeries = null,
     Object? recentApplications = null,
   }) {
     return _then(_AdminStats(
+      totalVendors: null == totalVendors
+          ? _self.totalVendors
+          : totalVendors // ignore: cast_nullable_to_non_nullable
+              as int,
       pendingCount: null == pendingCount
           ? _self.pendingCount
           : pendingCount // ignore: cast_nullable_to_non_nullable
-              as int,
-      approvedCount: null == approvedCount
-          ? _self.approvedCount
-          : approvedCount // ignore: cast_nullable_to_non_nullable
-              as int,
-      suspendedCount: null == suspendedCount
-          ? _self.suspendedCount
-          : suspendedCount // ignore: cast_nullable_to_non_nullable
               as int,
       totalUsers: null == totalUsers
           ? _self.totalUsers
           : totalUsers // ignore: cast_nullable_to_non_nullable
               as int,
+      platformGmv: null == platformGmv
+          ? _self.platformGmv
+          : platformGmv // ignore: cast_nullable_to_non_nullable
+              as double,
+      approvedCount: null == approvedCount
+          ? _self.approvedCount
+          : approvedCount // ignore: cast_nullable_to_non_nullable
+              as int,
+      declinedCount: null == declinedCount
+          ? _self.declinedCount
+          : declinedCount // ignore: cast_nullable_to_non_nullable
+              as int,
+      suspendedCount: null == suspendedCount
+          ? _self.suspendedCount
+          : suspendedCount // ignore: cast_nullable_to_non_nullable
+              as int,
+      recentActivity: null == recentActivity
+          ? _self._recentActivity
+          : recentActivity // ignore: cast_nullable_to_non_nullable
+              as List<AdminAuditLogEntry>,
+      signupSeries: null == signupSeries
+          ? _self._signupSeries
+          : signupSeries // ignore: cast_nullable_to_non_nullable
+              as List<double>,
       recentApplications: null == recentApplications
           ? _self._recentApplications
           : recentApplications // ignore: cast_nullable_to_non_nullable

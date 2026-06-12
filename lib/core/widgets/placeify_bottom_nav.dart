@@ -18,7 +18,7 @@ class PlaceifyBottomNav extends StatelessWidget {
 
   /// Consumer: 0 home, 1 browse, 2 bookmarks, 3 profile.
   /// Vendor: 0 dashboard, 1 orders, 2 products, 3 payments, 4 profile.
-  /// Admin: 0 overview, 1 applications, 2 vendors, 3 users.
+  /// Admin: 0 dashboard, 1 approvals, 2 vendors, 3 settings.
   final int activeIndex;
   final PlaceifyBottomNavMode mode;
 

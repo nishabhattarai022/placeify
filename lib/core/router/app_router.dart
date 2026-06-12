@@ -7,6 +7,7 @@ import 'package:placeify/features/admin/presentation/notifications/admin_notific
 import 'package:placeify/features/admin/presentation/settings/admin_audit_log_screen.dart';
 import 'package:placeify/features/admin/presentation/settings/admin_settings_screen.dart';
 import 'package:placeify/features/admin/presentation/shell/admin_shell.dart';
+import 'package:placeify/features/admin/presentation/users/admin_user_detail_screen.dart';
 import 'package:placeify/features/admin/presentation/users/admin_users_screen.dart';
 import 'package:placeify/features/admin/presentation/vendor_approvals/vendor_application_detail_screen.dart';
 import 'package:placeify/features/admin/presentation/vendor_approvals/vendor_applications_screen.dart';
@@ -76,8 +77,8 @@ final adminApplicationsNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'adminApplications');
 final adminVendorsNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'adminVendors');
-final adminUsersNavigatorKey =
-    GlobalKey<NavigatorState>(debugLabel: 'adminUsers');
+final adminSettingsNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'adminSettings');
 
 @Riverpod(keepAlive: true)
 GoRouter appRouter(Ref ref) {
@@ -358,20 +359,21 @@ List<RouteBase> get _appRoutes => [
               navigatorKey: adminApplicationsNavigatorKey,
               routes: [
                 GoRoute(
-                  path: AdminRoutes.applications,
-                  name: 'adminApplications',
+                  path: AdminRoutes.approvals,
+                  name: 'adminApprovals',
                   pageBuilder: (context, state) => _adminTabPage(
                     state: state,
                     child: const VendorApplicationsScreen(),
                   ),
                   routes: [
                     GoRoute(
-                      path: ':vendorId',
+                      path: ':applicationId',
                       name: 'adminApplicationDetail',
                       pageBuilder: (context, state) => _slidePage(
                         key: ValueKey<String>(state.uri.toString()),
                         child: VendorApplicationDetailScreen(
-                          vendorId: state.pathParameters['vendorId']!,
+                          applicationId:
+                              state.pathParameters['applicationId']!,
                         ),
                       ),
                     ),
@@ -405,17 +407,37 @@ List<RouteBase> get _appRoutes => [
               ],
             ),
             StatefulShellBranch(
-              navigatorKey: adminUsersNavigatorKey,
+              navigatorKey: adminSettingsNavigatorKey,
               routes: [
                 GoRoute(
-                  path: AdminRoutes.users,
-                  name: 'adminUsers',
+                  path: AdminRoutes.settings,
+                  name: 'adminSettings',
                   pageBuilder: (context, state) => _adminTabPage(
                     state: state,
-                    child: const AdminUsersScreen(),
+                    child: const AdminSettingsScreen(),
                   ),
                 ),
               ],
+            ),
+          ],
+        ),
+        GoRoute(
+          path: AdminRoutes.users,
+          name: 'adminUsers',
+          pageBuilder: (context, state) => _slidePage(
+            key: ValueKey<String>(state.uri.toString()),
+            child: const AdminUsersScreen(),
+          ),
+          routes: [
+            GoRoute(
+              path: ':userId',
+              name: 'adminUserDetail',
+              pageBuilder: (context, state) => _slidePage(
+                key: ValueKey<String>(state.uri.toString()),
+                child: AdminUserDetailScreen(
+                  userId: state.pathParameters['userId']!,
+                ),
+              ),
             ),
           ],
         ),
@@ -425,14 +447,6 @@ List<RouteBase> get _appRoutes => [
           pageBuilder: (context, state) => _slidePage(
             key: ValueKey<String>(state.uri.toString()),
             child: const AdminNotificationsScreen(),
-          ),
-        ),
-        GoRoute(
-          path: AdminRoutes.settings,
-          name: 'adminSettings',
-          pageBuilder: (context, state) => _slidePage(
-            key: ValueKey<String>(state.uri.toString()),
-            child: const AdminSettingsScreen(),
           ),
         ),
         GoRoute(

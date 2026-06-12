@@ -4,13 +4,17 @@ import 'package:go_router/go_router.dart';
 import 'package:placeify/core/constants/app_colors.dart';
 import 'package:placeify/core/constants/app_radii.dart';
 import 'package:placeify/core/constants/app_spacing.dart';
+import 'package:placeify/core/constants/app_typography.dart';
 import 'package:placeify/core/services/haptic_service.dart';
 import 'package:placeify/core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import 'package:placeify/core/widgets/toast_overlay.dart';
 import 'package:placeify/features/admin/domain/constants/admin_routes.dart';
 import 'package:placeify/features/admin/domain/constants/admin_strings.dart';
+import 'package:placeify/features/admin/presentation/providers/admin_settings_prefs_provider.dart';
+import 'package:placeify/features/admin/domain/enums/user_role.dart';
+import 'package:placeify/features/admin/presentation/widgets/admin_role_chip.dart';
 import 'package:placeify/features/auth/presentation/providers/auth_provider.dart';
-import 'package:placeify/features/profile/presentation/widgets/profile_sub_hero.dart';
+import 'package:placeify/features/profile/presentation/widgets/shared/profile_toggle_row.dart';
 
 class AdminSettingsScreen extends ConsumerWidget {
   const AdminSettingsScreen({super.key});
@@ -18,61 +22,107 @@ class AdminSettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider).value;
+    final prefs = ref.watch(adminSettingsPrefsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.cream,
-      body: Column(
-        children: [
-          const ProfileSubHero(title: AdminStrings.settingsTitle),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.screenPadding,
-                20,
-                AppSpacing.screenPadding,
-                BottomNavTokens.scrollBottomPadding,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(24, 14, 24, 4),
+              child: Text(
+                AdminStrings.settingsTitle,
+                style: AppTypography.sectionTitle,
               ),
-              children: [
-                const Text(
-                  AdminStrings.accountSection,
-                  style: TextStyle(
-                    fontFamily: 'Fraunces',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.espresso,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _AdminProfileCard(
-                  name: user?.fullName ?? 'Admin',
-                  email: user?.email ?? '',
-                ),
-                const SizedBox(height: 24),
-                _AdminSettingsTile(
-                  icon: Icons.history_outlined,
-                  iconBackground: AppColors.espresso.withValues(alpha: 0.08),
-                  iconColor: AppColors.espresso,
-                  title: AdminStrings.auditLog,
-                  subtitle: AdminStrings.auditLogSubtitle,
-                  onTap: () {
-                    HapticService.light();
-                    context.push(AdminRoutes.auditLog);
-                  },
-                ),
-                const SizedBox(height: 8),
-                _AdminSettingsTile(
-                  icon: Icons.logout_outlined,
-                  iconBackground: AppColors.rust.withValues(alpha: 0.1),
-                  iconColor: AppColors.rust,
-                  title: AdminStrings.signOut,
-                  subtitle: AdminStrings.signOutSubtitle,
-                  isDanger: true,
-                  onTap: () => _signOut(context, ref),
-                ),
-              ],
             ),
-          ),
-        ],
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.screenPadding,
+                  12,
+                  AppSpacing.screenPadding,
+                  BottomNavTokens.scrollBottomPadding,
+                ),
+                children: [
+                  _AdminProfileCard(
+                    name: user?.fullName ?? 'Admin',
+                    email: user?.email ?? '',
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    AdminStrings.notificationPrefs,
+                    style: TextStyle(
+                      fontFamily: 'Fraunces',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.espresso,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    AdminStrings.notificationPrefsSubtitle,
+                    style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+                  ),
+                  const SizedBox(height: 12),
+                  ProfileToggleRow(
+                    title: AdminStrings.newApplicationAlerts,
+                    subtitle: 'Notify when vendors submit applications',
+                    value: prefs.newApplicationAlerts,
+                    onChanged: (value) => ref
+                        .read(adminSettingsPrefsProvider.notifier)
+                        .setNewApplicationAlerts(value),
+                  ),
+                  ProfileToggleRow(
+                    title: AdminStrings.systemAlerts,
+                    subtitle: 'Platform maintenance and policy updates',
+                    value: prefs.systemAlerts,
+                    onChanged: (value) => ref
+                        .read(adminSettingsPrefsProvider.notifier)
+                        .setSystemAlerts(value),
+                  ),
+                  const SizedBox(height: 24),
+                  _AdminSettingsTile(
+                    icon: Icons.people_outline,
+                    title: AdminStrings.usersTitle,
+                    subtitle: 'View all platform users',
+                    onTap: () {
+                      HapticService.light();
+                      context.push(AdminRoutes.users);
+                    },
+                  ),
+                  _AdminSettingsTile(
+                    icon: Icons.notifications_outlined,
+                    title: AdminStrings.notificationsTitle,
+                    subtitle: 'Admin notification feed',
+                    onTap: () {
+                      HapticService.light();
+                      context.push(AdminRoutes.notifications);
+                    },
+                  ),
+                  _AdminSettingsTile(
+                    icon: Icons.history_outlined,
+                    title: AdminStrings.auditLog,
+                    subtitle: AdminStrings.auditLogSubtitle,
+                    onTap: () {
+                      HapticService.light();
+                      context.push(AdminRoutes.auditLog);
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  _AdminSettingsTile(
+                    icon: Icons.logout_outlined,
+                    title: AdminStrings.signOut,
+                    subtitle: AdminStrings.signOutSubtitle,
+                    isDanger: true,
+                    onTap: () => _signOut(context, ref),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -108,13 +158,19 @@ class _AdminProfileCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            AdminStrings.adminProfile,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textMuted,
-            ),
+          Row(
+            children: [
+              Text(
+                AdminStrings.adminProfile,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textMuted,
+                ),
+              ),
+              const Spacer(),
+              const AdminRoleChip(role: UserRole.admin),
+            ],
           ),
           const SizedBox(height: 8),
           Text(
@@ -142,8 +198,6 @@ class _AdminProfileCard extends StatelessWidget {
 class _AdminSettingsTile extends StatelessWidget {
   const _AdminSettingsTile({
     required this.icon,
-    required this.iconBackground,
-    required this.iconColor,
     required this.title,
     required this.subtitle,
     required this.onTap,
@@ -151,8 +205,6 @@ class _AdminSettingsTile extends StatelessWidget {
   });
 
   final IconData icon;
-  final Color iconBackground;
-  final Color iconColor;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
@@ -161,6 +213,7 @@ class _AdminSettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final titleColor = isDanger ? AppColors.rust : AppColors.espresso;
+    final iconColor = isDanger ? AppColors.rust : AppColors.adminSlate;
 
     return Material(
       color: Colors.transparent,
@@ -168,19 +221,10 @@ class _AdminSettingsTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: AppRadii.md,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 10),
           child: Row(
             children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: iconBackground,
-                  borderRadius: AppRadii.sm,
-                ),
-                alignment: Alignment.center,
-                child: Icon(icon, size: 22, color: iconColor),
-              ),
+              Icon(icon, size: 22, color: iconColor),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -194,7 +238,6 @@ class _AdminSettingsTile extends StatelessWidget {
                         color: titleColor,
                       ),
                     ),
-                    const SizedBox(height: 1),
                     Text(
                       subtitle,
                       style: const TextStyle(
@@ -205,19 +248,10 @@ class _AdminSettingsTile extends StatelessWidget {
                   ],
                 ),
               ),
-              Container(
-                width: 28,
-                height: 28,
-                decoration: const BoxDecoration(
-                  color: AppColors.creamDark,
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Icon(
-                  Icons.chevron_right,
-                  size: 16,
-                  color: isDanger ? AppColors.rust : AppColors.espresso,
-                ),
+              Icon(
+                Icons.chevron_right,
+                size: 18,
+                color: isDanger ? AppColors.rust : AppColors.textMuted,
               ),
             ],
           ),

@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:placeify/features/admin/data/config/admin_seed_data.dart';
 import 'package:placeify/features/admin/domain/enums/audit_action.dart';
+import 'package:placeify/features/admin/domain/enums/user_role.dart';
+import 'package:placeify/features/admin/domain/enums/vendor_application_list_filter.dart';
 import 'package:placeify/features/admin/domain/models/admin_audit_log_entry.dart';
 import 'package:placeify/features/admin/domain/models/admin_notification.dart';
 import 'package:placeify/features/admin/domain/models/admin_stats.dart';
@@ -26,30 +28,58 @@ class MockAdminRepository implements AdminRepository {
 
   static const _auditLogKey = 'placeify_admin_audit_log';
 
+  static const _mockPlatformGmv = 2_450_000.0;
+
   @override
   Future<AdminStats> getStats() async {
     await AdminSeedData.ensureSeeded(_prefs);
 
     final users = await _authRepository.getAllUsers();
     final applications = await _vendorApplicationRepository.listApplications();
+    final declined = await _vendorApplicationRepository.listApplications(
+      filter: VendorApplicationListFilter.declined,
+    );
+    final auditLog = _loadAuditLog()
+      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+    final approvedCount =
+        users.where((u) => u.vendorStatus == VendorStatus.approved).length;
 
     return AdminStats(
-      pendingCount: users
-          .where((u) => u.vendorStatus == VendorStatus.pending)
-          .length,
-      approvedCount: users
-          .where((u) => u.vendorStatus == VendorStatus.approved)
-          .length,
-      suspendedCount: users
-          .where((u) => u.vendorStatus == VendorStatus.suspended)
-          .length,
+      totalVendors: approvedCount,
+      pendingCount:
+          users.where((u) => u.vendorStatus == VendorStatus.pending).length,
       totalUsers: users.length,
+      platformGmv: _mockPlatformGmv,
+      approvedCount: approvedCount,
+      declinedCount: declined.length,
+      suspendedCount:
+          users.where((u) => u.vendorStatus == VendorStatus.suspended).length,
+      recentActivity: auditLog.take(10).toList(),
+      signupSeries: _signupSeriesFor(users),
       recentApplications: applications.take(5).toList(),
     );
   }
 
+  List<double> _signupSeriesFor(List<AppUser> users) {
+    final now = DateTime.now();
+    final counts = List<int>.filled(7, 0);
+
+    for (final user in users) {
+      final created = AdminSeedData.createdAtFor(user.id);
+      final dayDiff = now.difference(created).inDays;
+      if (dayDiff >= 0 && dayDiff < 7) {
+        counts[6 - dayDiff]++;
+      }
+    }
+
+    final max = counts.reduce((a, b) => a > b ? a : b);
+    if (max == 0) return List<double>.filled(7, 0.15);
+    return counts.map((c) => c / max).toList();
+  }
+
   @override
-  Future<List<PlatformUser>> listUsers({String? query}) async {
+  Future<List<PlatformUser>> listUsers({String? query, UserRole? role}) async {
     await AdminSeedData.ensureSeeded(_prefs);
 
     final users = await _authRepository.getAllUsers();
@@ -57,6 +87,10 @@ class MockAdminRepository implements AdminRepository {
 
     var platformUsers = users.map(_toPlatformUser).toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+    if (role != null) {
+      platformUsers = platformUsers.where((user) => user.role == role).toList();
+    }
 
     if (normalizedQuery != null && normalizedQuery.isNotEmpty) {
       platformUsers = platformUsers
@@ -103,7 +137,7 @@ class MockAdminRepository implements AdminRepository {
   }
 
   @override
-  Future<void> suspendVendor(String userId) async {
+  Future<void> suspendVendor(String userId, {String? reason}) async {
     final user = await _findUser(userId);
     if (user?.vendorId == null) return;
 
@@ -116,6 +150,7 @@ class MockAdminRepository implements AdminRepository {
     await _appendAuditLog(
       targetUserId: userId,
       action: const AdminAuditAction.vendor(action: AuditAction.suspended),
+      note: reason,
     );
   }
 

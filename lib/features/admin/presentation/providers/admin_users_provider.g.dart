@@ -16,7 +16,11 @@ final class AdminUsersListProvider
     extends $AsyncNotifierProvider<AdminUsersList, List<PlatformUser>> {
   AdminUsersListProvider._(
       {required AdminUsersListFamily super.from,
-      required String super.argument})
+      required (
+        String,
+        UserRole?,
+      )
+          super.argument})
       : super(
           retry: null,
           name: r'adminUsersListProvider',
@@ -32,7 +36,7 @@ final class AdminUsersListProvider
   String toString() {
     return r'adminUsersListProvider'
         ''
-        '($argument)';
+        '$argument';
   }
 
   @$internal
@@ -50,12 +54,19 @@ final class AdminUsersListProvider
   }
 }
 
-String _$adminUsersListHash() => r'12ad7683f25f83a773916f97c662018e2d8c99a2';
+String _$adminUsersListHash() => r'cf13671507625368845c04086171e47aa3631530';
 
 final class AdminUsersListFamily extends $Family
     with
-        $ClassFamilyOverride<AdminUsersList, AsyncValue<List<PlatformUser>>,
-            List<PlatformUser>, FutureOr<List<PlatformUser>>, String> {
+        $ClassFamilyOverride<
+            AdminUsersList,
+            AsyncValue<List<PlatformUser>>,
+            List<PlatformUser>,
+            FutureOr<List<PlatformUser>>,
+            (
+              String,
+              UserRole?,
+            )> {
   AdminUsersListFamily._()
       : super(
           retry: null,
@@ -67,19 +78,28 @@ final class AdminUsersListFamily extends $Family
 
   AdminUsersListProvider call(
     String query,
+    UserRole? role,
   ) =>
-      AdminUsersListProvider._(argument: query, from: this);
+      AdminUsersListProvider._(argument: (
+        query,
+        role,
+      ), from: this);
 
   @override
   String toString() => r'adminUsersListProvider';
 }
 
 abstract class _$AdminUsersList extends $AsyncNotifier<List<PlatformUser>> {
-  late final _$args = ref.$arg as String;
-  String get query => _$args;
+  late final _$args = ref.$arg as (
+    String,
+    UserRole?,
+  );
+  String get query => _$args.$1;
+  UserRole? get role => _$args.$2;
 
   FutureOr<List<PlatformUser>> build(
     String query,
+    UserRole? role,
   );
   @$mustCallSuper
   @override
@@ -94,7 +114,83 @@ abstract class _$AdminUsersList extends $AsyncNotifier<List<PlatformUser>> {
     element.handleCreate(
         ref,
         () => build(
-              _$args,
+              _$args.$1,
+              _$args.$2,
             ));
   }
+}
+
+@ProviderFor(adminUserDetail)
+final adminUserDetailProvider = AdminUserDetailFamily._();
+
+final class AdminUserDetailProvider extends $FunctionalProvider<
+        AsyncValue<PlatformUser?>, PlatformUser?, FutureOr<PlatformUser?>>
+    with $FutureModifier<PlatformUser?>, $FutureProvider<PlatformUser?> {
+  AdminUserDetailProvider._(
+      {required AdminUserDetailFamily super.from,
+      required String super.argument})
+      : super(
+          retry: null,
+          name: r'adminUserDetailProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$adminUserDetailHash();
+
+  @override
+  String toString() {
+    return r'adminUserDetailProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<PlatformUser?> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<PlatformUser?> create(Ref ref) {
+    final argument = this.argument as String;
+    return adminUserDetail(
+      ref,
+      argument,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AdminUserDetailProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$adminUserDetailHash() => r'50000c693bdfe2d6e9c4659063c38563d805d7b4';
+
+final class AdminUserDetailFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<PlatformUser?>, String> {
+  AdminUserDetailFamily._()
+      : super(
+          retry: null,
+          name: r'adminUserDetailProvider',
+          dependencies: null,
+          $allTransitiveDependencies: null,
+          isAutoDispose: true,
+        );
+
+  AdminUserDetailProvider call(
+    String userId,
+  ) =>
+      AdminUserDetailProvider._(argument: userId, from: this);
+
+  @override
+  String toString() => r'adminUserDetailProvider';
 }

@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:placeify/features/admin/domain/models/admin_audit_log_entry.dart';
 import 'package:placeify/features/admin/domain/models/vendor_application.dart';
 
 part 'admin_stats.freezed.dart';
@@ -8,10 +9,15 @@ part 'admin_stats.g.dart';
 @freezed
 abstract class AdminStats with _$AdminStats {
   const factory AdminStats({
+    required int totalVendors,
     required int pendingCount,
-    required int approvedCount,
-    required int suspendedCount,
     required int totalUsers,
+    required double platformGmv,
+    required int approvedCount,
+    required int declinedCount,
+    required int suspendedCount,
+    @Default(<AdminAuditLogEntry>[]) List<AdminAuditLogEntry> recentActivity,
+    @Default(<double>[]) List<double> signupSeries,
     @Default(<VendorApplication>[]) List<VendorApplication> recentApplications,
   }) = _AdminStats;
 

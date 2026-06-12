@@ -6,6 +6,8 @@ import 'package:placeify/core/constants/app_spacing.dart';
 import 'package:placeify/core/constants/app_typography.dart';
 import 'package:placeify/core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import 'package:placeify/core/widgets/shimmer_loader.dart';
+import 'package:placeify/features/admin/domain/constants/admin_strings.dart';
+import 'package:placeify/features/admin/domain/enums/user_role.dart';
 import 'package:placeify/features/admin/presentation/providers/admin_users_provider.dart';
 import 'package:placeify/features/admin/presentation/users/widgets/admin_user_row.dart';
 import 'package:placeify/features/admin/presentation/widgets/admin_empty_state.dart';
@@ -19,6 +21,7 @@ class AdminUsersScreen extends ConsumerStatefulWidget {
 
 class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
   String _searchQuery = '';
+  UserRole? _roleFilter;
   bool _hasLoaded = false;
   final TextEditingController _searchController = TextEditingController();
 
@@ -29,12 +32,15 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
   }
 
   Future<void> _onRefresh() async {
-    await ref.read(adminUsersListProvider(_searchQuery).notifier).refresh();
+    await ref
+        .read(adminUsersListProvider(_searchQuery, _roleFilter).notifier)
+        .refresh();
   }
 
   @override
   Widget build(BuildContext context) {
-    final usersAsync = ref.watch(adminUsersListProvider(_searchQuery));
+    final usersAsync =
+        ref.watch(adminUsersListProvider(_searchQuery, _roleFilter));
 
     usersAsync.whenData((_) {
       if (!_hasLoaded) {
@@ -58,7 +64,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Users',
+                    AdminStrings.usersTitle,
                     style: AppTypography.sectionTitle,
                   ),
                   const SizedBox(height: 14),
@@ -68,6 +74,10 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                   ),
                 ],
               ),
+            ),
+            _RoleFilterChips(
+              selected: _roleFilter,
+              onSelected: (role) => setState(() => _roleFilter = role),
             ),
             const SizedBox(height: 8),
             Expanded(
@@ -120,6 +130,88 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                     ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RoleFilterChips extends StatelessWidget {
+  const _RoleFilterChips({
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final UserRole? selected;
+  final ValueChanged<UserRole?> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+      child: Row(
+        children: [
+          _RoleChip(
+            label: AdminStrings.filterAll,
+            isSelected: selected == null,
+            onTap: () => onSelected(null),
+          ),
+          const SizedBox(width: 8),
+          _RoleChip(
+            label: 'Customer',
+            isSelected: selected == UserRole.customer,
+            onTap: () => onSelected(UserRole.customer),
+          ),
+          const SizedBox(width: 8),
+          _RoleChip(
+            label: 'Vendor',
+            isSelected: selected == UserRole.vendor,
+            onTap: () => onSelected(UserRole.vendor),
+          ),
+          const SizedBox(width: 8),
+          _RoleChip(
+            label: AdminStrings.roleAdmin,
+            isSelected: selected == UserRole.admin,
+            onTap: () => onSelected(UserRole.admin),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RoleChip extends StatelessWidget {
+  const _RoleChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.adminSlate : AppColors.warmWhite,
+          borderRadius: AppRadii.pill,
+          border: Border.all(
+            color: isSelected ? AppColors.adminSlate : AppColors.creamDark,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isSelected ? AppColors.warmWhite : AppColors.textSecondary,
+          ),
         ),
       ),
     );

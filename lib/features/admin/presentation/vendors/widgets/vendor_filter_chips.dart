@@ -67,10 +67,10 @@ class _VendorFilterChip extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.espresso : AppColors.warmWhite,
+          color: isSelected ? AppColors.adminSlate : AppColors.warmWhite,
           borderRadius: AppRadii.pill,
           border: Border.all(
-            color: isSelected ? AppColors.espresso : AppColors.creamDark,
+            color: isSelected ? AppColors.adminSlate : AppColors.creamDark,
             width: 1.5,
           ),
         ),

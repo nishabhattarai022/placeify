@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:placeify/core/constants/app_colors.dart';
+import 'package:placeify/core/services/haptic_service.dart';
+import 'package:placeify/features/admin/domain/constants/admin_routes.dart';
 import 'package:placeify/core/constants/app_radii.dart';
 import 'package:placeify/core/utils/formatters.dart';
 import 'package:placeify/features/admin/domain/models/platform_user.dart';
@@ -20,7 +23,12 @@ class AdminUserRow extends StatelessWidget {
     final meta = '${user.email} · ${Formatters.shortDate(user.createdAt)}';
     final showVendorStatus = user.vendorStatus != VendorStatus.none;
 
-    return Container(
+    return GestureDetector(
+      onTap: () {
+        HapticService.light();
+        context.push(AdminRoutes.userDetail(user.id));
+      },
+      child: Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
       decoration: BoxDecoration(
@@ -86,6 +94,7 @@ class AdminUserRow extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }

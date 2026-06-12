@@ -17,13 +17,17 @@ import 'package:placeify/features/admin/presentation/widgets/admin_status_chip.d
 import 'package:placeify/features/vendor/domain/enums/vendor_status.dart';
 
 class VendorApplicationDetailScreen extends ConsumerWidget {
-  const VendorApplicationDetailScreen({required this.vendorId, super.key});
+  const VendorApplicationDetailScreen({
+    required this.applicationId,
+    super.key,
+  });
 
-  final String vendorId;
+  final String applicationId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final applicationAsync = ref.watch(vendorApplicationDetailProvider(vendorId));
+    final applicationAsync =
+        ref.watch(vendorApplicationDetailProvider(applicationId));
 
     return Scaffold(
       backgroundColor: AppColors.cream,
@@ -45,7 +49,8 @@ class VendorApplicationDetailScreen extends ConsumerWidget {
       body: applicationAsync.when(
         loading: () => const _ApplicationDetailShimmer(),
         error: (_, __) => _ApplicationDetailError(
-          onRetry: () => ref.invalidate(vendorApplicationDetailProvider(vendorId)),
+          onRetry: () =>
+              ref.invalidate(vendorApplicationDetailProvider(applicationId)),
         ),
         data: (application) {
           if (application == null) {
@@ -59,7 +64,7 @@ class VendorApplicationDetailScreen extends ConsumerWidget {
 
           return _ApplicationDetailBody(
             application: application,
-            vendorId: vendorId,
+            applicationId: applicationId,
           );
         },
       ),
@@ -70,11 +75,11 @@ class VendorApplicationDetailScreen extends ConsumerWidget {
 class _ApplicationDetailBody extends ConsumerWidget {
   const _ApplicationDetailBody({
     required this.application,
-    required this.vendorId,
+    required this.applicationId,
   });
 
   final VendorApplication application;
-  final String vendorId;
+  final String applicationId;
 
   bool get _canReview => application.status == VendorStatus.pending;
 

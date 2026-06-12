@@ -32,12 +32,12 @@ class AdminStatusChip extends StatelessWidget {
           AppColors.sage,
         ),
       VendorStatus.suspended => (
-          AppColors.rust.withValues(alpha: 0.12),
-          AppColors.rust,
+          AppColors.coral.withValues(alpha: 0.14),
+          AppColors.coral,
         ),
       VendorStatus.none => (
-          AppColors.creamDark,
-          AppColors.textMuted,
+          AppColors.coral.withValues(alpha: 0.14),
+          AppColors.coral,
         ),
     };
 

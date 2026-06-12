@@ -6,19 +6,51 @@ import 'package:placeify/features/admin/domain/models/admin_audit_log_entry.dart
 abstract final class AdminStrings {
   // Dashboard
   static const adminOverview = 'Admin Overview';
+  static const totalVendorsLabel = 'Total Vendors';
+  static const totalVendorsSubtitle = 'Approved on platform';
   static const pendingLabel = 'Pending';
   static const pendingSubtitle = 'Awaiting review';
   static const approvedLabel = 'Approved';
   static const approvedSubtitle = 'Active vendors';
   static const suspendedLabel = 'Suspended';
   static const suspendedSubtitle = 'Restricted access';
-  static const totalUsersLabel = 'Total users';
-  static const totalUsersSubtitle = 'Registered on platform';
+  static const totalUsersLabel = 'Total Users';
+  static const totalUsersSubtitle = 'Registered accounts';
+  static const platformGmvLabel = 'Platform GMV';
+  static const platformGmvSubtitle = 'Mock gross volume';
+  static const needsAttention = 'Needs Attention';
+  static const needsAttentionBody = 'vendor applications awaiting review';
+  static const reviewNow = 'Review now';
+  static const recentActivity = 'Recent Activity';
+  static const newSignups = 'New Signups';
+  static const last7Days = 'Last 7 days';
+  static const quickLinks = 'Quick Links';
+  static const usersLink = 'Users';
+  static const notificationsLink = 'Notifications';
   static const recentApplications = 'Recent Applications';
   static const seeAll = 'See all';
   static const noApplicationsYet = 'No vendor applications yet';
+  static const allCaughtUpPending = 'All caught up! No pending applications.';
+  static const approvalsTitle = 'Approvals';
   static const dashboardLoadError = 'Could not load dashboard';
   static const retry = 'Retry';
+  static const declineReasonLabel = 'Reason for decline';
+  static const declineOtherHint = 'Please describe the reason';
+  static const selectReason = 'Select a reason';
+  static const confirmDecline = 'Confirm Decline';
+  static const suspendReasonLabel = 'Reason for suspension';
+  static const confirmSuspend = 'Confirm Suspend';
+  static const roleAdmin = 'Admin';
+  static const notificationPrefs = 'Notification preferences';
+  static const notificationPrefsSubtitle = 'Choose which alerts you receive';
+  static const newApplicationAlerts = 'New vendor applications';
+  static const systemAlerts = 'System alerts';
+  static const usersTitle = 'Platform Users';
+  static const userDetailTitle = 'User Detail';
+  static const noActivityYet = 'No recent activity';
+  static const filterAll = 'All';
+  static const filterLast7Days = 'Last 7 days';
+  static const filterLast30Days = 'Last 30 days';
 
   // Notifications
   static const notificationsTitle = 'Notifications';

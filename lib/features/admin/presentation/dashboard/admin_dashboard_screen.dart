@@ -7,18 +7,21 @@ import 'package:placeify/core/constants/app_radii.dart';
 import 'package:placeify/core/constants/app_spacing.dart';
 import 'package:placeify/core/constants/app_typography.dart';
 import 'package:placeify/core/services/haptic_service.dart';
+import 'package:placeify/core/utils/formatters.dart';
+import 'package:placeify/core/utils/relative_time.dart';
 import 'package:placeify/core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import 'package:placeify/core/widgets/shimmer_loader.dart';
 import 'package:placeify/features/admin/domain/constants/admin_routes.dart';
 import 'package:placeify/features/admin/domain/constants/admin_strings.dart';
+import 'package:placeify/features/admin/domain/models/admin_audit_log_entry.dart';
 import 'package:placeify/features/admin/domain/models/admin_stats.dart' as models;
+import 'package:placeify/features/admin/presentation/providers/admin_audit_log_provider.dart';
 import 'package:placeify/features/admin/presentation/providers/admin_notification_badge_provider.dart';
 import 'package:placeify/features/admin/presentation/providers/admin_notifications_provider.dart';
 import 'package:placeify/features/admin/presentation/providers/admin_stats_provider.dart';
-import 'package:placeify/features/admin/presentation/widgets/admin_application_row.dart';
-import 'package:placeify/features/admin/presentation/widgets/admin_empty_state.dart';
 import 'package:placeify/features/admin/presentation/widgets/admin_stat_card.dart';
 import 'package:placeify/features/auth/presentation/providers/auth_provider.dart';
+import 'package:placeify/features/vendor/presentation/widgets/mini_bar_chart.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -54,6 +57,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     await Future.wait([
       ref.read(adminStatsProvider.notifier).refresh(),
       ref.read(adminNotificationsProvider.notifier).refresh(),
+      ref.read(adminAuditLogProvider.notifier).refresh(),
     ]);
   }
 
@@ -113,14 +117,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                       ],
                     ),
                   ),
-                  const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _DashboardNotificationButton(),
-                      SizedBox(width: 10),
-                      _DashboardSettingsButton(),
-                    ],
-                  ),
+                  const _DashboardNotificationButton(),
                 ],
               ),
             ),
@@ -132,7 +129,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                       : stats == null
                           ? const _DashboardShimmer()
                           : RefreshIndicator(
-                              color: AppColors.espresso,
+                              color: AppColors.adminSlate,
                               onRefresh: _onRefresh,
                               child: _DashboardBody(
                                 stats: stats,
@@ -174,11 +171,10 @@ class _DashboardBody extends StatelessWidget {
               children: [
                 Expanded(
                   child: AdminStatCard(
-                    label: AdminStrings.pendingLabel,
-                    value: stats.pendingCount.toString(),
-                    subtitle: AdminStrings.pendingSubtitle,
-                    accentColor: AppColors.accentLight,
-                    highlighted: true,
+                    label: AdminStrings.totalVendorsLabel,
+                    value: stats.totalVendors.toString(),
+                    subtitle: AdminStrings.totalVendorsSubtitle,
+                    accentColor: AppColors.sage,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -187,19 +183,20 @@ class _DashboardBody extends StatelessWidget {
                     children: [
                       Expanded(
                         child: AdminStatCard(
-                          label: AdminStrings.approvedLabel,
-                          value: stats.approvedCount.toString(),
-                          subtitle: AdminStrings.approvedSubtitle,
-                          accentColor: AppColors.sage,
+                          label: AdminStrings.pendingLabel,
+                          value: stats.pendingCount.toString(),
+                          subtitle: AdminStrings.pendingSubtitle,
+                          accentColor: AppColors.accent,
+                          highlighted: stats.pendingCount > 0,
                         ),
                       ),
                       const SizedBox(height: 12),
                       Expanded(
                         child: AdminStatCard(
-                          label: AdminStrings.suspendedLabel,
-                          value: stats.suspendedCount.toString(),
-                          subtitle: AdminStrings.suspendedSubtitle,
-                          accentColor: AppColors.rust,
+                          label: AdminStrings.totalUsersLabel,
+                          value: stats.totalUsers.toString(),
+                          subtitle: AdminStrings.totalUsersSubtitle,
+                          accentColor: AppColors.bark,
                         ),
                       ),
                     ],
@@ -210,40 +207,252 @@ class _DashboardBody extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           AdminStatCard(
-            label: AdminStrings.totalUsersLabel,
-            value: stats.totalUsers.toString(),
-            subtitle: AdminStrings.totalUsersSubtitle,
-            accentColor: AppColors.bark,
+            label: AdminStrings.platformGmvLabel,
+            value: Formatters.currencyFull(stats.platformGmv),
+            subtitle: AdminStrings.platformGmvSubtitle,
+            accentColor: AppColors.adminSlate,
           ),
+          if (stats.pendingCount > 0) ...[
+            const SizedBox(height: 16),
+            _NeedsAttentionCard(pendingCount: stats.pendingCount),
+          ],
+          const SizedBox(height: 20),
+          const Text(
+            AdminStrings.quickLinks,
+            style: AppTypography.sectionTitle,
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _QuickLinkTile(
+                  icon: Icons.people_outline,
+                  label: AdminStrings.usersLink,
+                  onTap: () {
+                    HapticService.light();
+                    context.push(AdminRoutes.users);
+                  },
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _QuickLinkTile(
+                  icon: Icons.notifications_outlined,
+                  label: AdminStrings.notificationsLink,
+                  onTap: () {
+                    HapticService.light();
+                    context.push(AdminRoutes.notifications);
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            AdminStrings.recentActivity,
+            style: AppTypography.sectionTitle,
+          ),
+          const SizedBox(height: 12),
+          if (stats.recentActivity.isEmpty)
+            const _EmptyActivityCard()
+          else
+            ...stats.recentActivity.map(
+              (entry) => _ActivityTile(entry: entry),
+            ),
           const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                AdminStrings.recentApplications,
+                AdminStrings.newSignups,
                 style: AppTypography.sectionTitle,
               ),
-              GestureDetector(
-                onTap: () {
-                  HapticService.light();
-                  context.go(AdminRoutes.applications);
-                },
-                child: const Text(AdminStrings.seeAll, style: AppTypography.seeAll),
+              const Text(
+                AdminStrings.last7Days,
+                style: TextStyle(fontSize: 12, color: AppColors.textMuted),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          if (stats.recentApplications.isEmpty)
-            const AdminEmptyState(
-              message: AdminStrings.noApplicationsYet,
-              icon: Icons.storefront_outlined,
-            )
-          else
-            ...stats.recentApplications.map(
-              (application) => AdminApplicationRow(application: application),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.warmWhite,
+              borderRadius: AppRadii.md,
+              border: Border.all(color: AppColors.creamDark, width: 1.5),
             ),
+            child: MiniBarChart(heights: stats.signupSeries),
+          ),
           const SizedBox(height: BottomNavTokens.scrollBottomPadding),
         ],
+      ),
+    );
+  }
+}
+
+class _NeedsAttentionCard extends StatelessWidget {
+  const _NeedsAttentionCard({required this.pendingCount});
+
+  final int pendingCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        HapticService.light();
+        context.go(AdminRoutes.approvals);
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.accentBg,
+          borderRadius: AppRadii.md,
+          border: Border.all(
+            color: AppColors.accent.withValues(alpha: 0.35),
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    AdminStrings.needsAttention,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.espresso,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '$pendingCount ${AdminStrings.needsAttentionBody}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Text(
+              AdminStrings.reviewNow,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.accent,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickLinkTile extends StatelessWidget {
+  const _QuickLinkTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: AppRadii.md,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+          decoration: BoxDecoration(
+            color: AppColors.warmWhite,
+            borderRadius: AppRadii.md,
+            border: Border.all(color: AppColors.creamDark, width: 1.5),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 20, color: AppColors.adminSlate),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.espresso,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActivityTile extends StatelessWidget {
+  const _ActivityTile({required this.entry});
+
+  final AdminAuditLogEntry entry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.warmWhite,
+        borderRadius: AppRadii.md,
+        border: Border.all(color: AppColors.creamDark, width: 1.5),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              AdminStrings.auditActionLabel(entry.action),
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.espresso,
+              ),
+            ),
+          ),
+          Text(
+            RelativeTime.format(entry.timestamp),
+            style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyActivityCard extends StatelessWidget {
+  const _EmptyActivityCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.warmWhite,
+        borderRadius: AppRadii.md,
+        border: Border.all(color: AppColors.creamDark, width: 1.5),
+      ),
+      child: const Text(
+        AdminStrings.noActivityYet,
+        style: TextStyle(fontSize: 13, color: AppColors.textMuted),
       ),
     );
   }
@@ -258,28 +467,19 @@ class _DashboardShimmer extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
             height: 196,
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Expanded(
-                  flex: 1,
-                  child: ShimmerLoader(borderRadius: AppRadii.md),
-                ),
+                const Expanded(child: ShimmerLoader(borderRadius: AppRadii.md)),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     children: [
-                      Expanded(
-                        child: ShimmerLoader(borderRadius: AppRadii.md),
-                      ),
+                      Expanded(child: ShimmerLoader(borderRadius: AppRadii.md)),
                       const SizedBox(height: 12),
-                      Expanded(
-                        child: ShimmerLoader(borderRadius: AppRadii.md),
-                      ),
+                      Expanded(child: ShimmerLoader(borderRadius: AppRadii.md)),
                     ],
                   ),
                 ),
@@ -290,19 +490,6 @@ class _DashboardShimmer extends StatelessWidget {
           const SizedBox(
             height: 96,
             child: ShimmerLoader(borderRadius: AppRadii.md),
-          ),
-          const SizedBox(height: 20),
-          const ShimmerLoader(borderRadius: AppRadii.sm),
-          const SizedBox(height: 12),
-          ...List.generate(
-            3,
-            (_) => const Padding(
-              padding: EdgeInsets.only(bottom: 10),
-              child: SizedBox(
-                height: 76,
-                child: ShimmerLoader(borderRadius: AppRadii.md),
-              ),
-            ),
           ),
         ],
       ),
@@ -318,51 +505,19 @@ class _DashboardError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              AdminStrings.dashboardLoadError,
-              style: AppTypography.sectionTitle,
-            ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: onRetry,
-              child: const Text(AdminStrings.retry),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DashboardSettingsButton extends StatelessWidget {
-  const _DashboardSettingsButton();
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        HapticService.light();
-        context.push(AdminRoutes.settings);
-      },
-      child: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          color: AppColors.warmWhite,
-          shape: BoxShape.circle,
-          border: Border.all(color: AppColors.creamDark, width: 1.5),
-        ),
-        alignment: Alignment.center,
-        child: const Icon(
-          Icons.settings_outlined,
-          size: 22,
-          color: AppColors.espresso,
-        ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            AdminStrings.dashboardLoadError,
+            style: AppTypography.sectionTitle,
+          ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: onRetry,
+            child: const Text(AdminStrings.retry),
+          ),
+        ],
       ),
     );
   }
@@ -395,7 +550,7 @@ class _DashboardNotificationButton extends ConsumerWidget {
             child: const Icon(
               Icons.notifications_outlined,
               size: 22,
-              color: AppColors.espresso,
+              color: AppColors.adminSlate,
             ),
           ),
           if (badgeCount > 0)

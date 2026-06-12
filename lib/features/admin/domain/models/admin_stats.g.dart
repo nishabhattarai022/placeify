@@ -7,10 +7,22 @@ part of 'admin_stats.dart';
 // **************************************************************************
 
 _AdminStats _$AdminStatsFromJson(Map<String, dynamic> json) => _AdminStats(
+      totalVendors: (json['totalVendors'] as num).toInt(),
       pendingCount: (json['pendingCount'] as num).toInt(),
-      approvedCount: (json['approvedCount'] as num).toInt(),
-      suspendedCount: (json['suspendedCount'] as num).toInt(),
       totalUsers: (json['totalUsers'] as num).toInt(),
+      platformGmv: (json['platformGmv'] as num).toDouble(),
+      approvedCount: (json['approvedCount'] as num).toInt(),
+      declinedCount: (json['declinedCount'] as num).toInt(),
+      suspendedCount: (json['suspendedCount'] as num).toInt(),
+      recentActivity: (json['recentActivity'] as List<dynamic>?)
+              ?.map(
+                  (e) => AdminAuditLogEntry.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const <AdminAuditLogEntry>[],
+      signupSeries: (json['signupSeries'] as List<dynamic>?)
+              ?.map((e) => (e as num).toDouble())
+              .toList() ??
+          const <double>[],
       recentApplications: (json['recentApplications'] as List<dynamic>?)
               ?.map(
                   (e) => VendorApplication.fromJson(e as Map<String, dynamic>))
@@ -20,9 +32,14 @@ _AdminStats _$AdminStatsFromJson(Map<String, dynamic> json) => _AdminStats(
 
 Map<String, dynamic> _$AdminStatsToJson(_AdminStats instance) =>
     <String, dynamic>{
+      'totalVendors': instance.totalVendors,
       'pendingCount': instance.pendingCount,
-      'approvedCount': instance.approvedCount,
-      'suspendedCount': instance.suspendedCount,
       'totalUsers': instance.totalUsers,
+      'platformGmv': instance.platformGmv,
+      'approvedCount': instance.approvedCount,
+      'declinedCount': instance.declinedCount,
+      'suspendedCount': instance.suspendedCount,
+      'recentActivity': instance.recentActivity,
+      'signupSeries': instance.signupSeries,
       'recentApplications': instance.recentApplications,
     };

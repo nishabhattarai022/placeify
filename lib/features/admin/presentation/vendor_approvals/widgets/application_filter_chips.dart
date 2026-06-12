@@ -8,13 +8,25 @@ class ApplicationFilterChips extends StatelessWidget {
   const ApplicationFilterChips({
     required this.selected,
     required this.onSelected,
+    required this.pendingCount,
+    required this.approvedCount,
+    required this.declinedCount,
     super.key,
   });
 
   final VendorApplicationListFilter selected;
   final ValueChanged<VendorApplicationListFilter> onSelected;
+  final int pendingCount;
+  final int approvedCount;
+  final int declinedCount;
 
   static const _filters = VendorApplicationListFilter.values;
+
+  int _countFor(VendorApplicationListFilter filter) => switch (filter) {
+        VendorApplicationListFilter.pending => pendingCount,
+        VendorApplicationListFilter.approved => approvedCount,
+        VendorApplicationListFilter.declined => declinedCount,
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +38,7 @@ class ApplicationFilterChips extends StatelessWidget {
           for (final filter in _filters) ...[
             _ApplicationFilterChip(
               label: _labelFor(filter),
+              count: _countFor(filter),
               isSelected: selected == filter,
               onTap: () {
                 HapticService.light();
@@ -51,11 +64,13 @@ class ApplicationFilterChips extends StatelessWidget {
 class _ApplicationFilterChip extends StatelessWidget {
   const _ApplicationFilterChip({
     required this.label,
+    required this.count,
     required this.isSelected,
     required this.onTap,
   });
 
   final String label;
+  final int count;
   final bool isSelected;
   final VoidCallback onTap;
 
@@ -67,20 +82,46 @@ class _ApplicationFilterChip extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.espresso : AppColors.warmWhite,
+          color: isSelected ? AppColors.adminSlate : AppColors.warmWhite,
           borderRadius: AppRadii.pill,
           border: Border.all(
-            color: isSelected ? AppColors.espresso : AppColors.creamDark,
+            color: isSelected ? AppColors.adminSlate : AppColors.creamDark,
             width: 1.5,
           ),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: isSelected ? AppColors.warmWhite : AppColors.textSecondary,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color:
+                    isSelected ? AppColors.warmWhite : AppColors.textSecondary,
+              ),
+            ),
+            if (count > 0) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppColors.warmWhite.withValues(alpha: 0.2)
+                      : AppColors.adminSlateBg,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  count > 99 ? '99+' : '$count',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: isSelected ? AppColors.warmWhite : AppColors.adminSlate,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );

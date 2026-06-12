@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:placeify/core/constants/app_colors.dart';
 import 'package:placeify/core/constants/app_radii.dart';
 import 'package:placeify/core/constants/app_spacing.dart';
@@ -8,7 +9,9 @@ import 'package:placeify/core/services/haptic_service.dart';
 import 'package:placeify/core/utils/formatters.dart';
 import 'package:placeify/core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import 'package:placeify/core/widgets/shimmer_loader.dart';
+import 'package:placeify/features/admin/domain/constants/admin_routes.dart';
 import 'package:placeify/features/admin/domain/constants/admin_strings.dart';
+import 'package:placeify/features/admin/domain/enums/admin_notification_type.dart';
 import 'package:placeify/features/admin/domain/models/admin_notification.dart';
 import 'package:placeify/features/admin/presentation/providers/admin_notifications_provider.dart';
 import 'package:placeify/features/admin/presentation/widgets/admin_empty_state.dart';
@@ -115,11 +118,22 @@ class AdminNotificationsScreen extends ConsumerWidget {
                       return _NotificationTile(
                         notification: notification,
                         onTap: () async {
-                          if (notification.read) return;
                           HapticService.light();
-                          await ref
-                              .read(adminNotificationsProvider.notifier)
-                              .markAsRead(notification.id);
+                          if (!notification.read) {
+                            await ref
+                                .read(adminNotificationsProvider.notifier)
+                                .markAsRead(notification.id);
+                          }
+                          if (!context.mounted) return;
+                          if (notification.type ==
+                                  AdminNotificationType.newApplication &&
+                              notification.linkedVendorId != null) {
+                            context.push(
+                              AdminRoutes.approvalDetail(
+                                notification.linkedVendorId!,
+                              ),
+                            );
+                          }
                         },
                       );
                     },

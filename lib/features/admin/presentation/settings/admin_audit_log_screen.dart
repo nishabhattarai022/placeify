@@ -8,19 +8,66 @@ import 'package:placeify/core/utils/formatters.dart';
 import 'package:placeify/core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import 'package:placeify/core/widgets/shimmer_loader.dart';
 import 'package:placeify/features/admin/domain/constants/admin_strings.dart';
+import 'package:placeify/features/admin/domain/enums/application_decision.dart';
+import 'package:placeify/features/admin/domain/enums/audit_action.dart';
 import 'package:placeify/features/admin/domain/models/admin_audit_log_entry.dart';
 import 'package:placeify/features/admin/presentation/providers/admin_audit_log_provider.dart';
 import 'package:placeify/features/admin/presentation/providers/admin_users_provider.dart';
 import 'package:placeify/features/admin/presentation/widgets/admin_empty_state.dart';
 import 'package:placeify/features/profile/presentation/widgets/profile_sub_hero.dart';
 
-class AdminAuditLogScreen extends ConsumerWidget {
+enum _AuditActionFilter { all, approvals, declines, suspensions, reinstatements }
+
+enum _AuditDateFilter { all, last7Days, last30Days }
+
+class AdminAuditLogScreen extends ConsumerStatefulWidget {
   const AdminAuditLogScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AdminAuditLogScreen> createState() =>
+      _AdminAuditLogScreenState();
+}
+
+class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
+  _AuditActionFilter _actionFilter = _AuditActionFilter.all;
+  _AuditDateFilter _dateFilter = _AuditDateFilter.all;
+
+  bool _matchesAction(AdminAuditLogEntry entry) {
+    return switch (_actionFilter) {
+      _AuditActionFilter.all => true,
+      _AuditActionFilter.approvals => entry.action.maybeWhen(
+            application: (d) => d == ApplicationDecision.approved,
+            orElse: () => false,
+          ),
+      _AuditActionFilter.declines => entry.action.maybeWhen(
+            application: (d) => d == ApplicationDecision.declined,
+            orElse: () => false,
+          ),
+      _AuditActionFilter.suspensions => entry.action.maybeWhen(
+            vendor: (a) => a == AuditAction.suspended,
+            orElse: () => false,
+          ),
+      _AuditActionFilter.reinstatements => entry.action.maybeWhen(
+            vendor: (a) => a == AuditAction.reinstated,
+            orElse: () => false,
+          ),
+    };
+  }
+
+  bool _matchesDate(AdminAuditLogEntry entry) {
+    final now = DateTime.now();
+    return switch (_dateFilter) {
+      _AuditDateFilter.all => true,
+      _AuditDateFilter.last7Days => now.difference(entry.timestamp).inDays <= 7,
+      _AuditDateFilter.last30Days =>
+        now.difference(entry.timestamp).inDays <= 30,
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final auditAsync = ref.watch(adminAuditLogProvider);
-    final usersAsync = ref.watch(adminUsersListProvider(''));
+    final usersAsync = ref.watch(adminUsersListProvider('', null));
 
     final userNames = usersAsync.value?.fold<Map<String, String>>(
           {},
@@ -33,6 +80,50 @@ class AdminAuditLogScreen extends ConsumerWidget {
       body: Column(
         children: [
           const ProfileSubHero(title: AdminStrings.auditLogTitle),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Row(
+              children: [
+                for (final filter in _AuditActionFilter.values) ...[
+                  _FilterChip(
+                    label: _actionLabel(filter),
+                    isSelected: _actionFilter == filter,
+                    onTap: () => setState(() => _actionFilter = filter),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+              ],
+            ),
+          ),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+            child: Row(
+              children: [
+                _FilterChip(
+                  label: AdminStrings.filterAll,
+                  isSelected: _dateFilter == _AuditDateFilter.all,
+                  onTap: () => setState(() => _dateFilter = _AuditDateFilter.all),
+                ),
+                const SizedBox(width: 8),
+                _FilterChip(
+                  label: AdminStrings.filterLast7Days,
+                  isSelected: _dateFilter == _AuditDateFilter.last7Days,
+                  onTap: () =>
+                      setState(() => _dateFilter = _AuditDateFilter.last7Days),
+                ),
+                const SizedBox(width: 8),
+                _FilterChip(
+                  label: AdminStrings.filterLast30Days,
+                  isSelected: _dateFilter == _AuditDateFilter.last30Days,
+                  onTap: () => setState(
+                    () => _dateFilter = _AuditDateFilter.last30Days,
+                  ),
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: auditAsync.when(
               loading: () => ListView.separated(
@@ -57,7 +148,13 @@ class AdminAuditLogScreen extends ConsumerWidget {
                 ),
               ),
               data: (entries) {
-                if (entries.isEmpty) {
+                final filtered = entries
+                    .where(_matchesAction)
+                    .where(_matchesDate)
+                    .toList()
+                  ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+                if (filtered.isEmpty) {
                   return const Center(
                     child: AdminEmptyState(
                       message: AdminStrings.noAuditEntries,
@@ -66,11 +163,8 @@ class AdminAuditLogScreen extends ConsumerWidget {
                   );
                 }
 
-                final sorted = [...entries]
-                  ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
-
                 return RefreshIndicator(
-                  color: AppColors.espresso,
+                  color: AppColors.adminSlate,
                   onRefresh: () =>
                       ref.read(adminAuditLogProvider.notifier).refresh(),
                   child: ListView.separated(
@@ -83,10 +177,10 @@ class AdminAuditLogScreen extends ConsumerWidget {
                       AppSpacing.screenPadding,
                       BottomNavTokens.scrollBottomPadding,
                     ),
-                    itemCount: sorted.length,
+                    itemCount: filtered.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
-                      final entry = sorted[index];
+                      final entry = filtered[index];
                       return _AuditLogTile(
                         entry: entry,
                         targetName: userNames[entry.targetUserId],
@@ -98,6 +192,51 @@ class AdminAuditLogScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  String _actionLabel(_AuditActionFilter filter) => switch (filter) {
+        _AuditActionFilter.all => AdminStrings.filterAll,
+        _AuditActionFilter.approvals => 'Approvals',
+        _AuditActionFilter.declines => 'Declines',
+        _AuditActionFilter.suspensions => 'Suspensions',
+        _AuditActionFilter.reinstatements => 'Reinstatements',
+      };
+}
+
+class _FilterChip extends StatelessWidget {
+  const _FilterChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.adminSlate : AppColors.warmWhite,
+          borderRadius: AppRadii.pill,
+          border: Border.all(
+            color: isSelected ? AppColors.adminSlate : AppColors.creamDark,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isSelected ? AppColors.warmWhite : AppColors.textSecondary,
+          ),
+        ),
       ),
     );
   }
