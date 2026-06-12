@@ -1,0 +1,109 @@
+import 'package:flutter/material.dart';
+
+import '../domain/user_dashboard_nav.dart';
+import 'widgets/user_placeholder_page.dart';
+
+class UserOrdersPage extends StatelessWidget {
+  const UserOrdersPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const UserPlaceholderPage(
+      title: 'Orders',
+      description:
+          'Order history and tracking will appear here in a future step.',
+      icon: Icons.receipt_long_outlined,
+    );
+  }
+}
+
+class UserCartPage extends StatelessWidget {
+  const UserCartPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const UserPlaceholderPage(
+      title: 'Cart',
+      description: 'Saved cart items will be managed from this page.',
+      icon: Icons.shopping_cart_outlined,
+    );
+  }
+}
+
+class UserWishlistPage extends StatelessWidget {
+  const UserWishlistPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const UserPlaceholderPage(
+      title: 'Wishlist',
+      description: 'Your saved products will be listed here.',
+      icon: Icons.favorite_border_rounded,
+    );
+  }
+}
+
+class UserRefundPage extends StatelessWidget {
+  const UserRefundPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const UserPlaceholderPage(
+      title: 'Refund & Return',
+      description: 'Return and refund requests will be handled here.',
+      icon: Icons.assignment_return_outlined,
+    );
+  }
+}
+
+class UserNotificationsPage extends StatelessWidget {
+  const UserNotificationsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const UserPlaceholderPage(
+      title: 'Notifications',
+      description: 'Alerts and updates will show up in this section.',
+      icon: Icons.notifications_outlined,
+    );
+  }
+}
+
+class UserAccountPage extends StatelessWidget {
+  const UserAccountPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return UserPlaceholderPage(
+      title: UserDashboardNav.profile.pageTitle,
+      description: 'Profile details and account information will live here.',
+      icon: UserDashboardNav.profile.icon,
+    );
+  }
+}
+
+class UserSettingsPage extends StatelessWidget {
+  const UserSettingsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const UserPlaceholderPage(
+      title: 'Settings',
+      description: 'Account preferences and security settings coming soon.',
+      icon: Icons.settings_outlined,
+    );
+  }
+}
+
+class UserTryMePage extends StatelessWidget {
+  const UserTryMePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const UserPlaceholderPage(
+      title: 'Try Me',
+      description: 'AR try-on experiences will be available from here.',
+      icon: Icons.view_in_ar_outlined,
+    );
+  }
+}
