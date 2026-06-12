@@ -41,7 +41,7 @@ abstract final class VendorStrings {
   static const dismiss = 'Dismiss';
 
   // Product form
-  static const saveProduct = 'Save Product';
+  static const uploadProduct = 'Upload Product';
   static const saveChanges = 'Save Changes';
   static const noChangesLabel = 'No Changes';
   static const productSaved = 'Product saved successfully';

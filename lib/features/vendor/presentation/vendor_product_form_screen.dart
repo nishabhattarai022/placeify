@@ -346,7 +346,7 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
         form.dimensionUnit == VendorProductDimensionUnit.cm ? 'cm' : 'in';
     final saveLabel = isEditing
         ? (_isDirty ? VendorStrings.saveChanges : VendorStrings.noChangesLabel)
-        : VendorStrings.saveProduct;
+        : VendorStrings.uploadProduct;
     final onSave = form.isSubmitting
         ? null
         : (isEditing ? _onSaveChanges : _onUpload);
