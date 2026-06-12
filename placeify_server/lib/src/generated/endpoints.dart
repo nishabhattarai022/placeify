@@ -30,11 +30,13 @@ import 'package:placeify_server/src/generated/checkout_request.dart' as _i17;
 import 'package:placeify_server/src/generated/pagination_input.dart' as _i18;
 import 'package:placeify_server/src/generated/product_search_input.dart'
     as _i19;
-import 'dart:typed_data' as _i20;
+import 'package:placeify_server/src/generated/vendor_product_upload_input.dart'
+    as _i20;
+import 'dart:typed_data' as _i21;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
-    as _i21;
-import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _i22;
+import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+    as _i23;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -1175,6 +1177,37 @@ class Endpoints extends _i1.EndpointDispatch {
                     thumbnailUrl: params['thumbnailUrl'],
                   ),
         ),
+        'uploadProduct': _i1.MethodConnector(
+          name: 'uploadProduct',
+          params: {
+            'input': _i1.ParameterDescription(
+              name: 'input',
+              type: _i1.getType<_i20.VendorProductUploadInput>(),
+              nullable: false,
+            ),
+            'imageData': _i1.ParameterDescription(
+              name: 'imageData',
+              type: _i1.getType<_i21.ByteData>(),
+              nullable: false,
+            ),
+            'imageFileName': _i1.ParameterDescription(
+              name: 'imageFileName',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i13.VendorEndpoint).uploadProduct(
+                    session,
+                    params['input'],
+                    params['imageData'],
+                    params['imageFileName'],
+                  ),
+        ),
         'updateProductThumbnail': _i1.MethodConnector(
           name: 'updateProductThumbnail',
           params: {
@@ -1205,7 +1238,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i20.ByteData>(),
+              type: _i1.getType<_i21.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -1397,9 +1430,9 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
-    modules['serverpod_auth_core'] = _i21.Endpoints()
+    modules['serverpod_auth_core'] = _i22.Endpoints()
       ..initializeEndpoints(server);
-    modules['serverpod_auth_idp'] = _i22.Endpoints()
+    modules['serverpod_auth_idp'] = _i23.Endpoints()
       ..initializeEndpoints(server);
   }
 }

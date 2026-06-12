@@ -1,0 +1,16 @@
+### Metadata for creating a vendor product with an uploaded photo.
+class: VendorProductUploadInput
+fields:
+  name: String
+  description: String
+  price: double
+  materials: String
+  widthCm: double
+  depthCm: double
+  heightCm: double
+  careInstructions: String
+  categoryId: int?
+  weightKg: double?
+  assemblyNote: String?
+  warranty: String?
+  generateModel3d: bool, default=false

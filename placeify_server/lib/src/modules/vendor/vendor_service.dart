@@ -95,6 +95,20 @@ class VendorService {
     );
   }
 
+  Future<Product> uploadProduct(
+    Session session,
+    VendorProductUploadInput input,
+    ByteData imageData,
+    String imageFileName,
+  ) {
+    return _repository.uploadProduct(
+      session,
+      input,
+      imageData,
+      imageFileName,
+    );
+  }
+
   Future<Product> updateProductThumbnail(
     Session session,
     int productId,

@@ -376,6 +376,66 @@ class VendorStore {
     );
   }
 
+  /// Creates a product and stores [imageData] as the catalog thumbnail in one
+  /// request. Optionally kicks off Tripo 3D generation when configured.
+  Future<Product> uploadProduct(
+    Session session,
+    VendorProductUploadInput input,
+    ByteData imageData,
+    String imageFileName,
+  ) async {
+    await requireOwnedVendor(session);
+
+    if (imageData.lengthInBytes == 0) {
+      throw PlaceifyException(
+        'Product photo is required.',
+        code: 'INVALID_FILE',
+      );
+    }
+
+    final thumbnailUrl = await _persistProductImage(
+      session,
+      imageData,
+      imageFileName,
+    );
+
+    var product = await createProduct(
+      session,
+      input.name,
+      input.description,
+      input.price,
+      categoryId: input.categoryId,
+      materials: input.materials,
+      widthCm: input.widthCm,
+      depthCm: input.depthCm,
+      heightCm: input.heightCm,
+      weightKg: input.weightKg,
+      assemblyNote: input.assemblyNote,
+      careInstructions: input.careInstructions,
+      warranty: input.warranty,
+      thumbnailUrl: thumbnailUrl,
+    );
+
+    if (input.generateModel3d) {
+      product = await _generateAndStoreModel3d(
+        session,
+        product,
+        skipIfExists: false,
+        throwOnFailure: false,
+      );
+    }
+
+    final productId = product.id;
+    if (productId == null) return product;
+
+    final loaded = await Product.db.findById(
+      session,
+      productId,
+      include: Product.include(category: Category.include()),
+    );
+    return loaded ?? product;
+  }
+
   Future<Product> _generateAndStoreModel3d(
     Session session,
     Product product, {
@@ -467,7 +527,14 @@ class VendorStore {
     String fileName,
   ) async {
     await requireOwnedVendor(session);
+    return _persistProductImage(session, fileData, fileName);
+  }
 
+  Future<String> _persistProductImage(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) async {
     final bytes = fileData.buffer.asUint8List(
       fileData.offsetInBytes,
       fileData.lengthInBytes,
@@ -483,7 +550,8 @@ class VendorStore {
     }
 
     final sanitized = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
-    final extension = _imageExtension(sanitized);
+    final extension =
+        _imageExtension(sanitized) ?? _imageExtensionFromBytes(bytes);
     if (extension == null) {
       throw PlaceifyException(
         'Use a JPG, PNG, or WEBP image.',
@@ -519,6 +587,34 @@ class VendorStore {
     if (lower.endsWith('.png')) return '.png';
     if (lower.endsWith('.webp')) return '.webp';
     if (lower.endsWith('.heic')) return '.heic';
+    return null;
+  }
+
+  String? _imageExtensionFromBytes(Uint8List bytes) {
+    if (bytes.length >= 3 &&
+        bytes[0] == 0xFF &&
+        bytes[1] == 0xD8 &&
+        bytes[2] == 0xFF) {
+      return '.jpg';
+    }
+    if (bytes.length >= 4 &&
+        bytes[0] == 0x89 &&
+        bytes[1] == 0x50 &&
+        bytes[2] == 0x4E &&
+        bytes[3] == 0x47) {
+      return '.png';
+    }
+    if (bytes.length >= 12 &&
+        bytes[0] == 0x52 &&
+        bytes[1] == 0x49 &&
+        bytes[2] == 0x46 &&
+        bytes[3] == 0x46 &&
+        bytes[8] == 0x57 &&
+        bytes[9] == 0x45 &&
+        bytes[10] == 0x42 &&
+        bytes[11] == 0x50) {
+      return '.webp';
+    }
     return null;
   }
 

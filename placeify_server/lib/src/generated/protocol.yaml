@@ -54,6 +54,7 @@ vendor:
   - updateShop:
   - listMyProducts:
   - createProduct:
+  - uploadProduct:
   - updateProductThumbnail:
   - uploadProductImage:
   - regenerateProductModel3d:

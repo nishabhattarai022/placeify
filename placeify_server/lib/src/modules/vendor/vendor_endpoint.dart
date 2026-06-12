@@ -96,6 +96,21 @@ class VendorEndpoint extends Endpoint {
     );
   }
 
+  /// Creates a vendor product and stores the uploaded photo in one call.
+  Future<Product> uploadProduct(
+    Session session,
+    VendorProductUploadInput input,
+    ByteData imageData,
+    String imageFileName,
+  ) {
+    return _service.uploadProduct(
+      session,
+      input,
+      imageData,
+      imageFileName,
+    );
+  }
+
   Future<Product> updateProductThumbnail(
     Session session,
     int productId,
