@@ -23,30 +23,37 @@ List<ProductCategory> categories(Ref ref) =>
 @riverpod
 List<Product> filteredProducts(Ref ref) {
   final categoryId = ref.watch(selectedCategoryProvider);
-  final catalog = ref.watch(catalogIndexProvider).value;
-  if (catalog != null && catalog.isNotEmpty) {
-    final products = catalog.values
+  final catalogAsync = ref.watch(catalogIndexProvider);
+
+  return catalogAsync.when(
+    data: (catalog) {
+      return catalog.values
+          .where((p) => p.categoryId == categoryId)
+          .toList()
+        ..sort((a, b) => ProductIdCodec.compareNewestFirst(a.id, b.id));
+    },
+    loading: () => const [],
+    error: (_, __) => MockProductRepository.products
         .where((p) => p.categoryId == categoryId)
-        .toList()
-      ..sort((a, b) => ProductIdCodec.compareNewestFirst(a.id, b.id));
-    return products;
-  }
-  return MockProductRepository.products
-      .where((p) => p.categoryId == categoryId)
-      .toList();
+        .toList(),
+  );
 }
 
 @riverpod
 Product? productById(Ref ref, String id) {
-  final catalog = ref.watch(catalogIndexProvider).value;
-  if (catalog != null) {
-    return catalog[id];
-  }
-  try {
-    return MockProductRepository.products.firstWhere((p) => p.id == id);
-  } catch (_) {
-    return null;
-  }
+  final catalogAsync = ref.watch(catalogIndexProvider);
+
+  return catalogAsync.when(
+    data: (catalog) => catalog[id],
+    loading: () => null,
+    error: (_, __) {
+      try {
+        return MockProductRepository.products.firstWhere((p) => p.id == id);
+      } catch (_) {
+        return null;
+      }
+    },
+  );
 }
 
 String categoryTitle(String categoryId) {
