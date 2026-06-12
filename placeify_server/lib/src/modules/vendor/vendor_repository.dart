@@ -5,7 +5,10 @@ import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
+import '../../shared/server_static_paths.dart';
 import '../../shared/session_service.dart';
+import 'product_3d/product_3d_generation_result.dart';
+import 'product_3d/product_3d_generator.dart';
 import 'product_image_processor.dart';
 
 class VendorStore {
@@ -373,6 +376,74 @@ class VendorStore {
     );
   }
 
+  Future<Product> _generateAndStoreModel3d(
+    Session session,
+    Product product, {
+    bool skipIfExists = true,
+    bool throwOnFailure = false,
+  }) async {
+    if (skipIfExists &&
+        product.model3dUrl != null &&
+        product.model3dUrl!.trim().isNotEmpty) {
+      return product;
+    }
+
+    const generator = Product3dGenerator();
+    final result = await generator.generateForProduct(
+      session,
+      product: product,
+    );
+
+    if (result is Product3dGenerationSuccess) {
+      return Product.db.updateRow(
+        session,
+        product.copyWith(model3dUrl: result.modelUrl),
+      );
+    }
+    if (result is Product3dGenerationFailure) {
+      if (throwOnFailure) {
+        throw PlaceifyException(
+          result.message,
+          code: result.code,
+        );
+      }
+      session.log(
+        '3D generation skipped for product ${product.id}: ${result.code}',
+        level: LogLevel.warning,
+      );
+      return product;
+    }
+
+    if (throwOnFailure) {
+      throw PlaceifyException(
+        '3D model generation returned an unknown result.',
+        code: 'MODEL3D_GENERATION_FAILED',
+      );
+    }
+    return product;
+  }
+
+  /// Generates a 3D model for an existing vendor product via Tripo API.
+  Future<Product> regenerateProductModel3d(
+    Session session,
+    int productId,
+  ) async {
+    final vendor = await requireOwnedVendor(session);
+    final product = await Product.db.findById(session, productId);
+    if (product == null || product.vendorId != vendor.id) {
+      throw PlaceifyException(
+        'Product not found.',
+        code: 'PRODUCT_NOT_FOUND',
+      );
+    }
+    return _generateAndStoreModel3d(
+      session,
+      product,
+      skipIfExists: false,
+      throwOnFailure: true,
+    );
+  }
+
   Future<Product> updateProductThumbnail(
     Session session,
     int productId,
@@ -427,15 +498,17 @@ class VendorStore {
       sanitized,
     );
 
-    final uploadsDir = Directory('web/static/uploads');
+    final uploadsDir = Directory(ServerStaticPaths.uploadsDir());
     if (!uploadsDir.existsSync()) {
       uploadsDir.createSync(recursive: true);
     }
 
     final baseName = sanitized.replaceAll(RegExp(r'\.[^.]+$'), '');
     final storedName =
-        '${DateTime.now().millisecondsSinceEpoch}_$baseName$processed.extension';
-    final file = File('web/static/uploads/$storedName');
+        '${DateTime.now().millisecondsSinceEpoch}_$baseName${processed.extension}';
+    final file = File(
+      '${uploadsDir.path}${Platform.pathSeparator}$storedName',
+    );
     await file.writeAsBytes(processed.bytes);
     return '/uploads/$storedName';
   }

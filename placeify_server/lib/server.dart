@@ -5,6 +5,8 @@ import 'package:serverpod/serverpod.dart';
 import 'src/auth/auth_services_setup.dart';
 import 'src/generated/endpoints.dart';
 import 'src/generated/protocol.dart';
+import 'src/shared/server_static_paths.dart';
+import 'src/web/middleware/uploads_cors_middleware.dart';
 import 'src/web/routes/app_config_route.dart';
 import 'src/web/routes/root.dart';
 
@@ -22,7 +24,8 @@ void run(List<String> args) async {
 
   // Serve all files in the web/static relative directory under /.
   // These are used by the default web page.
-  final root = Directory(Uri(path: 'web/static').toFilePath());
+  final root = Directory(ServerStaticPaths.root);
+  pod.webServer.addMiddleware(const UploadsCorsMiddleware().call, '/');
   pod.webServer.addRoute(StaticRoute.directory(root));
 
   // Setup the app config route.
