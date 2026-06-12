@@ -95,6 +95,7 @@ class VendorProducts extends _$VendorProducts {
       } else {
         await refresh();
       }
+      ref.invalidate(catalogIndexProvider);
       return null;
     } on VendorProductActionException catch (e) {
       state = previous;

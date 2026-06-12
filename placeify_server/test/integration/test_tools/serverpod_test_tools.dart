@@ -44,9 +44,10 @@ import 'package:placeify_server/src/generated/vendor_dashboard.dart' as _i26;
 import 'package:placeify_server/src/generated/vendor_product_upload_input.dart'
     as _i27;
 import 'dart:typed_data' as _i28;
-import 'package:placeify_server/src/generated/vendor_shop_order.dart' as _i29;
-import 'package:placeify_server/src/generated/wishlist_page.dart' as _i30;
-import 'package:placeify_server/src/generated/wishlist_item.dart' as _i31;
+import 'package:placeify_server/src/generated/product_status.dart' as _i29;
+import 'package:placeify_server/src/generated/vendor_shop_order.dart' as _i30;
+import 'package:placeify_server/src/generated/wishlist_page.dart' as _i31;
+import 'package:placeify_server/src/generated/wishlist_item.dart' as _i32;
 import 'package:placeify_server/src/generated/protocol.dart';
 import 'package:placeify_server/src/generated/endpoints.dart';
 export 'package:serverpod_test/serverpod_test_public_exports.dart';
@@ -1896,6 +1897,43 @@ class _VendorEndpoint {
     });
   }
 
+  _i3.Future<_i23.Product> updateProduct(
+    _i1.TestSessionBuilder sessionBuilder,
+    int productId,
+    _i27.VendorProductUploadInput input, {
+    _i29.ProductStatus? status,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'vendor',
+            method: 'updateProduct',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'vendor',
+          methodName: 'updateProduct',
+          parameters: _i1.testObjectToJson({
+            'productId': productId,
+            'input': input,
+            'status': status,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i23.Product>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _i3.Future<_i23.Product> updateProductThumbnail(
     _i1.TestSessionBuilder sessionBuilder,
     int productId,
@@ -1997,7 +2035,7 @@ class _VendorEndpoint {
     });
   }
 
-  _i3.Future<List<_i29.VendorShopOrder>> listShopOrders(
+  _i3.Future<List<_i30.VendorShopOrder>> listShopOrders(
     _i1.TestSessionBuilder sessionBuilder, {
     required int limit,
     required int offset,
@@ -2026,7 +2064,7 @@ class _VendorEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i29.VendorShopOrder>>);
+                as _i3.Future<List<_i30.VendorShopOrder>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2034,7 +2072,7 @@ class _VendorEndpoint {
     });
   }
 
-  _i3.Future<_i29.VendorShopOrder> getShopOrder(
+  _i3.Future<_i30.VendorShopOrder> getShopOrder(
     _i1.TestSessionBuilder sessionBuilder,
     int orderId,
   ) async {
@@ -2057,7 +2095,7 @@ class _VendorEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i29.VendorShopOrder>);
+                as _i3.Future<_i30.VendorShopOrder>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2076,7 +2114,7 @@ class _WishlistEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i30.WishlistPage> listMyWishlist(
+  _i3.Future<_i31.WishlistPage> listMyWishlist(
     _i1.TestSessionBuilder sessionBuilder, {
     _i18.PaginationInput? pagination,
   }) async {
@@ -2099,7 +2137,7 @@ class _WishlistEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i30.WishlistPage>);
+                as _i3.Future<_i31.WishlistPage>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2107,7 +2145,7 @@ class _WishlistEndpoint {
     });
   }
 
-  _i3.Future<_i31.WishlistItem> addToWishlist(
+  _i3.Future<_i32.WishlistItem> addToWishlist(
     _i1.TestSessionBuilder sessionBuilder,
     int productId,
   ) async {
@@ -2130,7 +2168,7 @@ class _WishlistEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i31.WishlistItem>);
+                as _i3.Future<_i32.WishlistItem>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

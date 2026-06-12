@@ -436,6 +436,103 @@ class VendorStore {
     return loaded ?? product;
   }
 
+  /// Updates an existing vendor product owned by the signed-in user.
+  Future<Product> updateProduct(
+    Session session,
+    int productId,
+    VendorProductUploadInput input, {
+    ProductStatus? status,
+  }) async {
+    final vendor = await requireOwnedVendor(session);
+    final product = await Product.db.findById(session, productId);
+    if (product == null || product.vendorId != vendor.id) {
+      throw PlaceifyException(
+        'Product not found.',
+        code: 'PRODUCT_NOT_FOUND',
+      );
+    }
+
+    if (input.name.trim().isEmpty || input.description.trim().isEmpty) {
+      throw PlaceifyException(
+        'Name and description are required.',
+        code: 'INVALID_PRODUCT',
+      );
+    }
+    if (input.price <= 0) {
+      throw PlaceifyException('Price must be positive.', code: 'INVALID_PRICE');
+    }
+
+    final trimmedMaterials = input.materials.trim();
+    if (trimmedMaterials.isEmpty) {
+      throw PlaceifyException(
+        'Materials are required.',
+        code: 'INVALID_MATERIALS',
+      );
+    }
+
+    if (input.widthCm <= 0 || input.depthCm <= 0 || input.heightCm <= 0) {
+      throw PlaceifyException(
+        'Dimensions must be positive.',
+        code: 'INVALID_DIMENSIONS',
+      );
+    }
+
+    final trimmedCare = input.careInstructions.trim();
+    if (trimmedCare.isEmpty) {
+      throw PlaceifyException(
+        'Care instructions are required.',
+        code: 'INVALID_CARE',
+      );
+    }
+
+    var resolvedCategoryId = input.categoryId ?? product.categoryId;
+    if (resolvedCategoryId == null) {
+      final defaultCategory = await Category.db.findFirstRow(
+        session,
+        where: (row) => row.name.equals('chairs'),
+      );
+      resolvedCategoryId = defaultCategory?.id;
+    }
+
+    var updated = await Product.db.updateRow(
+      session,
+      product.copyWith(
+        categoryId: resolvedCategoryId,
+        name: input.name.trim(),
+        description: input.description.trim(),
+        price: input.price,
+        materials: trimmedMaterials,
+        widthCm: input.widthCm,
+        depthCm: input.depthCm,
+        heightCm: input.heightCm,
+        weightKg: input.weightKg,
+        assemblyNote: input.assemblyNote?.trim(),
+        careInstructions: trimmedCare,
+        warranty: input.warranty?.trim(),
+        status: status ?? product.status,
+      ),
+    );
+
+    if (input.generateModel3d) {
+      updated = await _generateAndStoreModel3d(
+        session,
+        updated,
+        skipIfExists: false,
+        throwOnFailure: false,
+      );
+    }
+
+    final updatedId = updated.id;
+    if (updatedId == null) return updated;
+
+    final loaded = await Product.db.findById(
+      session,
+      updatedId,
+      include: Product.include(category: Category.include()),
+    );
+    return loaded ?? updated;
+  }
+
   Future<Product> _generateAndStoreModel3d(
     Session session,
     Product product, {
