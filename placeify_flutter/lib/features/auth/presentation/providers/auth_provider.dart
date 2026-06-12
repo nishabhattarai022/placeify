@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../vendor/domain/enums/vendor_status.dart';
 import '../../data/serverpod_auth_repository.dart';
 import '../../domain/models/app_user.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -88,6 +89,30 @@ class CurrentUser extends _$CurrentUser {
     final repo = await ref.read(authRepositoryProvider.future);
     state = await AsyncValue.guard(() => repo.becomeConsumer());
     if (state.hasError) throw _unwrapError(state.error!);
+  }
+
+  Future<void> updateVendorStatus({
+    required VendorStatus status,
+    String? vendorId,
+  }) async {
+    final repo = await ref.read(authRepositoryProvider.future);
+    state = await AsyncValue.guard(
+      () => repo.updateVendorStatus(status: status, vendorId: vendorId),
+    );
+    if (state.hasError) throw _unwrapError(state.error!);
+  }
+
+  Future<void> updateVendorStatusForUser({
+    required String userId,
+    required VendorStatus status,
+    String? vendorId,
+  }) async {
+    final repo = await ref.read(authRepositoryProvider.future);
+    await repo.updateVendorStatusForUser(
+      userId: userId,
+      status: status,
+      vendorId: vendorId,
+    );
   }
 }
 

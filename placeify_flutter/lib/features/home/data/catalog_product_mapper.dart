@@ -43,7 +43,6 @@ abstract final class CatalogProductMapper {
       id: ProductIdCodec.fromDatabaseId(id),
       name: product.name,
       brand: shopName,
-      shopName: shopName,
       sku: 'PF${id.toString().padLeft(5, '0')}',
       price: product.price,
       imageUrl: imageUrl.isEmpty
@@ -53,12 +52,6 @@ abstract final class CatalogProductMapper {
       hasArView: product.model3dUrl != null && product.model3dUrl!.isNotEmpty,
       categoryId: categoryId,
       dimensions: dimensions,
-      description: product.description,
-      materials: product.materials ?? '',
-      careInstructions: product.careInstructions ?? '',
-      warranty: product.warranty,
-      assemblyNote: product.assemblyNote,
-      weightKg: product.weightKg,
     );
   }
 

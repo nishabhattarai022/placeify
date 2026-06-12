@@ -16,10 +16,15 @@ import '../domain/constants/vendor_routes.dart';
 import '../domain/enums/order_status.dart';
 import '../domain/models/delivery_update.dart';
 import '../domain/models/vendor_order.dart';
+import '../domain/enums/payment_status.dart';
+import '../domain/models/payment_update.dart';
 import 'providers/vendor_order_detail_provider.dart';
+import 'providers/vendor_payments_provider.dart';
 import 'widgets/order_action_sheet.dart';
 import 'widgets/order_status_chip.dart';
 import 'widgets/order_timeline_widget.dart';
+import 'widgets/payment_status_chip.dart';
+import 'widgets/payment_update_sheet.dart';
 
 class VendorOrderDetailScreen extends ConsumerWidget {
   const VendorOrderDetailScreen({required this.orderId, super.key});
@@ -192,6 +197,8 @@ class _OrderDetailBody extends ConsumerWidget {
                   vendorEditable: true,
                 ),
               ),
+              const SizedBox(height: 12),
+              _PaymentSection(order: order),
               if (canUpdateDelivery) ...[
                 const SizedBox(height: 20),
                 ProfileSubmitButton(
@@ -226,6 +233,149 @@ class _OrderDetailBody extends ConsumerWidget {
       return 'assets/icons/ic_table.svg';
     }
     return 'assets/icons/ic_chair.svg';
+  }
+}
+
+class _PaymentSection extends ConsumerWidget {
+  const _PaymentSection({required this.order});
+
+  final VendorOrder order;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final auditAsync = ref.watch(orderPaymentAuditTrailProvider(order.id));
+
+    return _SectionCard(
+      title: 'Payment',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          auditAsync.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+            error: (_, __) => const Text(
+              'Could not load payment history.',
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            data: (updates) {
+              if (updates.isEmpty) {
+                return const Text(
+                  'No payment updates recorded',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textMuted,
+                  ),
+                );
+              }
+
+              return Column(
+                children: [
+                  for (var i = 0; i < updates.length; i++) ...[
+                    if (i > 0) const SizedBox(height: 10),
+                    _PaymentAuditRow(update: updates[i]),
+                  ],
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton(
+            onPressed: () async {
+              HapticService.light();
+              await PaymentUpdateSheet.show(
+                context,
+                ref,
+                orderId: order.id,
+                orderLabel: 'Order #${order.orderNumber}',
+              );
+              ref.invalidate(orderPaymentAuditTrailProvider(order.id));
+            },
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.vendorForest,
+              side: const BorderSide(color: AppColors.vendorForest),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+            child: const Text('Update payment'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaymentAuditRow extends StatelessWidget {
+  const _PaymentAuditRow({required this.update});
+
+  final PaymentUpdate update;
+
+  static String _statusLabel(PaymentStatus status) {
+    return switch (status) {
+      PaymentStatus.pending => 'Pending',
+      PaymentStatus.paid => 'Received',
+      PaymentStatus.partial => 'Partial',
+      PaymentStatus.refunded => 'Refunded',
+      PaymentStatus.failed => 'Failed',
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.cream,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.creamDark),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              PaymentStatusChip(status: update.status),
+              const Spacer(),
+              Text(
+                Formatters.shortDate(update.updatedAt),
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '${_statusLabel(update.status)} · ${Formatters.currencyFull(update.amount)}',
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.espresso,
+            ),
+          ),
+          if (update.note.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              update.note,
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+                height: 1.35,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }
 

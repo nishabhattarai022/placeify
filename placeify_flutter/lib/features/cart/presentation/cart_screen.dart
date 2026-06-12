@@ -106,11 +106,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
               bottom: 0,
               child: CartOrderSummary(
                 totals: totals,
-                onCheckout: () async {
-                  final message =
-                      await ref.read(cartProvider.notifier).checkout();
-                  if (!context.mounted) return;
-                  PlaceifyToast.show(context, message);
+                onCheckout: () {
+                  PlaceifyToast.show(context, 'Checkout coming soon');
                 },
               ),
             ),

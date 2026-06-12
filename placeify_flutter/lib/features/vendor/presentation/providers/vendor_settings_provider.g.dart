@@ -15,15 +15,15 @@ final vendorSettingsProvider = VendorSettingsProvider._();
 final class VendorSettingsProvider
     extends $NotifierProvider<VendorSettings, VendorSettingsState> {
   VendorSettingsProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'vendorSettingsProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'vendorSettingsProvider',
+          isAutoDispose: false,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
 
   @override
   String debugGetCreateSourceHash() => _$vendorSettingsHash();
@@ -49,14 +49,11 @@ abstract class _$VendorSettings extends $Notifier<VendorSettingsState> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<VendorSettingsState, VendorSettingsState>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<VendorSettingsState, VendorSettingsState>,
-              VendorSettingsState,
-              Object?,
-              Object?
-            >;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<VendorSettingsState, VendorSettingsState>,
+        VendorSettingsState,
+        Object?,
+        Object?>;
     element.handleCreate(ref, build);
   }
 }

@@ -25,6 +25,14 @@ abstract interface class AuthRepository {
     String? vendorId,
   });
 
+  Future<List<AppUser>> getAllUsers();
+
+  Future<void> updateVendorStatusForUser({
+    required String userId,
+    required VendorStatus status,
+    String? vendorId,
+  });
+
   Future<void> signOut();
 }
 

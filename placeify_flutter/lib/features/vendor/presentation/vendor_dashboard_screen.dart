@@ -6,6 +6,7 @@ import 'package:placeify_flutter/core/constants/app_colors.dart';
 import 'package:placeify_flutter/core/constants/app_radii.dart';
 import 'package:placeify_flutter/core/constants/app_spacing.dart';
 import 'package:placeify_flutter/core/constants/app_typography.dart';
+import 'package:placeify_flutter/core/services/haptic_service.dart';
 import 'package:placeify_flutter/core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import 'package:placeify_flutter/core/widgets/shimmer_loader.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_routes.dart';
@@ -121,6 +122,8 @@ class _VendorDashboardScreenState extends ConsumerState<VendorDashboardScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const _DashboardBackButton(),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -137,6 +140,7 @@ class _VendorDashboardScreenState extends ConsumerState<VendorDashboardScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(width: 12),
                   const _DashboardNotificationButton(),
                 ],
               ),
@@ -351,6 +355,39 @@ class _DashboardError extends StatelessWidget {
             const SizedBox(height: 12),
             TextButton(onPressed: onRetry, child: const Text('Retry')),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DashboardBackButton extends StatelessWidget {
+  const _DashboardBackButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        HapticService.light();
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go(VendorRoutes.profileFallback);
+        }
+      },
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: AppColors.warmWhite,
+          shape: BoxShape.circle,
+          border: Border.all(color: AppColors.creamDark, width: 1.5),
+        ),
+        alignment: Alignment.center,
+        child: const Icon(
+          Icons.arrow_back,
+          size: 22,
+          color: AppColors.vendorForest,
         ),
       ),
     );

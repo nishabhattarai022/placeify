@@ -2,25 +2,128 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/theme/app_fonts.dart';
-import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/animated_scale_tap.dart';
 import '../product_detail_tokens.dart';
 
-class ProductDetailCartBar extends StatefulWidget {
+class _ActionIconChip extends StatelessWidget {
+  const _ActionIconChip({
+    required this.icon,
+    required this.size,
+    required this.iconSize,
+  });
+
+  final IconData icon;
+  final double size;
+  final double iconSize;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: const BoxDecoration(
+        color: ProductDetailTokens.cartBarIconChip,
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: Icon(
+        icon,
+        size: iconSize,
+        color: Colors.white,
+      ),
+    );
+  }
+}
+
+class ProductDetailPillButton extends StatelessWidget {
+  const ProductDetailPillButton({
+    required this.label,
+    required this.leadingIcon,
+    required this.onTap,
+    super.key,
+  });
+
+  final String label;
+  final IconData leadingIcon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: label,
+      child: AnimatedScaleTap(
+        pressScale: 0.98,
+        onTap: () {
+          HapticService.medium();
+          onTap();
+        },
+        child: Container(
+          height: ProductDetailTokens.cartBarActionHeight,
+          padding: const EdgeInsets.symmetric(
+            horizontal: ProductDetailTokens.cartBarActionInnerPadding,
+          ),
+          decoration: BoxDecoration(
+            color: ProductDetailTokens.cartBarBg,
+            borderRadius: BorderRadius.circular(999),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.22),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              _ActionIconChip(
+                icon: leadingIcon,
+                size: ProductDetailTokens.cartBarActionIconChipSize,
+                iconSize: ProductDetailTokens.cartBarActionLeadingIconSize,
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.center,
+                    child: Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppFonts.dmSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              _ActionIconChip(
+                icon: Icons.arrow_forward,
+                size: ProductDetailTokens.cartBarActionIconChipSize,
+                iconSize: ProductDetailTokens.cartBarActionArrowIconSize,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class ProductDetailCartBar extends StatelessWidget {
   const ProductDetailCartBar({
-    required this.totalPrice,
+    required this.onTryInMyRoom,
     required this.onAddToCart,
     super.key,
   });
 
-  final double totalPrice;
+  final VoidCallback onTryInMyRoom;
   final VoidCallback onAddToCart;
-
-  @override
-  State<ProductDetailCartBar> createState() => _ProductDetailCartBarState();
-}
-
-class _ProductDetailCartBarState extends State<ProductDetailCartBar> {
-  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -33,88 +136,24 @@ class _ProductDetailCartBarState extends State<ProductDetailCartBar> {
         ProductDetailTokens.cartBarHorizontalPadding,
         bottom + ProductDetailTokens.cartBarBottomPadding,
       ),
-      child: GestureDetector(
-        onTapDown: (_) => setState(() => _pressed = true),
-        onTapUp: (_) => setState(() => _pressed = false),
-        onTapCancel: () => setState(() => _pressed = false),
-        onTap: () {
-          HapticService.medium();
-          widget.onAddToCart();
-        },
-        child: AnimatedScale(
-          scale: _pressed ? 0.98 : 1,
-          duration: const Duration(milliseconds: 140),
-          child: Container(
-            height: ProductDetailTokens.cartBarHeight,
-            padding: const EdgeInsets.symmetric(
-              horizontal: ProductDetailTokens.cartBarInnerPadding,
-            ),
-            decoration: BoxDecoration(
-              color: ProductDetailTokens.cartBarBg,
-              borderRadius: BorderRadius.circular(999),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.22),
-                  blurRadius: 24,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: ProductDetailTokens.cartBarIconChipSize,
-                  height: ProductDetailTokens.cartBarIconChipSize,
-                  decoration: const BoxDecoration(
-                    color: ProductDetailTokens.cartBarIconChip,
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: const Icon(
-                    Icons.shopping_bag_outlined,
-                    size: 18,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Add To Cart',
-                  style: AppFonts.dmSans(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  Formatters.currencyDecimal(widget.totalPrice),
-                  style: AppFonts.dmSans(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Container(
-                  width: ProductDetailTokens.cartBarTrailingArrowSize,
-                  height: ProductDetailTokens.cartBarTrailingArrowSize,
-                  decoration: const BoxDecoration(
-                    color: ProductDetailTokens.cartBarIconChip,
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: const Icon(
-                    Icons.arrow_forward,
-                    size: 16,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
+      child: Row(
+        children: [
+          Expanded(
+            child: ProductDetailPillButton(
+              label: 'Try in my room',
+              leadingIcon: Icons.view_in_ar_outlined,
+              onTap: onTryInMyRoom,
             ),
           ),
-        ),
+          const SizedBox(width: ProductDetailTokens.cartBarGap),
+          Expanded(
+            child: ProductDetailPillButton(
+              label: 'Add to cart',
+              leadingIcon: Icons.shopping_bag_outlined,
+              onTap: onAddToCart,
+            ),
+          ),
+        ],
       ),
     );
   }

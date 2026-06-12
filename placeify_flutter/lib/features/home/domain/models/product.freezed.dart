@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Product {
 
- String get id; String get name; String get brand; String get sku; double get price; double? get originalPrice; String get imageUrl; String get svgIconPath; bool get hasArView; bool get isWishlisted; String get categoryId; ProductDimensions get dimensions; String get description; String get materials; String get careInstructions; String? get warranty; String? get assemblyNote; double? get weightKg; String get shopName;
+ String get id; String get name; String get brand; String get sku; double get price; double? get originalPrice; String get imageUrl; String get svgIconPath; bool get hasArView; bool get isWishlisted; String get categoryId; ProductDimensions get dimensions;
 /// Create a copy of Product
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $ProductCopyWith<Product> get copyWith => _$ProductCopyWithImpl<Product>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Product&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.brand, brand) || other.brand == brand)&&(identical(other.sku, sku) || other.sku == sku)&&(identical(other.price, price) || other.price == price)&&(identical(other.originalPrice, originalPrice) || other.originalPrice == originalPrice)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.svgIconPath, svgIconPath) || other.svgIconPath == svgIconPath)&&(identical(other.hasArView, hasArView) || other.hasArView == hasArView)&&(identical(other.isWishlisted, isWishlisted) || other.isWishlisted == isWishlisted)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.dimensions, dimensions) || other.dimensions == dimensions)&&(identical(other.description, description) || other.description == description)&&(identical(other.materials, materials) || other.materials == materials)&&(identical(other.careInstructions, careInstructions) || other.careInstructions == careInstructions)&&(identical(other.warranty, warranty) || other.warranty == warranty)&&(identical(other.assemblyNote, assemblyNote) || other.assemblyNote == assemblyNote)&&(identical(other.weightKg, weightKg) || other.weightKg == weightKg)&&(identical(other.shopName, shopName) || other.shopName == shopName));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Product&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.brand, brand) || other.brand == brand)&&(identical(other.sku, sku) || other.sku == sku)&&(identical(other.price, price) || other.price == price)&&(identical(other.originalPrice, originalPrice) || other.originalPrice == originalPrice)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.svgIconPath, svgIconPath) || other.svgIconPath == svgIconPath)&&(identical(other.hasArView, hasArView) || other.hasArView == hasArView)&&(identical(other.isWishlisted, isWishlisted) || other.isWishlisted == isWishlisted)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.dimensions, dimensions) || other.dimensions == dimensions));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,id,name,brand,sku,price,originalPrice,imageUrl,svgIconPath,hasArView,isWishlisted,categoryId,dimensions,description,materials,careInstructions,warranty,assemblyNote,weightKg,shopName]);
+int get hashCode => Object.hash(runtimeType,id,name,brand,sku,price,originalPrice,imageUrl,svgIconPath,hasArView,isWishlisted,categoryId,dimensions);
 
 @override
 String toString() {
-  return 'Product(id: $id, name: $name, brand: $brand, sku: $sku, price: $price, originalPrice: $originalPrice, imageUrl: $imageUrl, svgIconPath: $svgIconPath, hasArView: $hasArView, isWishlisted: $isWishlisted, categoryId: $categoryId, dimensions: $dimensions, description: $description, materials: $materials, careInstructions: $careInstructions, warranty: $warranty, assemblyNote: $assemblyNote, weightKg: $weightKg, shopName: $shopName)';
+  return 'Product(id: $id, name: $name, brand: $brand, sku: $sku, price: $price, originalPrice: $originalPrice, imageUrl: $imageUrl, svgIconPath: $svgIconPath, hasArView: $hasArView, isWishlisted: $isWishlisted, categoryId: $categoryId, dimensions: $dimensions)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $ProductCopyWith<$Res>  {
   factory $ProductCopyWith(Product value, $Res Function(Product) _then) = _$ProductCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String brand, String sku, double price, double? originalPrice, String imageUrl, String svgIconPath, bool hasArView, bool isWishlisted, String categoryId, ProductDimensions dimensions, String description, String materials, String careInstructions, String? warranty, String? assemblyNote, double? weightKg, String shopName
+ String id, String name, String brand, String sku, double price, double? originalPrice, String imageUrl, String svgIconPath, bool hasArView, bool isWishlisted, String categoryId, ProductDimensions dimensions
 });
 
 
@@ -62,7 +62,7 @@ class _$ProductCopyWithImpl<$Res>
 
 /// Create a copy of Product
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? brand = null,Object? sku = null,Object? price = null,Object? originalPrice = freezed,Object? imageUrl = null,Object? svgIconPath = null,Object? hasArView = null,Object? isWishlisted = null,Object? categoryId = null,Object? dimensions = null,Object? description = null,Object? materials = null,Object? careInstructions = null,Object? warranty = freezed,Object? assemblyNote = freezed,Object? weightKg = freezed,Object? shopName = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? brand = null,Object? sku = null,Object? price = null,Object? originalPrice = freezed,Object? imageUrl = null,Object? svgIconPath = null,Object? hasArView = null,Object? isWishlisted = null,Object? categoryId = null,Object? dimensions = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -76,14 +76,7 @@ as String,hasArView: null == hasArView ? _self.hasArView : hasArView // ignore: 
 as bool,isWishlisted: null == isWishlisted ? _self.isWishlisted : isWishlisted // ignore: cast_nullable_to_non_nullable
 as bool,categoryId: null == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as String,dimensions: null == dimensions ? _self.dimensions : dimensions // ignore: cast_nullable_to_non_nullable
-as ProductDimensions,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
-as String,materials: null == materials ? _self.materials : materials // ignore: cast_nullable_to_non_nullable
-as String,careInstructions: null == careInstructions ? _self.careInstructions : careInstructions // ignore: cast_nullable_to_non_nullable
-as String,warranty: freezed == warranty ? _self.warranty : warranty // ignore: cast_nullable_to_non_nullable
-as String?,assemblyNote: freezed == assemblyNote ? _self.assemblyNote : assemblyNote // ignore: cast_nullable_to_non_nullable
-as String?,weightKg: freezed == weightKg ? _self.weightKg : weightKg // ignore: cast_nullable_to_non_nullable
-as double?,shopName: null == shopName ? _self.shopName : shopName // ignore: cast_nullable_to_non_nullable
-as String,
+as ProductDimensions,
   ));
 }
 /// Create a copy of Product
@@ -177,10 +170,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String brand,  String sku,  double price,  double? originalPrice,  String imageUrl,  String svgIconPath,  bool hasArView,  bool isWishlisted,  String categoryId,  ProductDimensions dimensions,  String description,  String materials,  String careInstructions,  String? warranty,  String? assemblyNote,  double? weightKg,  String shopName)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String brand,  String sku,  double price,  double? originalPrice,  String imageUrl,  String svgIconPath,  bool hasArView,  bool isWishlisted,  String categoryId,  ProductDimensions dimensions)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Product() when $default != null:
-return $default(_that.id,_that.name,_that.brand,_that.sku,_that.price,_that.originalPrice,_that.imageUrl,_that.svgIconPath,_that.hasArView,_that.isWishlisted,_that.categoryId,_that.dimensions,_that.description,_that.materials,_that.careInstructions,_that.warranty,_that.assemblyNote,_that.weightKg,_that.shopName);case _:
+return $default(_that.id,_that.name,_that.brand,_that.sku,_that.price,_that.originalPrice,_that.imageUrl,_that.svgIconPath,_that.hasArView,_that.isWishlisted,_that.categoryId,_that.dimensions);case _:
   return orElse();
 
 }
@@ -198,10 +191,10 @@ return $default(_that.id,_that.name,_that.brand,_that.sku,_that.price,_that.orig
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String brand,  String sku,  double price,  double? originalPrice,  String imageUrl,  String svgIconPath,  bool hasArView,  bool isWishlisted,  String categoryId,  ProductDimensions dimensions,  String description,  String materials,  String careInstructions,  String? warranty,  String? assemblyNote,  double? weightKg,  String shopName)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String brand,  String sku,  double price,  double? originalPrice,  String imageUrl,  String svgIconPath,  bool hasArView,  bool isWishlisted,  String categoryId,  ProductDimensions dimensions)  $default,) {final _that = this;
 switch (_that) {
 case _Product():
-return $default(_that.id,_that.name,_that.brand,_that.sku,_that.price,_that.originalPrice,_that.imageUrl,_that.svgIconPath,_that.hasArView,_that.isWishlisted,_that.categoryId,_that.dimensions,_that.description,_that.materials,_that.careInstructions,_that.warranty,_that.assemblyNote,_that.weightKg,_that.shopName);case _:
+return $default(_that.id,_that.name,_that.brand,_that.sku,_that.price,_that.originalPrice,_that.imageUrl,_that.svgIconPath,_that.hasArView,_that.isWishlisted,_that.categoryId,_that.dimensions);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -218,10 +211,10 @@ return $default(_that.id,_that.name,_that.brand,_that.sku,_that.price,_that.orig
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String brand,  String sku,  double price,  double? originalPrice,  String imageUrl,  String svgIconPath,  bool hasArView,  bool isWishlisted,  String categoryId,  ProductDimensions dimensions,  String description,  String materials,  String careInstructions,  String? warranty,  String? assemblyNote,  double? weightKg,  String shopName)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String brand,  String sku,  double price,  double? originalPrice,  String imageUrl,  String svgIconPath,  bool hasArView,  bool isWishlisted,  String categoryId,  ProductDimensions dimensions)?  $default,) {final _that = this;
 switch (_that) {
 case _Product() when $default != null:
-return $default(_that.id,_that.name,_that.brand,_that.sku,_that.price,_that.originalPrice,_that.imageUrl,_that.svgIconPath,_that.hasArView,_that.isWishlisted,_that.categoryId,_that.dimensions,_that.description,_that.materials,_that.careInstructions,_that.warranty,_that.assemblyNote,_that.weightKg,_that.shopName);case _:
+return $default(_that.id,_that.name,_that.brand,_that.sku,_that.price,_that.originalPrice,_that.imageUrl,_that.svgIconPath,_that.hasArView,_that.isWishlisted,_that.categoryId,_that.dimensions);case _:
   return null;
 
 }
@@ -233,7 +226,7 @@ return $default(_that.id,_that.name,_that.brand,_that.sku,_that.price,_that.orig
 
 
 class _Product extends Product {
-  const _Product({required this.id, required this.name, required this.brand, required this.sku, required this.price, this.originalPrice, required this.imageUrl, required this.svgIconPath, required this.hasArView, this.isWishlisted = false, required this.categoryId, required this.dimensions, this.description = '', this.materials = '', this.careInstructions = '', this.warranty, this.assemblyNote, this.weightKg, this.shopName = ''}): super._();
+  const _Product({required this.id, required this.name, required this.brand, required this.sku, required this.price, this.originalPrice, required this.imageUrl, required this.svgIconPath, required this.hasArView, this.isWishlisted = false, required this.categoryId, required this.dimensions}): super._();
   
 
 @override final  String id;
@@ -248,13 +241,6 @@ class _Product extends Product {
 @override@JsonKey() final  bool isWishlisted;
 @override final  String categoryId;
 @override final  ProductDimensions dimensions;
-@override@JsonKey() final  String description;
-@override@JsonKey() final  String materials;
-@override@JsonKey() final  String careInstructions;
-@override final  String? warranty;
-@override final  String? assemblyNote;
-@override final  double? weightKg;
-@override@JsonKey() final  String shopName;
 
 /// Create a copy of Product
 /// with the given fields replaced by the non-null parameter values.
@@ -266,16 +252,16 @@ _$ProductCopyWith<_Product> get copyWith => __$ProductCopyWithImpl<_Product>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Product&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.brand, brand) || other.brand == brand)&&(identical(other.sku, sku) || other.sku == sku)&&(identical(other.price, price) || other.price == price)&&(identical(other.originalPrice, originalPrice) || other.originalPrice == originalPrice)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.svgIconPath, svgIconPath) || other.svgIconPath == svgIconPath)&&(identical(other.hasArView, hasArView) || other.hasArView == hasArView)&&(identical(other.isWishlisted, isWishlisted) || other.isWishlisted == isWishlisted)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.dimensions, dimensions) || other.dimensions == dimensions)&&(identical(other.description, description) || other.description == description)&&(identical(other.materials, materials) || other.materials == materials)&&(identical(other.careInstructions, careInstructions) || other.careInstructions == careInstructions)&&(identical(other.warranty, warranty) || other.warranty == warranty)&&(identical(other.assemblyNote, assemblyNote) || other.assemblyNote == assemblyNote)&&(identical(other.weightKg, weightKg) || other.weightKg == weightKg)&&(identical(other.shopName, shopName) || other.shopName == shopName));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Product&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.brand, brand) || other.brand == brand)&&(identical(other.sku, sku) || other.sku == sku)&&(identical(other.price, price) || other.price == price)&&(identical(other.originalPrice, originalPrice) || other.originalPrice == originalPrice)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.svgIconPath, svgIconPath) || other.svgIconPath == svgIconPath)&&(identical(other.hasArView, hasArView) || other.hasArView == hasArView)&&(identical(other.isWishlisted, isWishlisted) || other.isWishlisted == isWishlisted)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.dimensions, dimensions) || other.dimensions == dimensions));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,id,name,brand,sku,price,originalPrice,imageUrl,svgIconPath,hasArView,isWishlisted,categoryId,dimensions,description,materials,careInstructions,warranty,assemblyNote,weightKg,shopName]);
+int get hashCode => Object.hash(runtimeType,id,name,brand,sku,price,originalPrice,imageUrl,svgIconPath,hasArView,isWishlisted,categoryId,dimensions);
 
 @override
 String toString() {
-  return 'Product(id: $id, name: $name, brand: $brand, sku: $sku, price: $price, originalPrice: $originalPrice, imageUrl: $imageUrl, svgIconPath: $svgIconPath, hasArView: $hasArView, isWishlisted: $isWishlisted, categoryId: $categoryId, dimensions: $dimensions, description: $description, materials: $materials, careInstructions: $careInstructions, warranty: $warranty, assemblyNote: $assemblyNote, weightKg: $weightKg, shopName: $shopName)';
+  return 'Product(id: $id, name: $name, brand: $brand, sku: $sku, price: $price, originalPrice: $originalPrice, imageUrl: $imageUrl, svgIconPath: $svgIconPath, hasArView: $hasArView, isWishlisted: $isWishlisted, categoryId: $categoryId, dimensions: $dimensions)';
 }
 
 
@@ -286,7 +272,7 @@ abstract mixin class _$ProductCopyWith<$Res> implements $ProductCopyWith<$Res> {
   factory _$ProductCopyWith(_Product value, $Res Function(_Product) _then) = __$ProductCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String brand, String sku, double price, double? originalPrice, String imageUrl, String svgIconPath, bool hasArView, bool isWishlisted, String categoryId, ProductDimensions dimensions, String description, String materials, String careInstructions, String? warranty, String? assemblyNote, double? weightKg, String shopName
+ String id, String name, String brand, String sku, double price, double? originalPrice, String imageUrl, String svgIconPath, bool hasArView, bool isWishlisted, String categoryId, ProductDimensions dimensions
 });
 
 
@@ -303,7 +289,7 @@ class __$ProductCopyWithImpl<$Res>
 
 /// Create a copy of Product
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? brand = null,Object? sku = null,Object? price = null,Object? originalPrice = freezed,Object? imageUrl = null,Object? svgIconPath = null,Object? hasArView = null,Object? isWishlisted = null,Object? categoryId = null,Object? dimensions = null,Object? description = null,Object? materials = null,Object? careInstructions = null,Object? warranty = freezed,Object? assemblyNote = freezed,Object? weightKg = freezed,Object? shopName = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? brand = null,Object? sku = null,Object? price = null,Object? originalPrice = freezed,Object? imageUrl = null,Object? svgIconPath = null,Object? hasArView = null,Object? isWishlisted = null,Object? categoryId = null,Object? dimensions = null,}) {
   return _then(_Product(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -317,14 +303,7 @@ as String,hasArView: null == hasArView ? _self.hasArView : hasArView // ignore: 
 as bool,isWishlisted: null == isWishlisted ? _self.isWishlisted : isWishlisted // ignore: cast_nullable_to_non_nullable
 as bool,categoryId: null == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as String,dimensions: null == dimensions ? _self.dimensions : dimensions // ignore: cast_nullable_to_non_nullable
-as ProductDimensions,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
-as String,materials: null == materials ? _self.materials : materials // ignore: cast_nullable_to_non_nullable
-as String,careInstructions: null == careInstructions ? _self.careInstructions : careInstructions // ignore: cast_nullable_to_non_nullable
-as String,warranty: freezed == warranty ? _self.warranty : warranty // ignore: cast_nullable_to_non_nullable
-as String?,assemblyNote: freezed == assemblyNote ? _self.assemblyNote : assemblyNote // ignore: cast_nullable_to_non_nullable
-as String?,weightKg: freezed == weightKg ? _self.weightKg : weightKg // ignore: cast_nullable_to_non_nullable
-as double?,shopName: null == shopName ? _self.shopName : shopName // ignore: cast_nullable_to_non_nullable
-as String,
+as ProductDimensions,
   ));
 }
 

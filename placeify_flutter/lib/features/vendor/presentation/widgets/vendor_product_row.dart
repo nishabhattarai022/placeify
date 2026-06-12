@@ -118,7 +118,16 @@ class VendorProductRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                VendorProductStatusChip(isActive: product.isActive),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (product.isLowStock) ...[
+                      const _LowStockBadge(),
+                      const SizedBox(width: 6),
+                    ],
+                    VendorProductStatusChip(isActive: product.isActive),
+                  ],
+                ),
               ],
             ),
           ],
@@ -132,6 +141,29 @@ class VendorProductRow extends StatelessWidget {
       if (category.id == categoryId) return category.svgIconAssetPath;
     }
     return 'assets/icons/ic_chair.svg';
+  }
+}
+
+class _LowStockBadge extends StatelessWidget {
+  const _LowStockBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColors.coralBg,
+        borderRadius: AppRadii.pill,
+      ),
+      child: const Text(
+        'Low stock',
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: AppColors.coral,
+        ),
+      ),
+    );
   }
 }
 

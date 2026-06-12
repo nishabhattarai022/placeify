@@ -2,18 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:placeify_flutter/features/home/data/mock_product_repository.dart';
 import 'package:placeify_flutter/features/profile/presentation/widgets/shared/profile_form_field.dart';
-import 'package:placeify_flutter/features/profile/presentation/widgets/shared/profile_submit_button.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_form_state.dart';
+import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_image_item.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_product_form_provider.dart';
+import 'package:placeify_flutter/features/vendor/domain/constants/vendor_strings.dart';
 import 'package:placeify_flutter/features/vendor/presentation/widgets/product_image_picker_grid.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_radii.dart';
+import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/animated_scale_tap.dart';
+import '../../../core/widgets/placeify_bottom_sheet.dart';
 import '../../../core/widgets/toast_overlay.dart';
 
 class VendorProductFormScreen extends ConsumerStatefulWidget {
@@ -30,6 +35,16 @@ class VendorProductFormScreen extends ConsumerStatefulWidget {
 }
 
 class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScreen> {
+  bool _isDirty = false;
+  bool _isHydrated = false;
+
+  final _formKey = GlobalKey<FormState>();
+  final _nameKey = GlobalKey<FormFieldState<String>>();
+  final _skuKey = GlobalKey<FormFieldState<String>>();
+  final _categoryKey = GlobalKey<FormFieldState<String>>();
+  final _listPriceKey = GlobalKey<FormFieldState<String>>();
+  final _stockKey = GlobalKey<FormFieldState<String>>();
+
   late final TextEditingController _name;
   late final TextEditingController _description;
   late final TextEditingController _brand;
@@ -70,8 +85,14 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
           .prepareForRoute(productId: widget.productId);
       if (mounted) {
         _syncControllersFromState(ref.read(vendorProductFormProvider));
+        setState(() => _isHydrated = true);
       }
     });
+  }
+
+  void _markDirty() {
+    if (!_isHydrated || widget.productId == null) return;
+    if (!_isDirty) setState(() => _isDirty = true);
   }
 
   @override
@@ -119,15 +140,64 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     setIfDifferent(_lowStockThreshold, form.lowStockThreshold);
   }
 
-  Future<void> _submit() async {
+  void _flushControllersToNotifier() {
+    final notifier = ref.read(vendorProductFormProvider.notifier);
+    notifier.update(
+      (state) => state.copyWith(
+        name: _name.text,
+        description: _description.text,
+        brand: _brand.text,
+        sku: _sku.text,
+        materials: _materials.text,
+        listPrice: _listPrice.text,
+        discountPercent: _discountPercent.text,
+        offerLabel: _offerLabel.text,
+        width: _width.text,
+        height: _height.text,
+        depth: _depth.text,
+        weight: _weight.text,
+        stock: _stock.text,
+        lowStockThreshold: _lowStockThreshold.text,
+      ),
+    );
+  }
+
+  void _scrollToFirstError() {
+    final keys = [
+      _nameKey,
+      _skuKey,
+      _categoryKey,
+      _listPriceKey,
+      _stockKey,
+    ];
+    for (final key in keys) {
+      final fieldState = key.currentState;
+      if (fieldState != null && fieldState.hasError) {
+        Scrollable.ensureVisible(
+          fieldState.context,
+          alignment: 0.2,
+          duration: const Duration(milliseconds: 300),
+        );
+        return;
+      }
+    }
+  }
+
+  Future<void> _onUpload() async {
+    await HapticService.light();
+    if (!mounted) return;
+    _flushControllersToNotifier();
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      _scrollToFirstError();
+      return;
+    }
+
     final success = await ref.read(vendorProductFormProvider.notifier).submit();
     if (!mounted) return;
 
     if (success) {
-      PlaceifyToast.show(
-        context,
-        widget.productId == null ? 'Product published ✓' : 'Product updated ✓',
-      );
+      HapticService.medium();
+      PlaceifyToast.show(context, VendorStrings.productSaved);
       context.pop();
       return;
     }
@@ -136,6 +206,118 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     if (error != null) {
       PlaceifyToast.show(context, error);
     }
+  }
+
+  Future<void> _onSaveChanges() async {
+    await HapticService.light();
+    if (!mounted) return;
+    if (!_isDirty) {
+      PlaceifyToast.show(context, VendorStrings.noChangesToSave);
+      return;
+    }
+    _flushControllersToNotifier();
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      _scrollToFirstError();
+      return;
+    }
+
+    final success = await ref
+        .read(vendorProductFormProvider.notifier)
+        .submit(resetOnSuccess: false);
+    if (!mounted) return;
+
+    if (success) {
+      HapticService.medium();
+      PlaceifyToast.show(context, VendorStrings.changesSaved);
+      setState(() => _isDirty = false);
+      return;
+    }
+
+    final error = ref.read(vendorProductFormProvider).submitError;
+    if (error != null) {
+      PlaceifyToast.show(context, error);
+    }
+  }
+
+  Future<bool> _confirmDiscardChanges() async {
+    if (!_isDirty) return true;
+
+    final shouldDiscard = await PlaceifyBottomSheet.show<bool>(
+      context,
+      builder: (sheetContext) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const PlaceifyBottomSheetHeader(
+              title: 'Discard changes?',
+              subtitle:
+                  'Your unsaved edits will be lost if you leave this screen.',
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticService.light();
+                      Navigator.pop(sheetContext, false);
+                    },
+                    child: Container(
+                      height: 48,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.cream,
+                        borderRadius: AppRadii.pill,
+                        border: Border.all(
+                          color: AppColors.creamDark,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Text(
+                        'Keep Editing',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticService.medium();
+                      Navigator.pop(sheetContext, true);
+                    },
+                    child: Container(
+                      height: 48,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.rust,
+                        borderRadius: AppRadii.pill,
+                      ),
+                      child: Text(
+                        'Discard',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.warmWhite,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+
+    return shouldDiscard == true;
   }
 
   @override
@@ -150,11 +332,26 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
       }
     });
 
+    ref.listen<List<VendorProductImageItem>>(
+      vendorProductFormProvider.select((s) => s.images),
+      (previous, next) {
+        if (previous != null && previous != next && _isHydrated) {
+          _markDirty();
+        }
+      },
+    );
+
     final isEditing = form.isEditing;
     final unitLabel =
         form.dimensionUnit == VendorProductDimensionUnit.cm ? 'cm' : 'in';
+    final saveLabel = isEditing
+        ? (_isDirty ? VendorStrings.saveChanges : VendorStrings.noChangesLabel)
+        : VendorStrings.uploadProduct;
+    final onSave = form.isSubmitting
+        ? null
+        : (isEditing ? _onSaveChanges : _onUpload);
 
-    return Scaffold(
+    final scaffold = Scaffold(
       backgroundColor: AppColors.cream,
       appBar: AppBar(
         backgroundColor: AppColors.cream,
@@ -162,19 +359,54 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
           color: AppColors.espresso,
-          onPressed: () => context.pop(),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
           isEditing ? 'Edit Product' : 'Upload Product',
           style: AppTypography.sectionTitle,
         ),
+        actions: [
+          if (form.isSubmitting)
+            const Padding(
+              padding: EdgeInsets.only(right: 16),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.vendorForest,
+                  ),
+                ),
+              ),
+            )
+          else
+            TextButton(
+              onPressed: onSave,
+              child: Text(
+                'Save',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: isEditing && !_isDirty
+                      ? AppColors.textMuted
+                      : AppColors.vendorForest,
+                ),
+              ),
+            ),
+        ],
       ),
+      resizeToAvoidBottomInset: true,
       body: Column(
         children: [
           Expanded(
-            child: ListView(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(18, 8, 18, 24),
-              children: [
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                 const Text(
                   'Product details',
                   style: TextStyle(
@@ -199,11 +431,17 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                 ProfileFormField(
                   label: 'Product Name',
                   child: ProfileTextInput(
+                    fieldKey: _nameKey,
                     controller: _name,
                     hint: 'e.g. Harmony Chair',
-                    onChanged: (value) => notifier.update(
-                      (state) => state.copyWith(name: value),
-                    ),
+                    validator: (value) =>
+                        value == null || value.trim().isEmpty
+                            ? 'Enter a product name'
+                            : null,
+                    onChanged: (value) {
+                      notifier.update((state) => state.copyWith(name: value));
+                      _markDirty();
+                    },
                   ),
                 ),
                 ProfileFormField(
@@ -212,9 +450,12 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                     controller: _description,
                     hint: 'Describe materials, comfort, and key features',
                     maxLines: 4,
-                    onChanged: (value) => notifier.update(
-                      (state) => state.copyWith(description: value),
-                    ),
+                    onChanged: (value) {
+                      notifier.update(
+                        (state) => state.copyWith(description: value),
+                      );
+                      _markDirty();
+                    },
                   ),
                 ),
                 ProfileFormField(
@@ -222,27 +463,59 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                   child: ProfileTextInput(
                     controller: _brand,
                     hint: 'e.g. Oak & Linen Co.',
-                    onChanged: (value) => notifier.update(
-                      (state) => state.copyWith(brand: value),
-                    ),
+                    onChanged: (value) {
+                      notifier.update((state) => state.copyWith(brand: value));
+                      _markDirty();
+                    },
                   ),
                 ),
                 ProfileFormField(
                   label: 'SKU',
                   child: ProfileTextInput(
+                    fieldKey: _skuKey,
                     controller: _sku,
                     hint: 'HH-CHR-001',
-                    onChanged: (value) => notifier.update(
-                      (state) => state.copyWith(sku: value),
-                    ),
+                    validator: (value) =>
+                        value == null || value.trim().isEmpty ? 'Enter a SKU' : null,
+                    onChanged: (value) {
+                      notifier.update((state) => state.copyWith(sku: value));
+                      _markDirty();
+                    },
                   ),
                 ),
                 ProfileFormField(
                   label: 'Category',
-                  child: _CategoryPicker(
-                    categoryId: form.categoryId,
-                    onChanged: (categoryId) => notifier.update(
-                      (state) => state.copyWith(categoryId: categoryId),
+                  child: FormField<String>(
+                    key: _categoryKey,
+                    validator: (_) => ref.read(vendorProductFormProvider).categoryId.isEmpty
+                        ? 'Select a category'
+                        : null,
+                    builder: (field) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _CategoryPicker(
+                          categoryId: form.categoryId,
+                          hasError: field.hasError,
+                          onChanged: (categoryId) {
+                            field.didChange(categoryId);
+                            notifier.update(
+                              (state) => state.copyWith(categoryId: categoryId),
+                            );
+                            _markDirty();
+                          },
+                        ),
+                        if (field.hasError)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6, left: 4),
+                            child: Text(
+                              field.errorText!,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),
@@ -251,9 +524,12 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                   child: ProfileTextInput(
                     controller: _materials,
                     hint: 'e.g. Solid oak, linen upholstery',
-                    onChanged: (value) => notifier.update(
-                      (state) => state.copyWith(materials: value),
-                    ),
+                    onChanged: (value) {
+                      notifier.update(
+                        (state) => state.copyWith(materials: value),
+                      );
+                      _markDirty();
+                    },
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -269,6 +545,7 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                 ProfileFormField(
                   label: 'List Price (NPR)',
                   child: ProfileTextInput(
+                    fieldKey: _listPriceKey,
                     controller: _listPrice,
                     hint: '12500',
                     keyboardType: const TextInputType.numberWithOptions(
@@ -277,9 +554,22 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                     ],
-                    onChanged: (value) => notifier.update(
-                      (state) => state.copyWith(listPrice: value),
-                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Enter a list price';
+                      }
+                      final parsed = double.tryParse(value.trim());
+                      if (parsed == null || parsed <= 0) {
+                        return 'Enter a valid list price';
+                      }
+                      return null;
+                    },
+                    onChanged: (value) {
+                      notifier.update(
+                        (state) => state.copyWith(listPrice: value),
+                      );
+                      _markDirty();
+                    },
                   ),
                 ),
                 ProfileFormField(
@@ -293,9 +583,12 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                     ],
-                    onChanged: (value) => notifier.update(
-                      (state) => state.copyWith(discountPercent: value),
-                    ),
+                    onChanged: (value) {
+                      notifier.update(
+                        (state) => state.copyWith(discountPercent: value),
+                      );
+                      _markDirty();
+                    },
                   ),
                 ),
                 ProfileFormField(
@@ -303,9 +596,12 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                   child: ProfileTextInput(
                     controller: _offerLabel,
                     hint: 'e.g. Summer Sale, Limited Offer',
-                    onChanged: (value) => notifier.update(
-                      (state) => state.copyWith(offerLabel: value),
-                    ),
+                    onChanged: (value) {
+                      notifier.update(
+                        (state) => state.copyWith(offerLabel: value),
+                      );
+                      _markDirty();
+                    },
                   ),
                 ),
                 ListenableBuilder(
@@ -367,7 +663,10 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                     ),
                     _DimensionUnitToggle(
                       unit: form.dimensionUnit,
-                      onChanged: notifier.toggleDimensionUnit,
+                      onChanged: () {
+                        notifier.toggleDimensionUnit();
+                        _markDirty();
+                      },
                     ),
                   ],
                 ),
@@ -388,9 +687,12 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                               RegExp(r'[0-9.]'),
                             ),
                           ],
-                          onChanged: (value) => notifier.update(
-                            (state) => state.copyWith(width: value),
-                          ),
+                          onChanged: (value) {
+                            notifier.update(
+                              (state) => state.copyWith(width: value),
+                            );
+                            _markDirty();
+                          },
                         ),
                       ),
                     ),
@@ -409,9 +711,12 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                               RegExp(r'[0-9.]'),
                             ),
                           ],
-                          onChanged: (value) => notifier.update(
-                            (state) => state.copyWith(height: value),
-                          ),
+                          onChanged: (value) {
+                            notifier.update(
+                              (state) => state.copyWith(height: value),
+                            );
+                            _markDirty();
+                          },
                         ),
                       ),
                     ),
@@ -428,9 +733,10 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                     ],
-                    onChanged: (value) => notifier.update(
-                      (state) => state.copyWith(depth: value),
-                    ),
+                    onChanged: (value) {
+                      notifier.update((state) => state.copyWith(depth: value));
+                      _markDirty();
+                    },
                   ),
                 ),
                 ProfileFormField(
@@ -444,21 +750,36 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                     ],
-                    onChanged: (value) => notifier.update(
-                      (state) => state.copyWith(weight: value),
-                    ),
+                    onChanged: (value) {
+                      notifier.update(
+                        (state) => state.copyWith(weight: value),
+                      );
+                      _markDirty();
+                    },
                   ),
                 ),
                 ProfileFormField(
                   label: 'Stock Quantity',
                   child: ProfileTextInput(
+                    fieldKey: _stockKey,
                     controller: _stock,
                     hint: '0',
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    onChanged: (value) => notifier.update(
-                      (state) => state.copyWith(stock: value),
-                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Enter a stock quantity';
+                      }
+                      final parsed = int.tryParse(value.trim());
+                      if (parsed == null || parsed < 0) {
+                        return 'Enter a valid stock quantity';
+                      }
+                      return null;
+                    },
+                    onChanged: (value) {
+                      notifier.update((state) => state.copyWith(stock: value));
+                      _markDirty();
+                    },
                   ),
                 ),
                 ProfileFormField(
@@ -468,49 +789,113 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                     hint: '5',
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    onChanged: (value) => notifier.update(
-                      (state) => state.copyWith(lowStockThreshold: value),
-                    ),
+                    onChanged: (value) {
+                      notifier.update(
+                        (state) => state.copyWith(lowStockThreshold: value),
+                      );
+                      _markDirty();
+                    },
                   ),
                 ),
                 _FormSwitchRow(
                   label: 'AR View Available',
                   subtitle: 'Allow customers to preview this product in AR',
                   value: form.hasArView,
-                  onChanged: (value) => notifier.update(
-                    (state) => state.copyWith(hasArView: value),
-                  ),
+                  onChanged: (value) {
+                    notifier.update((state) => state.copyWith(hasArView: value));
+                    _markDirty();
+                  },
                 ),
                 _FormSwitchRow(
                   label: 'Visible in Store',
                   subtitle: 'Hidden products stay in your catalog but are not listed',
                   value: form.isActive,
-                  onChanged: (value) => notifier.update(
-                    (state) => state.copyWith(isActive: value),
-                  ),
+                  onChanged: (value) {
+                    notifier.update((state) => state.copyWith(isActive: value));
+                    _markDirty();
+                  },
                 ),
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
-          Container(
-            color: AppColors.cream,
-            padding: const EdgeInsets.fromLTRB(18, 8, 18, 24),
-            child: form.isSubmitting
-                ? const SizedBox(
-                    height: 52,
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.espresso,
-                        strokeWidth: 2,
-                      ),
-                    ),
-                  )
-                : ProfileSubmitButton(
-                    label: isEditing ? 'Save Changes' : 'Publish Product',
-                    onPressed: _submit,
-                  ),
+          _UploadBottomBar(
+            label: saveLabel,
+            muted: isEditing && !_isDirty,
+            isLoading: form.isSubmitting,
+            onTap: onSave,
           ),
         ],
+      ),
+    );
+
+    if (!isEditing) return scaffold;
+
+    return PopScope(
+      canPop: !_isDirty,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final shouldPop = await _confirmDiscardChanges();
+        if (shouldPop && context.mounted) {
+          context.pop();
+        }
+      },
+      child: scaffold,
+    );
+  }
+}
+
+class _UploadBottomBar extends StatelessWidget {
+  const _UploadBottomBar({
+    required this.label,
+    required this.isLoading,
+    this.muted = false,
+    this.onTap,
+  });
+
+  final String label;
+  final bool isLoading;
+  final bool muted;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+    final safeBottom = MediaQuery.paddingOf(context).bottom;
+    final pill = Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        color: AppColors.vendorForest,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      alignment: Alignment.center,
+      child: isLoading
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2,
+              ),
+            )
+          : Text(
+              label,
+              style: GoogleFonts.dmSans(
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+                color: Colors.white,
+              ),
+            ),
+    );
+
+    return Container(
+      color: AppColors.cream,
+      padding: EdgeInsets.fromLTRB(18, 8, 18, 24 + keyboardInset + safeBottom),
+      child: AnimatedScaleTap(
+        onTap: onTap,
+        child: muted ? Opacity(opacity: 0.5, child: pill) : pill,
       ),
     );
   }
@@ -520,10 +905,12 @@ class _CategoryPicker extends StatelessWidget {
   const _CategoryPicker({
     required this.categoryId,
     required this.onChanged,
+    this.hasError = false,
   });
 
   final String categoryId;
   final ValueChanged<String> onChanged;
+  final bool hasError;
 
   String get _label {
     if (categoryId.isEmpty) return 'Select a category';
@@ -588,7 +975,10 @@ class _CategoryPicker extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.cream,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.creamDark, width: 1.5),
+          border: Border.all(
+            color: hasError ? Colors.red : AppColors.creamDark,
+            width: 1.5,
+          ),
         ),
         child: Row(
           children: [

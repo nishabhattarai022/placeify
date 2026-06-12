@@ -48,6 +48,7 @@ class MockAuthRepository implements AuthRepository {
     users.add(user);
     await _saveUsers(users);
 
+    await _prefs.setString(_sessionEmailKey, normalizedEmail);
     return user.toAppUser();
   }
 
@@ -74,14 +75,19 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<List<AppUser>> getAllUsers() async {
+    final users = await _loadUsers();
+    return users.map((u) => u.toAppUser()).toList();
+  }
+
+  @override
   Future<AppUser?> getCurrentUser() async {
     final email = _prefs.getString(_sessionEmailKey);
     if (email == null) return null;
 
     final users = await _loadUsers();
     final match = users.where((u) => u.email == email).firstOrNull;
-    final user = match?.toAppUser();
-    return user == null ? null : _withVendorOverrides(user);
+    return match?.toAppUser();
   }
 
   @override
@@ -89,15 +95,50 @@ class MockAuthRepository implements AuthRepository {
     required VendorStatus status,
     String? vendorId,
   }) async {
-    final user = await getCurrentUser();
-    if (user == null) {
+    final email = _prefs.getString(_sessionEmailKey);
+    if (email == null) {
       throw AuthException('Sign in to continue');
     }
+
+    final users = await _loadUsers();
+    final index = users.indexWhere((u) => u.email == email);
+    if (index == -1) {
+      throw AuthException('User profile not found');
+    }
+
+    final current = users[index];
+    users[index] = vendorId != null
+        ? current.copyWith(vendorStatus: status, vendorId: vendorId)
+        : current.copyWith(vendorStatus: status);
+    await _saveUsers(users);
+
     await _prefs.setString(_vendorStatusKey, status.name);
     if (vendorId != null) {
       await _prefs.setString(_vendorIdKey, vendorId);
     }
-    return _withVendorOverrides(user);
+
+    return users[index].toAppUser();
+  }
+
+  @override
+  Future<void> updateVendorStatusForUser({
+    required String userId,
+    required VendorStatus status,
+    String? vendorId,
+  }) async {
+    final users = await _loadUsers();
+    final index = users.indexWhere((u) => u.id == userId);
+    if (index == -1) return;
+
+    final current = users[index];
+    final updated = switch ((vendorId, status)) {
+      (final id?, _) => current.copyWith(vendorStatus: status, vendorId: id),
+      (null, VendorStatus.none) =>
+        current.copyWith(vendorStatus: status, clearVendorId: true),
+      _ => current.copyWith(vendorStatus: status),
+    };
+    users[index] = updated;
+    await _saveUsers(users);
   }
 
   @override
@@ -106,9 +147,17 @@ class MockAuthRepository implements AuthRepository {
     if (user == null) {
       throw AuthException('Sign in to continue');
     }
-    if (!user.hasVendorShop) {
+    if (!user.hasVendorShop && user.vendorStatus != VendorStatus.approved) {
       throw AuthException('Register your shop first to switch to vendor mode.');
     }
+
+    final users = await _loadUsers();
+    final index = users.indexWhere((u) => u.id == user.id);
+    if (index != -1) {
+      users[index] = users[index].copyWith(role: UserRole.vendor);
+      await _saveUsers(users);
+    }
+
     return user.copyWith(role: UserRole.vendor);
   }
 
@@ -118,6 +167,14 @@ class MockAuthRepository implements AuthRepository {
     if (user == null) {
       throw AuthException('Sign in to continue');
     }
+
+    final users = await _loadUsers();
+    final index = users.indexWhere((u) => u.id == user.id);
+    if (index != -1) {
+      users[index] = users[index].copyWith(role: UserRole.consumer);
+      await _saveUsers(users);
+    }
+
     return user.copyWith(role: UserRole.consumer);
   }
 
@@ -126,17 +183,6 @@ class MockAuthRepository implements AuthRepository {
     await _prefs.remove(_sessionEmailKey);
     await _prefs.remove(_vendorStatusKey);
     await _prefs.remove(_vendorIdKey);
-  }
-
-  AppUser _withVendorOverrides(AppUser user) {
-    final statusRaw = _prefs.getString(_vendorStatusKey);
-    final status = statusRaw == null
-        ? null
-        : VendorStatus.values.asNameMap()[statusRaw];
-    return user.copyWith(
-      registeredVendorStatus: status,
-      registeredVendorId: _prefs.getString(_vendorIdKey),
-    );
   }
 
   Future<List<_StoredUser>> _loadUsers() async {
@@ -150,24 +196,46 @@ class MockAuthRepository implements AuthRepository {
           .toList();
     }
 
-    return _ensureDemoUser(users);
+    return _ensureDemoUsers(users);
   }
 
-  Future<List<_StoredUser>> _ensureDemoUser(List<_StoredUser> users) async {
-    final demoEmail = DemoCredentials.email.toLowerCase();
-    if (users.any((u) => u.email == demoEmail)) return users;
+  Future<List<_StoredUser>> _ensureDemoUsers(List<_StoredUser> users) async {
+    var updated = users;
+    var changed = false;
 
-    final withDemo = [
-      _StoredUser(
-        id: 'demo-user',
-        fullName: DemoCredentials.fullName,
-        email: demoEmail,
-        password: DemoCredentials.password,
-      ),
-      ...users,
-    ];
-    await _saveUsers(withDemo);
-    return withDemo;
+    final demoEmail = DemoCredentials.email.toLowerCase();
+    if (!updated.any((u) => u.email == demoEmail)) {
+      updated = [
+        _StoredUser(
+          id: 'demo-user',
+          fullName: DemoCredentials.fullName,
+          email: demoEmail,
+          password: DemoCredentials.password,
+        ),
+        ...updated,
+      ];
+      changed = true;
+    }
+
+    final adminEmail = DemoCredentials.adminEmail.toLowerCase();
+    if (!updated.any((u) => u.email == adminEmail)) {
+      updated = [
+        _StoredUser(
+          id: 'demo-admin',
+          fullName: DemoCredentials.adminFullName,
+          email: adminEmail,
+          password: DemoCredentials.adminPassword,
+          role: UserRole.admin,
+        ),
+        ...updated,
+      ];
+      changed = true;
+    }
+
+    if (changed) {
+      await _saveUsers(updated);
+    }
+    return updated;
   }
 
   Future<void> _saveUsers(List<_StoredUser> users) async {
@@ -182,18 +250,49 @@ class _StoredUser {
     required this.fullName,
     required this.email,
     required this.password,
+    this.role = UserRole.consumer,
+    this.vendorStatus = VendorStatus.none,
+    this.vendorId,
   });
 
   final String id;
   final String fullName;
   final String email;
   final String password;
+  final UserRole role;
+  final VendorStatus vendorStatus;
+  final String? vendorId;
+
+  bool get hasVendorShop =>
+      vendorStatus == VendorStatus.approved ||
+      vendorStatus == VendorStatus.pending ||
+      vendorStatus == VendorStatus.suspended;
+
+  _StoredUser copyWith({
+    UserRole? role,
+    VendorStatus? vendorStatus,
+    String? vendorId,
+    bool clearVendorId = false,
+  }) {
+    return _StoredUser(
+      id: id,
+      fullName: fullName,
+      email: email,
+      password: password,
+      role: role ?? this.role,
+      vendorStatus: vendorStatus ?? this.vendorStatus,
+      vendorId: clearVendorId ? null : (vendorId ?? this.vendorId),
+    );
+  }
 
   AppUser toAppUser() => AppUser(
         id: id,
         fullName: fullName,
         email: email,
-        role: UserRole.consumer,
+        role: role,
+        hasVendorShop: hasVendorShop,
+        registeredVendorStatus: vendorStatus,
+        registeredVendorId: vendorId,
       );
 
   Map<String, dynamic> toJson() => {
@@ -201,6 +300,9 @@ class _StoredUser {
         'fullName': fullName,
         'email': email,
         'password': password,
+        'role': role.name,
+        'vendorStatus': vendorStatus.name,
+        if (vendorId != null) 'vendorId': vendorId,
       };
 
   factory _StoredUser.fromJson(Map<String, dynamic> json) {
@@ -209,6 +311,13 @@ class _StoredUser {
       fullName: json['fullName'] as String,
       email: json['email'] as String,
       password: json['password'] as String,
+      role: json['role'] != null
+          ? UserRole.fromJson(json['role'] as String)
+          : UserRole.consumer,
+      vendorStatus: json['vendorStatus'] != null
+          ? VendorStatus.values.byName(json['vendorStatus'] as String)
+          : VendorStatus.none,
+      vendorId: json['vendorId'] as String?,
     );
   }
 }
