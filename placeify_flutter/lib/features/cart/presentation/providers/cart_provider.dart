@@ -66,7 +66,9 @@ class Cart extends _$Cart {
     try {
       await _cartRepository.addProduct(productId, quantity: quantity);
       await _refreshFromServer();
-    } catch (_) {}
+    } catch (_) {
+      await _refreshFromServer();
+    }
   }
 
   Future<void> increment(String productId) async {

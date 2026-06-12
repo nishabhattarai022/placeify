@@ -21,7 +21,9 @@ class ServerpodCartRepository {
 
   Future<void> addProduct(String productId, {int quantity = 1}) async {
     final id = ProductIdCodec.toDatabaseId(productId);
-    if (id == null) return;
+    if (id == null) {
+      throw StateError('Invalid product id: $productId');
+    }
     _requireAuthenticated();
     await client.cart.addToCart(id, quantity: quantity);
   }
