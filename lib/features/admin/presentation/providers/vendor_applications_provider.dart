@@ -2,6 +2,10 @@ import 'package:placeify/features/admin/domain/enums/vendor_application_list_fil
 import 'package:placeify/features/admin/domain/models/vendor_application.dart';
 import 'package:placeify/features/admin/presentation/providers/admin_stats_provider.dart';
 import 'package:placeify/features/admin/presentation/providers/vendor_application_repository_provider.dart';
+import 'package:placeify/features/auth/presentation/providers/auth_provider.dart';
+import 'package:placeify/features/vendor/domain/enums/vendor_status.dart';
+import 'package:placeify/features/vendor/presentation/providers/vendor_profile_provider.dart';
+import 'package:placeify/features/vendor/presentation/providers/vendor_stats_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'vendor_applications_provider.g.dart';
@@ -45,6 +49,11 @@ class VendorApplicationActions extends _$VendorApplicationActions {
   }) async {
     final repo = await ref.read(vendorApplicationRepositoryProvider.future);
     try {
+      await ref.read(currentUserProvider.notifier).updateVendorStatusForUser(
+            userId: userId,
+            status: VendorStatus.approved,
+            vendorId: vendorId,
+          );
       await repo.approve(userId: userId, vendorId: vendorId);
       _invalidateAfterDecision(vendorId);
       return null;
@@ -60,6 +69,11 @@ class VendorApplicationActions extends _$VendorApplicationActions {
   }) async {
     final repo = await ref.read(vendorApplicationRepositoryProvider.future);
     try {
+      await ref.read(currentUserProvider.notifier).updateVendorStatusForUser(
+            userId: userId,
+            status: VendorStatus.none,
+            vendorId: null,
+          );
       await repo.decline(userId: userId, note: note);
       _invalidateAfterDecision(vendorId);
       return null;
@@ -72,5 +86,7 @@ class VendorApplicationActions extends _$VendorApplicationActions {
     ref.invalidate(vendorApplicationDetailProvider(vendorId));
     ref.invalidate(vendorApplicationsListProvider);
     ref.invalidate(adminStatsProvider);
+    ref.invalidate(vendorProfileProvider);
+    ref.invalidate(vendorStatsProvider);
   }
 }

@@ -8,7 +8,9 @@ import 'package:placeify/features/admin/domain/models/vendor_application.dart';
 import 'package:placeify/features/admin/domain/repositories/vendor_application_repository.dart';
 import 'package:placeify/features/auth/domain/models/app_user.dart';
 import 'package:placeify/features/auth/domain/repositories/auth_repository.dart';
+import 'package:placeify/features/vendor/data/config/vendor_mock_config.dart';
 import 'package:placeify/features/vendor/domain/enums/vendor_status.dart';
+import 'package:placeify/features/vendor/domain/models/vendor_profile.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_registration.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -86,11 +88,7 @@ class MockVendorApplicationRepository implements VendorApplicationRepository {
     required String userId,
     required String vendorId,
   }) async {
-    await _authRepository.updateVendorStatusForUser(
-      userId: userId,
-      status: VendorStatus.approved,
-      vendorId: vendorId,
-    );
+    _provisionVendorProfile(vendorId);
 
     await _appendAuditLog(
       targetUserId: userId,
@@ -105,12 +103,6 @@ class MockVendorApplicationRepository implements VendorApplicationRepository {
     required String userId,
     String? note,
   }) async {
-    await _authRepository.updateVendorStatusForUser(
-      userId: userId,
-      status: VendorStatus.none,
-      vendorId: null,
-    );
-
     await _appendAuditLog(
       targetUserId: userId,
       action: const AdminAuditAction.application(
@@ -198,6 +190,36 @@ class MockVendorApplicationRepository implements VendorApplicationRepository {
 
     final decoded = jsonDecode(raw) as Map<String, dynamic>;
     return Map<String, dynamic>.from(decoded);
+  }
+
+  void _provisionVendorProfile(String vendorId) {
+    final regData = _loadRegistrations()[vendorId];
+    if (regData == null) return;
+
+    final registration = VendorRegistration.fromJson(
+      Map<String, dynamic>.from(regData)
+        ..remove('vendorId')
+        ..remove('submittedAt'),
+    );
+    final submittedRaw = regData['submittedAt'] as String?;
+    final submittedAt = submittedRaw != null
+        ? DateTime.parse(submittedRaw)
+        : DateTime.now();
+    final address = registration.address;
+
+    VendorMockConfig.registerApprovedProfile(
+      VendorProfile(
+        id: vendorId,
+        businessName: registration.business.businessName,
+        email: registration.business.email,
+        phone: registration.business.phone,
+        address:
+            '${address.street}, ${address.city}, ${address.state} ${address.postalCode}',
+        category: registration.category.category,
+        bio: registration.category.description,
+        createdAt: submittedAt,
+      ),
+    );
   }
 
   Future<void> _appendAuditLog({

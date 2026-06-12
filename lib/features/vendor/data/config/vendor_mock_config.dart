@@ -525,12 +525,26 @@ abstract final class VendorMockConfig {
     ),
   ];
 
+  static final Map<String, VendorProfile> _approvedProfiles = {};
+
+  /// Registers a vendor profile after admin approval (dynamic vendor IDs).
+  static void registerApprovedProfile(VendorProfile profile) {
+    _approvedProfiles[profile.id] = profile;
+  }
+
   static bool isKnownVendor(String vendorId) => vendorId == demoVendorId;
 
-  static VendorProfile? profileFor(String vendorId) =>
-      isKnownVendor(vendorId) ? profile : null;
+  static VendorProfile? profileFor(String vendorId) {
+    final approved = _approvedProfiles[vendorId];
+    if (approved != null) return approved;
+    return isKnownVendor(vendorId) ? profile : null;
+  }
 
   static VendorProfile? updateProfile(VendorProfile updated) {
+    if (_approvedProfiles.containsKey(updated.id)) {
+      _approvedProfiles[updated.id] = updated;
+      return updated;
+    }
     if (!isKnownVendor(updated.id)) return null;
     profile = updated;
     return profile;

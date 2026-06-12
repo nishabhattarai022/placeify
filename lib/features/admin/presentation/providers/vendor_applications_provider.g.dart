@@ -213,7 +213,7 @@ final class VendorApplicationActionsProvider
 }
 
 String _$vendorApplicationActionsHash() =>
-    r'552c158cb1c9874d7cbff69f2fd4d6be24c4621f';
+    r'8ec7f9081a0c6facdf9a10b5ae6eaf6c2680c99c';
 
 abstract class _$VendorApplicationActions extends $AsyncNotifier<void> {
   FutureOr<void> build();
