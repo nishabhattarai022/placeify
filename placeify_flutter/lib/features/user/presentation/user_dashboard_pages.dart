@@ -16,19 +16,6 @@ class UserCartPage extends StatelessWidget {
   }
 }
 
-class UserWishlistPage extends StatelessWidget {
-  const UserWishlistPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const UserPlaceholderPage(
-      title: 'Wishlist',
-      description: 'Your saved products will be listed here.',
-      icon: Icons.favorite_border_rounded,
-    );
-  }
-}
-
 class UserRefundPage extends StatelessWidget {
   const UserRefundPage({super.key});
 
