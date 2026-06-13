@@ -1,0 +1,10 @@
+### Refund row for the customer profile refund list.
+class: RefundRequestSummary
+fields:
+  id: int
+  orderId: int
+  orderNumber: String
+  status: RequestStatus
+  refundAmount: double
+  reason: String
+  createdAt: DateTime
