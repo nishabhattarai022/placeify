@@ -12,6 +12,7 @@ fields:
   address: String?
   profileImageUrl: String?
   role: UserRole, default=consumer
+  ### Default approved at signup; vendors set to pending in vendor_repository.createShop.
   status: UserAccountStatus, default=approved
   ### Admin who approved this account (vendor onboarding or customer verification).
   approvedBy: Admin?, relation(optional)

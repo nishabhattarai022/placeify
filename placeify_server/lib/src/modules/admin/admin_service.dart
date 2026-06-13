@@ -103,7 +103,7 @@ class AdminService {
     return _moderation.listComplaints(session, status: status);
   }
 
-  Future<Complaint> resolveComplaint(Session session, int complaintId) {
+  Future<Complaint> resolveComplaint(Session session, UuidValue complaintId) {
     return _moderation.resolveComplaint(session, complaintId);
   }
 }

@@ -15,7 +15,6 @@ import 'package:serverpod_client/serverpod_client.dart' as _i1;
 /// Catalog visibility and admin moderation state for products.
 enum ProductStatus implements _i1.SerializableModel {
   active,
-  inactive,
   flagged,
   removed;
 
@@ -23,8 +22,6 @@ enum ProductStatus implements _i1.SerializableModel {
     switch (name) {
       case 'active':
         return ProductStatus.active;
-      case 'inactive':
-        return ProductStatus.inactive;
       case 'flagged':
         return ProductStatus.flagged;
       case 'removed':

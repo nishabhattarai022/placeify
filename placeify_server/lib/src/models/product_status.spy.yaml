@@ -4,6 +4,5 @@ serialized: byName
 default: active
 values:
   - active
-  - inactive
   - flagged
   - removed

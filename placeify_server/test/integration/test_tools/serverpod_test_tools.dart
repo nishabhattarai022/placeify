@@ -1329,7 +1329,7 @@ class _AdminEndpoint {
 
   _i3.Future<_i17.Complaint> resolveComplaint(
     _i1.TestSessionBuilder sessionBuilder,
-    int complaintId,
+    _i2.UuidValue complaintId,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =

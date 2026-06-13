@@ -26,33 +26,38 @@ abstract class Complaint implements _i1.SerializableModel {
     required this.reportedById,
     this.reportedBy,
     required this.reason,
-    required this.description,
+    this.description,
     _i2.ComplaintStatus? status,
     this.resolvedById,
     this.resolvedBy,
     this.resolvedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) : status = status ?? _i2.ComplaintStatus.pending,
-       createdAt = createdAt ?? DateTime.now();
+       createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
   factory Complaint({
-    int? id,
+    _i1.UuidValue? id,
     required int productId,
     _i3.Product? product,
     required _i1.UuidValue reportedById,
     _i4.User? reportedBy,
     required String reason,
-    required String description,
+    String? description,
     _i2.ComplaintStatus? status,
     _i1.UuidValue? resolvedById,
     _i5.Admin? resolvedBy,
     DateTime? resolvedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) = _ComplaintImpl;
 
   factory Complaint.fromJson(Map<String, dynamic> jsonSerialization) {
     return Complaint(
-      id: jsonSerialization['id'] as int?,
+      id: jsonSerialization['id'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(jsonSerialization['id']),
       productId: jsonSerialization['productId'] as int,
       product: jsonSerialization['product'] == null
           ? null
@@ -68,7 +73,7 @@ abstract class Complaint implements _i1.SerializableModel {
               jsonSerialization['reportedBy'],
             ),
       reason: jsonSerialization['reason'] as String,
-      description: jsonSerialization['description'] as String,
+      description: jsonSerialization['description'] as String?,
       status: jsonSerialization['status'] == null
           ? null
           : _i2.ComplaintStatus.fromJson(
@@ -90,13 +95,16 @@ abstract class Complaint implements _i1.SerializableModel {
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
+      updatedAt: jsonSerialization['updatedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['updatedAt']),
     );
   }
 
   /// The database id, set if the object has been inserted into the
   /// database or if it has been fetched from the database. Otherwise,
   /// the id will be null.
-  int? id;
+  _i1.UuidValue? id;
 
   int productId;
 
@@ -108,24 +116,26 @@ abstract class Complaint implements _i1.SerializableModel {
 
   String reason;
 
-  String description;
+  String? description;
 
   _i2.ComplaintStatus status;
 
   _i1.UuidValue? resolvedById;
 
-  /// Admin who marked this complaint resolved.
+  /// Admin who marked this complaint resolved or rejected.
   _i5.Admin? resolvedBy;
 
   DateTime? resolvedAt;
 
   DateTime createdAt;
 
+  DateTime updatedAt;
+
   /// Returns a shallow copy of this [Complaint]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
   Complaint copyWith({
-    int? id,
+    _i1.UuidValue? id,
     int? productId,
     _i3.Product? product,
     _i1.UuidValue? reportedById,
@@ -137,23 +147,25 @@ abstract class Complaint implements _i1.SerializableModel {
     _i5.Admin? resolvedBy,
     DateTime? resolvedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   });
   @override
   Map<String, dynamic> toJson() {
     return {
       '__className__': 'Complaint',
-      if (id != null) 'id': id,
+      if (id != null) 'id': id?.toJson(),
       'productId': productId,
       if (product != null) 'product': product?.toJson(),
       'reportedById': reportedById.toJson(),
       if (reportedBy != null) 'reportedBy': reportedBy?.toJson(),
       'reason': reason,
-      'description': description,
+      if (description != null) 'description': description,
       'status': status.toJson(),
       if (resolvedById != null) 'resolvedById': resolvedById?.toJson(),
       if (resolvedBy != null) 'resolvedBy': resolvedBy?.toJson(),
       if (resolvedAt != null) 'resolvedAt': resolvedAt?.toJson(),
       'createdAt': createdAt.toJson(),
+      'updatedAt': updatedAt.toJson(),
     };
   }
 
@@ -167,18 +179,19 @@ class _Undefined {}
 
 class _ComplaintImpl extends Complaint {
   _ComplaintImpl({
-    int? id,
+    _i1.UuidValue? id,
     required int productId,
     _i3.Product? product,
     required _i1.UuidValue reportedById,
     _i4.User? reportedBy,
     required String reason,
-    required String description,
+    String? description,
     _i2.ComplaintStatus? status,
     _i1.UuidValue? resolvedById,
     _i5.Admin? resolvedBy,
     DateTime? resolvedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) : super._(
          id: id,
          productId: productId,
@@ -192,6 +205,7 @@ class _ComplaintImpl extends Complaint {
          resolvedBy: resolvedBy,
          resolvedAt: resolvedAt,
          createdAt: createdAt,
+         updatedAt: updatedAt,
        );
 
   /// Returns a shallow copy of this [Complaint]
@@ -205,15 +219,16 @@ class _ComplaintImpl extends Complaint {
     _i1.UuidValue? reportedById,
     Object? reportedBy = _Undefined,
     String? reason,
-    String? description,
+    Object? description = _Undefined,
     _i2.ComplaintStatus? status,
     Object? resolvedById = _Undefined,
     Object? resolvedBy = _Undefined,
     Object? resolvedAt = _Undefined,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return Complaint(
-      id: id is int? ? id : this.id,
+      id: id is _i1.UuidValue? ? id : this.id,
       productId: productId ?? this.productId,
       product: product is _i3.Product? ? product : this.product?.copyWith(),
       reportedById: reportedById ?? this.reportedById,
@@ -221,7 +236,7 @@ class _ComplaintImpl extends Complaint {
           ? reportedBy
           : this.reportedBy?.copyWith(),
       reason: reason ?? this.reason,
-      description: description ?? this.description,
+      description: description is String? ? description : this.description,
       status: status ?? this.status,
       resolvedById: resolvedById is _i1.UuidValue?
           ? resolvedById
@@ -231,6 +246,7 @@ class _ComplaintImpl extends Complaint {
           : this.resolvedBy?.copyWith(),
       resolvedAt: resolvedAt is DateTime? ? resolvedAt : this.resolvedAt,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }
