@@ -55,8 +55,8 @@ class VendorProducts extends _$VendorProducts {
       return null;
     } on VendorProductActionException catch (e) {
       return e.message;
-    } catch (_) {
-      return 'Could not create product. Try again.';
+    } catch (error) {
+      return _unexpectedProductError(error, 'Could not create product. Try again.');
     } finally {
       await _setSaving(false);
     }
@@ -100,9 +100,9 @@ class VendorProducts extends _$VendorProducts {
     } on VendorProductActionException catch (e) {
       state = previous;
       return e.message;
-    } catch (_) {
+    } catch (error) {
       state = previous;
-      return 'Could not update product. Try again.';
+      return _unexpectedProductError(error, 'Could not update product. Try again.');
     } finally {
       await _setSaving(false);
     }
@@ -135,8 +135,11 @@ class VendorProducts extends _$VendorProducts {
       return null;
     } on VendorProductActionException catch (e) {
       return e.message;
-    } catch (_) {
-      return 'Could not build 3D preview. Try again.';
+    } catch (error) {
+      return _unexpectedProductError(
+        error,
+        'Could not build 3D preview. Try again.',
+      );
     } finally {
       await _setSaving(false);
     }
@@ -203,5 +206,12 @@ class VendorProducts extends _$VendorProducts {
     } finally {
       await _setSaving(false);
     }
+  }
+
+  String _unexpectedProductError(Object error, String fallback) {
+    if (error is StateError) return error.message;
+    final text = error.toString().replaceFirst('Exception: ', '').trim();
+    if (text.isEmpty || text == error.runtimeType.toString()) return fallback;
+    return text.length <= 160 ? text : fallback;
   }
 }

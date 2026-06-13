@@ -1,5 +1,6 @@
 import 'package:placeify_flutter/core/services/background_removal_service.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
+import 'package:placeify_flutter/features/vendor/data/mock_vendor_product_repository.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_form_state.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_image_item.dart';
@@ -323,6 +324,9 @@ class VendorProductForm extends _$VendorProductForm {
       }
 
       if (error != null) {
+        if (error.contains('pending admin approval')) {
+          ref.invalidate(currentUserProvider);
+        }
         state = state.copyWith(isSubmitting: false, submitError: error);
         return false;
       }
@@ -333,10 +337,14 @@ class VendorProductForm extends _$VendorProductForm {
         state = state.copyWith(isSubmitting: false, clearSubmitError: true);
       }
       return true;
-    } catch (_) {
+    } catch (error) {
       state = state.copyWith(
         isSubmitting: false,
-        submitError: 'Could not save product. Try again.',
+        submitError: error is VendorProductActionException
+            ? error.message
+            : (error is StateError
+                ? error.message
+                : 'Could not save product. Try again.'),
       );
       return false;
     }

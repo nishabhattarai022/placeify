@@ -21,7 +21,7 @@ class AdminModerationStore {
     final user = await User.db.findById(session, vendorUserId);
     if (user == null || user.role != UserRole.vendor) {
       throw PlaceifyException(
-        'Vendor account not found.',
+        message: 'Vendor account not found.',
         code: 'VENDOR_NOT_FOUND',
       );
     }
@@ -32,7 +32,7 @@ class AdminModerationStore {
     );
     if (vendor == null) {
       throw PlaceifyException(
-        'Vendor profile not found.',
+        message: 'Vendor profile not found.',
         code: 'VENDOR_NOT_FOUND',
       );
     }
@@ -64,7 +64,7 @@ class AdminModerationStore {
     final user = await User.db.findById(session, vendorUserId);
     if (user == null || user.role != UserRole.vendor) {
       throw PlaceifyException(
-        'Vendor account not found.',
+        message: 'Vendor account not found.',
         code: 'VENDOR_NOT_FOUND',
       );
     }
@@ -88,7 +88,7 @@ class AdminModerationStore {
     final admin = await _requireAdminProfile(session);
     final user = await User.db.findById(session, targetUserId);
     if (user == null) {
-      throw PlaceifyException('User not found.', code: 'USER_NOT_FOUND');
+      throw PlaceifyException(message: 'User not found.', code: 'USER_NOT_FOUND');
     }
 
     return User.db.updateRow(
@@ -106,7 +106,7 @@ class AdminModerationStore {
     final admin = await _requireAdminProfile(session);
     final user = await User.db.findById(session, targetUserId);
     if (user == null) {
-      throw PlaceifyException('User not found.', code: 'USER_NOT_FOUND');
+      throw PlaceifyException(message: 'User not found.', code: 'USER_NOT_FOUND');
     }
 
     final now = DateTime.now();
@@ -130,13 +130,13 @@ class AdminModerationStore {
     final admin = await _requireAdminProfile(session);
     final product = await Product.db.findById(session, productId);
     if (product == null) {
-      throw PlaceifyException('Product not found.', code: 'PRODUCT_NOT_FOUND');
+      throw PlaceifyException(message: 'Product not found.', code: 'PRODUCT_NOT_FOUND');
     }
 
     final trimmedReason = reason.trim();
     if (trimmedReason.isEmpty) {
       throw PlaceifyException(
-        'Removal reason is required.',
+        message: 'Removal reason is required.',
         code: 'INVALID_REASON',
       );
     }
@@ -158,7 +158,7 @@ class AdminModerationStore {
     await _requireAdminProfile(session);
     final product = await Product.db.findById(session, productId);
     if (product == null) {
-      throw PlaceifyException('Product not found.', code: 'PRODUCT_NOT_FOUND');
+      throw PlaceifyException(message: 'Product not found.', code: 'PRODUCT_NOT_FOUND');
     }
 
     return Product.db.updateRow(
@@ -179,14 +179,14 @@ class AdminModerationStore {
     final reporter = await SessionService.requireUser(session);
     final product = await Product.db.findById(session, productId);
     if (product == null) {
-      throw PlaceifyException('Product not found.', code: 'PRODUCT_NOT_FOUND');
+      throw PlaceifyException(message: 'Product not found.', code: 'PRODUCT_NOT_FOUND');
     }
 
     final trimmedReason = reason.trim();
     final trimmedDescription = description.trim();
     if (trimmedReason.isEmpty || trimmedDescription.isEmpty) {
       throw PlaceifyException(
-        'Reason and description are required.',
+        message: 'Reason and description are required.',
         code: 'INVALID_COMPLAINT',
       );
     }
@@ -227,7 +227,7 @@ class AdminModerationStore {
     final complaint = await Complaint.db.findById(session, complaintId);
     if (complaint == null) {
       throw PlaceifyException(
-        'Complaint not found.',
+        message: 'Complaint not found.',
         code: 'COMPLAINT_NOT_FOUND',
       );
     }

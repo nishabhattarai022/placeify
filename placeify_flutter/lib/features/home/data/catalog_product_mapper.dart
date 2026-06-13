@@ -43,7 +43,7 @@ abstract final class CatalogProductMapper {
     final model3dUrl = product.model3dUrl?.trim();
     final has3dPreview = model3dUrl != null && model3dUrl.isNotEmpty;
     if (has3dPreview) {
-      ProductModel3dUrls.set(uiId, model3dUrl);
+      ProductModel3dUrls.set(uiId, await resolveMediaUrl(model3dUrl));
     }
 
     return Product(

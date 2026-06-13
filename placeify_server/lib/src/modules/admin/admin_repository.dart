@@ -56,7 +56,7 @@ class AdminStore {
     final user = await SessionService.requireRole(session, {UserRole.admin});
     if (fullName.trim().isEmpty) {
       throw PlaceifyException(
-        'Admin full name is required.',
+        message: 'Admin full name is required.',
         code: 'INVALID_ADMIN_PROFILE',
       );
     }
