@@ -3,20 +3,6 @@ import 'package:flutter/material.dart';
 import '../domain/user_dashboard_nav.dart';
 import 'widgets/user_placeholder_page.dart';
 
-class UserOrdersPage extends StatelessWidget {
-  const UserOrdersPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const UserPlaceholderPage(
-      title: 'Orders',
-      description:
-          'Order history and tracking will appear here in a future step.',
-      icon: Icons.receipt_long_outlined,
-    );
-  }
-}
-
 class UserCartPage extends StatelessWidget {
   const UserCartPage({super.key});
 

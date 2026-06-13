@@ -25,6 +25,7 @@ import '../../features/product_detail/presentation/product_detail_screen.dart';
 import '../../features/cart/presentation/cart_screen.dart';
 import '../../features/user/presentation/user_dashboard_pages.dart';
 import '../../features/user/presentation/user_dashboard_screen.dart';
+import '../../features/user/presentation/user_orders_page.dart';
 import '../../features/user/presentation/user_dashboard_shell.dart';
 import 'main_shell.dart';
 
