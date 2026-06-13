@@ -47,9 +47,14 @@ redis:
 
 maxRequestSize: 10485760 # 10 MB — allows vendor product photo uploads
 
-# Vendor product photos: set PLACEIFY_REMOVEBG_API_KEY in the shell before
-# starting the server to enable background removal (https://www.remove.bg/api).
-# Example: export PLACEIFY_REMOVEBG_API_KEY=your_key_here
+# Vendor product photos: copy config/removebg_api_key.example.yaml to
+# config/removebg_api_key.yaml and add your key from https://www.remove.bg/api
+# (free tier available). Images are stored on a white background for catalog + Tripo.
+# Optional override: PLACEIFY_REMOVEBG_API_KEY env var.
+#
+# 3D model generation (Tripo): copy config/tripo_api_key.example.yaml to
+# config/tripo_api_key.yaml and paste your key from https://platform.tripo3d.ai/api-keys
+# Optional override: PLACEIFY_TRIPO_API_KEY env var (production/Docker).
 
 sessionLogs:
   persistentEnabled: true

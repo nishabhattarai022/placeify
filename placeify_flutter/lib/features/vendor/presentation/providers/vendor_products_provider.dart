@@ -108,6 +108,40 @@ class VendorProducts extends _$VendorProducts {
     }
   }
 
+  Future<String?> regenerateProductModel3d(String productId) async {
+    await _setSaving(true);
+    try {
+      final user = await ref.read(currentUserProvider.future);
+      final vendorId = user?.vendorId;
+      if (vendorId == null) {
+        return 'Vendor account not found.';
+      }
+
+      final repo = ref.read(vendorProductRepositoryProvider);
+      final updated = await repo.regenerateProductModel3d(vendorId, productId);
+
+      final products = state.value;
+      if (products != null) {
+        final index = products.indexWhere((item) => item.id == productId);
+        if (index >= 0) {
+          final synced = [...products];
+          synced[index] = updated;
+          state = AsyncData(synced);
+        } else {
+          await refresh();
+        }
+      }
+      ref.invalidate(catalogIndexProvider);
+      return null;
+    } on VendorProductActionException catch (e) {
+      return e.message;
+    } catch (_) {
+      return 'Could not build 3D preview. Try again.';
+    } finally {
+      await _setSaving(false);
+    }
+  }
+
   Future<String?> applyBulkDiscount(
     List<String> productIds,
     double discountPercent,
