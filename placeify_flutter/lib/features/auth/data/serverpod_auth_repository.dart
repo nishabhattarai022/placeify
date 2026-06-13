@@ -98,6 +98,32 @@ class ServerpodAuthRepository implements AuthRepository {
     }
   }
 
+  /// Signs in with the demo admin account for local admin dashboard access.
+  Future<AppUser> signInWithDemoAdminCredentials() async {
+    AppUser user;
+    try {
+      user = await signIn(
+        email: DemoCredentials.adminEmail,
+        password: DemoCredentials.adminPassword,
+      );
+    } on AuthException catch (error) {
+      if (!_isMissingAccountError(error.message)) rethrow;
+
+      await register(
+        fullName: DemoCredentials.adminFullName,
+        email: DemoCredentials.adminEmail,
+        password: DemoCredentials.adminPassword,
+      );
+      user = await signIn(
+        email: DemoCredentials.adminEmail,
+        password: DemoCredentials.adminPassword,
+      );
+    }
+
+    // Admin UI uses mock repositories; grant admin role for the demo account.
+    return user.copyWith(role: UserRole.admin);
+  }
+
   @override
   Future<AppUser> signIn({
     required String email,
