@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 import '../../../../main.dart' show client;
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/serverpod_profile_repository.dart';
 import '../../domain/repositories/profile_repository.dart';
 
@@ -18,6 +19,17 @@ class ProfileDashboard extends _$ProfileDashboard {
   @override
   Future<UserDashboard?> build() async {
     if (!client.auth.isAuthenticated) return null;
+
+    ref.listen(currentUserProvider, (previous, next) {
+      if (!client.auth.isAuthenticated) {
+        state = const AsyncData(null);
+        return;
+      }
+      if (next.hasValue && previous?.value?.id != next.value?.id) {
+        refresh();
+      }
+    });
+
     final repo = ref.watch(profileRepositoryProvider);
     return repo.getDashboard();
   }
@@ -40,6 +52,17 @@ class ProfileOrders extends _$ProfileOrders {
   @override
   Future<List<UserOrderSummary>> build() async {
     if (!client.auth.isAuthenticated) return [];
+
+    ref.listen(currentUserProvider, (previous, next) {
+      if (!client.auth.isAuthenticated) {
+        state = const AsyncData([]);
+        return;
+      }
+      if (next.hasValue && previous?.value?.id != next.value?.id) {
+        ref.invalidateSelf();
+      }
+    });
+
     final repo = ref.watch(profileRepositoryProvider);
     return repo.listOrders();
   }
