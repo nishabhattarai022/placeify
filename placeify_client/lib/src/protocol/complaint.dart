@@ -14,7 +14,8 @@ import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'complaint_status.dart' as _i2;
 import 'product.dart' as _i3;
 import 'user.dart' as _i4;
-import 'package:placeify_client/src/protocol/protocol.dart' as _i5;
+import 'admin.dart' as _i5;
+import 'package:placeify_client/src/protocol/protocol.dart' as _i6;
 
 /// Product complaint/damage report. Admins resolve these and may remove flagged products.
 abstract class Complaint implements _i1.SerializableModel {
@@ -27,6 +28,9 @@ abstract class Complaint implements _i1.SerializableModel {
     required this.reason,
     required this.description,
     _i2.ComplaintStatus? status,
+    this.resolvedById,
+    this.resolvedBy,
+    this.resolvedAt,
     DateTime? createdAt,
   }) : status = status ?? _i2.ComplaintStatus.pending,
        createdAt = createdAt ?? DateTime.now();
@@ -40,6 +44,9 @@ abstract class Complaint implements _i1.SerializableModel {
     required String reason,
     required String description,
     _i2.ComplaintStatus? status,
+    _i1.UuidValue? resolvedById,
+    _i5.Admin? resolvedBy,
+    DateTime? resolvedAt,
     DateTime? createdAt,
   }) = _ComplaintImpl;
 
@@ -49,7 +56,7 @@ abstract class Complaint implements _i1.SerializableModel {
       productId: jsonSerialization['productId'] as int,
       product: jsonSerialization['product'] == null
           ? null
-          : _i5.Protocol().deserialize<_i3.Product>(
+          : _i6.Protocol().deserialize<_i3.Product>(
               jsonSerialization['product'],
             ),
       reportedById: _i1.UuidValueJsonExtension.fromJson(
@@ -57,7 +64,7 @@ abstract class Complaint implements _i1.SerializableModel {
       ),
       reportedBy: jsonSerialization['reportedBy'] == null
           ? null
-          : _i5.Protocol().deserialize<_i4.User>(
+          : _i6.Protocol().deserialize<_i4.User>(
               jsonSerialization['reportedBy'],
             ),
       reason: jsonSerialization['reason'] as String,
@@ -67,6 +74,19 @@ abstract class Complaint implements _i1.SerializableModel {
           : _i2.ComplaintStatus.fromJson(
               (jsonSerialization['status'] as String),
             ),
+      resolvedById: jsonSerialization['resolvedById'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(
+              jsonSerialization['resolvedById'],
+            ),
+      resolvedBy: jsonSerialization['resolvedBy'] == null
+          ? null
+          : _i6.Protocol().deserialize<_i5.Admin>(
+              jsonSerialization['resolvedBy'],
+            ),
+      resolvedAt: jsonSerialization['resolvedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['resolvedAt']),
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
@@ -92,6 +112,13 @@ abstract class Complaint implements _i1.SerializableModel {
 
   _i2.ComplaintStatus status;
 
+  _i1.UuidValue? resolvedById;
+
+  /// Admin who marked this complaint resolved.
+  _i5.Admin? resolvedBy;
+
+  DateTime? resolvedAt;
+
   DateTime createdAt;
 
   /// Returns a shallow copy of this [Complaint]
@@ -106,6 +133,9 @@ abstract class Complaint implements _i1.SerializableModel {
     String? reason,
     String? description,
     _i2.ComplaintStatus? status,
+    _i1.UuidValue? resolvedById,
+    _i5.Admin? resolvedBy,
+    DateTime? resolvedAt,
     DateTime? createdAt,
   });
   @override
@@ -120,6 +150,9 @@ abstract class Complaint implements _i1.SerializableModel {
       'reason': reason,
       'description': description,
       'status': status.toJson(),
+      if (resolvedById != null) 'resolvedById': resolvedById?.toJson(),
+      if (resolvedBy != null) 'resolvedBy': resolvedBy?.toJson(),
+      if (resolvedAt != null) 'resolvedAt': resolvedAt?.toJson(),
       'createdAt': createdAt.toJson(),
     };
   }
@@ -142,6 +175,9 @@ class _ComplaintImpl extends Complaint {
     required String reason,
     required String description,
     _i2.ComplaintStatus? status,
+    _i1.UuidValue? resolvedById,
+    _i5.Admin? resolvedBy,
+    DateTime? resolvedAt,
     DateTime? createdAt,
   }) : super._(
          id: id,
@@ -152,6 +188,9 @@ class _ComplaintImpl extends Complaint {
          reason: reason,
          description: description,
          status: status,
+         resolvedById: resolvedById,
+         resolvedBy: resolvedBy,
+         resolvedAt: resolvedAt,
          createdAt: createdAt,
        );
 
@@ -168,6 +207,9 @@ class _ComplaintImpl extends Complaint {
     String? reason,
     String? description,
     _i2.ComplaintStatus? status,
+    Object? resolvedById = _Undefined,
+    Object? resolvedBy = _Undefined,
+    Object? resolvedAt = _Undefined,
     DateTime? createdAt,
   }) {
     return Complaint(
@@ -181,6 +223,13 @@ class _ComplaintImpl extends Complaint {
       reason: reason ?? this.reason,
       description: description ?? this.description,
       status: status ?? this.status,
+      resolvedById: resolvedById is _i1.UuidValue?
+          ? resolvedById
+          : this.resolvedById,
+      resolvedBy: resolvedBy is _i5.Admin?
+          ? resolvedBy
+          : this.resolvedBy?.copyWith(),
+      resolvedAt: resolvedAt is DateTime? ? resolvedAt : this.resolvedAt,
       createdAt: createdAt ?? this.createdAt,
     );
   }

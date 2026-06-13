@@ -3,15 +3,21 @@ import 'package:serverpod/serverpod.dart';
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
+import 'admin_repository.dart';
 
 /// Admin moderation: vendor approval, user status, product removal, complaints.
 class AdminModerationStore {
-  Future<User> _requireAdminUser(Session session) {
-    return SessionService.requireRole(session, {UserRole.admin});
+  AdminModerationStore({AdminStore? adminStore})
+      : _adminStore = adminStore ?? AdminStore();
+
+  final AdminStore _adminStore;
+
+  Future<Admin> _requireAdminProfile(Session session) {
+    return _adminStore.requireAdminProfile(session);
   }
 
   Future<Vendor> approveVendor(Session session, UuidValue vendorUserId) async {
-    final admin = await _requireAdminUser(session);
+    final admin = await _requireAdminProfile(session);
     final user = await User.db.findById(session, vendorUserId);
     if (user == null || user.role != UserRole.vendor) {
       throw PlaceifyException(
@@ -37,6 +43,8 @@ class AdminModerationStore {
       user.copyWith(
         status: UserAccountStatus.approved,
         isActive: true,
+        approvedById: admin.id,
+        statusChangedById: admin.id,
         updatedAt: now,
       ),
     );
@@ -52,7 +60,7 @@ class AdminModerationStore {
   }
 
   Future<User> rejectVendor(Session session, UuidValue vendorUserId) async {
-    await _requireAdminUser(session);
+    final admin = await _requireAdminProfile(session);
     final user = await User.db.findById(session, vendorUserId);
     if (user == null || user.role != UserRole.vendor) {
       throw PlaceifyException(
@@ -65,6 +73,7 @@ class AdminModerationStore {
       session,
       user.copyWith(
         status: UserAccountStatus.rejected,
+        statusChangedById: admin.id,
         updatedAt: DateTime.now(),
       ),
     );
@@ -76,7 +85,7 @@ class AdminModerationStore {
     UserAccountStatus status, {
     bool? isActive,
   }) async {
-    await _requireAdminUser(session);
+    final admin = await _requireAdminProfile(session);
     final user = await User.db.findById(session, targetUserId);
     if (user == null) {
       throw PlaceifyException('User not found.', code: 'USER_NOT_FOUND');
@@ -87,13 +96,14 @@ class AdminModerationStore {
       user.copyWith(
         status: status,
         isActive: isActive ?? user.isActive,
+        statusChangedById: admin.id,
         updatedAt: DateTime.now(),
       ),
     );
   }
 
   Future<User> deactivateUser(Session session, UuidValue targetUserId) async {
-    await _requireAdminUser(session);
+    final admin = await _requireAdminProfile(session);
     final user = await User.db.findById(session, targetUserId);
     if (user == null) {
       throw PlaceifyException('User not found.', code: 'USER_NOT_FOUND');
@@ -106,6 +116,7 @@ class AdminModerationStore {
         status: UserAccountStatus.suspended,
         isActive: false,
         deletedAt: now,
+        statusChangedById: admin.id,
         updatedAt: now,
       ),
     );
@@ -116,7 +127,7 @@ class AdminModerationStore {
     int productId,
     String reason,
   ) async {
-    final admin = await _requireAdminUser(session);
+    final admin = await _requireAdminProfile(session);
     final product = await Product.db.findById(session, productId);
     if (product == null) {
       throw PlaceifyException('Product not found.', code: 'PRODUCT_NOT_FOUND');
@@ -144,7 +155,7 @@ class AdminModerationStore {
   }
 
   Future<Product> flagProduct(Session session, int productId) async {
-    await _requireAdminUser(session);
+    await _requireAdminProfile(session);
     final product = await Product.db.findById(session, productId);
     if (product == null) {
       throw PlaceifyException('Product not found.', code: 'PRODUCT_NOT_FOUND');
@@ -195,7 +206,7 @@ class AdminModerationStore {
     Session session, {
     ComplaintStatus? status,
   }) async {
-    await _requireAdminUser(session);
+    await _requireAdminProfile(session);
     return Complaint.db.find(
       session,
       where: status == null
@@ -204,6 +215,7 @@ class AdminModerationStore {
       include: Complaint.include(
         product: Product.include(vendor: Vendor.include()),
         reportedBy: User.include(),
+        resolvedBy: Admin.include(),
       ),
       orderBy: (row) => row.createdAt,
       orderDescending: true,
@@ -211,7 +223,7 @@ class AdminModerationStore {
   }
 
   Future<Complaint> resolveComplaint(Session session, int complaintId) async {
-    await _requireAdminUser(session);
+    final admin = await _requireAdminProfile(session);
     final complaint = await Complaint.db.findById(session, complaintId);
     if (complaint == null) {
       throw PlaceifyException(
@@ -220,9 +232,14 @@ class AdminModerationStore {
       );
     }
 
+    final now = DateTime.now();
     return Complaint.db.updateRow(
       session,
-      complaint.copyWith(status: ComplaintStatus.resolved),
+      complaint.copyWith(
+        status: ComplaintStatus.resolved,
+        resolvedById: admin.id,
+        resolvedAt: now,
+      ),
     );
   }
 }

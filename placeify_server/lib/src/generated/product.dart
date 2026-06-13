@@ -15,7 +15,7 @@ import 'package:serverpod/serverpod.dart' as _i1;
 import 'product_status.dart' as _i2;
 import 'vendor.dart' as _i3;
 import 'category.dart' as _i4;
-import 'user.dart' as _i5;
+import 'admin.dart' as _i5;
 import 'package:placeify_server/src/generated/protocol.dart' as _i6;
 
 /// Furniture product listed by a vendor in the marketplace.
@@ -73,7 +73,7 @@ abstract class Product
     _i2.ProductStatus? status,
     String? removedReason,
     _i1.UuidValue? removedById,
-    _i5.User? removedBy,
+    _i5.Admin? removedBy,
     DateTime? removedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -118,7 +118,7 @@ abstract class Product
             ),
       removedBy: jsonSerialization['removedBy'] == null
           ? null
-          : _i6.Protocol().deserialize<_i5.User>(
+          : _i6.Protocol().deserialize<_i5.Admin>(
               jsonSerialization['removedBy'],
             ),
       removedAt: jsonSerialization['removedAt'] == null
@@ -176,11 +176,13 @@ abstract class Product
 
   _i2.ProductStatus status;
 
+  /// Why the product was removed from the catalog.
   String? removedReason;
 
   _i1.UuidValue? removedById;
 
-  _i5.User? removedBy;
+  /// Admin who removed or flagged the product.
+  _i5.Admin? removedBy;
 
   DateTime? removedAt;
 
@@ -216,7 +218,7 @@ abstract class Product
     _i2.ProductStatus? status,
     String? removedReason,
     _i1.UuidValue? removedById,
-    _i5.User? removedBy,
+    _i5.Admin? removedBy,
     DateTime? removedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -288,7 +290,7 @@ abstract class Product
   static ProductInclude include({
     _i3.VendorInclude? vendor,
     _i4.CategoryInclude? category,
-    _i5.UserInclude? removedBy,
+    _i5.AdminInclude? removedBy,
   }) {
     return ProductInclude._(
       vendor: vendor,
@@ -348,7 +350,7 @@ class _ProductImpl extends Product {
     _i2.ProductStatus? status,
     String? removedReason,
     _i1.UuidValue? removedById,
-    _i5.User? removedBy,
+    _i5.Admin? removedBy,
     DateTime? removedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -441,7 +443,7 @@ class _ProductImpl extends Product {
       removedById: removedById is _i1.UuidValue?
           ? removedById
           : this.removedById,
-      removedBy: removedBy is _i5.User?
+      removedBy: removedBy is _i5.Admin?
           ? removedBy
           : this.removedBy?.copyWith(),
       removedAt: removedAt is DateTime? ? removedAt : this.removedAt,
@@ -703,11 +705,13 @@ class ProductTable extends _i1.Table<int?> {
 
   late final _i1.ColumnEnum<_i2.ProductStatus> status;
 
+  /// Why the product was removed from the catalog.
   late final _i1.ColumnString removedReason;
 
   late final _i1.ColumnUuid removedById;
 
-  _i5.UserTable? _removedBy;
+  /// Admin who removed or flagged the product.
+  _i5.AdminTable? _removedBy;
 
   late final _i1.ColumnDateTime removedAt;
 
@@ -741,15 +745,15 @@ class ProductTable extends _i1.Table<int?> {
     return _category!;
   }
 
-  _i5.UserTable get removedBy {
+  _i5.AdminTable get removedBy {
     if (_removedBy != null) return _removedBy!;
     _removedBy = _i1.createRelationTable(
       relationFieldName: 'removedBy',
       field: Product.t.removedById,
-      foreignField: _i5.User.t.id,
+      foreignField: _i5.Admin.t.id,
       tableRelation: tableRelation,
       createTable: (foreignTableRelation) =>
-          _i5.UserTable(tableRelation: foreignTableRelation),
+          _i5.AdminTable(tableRelation: foreignTableRelation),
     );
     return _removedBy!;
   }
@@ -799,7 +803,7 @@ class ProductInclude extends _i1.IncludeObject {
   ProductInclude._({
     _i3.VendorInclude? vendor,
     _i4.CategoryInclude? category,
-    _i5.UserInclude? removedBy,
+    _i5.AdminInclude? removedBy,
   }) {
     _vendor = vendor;
     _category = category;
@@ -810,7 +814,7 @@ class ProductInclude extends _i1.IncludeObject {
 
   _i4.CategoryInclude? _category;
 
-  _i5.UserInclude? _removedBy;
+  _i5.AdminInclude? _removedBy;
 
   @override
   Map<String, _i1.Include?> get includes => {
@@ -1189,12 +1193,12 @@ class ProductAttachRowRepository {
     );
   }
 
-  /// Creates a relation between the given [Product] and [User]
-  /// by setting the [Product]'s foreign key `removedById` to refer to the [User].
+  /// Creates a relation between the given [Product] and [Admin]
+  /// by setting the [Product]'s foreign key `removedById` to refer to the [Admin].
   Future<void> removedBy(
     _i1.DatabaseSession session,
     Product product,
-    _i5.User removedBy, {
+    _i5.Admin removedBy, {
     _i1.Transaction? transaction,
   }) async {
     if (product.id == null) {
@@ -1238,7 +1242,7 @@ class ProductDetachRowRepository {
     );
   }
 
-  /// Detaches the relation between this [Product] and the [User] set in `removedBy`
+  /// Detaches the relation between this [Product] and the [Admin] set in `removedBy`
   /// by setting the [Product]'s foreign key `removedById` to `null`.
   ///
   /// This removes the association between the two models without deleting

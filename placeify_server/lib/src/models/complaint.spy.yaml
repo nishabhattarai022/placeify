@@ -7,6 +7,9 @@ fields:
   reason: String
   description: String
   status: ComplaintStatus, default=pending
+  ### Admin who marked this complaint resolved.
+  resolvedBy: Admin?, relation(optional)
+  resolvedAt: DateTime?
   createdAt: DateTime, default=now
 
 indexes:

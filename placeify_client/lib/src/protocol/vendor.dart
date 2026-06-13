@@ -12,7 +12,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'user.dart' as _i2;
-import 'package:placeify_client/src/protocol/protocol.dart' as _i3;
+import 'admin.dart' as _i3;
+import 'package:placeify_client/src/protocol/protocol.dart' as _i4;
 
 /// VendorProfile — vendor-specific data linked 1:1 to a User account.
 abstract class Vendor implements _i1.SerializableModel {
@@ -44,7 +45,7 @@ abstract class Vendor implements _i1.SerializableModel {
     String? logoUrl,
     double? rating,
     _i1.UuidValue? approvedById,
-    _i2.User? approvedBy,
+    _i3.Admin? approvedBy,
     DateTime? approvedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -58,7 +59,7 @@ abstract class Vendor implements _i1.SerializableModel {
       userId: _i1.UuidValueJsonExtension.fromJson(jsonSerialization['userId']),
       user: jsonSerialization['user'] == null
           ? null
-          : _i3.Protocol().deserialize<_i2.User>(jsonSerialization['user']),
+          : _i4.Protocol().deserialize<_i2.User>(jsonSerialization['user']),
       shopName: jsonSerialization['shopName'] as String,
       description: jsonSerialization['description'] as String?,
       businessAddress: jsonSerialization['businessAddress'] as String?,
@@ -71,7 +72,7 @@ abstract class Vendor implements _i1.SerializableModel {
             ),
       approvedBy: jsonSerialization['approvedBy'] == null
           ? null
-          : _i3.Protocol().deserialize<_i2.User>(
+          : _i4.Protocol().deserialize<_i3.Admin>(
               jsonSerialization['approvedBy'],
             ),
       approvedAt: jsonSerialization['approvedAt'] == null
@@ -107,7 +108,8 @@ abstract class Vendor implements _i1.SerializableModel {
 
   _i1.UuidValue? approvedById;
 
-  _i2.User? approvedBy;
+  /// Admin who approved this vendor shop.
+  _i3.Admin? approvedBy;
 
   DateTime? approvedAt;
 
@@ -128,7 +130,7 @@ abstract class Vendor implements _i1.SerializableModel {
     String? logoUrl,
     double? rating,
     _i1.UuidValue? approvedById,
-    _i2.User? approvedBy,
+    _i3.Admin? approvedBy,
     DateTime? approvedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -172,7 +174,7 @@ class _VendorImpl extends Vendor {
     String? logoUrl,
     double? rating,
     _i1.UuidValue? approvedById,
-    _i2.User? approvedBy,
+    _i3.Admin? approvedBy,
     DateTime? approvedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -225,7 +227,7 @@ class _VendorImpl extends Vendor {
       approvedById: approvedById is _i1.UuidValue?
           ? approvedById
           : this.approvedById,
-      approvedBy: approvedBy is _i2.User?
+      approvedBy: approvedBy is _i3.Admin?
           ? approvedBy
           : this.approvedBy?.copyWith(),
       approvedAt: approvedAt is DateTime? ? approvedAt : this.approvedAt,

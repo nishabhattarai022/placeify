@@ -14,7 +14,7 @@ import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'product_status.dart' as _i2;
 import 'vendor.dart' as _i3;
 import 'category.dart' as _i4;
-import 'user.dart' as _i5;
+import 'admin.dart' as _i5;
 import 'package:placeify_client/src/protocol/protocol.dart' as _i6;
 
 /// Furniture product listed by a vendor in the marketplace.
@@ -71,7 +71,7 @@ abstract class Product implements _i1.SerializableModel {
     _i2.ProductStatus? status,
     String? removedReason,
     _i1.UuidValue? removedById,
-    _i5.User? removedBy,
+    _i5.Admin? removedBy,
     DateTime? removedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -116,7 +116,7 @@ abstract class Product implements _i1.SerializableModel {
             ),
       removedBy: jsonSerialization['removedBy'] == null
           ? null
-          : _i6.Protocol().deserialize<_i5.User>(
+          : _i6.Protocol().deserialize<_i5.Admin>(
               jsonSerialization['removedBy'],
             ),
       removedAt: jsonSerialization['removedAt'] == null
@@ -172,11 +172,13 @@ abstract class Product implements _i1.SerializableModel {
 
   _i2.ProductStatus status;
 
+  /// Why the product was removed from the catalog.
   String? removedReason;
 
   _i1.UuidValue? removedById;
 
-  _i5.User? removedBy;
+  /// Admin who removed or flagged the product.
+  _i5.Admin? removedBy;
 
   DateTime? removedAt;
 
@@ -209,7 +211,7 @@ abstract class Product implements _i1.SerializableModel {
     _i2.ProductStatus? status,
     String? removedReason,
     _i1.UuidValue? removedById,
-    _i5.User? removedBy,
+    _i5.Admin? removedBy,
     DateTime? removedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -277,7 +279,7 @@ class _ProductImpl extends Product {
     _i2.ProductStatus? status,
     String? removedReason,
     _i1.UuidValue? removedById,
-    _i5.User? removedBy,
+    _i5.Admin? removedBy,
     DateTime? removedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -370,7 +372,7 @@ class _ProductImpl extends Product {
       removedById: removedById is _i1.UuidValue?
           ? removedById
           : this.removedById,
-      removedBy: removedBy is _i5.User?
+      removedBy: removedBy is _i5.Admin?
           ? removedBy
           : this.removedBy?.copyWith(),
       removedAt: removedAt is DateTime? ? removedAt : this.removedAt,

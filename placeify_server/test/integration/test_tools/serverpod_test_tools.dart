@@ -25,32 +25,33 @@ import 'package:placeify_server/src/generated/user_ar_session_summary.dart'
 import 'package:placeify_server/src/generated/user_role.dart' as _i10;
 import 'package:placeify_server/src/generated/greetings/greeting.dart' as _i11;
 import 'package:placeify_server/src/generated/admin.dart' as _i12;
-import 'package:placeify_server/src/generated/vendor.dart' as _i13;
-import 'package:placeify_server/src/generated/user_account_status.dart' as _i14;
-import 'package:placeify_server/src/generated/product.dart' as _i15;
-import 'package:placeify_server/src/generated/complaint.dart' as _i16;
-import 'package:placeify_server/src/generated/complaint_status.dart' as _i17;
-import 'package:placeify_server/src/generated/ar_session.dart' as _i18;
-import 'package:placeify_server/src/generated/cart_item.dart' as _i19;
-import 'package:placeify_server/src/generated/checkout_result.dart' as _i20;
-import 'package:placeify_server/src/generated/checkout_request.dart' as _i21;
+import 'package:placeify_server/src/generated/admin_type.dart' as _i13;
+import 'package:placeify_server/src/generated/vendor.dart' as _i14;
+import 'package:placeify_server/src/generated/user_account_status.dart' as _i15;
+import 'package:placeify_server/src/generated/product.dart' as _i16;
+import 'package:placeify_server/src/generated/complaint.dart' as _i17;
+import 'package:placeify_server/src/generated/complaint_status.dart' as _i18;
+import 'package:placeify_server/src/generated/ar_session.dart' as _i19;
+import 'package:placeify_server/src/generated/cart_item.dart' as _i20;
+import 'package:placeify_server/src/generated/checkout_result.dart' as _i21;
+import 'package:placeify_server/src/generated/checkout_request.dart' as _i22;
 import 'package:placeify_server/src/generated/notification_preference.dart'
-    as _i22;
-import 'package:placeify_server/src/generated/order_page.dart' as _i23;
-import 'package:placeify_server/src/generated/pagination_input.dart' as _i24;
-import 'package:placeify_server/src/generated/order.dart' as _i25;
-import 'package:placeify_server/src/generated/category.dart' as _i26;
-import 'package:placeify_server/src/generated/product_page.dart' as _i27;
+    as _i23;
+import 'package:placeify_server/src/generated/order_page.dart' as _i24;
+import 'package:placeify_server/src/generated/pagination_input.dart' as _i25;
+import 'package:placeify_server/src/generated/order.dart' as _i26;
+import 'package:placeify_server/src/generated/category.dart' as _i27;
+import 'package:placeify_server/src/generated/product_page.dart' as _i28;
 import 'package:placeify_server/src/generated/product_search_input.dart'
-    as _i28;
-import 'package:placeify_server/src/generated/review.dart' as _i29;
-import 'package:placeify_server/src/generated/vendor_dashboard.dart' as _i30;
+    as _i29;
+import 'package:placeify_server/src/generated/review.dart' as _i30;
+import 'package:placeify_server/src/generated/vendor_dashboard.dart' as _i31;
 import 'package:placeify_server/src/generated/vendor_product_upload_input.dart'
-    as _i31;
-import 'dart:typed_data' as _i32;
-import 'package:placeify_server/src/generated/vendor_shop_order.dart' as _i33;
-import 'package:placeify_server/src/generated/wishlist_page.dart' as _i34;
-import 'package:placeify_server/src/generated/wishlist_item.dart' as _i35;
+    as _i32;
+import 'dart:typed_data' as _i33;
+import 'package:placeify_server/src/generated/vendor_shop_order.dart' as _i34;
+import 'package:placeify_server/src/generated/wishlist_page.dart' as _i35;
+import 'package:placeify_server/src/generated/wishlist_item.dart' as _i36;
 import 'package:placeify_server/src/generated/protocol.dart';
 import 'package:placeify_server/src/generated/endpoints.dart';
 export 'package:serverpod_test/serverpod_test_public_exports.dart';
@@ -1023,8 +1024,10 @@ class _AdminEndpoint {
 
   _i3.Future<_i12.Admin> updateMyProfile(
     _i1.TestSessionBuilder sessionBuilder,
-    String title, {
-    String? department,
+    String fullName, {
+    String? email,
+    String? phoneNumber,
+    _i13.AdminType? adminType,
     bool? isActive,
   }) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -1039,8 +1042,10 @@ class _AdminEndpoint {
           endpointPath: 'admin',
           methodName: 'updateMyProfile',
           parameters: _i1.testObjectToJson({
-            'title': title,
-            'department': department,
+            'fullName': fullName,
+            'email': email,
+            'phoneNumber': phoneNumber,
+            'adminType': adminType,
             'isActive': isActive,
           }),
           serializationManager: _serializationManager,
@@ -1058,7 +1063,7 @@ class _AdminEndpoint {
     });
   }
 
-  _i3.Future<_i13.Vendor> approveVendor(
+  _i3.Future<_i14.Vendor> approveVendor(
     _i1.TestSessionBuilder sessionBuilder,
     _i2.UuidValue vendorUserId,
   ) async {
@@ -1081,7 +1086,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i13.Vendor>);
+                as _i3.Future<_i14.Vendor>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1123,7 +1128,7 @@ class _AdminEndpoint {
   _i3.Future<_i5.User> updateUserStatus(
     _i1.TestSessionBuilder sessionBuilder,
     _i2.UuidValue targetUserId,
-    _i14.UserAccountStatus status, {
+    _i15.UserAccountStatus status, {
     bool? isActive,
   }) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -1188,7 +1193,7 @@ class _AdminEndpoint {
     });
   }
 
-  _i3.Future<_i15.Product> removeProduct(
+  _i3.Future<_i16.Product> removeProduct(
     _i1.TestSessionBuilder sessionBuilder,
     int productId,
     String reason,
@@ -1215,7 +1220,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i15.Product>);
+                as _i3.Future<_i16.Product>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1223,7 +1228,7 @@ class _AdminEndpoint {
     });
   }
 
-  _i3.Future<_i15.Product> flagProduct(
+  _i3.Future<_i16.Product> flagProduct(
     _i1.TestSessionBuilder sessionBuilder,
     int productId,
   ) async {
@@ -1246,7 +1251,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i15.Product>);
+                as _i3.Future<_i16.Product>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1254,7 +1259,7 @@ class _AdminEndpoint {
     });
   }
 
-  _i3.Future<_i16.Complaint> fileComplaint(
+  _i3.Future<_i17.Complaint> fileComplaint(
     _i1.TestSessionBuilder sessionBuilder,
     int productId,
     String reason,
@@ -1283,7 +1288,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i16.Complaint>);
+                as _i3.Future<_i17.Complaint>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1291,9 +1296,9 @@ class _AdminEndpoint {
     });
   }
 
-  _i3.Future<List<_i16.Complaint>> listComplaints(
+  _i3.Future<List<_i17.Complaint>> listComplaints(
     _i1.TestSessionBuilder sessionBuilder, {
-    _i17.ComplaintStatus? status,
+    _i18.ComplaintStatus? status,
   }) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -1314,7 +1319,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i16.Complaint>>);
+                as _i3.Future<List<_i17.Complaint>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1322,7 +1327,7 @@ class _AdminEndpoint {
     });
   }
 
-  _i3.Future<_i16.Complaint> resolveComplaint(
+  _i3.Future<_i17.Complaint> resolveComplaint(
     _i1.TestSessionBuilder sessionBuilder,
     int complaintId,
   ) async {
@@ -1345,7 +1350,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i16.Complaint>);
+                as _i3.Future<_i17.Complaint>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1425,7 +1430,7 @@ class _ArEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i18.ARSession> recordSession(
+  _i3.Future<_i19.ARSession> recordSession(
     _i1.TestSessionBuilder sessionBuilder,
     int productId, {
     String? deviceInfo,
@@ -1454,7 +1459,7 @@ class _ArEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i18.ARSession>);
+                as _i3.Future<_i19.ARSession>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1462,7 +1467,7 @@ class _ArEndpoint {
     });
   }
 
-  _i3.Future<List<_i18.ARSession>> listMySessions(
+  _i3.Future<List<_i19.ARSession>> listMySessions(
     _i1.TestSessionBuilder sessionBuilder, {
     required int limit,
     required int offset,
@@ -1489,7 +1494,7 @@ class _ArEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i18.ARSession>>);
+                as _i3.Future<List<_i19.ARSession>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1508,7 +1513,7 @@ class _CartEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<List<_i19.CartItem>> getCartItems(
+  _i3.Future<List<_i20.CartItem>> getCartItems(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -1530,7 +1535,7 @@ class _CartEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i19.CartItem>>);
+                as _i3.Future<List<_i20.CartItem>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1538,7 +1543,7 @@ class _CartEndpoint {
     });
   }
 
-  _i3.Future<_i19.CartItem> addToCart(
+  _i3.Future<_i20.CartItem> addToCart(
     _i1.TestSessionBuilder sessionBuilder,
     int productId, {
     required int quantity,
@@ -1565,7 +1570,7 @@ class _CartEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i19.CartItem>);
+                as _i3.Future<_i20.CartItem>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1573,7 +1578,7 @@ class _CartEndpoint {
     });
   }
 
-  _i3.Future<_i19.CartItem> updateCartItemQuantity(
+  _i3.Future<_i20.CartItem> updateCartItemQuantity(
     _i1.TestSessionBuilder sessionBuilder,
     int productId,
     int quantity,
@@ -1600,7 +1605,7 @@ class _CartEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i19.CartItem>);
+                as _i3.Future<_i20.CartItem>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1678,9 +1683,9 @@ class _CheckoutEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i20.CheckoutResult> checkout(
+  _i3.Future<_i21.CheckoutResult> checkout(
     _i1.TestSessionBuilder sessionBuilder,
-    _i21.CheckoutRequest request,
+    _i22.CheckoutRequest request,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -1701,7 +1706,7 @@ class _CheckoutEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i20.CheckoutResult>);
+                as _i3.Future<_i21.CheckoutResult>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1720,7 +1725,7 @@ class _NotificationEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i22.NotificationPreference> getPreferences(
+  _i3.Future<_i23.NotificationPreference> getPreferences(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -1742,7 +1747,7 @@ class _NotificationEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i22.NotificationPreference>);
+                as _i3.Future<_i23.NotificationPreference>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1750,7 +1755,7 @@ class _NotificationEndpoint {
     });
   }
 
-  _i3.Future<_i22.NotificationPreference> updatePreferences(
+  _i3.Future<_i23.NotificationPreference> updatePreferences(
     _i1.TestSessionBuilder sessionBuilder, {
     bool? orderUpdates,
     bool? refundStatus,
@@ -1785,7 +1790,7 @@ class _NotificationEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i22.NotificationPreference>);
+                as _i3.Future<_i23.NotificationPreference>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1804,9 +1809,9 @@ class _OrderEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i23.OrderPage> listMyOrders(
+  _i3.Future<_i24.OrderPage> listMyOrders(
     _i1.TestSessionBuilder sessionBuilder, {
-    _i24.PaginationInput? pagination,
+    _i25.PaginationInput? pagination,
     _i8.OrderStatus? status,
   }) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -1831,7 +1836,7 @@ class _OrderEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i23.OrderPage>);
+                as _i3.Future<_i24.OrderPage>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1839,7 +1844,7 @@ class _OrderEndpoint {
     });
   }
 
-  _i3.Future<_i25.Order?> getOrder(
+  _i3.Future<_i26.Order?> getOrder(
     _i1.TestSessionBuilder sessionBuilder,
     int orderId,
   ) async {
@@ -1862,7 +1867,7 @@ class _OrderEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i25.Order?>);
+                as _i3.Future<_i26.Order?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1881,7 +1886,7 @@ class _ProductEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<List<_i26.Category>> listCategories(
+  _i3.Future<List<_i27.Category>> listCategories(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -1903,7 +1908,7 @@ class _ProductEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i26.Category>>);
+                as _i3.Future<List<_i27.Category>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1911,9 +1916,9 @@ class _ProductEndpoint {
     });
   }
 
-  _i3.Future<_i27.ProductPage> searchProducts(
+  _i3.Future<_i28.ProductPage> searchProducts(
     _i1.TestSessionBuilder sessionBuilder,
-    _i28.ProductSearchInput input,
+    _i29.ProductSearchInput input,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -1934,7 +1939,7 @@ class _ProductEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i27.ProductPage>);
+                as _i3.Future<_i28.ProductPage>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1942,7 +1947,7 @@ class _ProductEndpoint {
     });
   }
 
-  _i3.Future<_i15.Product?> getProduct(
+  _i3.Future<_i16.Product?> getProduct(
     _i1.TestSessionBuilder sessionBuilder,
     int productId,
   ) async {
@@ -1965,7 +1970,7 @@ class _ProductEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i15.Product?>);
+                as _i3.Future<_i16.Product?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1973,7 +1978,7 @@ class _ProductEndpoint {
     });
   }
 
-  _i3.Future<List<_i15.Product>> listProducts(
+  _i3.Future<List<_i16.Product>> listProducts(
     _i1.TestSessionBuilder sessionBuilder, {
     String? categoryName,
     int? limit,
@@ -2002,7 +2007,7 @@ class _ProductEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i15.Product>>);
+                as _i3.Future<List<_i16.Product>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2021,7 +2026,7 @@ class _ReviewEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i29.Review> submitReview(
+  _i3.Future<_i30.Review> submitReview(
     _i1.TestSessionBuilder sessionBuilder,
     int productId,
     int orderId,
@@ -2052,7 +2057,7 @@ class _ReviewEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i29.Review>);
+                as _i3.Future<_i30.Review>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2060,7 +2065,7 @@ class _ReviewEndpoint {
     });
   }
 
-  _i3.Future<List<_i29.Review>> listProductReviews(
+  _i3.Future<List<_i30.Review>> listProductReviews(
     _i1.TestSessionBuilder sessionBuilder,
     int productId, {
     required int limit,
@@ -2089,7 +2094,7 @@ class _ReviewEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i29.Review>>);
+                as _i3.Future<List<_i30.Review>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2108,7 +2113,7 @@ class _VendorEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i13.Vendor> getMyShop(
+  _i3.Future<_i14.Vendor> getMyShop(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -2130,7 +2135,7 @@ class _VendorEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i13.Vendor>);
+                as _i3.Future<_i14.Vendor>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2138,7 +2143,7 @@ class _VendorEndpoint {
     });
   }
 
-  _i3.Future<_i30.VendorDashboard> getDashboard(
+  _i3.Future<_i31.VendorDashboard> getDashboard(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -2160,7 +2165,7 @@ class _VendorEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i30.VendorDashboard>);
+                as _i3.Future<_i31.VendorDashboard>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2196,7 +2201,7 @@ class _VendorEndpoint {
     });
   }
 
-  _i3.Future<_i13.Vendor> createShop(
+  _i3.Future<_i14.Vendor> createShop(
     _i1.TestSessionBuilder sessionBuilder,
     String shopName, {
     String? description,
@@ -2229,7 +2234,7 @@ class _VendorEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i13.Vendor>);
+                as _i3.Future<_i14.Vendor>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2237,7 +2242,7 @@ class _VendorEndpoint {
     });
   }
 
-  _i3.Future<_i13.Vendor> updateShop(
+  _i3.Future<_i14.Vendor> updateShop(
     _i1.TestSessionBuilder sessionBuilder,
     String shopName, {
     String? description,
@@ -2266,7 +2271,7 @@ class _VendorEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i13.Vendor>);
+                as _i3.Future<_i14.Vendor>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2274,7 +2279,7 @@ class _VendorEndpoint {
     });
   }
 
-  _i3.Future<List<_i15.Product>> listMyProducts(
+  _i3.Future<List<_i16.Product>> listMyProducts(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -2296,7 +2301,7 @@ class _VendorEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i15.Product>>);
+                as _i3.Future<List<_i16.Product>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2304,7 +2309,7 @@ class _VendorEndpoint {
     });
   }
 
-  _i3.Future<_i15.Product> createProduct(
+  _i3.Future<_i16.Product> createProduct(
     _i1.TestSessionBuilder sessionBuilder,
     String name,
     String description,
@@ -2355,7 +2360,7 @@ class _VendorEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i15.Product>);
+                as _i3.Future<_i16.Product>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2363,10 +2368,10 @@ class _VendorEndpoint {
     });
   }
 
-  _i3.Future<_i15.Product> uploadProduct(
+  _i3.Future<_i16.Product> uploadProduct(
     _i1.TestSessionBuilder sessionBuilder,
-    _i31.VendorProductUploadInput input,
-    _i32.ByteData imageData,
+    _i32.VendorProductUploadInput input,
+    _i33.ByteData imageData,
     String imageFileName,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -2392,7 +2397,7 @@ class _VendorEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i15.Product>);
+                as _i3.Future<_i16.Product>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2400,7 +2405,7 @@ class _VendorEndpoint {
     });
   }
 
-  _i3.Future<_i15.Product> updateProductThumbnail(
+  _i3.Future<_i16.Product> updateProductThumbnail(
     _i1.TestSessionBuilder sessionBuilder,
     int productId,
     String thumbnailUrl,
@@ -2427,7 +2432,7 @@ class _VendorEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i15.Product>);
+                as _i3.Future<_i16.Product>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2437,7 +2442,7 @@ class _VendorEndpoint {
 
   _i3.Future<String> uploadProductImage(
     _i1.TestSessionBuilder sessionBuilder,
-    _i32.ByteData fileData,
+    _i33.ByteData fileData,
     String fileName,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -2470,7 +2475,7 @@ class _VendorEndpoint {
     });
   }
 
-  _i3.Future<_i15.Product> regenerateProductModel3d(
+  _i3.Future<_i16.Product> regenerateProductModel3d(
     _i1.TestSessionBuilder sessionBuilder,
     int productId,
   ) async {
@@ -2493,7 +2498,7 @@ class _VendorEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i15.Product>);
+                as _i3.Future<_i16.Product>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2501,7 +2506,7 @@ class _VendorEndpoint {
     });
   }
 
-  _i3.Future<List<_i33.VendorShopOrder>> listShopOrders(
+  _i3.Future<List<_i34.VendorShopOrder>> listShopOrders(
     _i1.TestSessionBuilder sessionBuilder, {
     required int limit,
     required int offset,
@@ -2530,7 +2535,7 @@ class _VendorEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i33.VendorShopOrder>>);
+                as _i3.Future<List<_i34.VendorShopOrder>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2538,7 +2543,7 @@ class _VendorEndpoint {
     });
   }
 
-  _i3.Future<_i33.VendorShopOrder> getShopOrder(
+  _i3.Future<_i34.VendorShopOrder> getShopOrder(
     _i1.TestSessionBuilder sessionBuilder,
     int orderId,
   ) async {
@@ -2561,7 +2566,7 @@ class _VendorEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i33.VendorShopOrder>);
+                as _i3.Future<_i34.VendorShopOrder>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2580,9 +2585,9 @@ class _WishlistEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i34.WishlistPage> listMyWishlist(
+  _i3.Future<_i35.WishlistPage> listMyWishlist(
     _i1.TestSessionBuilder sessionBuilder, {
-    _i24.PaginationInput? pagination,
+    _i25.PaginationInput? pagination,
   }) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -2603,7 +2608,7 @@ class _WishlistEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i34.WishlistPage>);
+                as _i3.Future<_i35.WishlistPage>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2611,7 +2616,7 @@ class _WishlistEndpoint {
     });
   }
 
-  _i3.Future<_i35.WishlistItem> addToWishlist(
+  _i3.Future<_i36.WishlistItem> addToWishlist(
     _i1.TestSessionBuilder sessionBuilder,
     int productId,
   ) async {
@@ -2634,7 +2639,7 @@ class _WishlistEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i35.WishlistItem>);
+                as _i3.Future<_i36.WishlistItem>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
