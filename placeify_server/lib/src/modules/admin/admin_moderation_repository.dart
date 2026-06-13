@@ -222,7 +222,7 @@ class AdminModerationStore {
     );
   }
 
-  Future<Complaint> resolveComplaint(Session session, int complaintId) async {
+  Future<Complaint> resolveComplaint(Session session, UuidValue complaintId) async {
     final admin = await _requireAdminProfile(session);
     final complaint = await Complaint.db.findById(session, complaintId);
     if (complaint == null) {

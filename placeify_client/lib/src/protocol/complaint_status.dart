@@ -12,17 +12,23 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 
-/// Resolution state for a product complaint report.
+/// Resolution workflow for a product complaint or damage report.
 enum ComplaintStatus implements _i1.SerializableModel {
   pending,
-  resolved;
+  reviewed,
+  resolved,
+  rejected;
 
   static ComplaintStatus fromJson(String name) {
     switch (name) {
       case 'pending':
         return ComplaintStatus.pending;
+      case 'reviewed':
+        return ComplaintStatus.reviewed;
       case 'resolved':
         return ComplaintStatus.resolved;
+      case 'rejected':
+        return ComplaintStatus.rejected;
       default:
         return ComplaintStatus.pending;
     }

@@ -154,6 +154,7 @@ abstract class User
 
   _i2.UserRole role;
 
+  /// Default approved at signup; vendors set to pending in vendor_repository.createShop.
   _i3.UserAccountStatus status;
 
   _i1.UuidValue? approvedById;
@@ -566,6 +567,7 @@ class UserTable extends _i1.Table<_i1.UuidValue?> {
 
   late final _i1.ColumnEnum<_i2.UserRole> role;
 
+  /// Default approved at signup; vendors set to pending in vendor_repository.createShop.
   late final _i1.ColumnEnum<_i3.UserAccountStatus> status;
 
   late final _i1.ColumnUuid approvedById;

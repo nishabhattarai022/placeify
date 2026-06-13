@@ -541,7 +541,14 @@ class VendorStore {
         careInstructions: trimmedCare,
         warranty: input.warranty?.trim(),
         thumbnailUrl: thumbnailUrl?.trim(),
-        status: input.isActive ? ProductStatus.active : ProductStatus.inactive,
+        status: input.isActive ? ProductStatus.active : ProductStatus.removed,
+        removedReason: input.isActive
+            ? (product.removedById == null ? null : product.removedReason)
+            : 'Hidden by vendor',
+        removedById: input.isActive ? product.removedById : null,
+        removedAt: input.isActive
+            ? (product.removedById == null ? null : product.removedAt)
+            : DateTime.now(),
       ),
     );
 

@@ -20,7 +20,7 @@ import 'package:placeify_server/src/generated/protocol.dart' as _i6;
 
 /// Product complaint/damage report. Admins resolve these and may remove flagged products.
 abstract class Complaint
-    implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
+    implements _i1.TableRow<_i1.UuidValue?>, _i1.ProtocolSerialization {
   Complaint._({
     this.id,
     required this.productId,
@@ -28,33 +28,38 @@ abstract class Complaint
     required this.reportedById,
     this.reportedBy,
     required this.reason,
-    required this.description,
+    this.description,
     _i2.ComplaintStatus? status,
     this.resolvedById,
     this.resolvedBy,
     this.resolvedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) : status = status ?? _i2.ComplaintStatus.pending,
-       createdAt = createdAt ?? DateTime.now();
+       createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
   factory Complaint({
-    int? id,
+    _i1.UuidValue? id,
     required int productId,
     _i3.Product? product,
     required _i1.UuidValue reportedById,
     _i4.User? reportedBy,
     required String reason,
-    required String description,
+    String? description,
     _i2.ComplaintStatus? status,
     _i1.UuidValue? resolvedById,
     _i5.Admin? resolvedBy,
     DateTime? resolvedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) = _ComplaintImpl;
 
   factory Complaint.fromJson(Map<String, dynamic> jsonSerialization) {
     return Complaint(
-      id: jsonSerialization['id'] as int?,
+      id: jsonSerialization['id'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(jsonSerialization['id']),
       productId: jsonSerialization['productId'] as int,
       product: jsonSerialization['product'] == null
           ? null
@@ -70,7 +75,7 @@ abstract class Complaint
               jsonSerialization['reportedBy'],
             ),
       reason: jsonSerialization['reason'] as String,
-      description: jsonSerialization['description'] as String,
+      description: jsonSerialization['description'] as String?,
       status: jsonSerialization['status'] == null
           ? null
           : _i2.ComplaintStatus.fromJson(
@@ -92,6 +97,9 @@ abstract class Complaint
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
+      updatedAt: jsonSerialization['updatedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['updatedAt']),
     );
   }
 
@@ -100,7 +108,7 @@ abstract class Complaint
   static const db = ComplaintRepository._();
 
   @override
-  int? id;
+  _i1.UuidValue? id;
 
   int productId;
 
@@ -112,27 +120,29 @@ abstract class Complaint
 
   String reason;
 
-  String description;
+  String? description;
 
   _i2.ComplaintStatus status;
 
   _i1.UuidValue? resolvedById;
 
-  /// Admin who marked this complaint resolved.
+  /// Admin who marked this complaint resolved or rejected.
   _i5.Admin? resolvedBy;
 
   DateTime? resolvedAt;
 
   DateTime createdAt;
 
+  DateTime updatedAt;
+
   @override
-  _i1.Table<int?> get table => t;
+  _i1.Table<_i1.UuidValue?> get table => t;
 
   /// Returns a shallow copy of this [Complaint]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
   Complaint copyWith({
-    int? id,
+    _i1.UuidValue? id,
     int? productId,
     _i3.Product? product,
     _i1.UuidValue? reportedById,
@@ -144,23 +154,25 @@ abstract class Complaint
     _i5.Admin? resolvedBy,
     DateTime? resolvedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   });
   @override
   Map<String, dynamic> toJson() {
     return {
       '__className__': 'Complaint',
-      if (id != null) 'id': id,
+      if (id != null) 'id': id?.toJson(),
       'productId': productId,
       if (product != null) 'product': product?.toJson(),
       'reportedById': reportedById.toJson(),
       if (reportedBy != null) 'reportedBy': reportedBy?.toJson(),
       'reason': reason,
-      'description': description,
+      if (description != null) 'description': description,
       'status': status.toJson(),
       if (resolvedById != null) 'resolvedById': resolvedById?.toJson(),
       if (resolvedBy != null) 'resolvedBy': resolvedBy?.toJson(),
       if (resolvedAt != null) 'resolvedAt': resolvedAt?.toJson(),
       'createdAt': createdAt.toJson(),
+      'updatedAt': updatedAt.toJson(),
     };
   }
 
@@ -168,18 +180,19 @@ abstract class Complaint
   Map<String, dynamic> toJsonForProtocol() {
     return {
       '__className__': 'Complaint',
-      if (id != null) 'id': id,
+      if (id != null) 'id': id?.toJson(),
       'productId': productId,
       if (product != null) 'product': product?.toJsonForProtocol(),
       'reportedById': reportedById.toJson(),
       if (reportedBy != null) 'reportedBy': reportedBy?.toJsonForProtocol(),
       'reason': reason,
-      'description': description,
+      if (description != null) 'description': description,
       'status': status.toJson(),
       if (resolvedById != null) 'resolvedById': resolvedById?.toJson(),
       if (resolvedBy != null) 'resolvedBy': resolvedBy?.toJsonForProtocol(),
       if (resolvedAt != null) 'resolvedAt': resolvedAt?.toJson(),
       'createdAt': createdAt.toJson(),
+      'updatedAt': updatedAt.toJson(),
     };
   }
 
@@ -225,18 +238,19 @@ class _Undefined {}
 
 class _ComplaintImpl extends Complaint {
   _ComplaintImpl({
-    int? id,
+    _i1.UuidValue? id,
     required int productId,
     _i3.Product? product,
     required _i1.UuidValue reportedById,
     _i4.User? reportedBy,
     required String reason,
-    required String description,
+    String? description,
     _i2.ComplaintStatus? status,
     _i1.UuidValue? resolvedById,
     _i5.Admin? resolvedBy,
     DateTime? resolvedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) : super._(
          id: id,
          productId: productId,
@@ -250,6 +264,7 @@ class _ComplaintImpl extends Complaint {
          resolvedBy: resolvedBy,
          resolvedAt: resolvedAt,
          createdAt: createdAt,
+         updatedAt: updatedAt,
        );
 
   /// Returns a shallow copy of this [Complaint]
@@ -263,15 +278,16 @@ class _ComplaintImpl extends Complaint {
     _i1.UuidValue? reportedById,
     Object? reportedBy = _Undefined,
     String? reason,
-    String? description,
+    Object? description = _Undefined,
     _i2.ComplaintStatus? status,
     Object? resolvedById = _Undefined,
     Object? resolvedBy = _Undefined,
     Object? resolvedAt = _Undefined,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return Complaint(
-      id: id is int? ? id : this.id,
+      id: id is _i1.UuidValue? ? id : this.id,
       productId: productId ?? this.productId,
       product: product is _i3.Product? ? product : this.product?.copyWith(),
       reportedById: reportedById ?? this.reportedById,
@@ -279,7 +295,7 @@ class _ComplaintImpl extends Complaint {
           ? reportedBy
           : this.reportedBy?.copyWith(),
       reason: reason ?? this.reason,
-      description: description ?? this.description,
+      description: description is String? ? description : this.description,
       status: status ?? this.status,
       resolvedById: resolvedById is _i1.UuidValue?
           ? resolvedById
@@ -289,6 +305,7 @@ class _ComplaintImpl extends Complaint {
           : this.resolvedBy?.copyWith(),
       resolvedAt: resolvedAt is DateTime? ? resolvedAt : this.resolvedAt,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }
@@ -313,7 +330,7 @@ class ComplaintUpdateTable extends _i1.UpdateTable<ComplaintTable> {
     value,
   );
 
-  _i1.ColumnValue<String, String> description(String value) => _i1.ColumnValue(
+  _i1.ColumnValue<String, String> description(String? value) => _i1.ColumnValue(
     table.description,
     value,
   );
@@ -343,9 +360,15 @@ class ComplaintUpdateTable extends _i1.UpdateTable<ComplaintTable> {
         table.createdAt,
         value,
       );
+
+  _i1.ColumnValue<DateTime, DateTime> updatedAt(DateTime value) =>
+      _i1.ColumnValue(
+        table.updatedAt,
+        value,
+      );
 }
 
-class ComplaintTable extends _i1.Table<int?> {
+class ComplaintTable extends _i1.Table<_i1.UuidValue?> {
   ComplaintTable({super.tableRelation}) : super(tableName: 'complaint') {
     updateTable = ComplaintUpdateTable(this);
     productId = _i1.ColumnInt(
@@ -383,6 +406,11 @@ class ComplaintTable extends _i1.Table<int?> {
       this,
       hasDefault: true,
     );
+    updatedAt = _i1.ColumnDateTime(
+      'updatedAt',
+      this,
+      hasDefault: true,
+    );
   }
 
   late final ComplaintUpdateTable updateTable;
@@ -403,12 +431,14 @@ class ComplaintTable extends _i1.Table<int?> {
 
   late final _i1.ColumnUuid resolvedById;
 
-  /// Admin who marked this complaint resolved.
+  /// Admin who marked this complaint resolved or rejected.
   _i5.AdminTable? _resolvedBy;
 
   late final _i1.ColumnDateTime resolvedAt;
 
   late final _i1.ColumnDateTime createdAt;
+
+  late final _i1.ColumnDateTime updatedAt;
 
   _i3.ProductTable get product {
     if (_product != null) return _product!;
@@ -460,6 +490,7 @@ class ComplaintTable extends _i1.Table<int?> {
     resolvedById,
     resolvedAt,
     createdAt,
+    updatedAt,
   ];
 
   @override
@@ -502,7 +533,7 @@ class ComplaintInclude extends _i1.IncludeObject {
   };
 
   @override
-  _i1.Table<int?> get table => Complaint.t;
+  _i1.Table<_i1.UuidValue?> get table => Complaint.t;
 }
 
 class ComplaintIncludeList extends _i1.IncludeList {
@@ -522,7 +553,7 @@ class ComplaintIncludeList extends _i1.IncludeList {
   Map<String, _i1.Include?> get includes => include?.includes ?? {};
 
   @override
-  _i1.Table<int?> get table => Complaint.t;
+  _i1.Table<_i1.UuidValue?> get table => Complaint.t;
 }
 
 class ComplaintRepository {
@@ -626,7 +657,7 @@ class ComplaintRepository {
   /// Finds a single [Complaint] by its [id] or null if no such row exists.
   Future<Complaint?> findById(
     _i1.DatabaseSession session,
-    int id, {
+    _i1.UuidValue id, {
     _i1.Transaction? transaction,
     ComplaintInclude? include,
     _i1.LockMode? lockMode,
@@ -716,7 +747,7 @@ class ComplaintRepository {
   /// Returns the updated row or null if no row with the given id exists.
   Future<Complaint?> updateById(
     _i1.DatabaseSession session,
-    int id, {
+    _i1.UuidValue id, {
     required _i1.ColumnValueListBuilder<ComplaintUpdateTable> columnValues,
     _i1.Transaction? transaction,
   }) async {

@@ -783,7 +783,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'complaintId': _i1.ParameterDescription(
               name: 'complaintId',
-              type: _i1.getType<int>(),
+              type: _i1.getType<_i1.UuidValue>(),
               nullable: false,
             ),
           },

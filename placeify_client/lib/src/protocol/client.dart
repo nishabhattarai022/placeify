@@ -515,7 +515,7 @@ class EndpointAdmin extends EndpointPlaceifyAuthenticated {
     {'status': status},
   );
 
-  _i3.Future<_i17.Complaint> resolveComplaint(int complaintId) =>
+  _i3.Future<_i17.Complaint> resolveComplaint(_i2.UuidValue complaintId) =>
       caller.callServerEndpoint<_i17.Complaint>(
         'admin',
         'resolveComplaint',

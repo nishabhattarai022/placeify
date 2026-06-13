@@ -580,10 +580,10 @@ class Protocol extends _i1.SerializationManagerServer {
       columns: [
         _i2.ColumnDefinition(
           name: 'id',
-          columnType: _i2.ColumnType.bigint,
+          columnType: _i2.ColumnType.uuid,
           isNullable: false,
-          dartType: 'int?',
-          columnDefault: 'nextval(\'complaint_id_seq\'::regclass)',
+          dartType: 'UuidValue?',
+          columnDefault: 'gen_random_uuid_v7()',
         ),
         _i2.ColumnDefinition(
           name: 'productId',
@@ -606,8 +606,8 @@ class Protocol extends _i1.SerializationManagerServer {
         _i2.ColumnDefinition(
           name: 'description',
           columnType: _i2.ColumnType.text,
-          isNullable: false,
-          dartType: 'String',
+          isNullable: true,
+          dartType: 'String?',
         ),
         _i2.ColumnDefinition(
           name: 'status',
@@ -630,6 +630,13 @@ class Protocol extends _i1.SerializationManagerServer {
         ),
         _i2.ColumnDefinition(
           name: 'createdAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+          columnDefault: 'CURRENT_TIMESTAMP',
+        ),
+        _i2.ColumnDefinition(
+          name: 'updatedAt',
           columnType: _i2.ColumnType.timestampWithoutTimeZone,
           isNullable: false,
           dartType: 'DateTime',

@@ -150,6 +150,7 @@ abstract class User implements _i1.SerializableModel {
 
   _i2.UserRole role;
 
+  /// Default approved at signup; vendors set to pending in vendor_repository.createShop.
   _i3.UserAccountStatus status;
 
   _i1.UuidValue? approvedById;
