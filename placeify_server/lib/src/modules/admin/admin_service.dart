@@ -28,14 +28,18 @@ class AdminService {
 
   Future<Admin> updateMyProfile(
     Session session,
-    String title, {
-    String? department,
+    String fullName, {
+    String? email,
+    String? phoneNumber,
+    AdminType? adminType,
     bool? isActive,
   }) {
     return _repository.updateMyAdmin(
       session,
-      title,
-      department: department,
+      fullName,
+      email: email,
+      phoneNumber: phoneNumber,
+      adminType: adminType,
       isActive: isActive,
     );
   }

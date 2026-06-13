@@ -27,19 +27,20 @@ import '../modules/vendor/vendor_endpoint.dart' as _i14;
 import '../modules/wishlist/wishlist_endpoint.dart' as _i15;
 import 'package:placeify_server/src/generated/order_status.dart' as _i16;
 import 'package:placeify_server/src/generated/user_role.dart' as _i17;
-import 'package:placeify_server/src/generated/user_account_status.dart' as _i18;
-import 'package:placeify_server/src/generated/complaint_status.dart' as _i19;
-import 'package:placeify_server/src/generated/checkout_request.dart' as _i20;
-import 'package:placeify_server/src/generated/pagination_input.dart' as _i21;
+import 'package:placeify_server/src/generated/admin_type.dart' as _i18;
+import 'package:placeify_server/src/generated/user_account_status.dart' as _i19;
+import 'package:placeify_server/src/generated/complaint_status.dart' as _i20;
+import 'package:placeify_server/src/generated/checkout_request.dart' as _i21;
+import 'package:placeify_server/src/generated/pagination_input.dart' as _i22;
 import 'package:placeify_server/src/generated/product_search_input.dart'
-    as _i22;
-import 'package:placeify_server/src/generated/vendor_product_upload_input.dart'
     as _i23;
-import 'dart:typed_data' as _i24;
+import 'package:placeify_server/src/generated/vendor_product_upload_input.dart'
+    as _i24;
+import 'dart:typed_data' as _i25;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
-    as _i25;
-import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _i26;
+import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+    as _i27;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -557,14 +558,24 @@ class Endpoints extends _i1.EndpointDispatch {
         'updateMyProfile': _i1.MethodConnector(
           name: 'updateMyProfile',
           params: {
-            'title': _i1.ParameterDescription(
-              name: 'title',
+            'fullName': _i1.ParameterDescription(
+              name: 'fullName',
               type: _i1.getType<String>(),
               nullable: false,
             ),
-            'department': _i1.ParameterDescription(
-              name: 'department',
+            'email': _i1.ParameterDescription(
+              name: 'email',
               type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'phoneNumber': _i1.ParameterDescription(
+              name: 'phoneNumber',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'adminType': _i1.ParameterDescription(
+              name: 'adminType',
+              type: _i1.getType<_i18.AdminType?>(),
               nullable: true,
             ),
             'isActive': _i1.ParameterDescription(
@@ -580,8 +591,10 @@ class Endpoints extends _i1.EndpointDispatch {
               ) async =>
                   (endpoints['admin'] as _i6.AdminEndpoint).updateMyProfile(
                     session,
-                    params['title'],
-                    department: params['department'],
+                    params['fullName'],
+                    email: params['email'],
+                    phoneNumber: params['phoneNumber'],
+                    adminType: params['adminType'],
                     isActive: params['isActive'],
                   ),
         ),
@@ -632,7 +645,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i18.UserAccountStatus>(),
+              type: _i1.getType<_i19.UserAccountStatus>(),
               nullable: false,
             ),
             'isActive': _i1.ParameterDescription(
@@ -751,7 +764,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i19.ComplaintStatus?>(),
+              type: _i1.getType<_i20.ComplaintStatus?>(),
               nullable: true,
             ),
           },
@@ -976,7 +989,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'request': _i1.ParameterDescription(
               name: 'request',
-              type: _i1.getType<_i20.CheckoutRequest>(),
+              type: _i1.getType<_i21.CheckoutRequest>(),
               nullable: false,
             ),
           },
@@ -1068,7 +1081,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'pagination': _i1.ParameterDescription(
               name: 'pagination',
-              type: _i1.getType<_i21.PaginationInput?>(),
+              type: _i1.getType<_i22.PaginationInput?>(),
               nullable: true,
             ),
             'status': _i1.ParameterDescription(
@@ -1127,7 +1140,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'input': _i1.ParameterDescription(
               name: 'input',
-              type: _i1.getType<_i22.ProductSearchInput>(),
+              type: _i1.getType<_i23.ProductSearchInput>(),
               nullable: false,
             ),
           },
@@ -1488,12 +1501,12 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'input': _i1.ParameterDescription(
               name: 'input',
-              type: _i1.getType<_i23.VendorProductUploadInput>(),
+              type: _i1.getType<_i24.VendorProductUploadInput>(),
               nullable: false,
             ),
             'imageData': _i1.ParameterDescription(
               name: 'imageData',
-              type: _i1.getType<_i24.ByteData>(),
+              type: _i1.getType<_i25.ByteData>(),
               nullable: false,
             ),
             'imageFileName': _i1.ParameterDescription(
@@ -1544,7 +1557,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i24.ByteData>(),
+              type: _i1.getType<_i25.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -1644,7 +1657,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'pagination': _i1.ParameterDescription(
               name: 'pagination',
-              type: _i1.getType<_i21.PaginationInput?>(),
+              type: _i1.getType<_i22.PaginationInput?>(),
               nullable: true,
             ),
           },
@@ -1736,9 +1749,9 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
-    modules['serverpod_auth_core'] = _i25.Endpoints()
+    modules['serverpod_auth_core'] = _i26.Endpoints()
       ..initializeEndpoints(server);
-    modules['serverpod_auth_idp'] = _i26.Endpoints()
+    modules['serverpod_auth_idp'] = _i27.Endpoints()
       ..initializeEndpoints(server);
   }
 }

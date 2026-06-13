@@ -12,31 +12,43 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
-import 'user.dart' as _i2;
-import 'package:placeify_server/src/generated/protocol.dart' as _i3;
+import 'admin_type.dart' as _i2;
+import 'user.dart' as _i3;
+import 'package:placeify_server/src/generated/protocol.dart' as _i4;
 
-/// Platform administrator profile linked to a user account.
+/// Platform administrator profile linked 1:1 to a User account.
+/// Audit actions (approve, remove, resolve) reference this table's id, not user.id.
 abstract class Admin
     implements _i1.TableRow<_i1.UuidValue?>, _i1.ProtocolSerialization {
   Admin._({
     this.id,
     required this.userId,
     this.user,
-    required this.title,
-    this.department,
+    required this.fullName,
+    required this.email,
+    this.phoneNumber,
+    _i2.AdminType? adminType,
     bool? isActive,
+    this.lastLoginAt,
     DateTime? createdAt,
-  }) : isActive = isActive ?? true,
-       createdAt = createdAt ?? DateTime.now();
+    DateTime? updatedAt,
+  }) : adminType = adminType ?? _i2.AdminType.moderator,
+       isActive = isActive ?? true,
+       createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
   factory Admin({
     _i1.UuidValue? id,
     required _i1.UuidValue userId,
-    _i2.User? user,
-    required String title,
-    String? department,
+    _i3.User? user,
+    required String fullName,
+    required String email,
+    String? phoneNumber,
+    _i2.AdminType? adminType,
     bool? isActive,
+    DateTime? lastLoginAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) = _AdminImpl;
 
   factory Admin.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -47,15 +59,27 @@ abstract class Admin
       userId: _i1.UuidValueJsonExtension.fromJson(jsonSerialization['userId']),
       user: jsonSerialization['user'] == null
           ? null
-          : _i3.Protocol().deserialize<_i2.User>(jsonSerialization['user']),
-      title: jsonSerialization['title'] as String,
-      department: jsonSerialization['department'] as String?,
+          : _i4.Protocol().deserialize<_i3.User>(jsonSerialization['user']),
+      fullName: jsonSerialization['fullName'] as String,
+      email: jsonSerialization['email'] as String,
+      phoneNumber: jsonSerialization['phoneNumber'] as String?,
+      adminType: jsonSerialization['adminType'] == null
+          ? null
+          : _i2.AdminType.fromJson((jsonSerialization['adminType'] as String)),
       isActive: jsonSerialization['isActive'] == null
           ? null
           : _i1.BoolJsonExtension.fromJson(jsonSerialization['isActive']),
+      lastLoginAt: jsonSerialization['lastLoginAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['lastLoginAt'],
+            ),
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
+      updatedAt: jsonSerialization['updatedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['updatedAt']),
     );
   }
 
@@ -68,15 +92,23 @@ abstract class Admin
 
   _i1.UuidValue userId;
 
-  _i2.User? user;
+  _i3.User? user;
 
-  String title;
+  String fullName;
 
-  String? department;
+  String email;
+
+  String? phoneNumber;
+
+  _i2.AdminType adminType;
 
   bool isActive;
 
+  DateTime? lastLoginAt;
+
   DateTime createdAt;
+
+  DateTime updatedAt;
 
   @override
   _i1.Table<_i1.UuidValue?> get table => t;
@@ -87,11 +119,15 @@ abstract class Admin
   Admin copyWith({
     _i1.UuidValue? id,
     _i1.UuidValue? userId,
-    _i2.User? user,
-    String? title,
-    String? department,
+    _i3.User? user,
+    String? fullName,
+    String? email,
+    String? phoneNumber,
+    _i2.AdminType? adminType,
     bool? isActive,
+    DateTime? lastLoginAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -100,10 +136,14 @@ abstract class Admin
       if (id != null) 'id': id?.toJson(),
       'userId': userId.toJson(),
       if (user != null) 'user': user?.toJson(),
-      'title': title,
-      if (department != null) 'department': department,
+      'fullName': fullName,
+      'email': email,
+      if (phoneNumber != null) 'phoneNumber': phoneNumber,
+      'adminType': adminType.toJson(),
       'isActive': isActive,
+      if (lastLoginAt != null) 'lastLoginAt': lastLoginAt?.toJson(),
       'createdAt': createdAt.toJson(),
+      'updatedAt': updatedAt.toJson(),
     };
   }
 
@@ -114,14 +154,18 @@ abstract class Admin
       if (id != null) 'id': id?.toJson(),
       'userId': userId.toJson(),
       if (user != null) 'user': user?.toJsonForProtocol(),
-      'title': title,
-      if (department != null) 'department': department,
+      'fullName': fullName,
+      'email': email,
+      if (phoneNumber != null) 'phoneNumber': phoneNumber,
+      'adminType': adminType.toJson(),
       'isActive': isActive,
+      if (lastLoginAt != null) 'lastLoginAt': lastLoginAt?.toJson(),
       'createdAt': createdAt.toJson(),
+      'updatedAt': updatedAt.toJson(),
     };
   }
 
-  static AdminInclude include({_i2.UserInclude? user}) {
+  static AdminInclude include({_i3.UserInclude? user}) {
     return AdminInclude._(user: user);
   }
 
@@ -157,19 +201,27 @@ class _AdminImpl extends Admin {
   _AdminImpl({
     _i1.UuidValue? id,
     required _i1.UuidValue userId,
-    _i2.User? user,
-    required String title,
-    String? department,
+    _i3.User? user,
+    required String fullName,
+    required String email,
+    String? phoneNumber,
+    _i2.AdminType? adminType,
     bool? isActive,
+    DateTime? lastLoginAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) : super._(
          id: id,
          userId: userId,
          user: user,
-         title: title,
-         department: department,
+         fullName: fullName,
+         email: email,
+         phoneNumber: phoneNumber,
+         adminType: adminType,
          isActive: isActive,
+         lastLoginAt: lastLoginAt,
          createdAt: createdAt,
+         updatedAt: updatedAt,
        );
 
   /// Returns a shallow copy of this [Admin]
@@ -180,19 +232,27 @@ class _AdminImpl extends Admin {
     Object? id = _Undefined,
     _i1.UuidValue? userId,
     Object? user = _Undefined,
-    String? title,
-    Object? department = _Undefined,
+    String? fullName,
+    String? email,
+    Object? phoneNumber = _Undefined,
+    _i2.AdminType? adminType,
     bool? isActive,
+    Object? lastLoginAt = _Undefined,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return Admin(
       id: id is _i1.UuidValue? ? id : this.id,
       userId: userId ?? this.userId,
-      user: user is _i2.User? ? user : this.user?.copyWith(),
-      title: title ?? this.title,
-      department: department is String? ? department : this.department,
+      user: user is _i3.User? ? user : this.user?.copyWith(),
+      fullName: fullName ?? this.fullName,
+      email: email ?? this.email,
+      phoneNumber: phoneNumber is String? ? phoneNumber : this.phoneNumber,
+      adminType: adminType ?? this.adminType,
       isActive: isActive ?? this.isActive,
+      lastLoginAt: lastLoginAt is DateTime? ? lastLoginAt : this.lastLoginAt,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }
@@ -206,13 +266,25 @@ class AdminUpdateTable extends _i1.UpdateTable<AdminTable> {
         value,
       );
 
-  _i1.ColumnValue<String, String> title(String value) => _i1.ColumnValue(
-    table.title,
+  _i1.ColumnValue<String, String> fullName(String value) => _i1.ColumnValue(
+    table.fullName,
     value,
   );
 
-  _i1.ColumnValue<String, String> department(String? value) => _i1.ColumnValue(
-    table.department,
+  _i1.ColumnValue<String, String> email(String value) => _i1.ColumnValue(
+    table.email,
+    value,
+  );
+
+  _i1.ColumnValue<String, String> phoneNumber(String? value) => _i1.ColumnValue(
+    table.phoneNumber,
+    value,
+  );
+
+  _i1.ColumnValue<_i2.AdminType, _i2.AdminType> adminType(
+    _i2.AdminType value,
+  ) => _i1.ColumnValue(
+    table.adminType,
     value,
   );
 
@@ -221,9 +293,21 @@ class AdminUpdateTable extends _i1.UpdateTable<AdminTable> {
     value,
   );
 
+  _i1.ColumnValue<DateTime, DateTime> lastLoginAt(DateTime? value) =>
+      _i1.ColumnValue(
+        table.lastLoginAt,
+        value,
+      );
+
   _i1.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
       _i1.ColumnValue(
         table.createdAt,
+        value,
+      );
+
+  _i1.ColumnValue<DateTime, DateTime> updatedAt(DateTime value) =>
+      _i1.ColumnValue(
+        table.updatedAt,
         value,
       );
 }
@@ -235,21 +319,40 @@ class AdminTable extends _i1.Table<_i1.UuidValue?> {
       'userId',
       this,
     );
-    title = _i1.ColumnString(
-      'title',
+    fullName = _i1.ColumnString(
+      'fullName',
       this,
     );
-    department = _i1.ColumnString(
-      'department',
+    email = _i1.ColumnString(
+      'email',
       this,
+    );
+    phoneNumber = _i1.ColumnString(
+      'phoneNumber',
+      this,
+    );
+    adminType = _i1.ColumnEnum(
+      'adminType',
+      this,
+      _i1.EnumSerialization.byName,
+      hasDefault: true,
     );
     isActive = _i1.ColumnBool(
       'isActive',
       this,
       hasDefault: true,
     );
+    lastLoginAt = _i1.ColumnDateTime(
+      'lastLoginAt',
+      this,
+    );
     createdAt = _i1.ColumnDateTime(
       'createdAt',
+      this,
+      hasDefault: true,
+    );
+    updatedAt = _i1.ColumnDateTime(
+      'updatedAt',
       this,
       hasDefault: true,
     );
@@ -259,25 +362,33 @@ class AdminTable extends _i1.Table<_i1.UuidValue?> {
 
   late final _i1.ColumnUuid userId;
 
-  _i2.UserTable? _user;
+  _i3.UserTable? _user;
 
-  late final _i1.ColumnString title;
+  late final _i1.ColumnString fullName;
 
-  late final _i1.ColumnString department;
+  late final _i1.ColumnString email;
+
+  late final _i1.ColumnString phoneNumber;
+
+  late final _i1.ColumnEnum<_i2.AdminType> adminType;
 
   late final _i1.ColumnBool isActive;
 
+  late final _i1.ColumnDateTime lastLoginAt;
+
   late final _i1.ColumnDateTime createdAt;
 
-  _i2.UserTable get user {
+  late final _i1.ColumnDateTime updatedAt;
+
+  _i3.UserTable get user {
     if (_user != null) return _user!;
     _user = _i1.createRelationTable(
       relationFieldName: 'user',
       field: Admin.t.userId,
-      foreignField: _i2.User.t.id,
+      foreignField: _i3.User.t.id,
       tableRelation: tableRelation,
       createTable: (foreignTableRelation) =>
-          _i2.UserTable(tableRelation: foreignTableRelation),
+          _i3.UserTable(tableRelation: foreignTableRelation),
     );
     return _user!;
   }
@@ -286,10 +397,14 @@ class AdminTable extends _i1.Table<_i1.UuidValue?> {
   List<_i1.Column> get columns => [
     id,
     userId,
-    title,
-    department,
+    fullName,
+    email,
+    phoneNumber,
+    adminType,
     isActive,
+    lastLoginAt,
     createdAt,
+    updatedAt,
   ];
 
   @override
@@ -302,11 +417,11 @@ class AdminTable extends _i1.Table<_i1.UuidValue?> {
 }
 
 class AdminInclude extends _i1.IncludeObject {
-  AdminInclude._({_i2.UserInclude? user}) {
+  AdminInclude._({_i3.UserInclude? user}) {
     _user = user;
   }
 
-  _i2.UserInclude? _user;
+  _i3.UserInclude? _user;
 
   @override
   Map<String, _i1.Include?> get includes => {'user': _user};
@@ -638,7 +753,7 @@ class AdminAttachRowRepository {
   Future<void> user(
     _i1.DatabaseSession session,
     Admin admin,
-    _i2.User user, {
+    _i3.User user, {
     _i1.Transaction? transaction,
   }) async {
     if (admin.id == null) {

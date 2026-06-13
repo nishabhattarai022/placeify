@@ -21,18 +21,22 @@ class AdminStore {
     return profile != null;
   }
 
+  Admin _profileFromUser(User user) {
+    return Admin(
+      userId: user.id!,
+      fullName: user.name,
+      email: user.email ?? '',
+      phoneNumber: user.phone,
+      adminType: AdminType.moderator,
+    );
+  }
+
   Future<Admin> requireAdminProfile(Session session) async {
     final user = await SessionService.requireRole(session, {UserRole.admin});
     final existing = await findByUserId(session, user.id!);
     if (existing != null) return existing;
 
-    return Admin.db.insertRow(
-      session,
-      Admin(
-        userId: user.id!,
-        title: 'Platform Administrator',
-      ),
-    );
+    return Admin.db.insertRow(session, _profileFromUser(user));
   }
 
   Future<Admin?> getMyAdmin(Session session) async {
@@ -43,27 +47,32 @@ class AdminStore {
 
   Future<Admin> updateMyAdmin(
     Session session,
-    String title, {
-    String? department,
+    String fullName, {
+    String? email,
+    String? phoneNumber,
+    AdminType? adminType,
     bool? isActive,
   }) async {
     final user = await SessionService.requireRole(session, {UserRole.admin});
-    if (title.trim().isEmpty) {
+    if (fullName.trim().isEmpty) {
       throw PlaceifyException(
-        'Admin title is required.',
+        'Admin full name is required.',
         code: 'INVALID_ADMIN_PROFILE',
       );
     }
 
     final existing = await findByUserId(session, user.id!);
+    final now = DateTime.now();
     if (existing == null) {
       return Admin.db.insertRow(
         session,
-        Admin(
-          userId: user.id!,
-          title: title.trim(),
-          department: department?.trim(),
+        _profileFromUser(user).copyWith(
+          fullName: fullName.trim(),
+          email: email?.trim().toLowerCase() ?? user.email ?? '',
+          phoneNumber: phoneNumber?.trim() ?? user.phone,
+          adminType: adminType ?? AdminType.moderator,
           isActive: isActive ?? true,
+          updatedAt: now,
         ),
       );
     }
@@ -71,9 +80,12 @@ class AdminStore {
     return Admin.db.updateRow(
       session,
       existing.copyWith(
-        title: title.trim(),
-        department: department?.trim(),
+        fullName: fullName.trim(),
+        email: email?.trim().toLowerCase() ?? existing.email,
+        phoneNumber: phoneNumber?.trim() ?? existing.phoneNumber,
+        adminType: adminType ?? existing.adminType,
         isActive: isActive ?? existing.isActive,
+        updatedAt: now,
       ),
     );
   }

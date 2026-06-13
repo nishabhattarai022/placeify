@@ -13,6 +13,10 @@ fields:
   profileImageUrl: String?
   role: UserRole, default=consumer
   status: UserAccountStatus, default=approved
+  ### Admin who approved this account (vendor onboarding or customer verification).
+  approvedBy: Admin?, relation(optional)
+  ### Admin who last changed status (suspend, reject, re-approve).
+  statusChangedBy: Admin?, relation(optional)
   isActive: bool, default=true
   deletedAt: DateTime?
   createdAt: DateTime, default=now

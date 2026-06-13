@@ -11,30 +11,42 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
-import 'user.dart' as _i2;
-import 'package:placeify_client/src/protocol/protocol.dart' as _i3;
+import 'admin_type.dart' as _i2;
+import 'user.dart' as _i3;
+import 'package:placeify_client/src/protocol/protocol.dart' as _i4;
 
-/// Platform administrator profile linked to a user account.
+/// Platform administrator profile linked 1:1 to a User account.
+/// Audit actions (approve, remove, resolve) reference this table's id, not user.id.
 abstract class Admin implements _i1.SerializableModel {
   Admin._({
     this.id,
     required this.userId,
     this.user,
-    required this.title,
-    this.department,
+    required this.fullName,
+    required this.email,
+    this.phoneNumber,
+    _i2.AdminType? adminType,
     bool? isActive,
+    this.lastLoginAt,
     DateTime? createdAt,
-  }) : isActive = isActive ?? true,
-       createdAt = createdAt ?? DateTime.now();
+    DateTime? updatedAt,
+  }) : adminType = adminType ?? _i2.AdminType.moderator,
+       isActive = isActive ?? true,
+       createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
   factory Admin({
     _i1.UuidValue? id,
     required _i1.UuidValue userId,
-    _i2.User? user,
-    required String title,
-    String? department,
+    _i3.User? user,
+    required String fullName,
+    required String email,
+    String? phoneNumber,
+    _i2.AdminType? adminType,
     bool? isActive,
+    DateTime? lastLoginAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) = _AdminImpl;
 
   factory Admin.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -45,15 +57,27 @@ abstract class Admin implements _i1.SerializableModel {
       userId: _i1.UuidValueJsonExtension.fromJson(jsonSerialization['userId']),
       user: jsonSerialization['user'] == null
           ? null
-          : _i3.Protocol().deserialize<_i2.User>(jsonSerialization['user']),
-      title: jsonSerialization['title'] as String,
-      department: jsonSerialization['department'] as String?,
+          : _i4.Protocol().deserialize<_i3.User>(jsonSerialization['user']),
+      fullName: jsonSerialization['fullName'] as String,
+      email: jsonSerialization['email'] as String,
+      phoneNumber: jsonSerialization['phoneNumber'] as String?,
+      adminType: jsonSerialization['adminType'] == null
+          ? null
+          : _i2.AdminType.fromJson((jsonSerialization['adminType'] as String)),
       isActive: jsonSerialization['isActive'] == null
           ? null
           : _i1.BoolJsonExtension.fromJson(jsonSerialization['isActive']),
+      lastLoginAt: jsonSerialization['lastLoginAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['lastLoginAt'],
+            ),
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
+      updatedAt: jsonSerialization['updatedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['updatedAt']),
     );
   }
 
@@ -64,15 +88,23 @@ abstract class Admin implements _i1.SerializableModel {
 
   _i1.UuidValue userId;
 
-  _i2.User? user;
+  _i3.User? user;
 
-  String title;
+  String fullName;
 
-  String? department;
+  String email;
+
+  String? phoneNumber;
+
+  _i2.AdminType adminType;
 
   bool isActive;
 
+  DateTime? lastLoginAt;
+
   DateTime createdAt;
+
+  DateTime updatedAt;
 
   /// Returns a shallow copy of this [Admin]
   /// with some or all fields replaced by the given arguments.
@@ -80,11 +112,15 @@ abstract class Admin implements _i1.SerializableModel {
   Admin copyWith({
     _i1.UuidValue? id,
     _i1.UuidValue? userId,
-    _i2.User? user,
-    String? title,
-    String? department,
+    _i3.User? user,
+    String? fullName,
+    String? email,
+    String? phoneNumber,
+    _i2.AdminType? adminType,
     bool? isActive,
+    DateTime? lastLoginAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -93,10 +129,14 @@ abstract class Admin implements _i1.SerializableModel {
       if (id != null) 'id': id?.toJson(),
       'userId': userId.toJson(),
       if (user != null) 'user': user?.toJson(),
-      'title': title,
-      if (department != null) 'department': department,
+      'fullName': fullName,
+      'email': email,
+      if (phoneNumber != null) 'phoneNumber': phoneNumber,
+      'adminType': adminType.toJson(),
       'isActive': isActive,
+      if (lastLoginAt != null) 'lastLoginAt': lastLoginAt?.toJson(),
       'createdAt': createdAt.toJson(),
+      'updatedAt': updatedAt.toJson(),
     };
   }
 
@@ -112,19 +152,27 @@ class _AdminImpl extends Admin {
   _AdminImpl({
     _i1.UuidValue? id,
     required _i1.UuidValue userId,
-    _i2.User? user,
-    required String title,
-    String? department,
+    _i3.User? user,
+    required String fullName,
+    required String email,
+    String? phoneNumber,
+    _i2.AdminType? adminType,
     bool? isActive,
+    DateTime? lastLoginAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) : super._(
          id: id,
          userId: userId,
          user: user,
-         title: title,
-         department: department,
+         fullName: fullName,
+         email: email,
+         phoneNumber: phoneNumber,
+         adminType: adminType,
          isActive: isActive,
+         lastLoginAt: lastLoginAt,
          createdAt: createdAt,
+         updatedAt: updatedAt,
        );
 
   /// Returns a shallow copy of this [Admin]
@@ -135,19 +183,27 @@ class _AdminImpl extends Admin {
     Object? id = _Undefined,
     _i1.UuidValue? userId,
     Object? user = _Undefined,
-    String? title,
-    Object? department = _Undefined,
+    String? fullName,
+    String? email,
+    Object? phoneNumber = _Undefined,
+    _i2.AdminType? adminType,
     bool? isActive,
+    Object? lastLoginAt = _Undefined,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return Admin(
       id: id is _i1.UuidValue? ? id : this.id,
       userId: userId ?? this.userId,
-      user: user is _i2.User? ? user : this.user?.copyWith(),
-      title: title ?? this.title,
-      department: department is String? ? department : this.department,
+      user: user is _i3.User? ? user : this.user?.copyWith(),
+      fullName: fullName ?? this.fullName,
+      email: email ?? this.email,
+      phoneNumber: phoneNumber is String? ? phoneNumber : this.phoneNumber,
+      adminType: adminType ?? this.adminType,
       isActive: isActive ?? this.isActive,
+      lastLoginAt: lastLoginAt is DateTime? ? lastLoginAt : this.lastLoginAt,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }

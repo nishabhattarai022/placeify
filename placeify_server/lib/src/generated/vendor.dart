@@ -13,7 +13,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
 import 'user.dart' as _i2;
-import 'package:placeify_server/src/generated/protocol.dart' as _i3;
+import 'admin.dart' as _i3;
+import 'package:placeify_server/src/generated/protocol.dart' as _i4;
 
 /// VendorProfile — vendor-specific data linked 1:1 to a User account.
 abstract class Vendor
@@ -46,7 +47,7 @@ abstract class Vendor
     String? logoUrl,
     double? rating,
     _i1.UuidValue? approvedById,
-    _i2.User? approvedBy,
+    _i3.Admin? approvedBy,
     DateTime? approvedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -60,7 +61,7 @@ abstract class Vendor
       userId: _i1.UuidValueJsonExtension.fromJson(jsonSerialization['userId']),
       user: jsonSerialization['user'] == null
           ? null
-          : _i3.Protocol().deserialize<_i2.User>(jsonSerialization['user']),
+          : _i4.Protocol().deserialize<_i2.User>(jsonSerialization['user']),
       shopName: jsonSerialization['shopName'] as String,
       description: jsonSerialization['description'] as String?,
       businessAddress: jsonSerialization['businessAddress'] as String?,
@@ -73,7 +74,7 @@ abstract class Vendor
             ),
       approvedBy: jsonSerialization['approvedBy'] == null
           ? null
-          : _i3.Protocol().deserialize<_i2.User>(
+          : _i4.Protocol().deserialize<_i3.Admin>(
               jsonSerialization['approvedBy'],
             ),
       approvedAt: jsonSerialization['approvedAt'] == null
@@ -111,7 +112,8 @@ abstract class Vendor
 
   _i1.UuidValue? approvedById;
 
-  _i2.User? approvedBy;
+  /// Admin who approved this vendor shop.
+  _i3.Admin? approvedBy;
 
   DateTime? approvedAt;
 
@@ -135,7 +137,7 @@ abstract class Vendor
     String? logoUrl,
     double? rating,
     _i1.UuidValue? approvedById,
-    _i2.User? approvedBy,
+    _i3.Admin? approvedBy,
     DateTime? approvedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -182,7 +184,7 @@ abstract class Vendor
 
   static VendorInclude include({
     _i2.UserInclude? user,
-    _i2.UserInclude? approvedBy,
+    _i3.AdminInclude? approvedBy,
   }) {
     return VendorInclude._(
       user: user,
@@ -229,7 +231,7 @@ class _VendorImpl extends Vendor {
     String? logoUrl,
     double? rating,
     _i1.UuidValue? approvedById,
-    _i2.User? approvedBy,
+    _i3.Admin? approvedBy,
     DateTime? approvedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -282,7 +284,7 @@ class _VendorImpl extends Vendor {
       approvedById: approvedById is _i1.UuidValue?
           ? approvedById
           : this.approvedById,
-      approvedBy: approvedBy is _i2.User?
+      approvedBy: approvedBy is _i3.Admin?
           ? approvedBy
           : this.approvedBy?.copyWith(),
       approvedAt: approvedAt is DateTime? ? approvedAt : this.approvedAt,
@@ -419,7 +421,8 @@ class VendorTable extends _i1.Table<_i1.UuidValue?> {
 
   late final _i1.ColumnUuid approvedById;
 
-  _i2.UserTable? _approvedBy;
+  /// Admin who approved this vendor shop.
+  _i3.AdminTable? _approvedBy;
 
   late final _i1.ColumnDateTime approvedAt;
 
@@ -440,15 +443,15 @@ class VendorTable extends _i1.Table<_i1.UuidValue?> {
     return _user!;
   }
 
-  _i2.UserTable get approvedBy {
+  _i3.AdminTable get approvedBy {
     if (_approvedBy != null) return _approvedBy!;
     _approvedBy = _i1.createRelationTable(
       relationFieldName: 'approvedBy',
       field: Vendor.t.approvedById,
-      foreignField: _i2.User.t.id,
+      foreignField: _i3.Admin.t.id,
       tableRelation: tableRelation,
       createTable: (foreignTableRelation) =>
-          _i2.UserTable(tableRelation: foreignTableRelation),
+          _i3.AdminTable(tableRelation: foreignTableRelation),
     );
     return _approvedBy!;
   }
@@ -483,7 +486,7 @@ class VendorTable extends _i1.Table<_i1.UuidValue?> {
 class VendorInclude extends _i1.IncludeObject {
   VendorInclude._({
     _i2.UserInclude? user,
-    _i2.UserInclude? approvedBy,
+    _i3.AdminInclude? approvedBy,
   }) {
     _user = user;
     _approvedBy = approvedBy;
@@ -491,7 +494,7 @@ class VendorInclude extends _i1.IncludeObject {
 
   _i2.UserInclude? _user;
 
-  _i2.UserInclude? _approvedBy;
+  _i3.AdminInclude? _approvedBy;
 
   @override
   Map<String, _i1.Include?> get includes => {
@@ -846,12 +849,12 @@ class VendorAttachRowRepository {
     );
   }
 
-  /// Creates a relation between the given [Vendor] and [User]
-  /// by setting the [Vendor]'s foreign key `approvedById` to refer to the [User].
+  /// Creates a relation between the given [Vendor] and [Admin]
+  /// by setting the [Vendor]'s foreign key `approvedById` to refer to the [Admin].
   Future<void> approvedBy(
     _i1.DatabaseSession session,
     Vendor vendor,
-    _i2.User approvedBy, {
+    _i3.Admin approvedBy, {
     _i1.Transaction? transaction,
   }) async {
     if (vendor.id == null) {
@@ -873,7 +876,7 @@ class VendorAttachRowRepository {
 class VendorDetachRowRepository {
   const VendorDetachRowRepository._();
 
-  /// Detaches the relation between this [Vendor] and the [User] set in `approvedBy`
+  /// Detaches the relation between this [Vendor] and the [Admin] set in `approvedBy`
   /// by setting the [Vendor]'s foreign key `approvedById` to `null`.
   ///
   /// This removes the association between the two models without deleting

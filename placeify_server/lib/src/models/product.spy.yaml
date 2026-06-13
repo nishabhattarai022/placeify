@@ -18,8 +18,10 @@ fields:
   model3dUrl: String?
   thumbnailUrl: String?
   status: ProductStatus, default=active
+  ### Why the product was removed from the catalog.
   removedReason: String?
-  removedBy: User?, relation(optional)
+  ### Admin who removed or flagged the product.
+  removedBy: Admin?, relation(optional)
   removedAt: DateTime?
   createdAt: DateTime, default=now
   updatedAt: DateTime, default=now

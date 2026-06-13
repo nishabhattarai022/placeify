@@ -15,7 +15,8 @@ import 'user_role.dart' as _i2;
 import 'user_account_status.dart' as _i3;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _i4;
-import 'package:placeify_client/src/protocol/protocol.dart' as _i5;
+import 'admin.dart' as _i5;
+import 'package:placeify_client/src/protocol/protocol.dart' as _i6;
 
 /// Core Placeify account (customer / vendor / admin).
 /// Email and password are managed by Serverpod Auth via authUser — not stored here.
@@ -32,6 +33,10 @@ abstract class User implements _i1.SerializableModel {
     this.profileImageUrl,
     _i2.UserRole? role,
     _i3.UserAccountStatus? status,
+    this.approvedById,
+    this.approvedBy,
+    this.statusChangedById,
+    this.statusChangedBy,
     bool? isActive,
     this.deletedAt,
     DateTime? createdAt,
@@ -53,6 +58,10 @@ abstract class User implements _i1.SerializableModel {
     String? profileImageUrl,
     _i2.UserRole? role,
     _i3.UserAccountStatus? status,
+    _i1.UuidValue? approvedById,
+    _i5.Admin? approvedBy,
+    _i1.UuidValue? statusChangedById,
+    _i5.Admin? statusChangedBy,
     bool? isActive,
     DateTime? deletedAt,
     DateTime? createdAt,
@@ -69,7 +78,7 @@ abstract class User implements _i1.SerializableModel {
       ),
       authUser: jsonSerialization['authUser'] == null
           ? null
-          : _i5.Protocol().deserialize<_i4.AuthUser>(
+          : _i6.Protocol().deserialize<_i4.AuthUser>(
               jsonSerialization['authUser'],
             ),
       name: jsonSerialization['name'] as String,
@@ -84,6 +93,26 @@ abstract class User implements _i1.SerializableModel {
           ? null
           : _i3.UserAccountStatus.fromJson(
               (jsonSerialization['status'] as String),
+            ),
+      approvedById: jsonSerialization['approvedById'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(
+              jsonSerialization['approvedById'],
+            ),
+      approvedBy: jsonSerialization['approvedBy'] == null
+          ? null
+          : _i6.Protocol().deserialize<_i5.Admin>(
+              jsonSerialization['approvedBy'],
+            ),
+      statusChangedById: jsonSerialization['statusChangedById'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(
+              jsonSerialization['statusChangedById'],
+            ),
+      statusChangedBy: jsonSerialization['statusChangedBy'] == null
+          ? null
+          : _i6.Protocol().deserialize<_i5.Admin>(
+              jsonSerialization['statusChangedBy'],
             ),
       isActive: jsonSerialization['isActive'] == null
           ? null
@@ -123,6 +152,16 @@ abstract class User implements _i1.SerializableModel {
 
   _i3.UserAccountStatus status;
 
+  _i1.UuidValue? approvedById;
+
+  /// Admin who approved this account (vendor onboarding or customer verification).
+  _i5.Admin? approvedBy;
+
+  _i1.UuidValue? statusChangedById;
+
+  /// Admin who last changed status (suspend, reject, re-approve).
+  _i5.Admin? statusChangedBy;
+
   bool isActive;
 
   DateTime? deletedAt;
@@ -145,6 +184,10 @@ abstract class User implements _i1.SerializableModel {
     String? profileImageUrl,
     _i2.UserRole? role,
     _i3.UserAccountStatus? status,
+    _i1.UuidValue? approvedById,
+    _i5.Admin? approvedBy,
+    _i1.UuidValue? statusChangedById,
+    _i5.Admin? statusChangedBy,
     bool? isActive,
     DateTime? deletedAt,
     DateTime? createdAt,
@@ -164,6 +207,11 @@ abstract class User implements _i1.SerializableModel {
       if (profileImageUrl != null) 'profileImageUrl': profileImageUrl,
       'role': role.toJson(),
       'status': status.toJson(),
+      if (approvedById != null) 'approvedById': approvedById?.toJson(),
+      if (approvedBy != null) 'approvedBy': approvedBy?.toJson(),
+      if (statusChangedById != null)
+        'statusChangedById': statusChangedById?.toJson(),
+      if (statusChangedBy != null) 'statusChangedBy': statusChangedBy?.toJson(),
       'isActive': isActive,
       if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
       'createdAt': createdAt.toJson(),
@@ -191,6 +239,10 @@ class _UserImpl extends User {
     String? profileImageUrl,
     _i2.UserRole? role,
     _i3.UserAccountStatus? status,
+    _i1.UuidValue? approvedById,
+    _i5.Admin? approvedBy,
+    _i1.UuidValue? statusChangedById,
+    _i5.Admin? statusChangedBy,
     bool? isActive,
     DateTime? deletedAt,
     DateTime? createdAt,
@@ -206,6 +258,10 @@ class _UserImpl extends User {
          profileImageUrl: profileImageUrl,
          role: role,
          status: status,
+         approvedById: approvedById,
+         approvedBy: approvedBy,
+         statusChangedById: statusChangedById,
+         statusChangedBy: statusChangedBy,
          isActive: isActive,
          deletedAt: deletedAt,
          createdAt: createdAt,
@@ -227,6 +283,10 @@ class _UserImpl extends User {
     Object? profileImageUrl = _Undefined,
     _i2.UserRole? role,
     _i3.UserAccountStatus? status,
+    Object? approvedById = _Undefined,
+    Object? approvedBy = _Undefined,
+    Object? statusChangedById = _Undefined,
+    Object? statusChangedBy = _Undefined,
     bool? isActive,
     Object? deletedAt = _Undefined,
     DateTime? createdAt,
@@ -247,6 +307,18 @@ class _UserImpl extends User {
           : this.profileImageUrl,
       role: role ?? this.role,
       status: status ?? this.status,
+      approvedById: approvedById is _i1.UuidValue?
+          ? approvedById
+          : this.approvedById,
+      approvedBy: approvedBy is _i5.Admin?
+          ? approvedBy
+          : this.approvedBy?.copyWith(),
+      statusChangedById: statusChangedById is _i1.UuidValue?
+          ? statusChangedById
+          : this.statusChangedById,
+      statusChangedBy: statusChangedBy is _i5.Admin?
+          ? statusChangedBy
+          : this.statusChangedBy?.copyWith(),
       isActive: isActive ?? this.isActive,
       deletedAt: deletedAt is DateTime? ? deletedAt : this.deletedAt,
       createdAt: createdAt ?? this.createdAt,

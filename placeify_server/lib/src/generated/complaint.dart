@@ -15,7 +15,8 @@ import 'package:serverpod/serverpod.dart' as _i1;
 import 'complaint_status.dart' as _i2;
 import 'product.dart' as _i3;
 import 'user.dart' as _i4;
-import 'package:placeify_server/src/generated/protocol.dart' as _i5;
+import 'admin.dart' as _i5;
+import 'package:placeify_server/src/generated/protocol.dart' as _i6;
 
 /// Product complaint/damage report. Admins resolve these and may remove flagged products.
 abstract class Complaint
@@ -29,6 +30,9 @@ abstract class Complaint
     required this.reason,
     required this.description,
     _i2.ComplaintStatus? status,
+    this.resolvedById,
+    this.resolvedBy,
+    this.resolvedAt,
     DateTime? createdAt,
   }) : status = status ?? _i2.ComplaintStatus.pending,
        createdAt = createdAt ?? DateTime.now();
@@ -42,6 +46,9 @@ abstract class Complaint
     required String reason,
     required String description,
     _i2.ComplaintStatus? status,
+    _i1.UuidValue? resolvedById,
+    _i5.Admin? resolvedBy,
+    DateTime? resolvedAt,
     DateTime? createdAt,
   }) = _ComplaintImpl;
 
@@ -51,7 +58,7 @@ abstract class Complaint
       productId: jsonSerialization['productId'] as int,
       product: jsonSerialization['product'] == null
           ? null
-          : _i5.Protocol().deserialize<_i3.Product>(
+          : _i6.Protocol().deserialize<_i3.Product>(
               jsonSerialization['product'],
             ),
       reportedById: _i1.UuidValueJsonExtension.fromJson(
@@ -59,7 +66,7 @@ abstract class Complaint
       ),
       reportedBy: jsonSerialization['reportedBy'] == null
           ? null
-          : _i5.Protocol().deserialize<_i4.User>(
+          : _i6.Protocol().deserialize<_i4.User>(
               jsonSerialization['reportedBy'],
             ),
       reason: jsonSerialization['reason'] as String,
@@ -69,6 +76,19 @@ abstract class Complaint
           : _i2.ComplaintStatus.fromJson(
               (jsonSerialization['status'] as String),
             ),
+      resolvedById: jsonSerialization['resolvedById'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(
+              jsonSerialization['resolvedById'],
+            ),
+      resolvedBy: jsonSerialization['resolvedBy'] == null
+          ? null
+          : _i6.Protocol().deserialize<_i5.Admin>(
+              jsonSerialization['resolvedBy'],
+            ),
+      resolvedAt: jsonSerialization['resolvedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['resolvedAt']),
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
@@ -96,6 +116,13 @@ abstract class Complaint
 
   _i2.ComplaintStatus status;
 
+  _i1.UuidValue? resolvedById;
+
+  /// Admin who marked this complaint resolved.
+  _i5.Admin? resolvedBy;
+
+  DateTime? resolvedAt;
+
   DateTime createdAt;
 
   @override
@@ -113,6 +140,9 @@ abstract class Complaint
     String? reason,
     String? description,
     _i2.ComplaintStatus? status,
+    _i1.UuidValue? resolvedById,
+    _i5.Admin? resolvedBy,
+    DateTime? resolvedAt,
     DateTime? createdAt,
   });
   @override
@@ -127,6 +157,9 @@ abstract class Complaint
       'reason': reason,
       'description': description,
       'status': status.toJson(),
+      if (resolvedById != null) 'resolvedById': resolvedById?.toJson(),
+      if (resolvedBy != null) 'resolvedBy': resolvedBy?.toJson(),
+      if (resolvedAt != null) 'resolvedAt': resolvedAt?.toJson(),
       'createdAt': createdAt.toJson(),
     };
   }
@@ -143,6 +176,9 @@ abstract class Complaint
       'reason': reason,
       'description': description,
       'status': status.toJson(),
+      if (resolvedById != null) 'resolvedById': resolvedById?.toJson(),
+      if (resolvedBy != null) 'resolvedBy': resolvedBy?.toJsonForProtocol(),
+      if (resolvedAt != null) 'resolvedAt': resolvedAt?.toJson(),
       'createdAt': createdAt.toJson(),
     };
   }
@@ -150,10 +186,12 @@ abstract class Complaint
   static ComplaintInclude include({
     _i3.ProductInclude? product,
     _i4.UserInclude? reportedBy,
+    _i5.AdminInclude? resolvedBy,
   }) {
     return ComplaintInclude._(
       product: product,
       reportedBy: reportedBy,
+      resolvedBy: resolvedBy,
     );
   }
 
@@ -195,6 +233,9 @@ class _ComplaintImpl extends Complaint {
     required String reason,
     required String description,
     _i2.ComplaintStatus? status,
+    _i1.UuidValue? resolvedById,
+    _i5.Admin? resolvedBy,
+    DateTime? resolvedAt,
     DateTime? createdAt,
   }) : super._(
          id: id,
@@ -205,6 +246,9 @@ class _ComplaintImpl extends Complaint {
          reason: reason,
          description: description,
          status: status,
+         resolvedById: resolvedById,
+         resolvedBy: resolvedBy,
+         resolvedAt: resolvedAt,
          createdAt: createdAt,
        );
 
@@ -221,6 +265,9 @@ class _ComplaintImpl extends Complaint {
     String? reason,
     String? description,
     _i2.ComplaintStatus? status,
+    Object? resolvedById = _Undefined,
+    Object? resolvedBy = _Undefined,
+    Object? resolvedAt = _Undefined,
     DateTime? createdAt,
   }) {
     return Complaint(
@@ -234,6 +281,13 @@ class _ComplaintImpl extends Complaint {
       reason: reason ?? this.reason,
       description: description ?? this.description,
       status: status ?? this.status,
+      resolvedById: resolvedById is _i1.UuidValue?
+          ? resolvedById
+          : this.resolvedById,
+      resolvedBy: resolvedBy is _i5.Admin?
+          ? resolvedBy
+          : this.resolvedBy?.copyWith(),
+      resolvedAt: resolvedAt is DateTime? ? resolvedAt : this.resolvedAt,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -271,6 +325,19 @@ class ComplaintUpdateTable extends _i1.UpdateTable<ComplaintTable> {
     value,
   );
 
+  _i1.ColumnValue<_i1.UuidValue, _i1.UuidValue> resolvedById(
+    _i1.UuidValue? value,
+  ) => _i1.ColumnValue(
+    table.resolvedById,
+    value,
+  );
+
+  _i1.ColumnValue<DateTime, DateTime> resolvedAt(DateTime? value) =>
+      _i1.ColumnValue(
+        table.resolvedAt,
+        value,
+      );
+
   _i1.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
       _i1.ColumnValue(
         table.createdAt,
@@ -303,6 +370,14 @@ class ComplaintTable extends _i1.Table<int?> {
       _i1.EnumSerialization.byName,
       hasDefault: true,
     );
+    resolvedById = _i1.ColumnUuid(
+      'resolvedById',
+      this,
+    );
+    resolvedAt = _i1.ColumnDateTime(
+      'resolvedAt',
+      this,
+    );
     createdAt = _i1.ColumnDateTime(
       'createdAt',
       this,
@@ -325,6 +400,13 @@ class ComplaintTable extends _i1.Table<int?> {
   late final _i1.ColumnString description;
 
   late final _i1.ColumnEnum<_i2.ComplaintStatus> status;
+
+  late final _i1.ColumnUuid resolvedById;
+
+  /// Admin who marked this complaint resolved.
+  _i5.AdminTable? _resolvedBy;
+
+  late final _i1.ColumnDateTime resolvedAt;
 
   late final _i1.ColumnDateTime createdAt;
 
@@ -354,6 +436,19 @@ class ComplaintTable extends _i1.Table<int?> {
     return _reportedBy!;
   }
 
+  _i5.AdminTable get resolvedBy {
+    if (_resolvedBy != null) return _resolvedBy!;
+    _resolvedBy = _i1.createRelationTable(
+      relationFieldName: 'resolvedBy',
+      field: Complaint.t.resolvedById,
+      foreignField: _i5.Admin.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i5.AdminTable(tableRelation: foreignTableRelation),
+    );
+    return _resolvedBy!;
+  }
+
   @override
   List<_i1.Column> get columns => [
     id,
@@ -362,6 +457,8 @@ class ComplaintTable extends _i1.Table<int?> {
     reason,
     description,
     status,
+    resolvedById,
+    resolvedAt,
     createdAt,
   ];
 
@@ -373,6 +470,9 @@ class ComplaintTable extends _i1.Table<int?> {
     if (relationField == 'reportedBy') {
       return reportedBy;
     }
+    if (relationField == 'resolvedBy') {
+      return resolvedBy;
+    }
     return null;
   }
 }
@@ -381,19 +481,24 @@ class ComplaintInclude extends _i1.IncludeObject {
   ComplaintInclude._({
     _i3.ProductInclude? product,
     _i4.UserInclude? reportedBy,
+    _i5.AdminInclude? resolvedBy,
   }) {
     _product = product;
     _reportedBy = reportedBy;
+    _resolvedBy = resolvedBy;
   }
 
   _i3.ProductInclude? _product;
 
   _i4.UserInclude? _reportedBy;
 
+  _i5.AdminInclude? _resolvedBy;
+
   @override
   Map<String, _i1.Include?> get includes => {
     'product': _product,
     'reportedBy': _reportedBy,
+    'resolvedBy': _resolvedBy,
   };
 
   @override
@@ -424,6 +529,8 @@ class ComplaintRepository {
   const ComplaintRepository._();
 
   final attachRow = const ComplaintAttachRowRepository._();
+
+  final detachRow = const ComplaintDetachRowRepository._();
 
   /// Returns a list of [Complaint]s matching the given query parameters.
   ///
@@ -760,6 +867,55 @@ class ComplaintAttachRowRepository {
     await session.db.updateRow<Complaint>(
       $complaint,
       columns: [Complaint.t.reportedById],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between the given [Complaint] and [Admin]
+  /// by setting the [Complaint]'s foreign key `resolvedById` to refer to the [Admin].
+  Future<void> resolvedBy(
+    _i1.DatabaseSession session,
+    Complaint complaint,
+    _i5.Admin resolvedBy, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (complaint.id == null) {
+      throw ArgumentError.notNull('complaint.id');
+    }
+    if (resolvedBy.id == null) {
+      throw ArgumentError.notNull('resolvedBy.id');
+    }
+
+    var $complaint = complaint.copyWith(resolvedById: resolvedBy.id);
+    await session.db.updateRow<Complaint>(
+      $complaint,
+      columns: [Complaint.t.resolvedById],
+      transaction: transaction,
+    );
+  }
+}
+
+class ComplaintDetachRowRepository {
+  const ComplaintDetachRowRepository._();
+
+  /// Detaches the relation between this [Complaint] and the [Admin] set in `resolvedBy`
+  /// by setting the [Complaint]'s foreign key `resolvedById` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> resolvedBy(
+    _i1.DatabaseSession session,
+    Complaint complaint, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (complaint.id == null) {
+      throw ArgumentError.notNull('complaint.id');
+    }
+
+    var $complaint = complaint.copyWith(resolvedById: null);
+    await session.db.updateRow<Complaint>(
+      $complaint,
+      columns: [Complaint.t.resolvedById],
       transaction: transaction,
     );
   }
