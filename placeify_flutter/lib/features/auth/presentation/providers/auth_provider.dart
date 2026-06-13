@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../vendor/domain/enums/vendor_status.dart';
+import '../../constants/demo_credentials.dart';
 import '../../data/serverpod_auth_repository.dart';
 import '../../domain/models/app_user.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -58,8 +59,23 @@ class CurrentUser extends _$CurrentUser {
         return repo.signInWithDemoCredentials();
       }
       return repo.signIn(
-        email: 'demo@placeify.app',
-        password: 'demo1234',
+        email: DemoCredentials.email,
+        password: DemoCredentials.password,
+      );
+    });
+    if (state.hasError) throw _unwrapError(state.error!);
+  }
+
+  Future<void> signInWithDemoAdminCredentials() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final repo = await ref.read(authRepositoryProvider.future);
+      if (repo is ServerpodAuthRepository) {
+        return repo.signInWithDemoAdminCredentials();
+      }
+      return repo.signIn(
+        email: DemoCredentials.adminEmail,
+        password: DemoCredentials.adminPassword,
       );
     });
     if (state.hasError) throw _unwrapError(state.error!);

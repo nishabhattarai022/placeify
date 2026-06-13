@@ -67,6 +67,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _signInWithDemoAdmin() async {
+    if (_isSubmitting) return;
+
+    setState(() => _isSubmitting = true);
+    await HapticService.heavy();
+
+    try {
+      await ref
+          .read(currentUserProvider.notifier)
+          .signInWithDemoAdminCredentials();
+      if (!mounted) return;
+      context.go('/admin');
+    } on AuthException catch (e) {
+      if (mounted) PlaceifyToast.show(context, e.message);
+    } catch (error) {
+      if (mounted) {
+        PlaceifyToast.show(context, _loginErrorMessage(error));
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_isSubmitting) return;
@@ -248,6 +271,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.onboardingAmber,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Center(
+                            child: TextButton(
+                              onPressed: _isSubmitting
+                                  ? null
+                                  : () {
+                                      HapticService.light();
+                                      _signInWithDemoAdmin();
+                                    },
+                              child: Text(
+                                'Demo Admin Access',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.onboardingTextBody.withValues(
+                                    alpha: 0.65,
+                                  ),
                                 ),
                               ),
                             ),
