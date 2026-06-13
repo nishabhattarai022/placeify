@@ -68,14 +68,12 @@ Future<String> _resolveOnce({required bool forceRefresh}) async {
 }
 
 bool _cacheMatchesPlatform(String url) {
-  if (!Platform.isAndroid) return true;
-
   final uri = Uri.tryParse(url);
   if (uri == null) return false;
 
-  // A macOS session may cache localhost; Android must re-probe emulator/LAN hosts.
+  // A desktop/simulator session may cache localhost; phones must re-probe LAN hosts.
   if (uri.host == 'localhost' || uri.host == '127.0.0.1') {
-    return false;
+    return !(Platform.isAndroid || Platform.isIOS);
   }
 
   return true;

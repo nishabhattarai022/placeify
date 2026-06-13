@@ -96,7 +96,8 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
       warranty: product.offerLabel.trim().isNotEmpty
           ? product.offerLabel.trim()
           : null,
-      generateModel3d: product.hasArView,
+      // 3D models are built via regenerateProductModel3d (Build 3D), not on create.
+      generateModel3d: false,
     );
 
     try {
@@ -159,7 +160,8 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
       warranty: product.offerLabel.trim().isNotEmpty
           ? product.offerLabel.trim()
           : null,
-      generateModel3d: product.hasArView,
+      // Avoid blocking saves on Tripo (1–3+ min); use Build 3D on the edit screen.
+      generateModel3d: false,
       isActive: product.isActive,
     );
 
@@ -221,7 +223,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
         vendorId: vendorId,
       );
     } catch (error) {
-      throw VendorProductActionException(_mapError(error));
+      throw VendorProductActionException(_map3dError(error));
     }
   }
 
@@ -297,65 +299,132 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     return null;
   }
 
-  String _mapError(Object error) {
+  String _map3dError(Object error) => _mapError(
+        error,
+        fallback:
+            'Could not build 3D preview. Check your connection and try again.',
+      );
+
+  String _mapError(
+    Object error, {
+    String fallback =
+        'Could not upload product. Check your connection and try again.',
+  }) {
     if (error is VendorProductActionException) return error.message;
+
+    if (error is PlaceifyException) {
+      return _messageForServerCode(error.code, error.message);
+    }
 
     final raw = error is ServerpodClientException
         ? error.message
         : error.toString();
 
-    // PlaceifyException surfaces as "CODE: message" in Serverpod errors.
-    final colonIndex = raw.indexOf(': ');
-    if (colonIndex > 0 && colonIndex < 40) {
-      final message = raw.substring(colonIndex + 2).trim();
-      if (message.isNotEmpty) return message;
+    if (_looksLikeRequestTimeout(raw)) {
+      return '3D generation is still running or took too long. '
+          'Wait a minute and check the product again, or retry Build 3D.';
     }
 
-    if (raw.contains('SHOP_NOT_FOUND')) {
+    if (_looksLikeConnectionError(raw)) {
+      return 'Cannot reach the server. Make sure placeify_server is running and your phone is on the same Wi‑Fi as this Mac.';
+    }
+
+    return _messageForServerCode(null, raw, fallback: fallback);
+  }
+
+  bool _looksLikeConnectionError(String raw) {
+    final lower = raw.toLowerCase();
+    return lower.contains('socketexception') ||
+        lower.contains('connection refused') ||
+        lower.contains('failed host lookup') ||
+        lower.contains('network is unreachable') ||
+        lower.contains('timed out') ||
+        lower.contains('future not completed');
+  }
+
+  bool _looksLikeRequestTimeout(String raw) {
+    final lower = raw.toLowerCase();
+    return lower.contains('future not completed') ||
+        lower.contains('timeoutexception') ||
+        (lower.contains('timed out') && !lower.contains('tripo generation timed out'));
+  }
+
+  String _messageForServerCode(
+    String? code,
+    String raw, {
+    String fallback =
+        'Could not upload product. Check your connection and try again.',
+  }) {
+    final haystack = '${code ?? ''} $raw';
+
+    if (haystack.contains('SHOP_NOT_FOUND')) {
       return 'Create your vendor shop before uploading products.';
     }
-    if (raw.contains('VENDOR_NOT_APPROVED')) {
+    if (haystack.contains('VENDOR_NOT_APPROVED')) {
       return 'Vendor account is pending admin approval.';
     }
-    if (raw.contains('ACCOUNT_INACTIVE')) {
+    if (haystack.contains('ACCOUNT_INACTIVE')) {
       return 'Vendor account is deactivated.';
     }
-    if (raw.contains('BG_REMOVAL_NOT_CONFIGURED')) {
+    if (haystack.contains('BG_REMOVAL_NOT_CONFIGURED')) {
       return 'Photo processing is not set up on the server. '
           'Add a remove.bg API key to config/removebg_api_key.yaml.';
     }
-    if (raw.contains('BG_REMOVAL_AUTH')) {
+    if (haystack.contains('BG_REMOVAL_AUTH')) {
       return 'Background removal quota or API key issue. Check your remove.bg account.';
     }
-    if (raw.contains('BG_REMOVAL_FAILED')) {
+    if (haystack.contains('BG_REMOVAL_FAILED')) {
       return 'Could not process the photo background. Try another image.';
     }
-    if (raw.contains('PRODUCT_NOT_FOUND')) {
+    if (haystack.contains('INVALID_PHONE') || haystack.contains('INVALID_ADDRESS')) {
+      return 'Complete your phone and address in Profile settings before uploading.';
+    }
+    if (haystack.contains('PRODUCT_NOT_FOUND')) {
       return 'Product not found.';
     }
-    if (raw.contains('MODEL3D_NO_THUMBNAIL')) {
+    if (haystack.contains('MODEL3D_NO_THUMBNAIL')) {
       return 'Add a product photo before building a 3D preview.';
     }
-    if (raw.contains('MODEL3D_THUMBNAIL_MISSING')) {
+    if (haystack.contains('MODEL3D_THUMBNAIL_MISSING')) {
       return 'Product photo file is missing on the server. Re-upload the photo, then try Build 3D again.';
     }
-    if (raw.contains('MODEL3D_TRIPO_FAILED') ||
-        raw.contains('MODEL3D_GENERATION_FAILED')) {
-      return '3D generation failed. Add your Tripo key to config/tripo_api_key.yaml on the server.';
+    if (haystack.contains('MODEL3D_INVALID_IMAGE')) {
+      return 'Product photo must be JPG, PNG, or WEBP to build a 3D preview.';
     }
-    if (raw.contains('INVALID_FILE') || raw.contains('INVALID_FILE_TYPE')) {
+    if (haystack.contains('MODEL3D_TRIPO_FAILED') ||
+        haystack.contains('MODEL3D_GENERATION_FAILED') ||
+        haystack.contains('Tripo API key')) {
+      if (raw.contains('Tripo API key') || raw.contains('tripo_api_key')) {
+        return 'Tripo API key is missing or invalid. Add a real key to placeify_server/config/tripo_api_key.yaml and restart the server.';
+      }
+      return '3D generation failed. Check your Tripo API key and account credits, then try again.';
+    }
+    if (haystack.contains('INVALID_FILE') || haystack.contains('INVALID_FILE_TYPE')) {
       return 'Use a JPG, PNG, or WEBP photo under 8 MB.';
     }
-    if (raw.contains('INVALID_MATERIALS')) {
+    if (haystack.contains('INVALID_MATERIALS')) {
       return 'Enter product materials.';
     }
-    if (raw.contains('INVALID_DIMENSIONS')) {
+    if (haystack.contains('INVALID_DIMENSIONS')) {
       return 'Enter valid width, depth, and height.';
     }
-    if (raw.contains('INVALID_CARE')) {
+    if (haystack.contains('INVALID_CARE')) {
       return 'Care instructions are required.';
     }
+    if (haystack.contains('Method not found') ||
+        haystack.contains('regenerateProductModel3d')) {
+      return 'Server is missing Build 3D support. Restart placeify_server after pulling the latest code.';
+    }
 
-    return 'Could not upload product. Check your connection and try again.';
+    // PlaceifyException often surfaces as "CODE: message" in Serverpod errors.
+    final colonIndex = raw.indexOf(': ');
+    if (colonIndex > 0 && colonIndex < 40) {
+      final message = raw.substring(colonIndex + 2).trim();
+      if (message.isNotEmpty && !message.startsWith('Exception')) {
+        return message.length <= 200 ? message : fallback;
+      }
+    }
+
+    return fallback;
   }
 }

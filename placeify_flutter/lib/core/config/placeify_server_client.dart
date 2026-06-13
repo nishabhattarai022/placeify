@@ -24,9 +24,15 @@ Future<void> reconnectPlaceifyClient({bool forceRefresh = true}) async {
   await _createClient(forceRefresh: forceRefresh);
 }
 
+/// Tripo 3D generation can take several minutes; default Serverpod timeout is 20s.
+const Duration placeifyLongRequestTimeout = Duration(minutes: 10);
+
 Future<void> _createClient({required bool forceRefresh}) async {
   serverUrl = await resolveServerUrl(forceRefresh: forceRefresh);
-  client = Client(serverUrl)
+  client = Client(
+    serverUrl,
+    connectionTimeout: placeifyLongRequestTimeout,
+  )
     ..connectivityMonitor = FlutterConnectivityMonitor()
     ..authSessionManager = _authSessionManager;
   await client.auth.initialize();

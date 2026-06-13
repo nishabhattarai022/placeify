@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -12,7 +14,15 @@ import 'background_removal_sheet.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radii.dart';
 import '../../../../core/services/haptic_service.dart';
+import '../../../../core/utils/local_image_path.dart';
+import '../../../../core/utils/persist_picked_image.dart';
 import '../../../../core/widgets/toast_overlay.dart';
+
+enum _PickPhotoAction { browseFolders, photoLibrary, camera }
+
+bool get _isDesktop =>
+    !kIsWeb &&
+    (Platform.isMacOS || Platform.isWindows || Platform.isLinux);
 
 /// Horizontal reorderable grid for product photos (up to 8).
 class ProductImagePickerGrid extends ConsumerWidget {
@@ -60,7 +70,9 @@ class ProductImagePickerGrid extends ConsumerWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          'First photo is the primary listing image. Drag to reorder.',
+          _isDesktop
+              ? 'First photo is the primary listing image. Browse Downloads or any folder on this device.'
+              : 'First photo is the primary listing image. Drag to reorder.',
           style: TextStyle(
             fontSize: 12,
             color: AppColors.textSecondary.withValues(alpha: 0.9),
@@ -148,7 +160,12 @@ class ProductImagePickerGrid extends ConsumerWidget {
 
     HapticService.light();
 
-    final source = await showModalBottomSheet<ImageSource>(
+    if (_isDesktop) {
+      await _pickFromFolders(context, ref, remaining);
+      return;
+    }
+
+    final action = await showModalBottomSheet<_PickPhotoAction>(
       context: context,
       backgroundColor: AppColors.warmWhite,
       shape: const RoundedRectangleBorder(
@@ -174,14 +191,25 @@ class ProductImagePickerGrid extends ConsumerWidget {
                 ),
               ),
               ListTile(
+                leading: const Icon(Icons.folder_outlined),
+                title: const Text('Browse folders'),
+                subtitle: const Text('Downloads, Files, and other folders'),
+                onTap: () =>
+                    Navigator.pop(sheetContext, _PickPhotoAction.browseFolders),
+              ),
+              ListTile(
                 leading: const Icon(Icons.photo_library_outlined),
-                title: const Text('Choose from gallery'),
-                onTap: () => Navigator.pop(sheetContext, ImageSource.gallery),
+                title: const Text('Photo library'),
+                onTap: () => Navigator.pop(
+                  sheetContext,
+                  _PickPhotoAction.photoLibrary,
+                ),
               ),
               ListTile(
                 leading: const Icon(Icons.photo_camera_outlined),
                 title: const Text('Take a photo'),
-                onTap: () => Navigator.pop(sheetContext, ImageSource.camera),
+                onTap: () =>
+                    Navigator.pop(sheetContext, _PickPhotoAction.camera),
               ),
             ],
           ),
@@ -189,30 +217,147 @@ class ProductImagePickerGrid extends ConsumerWidget {
       },
     );
 
-    if (source == null || !context.mounted) return;
+    if (action == null || !context.mounted) return;
 
+    switch (action) {
+      case _PickPhotoAction.browseFolders:
+        await _pickFromFolders(context, ref, remaining);
+      case _PickPhotoAction.photoLibrary:
+        await _pickFromPhotoLibrary(context, ref, remaining);
+      case _PickPhotoAction.camera:
+        await _pickFromCamera(context, ref);
+    }
+  }
+
+  Future<void> _pickFromFolders(
+    BuildContext context,
+    WidgetRef ref,
+    int remaining,
+  ) async {
+    try {
+      final allowMultiple = remaining > 1;
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const [
+          'jpg',
+          'jpeg',
+          'png',
+          'webp',
+          'gif',
+          'bmp',
+          'heic',
+          'heif',
+        ],
+        allowMultiple: allowMultiple,
+        withReadStream: false,
+        withData: Platform.isIOS,
+      );
+
+      if (result == null || result.files.isEmpty) return;
+
+      final paths = <String>[];
+      for (final file in result.files.take(remaining)) {
+        final path = file.path;
+        if (path != null && path.isNotEmpty) {
+          paths.add(path);
+          continue;
+        }
+
+        final bytes = file.bytes;
+        if (bytes == null || bytes.isEmpty) continue;
+
+        final extension = (file.extension?.trim().isNotEmpty ?? false)
+            ? '.${file.extension!.toLowerCase()}'
+            : '.jpg';
+        final destination = File(
+          '${Directory.systemTemp.path}/placeify_${DateTime.now().microsecondsSinceEpoch}$extension',
+        );
+        await destination.writeAsBytes(bytes);
+        paths.add(destination.path);
+      }
+
+      if (paths.isEmpty) {
+        if (context.mounted) {
+          PlaceifyToast.show(context, 'Could not read the selected file.');
+        }
+        return;
+      }
+
+      ref.read(vendorProductFormProvider.notifier).addLocalImages(
+            await PersistPickedImage.copyAllToTemp(paths),
+          );
+    } catch (_) {
+      if (context.mounted) {
+        PlaceifyToast.show(
+          context,
+          'Could not open folders. Check file access permissions.',
+        );
+      }
+    }
+  }
+
+  Future<void> _pickFromPhotoLibrary(
+    BuildContext context,
+    WidgetRef ref,
+    int remaining,
+  ) async {
     final picker = ImagePicker();
     try {
-      if (source == ImageSource.gallery) {
-        final picked = await picker.pickMultiImage(
-          imageQuality: 85,
-          limit: remaining,
-        );
-        if (picked.isEmpty) return;
-        ref.read(vendorProductFormProvider.notifier).addLocalImages(
-              picked.map((file) => file.path).toList(),
-            );
-      } else {
+      if (remaining == 1) {
         final picked = await picker.pickImage(
-          source: ImageSource.camera,
+          source: ImageSource.gallery,
           imageQuality: 85,
         );
         if (picked == null) return;
-        ref.read(vendorProductFormProvider.notifier).addLocalImages([picked.path]);
+        final persisted = await PersistPickedImage.copyToTemp(picked.path);
+        if (persisted == null) {
+          if (context.mounted) {
+            PlaceifyToast.show(context, 'Could not read the selected photo.');
+          }
+          return;
+        }
+        ref
+            .read(vendorProductFormProvider.notifier)
+            .addLocalImages([persisted]);
+        return;
       }
+
+      final picked = await picker.pickMultiImage(
+        imageQuality: 85,
+        limit: remaining,
+      );
+      if (picked.isEmpty) return;
+      ref.read(vendorProductFormProvider.notifier).addLocalImages(
+            await PersistPickedImage.copyAllToTemp(
+              picked.map((file) => file.path).toList(),
+            ),
+          );
     } catch (_) {
       if (context.mounted) {
         PlaceifyToast.show(context, 'Could not access photos. Check permissions.');
+      }
+    }
+  }
+
+  Future<void> _pickFromCamera(BuildContext context, WidgetRef ref) async {
+    final picker = ImagePicker();
+    try {
+      final picked = await picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+      );
+      if (picked == null) return;
+      final persisted = await PersistPickedImage.copyToTemp(picked.path);
+      if (persisted == null) {
+        if (context.mounted) {
+          PlaceifyToast.show(context, 'Could not read the photo.');
+        }
+        return;
+      }
+      ref.read(vendorProductFormProvider.notifier).addLocalImages([persisted]);
+    } catch (_) {
+      if (context.mounted) {
+        PlaceifyToast.show(context, 'Could not access the camera.');
       }
     }
   }
@@ -357,18 +502,18 @@ class _AddImageTile extends StatelessWidget {
               width: 1.5,
             ),
           ),
-          child: const Column(
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                Icons.add_photo_alternate_outlined,
+                _isDesktop ? Icons.folder_open_outlined : Icons.add_photo_alternate_outlined,
                 color: AppColors.vendorForest,
                 size: 26,
               ),
-              SizedBox(height: 6),
+              const SizedBox(height: 6),
               Text(
-                'Add',
-                style: TextStyle(
+                _isDesktop ? 'Browse' : 'Add',
+                style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
@@ -417,21 +562,14 @@ class _ProductImagePreview extends StatelessWidget {
 
   final String source;
 
-  bool get _isAsset => source.startsWith('assets/');
-  bool get _isLocalFile =>
-      source.startsWith('/') || source.startsWith('file://');
-
   @override
   Widget build(BuildContext context) {
-    if (_isAsset) {
+    if (LocalImagePath.isAsset(source)) {
       return Image.asset(source, fit: BoxFit.cover);
     }
-    if (_isLocalFile) {
-      final path = source.startsWith('file://')
-          ? source.replaceFirst('file://', '')
-          : source;
+    if (LocalImagePath.isLocal(source)) {
       return Image.file(
-        File(path),
+        File(LocalImagePath.normalize(source)),
         fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => _placeholder(),
       );

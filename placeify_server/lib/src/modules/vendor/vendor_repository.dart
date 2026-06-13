@@ -176,14 +176,14 @@ class VendorStore {
     if (user.role != UserRole.admin &&
         user.status != UserAccountStatus.approved) {
       throw PlaceifyException(
-        'Vendor account is pending admin approval.',
+        message: 'Vendor account is pending admin approval.',
         code: 'VENDOR_NOT_APPROVED',
       );
     }
 
     if (!user.isActive) {
       throw PlaceifyException(
-        'Vendor account is deactivated.',
+        message: 'Vendor account is deactivated.',
         code: 'ACCOUNT_INACTIVE',
       );
     }
@@ -405,7 +405,7 @@ class VendorStore {
 
     if (imageData.lengthInBytes == 0) {
       throw PlaceifyException(
-        'Product photo is required.',
+        message: 'Product photo is required.',
         code: 'INVALID_FILE',
       );
     }
@@ -456,14 +456,14 @@ class VendorStore {
     final product = await Product.db.findById(session, productId);
     if (product == null || product.vendorId != vendor.id) {
       throw PlaceifyException(
-        'Product not found.',
+        message: 'Product not found.',
         code: 'PRODUCT_NOT_FOUND',
       );
     }
 
     if (input.name.trim().isEmpty || input.description.trim().isEmpty) {
       throw PlaceifyException(
-        'Name and description are required.',
+        message: 'Name and description are required.',
         code: 'INVALID_PRODUCT',
       );
     }
@@ -474,14 +474,14 @@ class VendorStore {
     final trimmedMaterials = input.materials.trim();
     if (trimmedMaterials.isEmpty) {
       throw PlaceifyException(
-        'Materials are required.',
+        message: 'Materials are required.',
         code: 'INVALID_MATERIALS',
       );
     }
 
     if (input.widthCm <= 0 || input.depthCm <= 0 || input.heightCm <= 0) {
       throw PlaceifyException(
-        'Dimensions must be positive.',
+        message: 'Dimensions must be positive.',
         code: 'INVALID_DIMENSIONS',
       );
     }
@@ -489,7 +489,7 @@ class VendorStore {
     final trimmedCare = input.careInstructions.trim();
     if (trimmedCare.isEmpty) {
       throw PlaceifyException(
-        'Care instructions are required.',
+        message: 'Care instructions are required.',
         code: 'INVALID_CARE',
       );
     }

@@ -223,6 +223,10 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
 
     setState(() => _building3d = false);
     if (error == null) {
+      await ref
+          .read(vendorProductFormProvider.notifier)
+          .prepareForRoute(productId: productId);
+      if (!mounted) return;
       HapticService.medium();
       PlaceifyToast.show(
         context,
@@ -845,7 +849,11 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                           )
                         : const Icon(Icons.view_in_ar_outlined, size: 18),
                     label: Text(
-                      form.hasArView ? 'Regenerate 3D preview' : 'Build 3D preview',
+                      _building3d
+                          ? 'Building 3D model… (1–3 min)'
+                          : form.hasArView
+                              ? 'Regenerate 3D preview'
+                              : 'Build 3D preview',
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.vendorForest,

@@ -191,12 +191,12 @@ class ServerpodAuthRepository implements AuthRepository {
   Future<AppUser> becomeVendor() async {
     _requireAuthenticated();
     try {
-      final profile = await client.user.becomeVendor();
+      await client.user.becomeVendor();
       final email = _prefs.getString(_sessionEmailKey);
       if (email == null) {
         throw AuthException('User profile not found');
       }
-      return _toAppUser(profile, email, hasVendorShop: true);
+      return _loadAppUser(email);
     } catch (error) {
       throw _mapError(error);
     }
@@ -224,10 +224,18 @@ class ServerpodAuthRepository implements AuthRepository {
       throw AuthException('User profile not found');
     }
     final hasVendorShop = await _loadHasVendorShop();
+    final vendorStatus = _vendorStatusFromServer(
+      profile,
+      hasVendorShop: hasVendorShop,
+    );
+    if (vendorStatus != null) {
+      await _prefs.setString(_vendorStatusKey, vendorStatus.name);
+    }
     return _toAppUser(
       profile,
       email,
       hasVendorShop: hasVendorShop,
+      vendorStatus: vendorStatus,
     );
   }
 
@@ -243,6 +251,7 @@ class ServerpodAuthRepository implements AuthRepository {
     User profile,
     String email, {
     bool? hasVendorShop,
+    VendorStatus? vendorStatus,
   }) {
     return AppUser(
       id: profile.id.toString(),
@@ -252,9 +261,24 @@ class ServerpodAuthRepository implements AuthRepository {
       phone: profile.phone,
       address: profile.address,
       hasVendorShop: hasVendorShop ?? false,
-      registeredVendorStatus: _readVendorStatus(),
+      registeredVendorStatus: vendorStatus ?? _readVendorStatus(),
       registeredVendorId: _prefs.getString(_vendorIdKey),
     );
+  }
+
+  /// Maps server moderation status for vendor accounts.
+  VendorStatus? _vendorStatusFromServer(
+    User profile, {
+    required bool hasVendorShop,
+  }) {
+    if (!hasVendorShop && profile.role != UserRole.vendor) return null;
+
+    return switch (profile.status) {
+      UserAccountStatus.approved => VendorStatus.approved,
+      UserAccountStatus.pending => VendorStatus.pending,
+      UserAccountStatus.suspended => VendorStatus.suspended,
+      UserAccountStatus.rejected => VendorStatus.none,
+    };
   }
 
   VendorStatus? _readVendorStatus() {
@@ -412,10 +436,11 @@ class ServerpodAuthRepository implements AuthRepository {
         'Cannot reach the server at $serverUrl. '
         'Start it with: cd placeify_server && dart bin/main.dart --apply-migrations';
 
-    if (Platform.isAndroid) {
+    if (Platform.isAndroid || Platform.isIOS) {
       return '$base\n\n'
-          'On a physical Android phone, set your Mac IP in '
-          'placeify_flutter/assets/config.json → physicalApiUrl.';
+          'On a physical phone, set your Mac Wi‑Fi IP in '
+          'placeify_flutter/assets/config.json → physicalApiUrl, '
+          'then rebuild the app. Mac and phone must be on the same Wi‑Fi.';
     }
 
     return base;
