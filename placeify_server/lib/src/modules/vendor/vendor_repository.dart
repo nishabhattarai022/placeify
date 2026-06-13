@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
-import '../../shared/placeify_exception.dart';
 import '../../shared/server_static_paths.dart';
 import '../../shared/session_service.dart';
 import 'product_3d/product_3d_generation_result.dart';
