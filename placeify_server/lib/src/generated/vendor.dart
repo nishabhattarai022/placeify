@@ -15,7 +15,7 @@ import 'package:serverpod/serverpod.dart' as _i1;
 import 'user.dart' as _i2;
 import 'package:placeify_server/src/generated/protocol.dart' as _i3;
 
-/// Vendor shop profile linked to a user account.
+/// VendorProfile — vendor-specific data linked 1:1 to a User account.
 abstract class Vendor
     implements _i1.TableRow<_i1.UuidValue?>, _i1.ProtocolSerialization {
   Vendor._({
@@ -24,11 +24,17 @@ abstract class Vendor
     this.user,
     required this.shopName,
     this.description,
+    this.businessAddress,
     this.logoUrl,
     double? rating,
+    this.approvedById,
+    this.approvedBy,
+    this.approvedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) : rating = rating ?? 0.0,
-       createdAt = createdAt ?? DateTime.now();
+       createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
   factory Vendor({
     _i1.UuidValue? id,
@@ -36,9 +42,14 @@ abstract class Vendor
     _i2.User? user,
     required String shopName,
     String? description,
+    String? businessAddress,
     String? logoUrl,
     double? rating,
+    _i1.UuidValue? approvedById,
+    _i2.User? approvedBy,
+    DateTime? approvedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) = _VendorImpl;
 
   factory Vendor.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -52,11 +63,28 @@ abstract class Vendor
           : _i3.Protocol().deserialize<_i2.User>(jsonSerialization['user']),
       shopName: jsonSerialization['shopName'] as String,
       description: jsonSerialization['description'] as String?,
+      businessAddress: jsonSerialization['businessAddress'] as String?,
       logoUrl: jsonSerialization['logoUrl'] as String?,
       rating: (jsonSerialization['rating'] as num?)?.toDouble(),
+      approvedById: jsonSerialization['approvedById'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(
+              jsonSerialization['approvedById'],
+            ),
+      approvedBy: jsonSerialization['approvedBy'] == null
+          ? null
+          : _i3.Protocol().deserialize<_i2.User>(
+              jsonSerialization['approvedBy'],
+            ),
+      approvedAt: jsonSerialization['approvedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['approvedAt']),
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
+      updatedAt: jsonSerialization['updatedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['updatedAt']),
     );
   }
 
@@ -75,11 +103,21 @@ abstract class Vendor
 
   String? description;
 
+  String? businessAddress;
+
   String? logoUrl;
 
   double rating;
 
+  _i1.UuidValue? approvedById;
+
+  _i2.User? approvedBy;
+
+  DateTime? approvedAt;
+
   DateTime createdAt;
+
+  DateTime updatedAt;
 
   @override
   _i1.Table<_i1.UuidValue?> get table => t;
@@ -93,9 +131,14 @@ abstract class Vendor
     _i2.User? user,
     String? shopName,
     String? description,
+    String? businessAddress,
     String? logoUrl,
     double? rating,
+    _i1.UuidValue? approvedById,
+    _i2.User? approvedBy,
+    DateTime? approvedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -106,9 +149,14 @@ abstract class Vendor
       if (user != null) 'user': user?.toJson(),
       'shopName': shopName,
       if (description != null) 'description': description,
+      if (businessAddress != null) 'businessAddress': businessAddress,
       if (logoUrl != null) 'logoUrl': logoUrl,
       'rating': rating,
+      if (approvedById != null) 'approvedById': approvedById?.toJson(),
+      if (approvedBy != null) 'approvedBy': approvedBy?.toJson(),
+      if (approvedAt != null) 'approvedAt': approvedAt?.toJson(),
       'createdAt': createdAt.toJson(),
+      'updatedAt': updatedAt.toJson(),
     };
   }
 
@@ -121,14 +169,25 @@ abstract class Vendor
       if (user != null) 'user': user?.toJsonForProtocol(),
       'shopName': shopName,
       if (description != null) 'description': description,
+      if (businessAddress != null) 'businessAddress': businessAddress,
       if (logoUrl != null) 'logoUrl': logoUrl,
       'rating': rating,
+      if (approvedById != null) 'approvedById': approvedById?.toJson(),
+      if (approvedBy != null) 'approvedBy': approvedBy?.toJsonForProtocol(),
+      if (approvedAt != null) 'approvedAt': approvedAt?.toJson(),
       'createdAt': createdAt.toJson(),
+      'updatedAt': updatedAt.toJson(),
     };
   }
 
-  static VendorInclude include({_i2.UserInclude? user}) {
-    return VendorInclude._(user: user);
+  static VendorInclude include({
+    _i2.UserInclude? user,
+    _i2.UserInclude? approvedBy,
+  }) {
+    return VendorInclude._(
+      user: user,
+      approvedBy: approvedBy,
+    );
   }
 
   static VendorIncludeList includeList({
@@ -166,18 +225,28 @@ class _VendorImpl extends Vendor {
     _i2.User? user,
     required String shopName,
     String? description,
+    String? businessAddress,
     String? logoUrl,
     double? rating,
+    _i1.UuidValue? approvedById,
+    _i2.User? approvedBy,
+    DateTime? approvedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) : super._(
          id: id,
          userId: userId,
          user: user,
          shopName: shopName,
          description: description,
+         businessAddress: businessAddress,
          logoUrl: logoUrl,
          rating: rating,
+         approvedById: approvedById,
+         approvedBy: approvedBy,
+         approvedAt: approvedAt,
          createdAt: createdAt,
+         updatedAt: updatedAt,
        );
 
   /// Returns a shallow copy of this [Vendor]
@@ -190,9 +259,14 @@ class _VendorImpl extends Vendor {
     Object? user = _Undefined,
     String? shopName,
     Object? description = _Undefined,
+    Object? businessAddress = _Undefined,
     Object? logoUrl = _Undefined,
     double? rating,
+    Object? approvedById = _Undefined,
+    Object? approvedBy = _Undefined,
+    Object? approvedAt = _Undefined,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return Vendor(
       id: id is _i1.UuidValue? ? id : this.id,
@@ -200,9 +274,20 @@ class _VendorImpl extends Vendor {
       user: user is _i2.User? ? user : this.user?.copyWith(),
       shopName: shopName ?? this.shopName,
       description: description is String? ? description : this.description,
+      businessAddress: businessAddress is String?
+          ? businessAddress
+          : this.businessAddress,
       logoUrl: logoUrl is String? ? logoUrl : this.logoUrl,
       rating: rating ?? this.rating,
+      approvedById: approvedById is _i1.UuidValue?
+          ? approvedById
+          : this.approvedById,
+      approvedBy: approvedBy is _i2.User?
+          ? approvedBy
+          : this.approvedBy?.copyWith(),
+      approvedAt: approvedAt is DateTime? ? approvedAt : this.approvedAt,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }
@@ -226,6 +311,12 @@ class VendorUpdateTable extends _i1.UpdateTable<VendorTable> {
     value,
   );
 
+  _i1.ColumnValue<String, String> businessAddress(String? value) =>
+      _i1.ColumnValue(
+        table.businessAddress,
+        value,
+      );
+
   _i1.ColumnValue<String, String> logoUrl(String? value) => _i1.ColumnValue(
     table.logoUrl,
     value,
@@ -236,9 +327,28 @@ class VendorUpdateTable extends _i1.UpdateTable<VendorTable> {
     value,
   );
 
+  _i1.ColumnValue<_i1.UuidValue, _i1.UuidValue> approvedById(
+    _i1.UuidValue? value,
+  ) => _i1.ColumnValue(
+    table.approvedById,
+    value,
+  );
+
+  _i1.ColumnValue<DateTime, DateTime> approvedAt(DateTime? value) =>
+      _i1.ColumnValue(
+        table.approvedAt,
+        value,
+      );
+
   _i1.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
       _i1.ColumnValue(
         table.createdAt,
+        value,
+      );
+
+  _i1.ColumnValue<DateTime, DateTime> updatedAt(DateTime value) =>
+      _i1.ColumnValue(
+        table.updatedAt,
         value,
       );
 }
@@ -258,6 +368,10 @@ class VendorTable extends _i1.Table<_i1.UuidValue?> {
       'description',
       this,
     );
+    businessAddress = _i1.ColumnString(
+      'businessAddress',
+      this,
+    );
     logoUrl = _i1.ColumnString(
       'logoUrl',
       this,
@@ -267,8 +381,21 @@ class VendorTable extends _i1.Table<_i1.UuidValue?> {
       this,
       hasDefault: true,
     );
+    approvedById = _i1.ColumnUuid(
+      'approvedById',
+      this,
+    );
+    approvedAt = _i1.ColumnDateTime(
+      'approvedAt',
+      this,
+    );
     createdAt = _i1.ColumnDateTime(
       'createdAt',
+      this,
+      hasDefault: true,
+    );
+    updatedAt = _i1.ColumnDateTime(
+      'updatedAt',
       this,
       hasDefault: true,
     );
@@ -284,11 +411,21 @@ class VendorTable extends _i1.Table<_i1.UuidValue?> {
 
   late final _i1.ColumnString description;
 
+  late final _i1.ColumnString businessAddress;
+
   late final _i1.ColumnString logoUrl;
 
   late final _i1.ColumnDouble rating;
 
+  late final _i1.ColumnUuid approvedById;
+
+  _i2.UserTable? _approvedBy;
+
+  late final _i1.ColumnDateTime approvedAt;
+
   late final _i1.ColumnDateTime createdAt;
+
+  late final _i1.ColumnDateTime updatedAt;
 
   _i2.UserTable get user {
     if (_user != null) return _user!;
@@ -303,15 +440,32 @@ class VendorTable extends _i1.Table<_i1.UuidValue?> {
     return _user!;
   }
 
+  _i2.UserTable get approvedBy {
+    if (_approvedBy != null) return _approvedBy!;
+    _approvedBy = _i1.createRelationTable(
+      relationFieldName: 'approvedBy',
+      field: Vendor.t.approvedById,
+      foreignField: _i2.User.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i2.UserTable(tableRelation: foreignTableRelation),
+    );
+    return _approvedBy!;
+  }
+
   @override
   List<_i1.Column> get columns => [
     id,
     userId,
     shopName,
     description,
+    businessAddress,
     logoUrl,
     rating,
+    approvedById,
+    approvedAt,
     createdAt,
+    updatedAt,
   ];
 
   @override
@@ -319,19 +473,31 @@ class VendorTable extends _i1.Table<_i1.UuidValue?> {
     if (relationField == 'user') {
       return user;
     }
+    if (relationField == 'approvedBy') {
+      return approvedBy;
+    }
     return null;
   }
 }
 
 class VendorInclude extends _i1.IncludeObject {
-  VendorInclude._({_i2.UserInclude? user}) {
+  VendorInclude._({
+    _i2.UserInclude? user,
+    _i2.UserInclude? approvedBy,
+  }) {
     _user = user;
+    _approvedBy = approvedBy;
   }
 
   _i2.UserInclude? _user;
 
+  _i2.UserInclude? _approvedBy;
+
   @override
-  Map<String, _i1.Include?> get includes => {'user': _user};
+  Map<String, _i1.Include?> get includes => {
+    'user': _user,
+    'approvedBy': _approvedBy,
+  };
 
   @override
   _i1.Table<_i1.UuidValue?> get table => Vendor.t;
@@ -361,6 +527,8 @@ class VendorRepository {
   const VendorRepository._();
 
   final attachRow = const VendorAttachRowRepository._();
+
+  final detachRow = const VendorDetachRowRepository._();
 
   /// Returns a list of [Vendor]s matching the given query parameters.
   ///
@@ -674,6 +842,55 @@ class VendorAttachRowRepository {
     await session.db.updateRow<Vendor>(
       $vendor,
       columns: [Vendor.t.userId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between the given [Vendor] and [User]
+  /// by setting the [Vendor]'s foreign key `approvedById` to refer to the [User].
+  Future<void> approvedBy(
+    _i1.DatabaseSession session,
+    Vendor vendor,
+    _i2.User approvedBy, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (vendor.id == null) {
+      throw ArgumentError.notNull('vendor.id');
+    }
+    if (approvedBy.id == null) {
+      throw ArgumentError.notNull('approvedBy.id');
+    }
+
+    var $vendor = vendor.copyWith(approvedById: approvedBy.id);
+    await session.db.updateRow<Vendor>(
+      $vendor,
+      columns: [Vendor.t.approvedById],
+      transaction: transaction,
+    );
+  }
+}
+
+class VendorDetachRowRepository {
+  const VendorDetachRowRepository._();
+
+  /// Detaches the relation between this [Vendor] and the [User] set in `approvedBy`
+  /// by setting the [Vendor]'s foreign key `approvedById` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> approvedBy(
+    _i1.DatabaseSession session,
+    Vendor vendor, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (vendor.id == null) {
+      throw ArgumentError.notNull('vendor.id');
+    }
+
+    var $vendor = vendor.copyWith(approvedById: null);
+    await session.db.updateRow<Vendor>(
+      $vendor,
+      columns: [Vendor.t.approvedById],
       transaction: transaction,
     );
   }

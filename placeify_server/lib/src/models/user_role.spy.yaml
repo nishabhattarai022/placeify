@@ -1,4 +1,4 @@
-### Application role for authorization.
+### Application role for authorization (`consumer` = customer in UI/docs).
 enum: UserRole
 values:
   - consumer

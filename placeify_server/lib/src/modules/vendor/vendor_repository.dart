@@ -157,7 +157,7 @@ class VendorStore {
   /// Resolves the vendor shop for the logged-in user without requiring a
   /// pre-set vendor role (upgrades role when a shop already exists).
   Future<Vendor> requireOwnedVendor(Session session) async {
-    final user = await SessionService.requireUser(session);
+    var user = await SessionService.requireUser(session);
     final vendor = await Vendor.db.findFirstRow(
       session,
       where: (row) => row.userId.equals(user.id!),
@@ -170,9 +170,24 @@ class VendorStore {
     }
 
     if (user.role != UserRole.vendor && user.role != UserRole.admin) {
-      await User.db.updateRow(
+      user = await User.db.updateRow(
         session,
         user.copyWith(role: UserRole.vendor),
+      );
+    }
+
+    if (user.role != UserRole.admin &&
+        user.status != UserAccountStatus.approved) {
+      throw PlaceifyException(
+        'Vendor account is pending admin approval.',
+        code: 'VENDOR_NOT_APPROVED',
+      );
+    }
+
+    if (!user.isActive) {
+      throw PlaceifyException(
+        'Vendor account is deactivated.',
+        code: 'ACCOUNT_INACTIVE',
       );
     }
 
@@ -245,6 +260,8 @@ class VendorStore {
         role: UserRole.vendor,
         phone: trimmedPhone,
         address: trimmedAddress,
+        status: UserAccountStatus.pending,
+        updatedAt: DateTime.now(),
       ),
     );
 
@@ -254,6 +271,7 @@ class VendorStore {
         userId: user.id!,
         shopName: trimmedName,
         description: trimmedDescription,
+        businessAddress: trimmedAddress,
         logoUrl: logoUrl?.trim(),
       ),
     );

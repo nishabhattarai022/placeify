@@ -14,7 +14,7 @@ import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'user.dart' as _i2;
 import 'package:placeify_client/src/protocol/protocol.dart' as _i3;
 
-/// Vendor shop profile linked to a user account.
+/// VendorProfile — vendor-specific data linked 1:1 to a User account.
 abstract class Vendor implements _i1.SerializableModel {
   Vendor._({
     this.id,
@@ -22,11 +22,17 @@ abstract class Vendor implements _i1.SerializableModel {
     this.user,
     required this.shopName,
     this.description,
+    this.businessAddress,
     this.logoUrl,
     double? rating,
+    this.approvedById,
+    this.approvedBy,
+    this.approvedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) : rating = rating ?? 0.0,
-       createdAt = createdAt ?? DateTime.now();
+       createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
   factory Vendor({
     _i1.UuidValue? id,
@@ -34,9 +40,14 @@ abstract class Vendor implements _i1.SerializableModel {
     _i2.User? user,
     required String shopName,
     String? description,
+    String? businessAddress,
     String? logoUrl,
     double? rating,
+    _i1.UuidValue? approvedById,
+    _i2.User? approvedBy,
+    DateTime? approvedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) = _VendorImpl;
 
   factory Vendor.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -50,11 +61,28 @@ abstract class Vendor implements _i1.SerializableModel {
           : _i3.Protocol().deserialize<_i2.User>(jsonSerialization['user']),
       shopName: jsonSerialization['shopName'] as String,
       description: jsonSerialization['description'] as String?,
+      businessAddress: jsonSerialization['businessAddress'] as String?,
       logoUrl: jsonSerialization['logoUrl'] as String?,
       rating: (jsonSerialization['rating'] as num?)?.toDouble(),
+      approvedById: jsonSerialization['approvedById'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(
+              jsonSerialization['approvedById'],
+            ),
+      approvedBy: jsonSerialization['approvedBy'] == null
+          ? null
+          : _i3.Protocol().deserialize<_i2.User>(
+              jsonSerialization['approvedBy'],
+            ),
+      approvedAt: jsonSerialization['approvedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['approvedAt']),
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
+      updatedAt: jsonSerialization['updatedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['updatedAt']),
     );
   }
 
@@ -71,11 +99,21 @@ abstract class Vendor implements _i1.SerializableModel {
 
   String? description;
 
+  String? businessAddress;
+
   String? logoUrl;
 
   double rating;
 
+  _i1.UuidValue? approvedById;
+
+  _i2.User? approvedBy;
+
+  DateTime? approvedAt;
+
   DateTime createdAt;
+
+  DateTime updatedAt;
 
   /// Returns a shallow copy of this [Vendor]
   /// with some or all fields replaced by the given arguments.
@@ -86,9 +124,14 @@ abstract class Vendor implements _i1.SerializableModel {
     _i2.User? user,
     String? shopName,
     String? description,
+    String? businessAddress,
     String? logoUrl,
     double? rating,
+    _i1.UuidValue? approvedById,
+    _i2.User? approvedBy,
+    DateTime? approvedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -99,9 +142,14 @@ abstract class Vendor implements _i1.SerializableModel {
       if (user != null) 'user': user?.toJson(),
       'shopName': shopName,
       if (description != null) 'description': description,
+      if (businessAddress != null) 'businessAddress': businessAddress,
       if (logoUrl != null) 'logoUrl': logoUrl,
       'rating': rating,
+      if (approvedById != null) 'approvedById': approvedById?.toJson(),
+      if (approvedBy != null) 'approvedBy': approvedBy?.toJson(),
+      if (approvedAt != null) 'approvedAt': approvedAt?.toJson(),
       'createdAt': createdAt.toJson(),
+      'updatedAt': updatedAt.toJson(),
     };
   }
 
@@ -120,18 +168,28 @@ class _VendorImpl extends Vendor {
     _i2.User? user,
     required String shopName,
     String? description,
+    String? businessAddress,
     String? logoUrl,
     double? rating,
+    _i1.UuidValue? approvedById,
+    _i2.User? approvedBy,
+    DateTime? approvedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) : super._(
          id: id,
          userId: userId,
          user: user,
          shopName: shopName,
          description: description,
+         businessAddress: businessAddress,
          logoUrl: logoUrl,
          rating: rating,
+         approvedById: approvedById,
+         approvedBy: approvedBy,
+         approvedAt: approvedAt,
          createdAt: createdAt,
+         updatedAt: updatedAt,
        );
 
   /// Returns a shallow copy of this [Vendor]
@@ -144,9 +202,14 @@ class _VendorImpl extends Vendor {
     Object? user = _Undefined,
     String? shopName,
     Object? description = _Undefined,
+    Object? businessAddress = _Undefined,
     Object? logoUrl = _Undefined,
     double? rating,
+    Object? approvedById = _Undefined,
+    Object? approvedBy = _Undefined,
+    Object? approvedAt = _Undefined,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return Vendor(
       id: id is _i1.UuidValue? ? id : this.id,
@@ -154,9 +217,20 @@ class _VendorImpl extends Vendor {
       user: user is _i2.User? ? user : this.user?.copyWith(),
       shopName: shopName ?? this.shopName,
       description: description is String? ? description : this.description,
+      businessAddress: businessAddress is String?
+          ? businessAddress
+          : this.businessAddress,
       logoUrl: logoUrl is String? ? logoUrl : this.logoUrl,
       rating: rating ?? this.rating,
+      approvedById: approvedById is _i1.UuidValue?
+          ? approvedById
+          : this.approvedById,
+      approvedBy: approvedBy is _i2.User?
+          ? approvedBy
+          : this.approvedBy?.copyWith(),
+      approvedAt: approvedAt is DateTime? ? approvedAt : this.approvedAt,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }

@@ -1,4 +1,4 @@
-### Vendor shop profile linked to a user account.
+### VendorProfile — vendor-specific data linked 1:1 to a User account.
 class: Vendor
 table: vendor
 fields:
@@ -6,9 +6,13 @@ fields:
   user: User?, relation(onDelete=Cascade)
   shopName: String
   description: String?
+  businessAddress: String?
   logoUrl: String?
   rating: double, default=0
+  approvedBy: User?, relation(optional)
+  approvedAt: DateTime?
   createdAt: DateTime, default=now
+  updatedAt: DateTime, default=now
 
 indexes:
   vendor_user_id:

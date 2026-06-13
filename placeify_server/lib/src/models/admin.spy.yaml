@@ -1,0 +1,15 @@
+### Platform administrator profile linked to a user account.
+class: Admin
+table: admin
+fields:
+  id: UuidValue?, defaultPersist=random_v7
+  user: User?, relation(onDelete=Cascade)
+  title: String
+  department: String?
+  isActive: bool, default=true
+  createdAt: DateTime, default=now
+
+indexes:
+  admin_user_id:
+    fields: userId
+    unique: true

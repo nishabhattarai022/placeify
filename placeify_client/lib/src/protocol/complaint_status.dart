@@ -10,27 +10,21 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'package:serverpod/serverpod.dart' as _i1;
+import 'package:serverpod_client/serverpod_client.dart' as _i1;
 
-/// Catalog visibility and admin moderation state for products.
-enum ProductStatus implements _i1.SerializableModel {
-  active,
-  inactive,
-  flagged,
-  removed;
+/// Resolution state for a product complaint report.
+enum ComplaintStatus implements _i1.SerializableModel {
+  pending,
+  resolved;
 
-  static ProductStatus fromJson(String name) {
+  static ComplaintStatus fromJson(String name) {
     switch (name) {
-      case 'active':
-        return ProductStatus.active;
-      case 'inactive':
-        return ProductStatus.inactive;
-      case 'flagged':
-        return ProductStatus.flagged;
-      case 'removed':
-        return ProductStatus.removed;
+      case 'pending':
+        return ComplaintStatus.pending;
+      case 'resolved':
+        return ComplaintStatus.resolved;
       default:
-        return ProductStatus.active;
+        return ComplaintStatus.pending;
     }
   }
 
