@@ -21,6 +21,22 @@ user:
   - requireRole:
 greeting:
   - hello:
+admin:
+  - hasAdminProfile:
+  - getMyAdmin:
+  - getMyProfile:
+  - updateMyProfile:
+  - approveVendor:
+  - rejectVendor:
+  - updateUserStatus:
+  - deactivateUser:
+  - removeProduct:
+  - flagProduct:
+  - fileComplaint:
+  - listComplaints:
+  - resolveComplaint:
+  - requirePlaceifyUser:
+  - requireRole:
 ar:
   - recordSession:
   - listMySessions:

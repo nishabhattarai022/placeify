@@ -14,7 +14,8 @@ import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'product_status.dart' as _i2;
 import 'vendor.dart' as _i3;
 import 'category.dart' as _i4;
-import 'package:placeify_client/src/protocol/protocol.dart' as _i5;
+import 'user.dart' as _i5;
+import 'package:placeify_client/src/protocol/protocol.dart' as _i6;
 
 /// Furniture product listed by a vendor in the marketplace.
 abstract class Product implements _i1.SerializableModel {
@@ -38,9 +39,15 @@ abstract class Product implements _i1.SerializableModel {
     this.model3dUrl,
     this.thumbnailUrl,
     _i2.ProductStatus? status,
+    this.removedReason,
+    this.removedById,
+    this.removedBy,
+    this.removedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) : status = status ?? _i2.ProductStatus.active,
-       createdAt = createdAt ?? DateTime.now();
+       createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
   factory Product({
     int? id,
@@ -62,7 +69,12 @@ abstract class Product implements _i1.SerializableModel {
     String? model3dUrl,
     String? thumbnailUrl,
     _i2.ProductStatus? status,
+    String? removedReason,
+    _i1.UuidValue? removedById,
+    _i5.User? removedBy,
+    DateTime? removedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) = _ProductImpl;
 
   factory Product.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -73,11 +85,11 @@ abstract class Product implements _i1.SerializableModel {
       ),
       vendor: jsonSerialization['vendor'] == null
           ? null
-          : _i5.Protocol().deserialize<_i3.Vendor>(jsonSerialization['vendor']),
+          : _i6.Protocol().deserialize<_i3.Vendor>(jsonSerialization['vendor']),
       categoryId: jsonSerialization['categoryId'] as int?,
       category: jsonSerialization['category'] == null
           ? null
-          : _i5.Protocol().deserialize<_i4.Category>(
+          : _i6.Protocol().deserialize<_i4.Category>(
               jsonSerialization['category'],
             ),
       name: jsonSerialization['name'] as String,
@@ -96,9 +108,26 @@ abstract class Product implements _i1.SerializableModel {
       status: jsonSerialization['status'] == null
           ? null
           : _i2.ProductStatus.fromJson((jsonSerialization['status'] as String)),
+      removedReason: jsonSerialization['removedReason'] as String?,
+      removedById: jsonSerialization['removedById'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(
+              jsonSerialization['removedById'],
+            ),
+      removedBy: jsonSerialization['removedBy'] == null
+          ? null
+          : _i6.Protocol().deserialize<_i5.User>(
+              jsonSerialization['removedBy'],
+            ),
+      removedAt: jsonSerialization['removedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['removedAt']),
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
+      updatedAt: jsonSerialization['updatedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['updatedAt']),
     );
   }
 
@@ -143,7 +172,17 @@ abstract class Product implements _i1.SerializableModel {
 
   _i2.ProductStatus status;
 
+  String? removedReason;
+
+  _i1.UuidValue? removedById;
+
+  _i5.User? removedBy;
+
+  DateTime? removedAt;
+
   DateTime createdAt;
+
+  DateTime updatedAt;
 
   /// Returns a shallow copy of this [Product]
   /// with some or all fields replaced by the given arguments.
@@ -168,7 +207,12 @@ abstract class Product implements _i1.SerializableModel {
     String? model3dUrl,
     String? thumbnailUrl,
     _i2.ProductStatus? status,
+    String? removedReason,
+    _i1.UuidValue? removedById,
+    _i5.User? removedBy,
+    DateTime? removedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -193,7 +237,12 @@ abstract class Product implements _i1.SerializableModel {
       if (model3dUrl != null) 'model3dUrl': model3dUrl,
       if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
       'status': status.toJson(),
+      if (removedReason != null) 'removedReason': removedReason,
+      if (removedById != null) 'removedById': removedById?.toJson(),
+      if (removedBy != null) 'removedBy': removedBy?.toJson(),
+      if (removedAt != null) 'removedAt': removedAt?.toJson(),
       'createdAt': createdAt.toJson(),
+      'updatedAt': updatedAt.toJson(),
     };
   }
 
@@ -226,7 +275,12 @@ class _ProductImpl extends Product {
     String? model3dUrl,
     String? thumbnailUrl,
     _i2.ProductStatus? status,
+    String? removedReason,
+    _i1.UuidValue? removedById,
+    _i5.User? removedBy,
+    DateTime? removedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) : super._(
          id: id,
          vendorId: vendorId,
@@ -247,7 +301,12 @@ class _ProductImpl extends Product {
          model3dUrl: model3dUrl,
          thumbnailUrl: thumbnailUrl,
          status: status,
+         removedReason: removedReason,
+         removedById: removedById,
+         removedBy: removedBy,
+         removedAt: removedAt,
          createdAt: createdAt,
+         updatedAt: updatedAt,
        );
 
   /// Returns a shallow copy of this [Product]
@@ -274,7 +333,12 @@ class _ProductImpl extends Product {
     Object? model3dUrl = _Undefined,
     Object? thumbnailUrl = _Undefined,
     _i2.ProductStatus? status,
+    Object? removedReason = _Undefined,
+    Object? removedById = _Undefined,
+    Object? removedBy = _Undefined,
+    Object? removedAt = _Undefined,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return Product(
       id: id is int? ? id : this.id,
@@ -300,7 +364,18 @@ class _ProductImpl extends Product {
       model3dUrl: model3dUrl is String? ? model3dUrl : this.model3dUrl,
       thumbnailUrl: thumbnailUrl is String? ? thumbnailUrl : this.thumbnailUrl,
       status: status ?? this.status,
+      removedReason: removedReason is String?
+          ? removedReason
+          : this.removedReason,
+      removedById: removedById is _i1.UuidValue?
+          ? removedById
+          : this.removedById,
+      removedBy: removedBy is _i5.User?
+          ? removedBy
+          : this.removedBy?.copyWith(),
+      removedAt: removedAt is DateTime? ? removedAt : this.removedAt,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }

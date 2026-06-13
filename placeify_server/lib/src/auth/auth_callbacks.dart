@@ -23,7 +23,9 @@ Future<void> onAfterAccountCreated(
     User(
       authUserId: authUserId,
       name: name,
+      email: email.trim().toLowerCase(),
       role: UserRole.consumer,
+      status: UserAccountStatus.approved,
     ),
     transaction: transaction,
   );

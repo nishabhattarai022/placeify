@@ -1,0 +1,7 @@
+### Resolution state for a product complaint report.
+enum: ComplaintStatus
+serialized: byName
+default: pending
+values:
+  - pending
+  - resolved

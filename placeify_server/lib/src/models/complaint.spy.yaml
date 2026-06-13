@@ -1,0 +1,18 @@
+### Product complaint/damage report. Admins resolve these and may remove flagged products.
+class: Complaint
+table: complaint
+fields:
+  product: Product?, relation(onDelete=Cascade)
+  reportedBy: User?, relation(onDelete=Cascade)
+  reason: String
+  description: String
+  status: ComplaintStatus, default=pending
+  createdAt: DateTime, default=now
+
+indexes:
+  complaint_product_id:
+    fields: productId
+  complaint_reported_by_id:
+    fields: reportedById
+  complaint_status:
+    fields: status

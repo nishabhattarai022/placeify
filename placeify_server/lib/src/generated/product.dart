@@ -15,7 +15,8 @@ import 'package:serverpod/serverpod.dart' as _i1;
 import 'product_status.dart' as _i2;
 import 'vendor.dart' as _i3;
 import 'category.dart' as _i4;
-import 'package:placeify_server/src/generated/protocol.dart' as _i5;
+import 'user.dart' as _i5;
+import 'package:placeify_server/src/generated/protocol.dart' as _i6;
 
 /// Furniture product listed by a vendor in the marketplace.
 abstract class Product
@@ -40,9 +41,15 @@ abstract class Product
     this.model3dUrl,
     this.thumbnailUrl,
     _i2.ProductStatus? status,
+    this.removedReason,
+    this.removedById,
+    this.removedBy,
+    this.removedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) : status = status ?? _i2.ProductStatus.active,
-       createdAt = createdAt ?? DateTime.now();
+       createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
   factory Product({
     int? id,
@@ -64,7 +71,12 @@ abstract class Product
     String? model3dUrl,
     String? thumbnailUrl,
     _i2.ProductStatus? status,
+    String? removedReason,
+    _i1.UuidValue? removedById,
+    _i5.User? removedBy,
+    DateTime? removedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) = _ProductImpl;
 
   factory Product.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -75,11 +87,11 @@ abstract class Product
       ),
       vendor: jsonSerialization['vendor'] == null
           ? null
-          : _i5.Protocol().deserialize<_i3.Vendor>(jsonSerialization['vendor']),
+          : _i6.Protocol().deserialize<_i3.Vendor>(jsonSerialization['vendor']),
       categoryId: jsonSerialization['categoryId'] as int?,
       category: jsonSerialization['category'] == null
           ? null
-          : _i5.Protocol().deserialize<_i4.Category>(
+          : _i6.Protocol().deserialize<_i4.Category>(
               jsonSerialization['category'],
             ),
       name: jsonSerialization['name'] as String,
@@ -98,9 +110,26 @@ abstract class Product
       status: jsonSerialization['status'] == null
           ? null
           : _i2.ProductStatus.fromJson((jsonSerialization['status'] as String)),
+      removedReason: jsonSerialization['removedReason'] as String?,
+      removedById: jsonSerialization['removedById'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(
+              jsonSerialization['removedById'],
+            ),
+      removedBy: jsonSerialization['removedBy'] == null
+          ? null
+          : _i6.Protocol().deserialize<_i5.User>(
+              jsonSerialization['removedBy'],
+            ),
+      removedAt: jsonSerialization['removedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['removedAt']),
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
+      updatedAt: jsonSerialization['updatedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['updatedAt']),
     );
   }
 
@@ -147,7 +176,17 @@ abstract class Product
 
   _i2.ProductStatus status;
 
+  String? removedReason;
+
+  _i1.UuidValue? removedById;
+
+  _i5.User? removedBy;
+
+  DateTime? removedAt;
+
   DateTime createdAt;
+
+  DateTime updatedAt;
 
   @override
   _i1.Table<int?> get table => t;
@@ -175,7 +214,12 @@ abstract class Product
     String? model3dUrl,
     String? thumbnailUrl,
     _i2.ProductStatus? status,
+    String? removedReason,
+    _i1.UuidValue? removedById,
+    _i5.User? removedBy,
+    DateTime? removedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -200,7 +244,12 @@ abstract class Product
       if (model3dUrl != null) 'model3dUrl': model3dUrl,
       if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
       'status': status.toJson(),
+      if (removedReason != null) 'removedReason': removedReason,
+      if (removedById != null) 'removedById': removedById?.toJson(),
+      if (removedBy != null) 'removedBy': removedBy?.toJson(),
+      if (removedAt != null) 'removedAt': removedAt?.toJson(),
       'createdAt': createdAt.toJson(),
+      'updatedAt': updatedAt.toJson(),
     };
   }
 
@@ -227,17 +276,24 @@ abstract class Product
       if (model3dUrl != null) 'model3dUrl': model3dUrl,
       if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
       'status': status.toJson(),
+      if (removedReason != null) 'removedReason': removedReason,
+      if (removedById != null) 'removedById': removedById?.toJson(),
+      if (removedBy != null) 'removedBy': removedBy?.toJsonForProtocol(),
+      if (removedAt != null) 'removedAt': removedAt?.toJson(),
       'createdAt': createdAt.toJson(),
+      'updatedAt': updatedAt.toJson(),
     };
   }
 
   static ProductInclude include({
     _i3.VendorInclude? vendor,
     _i4.CategoryInclude? category,
+    _i5.UserInclude? removedBy,
   }) {
     return ProductInclude._(
       vendor: vendor,
       category: category,
+      removedBy: removedBy,
     );
   }
 
@@ -290,7 +346,12 @@ class _ProductImpl extends Product {
     String? model3dUrl,
     String? thumbnailUrl,
     _i2.ProductStatus? status,
+    String? removedReason,
+    _i1.UuidValue? removedById,
+    _i5.User? removedBy,
+    DateTime? removedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) : super._(
          id: id,
          vendorId: vendorId,
@@ -311,7 +372,12 @@ class _ProductImpl extends Product {
          model3dUrl: model3dUrl,
          thumbnailUrl: thumbnailUrl,
          status: status,
+         removedReason: removedReason,
+         removedById: removedById,
+         removedBy: removedBy,
+         removedAt: removedAt,
          createdAt: createdAt,
+         updatedAt: updatedAt,
        );
 
   /// Returns a shallow copy of this [Product]
@@ -338,7 +404,12 @@ class _ProductImpl extends Product {
     Object? model3dUrl = _Undefined,
     Object? thumbnailUrl = _Undefined,
     _i2.ProductStatus? status,
+    Object? removedReason = _Undefined,
+    Object? removedById = _Undefined,
+    Object? removedBy = _Undefined,
+    Object? removedAt = _Undefined,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return Product(
       id: id is int? ? id : this.id,
@@ -364,7 +435,18 @@ class _ProductImpl extends Product {
       model3dUrl: model3dUrl is String? ? model3dUrl : this.model3dUrl,
       thumbnailUrl: thumbnailUrl is String? ? thumbnailUrl : this.thumbnailUrl,
       status: status ?? this.status,
+      removedReason: removedReason is String?
+          ? removedReason
+          : this.removedReason,
+      removedById: removedById is _i1.UuidValue?
+          ? removedById
+          : this.removedById,
+      removedBy: removedBy is _i5.User?
+          ? removedBy
+          : this.removedBy?.copyWith(),
+      removedAt: removedAt is DateTime? ? removedAt : this.removedAt,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }
@@ -458,9 +540,34 @@ class ProductUpdateTable extends _i1.UpdateTable<ProductTable> {
     value,
   );
 
+  _i1.ColumnValue<String, String> removedReason(String? value) =>
+      _i1.ColumnValue(
+        table.removedReason,
+        value,
+      );
+
+  _i1.ColumnValue<_i1.UuidValue, _i1.UuidValue> removedById(
+    _i1.UuidValue? value,
+  ) => _i1.ColumnValue(
+    table.removedById,
+    value,
+  );
+
+  _i1.ColumnValue<DateTime, DateTime> removedAt(DateTime? value) =>
+      _i1.ColumnValue(
+        table.removedAt,
+        value,
+      );
+
   _i1.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
       _i1.ColumnValue(
         table.createdAt,
+        value,
+      );
+
+  _i1.ColumnValue<DateTime, DateTime> updatedAt(DateTime value) =>
+      _i1.ColumnValue(
+        table.updatedAt,
         value,
       );
 }
@@ -534,8 +641,25 @@ class ProductTable extends _i1.Table<int?> {
       _i1.EnumSerialization.byName,
       hasDefault: true,
     );
+    removedReason = _i1.ColumnString(
+      'removedReason',
+      this,
+    );
+    removedById = _i1.ColumnUuid(
+      'removedById',
+      this,
+    );
+    removedAt = _i1.ColumnDateTime(
+      'removedAt',
+      this,
+    );
     createdAt = _i1.ColumnDateTime(
       'createdAt',
+      this,
+      hasDefault: true,
+    );
+    updatedAt = _i1.ColumnDateTime(
+      'updatedAt',
       this,
       hasDefault: true,
     );
@@ -579,7 +703,17 @@ class ProductTable extends _i1.Table<int?> {
 
   late final _i1.ColumnEnum<_i2.ProductStatus> status;
 
+  late final _i1.ColumnString removedReason;
+
+  late final _i1.ColumnUuid removedById;
+
+  _i5.UserTable? _removedBy;
+
+  late final _i1.ColumnDateTime removedAt;
+
   late final _i1.ColumnDateTime createdAt;
+
+  late final _i1.ColumnDateTime updatedAt;
 
   _i3.VendorTable get vendor {
     if (_vendor != null) return _vendor!;
@@ -607,6 +741,19 @@ class ProductTable extends _i1.Table<int?> {
     return _category!;
   }
 
+  _i5.UserTable get removedBy {
+    if (_removedBy != null) return _removedBy!;
+    _removedBy = _i1.createRelationTable(
+      relationFieldName: 'removedBy',
+      field: Product.t.removedById,
+      foreignField: _i5.User.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i5.UserTable(tableRelation: foreignTableRelation),
+    );
+    return _removedBy!;
+  }
+
   @override
   List<_i1.Column> get columns => [
     id,
@@ -626,7 +773,11 @@ class ProductTable extends _i1.Table<int?> {
     model3dUrl,
     thumbnailUrl,
     status,
+    removedReason,
+    removedById,
+    removedAt,
     createdAt,
+    updatedAt,
   ];
 
   @override
@@ -637,6 +788,9 @@ class ProductTable extends _i1.Table<int?> {
     if (relationField == 'category') {
       return category;
     }
+    if (relationField == 'removedBy') {
+      return removedBy;
+    }
     return null;
   }
 }
@@ -645,19 +799,24 @@ class ProductInclude extends _i1.IncludeObject {
   ProductInclude._({
     _i3.VendorInclude? vendor,
     _i4.CategoryInclude? category,
+    _i5.UserInclude? removedBy,
   }) {
     _vendor = vendor;
     _category = category;
+    _removedBy = removedBy;
   }
 
   _i3.VendorInclude? _vendor;
 
   _i4.CategoryInclude? _category;
 
+  _i5.UserInclude? _removedBy;
+
   @override
   Map<String, _i1.Include?> get includes => {
     'vendor': _vendor,
     'category': _category,
+    'removedBy': _removedBy,
   };
 
   @override
@@ -1029,6 +1188,29 @@ class ProductAttachRowRepository {
       transaction: transaction,
     );
   }
+
+  /// Creates a relation between the given [Product] and [User]
+  /// by setting the [Product]'s foreign key `removedById` to refer to the [User].
+  Future<void> removedBy(
+    _i1.DatabaseSession session,
+    Product product,
+    _i5.User removedBy, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (product.id == null) {
+      throw ArgumentError.notNull('product.id');
+    }
+    if (removedBy.id == null) {
+      throw ArgumentError.notNull('removedBy.id');
+    }
+
+    var $product = product.copyWith(removedById: removedBy.id);
+    await session.db.updateRow<Product>(
+      $product,
+      columns: [Product.t.removedById],
+      transaction: transaction,
+    );
+  }
 }
 
 class ProductDetachRowRepository {
@@ -1052,6 +1234,28 @@ class ProductDetachRowRepository {
     await session.db.updateRow<Product>(
       $product,
       columns: [Product.t.categoryId],
+      transaction: transaction,
+    );
+  }
+
+  /// Detaches the relation between this [Product] and the [User] set in `removedBy`
+  /// by setting the [Product]'s foreign key `removedById` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> removedBy(
+    _i1.DatabaseSession session,
+    Product product, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (product.id == null) {
+      throw ArgumentError.notNull('product.id');
+    }
+
+    var $product = product.copyWith(removedById: null);
+    await session.db.updateRow<Product>(
+      $product,
+      columns: [Product.t.removedById],
       transaction: transaction,
     );
   }

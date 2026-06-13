@@ -12,25 +12,25 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
 
-/// Catalog visibility and admin moderation state for products.
-enum ProductStatus implements _i1.SerializableModel {
-  active,
-  inactive,
-  flagged,
-  removed;
+/// Moderation status for customer and vendor accounts (admin approve/suspend).
+enum UserAccountStatus implements _i1.SerializableModel {
+  pending,
+  approved,
+  rejected,
+  suspended;
 
-  static ProductStatus fromJson(String name) {
+  static UserAccountStatus fromJson(String name) {
     switch (name) {
-      case 'active':
-        return ProductStatus.active;
-      case 'inactive':
-        return ProductStatus.inactive;
-      case 'flagged':
-        return ProductStatus.flagged;
-      case 'removed':
-        return ProductStatus.removed;
+      case 'pending':
+        return UserAccountStatus.pending;
+      case 'approved':
+        return UserAccountStatus.approved;
+      case 'rejected':
+        return UserAccountStatus.rejected;
+      case 'suspended':
+        return UserAccountStatus.suspended;
       default:
-        return ProductStatus.active;
+        return UserAccountStatus.approved;
     }
   }
 

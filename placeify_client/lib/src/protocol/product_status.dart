@@ -12,9 +12,12 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 
+/// Catalog visibility and admin moderation state for products.
 enum ProductStatus implements _i1.SerializableModel {
   active,
-  inactive;
+  inactive,
+  flagged,
+  removed;
 
   static ProductStatus fromJson(String name) {
     switch (name) {
@@ -22,6 +25,10 @@ enum ProductStatus implements _i1.SerializableModel {
         return ProductStatus.active;
       case 'inactive':
         return ProductStatus.inactive;
+      case 'flagged':
+        return ProductStatus.flagged;
+      case 'removed':
+        return ProductStatus.removed;
       default:
         return ProductStatus.active;
     }
