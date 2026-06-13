@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/widgets/toast_overlay.dart';
-import '../../data/ar_room_launcher.dart';
+import '../ar_room_screen.dart';
 import '../product_detail_tokens.dart';
 
-/// Interactive glTF / GLB viewer with optional in-room AR.
+/// Interactive glTF / GLB viewer with in-app AR room preview.
 class Product3dPreview extends StatefulWidget {
   const Product3dPreview({
     required this.modelSrc,
@@ -23,25 +22,36 @@ class Product3dPreview extends StatefulWidget {
 }
 
 class _Product3dPreviewState extends State<Product3dPreview> {
-  WebViewController? _webViewController;
-  bool _launchingAr = false;
+  bool _openingAr = false;
 
   Future<void> _tryInRoom() async {
-    if (_launchingAr) return;
-    setState(() => _launchingAr = true);
+    if (_openingAr) return;
+    setState(() => _openingAr = true);
     HapticService.medium();
 
-    final launched = await ArRoomLauncher.launch(
+    if (!ArRoomScreen.isSupported) {
+      if (mounted) {
+        setState(() => _openingAr = false);
+        PlaceifyToast.show(
+          context,
+          'Try in my room works on Android and iPhone with AR support.',
+        );
+      }
+      return;
+    }
+
+    final opened = await ArRoomLauncher.open(
+      context: context,
       modelSrc: widget.modelSrc,
-      webViewController: _webViewController,
+      productName: widget.productName,
     );
 
     if (mounted) {
-      setState(() => _launchingAr = false);
-      if (!launched) {
+      setState(() => _openingAr = false);
+      if (!opened) {
         PlaceifyToast.show(
           context,
-          'AR is not available. Use a phone with ARCore (Android) or AR Quick Look (iOS).',
+          'Camera access is required to preview furniture in your room.',
         );
       }
     }
@@ -65,10 +75,6 @@ class _Product3dPreviewState extends State<Product3dPreview> {
               cameraControls: true,
               disableZoom: false,
               interactionPrompt: InteractionPrompt.auto,
-              ar: true,
-              arModes: const ['scene-viewer', 'quick-look', 'webxr'],
-              arPlacement: ArPlacement.floor,
-              onWebViewCreated: (controller) => _webViewController = controller,
             ),
           ),
           Padding(
@@ -77,7 +83,7 @@ class _Product3dPreviewState extends State<Product3dPreview> {
               width: double.infinity,
               height: 44,
               child: FilledButton.icon(
-                onPressed: _launchingAr ? null : _tryInRoom,
+                onPressed: _openingAr ? null : _tryInRoom,
                 style: FilledButton.styleFrom(
                   backgroundColor: ProductDetailTokens.cartBarBg,
                   foregroundColor: Colors.white,
@@ -87,7 +93,7 @@ class _Product3dPreviewState extends State<Product3dPreview> {
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
-                icon: _launchingAr
+                icon: _openingAr
                     ? const SizedBox(
                         width: 18,
                         height: 18,
@@ -98,7 +104,7 @@ class _Product3dPreviewState extends State<Product3dPreview> {
                       )
                     : const Icon(Icons.view_in_ar_outlined, size: 20),
                 label: Text(
-                  _launchingAr ? 'Opening AR…' : 'Try in my room',
+                  _openingAr ? 'Opening camera…' : 'Try in my room',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
