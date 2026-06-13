@@ -57,6 +57,10 @@ Server URLs:
 | Insights  | http://localhost:8081  |
 | Web       | http://localhost:8082  |
 
+## User backend API
+
+Consumer dashboard endpoints (`getDashboard`, `listMyOrders`, wishlist, refunds) are documented in [docs/USER_API.md](docs/USER_API.md).
+
 ## Run tests
 
 ```bash
