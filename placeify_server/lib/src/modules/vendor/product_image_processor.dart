@@ -7,7 +7,6 @@ import 'package:serverpod/serverpod.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/removebg_api_key_config.dart';
 
-/// Result of preparing a vendor product photo for the catalog.
 class ProcessedProductImage {
   const ProcessedProductImage({
     required this.bytes,
