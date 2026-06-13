@@ -2,17 +2,21 @@ import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
 import '../ar/ar_repository.dart';
+import '../refund/refund_repository.dart';
 import '../wishlist/wishlist_repository.dart';
 
 class UserProfileStore {
   UserProfileStore({
     WishlistStore? wishlistStore,
     ArSessionStore? arSessionStore,
+    RefundStore? refundStore,
   })  : _wishlistStore = wishlistStore ?? WishlistStore(),
-        _arSessionStore = arSessionStore ?? ArSessionStore();
+        _arSessionStore = arSessionStore ?? ArSessionStore(),
+        _refundStore = refundStore ?? RefundStore();
 
   final WishlistStore _wishlistStore;
   final ArSessionStore _arSessionStore;
+  final RefundStore _refundStore;
 
   Future<User?> findByAuthUserId(Session session, UuidValue authUserId) {
     return User.db.findFirstRow(
@@ -62,13 +66,14 @@ class UserProfileStore {
 
     final wishlistCount = await _wishlistStore.countForUser(session, userId);
     final arSessionCount = await _arSessionStore.countForUser(session, userId);
+    final refundCount = await _refundStore.countForUser(session, userId);
 
     return UserDashboard(
       profile: user,
       orderCount: orderCount,
       wishlistCount: wishlistCount,
       arSessionCount: arSessionCount,
-      refundCount: 0,
+      refundCount: refundCount,
     );
   }
 }
