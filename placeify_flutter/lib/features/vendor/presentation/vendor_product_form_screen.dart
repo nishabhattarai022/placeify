@@ -200,7 +200,6 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
 
     if (success) {
       HapticService.medium();
-      PlaceifyToast.show(context, VendorStrings.productUploaded);
       context.pop(true);
       return;
     }
