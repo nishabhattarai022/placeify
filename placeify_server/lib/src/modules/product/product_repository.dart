@@ -96,7 +96,7 @@ class CatalogRepository {
   Future<Product> requireActiveProduct(Session session, int productId) async {
     final product = await getProduct(session, productId);
     if (product == null || product.status != ProductStatus.active) {
-      throw PlaceifyException('Product not found.', code: 'PRODUCT_NOT_FOUND');
+      throw PlaceifyException(message: 'Product not found.', code: 'PRODUCT_NOT_FOUND');
     }
     return product;
   }

@@ -32,8 +32,7 @@ class CartStore {
     int quantity = 1,
   }) async {
     if (quantity < 1) {
-      throw PlaceifyException(
-        'Quantity must be at least 1.',
+      throw PlaceifyException(message: 'Quantity must be at least 1.',
         code: 'INVALID_QUANTITY',
       );
     }
@@ -74,8 +73,7 @@ class CartStore {
     int quantity,
   ) async {
     if (quantity < 1) {
-      throw PlaceifyException(
-        'Quantity must be at least 1.',
+      throw PlaceifyException(message: 'Quantity must be at least 1.',
         code: 'INVALID_QUANTITY',
       );
     }
@@ -118,7 +116,7 @@ class CartStore {
           row.cartId.equals(cartId) & row.productId.equals(productId),
     );
     if (item == null) {
-      throw PlaceifyException('Cart item not found.', code: 'CART_ITEM_NOT_FOUND');
+      throw PlaceifyException(message: 'Cart item not found.', code: 'CART_ITEM_NOT_FOUND');
     }
     return item;
   }

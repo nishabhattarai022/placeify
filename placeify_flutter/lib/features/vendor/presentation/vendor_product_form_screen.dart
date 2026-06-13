@@ -9,6 +9,7 @@ import 'package:placeify_flutter/features/vendor/domain/constants/vendor_routes.
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_form_state.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_image_item.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_product_form_provider.dart';
+import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_products_provider.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_strings.dart';
 import 'package:placeify_flutter/features/vendor/presentation/widgets/product_image_picker_grid.dart';
 
@@ -38,6 +39,7 @@ class VendorProductFormScreen extends ConsumerStatefulWidget {
 class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScreen> {
   bool _isDirty = false;
   bool _isHydrated = false;
+  bool _building3d = false;
 
   final _formKey = GlobalKey<FormState>();
   final _nameKey = GlobalKey<FormFieldState<String>>();
@@ -207,6 +209,28 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     if (error != null) {
       PlaceifyToast.show(context, error);
     }
+  }
+
+  Future<void> _onBuild3d(String productId) async {
+    await HapticService.light();
+    if (!mounted || _building3d) return;
+
+    setState(() => _building3d = true);
+    final error = await ref
+        .read(vendorProductsProvider.notifier)
+        .regenerateProductModel3d(productId);
+    if (!mounted) return;
+
+    setState(() => _building3d = false);
+    if (error == null) {
+      HapticService.medium();
+      PlaceifyToast.show(
+        context,
+        '3D preview generated — buyers can view it on the product page',
+      );
+      return;
+    }
+    PlaceifyToast.show(context, error);
   }
 
   Future<void> _onSaveChanges() async {
@@ -807,6 +831,32 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                     _markDirty();
                   },
                 ),
+                if (isEditing && form.editingProductId != null) ...[
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: _building3d || form.isSubmitting
+                        ? null
+                        : () => _onBuild3d(form.editingProductId!),
+                    icon: _building3d
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.view_in_ar_outlined, size: 18),
+                    label: Text(
+                      form.hasArView ? 'Regenerate 3D preview' : 'Build 3D preview',
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.vendorForest,
+                      side: const BorderSide(color: AppColors.creamDark),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
+                ],
                 _FormSwitchRow(
                   label: 'Visible in Store',
                   subtitle: 'Hidden products stay in your catalog but are not listed',

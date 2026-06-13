@@ -80,6 +80,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
         : product.name.trim();
 
     final bytes = await file.readAsBytes();
+    final imageData = ByteData.sublistView(bytes);
     final input = VendorProductUploadInput(
       name: product.name.trim(),
       description: description,
@@ -101,7 +102,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     try {
       final created = await client.vendor.uploadProduct(
         input,
-        bytes.buffer.asByteData(),
+        imageData,
         _fileNameFromPath(imagePath),
       );
       return VendorProductMapper.fromApiProduct(
@@ -171,7 +172,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
         final file = File(imagePath);
         if (await file.exists()) {
           final bytes = await file.readAsBytes();
-          imageData = bytes.buffer.asByteData();
+          imageData = ByteData.sublistView(bytes);
           imageFileName = _fileNameFromPath(imagePath);
         }
       }
@@ -199,6 +200,29 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     throw VendorProductActionException(
       'Deleting products on the server is not supported yet.',
     );
+  }
+
+  @override
+  Future<VendorProduct> regenerateProductModel3d(
+    String vendorId,
+    String productId,
+  ) async {
+    await _ensureShopReady();
+
+    final dbId = ProductIdCodec.toDatabaseId(productId);
+    if (dbId == null) {
+      throw VendorProductActionException('Product not found.');
+    }
+
+    try {
+      final updated = await client.vendor.regenerateProductModel3d(dbId);
+      return VendorProductMapper.fromApiProduct(
+        updated,
+        vendorId: vendorId,
+      );
+    } catch (error) {
+      throw VendorProductActionException(_mapError(error));
+    }
   }
 
   Future<void> _ensureShopReady() async {
@@ -290,8 +314,34 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     if (raw.contains('SHOP_NOT_FOUND')) {
       return 'Create your vendor shop before uploading products.';
     }
+    if (raw.contains('VENDOR_NOT_APPROVED')) {
+      return 'Vendor account is pending admin approval.';
+    }
+    if (raw.contains('ACCOUNT_INACTIVE')) {
+      return 'Vendor account is deactivated.';
+    }
+    if (raw.contains('BG_REMOVAL_NOT_CONFIGURED')) {
+      return 'Photo processing is not set up on the server. '
+          'Add a remove.bg API key to config/removebg_api_key.yaml.';
+    }
+    if (raw.contains('BG_REMOVAL_AUTH')) {
+      return 'Background removal quota or API key issue. Check your remove.bg account.';
+    }
+    if (raw.contains('BG_REMOVAL_FAILED')) {
+      return 'Could not process the photo background. Try another image.';
+    }
     if (raw.contains('PRODUCT_NOT_FOUND')) {
       return 'Product not found.';
+    }
+    if (raw.contains('MODEL3D_NO_THUMBNAIL')) {
+      return 'Add a product photo before building a 3D preview.';
+    }
+    if (raw.contains('MODEL3D_THUMBNAIL_MISSING')) {
+      return 'Product photo file is missing on the server. Re-upload the photo, then try Build 3D again.';
+    }
+    if (raw.contains('MODEL3D_TRIPO_FAILED') ||
+        raw.contains('MODEL3D_GENERATION_FAILED')) {
+      return '3D generation failed. Add your Tripo key to config/tripo_api_key.yaml on the server.';
     }
     if (raw.contains('INVALID_FILE') || raw.contains('INVALID_FILE_TYPE')) {
       return 'Use a JPG, PNG, or WEBP photo under 8 MB.';
