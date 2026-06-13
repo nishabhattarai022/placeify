@@ -200,8 +200,8 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
 
     if (success) {
       HapticService.medium();
-      PlaceifyToast.show(context, VendorStrings.productSaved);
-      context.pop();
+      PlaceifyToast.show(context, VendorStrings.productUploaded);
+      context.pop(true);
       return;
     }
 
@@ -374,8 +374,10 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     final unitLabel =
         form.dimensionUnit == VendorProductDimensionUnit.cm ? 'cm' : 'in';
     final saveLabel = isEditing
-        ? (_isDirty ? VendorStrings.saveChanges : VendorStrings.noChangesLabel)
-        : VendorStrings.uploadProduct;
+        ? (form.isSubmitting
+            ? 'Saving…'
+            : (_isDirty ? VendorStrings.saveChanges : VendorStrings.noChangesLabel))
+        : (form.isSubmitting ? 'Uploading…' : VendorStrings.uploadProduct);
     final onSave = form.isSubmitting
         ? null
         : (isEditing ? _onSaveChanges : _onUpload);
