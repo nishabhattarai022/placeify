@@ -497,6 +497,11 @@ class VendorStore {
       '${uploadsDir.path}${Platform.pathSeparator}$storedName',
     );
     await file.writeAsBytes(processed.bytes);
+    session.log(
+      'Stored catalog image $storedName (white background, '
+      'bgRemoved=${processed.backgroundRemoved})',
+      level: LogLevel.info,
+    );
     return '/uploads/$storedName';
   }
 

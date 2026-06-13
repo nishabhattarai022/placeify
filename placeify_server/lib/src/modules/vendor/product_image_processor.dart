@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
@@ -6,6 +5,7 @@ import 'package:image/image.dart' as img;
 import 'package:serverpod/serverpod.dart';
 
 import '../../shared/placeify_exception.dart';
+import '../../shared/removebg_api_key_config.dart';
 
 /// Result of preparing a vendor product photo for the catalog.
 class ProcessedProductImage {
@@ -20,58 +20,52 @@ class ProcessedProductImage {
   final bool backgroundRemoved;
 }
 
-/// Removes backgrounds (via remove.bg when configured) and composites on white.
+/// Removes backgrounds via remove.bg and composites furniture on white (#FFFFFF).
 class ProductImageProcessor {
   ProductImageProcessor({http.Client? httpClient})
     : _httpClient = httpClient ?? http.Client();
 
   static const _removeBgUrl = 'https://api.remove.bg/v1.0/removebg';
-  static const _apiKeyEnv = 'PLACEIFY_REMOVEBG_API_KEY';
   static const _maxCatalogWidth = 1600;
   static const _jpegQuality = 88;
+  static final _white = img.ColorRgb8(255, 255, 255);
 
   final http.Client _httpClient;
 
-  /// Prepares catalog-ready JPEG bytes on a white background.
-  ///
-  /// When [PLACEIFY_REMOVEBG_API_KEY] is set, calls remove.bg first. Otherwise
-  /// the original image is normalized (resize/re-encode) without bg removal.
+  /// Removes the background, composites on white, and returns catalog-ready JPEG.
   Future<ProcessedProductImage> processForCatalog(
     Session session,
     Uint8List bytes,
     String fileName,
   ) async {
-    final apiKey = Platform.environment[_apiKeyEnv]?.trim();
-    Uint8List working = bytes;
-    var backgroundRemoved = false;
-
-    if (apiKey != null && apiKey.isNotEmpty) {
-      try {
-        working = await _removeBackground(apiKey, bytes, fileName);
-        backgroundRemoved = true;
-      } on PlaceifyException catch (error) {
-        session.log(
-          'Product image background removal failed (${error.code}); '
-          'using original upload.',
-          level: LogLevel.warning,
-        );
-        working = bytes;
-      }
-    } else {
-      session.log(
-        '$_apiKeyEnv is not set; storing product image without background removal.',
-        level: LogLevel.info,
+    final apiKey = RemoveBgApiKeyConfig.apiKey();
+    if (apiKey == null || apiKey.isEmpty) {
+      throw PlaceifyException(
+        message:
+            'Background removal is not configured. Copy '
+            'config/removebg_api_key.example.yaml to config/removebg_api_key.yaml '
+            'and add your remove.bg API key.',
+        code: 'BG_REMOVAL_NOT_CONFIGURED',
       );
     }
 
-    final catalogBytes = backgroundRemoved
-        ? _compositeOnWhite(working)
-        : _normalizeOriginal(working);
+    session.log(
+      'Removing product image background via remove.bg',
+      level: LogLevel.info,
+    );
+
+    final cutout = await _removeBackground(apiKey, bytes, fileName);
+    final catalogBytes = _compositeOnWhite(cutout);
+
+    session.log(
+      'Product image processed on white background (${catalogBytes.length} bytes)',
+      level: LogLevel.info,
+    );
 
     return ProcessedProductImage(
       bytes: catalogBytes,
       extension: '.jpg',
-      backgroundRemoved: backgroundRemoved,
+      backgroundRemoved: true,
     );
   }
 
@@ -84,6 +78,7 @@ class ProductImageProcessor {
       ..headers['X-Api-Key'] = apiKey
       ..fields['size'] = 'auto'
       ..fields['format'] = 'png'
+      ..fields['bg_color'] = 'FFFFFF'
       ..files.add(
         http.MultipartFile.fromBytes(
           'image_file',
@@ -104,12 +99,14 @@ class ProductImageProcessor {
         : body.body;
 
     if (body.statusCode == 402 || body.statusCode == 403) {
-      throw PlaceifyException(message: 'Background removal quota or API key issue.',
+      throw PlaceifyException(
+        message: 'Background removal quota or API key issue.',
         code: 'BG_REMOVAL_AUTH',
       );
     }
 
-    throw PlaceifyException(message: 'Background removal service error (${body.statusCode}): $detail',
+    throw PlaceifyException(
+      message: 'Background removal failed (${body.statusCode}): $detail',
       code: 'BG_REMOVAL_FAILED',
     );
   }
@@ -117,7 +114,8 @@ class ProductImageProcessor {
   Uint8List _compositeOnWhite(Uint8List cutoutPngBytes) {
     final decoded = img.decodeImage(cutoutPngBytes);
     if (decoded == null) {
-      throw PlaceifyException(message: 'Could not decode cutout image.',
+      throw PlaceifyException(
+        message: 'Could not decode cutout image.',
         code: 'IMAGE_DECODE_FAILED',
       );
     }
@@ -130,26 +128,11 @@ class ProductImageProcessor {
       width: resized.width,
       height: resized.height,
     );
-    img.fill(canvas, color: img.ColorRgb8(255, 255, 255));
+    img.fill(canvas, color: _white);
     img.compositeImage(canvas, resized);
 
     return Uint8List.fromList(
       img.encodeJpg(canvas, quality: _jpegQuality),
-    );
-  }
-
-  Uint8List _normalizeOriginal(Uint8List bytes) {
-    final decoded = img.decodeImage(bytes);
-    if (decoded == null) {
-      return bytes;
-    }
-
-    final resized = decoded.width > _maxCatalogWidth
-        ? img.copyResize(decoded, width: _maxCatalogWidth)
-        : decoded;
-
-    return Uint8List.fromList(
-      img.encodeJpg(resized, quality: _jpegQuality),
     );
   }
 

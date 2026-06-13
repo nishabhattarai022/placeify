@@ -21,5 +21,8 @@ config/passwords.yaml
 # Tripo API key (copy from tripo_api_key.example.yaml)
 config/tripo_api_key.yaml
 
+# remove.bg API key (copy from removebg_api_key.example.yaml)
+config/removebg_api_key.yaml
+
 # Firebase service account key for Firebase auth
 config/firebase_service_account_key.json
