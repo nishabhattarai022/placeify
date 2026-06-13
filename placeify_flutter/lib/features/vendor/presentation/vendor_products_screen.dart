@@ -13,6 +13,7 @@ import '../../../core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import '../../../core/widgets/shimmer_loader.dart';
 import '../domain/models/vendor_product.dart';
 import 'providers/vendor_products_provider.dart';
+import 'vendor_product_upload_navigation.dart';
 import 'widgets/bulk_discount_sheet.dart';
 import 'widgets/vendor_product_category_filter_sheet.dart';
 import 'widgets/vendor_product_delete_sheet.dart';
@@ -164,7 +165,7 @@ class _VendorProductsScreenState extends ConsumerState<VendorProductsScreen> {
           : FloatingActionButton(
               onPressed: () {
                 HapticService.light();
-                context.push(VendorRoutes.productsUpload);
+                openVendorProductUpload(context);
               },
               backgroundColor: AppColors.espresso,
               foregroundColor: AppColors.warmWhite,

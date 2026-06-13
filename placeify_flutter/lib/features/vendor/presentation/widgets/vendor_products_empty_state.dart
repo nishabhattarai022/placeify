@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:placeify_flutter/features/home/data/mock_product_repository.dart';
-import 'package:placeify_flutter/features/vendor/domain/constants/vendor_routes.dart';
+import 'package:placeify_flutter/features/vendor/presentation/vendor_product_upload_navigation.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radii.dart';
@@ -33,7 +32,7 @@ class VendorProductsEmptyState extends StatelessWidget {
     return _CatalogEmptyState(
       onAddProduct: () {
         HapticService.light();
-        context.push(VendorRoutes.productsUpload);
+        openVendorProductUpload(context);
       },
     );
   }
