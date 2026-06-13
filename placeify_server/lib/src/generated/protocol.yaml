@@ -43,6 +43,10 @@ product:
   - searchProducts:
   - getProduct:
   - listProducts:
+refund:
+  - listMyRefundRequests:
+  - getRefundRequest:
+  - createRefundRequest:
 review:
   - submitReview:
   - listProductReviews:
