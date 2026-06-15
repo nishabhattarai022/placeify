@@ -4,5 +4,6 @@ fields:
   profile: User
   orderCount: int
   wishlistCount: int
+  cartItemCount: int
   arSessionCount: int
   refundCount: int

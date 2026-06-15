@@ -26,6 +26,7 @@ void main() {
         expect(dashboard.profile.name, 'Test User');
         expect(dashboard.orderCount, 1);
         expect(dashboard.wishlistCount, 1);
+        expect(dashboard.cartItemCount, 0);
         expect(dashboard.refundCount, 0);
       },
     );
