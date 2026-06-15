@@ -2,7 +2,6 @@
 abstract final class ShopStrings {
   static const eyebrow = 'LOCAL SHOPS';
   static const titleLine1 = 'Shop';
-  static const titleLine2 = 'by vendor';
 
   static const searchHint = 'Search shops by name or category';
   static const emptyShopsTitle = 'No shops found';

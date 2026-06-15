@@ -85,17 +85,6 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
                               letterSpacing: -0.5,
                             ),
                           ),
-                          Text(
-                            ShopStrings.titleLine2,
-                            style: AppFonts.dmSerifDisplay(
-                              fontSize: 48,
-                              fontWeight: FontWeight.w400,
-                              fontStyle: FontStyle.italic,
-                              color: Colors.black,
-                              height: 0.98,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
                           const SizedBox(height: 14),
                           shopsAsync.when(
                             data: (shops) => Text(
