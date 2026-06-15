@@ -15,6 +15,7 @@ import 'package:placeify/core/widgets/toast_overlay.dart';
 import 'package:placeify/data/furniture_categories.dart';
 import 'package:placeify/features/profile/presentation/widgets/shared/profile_form_field.dart';
 import 'package:placeify/features/vendor/domain/constants/vendor_routes.dart';
+import 'package:placeify/features/vendor/domain/models/vendor_operating_day.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_profile.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_profile_editor_state.dart';
 import 'package:placeify/features/vendor/presentation/providers/vendor_profile_editor_provider.dart';
@@ -47,11 +48,12 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
     _email = TextEditingController(text: draft?.email ?? '');
     _address = TextEditingController(text: draft?.address ?? '');
     _bio = TextEditingController(text: draft?.bio ?? '');
-    _instagram = TextEditingController(text: draft?.instagramHandle ?? '');
-    _facebook = TextEditingController(text: draft?.facebookHandle ?? '');
-    _operatingHours =
-        TextEditingController(text: draft?.operatingHours ?? '');
-    _category = draft?.category ?? furnitureCategories.first.name;
+    _instagram = TextEditingController(text: draft?.socialLinks.instagram ?? '');
+    _facebook = TextEditingController(text: draft?.socialLinks.facebook ?? '');
+    _operatingHours = TextEditingController(
+      text: draft == null ? '' : formatVendorScheduleSummary(draft.schedule),
+    );
+    _category = draft?.tags.firstOrNull ?? furnitureCategories.first.name;
   }
 
   @override
@@ -80,11 +82,15 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
     setIfDifferent(_email, profile.email);
     setIfDifferent(_address, profile.address);
     setIfDifferent(_bio, profile.bio);
-    setIfDifferent(_instagram, profile.instagramHandle);
-    setIfDifferent(_facebook, profile.facebookHandle);
-    setIfDifferent(_operatingHours, profile.operatingHours);
-    if (_category != profile.category) {
-      setState(() => _category = profile.category);
+    setIfDifferent(_instagram, profile.socialLinks.instagram);
+    setIfDifferent(_facebook, profile.socialLinks.facebook);
+    setIfDifferent(
+      _operatingHours,
+      formatVendorScheduleSummary(profile.schedule),
+    );
+    final primaryTag = profile.tags.firstOrNull;
+    if (_category != primaryTag) {
+      setState(() => _category = primaryTag);
     }
   }
 
@@ -201,7 +207,7 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
 
   Widget _buildForm(VendorProfileEditorState editorState) {
     final draft = editorState.draft!;
-    final category = _category ?? draft.category;
+    final category = _category ?? draft.tags.firstOrNull ?? furnitureCategories.first.name;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
@@ -317,7 +323,7 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
             onChanged: (value) {
               if (value == null) return;
               setState(() => _category = value);
-              _updateDraft((p) => p.copyWith(category: value));
+              _updateDraft((p) => p.copyWith(tags: [value]));
               _saveOnBlur();
             },
           ),
@@ -337,8 +343,11 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
           child: ProfileTextInput(
             controller: _instagram,
             hint: '@yourstore',
-            onChanged: (v) =>
-                _updateDraft((p) => p.copyWith(instagramHandle: v)),
+            onChanged: (v) => _updateDraft(
+              (p) => p.copyWith(
+                socialLinks: p.socialLinks.copyWith(instagram: v),
+              ),
+            ),
             onEditingComplete: _saveOnBlur,
           ),
         ),
@@ -347,8 +356,11 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
           child: ProfileTextInput(
             controller: _facebook,
             hint: 'facebook.com/yourstore',
-            onChanged: (v) =>
-                _updateDraft((p) => p.copyWith(facebookHandle: v)),
+            onChanged: (v) => _updateDraft(
+              (p) => p.copyWith(
+                socialLinks: p.socialLinks.copyWith(facebook: v),
+              ),
+            ),
             onEditingComplete: _saveOnBlur,
           ),
         ),
@@ -357,9 +369,6 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
           child: ProfileTextInput(
             controller: _operatingHours,
             hint: 'Sun–Fri 10:00–18:00',
-            onChanged: (v) =>
-                _updateDraft((p) => p.copyWith(operatingHours: v)),
-            onEditingComplete: _saveOnBlur,
           ),
         ),
         const SizedBox(height: 8),

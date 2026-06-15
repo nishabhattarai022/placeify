@@ -20,6 +20,8 @@ mixin _$VendorStats {
   int get viewCount;
   double get conversionRate;
   String get periodLabel;
+  double get averageRating;
+  double get responseRate;
 
   /// Create a copy of VendorStats
   /// with the given fields replaced by the non-null parameter values.
@@ -46,17 +48,29 @@ mixin _$VendorStats {
             (identical(other.conversionRate, conversionRate) ||
                 other.conversionRate == conversionRate) &&
             (identical(other.periodLabel, periodLabel) ||
-                other.periodLabel == periodLabel));
+                other.periodLabel == periodLabel) &&
+            (identical(other.averageRating, averageRating) ||
+                other.averageRating == averageRating) &&
+            (identical(other.responseRate, responseRate) ||
+                other.responseRate == responseRate));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, revenue, orderCount,
-      productCount, viewCount, conversionRate, periodLabel);
+  int get hashCode => Object.hash(
+      runtimeType,
+      revenue,
+      orderCount,
+      productCount,
+      viewCount,
+      conversionRate,
+      periodLabel,
+      averageRating,
+      responseRate);
 
   @override
   String toString() {
-    return 'VendorStats(revenue: $revenue, orderCount: $orderCount, productCount: $productCount, viewCount: $viewCount, conversionRate: $conversionRate, periodLabel: $periodLabel)';
+    return 'VendorStats(revenue: $revenue, orderCount: $orderCount, productCount: $productCount, viewCount: $viewCount, conversionRate: $conversionRate, periodLabel: $periodLabel, averageRating: $averageRating, responseRate: $responseRate)';
   }
 }
 
@@ -72,7 +86,9 @@ abstract mixin class $VendorStatsCopyWith<$Res> {
       int productCount,
       int viewCount,
       double conversionRate,
-      String periodLabel});
+      String periodLabel,
+      double averageRating,
+      double responseRate});
 }
 
 /// @nodoc
@@ -93,6 +109,8 @@ class _$VendorStatsCopyWithImpl<$Res> implements $VendorStatsCopyWith<$Res> {
     Object? viewCount = null,
     Object? conversionRate = null,
     Object? periodLabel = null,
+    Object? averageRating = null,
+    Object? responseRate = null,
   }) {
     return _then(_self.copyWith(
       revenue: null == revenue
@@ -119,6 +137,14 @@ class _$VendorStatsCopyWithImpl<$Res> implements $VendorStatsCopyWith<$Res> {
           ? _self.periodLabel
           : periodLabel // ignore: cast_nullable_to_non_nullable
               as String,
+      averageRating: null == averageRating
+          ? _self.averageRating
+          : averageRating // ignore: cast_nullable_to_non_nullable
+              as double,
+      responseRate: null == responseRate
+          ? _self.responseRate
+          : responseRate // ignore: cast_nullable_to_non_nullable
+              as double,
     ));
   }
 }
@@ -216,16 +242,30 @@ extension VendorStatsPatterns on VendorStats {
 
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
-    TResult Function(double revenue, int orderCount, int productCount,
-            int viewCount, double conversionRate, String periodLabel)?
+    TResult Function(
+            double revenue,
+            int orderCount,
+            int productCount,
+            int viewCount,
+            double conversionRate,
+            String periodLabel,
+            double averageRating,
+            double responseRate)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _VendorStats() when $default != null:
-        return $default(_that.revenue, _that.orderCount, _that.productCount,
-            _that.viewCount, _that.conversionRate, _that.periodLabel);
+        return $default(
+            _that.revenue,
+            _that.orderCount,
+            _that.productCount,
+            _that.viewCount,
+            _that.conversionRate,
+            _that.periodLabel,
+            _that.averageRating,
+            _that.responseRate);
       case _:
         return orElse();
     }
@@ -246,15 +286,29 @@ extension VendorStatsPatterns on VendorStats {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(double revenue, int orderCount, int productCount,
-            int viewCount, double conversionRate, String periodLabel)
+    TResult Function(
+            double revenue,
+            int orderCount,
+            int productCount,
+            int viewCount,
+            double conversionRate,
+            String periodLabel,
+            double averageRating,
+            double responseRate)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _VendorStats():
-        return $default(_that.revenue, _that.orderCount, _that.productCount,
-            _that.viewCount, _that.conversionRate, _that.periodLabel);
+        return $default(
+            _that.revenue,
+            _that.orderCount,
+            _that.productCount,
+            _that.viewCount,
+            _that.conversionRate,
+            _that.periodLabel,
+            _that.averageRating,
+            _that.responseRate);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -274,15 +328,29 @@ extension VendorStatsPatterns on VendorStats {
 
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(double revenue, int orderCount, int productCount,
-            int viewCount, double conversionRate, String periodLabel)?
+    TResult? Function(
+            double revenue,
+            int orderCount,
+            int productCount,
+            int viewCount,
+            double conversionRate,
+            String periodLabel,
+            double averageRating,
+            double responseRate)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _VendorStats() when $default != null:
-        return $default(_that.revenue, _that.orderCount, _that.productCount,
-            _that.viewCount, _that.conversionRate, _that.periodLabel);
+        return $default(
+            _that.revenue,
+            _that.orderCount,
+            _that.productCount,
+            _that.viewCount,
+            _that.conversionRate,
+            _that.periodLabel,
+            _that.averageRating,
+            _that.responseRate);
       case _:
         return null;
     }
@@ -298,7 +366,9 @@ class _VendorStats implements VendorStats {
       required this.productCount,
       required this.viewCount,
       required this.conversionRate,
-      required this.periodLabel});
+      required this.periodLabel,
+      required this.averageRating,
+      required this.responseRate});
   factory _VendorStats.fromJson(Map<String, dynamic> json) =>
       _$VendorStatsFromJson(json);
 
@@ -314,6 +384,10 @@ class _VendorStats implements VendorStats {
   final double conversionRate;
   @override
   final String periodLabel;
+  @override
+  final double averageRating;
+  @override
+  final double responseRate;
 
   /// Create a copy of VendorStats
   /// with the given fields replaced by the non-null parameter values.
@@ -345,17 +419,29 @@ class _VendorStats implements VendorStats {
             (identical(other.conversionRate, conversionRate) ||
                 other.conversionRate == conversionRate) &&
             (identical(other.periodLabel, periodLabel) ||
-                other.periodLabel == periodLabel));
+                other.periodLabel == periodLabel) &&
+            (identical(other.averageRating, averageRating) ||
+                other.averageRating == averageRating) &&
+            (identical(other.responseRate, responseRate) ||
+                other.responseRate == responseRate));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, revenue, orderCount,
-      productCount, viewCount, conversionRate, periodLabel);
+  int get hashCode => Object.hash(
+      runtimeType,
+      revenue,
+      orderCount,
+      productCount,
+      viewCount,
+      conversionRate,
+      periodLabel,
+      averageRating,
+      responseRate);
 
   @override
   String toString() {
-    return 'VendorStats(revenue: $revenue, orderCount: $orderCount, productCount: $productCount, viewCount: $viewCount, conversionRate: $conversionRate, periodLabel: $periodLabel)';
+    return 'VendorStats(revenue: $revenue, orderCount: $orderCount, productCount: $productCount, viewCount: $viewCount, conversionRate: $conversionRate, periodLabel: $periodLabel, averageRating: $averageRating, responseRate: $responseRate)';
   }
 }
 
@@ -373,7 +459,9 @@ abstract mixin class _$VendorStatsCopyWith<$Res>
       int productCount,
       int viewCount,
       double conversionRate,
-      String periodLabel});
+      String periodLabel,
+      double averageRating,
+      double responseRate});
 }
 
 /// @nodoc
@@ -394,6 +482,8 @@ class __$VendorStatsCopyWithImpl<$Res> implements _$VendorStatsCopyWith<$Res> {
     Object? viewCount = null,
     Object? conversionRate = null,
     Object? periodLabel = null,
+    Object? averageRating = null,
+    Object? responseRate = null,
   }) {
     return _then(_VendorStats(
       revenue: null == revenue
@@ -420,6 +510,14 @@ class __$VendorStatsCopyWithImpl<$Res> implements _$VendorStatsCopyWith<$Res> {
           ? _self.periodLabel
           : periodLabel // ignore: cast_nullable_to_non_nullable
               as String,
+      averageRating: null == averageRating
+          ? _self.averageRating
+          : averageRating // ignore: cast_nullable_to_non_nullable
+              as double,
+      responseRate: null == responseRate
+          ? _self.responseRate
+          : responseRate // ignore: cast_nullable_to_non_nullable
+              as double,
     ));
   }
 }

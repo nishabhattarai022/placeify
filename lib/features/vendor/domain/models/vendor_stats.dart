@@ -12,6 +12,8 @@ abstract class VendorStats with _$VendorStats {
     required int viewCount,
     required double conversionRate,
     required String periodLabel,
+    required double averageRating,
+    required double responseRate,
   }) = _VendorStats;
 
   factory VendorStats.fromJson(Map<String, dynamic> json) =>

@@ -13,6 +13,8 @@ _VendorStats _$VendorStatsFromJson(Map<String, dynamic> json) => _VendorStats(
       viewCount: (json['viewCount'] as num).toInt(),
       conversionRate: (json['conversionRate'] as num).toDouble(),
       periodLabel: json['periodLabel'] as String,
+      averageRating: (json['averageRating'] as num).toDouble(),
+      responseRate: (json['responseRate'] as num).toDouble(),
     );
 
 Map<String, dynamic> _$VendorStatsToJson(_VendorStats instance) =>
@@ -23,4 +25,6 @@ Map<String, dynamic> _$VendorStatsToJson(_VendorStats instance) =>
       'viewCount': instance.viewCount,
       'conversionRate': instance.conversionRate,
       'periodLabel': instance.periodLabel,
+      'averageRating': instance.averageRating,
+      'responseRate': instance.responseRate,
     };
