@@ -76,6 +76,7 @@ class VendorEndpoint extends Endpoint {
     String? warranty,
     String? model3dUrl,
     String? thumbnailUrl,
+    List<String>? viewImageUrls,
   }) {
     return _service.createProduct(
       session,
@@ -93,6 +94,7 @@ class VendorEndpoint extends Endpoint {
       warranty: warranty,
       model3dUrl: model3dUrl,
       thumbnailUrl: thumbnailUrl,
+      viewImageUrls: viewImageUrls,
     );
   }
 

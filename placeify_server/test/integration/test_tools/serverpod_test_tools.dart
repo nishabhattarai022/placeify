@@ -1814,6 +1814,7 @@ class _VendorEndpoint {
     String? warranty,
     String? model3dUrl,
     String? thumbnailUrl,
+    List<String>? viewImageUrls,
   }) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -1841,6 +1842,7 @@ class _VendorEndpoint {
             'warranty': warranty,
             'model3dUrl': model3dUrl,
             'thumbnailUrl': thumbnailUrl,
+            'viewImageUrls': viewImageUrls,
           }),
           serializationManager: _serializationManager,
         );

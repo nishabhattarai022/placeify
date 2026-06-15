@@ -55,6 +55,7 @@ maxRequestSize: 10485760 # 10 MB — allows vendor product photo uploads
 # 3D model generation (Tripo): copy config/tripo_api_key.example.yaml to
 # config/tripo_api_key.yaml and paste your key from https://platform.tripo3d.ai/api-keys
 # Optional override: PLACEIFY_TRIPO_API_KEY env var (production/Docker).
+# With 2–4 product photos (front + optional left/back/right), Build 3D uses Tripo multiview.
 
 sessionLogs:
   persistentEnabled: true

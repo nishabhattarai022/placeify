@@ -294,6 +294,7 @@ class VendorStore {
     String? warranty,
     String? model3dUrl,
     String? thumbnailUrl,
+    List<String>? viewImageUrls,
   }) async {
     final vendor = await requireOwnedVendor(session);
     if (name.trim().isEmpty || description.trim().isEmpty) {
@@ -357,6 +358,7 @@ class VendorStore {
         warranty: warranty?.trim(),
         model3dUrl: model3dUrl?.trim(),
         thumbnailUrl: thumbnailUrl?.trim(),
+        viewImageUrls: _normalizeViewImageUrls(viewImageUrls),
         status: ProductStatus.active,
       ),
     );
@@ -502,6 +504,23 @@ class VendorStore {
       level: LogLevel.info,
     );
     return '/uploads/$storedName';
+  }
+
+  /// Keeps Tripo view order [left, back, right], dropping trailing empty slots.
+  List<String>? _normalizeViewImageUrls(List<String>? urls) {
+    if (urls == null || urls.isEmpty) return null;
+
+    final normalized = urls
+        .take(3)
+        .map((url) => url.trim())
+        .toList(growable: false);
+    if (normalized.every((url) => url.isEmpty)) return null;
+
+    final trimmed = List<String>.from(normalized);
+    while (trimmed.isNotEmpty && trimmed.last.isEmpty) {
+      trimmed.removeLast();
+    }
+    return trimmed.isEmpty ? null : trimmed;
   }
 
   String? _imageExtension(String fileName) {
