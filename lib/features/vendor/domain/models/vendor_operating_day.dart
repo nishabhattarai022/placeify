@@ -4,13 +4,13 @@ part 'vendor_operating_day.freezed.dart';
 part 'vendor_operating_day.g.dart';
 
 const vendorWeekDayKeys = [
+  'sunday',
   'monday',
   'tuesday',
   'wednesday',
   'thursday',
   'friday',
   'saturday',
-  'sunday',
 ];
 
 @freezed
@@ -106,4 +106,79 @@ String _dayRangeLabel(
   final startLabel = shortLabels[startKey] ?? startKey;
   final endLabel = shortLabels[endKey] ?? endKey;
   return start == end ? startLabel : '$startLabel–$endLabel';
+}
+
+/// Display label for a single [VendorOperatingDay] hours range.
+String formatVendorDayHours(VendorOperatingDay day) {
+  if (day.isClosed) return 'Closed';
+  return '${formatVendorTimeDisplay(day.openTime)} – '
+      '${formatVendorTimeDisplay(day.closeTime)}';
+}
+
+/// Converts 24h `HH:mm` to readable 12h time (e.g. `09:00` → `9:00 AM`).
+String formatVendorTimeDisplay(String time) {
+  final parts = time.split(':');
+  if (parts.length != 2) return time;
+
+  final hour = int.tryParse(parts[0]);
+  final minute = int.tryParse(parts[1]);
+  if (hour == null || minute == null) return time;
+
+  final period = hour >= 12 ? 'PM' : 'AM';
+  final hour12 = hour % 12 == 0 ? 12 : hour % 12;
+  final minutePadded = minute.toString().padLeft(2, '0');
+  return '$hour12:$minutePadded $period';
+}
+
+/// Grouped rows for operating-hours UI (view + summary).
+class VendorScheduleDisplayGroup {
+  const VendorScheduleDisplayGroup({
+    required this.daysLabel,
+    required this.hoursLabel,
+    required this.isClosed,
+  });
+
+  final String daysLabel;
+  final String hoursLabel;
+  final bool isClosed;
+}
+
+List<VendorScheduleDisplayGroup> buildVendorScheduleDisplayGroups(
+  List<VendorOperatingDay> schedule,
+) {
+  if (schedule.isEmpty) return const [];
+
+  final ordered = [
+    for (final key in vendorWeekDayKeys)
+      schedule.firstWhere(
+        (day) => day.dayKey == key,
+        orElse: () => VendorOperatingDay(dayKey: key, isClosed: true),
+      ),
+  ];
+
+  final groups = <VendorScheduleDisplayGroup>[];
+  var rangeStart = 0;
+
+  String blockKey(VendorOperatingDay day) =>
+      day.isClosed ? 'closed' : '${day.openTime}|${day.closeTime}';
+
+  for (var i = 1; i <= ordered.length; i++) {
+    final isBreak = i == ordered.length ||
+        blockKey(ordered[i]) != blockKey(ordered[rangeStart]);
+
+    if (!isBreak) continue;
+
+    final slice = ordered.sublist(rangeStart, i);
+    final first = slice.first;
+    groups.add(
+      VendorScheduleDisplayGroup(
+        daysLabel: _formatDayKeys(slice.map((d) => d.dayKey).toList()),
+        hoursLabel: formatVendorDayHours(first),
+        isClosed: first.isClosed,
+      ),
+    );
+    rangeStart = i;
+  }
+
+  return groups;
 }

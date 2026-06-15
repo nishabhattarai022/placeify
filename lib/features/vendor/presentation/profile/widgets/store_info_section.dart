@@ -11,6 +11,7 @@ import 'package:placeify/features/vendor/domain/models/vendor_operating_day.dart
 import 'package:placeify/features/vendor/domain/models/vendor_profile.dart';
 import 'package:placeify/features/vendor/domain/validators/vendor_profile_validator.dart';
 import 'package:placeify/features/vendor/presentation/profile/widgets/operating_hours_editor.dart';
+import 'package:placeify/features/vendor/presentation/profile/widgets/operating_hours_summary.dart';
 
 /// Bio, tags, contact, and hours summary / editor.
 class StoreInfoSection extends StatelessWidget {
@@ -75,7 +76,7 @@ class StoreInfoSection extends StatelessWidget {
                   fieldErrors: fieldErrors,
                   onChanged: onScheduleChanged,
                 )
-              : _ReadOnlyText(text: formatVendorScheduleSummary(profile.schedule)),
+              : OperatingHoursSummary(schedule: profile.schedule),
         ),
       ],
     );
