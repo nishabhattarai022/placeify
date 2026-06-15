@@ -141,7 +141,7 @@ class _VendorTabButton extends StatelessWidget {
       child: NavIconTap(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -158,20 +158,25 @@ class _VendorTabButton extends StatelessWidget {
                   if (badgeCount > 0)
                     Positioned(
                       top: -4,
-                      right: -6,
+                      right: -4,
                       child: _NotificationBadge(count: badgeCount),
                     ),
                 ],
               ),
               const SizedBox(height: 2),
-              Text(
-                tab.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: BottomNavTokens.vendorLabelSize,
-                  fontWeight: FontWeight.w500,
-                  color: labelColor,
+              SizedBox(
+                width: double.infinity,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    tab.label,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: BottomNavTokens.vendorLabelSize,
+                      fontWeight: FontWeight.w500,
+                      color: labelColor,
+                    ),
+                  ),
                 ),
               ),
             ],

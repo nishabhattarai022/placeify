@@ -131,6 +131,8 @@ class _VendorDashboardScreenState extends ConsumerState<VendorDashboardScreen> {
                         Text(
                           'Good morning, ${_greetingName(profileAsync.value?.businessName)}',
                           style: AppTypography.vendorGreeting,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
                         const Text(
