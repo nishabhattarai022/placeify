@@ -40,6 +40,9 @@ import '../../features/vendor/presentation/vendor_settings_screen.dart';
 import '../../features/vendor/presentation/vendor_shell.dart';
 import '../../features/vendor/presentation/widgets/vendor_tab_scaffold.dart';
 import '../../features/vendor/domain/constants/vendor_routes.dart';
+import 'package:placeify/features/shops/domain/constants/shop_routes.dart';
+import 'package:placeify/features/shops/presentation/shops_screen.dart';
+import 'package:placeify/features/shops/presentation/vendor_shop_screen.dart';
 import '../../features/home/presentation/bookmarks_screen.dart';
 import '../../data/furniture_categories.dart';
 import '../../screens/browse_screen.dart';
@@ -191,6 +194,29 @@ List<RouteBase> get _appRoutes => [
             transitionsBuilder: _fadeTransition,
             transitionDuration: AppDurations.slow,
           ),
+        ),
+        GoRoute(
+          path: ShopRoutes.shops,
+          name: 'shops',
+          pageBuilder: (context, state) => CustomTransitionPage(
+            key: state.pageKey,
+            child: const ShopsScreen(),
+            transitionsBuilder: _fadeTransition,
+            transitionDuration: AppDurations.slow,
+          ),
+          routes: [
+            GoRoute(
+              path: ':vendorId',
+              name: 'shopDetail',
+              pageBuilder: (context, state) {
+                final vendorId = state.pathParameters['vendorId']!;
+                return _slidePage(
+                  key: ValueKey<String>('shop-$vendorId'),
+                  child: VendorShopScreen(vendorId: vendorId),
+                );
+              },
+            ),
+          ],
         ),
         GoRoute(
           path: '/browse',
