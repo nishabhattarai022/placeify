@@ -245,14 +245,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
           ProductPhotoView.back,
           ProductPhotoView.right,
         ])
-          () {
-            final photo = _photos[view];
-            if (photo == null) return null;
-            return ProductViewPhotoInput(
-              bytes: photo.bytes,
-              fileName: photo.fileName,
-            );
-          }(),
+          _photos[view],
       ];
 
       await ref.read(vendorDashboardStateProvider.notifier).addProduct(
