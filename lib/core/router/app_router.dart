@@ -35,7 +35,7 @@ import '../../features/vendor/presentation/vendor_orders_screen.dart';
 import '../../features/vendor/presentation/vendor_product_form_screen.dart';
 import '../../features/vendor/presentation/vendor_products_screen.dart';
 import '../../features/vendor/presentation/vendor_payments_screen.dart';
-import '../../features/vendor/presentation/vendor_profile_screen.dart';
+import '../../features/vendor/presentation/profile/vendor_profile_screen.dart';
 import '../../features/vendor/presentation/vendor_settings_screen.dart';
 import '../../features/vendor/presentation/vendor_shell.dart';
 import '../../features/vendor/presentation/widgets/vendor_tab_scaffold.dart';
