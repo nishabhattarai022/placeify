@@ -3,15 +3,9 @@ import 'dart:typed_data';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-class PickedProductImage {
-  const PickedProductImage({
-    required this.bytes,
-    required this.fileName,
-  });
+import '../domain/models/picked_product_image.dart';
 
-  final Uint8List bytes;
-  final String fileName;
-}
+export '../domain/models/picked_product_image.dart';
 
 /// Camera permission was denied or permanently blocked.
 class CameraPermissionException implements Exception {

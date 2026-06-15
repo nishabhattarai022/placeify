@@ -7,6 +7,7 @@ import '../../../../main.dart' show client;
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../home/presentation/providers/catalog_provider.dart';
 import '../../data/serverpod_vendor_repository.dart';
+import '../../domain/models/picked_product_image.dart';
 import '../../domain/repositories/vendor_repository.dart';
 
 part 'vendor_dashboard_provider.g.dart';
@@ -107,7 +108,7 @@ class VendorDashboardState extends _$VendorDashboardState {
     required String careInstructions,
     required List<int> imageBytes,
     required String imageFileName,
-    List<ProductViewPhotoInput?> extraViewPhotos = const [],
+    List<PickedProductImage?> extraViewPhotos = const [],
     double? weightKg,
     String? assemblyNote,
     String? warranty,

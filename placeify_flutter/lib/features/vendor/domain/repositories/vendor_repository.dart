@@ -1,14 +1,6 @@
 import 'package:placeify_client/placeify_client.dart';
 
-class ProductViewPhotoInput {
-  const ProductViewPhotoInput({
-    required this.bytes,
-    required this.fileName,
-  });
-
-  final List<int> bytes;
-  final String fileName;
-}
+import '../models/picked_product_image.dart';
 
 abstract class VendorRepository {
   Future<VendorDashboard> getDashboard();
@@ -34,7 +26,7 @@ abstract class VendorRepository {
     required String careInstructions,
     required List<int> imageBytes,
     required String imageFileName,
-    List<ProductViewPhotoInput?> extraViewPhotos = const [],
+    List<PickedProductImage?> extraViewPhotos = const [],
     double? weightKg,
     String? assemblyNote,
     String? warranty,

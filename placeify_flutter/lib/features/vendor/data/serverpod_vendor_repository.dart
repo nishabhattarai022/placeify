@@ -4,6 +4,7 @@ import 'package:placeify_client/placeify_client.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 import '../../../../main.dart' show client;
+import '../domain/models/picked_product_image.dart';
 import '../domain/repositories/vendor_repository.dart';
 
 class ServerpodVendorRepository implements VendorRepository {
@@ -94,7 +95,7 @@ class ServerpodVendorRepository implements VendorRepository {
     required String careInstructions,
     required List<int> imageBytes,
     required String imageFileName,
-    List<ProductViewPhotoInput?> extraViewPhotos = const [],
+    List<PickedProductImage?> extraViewPhotos = const [],
     double? weightKg,
     String? assemblyNote,
     String? warranty,
@@ -109,17 +110,15 @@ class ServerpodVendorRepository implements VendorRepository {
       final viewImageUrls = <String>[];
       for (final photo in extraViewPhotos.take(3)) {
         if (photo == null) {
-          viewImageUrls.add('');
+          if (viewImageUrls.isNotEmpty) viewImageUrls.add('');
           continue;
         }
-        final url = await client.vendor.uploadProductImage(
-          ByteData.sublistView(Uint8List.fromList(photo.bytes)),
-          photo.fileName,
+        viewImageUrls.add(
+          await client.vendor.uploadProductImage(
+            ByteData.sublistView(photo.bytes),
+            photo.fileName,
+          ),
         );
-        viewImageUrls.add(url);
-      }
-      while (viewImageUrls.isNotEmpty && viewImageUrls.last.isEmpty) {
-        viewImageUrls.removeLast();
       }
 
       return await client.vendor.createProduct(
