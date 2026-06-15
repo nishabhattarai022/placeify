@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:placeify/core/constants/app_colors.dart';
 import 'package:placeify/features/vendor/domain/constants/vendor_routes.dart';
 import 'package:placeify/features/vendor/presentation/providers/vendor_notification_badge_provider.dart';
-import 'package:placeify/features/vendor/presentation/providers/vendor_profile_editor_provider.dart';
 
 import '../../services/haptic_service.dart';
 import 'bottom_nav_tokens.dart';
@@ -17,14 +16,12 @@ class _VendorTab {
     required this.label,
     required this.onTap,
     this.showNotificationBadge = false,
-    this.showUnsavedBadge = false,
   });
 
   final String icon;
   final String label;
   final void Function(BuildContext context) onTap;
   final bool showNotificationBadge;
-  final bool showUnsavedBadge;
 }
 
 /// Full-width pill bar with 5 labeled tabs (no protruding circle).
@@ -72,7 +69,6 @@ class VendorBottomNav extends ConsumerWidget {
       icon: 'assets/icons/ic_user.svg',
       label: 'Profile',
       onTap: _goProfile,
-      showUnsavedBadge: true,
     ),
   ];
 
@@ -80,7 +76,6 @@ class VendorBottomNav extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final active = activeIndex.clamp(0, _tabs.length - 1);
     final notificationBadgeCount = ref.watch(vendorNotificationBadgeCountProvider);
-    final hasUnsavedProfile = ref.watch(vendorProfileHasUnsavedChangesProvider);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -102,11 +97,8 @@ class VendorBottomNav extends ConsumerWidget {
                 child: _VendorTabButton(
                   tab: _tabs[i],
                   isActive: i == active,
-                  badgeCount: _tabs[i].showNotificationBadge
-                      ? notificationBadgeCount
-                      : _tabs[i].showUnsavedBadge && hasUnsavedProfile
-                          ? 1
-                          : 0,
+                  badgeCount:
+                      _tabs[i].showNotificationBadge ? notificationBadgeCount : 0,
                   onTap: () {
                     HapticService.light();
                     _tabs[i].onTap(context);

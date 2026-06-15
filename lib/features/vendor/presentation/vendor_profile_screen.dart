@@ -17,8 +17,59 @@ import 'package:placeify/features/profile/presentation/widgets/shared/profile_fo
 import 'package:placeify/features/vendor/domain/constants/vendor_routes.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_operating_day.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_profile.dart';
-import 'package:placeify/features/vendor/domain/models/vendor_profile_editor_state.dart';
-import 'package:placeify/features/vendor/presentation/providers/vendor_profile_editor_provider.dart';
+import 'package:placeify/features/vendor/presentation/providers/vendor_profile_provider.dart'
+    hide VendorProfile;
+
+class _VendorProfileFormState {
+  const _VendorProfileFormState({
+    this.isLoading = true,
+    this.draft,
+    this.lastSaved,
+    this.isSaving = false,
+    this.saveError,
+    this.localLogoPath,
+    this.localBannerPath,
+  });
+
+  final bool isLoading;
+  final VendorProfile? draft;
+  final VendorProfile? lastSaved;
+  final bool isSaving;
+  final String? saveError;
+  final String? localLogoPath;
+  final String? localBannerPath;
+
+  bool get hasUnsavedChanges {
+    if (draft == null || lastSaved == null) return false;
+    if (localLogoPath != null || localBannerPath != null) return true;
+    return draft != lastSaved;
+  }
+
+  _VendorProfileFormState copyWith({
+    bool? isLoading,
+    VendorProfile? draft,
+    VendorProfile? lastSaved,
+    bool? isSaving,
+    String? saveError,
+    String? localLogoPath,
+    String? localBannerPath,
+    bool clearSaveError = false,
+    bool clearLocalLogo = false,
+    bool clearLocalBanner = false,
+  }) {
+    return _VendorProfileFormState(
+      isLoading: isLoading ?? this.isLoading,
+      draft: draft ?? this.draft,
+      lastSaved: lastSaved ?? this.lastSaved,
+      isSaving: isSaving ?? this.isSaving,
+      saveError: clearSaveError ? null : (saveError ?? this.saveError),
+      localLogoPath:
+          clearLocalLogo ? null : (localLogoPath ?? this.localLogoPath),
+      localBannerPath:
+          clearLocalBanner ? null : (localBannerPath ?? this.localBannerPath),
+    );
+  }
+}
 
 class VendorProfileScreen extends ConsumerStatefulWidget {
   const VendorProfileScreen({super.key});
@@ -39,21 +90,18 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
 
   final _imagePicker = ImagePicker();
   String? _category;
+  _VendorProfileFormState _formState = const _VendorProfileFormState();
 
   @override
   void initState() {
     super.initState();
-    final draft = ref.read(vendorProfileEditorProvider).draft;
-    _businessName = TextEditingController(text: draft?.businessName ?? '');
-    _email = TextEditingController(text: draft?.email ?? '');
-    _address = TextEditingController(text: draft?.address ?? '');
-    _bio = TextEditingController(text: draft?.bio ?? '');
-    _instagram = TextEditingController(text: draft?.socialLinks.instagram ?? '');
-    _facebook = TextEditingController(text: draft?.socialLinks.facebook ?? '');
-    _operatingHours = TextEditingController(
-      text: draft == null ? '' : formatVendorScheduleSummary(draft.schedule),
-    );
-    _category = draft?.tags.firstOrNull ?? furnitureCategories.first.name;
+    _businessName = TextEditingController();
+    _email = TextEditingController();
+    _address = TextEditingController();
+    _bio = TextEditingController();
+    _instagram = TextEditingController();
+    _facebook = TextEditingController();
+    _operatingHours = TextEditingController();
   }
 
   @override
@@ -95,19 +143,65 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
   }
 
   void _updateDraft(VendorProfile Function(VendorProfile) updater) {
-    ref.read(vendorProfileEditorProvider.notifier).updateDraft(updater);
+    final draft = _formState.draft;
+    if (draft == null) return;
+    setState(() {
+      _formState = _formState.copyWith(
+        draft: updater(draft),
+        clearSaveError: true,
+      );
+    });
   }
 
   Future<void> _saveOnBlur() async {
-    await ref.read(vendorProfileEditorProvider.notifier).saveOnBlur();
-    final error = ref.read(vendorProfileEditorProvider).saveError;
-    if (error != null && mounted) {
-      PlaceifyToast.show(context, error);
+    if (!_formState.hasUnsavedChanges || _formState.isSaving) return;
+
+    final draft = _formState.draft;
+    final lastSaved = _formState.lastSaved;
+    if (draft == null || lastSaved == null) return;
+
+    final optimistic = draft.copyWith(
+      logoUrl: _formState.localLogoPath ?? draft.logoUrl,
+      bannerUrl: _formState.localBannerPath ?? draft.bannerUrl,
+    );
+
+    setState(() {
+      _formState = _formState.copyWith(
+        draft: optimistic,
+        isSaving: true,
+        clearSaveError: true,
+      );
+    });
+
+    try {
+      await ref.read(vendorProfileProvider.notifier).updateProfile(optimistic);
+      final saved = ref.read(vendorProfileProvider).value ?? optimistic;
+      if (!mounted) return;
+      setState(() {
+        _formState = _formState.copyWith(
+          draft: saved,
+          lastSaved: saved,
+          isSaving: false,
+          clearLocalLogo: true,
+          clearLocalBanner: true,
+        );
+      });
+    } catch (error) {
+      if (!mounted) return;
+      final message = error.toString().replaceFirst('Exception: ', '');
+      setState(() {
+        _formState = _formState.copyWith(
+          draft: lastSaved,
+          isSaving: false,
+          saveError: message,
+        );
+      });
+      PlaceifyToast.show(context, message);
     }
   }
 
   Future<bool> _confirmDiscard() async {
-    final hasUnsaved = ref.read(vendorProfileEditorProvider).hasUnsavedChanges;
+    final hasUnsaved = _formState.hasUnsavedChanges;
     if (!hasUnsaved) return true;
 
     final shouldDiscard = await showDialog<bool>(
@@ -131,9 +225,18 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
     );
 
     if (shouldDiscard == true) {
-      await ref
-          .read(vendorProfileEditorProvider.notifier)
-          .discardUnsavedChanges();
+      final lastSaved = _formState.lastSaved;
+      if (lastSaved != null) {
+        setState(() {
+          _formState = _formState.copyWith(
+            draft: lastSaved,
+            clearLocalLogo: true,
+            clearLocalBanner: true,
+            clearSaveError: true,
+          );
+        });
+        _syncControllers(lastSaved);
+      }
       return true;
     }
     return false;
@@ -147,17 +250,64 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
     );
     if (file == null || !mounted) return;
 
-    final notifier = ref.read(vendorProfileEditorProvider.notifier);
-    if (isLogo) {
-      notifier.setLocalLogo(file.path);
-    } else {
-      notifier.setLocalBanner(file.path);
-    }
+    setState(() {
+      _formState = _formState.copyWith(
+        localLogoPath: isLogo ? file.path : _formState.localLogoPath,
+        localBannerPath: isLogo ? _formState.localBannerPath : file.path,
+        clearSaveError: true,
+      );
+    });
 
-    final error = ref.read(vendorProfileEditorProvider).saveError;
-    if (error != null && mounted) {
-      PlaceifyToast.show(context, error);
+    try {
+      final notifier = ref.read(vendorProfileProvider.notifier);
+      if (isLogo) {
+        await notifier.updateLogo(file.path);
+      } else {
+        await notifier.updateBanner(file.path);
+      }
+      final saved = ref.read(vendorProfileProvider).value;
+      if (saved != null && mounted) {
+        setState(() {
+          _formState = _formState.copyWith(
+            draft: saved,
+            lastSaved: saved,
+            clearLocalLogo: true,
+            clearLocalBanner: true,
+          );
+        });
+      }
+    } catch (error) {
+      if (!mounted) return;
+      final message = error.toString().replaceFirst('Exception: ', '');
+      setState(() {
+        _formState = _formState.copyWith(saveError: message);
+      });
+      PlaceifyToast.show(context, message);
     }
+  }
+
+  void _clearLocalLogo() {
+    final draft = _formState.draft;
+    if (draft == null) return;
+    setState(() {
+      _formState = _formState.copyWith(
+        draft: draft.copyWith(logoUrl: null),
+        clearLocalLogo: true,
+      );
+    });
+    _saveOnBlur();
+  }
+
+  void _clearLocalBanner() {
+    final draft = _formState.draft;
+    if (draft == null) return;
+    setState(() {
+      _formState = _formState.copyWith(
+        draft: draft.copyWith(bannerUrl: null),
+        clearLocalBanner: true,
+      );
+    });
+    _saveOnBlur();
   }
 
   List<String> get _categoryOptions {
@@ -171,20 +321,41 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final editorState = ref.watch(vendorProfileEditorProvider);
+    final profileAsync = ref.watch(vendorProfileProvider);
 
-    ref.listen(vendorProfileEditorProvider, (previous, next) {
-      final draft = next.draft;
-      if (draft != null) {
-        _syncControllers(draft);
-      }
-      if (previous?.saveError == null && next.saveError != null && mounted) {
-        PlaceifyToast.show(context, next.saveError!);
-      }
+    ref.listen(vendorProfileProvider, (previous, next) {
+      next.whenData((profile) {
+        if (profile == null) {
+          if (mounted) {
+            setState(() {
+              _formState = const _VendorProfileFormState(isLoading: false);
+            });
+          }
+          return;
+        }
+
+        final current = _formState;
+        if (current.isLoading || current.lastSaved == null) {
+          if (mounted) {
+            setState(() {
+              _formState = _VendorProfileFormState(
+                draft: profile,
+                lastSaved: profile,
+                isLoading: false,
+              );
+            });
+            _syncControllers(profile);
+            _category ??= profile.tags.firstOrNull ?? furnitureCategories.first.name;
+          }
+        }
+      });
     });
 
+    final formState = _formState;
+    final isLoading = profileAsync.isLoading && formState.isLoading;
+
     return PopScope(
-      canPop: !editorState.hasUnsavedChanges,
+      canPop: !formState.hasUnsavedChanges,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
         final shouldPop = await _confirmDiscard();
@@ -195,18 +366,18 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
       child: Scaffold(
         backgroundColor: AppColors.cream,
         body: SafeArea(
-          child: editorState.isLoading
+          child: isLoading
               ? const _ProfileEditorShimmer()
-              : editorState.draft == null
+              : formState.draft == null
                   ? const _ProfileEditorEmpty()
-                  : _buildForm(editorState),
+                  : _buildForm(formState),
         ),
       ),
     );
   }
 
-  Widget _buildForm(VendorProfileEditorState editorState) {
-    final draft = editorState.draft!;
+  Widget _buildForm(_VendorProfileFormState formState) {
+    final draft = formState.draft!;
     final category = _category ?? draft.tags.firstOrNull ?? furnitureCategories.first.name;
 
     return ListView(
@@ -217,13 +388,13 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
             const Expanded(
               child: Text('Store Profile', style: AppTypography.sectionTitle),
             ),
-            if (editorState.isSaving)
+            if (formState.isSaving)
               const SizedBox(
                 width: 18,
                 height: 18,
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
-            if (editorState.hasUnsavedChanges && !editorState.isSaving)
+            if (formState.hasUnsavedChanges && !formState.isSaving)
               Container(
                 margin: const EdgeInsets.only(left: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -254,14 +425,12 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
           label: 'Store banner',
           hint: 'Recommended 3:1 aspect ratio',
           aspectRatio: 3,
-          imagePath: editorState.localBannerPath ?? draft.bannerUrl,
-          isLocal: editorState.localBannerPath != null,
+          imagePath: formState.localBannerPath ?? draft.bannerUrl,
+          isLocal: formState.localBannerPath != null,
           onPick: () => _pickImage(isLogo: false),
-          onClear: editorState.localBannerPath != null ||
+          onClear: formState.localBannerPath != null ||
                   draft.bannerUrl != null
-              ? () => ref
-                  .read(vendorProfileEditorProvider.notifier)
-                  .clearLocalBanner()
+              ? _clearLocalBanner
               : null,
         ),
         const SizedBox(height: 16),
@@ -269,13 +438,11 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
           label: 'Store logo',
           hint: 'Recommended 1:1 aspect ratio',
           aspectRatio: 1,
-          imagePath: editorState.localLogoPath ?? draft.logoUrl,
-          isLocal: editorState.localLogoPath != null,
+          imagePath: formState.localLogoPath ?? draft.logoUrl,
+          isLocal: formState.localLogoPath != null,
           onPick: () => _pickImage(isLogo: true),
-          onClear: editorState.localLogoPath != null || draft.logoUrl != null
-              ? () => ref
-                  .read(vendorProfileEditorProvider.notifier)
-                  .clearLocalLogo()
+          onClear: formState.localLogoPath != null || draft.logoUrl != null
+              ? _clearLocalLogo
               : null,
         ),
         const SizedBox(height: 8),
@@ -374,7 +541,7 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
         const SizedBox(height: 8),
         _SettingsLink(
           onTap: () async {
-            if (editorState.hasUnsavedChanges) {
+            if (formState.hasUnsavedChanges) {
               final canLeave = await _confirmDiscard();
               if (!canLeave) return;
             }
