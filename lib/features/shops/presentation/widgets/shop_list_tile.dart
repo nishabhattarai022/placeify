@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:placeify/features/shops/data/shop_listing_details.dart';
 import 'package:placeify/features/shops/domain/constants/shop_strings.dart';
 import 'package:placeify/features/shops/domain/models/shop_listing.dart';
 
@@ -12,6 +13,16 @@ class ShopListTile extends StatelessWidget {
 
   final ShopListing shop;
   final VoidCallback onTap;
+
+  String _subtitleFor(ShopListing shop) {
+    final details = ShopListingDetails.forShop(shop);
+    final parts = <String>[
+      '${ShopStrings.establishedLabel} ${details.establishedYear}',
+      shop.locality,
+      '${shop.productCount} ${ShopStrings.productCountLabel}',
+    ];
+    return parts.join(' · ');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +63,7 @@ class ShopListTile extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '${shop.locality} · ${shop.productCount} ${ShopStrings.productCountLabel}',
+                    _subtitleFor(shop),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.dmSans(

@@ -19,4 +19,6 @@ abstract final class ShopStrings {
 
   static const productCountLabel = 'items';
   static const soldByPrefix = 'Sold by';
+  static const establishedLabel = 'Est.';
+  static const ratingLabel = 'rating';
 }
