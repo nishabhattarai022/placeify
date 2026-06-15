@@ -1,17 +1,15 @@
-import 'dart:convert';
-
 import 'package:placeify/features/admin/data/config/admin_seed_data.dart';
 import 'package:placeify/features/auth/domain/repositories/auth_repository.dart';
 import 'package:placeify/features/home/domain/models/product.dart';
 import 'package:placeify/features/shops/data/consumer_shop_seed.dart';
 import 'package:placeify/features/shops/data/vendor_product_mapper.dart';
+import 'package:placeify/features/vendor/data/vendor_profile_provisioner.dart';
 import 'package:placeify/features/shops/domain/models/shop_listing.dart';
 import 'package:placeify/features/shops/domain/repositories/consumer_shop_repository.dart';
 import 'package:placeify/features/vendor/data/config/vendor_mock_config.dart';
 import 'package:placeify/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_product.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_profile.dart';
-import 'package:placeify/features/vendor/domain/models/vendor_registration.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MockConsumerShopRepository implements ConsumerShopRepository {
@@ -127,46 +125,8 @@ class MockConsumerShopRepository implements ConsumerShopRepository {
       final vendorId = user.vendorId;
       if (vendorId == null) continue;
       if (VendorMockConfig.profileFor(vendorId) != null) continue;
-      _provisionProfileFromRegistration(vendorId);
+      VendorProfileProvisioner.ensureFromRegistration(vendorId, _prefs);
     }
-  }
-
-  void _provisionProfileFromRegistration(String vendorId) {
-    final regData = _loadRegistrations()[vendorId];
-    if (regData == null) return;
-
-    final registration = VendorRegistration.fromJson(
-      Map<String, dynamic>.from(regData)
-        ..remove('vendorId')
-        ..remove('submittedAt'),
-    );
-    final submittedRaw = regData['submittedAt'] as String?;
-    final submittedAt = submittedRaw != null
-        ? DateTime.parse(submittedRaw)
-        : DateTime.now();
-    final address = registration.address;
-
-    VendorMockConfig.registerApprovedProfile(
-      VendorProfile(
-        id: vendorId,
-        businessName: registration.business.businessName,
-        email: registration.business.email,
-        phone: registration.business.phone,
-        address:
-            '${address.street}, ${address.city}, ${address.state} ${address.postalCode}',
-        tags: [registration.category.category],
-        bio: registration.category.description,
-        createdAt: submittedAt,
-      ),
-    );
-  }
-
-  Map<String, dynamic> _loadRegistrations() {
-    final raw = _prefs.getString(AdminSeedData.registrationsKey);
-    if (raw == null || raw.isEmpty) return {};
-
-    final decoded = jsonDecode(raw) as Map<String, dynamic>;
-    return Map<String, dynamic>.from(decoded);
   }
 
   ShopListing _toListing(VendorProfile profile, int productCount) {

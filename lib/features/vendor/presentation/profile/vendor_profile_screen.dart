@@ -479,6 +479,15 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
       });
     });
 
+    final profile = profileAsync.value;
+    if (profile != null && _form == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _form == null) {
+          setState(() => _initializeFromProfile(profile));
+        }
+      });
+    }
+
     final isLoading = profileAsync.isLoading && _form == null;
     final showActiveBadge =
         userAsync.value?.vendorStatus == VendorStatus.approved;
@@ -730,9 +739,10 @@ class _ProfileEmpty extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 100),
         child: Text(
           VendorProfileStrings.noProfileFound,
+          textAlign: TextAlign.center,
           style: AppTypography.bodyLight.copyWith(
             color: AppColors.textSecondary,
           ),

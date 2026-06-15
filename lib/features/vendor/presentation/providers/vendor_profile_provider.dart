@@ -1,3 +1,4 @@
+import 'package:placeify/core/providers/shared_preferences_provider.dart';
 import 'package:placeify/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify/features/vendor/data/mock_vendor_product_repository.dart';
 import 'package:placeify/features/vendor/data/mock_vendor_repository.dart';
@@ -12,7 +13,8 @@ part 'vendor_profile_provider.g.dart';
 
 @Riverpod(keepAlive: true)
 VendorRepository vendorRepository(Ref ref) {
-  return MockVendorRepository();
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return MockVendorRepository(prefs);
 }
 
 @Riverpod(keepAlive: true)

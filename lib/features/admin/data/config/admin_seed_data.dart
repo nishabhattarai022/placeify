@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:placeify/features/admin/domain/enums/user_role.dart';
 import 'package:placeify/features/admin/domain/enums/admin_notification_type.dart';
 import 'package:placeify/features/admin/domain/models/admin_notification.dart';
+import 'package:placeify/features/vendor/data/vendor_profile_provisioner.dart';
 import 'package:placeify/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_registration.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -48,8 +49,13 @@ abstract final class AdminSeedData {
     await _seedUsers(prefs);
     await _seedRegistrations(prefs);
     await _seedNotifications(prefs);
+    _seedApprovedVendorProfiles(prefs);
 
     await prefs.setBool(seedAppliedKey, true);
+  }
+
+  static void _seedApprovedVendorProfiles(SharedPreferences prefs) {
+    VendorProfileProvisioner.ensureFromRegistration(approvedVendorId, prefs);
   }
 
   static Future<void> _seedUsers(SharedPreferences prefs) async {

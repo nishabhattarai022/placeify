@@ -141,7 +141,7 @@ class _VendorTabButton extends StatelessWidget {
       child: NavIconTap(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -163,9 +163,11 @@ class _VendorTabButton extends StatelessWidget {
                     ),
                 ],
               ),
-              const SizedBox(height: 3),
+              const SizedBox(height: 2),
               Text(
                 tab.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: BottomNavTokens.vendorLabelSize,
                   fontWeight: FontWeight.w500,

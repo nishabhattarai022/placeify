@@ -1,4 +1,5 @@
 import 'package:placeify/features/vendor/data/config/vendor_mock_config.dart';
+import 'package:placeify/features/vendor/data/vendor_profile_provisioner.dart';
 import 'package:placeify/features/vendor/domain/enums/delivery_stage.dart';
 import 'package:placeify/features/vendor/domain/enums/order_status.dart';
 import 'package:placeify/features/vendor/domain/models/delivery_update.dart';
@@ -8,6 +9,7 @@ import 'package:placeify/features/vendor/domain/models/vendor_payout.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_profile.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_stats.dart';
 import 'package:placeify/features/vendor/domain/repositories/vendor_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class VendorOrderActionException implements Exception {
   VendorOrderActionException(this.message);
@@ -16,7 +18,9 @@ class VendorOrderActionException implements Exception {
 }
 
 class MockVendorRepository implements VendorRepository {
-  MockVendorRepository();
+  MockVendorRepository(this._prefs);
+
+  final SharedPreferences _prefs;
 
   /// When true, [acceptOrder] and [rejectOrder] throw after the network delay.
   bool simulateOrderActionError = false;
@@ -34,6 +38,7 @@ class MockVendorRepository implements VendorRepository {
   @override
   Future<VendorProfile?> getProfile(String vendorId) async {
     await Future<void>.delayed(const Duration(milliseconds: 200));
+    VendorProfileProvisioner.ensureFromRegistration(vendorId, _prefs);
     return VendorMockConfig.profileFor(vendorId);
   }
 
