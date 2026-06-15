@@ -1,3 +1,4 @@
+import 'package:placeify/features/shops/data/mock_consumer_shop_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../data/mock_product_repository.dart';
 import '../../domain/models/category.dart';
@@ -30,7 +31,7 @@ Product? productById(Ref ref, String id) {
   try {
     return MockProductRepository.products.firstWhere((p) => p.id == id);
   } catch (_) {
-    return null;
+    return MockConsumerShopRepository.productByIdSync(id);
   }
 }
 
