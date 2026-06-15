@@ -26,6 +26,7 @@ mixin _$Product {
   bool get isWishlisted;
   String get categoryId;
   ProductDimensions get dimensions;
+  String? get vendorId;
 
   /// Create a copy of Product
   /// with the given fields replaced by the non-null parameter values.
@@ -57,7 +58,9 @@ mixin _$Product {
             (identical(other.categoryId, categoryId) ||
                 other.categoryId == categoryId) &&
             (identical(other.dimensions, dimensions) ||
-                other.dimensions == dimensions));
+                other.dimensions == dimensions) &&
+            (identical(other.vendorId, vendorId) ||
+                other.vendorId == vendorId));
   }
 
   @override
@@ -74,11 +77,12 @@ mixin _$Product {
       hasArView,
       isWishlisted,
       categoryId,
-      dimensions);
+      dimensions,
+      vendorId);
 
   @override
   String toString() {
-    return 'Product(id: $id, name: $name, brand: $brand, sku: $sku, price: $price, originalPrice: $originalPrice, imageUrl: $imageUrl, svgIconPath: $svgIconPath, hasArView: $hasArView, isWishlisted: $isWishlisted, categoryId: $categoryId, dimensions: $dimensions)';
+    return 'Product(id: $id, name: $name, brand: $brand, sku: $sku, price: $price, originalPrice: $originalPrice, imageUrl: $imageUrl, svgIconPath: $svgIconPath, hasArView: $hasArView, isWishlisted: $isWishlisted, categoryId: $categoryId, dimensions: $dimensions, vendorId: $vendorId)';
   }
 }
 
@@ -99,7 +103,8 @@ abstract mixin class $ProductCopyWith<$Res> {
       bool hasArView,
       bool isWishlisted,
       String categoryId,
-      ProductDimensions dimensions});
+      ProductDimensions dimensions,
+      String? vendorId});
 
   $ProductDimensionsCopyWith<$Res> get dimensions;
 }
@@ -128,6 +133,7 @@ class _$ProductCopyWithImpl<$Res> implements $ProductCopyWith<$Res> {
     Object? isWishlisted = null,
     Object? categoryId = null,
     Object? dimensions = null,
+    Object? vendorId = freezed,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -178,6 +184,10 @@ class _$ProductCopyWithImpl<$Res> implements $ProductCopyWith<$Res> {
           ? _self.dimensions
           : dimensions // ignore: cast_nullable_to_non_nullable
               as ProductDimensions,
+      vendorId: freezed == vendorId
+          ? _self.vendorId
+          : vendorId // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 
@@ -297,7 +307,8 @@ extension ProductPatterns on Product {
             bool hasArView,
             bool isWishlisted,
             String categoryId,
-            ProductDimensions dimensions)?
+            ProductDimensions dimensions,
+            String? vendorId)?
         $default, {
     required TResult orElse(),
   }) {
@@ -316,7 +327,8 @@ extension ProductPatterns on Product {
             _that.hasArView,
             _that.isWishlisted,
             _that.categoryId,
-            _that.dimensions);
+            _that.dimensions,
+            _that.vendorId);
       case _:
         return orElse();
     }
@@ -349,7 +361,8 @@ extension ProductPatterns on Product {
             bool hasArView,
             bool isWishlisted,
             String categoryId,
-            ProductDimensions dimensions)
+            ProductDimensions dimensions,
+            String? vendorId)
         $default,
   ) {
     final _that = this;
@@ -367,7 +380,8 @@ extension ProductPatterns on Product {
             _that.hasArView,
             _that.isWishlisted,
             _that.categoryId,
-            _that.dimensions);
+            _that.dimensions,
+            _that.vendorId);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -399,7 +413,8 @@ extension ProductPatterns on Product {
             bool hasArView,
             bool isWishlisted,
             String categoryId,
-            ProductDimensions dimensions)?
+            ProductDimensions dimensions,
+            String? vendorId)?
         $default,
   ) {
     final _that = this;
@@ -417,7 +432,8 @@ extension ProductPatterns on Product {
             _that.hasArView,
             _that.isWishlisted,
             _that.categoryId,
-            _that.dimensions);
+            _that.dimensions,
+            _that.vendorId);
       case _:
         return null;
     }
@@ -439,7 +455,8 @@ class _Product extends Product {
       required this.hasArView,
       this.isWishlisted = false,
       required this.categoryId,
-      required this.dimensions})
+      required this.dimensions,
+      this.vendorId})
       : super._();
 
   @override
@@ -467,6 +484,8 @@ class _Product extends Product {
   final String categoryId;
   @override
   final ProductDimensions dimensions;
+  @override
+  final String? vendorId;
 
   /// Create a copy of Product
   /// with the given fields replaced by the non-null parameter values.
@@ -499,7 +518,9 @@ class _Product extends Product {
             (identical(other.categoryId, categoryId) ||
                 other.categoryId == categoryId) &&
             (identical(other.dimensions, dimensions) ||
-                other.dimensions == dimensions));
+                other.dimensions == dimensions) &&
+            (identical(other.vendorId, vendorId) ||
+                other.vendorId == vendorId));
   }
 
   @override
@@ -516,11 +537,12 @@ class _Product extends Product {
       hasArView,
       isWishlisted,
       categoryId,
-      dimensions);
+      dimensions,
+      vendorId);
 
   @override
   String toString() {
-    return 'Product(id: $id, name: $name, brand: $brand, sku: $sku, price: $price, originalPrice: $originalPrice, imageUrl: $imageUrl, svgIconPath: $svgIconPath, hasArView: $hasArView, isWishlisted: $isWishlisted, categoryId: $categoryId, dimensions: $dimensions)';
+    return 'Product(id: $id, name: $name, brand: $brand, sku: $sku, price: $price, originalPrice: $originalPrice, imageUrl: $imageUrl, svgIconPath: $svgIconPath, hasArView: $hasArView, isWishlisted: $isWishlisted, categoryId: $categoryId, dimensions: $dimensions, vendorId: $vendorId)';
   }
 }
 
@@ -542,7 +564,8 @@ abstract mixin class _$ProductCopyWith<$Res> implements $ProductCopyWith<$Res> {
       bool hasArView,
       bool isWishlisted,
       String categoryId,
-      ProductDimensions dimensions});
+      ProductDimensions dimensions,
+      String? vendorId});
 
   @override
   $ProductDimensionsCopyWith<$Res> get dimensions;
@@ -572,6 +595,7 @@ class __$ProductCopyWithImpl<$Res> implements _$ProductCopyWith<$Res> {
     Object? isWishlisted = null,
     Object? categoryId = null,
     Object? dimensions = null,
+    Object? vendorId = freezed,
   }) {
     return _then(_Product(
       id: null == id
@@ -622,6 +646,10 @@ class __$ProductCopyWithImpl<$Res> implements _$ProductCopyWith<$Res> {
           ? _self.dimensions
           : dimensions // ignore: cast_nullable_to_non_nullable
               as ProductDimensions,
+      vendorId: freezed == vendorId
+          ? _self.vendorId
+          : vendorId // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 
