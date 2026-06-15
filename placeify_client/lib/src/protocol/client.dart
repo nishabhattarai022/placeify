@@ -719,6 +719,7 @@ class EndpointVendor extends _i2.EndpointRef {
     String? warranty,
     String? model3dUrl,
     String? thumbnailUrl,
+    List<String>? viewImageUrls,
   }) => caller.callServerEndpoint<_i23.Product>(
     'vendor',
     'createProduct',
@@ -737,6 +738,7 @@ class EndpointVendor extends _i2.EndpointRef {
       'warranty': warranty,
       'model3dUrl': model3dUrl,
       'thumbnailUrl': thumbnailUrl,
+      'viewImageUrls': viewImageUrls,
     },
   );
 

@@ -1151,6 +1151,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<String?>(),
               nullable: true,
             ),
+            'viewImageUrls': _i1.ParameterDescription(
+              name: 'viewImageUrls',
+              type: _i1.getType<List<String>?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -1173,6 +1178,7 @@ class Endpoints extends _i1.EndpointDispatch {
                     warranty: params['warranty'],
                     model3dUrl: params['model3dUrl'],
                     thumbnailUrl: params['thumbnailUrl'],
+                    viewImageUrls: params['viewImageUrls'],
                   ),
         ),
         'updateProductThumbnail': _i1.MethodConnector(

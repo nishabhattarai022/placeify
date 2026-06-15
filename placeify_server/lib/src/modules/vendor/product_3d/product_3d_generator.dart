@@ -24,20 +24,6 @@ class Product3dGenerator {
       );
     }
 
-    final textureFile = ServerStaticPaths.fileFromUrlPath(thumbnail);
-    if (!textureFile.existsSync()) {
-      session.log(
-        'Thumbnail file missing for 3D generation: ${textureFile.path}',
-        level: LogLevel.warning,
-      );
-      return Product3dGenerationResult.failure(
-        code: 'MODEL3D_THUMBNAIL_MISSING',
-        message:
-            'Product photo file is missing on the server. '
-            'Re-upload the product photo, then try Build 3D again.',
-      );
-    }
-
     final productId = product.id;
     if (productId == null) {
       return Product3dGenerationResult.failure(
@@ -47,26 +33,34 @@ class Product3dGenerator {
     }
 
     try {
-      final imageBytes = await textureFile.readAsBytes();
-      final imageFormat = TripoClient.detectImageFormat(imageBytes);
-      if (imageFormat == null) {
+      final views = await _loadTripoViews(session, product);
+      if (views == null) {
         return Product3dGenerationResult.failure(
-          code: 'MODEL3D_INVALID_IMAGE',
-          message: 'Product photo must be JPG, PNG, or WEBP.',
+          code: 'MODEL3D_THUMBNAIL_MISSING',
+          message:
+              'Product photo file is missing on the server. '
+              'Re-upload the product photo, then try Build 3D again.',
         );
       }
 
-      final remoteModelUrl = await TripoClient.generateModelFromImage(
-        session,
-        imageBytes: imageBytes,
-        imageFormat: imageFormat,
-      );
+      final providedViews = views.whereType<TripoViewImage>().length;
+      final remoteModelUrl = providedViews >= 2
+          ? await TripoClient.generateModelFromMultiview(
+              session,
+              views: views,
+            )
+          : await TripoClient.generateModelFromImage(
+              session,
+              imageBytes: views.first!.bytes,
+              imageFormat: views.first!.format,
+            );
 
       final glbBytes = await _downloadGlb(remoteModelUrl);
       final localUrl = await _storeGlb(productId, glbBytes);
 
       session.log(
-        'Tripo 3D model saved for product $productId at $localUrl',
+        'Tripo 3D model saved for product $productId at $localUrl '
+        '($providedViews view${providedViews == 1 ? '' : 's'})',
         level: LogLevel.info,
       );
       return Product3dGenerationResult.success(localUrl);
@@ -91,6 +85,56 @@ class Product3dGenerator {
         message: '3D model could not be generated: $error',
       );
     }
+  }
+
+  /// Loads Tripo view slots [front, left, back, right]. Returns null if front is missing.
+  Future<List<TripoViewImage?>?> _loadTripoViews(
+    Session session,
+    Product product,
+  ) async {
+    final front = await _loadViewImage(session, product.thumbnailUrl);
+    if (front == null) return null;
+
+    final extraUrls = product.viewImageUrls ?? const <String>[];
+    final left = extraUrls.isNotEmpty
+        ? await _loadViewImage(session, extraUrls.elementAtOrNull(0))
+        : null;
+    final back = extraUrls.length > 1
+        ? await _loadViewImage(session, extraUrls.elementAtOrNull(1))
+        : null;
+    final right = extraUrls.length > 2
+        ? await _loadViewImage(session, extraUrls.elementAtOrNull(2))
+        : null;
+
+    if (left == null && back == null && right == null) {
+      return [front];
+    }
+
+    return [front, left, back, right];
+  }
+
+  Future<TripoViewImage?> _loadViewImage(
+    Session session,
+    String? urlPath,
+  ) async {
+    final trimmed = urlPath?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+
+    final file = ServerStaticPaths.fileFromUrlPath(trimmed);
+    if (!file.existsSync()) {
+      session.log(
+        'View image missing for 3D generation: ${file.path}',
+        level: LogLevel.warning,
+      );
+      return null;
+    }
+
+    final bytes = await file.readAsBytes();
+    final format = TripoClient.detectImageFormat(bytes);
+    if (format == null) {
+      throw TripoClientException('Product photo must be JPG, PNG, or WEBP.');
+    }
+    return TripoViewImage(bytes: bytes, format: format);
   }
 
   Future<List<int>> _downloadGlb(String url) async {

@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,7 +13,7 @@ import '../../../core/widgets/toast_overlay.dart';
 import '../data/product_image_service.dart';
 import '../domain/repositories/vendor_repository.dart';
 import 'providers/vendor_dashboard_provider.dart';
-import 'widgets/product_photo_picker.dart';
+import 'widgets/product_multiview_photo_picker.dart';
 import 'widgets/vendor_form_widgets.dart';
 
 class AddProductScreen extends ConsumerStatefulWidget {
@@ -40,8 +38,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   final _warrantyController = TextEditingController();
   final _imageService = ProductImageService();
 
-  Uint8List? _imageBytes;
-  String? _imageFileName;
+  final Map<ProductPhotoView, PickedProductImage> _photos = {};
+  ProductPhotoView _activePhotoView = ProductPhotoView.front;
   bool _isSubmitting = false;
   bool _showPhotoError = false;
   bool _showCategoryError = false;
@@ -83,8 +81,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
 
   void _applyPickedImage(PickedProductImage picked) {
     setState(() {
-      _imageBytes = picked.bytes;
-      _imageFileName = picked.fileName;
+      _photos[_activePhotoView] = picked;
       _showPhotoError = false;
     });
   }
@@ -182,14 +179,17 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     }
   }
 
-  void _removeImage() {
+  void _removeImage(ProductPhotoView view) {
     setState(() {
-      _imageBytes = null;
-      _imageFileName = null;
+      _photos.remove(view);
     });
   }
 
-  bool get _hasPhoto => _imageBytes != null;
+  bool get _hasPhoto => _photos.containsKey(ProductPhotoView.front);
+
+  int get _extraPhotoCount => _photos.keys
+      .where((view) => view != ProductPhotoView.front)
+      .length;
 
   bool get _hasCategory => _selectedCategoryId != null;
 
@@ -238,6 +238,23 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
 
     setState(() => _isSubmitting = true);
     try {
+      final front = _photos[ProductPhotoView.front]!;
+      final extraViews = [
+        for (final view in [
+          ProductPhotoView.left,
+          ProductPhotoView.back,
+          ProductPhotoView.right,
+        ])
+          () {
+            final photo = _photos[view];
+            if (photo == null) return null;
+            return ProductViewPhotoInput(
+              bytes: photo.bytes,
+              fileName: photo.fileName,
+            );
+          }(),
+      ];
+
       await ref.read(vendorDashboardStateProvider.notifier).addProduct(
             name: _nameController.text.trim(),
             description: _descriptionController.text.trim(),
@@ -248,8 +265,9 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
             depthCm: depth,
             heightCm: height,
             careInstructions: _careController.text.trim(),
-            imageBytes: _imageBytes!,
-            imageFileName: _imageFileName!,
+            imageBytes: front.bytes,
+            imageFileName: front.fileName,
+            extraViewPhotos: extraViews,
             weightKg: weight,
             assemblyNote: _assemblyController.text.trim().isEmpty
                 ? null
@@ -261,7 +279,9 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       if (!mounted) return;
       PlaceifyToast.show(
         context,
-        'Product published — tap Build 3D in your dashboard to create a preview',
+        _extraPhotoCount > 0
+            ? 'Product published — Build 3D will use your ${_extraPhotoCount + 1} photos'
+            : 'Product published — tap Build 3D in your dashboard to create a preview',
       );
       context.pop();
     } on VendorRepositoryException catch (error) {
@@ -335,10 +355,10 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                       const SizedBox(height: 20),
                       VendorFormSection(
                         step: 1,
-                        title: 'Product photo',
+                        title: 'Product photos',
                         subtitle:
-                            'Show one item, front or 3/4 angle. We remove the background '
-                            'and place it on white for listings and 3D generation.',
+                            'Front photo is required. Add left, back, and right views '
+                            'when you can — Tripo uses them for sharper 3D previews.',
                         children: [
                           DecoratedBox(
                             decoration: BoxDecoration(
@@ -350,9 +370,13 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                                 width: 1.5,
                               ),
                             ),
-                            child: ProductPhotoPicker(
-                              imageBytes: _imageBytes,
+                            child: ProductMultiviewPhotoPicker(
+                              photos: _photos,
+                              activeView: _activePhotoView,
                               cameraAvailable: _cameraAvailable,
+                              onSelectView: (view) {
+                                setState(() => _activePhotoView = view);
+                              },
                               onTakePhoto: _pickFromCamera,
                               onChooseGallery: _pickFromGallery,
                               onRemove: _removeImage,

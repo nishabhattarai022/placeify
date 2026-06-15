@@ -94,6 +94,7 @@ class ServerpodVendorRepository implements VendorRepository {
     required String careInstructions,
     required List<int> imageBytes,
     required String imageFileName,
+    List<ProductViewPhotoInput?> extraViewPhotos = const [],
     double? weightKg,
     String? assemblyNote,
     String? warranty,
@@ -104,6 +105,22 @@ class ServerpodVendorRepository implements VendorRepository {
         ByteData.sublistView(Uint8List.fromList(imageBytes)),
         imageFileName,
       );
+
+      final viewImageUrls = <String>[];
+      for (final photo in extraViewPhotos.take(3)) {
+        if (photo == null) {
+          viewImageUrls.add('');
+          continue;
+        }
+        final url = await client.vendor.uploadProductImage(
+          ByteData.sublistView(Uint8List.fromList(photo.bytes)),
+          photo.fileName,
+        );
+        viewImageUrls.add(url);
+      }
+      while (viewImageUrls.isNotEmpty && viewImageUrls.last.isEmpty) {
+        viewImageUrls.removeLast();
+      }
 
       return await client.vendor.createProduct(
         name,
@@ -119,6 +136,7 @@ class ServerpodVendorRepository implements VendorRepository {
         careInstructions: careInstructions,
         warranty: warranty,
         thumbnailUrl: thumbnailUrl,
+        viewImageUrls: viewImageUrls.isEmpty ? null : viewImageUrls,
       );
     } catch (error) {
       throw _mapError(error);

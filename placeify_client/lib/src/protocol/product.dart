@@ -37,6 +37,7 @@ abstract class Product implements _i1.SerializableModel {
     this.warranty,
     this.model3dUrl,
     this.thumbnailUrl,
+    this.viewImageUrls,
     _i2.ProductStatus? status,
     DateTime? createdAt,
   }) : status = status ?? _i2.ProductStatus.active,
@@ -61,6 +62,7 @@ abstract class Product implements _i1.SerializableModel {
     String? warranty,
     String? model3dUrl,
     String? thumbnailUrl,
+    List<String>? viewImageUrls,
     _i2.ProductStatus? status,
     DateTime? createdAt,
   }) = _ProductImpl;
@@ -93,6 +95,11 @@ abstract class Product implements _i1.SerializableModel {
       warranty: jsonSerialization['warranty'] as String?,
       model3dUrl: jsonSerialization['model3dUrl'] as String?,
       thumbnailUrl: jsonSerialization['thumbnailUrl'] as String?,
+      viewImageUrls: jsonSerialization['viewImageUrls'] == null
+          ? null
+          : _i5.Protocol().deserialize<List<String>>(
+              jsonSerialization['viewImageUrls'],
+            ),
       status: jsonSerialization['status'] == null
           ? null
           : _i2.ProductStatus.fromJson((jsonSerialization['status'] as String)),
@@ -141,6 +148,9 @@ abstract class Product implements _i1.SerializableModel {
 
   String? thumbnailUrl;
 
+  /// Extra catalog photos for Tripo multiview 3D: [left, back, right].
+  List<String>? viewImageUrls;
+
   _i2.ProductStatus status;
 
   DateTime createdAt;
@@ -167,6 +177,7 @@ abstract class Product implements _i1.SerializableModel {
     String? warranty,
     String? model3dUrl,
     String? thumbnailUrl,
+    List<String>? viewImageUrls,
     _i2.ProductStatus? status,
     DateTime? createdAt,
   });
@@ -192,6 +203,7 @@ abstract class Product implements _i1.SerializableModel {
       if (warranty != null) 'warranty': warranty,
       if (model3dUrl != null) 'model3dUrl': model3dUrl,
       if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
+      if (viewImageUrls != null) 'viewImageUrls': viewImageUrls?.toJson(),
       'status': status.toJson(),
       'createdAt': createdAt.toJson(),
     };
@@ -225,6 +237,7 @@ class _ProductImpl extends Product {
     String? warranty,
     String? model3dUrl,
     String? thumbnailUrl,
+    List<String>? viewImageUrls,
     _i2.ProductStatus? status,
     DateTime? createdAt,
   }) : super._(
@@ -246,6 +259,7 @@ class _ProductImpl extends Product {
          warranty: warranty,
          model3dUrl: model3dUrl,
          thumbnailUrl: thumbnailUrl,
+         viewImageUrls: viewImageUrls,
          status: status,
          createdAt: createdAt,
        );
@@ -273,6 +287,7 @@ class _ProductImpl extends Product {
     Object? warranty = _Undefined,
     Object? model3dUrl = _Undefined,
     Object? thumbnailUrl = _Undefined,
+    Object? viewImageUrls = _Undefined,
     _i2.ProductStatus? status,
     DateTime? createdAt,
   }) {
@@ -299,6 +314,9 @@ class _ProductImpl extends Product {
       warranty: warranty is String? ? warranty : this.warranty,
       model3dUrl: model3dUrl is String? ? model3dUrl : this.model3dUrl,
       thumbnailUrl: thumbnailUrl is String? ? thumbnailUrl : this.thumbnailUrl,
+      viewImageUrls: viewImageUrls is List<String>?
+          ? viewImageUrls
+          : this.viewImageUrls?.map((e0) => e0).toList(),
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
     );
