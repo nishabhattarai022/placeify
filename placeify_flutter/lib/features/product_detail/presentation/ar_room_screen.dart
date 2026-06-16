@@ -17,20 +17,22 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:vector_math/vector_math_64.dart' hide Colors;
 
 import '../data/product_3d_model_loader.dart';
+import 'webcam_ar_room_screen.dart';
 
-/// Full-screen in-app AR: live camera feed with the product GLB placed on a surface.
+/// Full-screen in-app AR: live camera feed with the product GLB placed in the scene.
 class ArRoomScreen extends StatefulWidget {
   const ArRoomScreen({
-    required this.modelUri,
+    required this.remoteModelUrl,
+    required this.productId,
     required this.productName,
     super.key,
   });
 
-  /// Local GLB path for [NodeType.fileSystemAppFolderGLB] (see [ArLocalModelFile.arNodeUri]).
-  final String modelUri;
+  final String remoteModelUrl;
+  final String productId;
   final String productName;
 
-  static bool get isSupported {
+  static bool get hasNativeAr {
     if (kIsWeb) return false;
     return Platform.isAndroid || Platform.isIOS;
   }
@@ -47,6 +49,8 @@ class _ArRoomScreenState extends State<ArRoomScreen> {
   ARNode? _placedNode;
   ARPlaneAnchor? _placedAnchor;
 
+  String? _modelUri;
+  bool _modelLoading = true;
   bool _placed = false;
   String? _statusMessage;
 
@@ -85,6 +89,7 @@ class _ArRoomScreenState extends State<ArRoomScreen> {
                 _InstructionBanner(
                   productName: widget.productName,
                   placed: _placed,
+                  modelLoading: _modelLoading,
                   statusMessage: _statusMessage,
                 ),
               ],
@@ -113,6 +118,8 @@ class _ArRoomScreenState extends State<ArRoomScreen> {
     objectManager.onInitialize();
 
     sessionManager.onPlaneOrPointTap = _onPlaneTapped;
+
+    _loadModelAndPlace();
   }
 
   void _showStatus(String message) {
@@ -120,10 +127,72 @@ class _ArRoomScreenState extends State<ArRoomScreen> {
     setState(() => _statusMessage = message);
   }
 
+  Future<void> _loadModelAndPlace() async {
+    final localModel = await Product3dModelLoader.prepareForAr(
+      remoteUrl: widget.remoteModelUrl,
+      productId: widget.productId,
+    );
+
+    if (!mounted) return;
+
+    if (localModel == null) {
+      setState(() {
+        _modelLoading = false;
+        _statusMessage =
+            'Could not load the 3D model. Check your connection and try again.';
+      });
+      return;
+    }
+
+    setState(() {
+      _modelUri = localModel.arNodeUri;
+      _modelLoading = false;
+    });
+
+    await _placeModelInFront();
+  }
+
+  Future<void> _placeModelInFront() async {
+    final objectManager = _objectManager;
+    final modelUri = _modelUri;
+    if (objectManager == null || modelUri == null || _placedNode != null) {
+      return;
+    }
+
+    final node = ARNode(
+      type: NodeType.fileSystemAppFolderGLB,
+      uri: modelUri,
+      scale: Vector3(0.35, 0.35, 0.35),
+      position: Vector3(0, -0.25, -0.85),
+      rotation: Vector4(1, 0, 0, 0),
+    );
+
+    final didAddNode = await objectManager.addNode(node);
+    if (!mounted) return;
+
+    if (didAddNode != true) {
+      _showStatus(
+        'Model loaded but could not be placed. Tap the floor to try again.',
+      );
+      return;
+    }
+
+    setState(() {
+      _placed = true;
+      _placedNode = node;
+      _statusMessage =
+          'Move around to view ${widget.productName}. Tap the floor to reposition.';
+    });
+  }
+
   Future<void> _onPlaneTapped(List<ARHitTestResult> hitTestResults) async {
     final objectManager = _objectManager;
     final anchorManager = _anchorManager;
-    if (objectManager == null || anchorManager == null) {
+    final modelUri = _modelUri;
+    if (objectManager == null ||
+        anchorManager == null ||
+        modelUri == null ||
+        _modelLoading) {
       return;
     }
 
@@ -154,7 +223,7 @@ class _ArRoomScreenState extends State<ArRoomScreen> {
 
     final node = ARNode(
       type: NodeType.fileSystemAppFolderGLB,
-      uri: widget.modelUri,
+      uri: modelUri,
       scale: Vector3(0.35, 0.35, 0.35),
       position: Vector3.zero(),
       rotation: Vector4(1, 0, 0, 0),
@@ -163,7 +232,7 @@ class _ArRoomScreenState extends State<ArRoomScreen> {
     final didAddNode = await objectManager.addNode(node, planeAnchor: anchor);
     if (didAddNode != true) {
       await anchorManager.removeAnchor(anchor);
-      _showStatus('Could not load the 3D model. Go back and try again.');
+      _showStatus('Could not place the model. Try another spot.');
       return;
     }
 
@@ -181,19 +250,23 @@ class _InstructionBanner extends StatelessWidget {
   const _InstructionBanner({
     required this.productName,
     required this.placed,
+    required this.modelLoading,
     this.statusMessage,
   });
 
   final String productName;
   final bool placed;
+  final bool modelLoading;
   final String? statusMessage;
 
   @override
   Widget build(BuildContext context) {
     final message = statusMessage ??
-        (placed
-            ? 'Drag to look around. Tap the floor again to reposition $productName.'
-            : 'Point your camera at the floor, then tap to place $productName.');
+        (modelLoading
+            ? 'Camera is on. Loading $productName…'
+            : placed
+                ? 'Move around to view $productName. Tap the floor to reposition.'
+                : 'Scan the floor — placing $productName in your room.');
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
@@ -230,10 +303,8 @@ class _InstructionBanner extends StatelessWidget {
   }
 }
 
-/// Requests camera permission and opens [ArRoomScreen] when supported.
 enum ArRoomOpenResult {
   opened,
-  unsupported,
   permissionDenied,
   modelDownloadFailed,
 }
@@ -245,10 +316,6 @@ abstract final class ArRoomLauncher {
     required String productId,
     required String productName,
   }) async {
-    if (!ArRoomScreen.isSupported) {
-      return ArRoomOpenResult.unsupported;
-    }
-
     final granted = await _ensureCameraPermission();
     if (!granted) {
       return ArRoomOpenResult.permissionDenied;
@@ -256,25 +323,29 @@ abstract final class ArRoomLauncher {
 
     if (!context.mounted) return ArRoomOpenResult.modelDownloadFailed;
 
-    final localModel = await Product3dModelLoader.prepareForAr(
-      remoteUrl: remoteModelUrl,
-      productId: productId,
-    );
-    if (localModel == null) {
-      return ArRoomOpenResult.modelDownloadFailed;
+    if (ArRoomScreen.hasNativeAr) {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          fullscreenDialog: true,
+          builder: (context) => ArRoomScreen(
+            remoteModelUrl: remoteModelUrl,
+            productId: productId,
+            productName: productName,
+          ),
+        ),
+      );
+    } else {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          fullscreenDialog: true,
+          builder: (context) => WebcamArRoomScreen(
+            modelSrc: remoteModelUrl,
+            productName: productName,
+          ),
+        ),
+      );
     }
 
-    if (!context.mounted) return ArRoomOpenResult.modelDownloadFailed;
-
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        fullscreenDialog: true,
-        builder: (context) => ArRoomScreen(
-          modelUri: localModel.arNodeUri,
-          productName: productName,
-        ),
-      ),
-    );
     return ArRoomOpenResult.opened;
   }
 
