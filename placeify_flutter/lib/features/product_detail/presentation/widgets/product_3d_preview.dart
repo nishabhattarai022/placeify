@@ -3,17 +3,21 @@ import 'package:model_viewer_plus/model_viewer_plus.dart';
 
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/widgets/toast_overlay.dart';
+import '../../data/product_3d_model_loader.dart';
 import '../ar_room_screen.dart';
+import '../model_3d_fullscreen_screen.dart';
 import '../product_detail_tokens.dart';
 
 /// Interactive glTF / GLB viewer with in-app AR room preview.
 class Product3dPreview extends StatefulWidget {
   const Product3dPreview({
+    required this.productId,
     required this.modelSrc,
     required this.productName,
     super.key,
   });
 
+  final String productId;
   final String modelSrc;
   final String productName;
 
@@ -30,29 +34,58 @@ class _Product3dPreviewState extends State<Product3dPreview> {
     HapticService.medium();
 
     if (!ArRoomScreen.isSupported) {
-      if (mounted) {
-        setState(() => _openingAr = false);
+      final localModel = await Product3dModelLoader.prepareForAr(
+        remoteUrl: widget.modelSrc,
+        productId: widget.productId,
+      );
+      if (!mounted) return;
+      setState(() => _openingAr = false);
+      if (localModel == null) {
         PlaceifyToast.show(
           context,
-          'Try in my room works on Android and iPhone with AR support.',
+          'Could not load the 3D model. Is the server running?',
         );
+        return;
       }
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          fullscreenDialog: true,
+          builder: (context) => Model3dFullscreenScreen(
+            modelSrc: widget.modelSrc,
+            productName: widget.productName,
+          ),
+        ),
+      );
       return;
     }
 
-    final opened = await ArRoomLauncher.open(
+    final result = await ArRoomLauncher.open(
       context: context,
-      modelSrc: widget.modelSrc,
+      remoteModelUrl: widget.modelSrc,
+      productId: widget.productId,
       productName: widget.productName,
     );
 
     if (mounted) {
       setState(() => _openingAr = false);
-      if (!opened) {
-        PlaceifyToast.show(
-          context,
-          'Camera access is required to preview furniture in your room.',
-        );
+      switch (result) {
+        case ArRoomOpenResult.opened:
+          break;
+        case ArRoomOpenResult.unsupported:
+          PlaceifyToast.show(
+            context,
+            'Try in my room works on Android and iPhone with AR support.',
+          );
+        case ArRoomOpenResult.permissionDenied:
+          PlaceifyToast.show(
+            context,
+            'Camera access is required to preview furniture in your room.',
+          );
+        case ArRoomOpenResult.modelDownloadFailed:
+          PlaceifyToast.show(
+            context,
+            'Could not load the 3D model. Check your connection and try again.',
+          );
       }
     }
   }
@@ -104,7 +137,7 @@ class _Product3dPreviewState extends State<Product3dPreview> {
                       )
                     : const Icon(Icons.view_in_ar_outlined, size: 20),
                 label: Text(
-                  _openingAr ? 'Opening camera…' : 'Try in my room',
+                  _openingAr ? 'Preparing model…' : 'Try in my room',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,

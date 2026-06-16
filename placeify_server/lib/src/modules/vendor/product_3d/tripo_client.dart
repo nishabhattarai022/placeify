@@ -15,20 +15,25 @@ abstract final class TripoClient {
   static const _pollInterval = Duration(seconds: 3);
   static const _maxPollAttempts = 120;
 
-  /// Realism-oriented generation (prompt fields may be ignored by multiview API).
-  static const _realismPrompt =
-      'Create a highly realistic, production-quality 3D model of furniture '
-      'using the provided multi-view images. The model must preserve accurate '
-      'real-world proportions, correct geometry, sharp edges, and physically '
-      'realistic structure. It should be suitable for e-commerce display and '
-      'AR visualization. Ensure true-to-life material representation and avoid '
-      'any form of stylization.';
+  /// Texture-fidelity prompt (may be ignored by multiview API; included per Tripo docs).
+  static const textureFidelityPrompt =
+      'Generate a highly realistic furniture 3D model from the provided '
+      'multi-view images. Preserve all visible surface details from the input '
+      'images, including wood grain, fabric weave, stitching, seams, leather '
+      'texture, surface imperfections, patterns, and material characteristics. '
+      'Maintain high texture fidelity and accurate material appearance. Do not '
+      'smooth, blur, simplify, average, or remove surface texture details. '
+      'Preserve fine details exactly as observed in the source images. The '
+      'result should look like a real furniture product suitable for e-commerce '
+      'and AR visualization.';
 
-  static const _negativePrompt =
-      'cartoon, toy, stylized, anime, game asset, low-poly, exaggerated '
-      'proportions, soft edges, plastic look, fictional design';
+  static const textureNegativePrompt =
+      'smooth texture, blurred texture, simplified texture, averaged texture, '
+      'cartoon texture, stylized texture, low detail texture, plastic appearance, '
+      'artificial material appearance, texture loss, texture cleanup, texture '
+      'simplification, toy-like appearance';
 
-  /// Photo-faithful texturing with preprocessing handled server-side.
+  /// Maximum texture fidelity — no autofix, low-poly, PBR regen, or compression.
   static const _baseTextureParams = <String, dynamic>{
     'texture': true,
     'pbr': false,
@@ -36,26 +41,22 @@ abstract final class TripoClient {
     'orientation': 'align_image',
     'enable_image_autofix': false,
     'smart_low_poly': false,
-    'prompt': _realismPrompt,
-    'negative_prompt': _negativePrompt,
+    'quad': false,
+    'generate_parts': false,
+    'prompt': textureFidelityPrompt,
+    'negative_prompt': textureNegativePrompt,
   };
 
-  /// Tripo task params tuned by how many reference photos are provided.
+  /// Tripo task params tuned for furniture multiview texture fidelity.
+  static Map<String, dynamic> taskParamsForLogging({required int viewCount}) {
+    return _taskParams(viewCount: viewCount);
+  }
+
   static Map<String, dynamic> _taskParams({required int viewCount}) {
     return {
       ..._baseTextureParams,
-      'face_limit': viewCount >= 5
-          ? 200000
-          : viewCount >= 4
-          ? 180000
-          : viewCount >= 3
-          ? 150000
-          : 120000,
-      'texture_quality': viewCount >= 5
-          ? 'extreme'
-          : viewCount >= 3
-          ? 'detailed'
-          : 'standard',
+      'face_limit': viewCount >= 5 ? 200000 : 180000,
+      'texture_quality': 'extreme',
     };
   }
 
@@ -93,6 +94,7 @@ abstract final class TripoClient {
     Session session, {
     required List<TripoViewImage?> views,
     int? sourceViewCount,
+    List<String>? slotLabels,
   }) async {
     if (views.length != 4) {
       throw TripoClientException(
@@ -127,17 +129,55 @@ abstract final class TripoClient {
       );
     }
 
+    final taskParams = _taskParams(viewCount: sourceViewCount ?? provided);
+    _logTextureGenerationSettings(
+      session,
+      taskType: 'multiview_to_model',
+      viewCount: sourceViewCount ?? provided,
+      taskParams: taskParams,
+      views: views,
+      slotLabels: slotLabels,
+    );
+
     final taskId = await _createMultiviewToModelTask(
       apiKey,
       uploadedViews,
-      viewCount: sourceViewCount ?? provided,
+      taskParams: taskParams,
     );
     session.log(
-      'Tripo multiview_to_model task created: $taskId ($provided images)',
+      'Tripo multiview_to_model task created: $taskId ($provided/4 slots filled, '
+      '${sourceViewCount ?? provided} vendor photos)',
       level: LogLevel.info,
     );
 
     return _pollForModelUrl(session, apiKey, taskId);
+  }
+
+  static void _logTextureGenerationSettings(
+    Session session, {
+    required String taskType,
+    required int viewCount,
+    required Map<String, dynamic> taskParams,
+    required List<TripoViewImage?> views,
+    List<String>? slotLabels,
+  }) {
+    session.log(
+      'Tripo $taskType texture settings (viewCount=$viewCount): '
+      '${jsonEncode(taskParams)}',
+      level: LogLevel.info,
+    );
+    for (var i = 0; i < views.length; i++) {
+      final view = views[i];
+      if (view == null) continue;
+      final label = slotLabels != null && i < slotLabels.length
+          ? slotLabels[i]
+          : 'slot_$i';
+      session.log(
+        'Tripo input $label: format=${view.format}, '
+        'bytes=${view.bytes.length}',
+        level: LogLevel.info,
+      );
+    }
   }
 
   static String _requireApiKey() {
@@ -177,7 +217,7 @@ abstract final class TripoClient {
     }
 
     session.log(
-      'Uploaded image to Tripo S3 (${imageBytes.length} bytes)',
+      'Uploaded image to Tripo S3 (${imageBytes.length} bytes, $imageFormat)',
       level: LogLevel.info,
     );
 
@@ -245,7 +285,7 @@ abstract final class TripoClient {
   static Future<String> _createMultiviewToModelTask(
     String apiKey,
     List<_UploadedTripoImage?> uploadedViews, {
-    required int viewCount,
+    required Map<String, dynamic> taskParams,
   }) async {
     final files = <Map<String, dynamic>>[];
     for (final uploaded in uploadedViews) {
@@ -269,7 +309,7 @@ abstract final class TripoClient {
         'type': 'multiview_to_model',
         'model_version': _modelVersion,
         'files': files,
-        ..._taskParams(viewCount: viewCount),
+        ...taskParams,
       }),
     );
     final body = _decodeResponse(response);
@@ -309,6 +349,13 @@ abstract final class TripoClient {
 
       switch (status) {
         case 'success':
+          final consumed = data['consumed_credit'] ?? data['consumed_credits'];
+          if (consumed != null) {
+            session.log(
+              'Tripo task $taskId consumed $consumed credits',
+              level: LogLevel.info,
+            );
+          }
           final outputRaw = data['output'];
           final outputMap = outputRaw is Map
               ? Map<String, dynamic>.from(outputRaw)
@@ -340,11 +387,12 @@ abstract final class TripoClient {
   }
 
   static String? _pickModelUrl(Map<String, dynamic> output) {
-    for (final key in ['model', 'base_model', 'pbr_model']) {
+    // Prefer non-PBR textured model to keep photo-projected materials.
+    for (final key in ['model', 'base_model']) {
       final url = _extractUrl(output[key]);
       if (url != null) return url;
     }
-    return null;
+    return _extractUrl(output['pbr_model']);
   }
 
   static String? _extractUrl(dynamic value) {

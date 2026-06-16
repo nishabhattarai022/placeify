@@ -16,15 +16,18 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:vector_math/vector_math_64.dart' hide Colors;
 
+import '../data/product_3d_model_loader.dart';
+
 /// Full-screen in-app AR: live camera feed with the product GLB placed on a surface.
 class ArRoomScreen extends StatefulWidget {
   const ArRoomScreen({
-    required this.modelSrc,
+    required this.modelUri,
     required this.productName,
     super.key,
   });
 
-  final String modelSrc;
+  /// Local GLB path for [NodeType.fileSystemAppFolderGLB] (see [ArLocalModelFile.arNodeUri]).
+  final String modelUri;
   final String productName;
 
   static bool get isSupported {
@@ -150,8 +153,8 @@ class _ArRoomScreenState extends State<ArRoomScreen> {
     }
 
     final node = ARNode(
-      type: NodeType.webGLB,
-      uri: widget.modelSrc,
+      type: NodeType.fileSystemAppFolderGLB,
+      uri: widget.modelUri,
       scale: Vector3(0.35, 0.35, 0.35),
       position: Vector3.zero(),
       rotation: Vector4(1, 0, 0, 0),
@@ -160,7 +163,7 @@ class _ArRoomScreenState extends State<ArRoomScreen> {
     final didAddNode = await objectManager.addNode(node, planeAnchor: anchor);
     if (didAddNode != true) {
       await anchorManager.removeAnchor(anchor);
-      _showStatus('Could not load the 3D model. Check your connection.');
+      _showStatus('Could not load the 3D model. Go back and try again.');
       return;
     }
 
@@ -228,33 +231,51 @@ class _InstructionBanner extends StatelessWidget {
 }
 
 /// Requests camera permission and opens [ArRoomScreen] when supported.
+enum ArRoomOpenResult {
+  opened,
+  unsupported,
+  permissionDenied,
+  modelDownloadFailed,
+}
+
 abstract final class ArRoomLauncher {
-  static Future<bool> open({
+  static Future<ArRoomOpenResult> open({
     required BuildContext context,
-    required String modelSrc,
+    required String remoteModelUrl,
+    required String productId,
     required String productName,
   }) async {
     if (!ArRoomScreen.isSupported) {
-      return false;
+      return ArRoomOpenResult.unsupported;
     }
 
     final granted = await _ensureCameraPermission();
     if (!granted) {
-      return false;
+      return ArRoomOpenResult.permissionDenied;
     }
 
-    if (!context.mounted) return false;
+    if (!context.mounted) return ArRoomOpenResult.modelDownloadFailed;
+
+    final localModel = await Product3dModelLoader.prepareForAr(
+      remoteUrl: remoteModelUrl,
+      productId: productId,
+    );
+    if (localModel == null) {
+      return ArRoomOpenResult.modelDownloadFailed;
+    }
+
+    if (!context.mounted) return ArRoomOpenResult.modelDownloadFailed;
 
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         fullscreenDialog: true,
         builder: (context) => ArRoomScreen(
-          modelSrc: modelSrc,
+          modelUri: localModel.arNodeUri,
           productName: productName,
         ),
       ),
     );
-    return true;
+    return ArRoomOpenResult.opened;
   }
 
   static Future<bool> _ensureCameraPermission() async {

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
@@ -82,17 +83,31 @@ class ProductImageProcessor {
       level: LogLevel.info,
     );
 
-    final cutout = await _removeBackground(apiKey, bytes, fileName);
-    final composited = _compositedOnWhiteImage(cutout);
-    final catalogBytes = Uint8List.fromList(
-      img.encodeJpg(composited, quality: _jpegQuality),
-    );
+    final cutout = await _removeBackgroundBestEffort(session, apiKey, bytes, fileName);
+
+    final Uint8List catalogBytes;
+    final bool backgroundRemoved;
+    if (cutout != null) {
+      final composited = _compositedOnWhiteImage(cutout);
+      catalogBytes = Uint8List.fromList(
+        img.encodeJpg(composited, quality: _jpegQuality),
+      );
+      backgroundRemoved = true;
+    } else {
+      session.log(
+        'remove.bg could not segment this photo — saving catalog fallback '
+        '(original on white, upload continues)',
+        level: LogLevel.warning,
+      );
+      catalogBytes = _fallbackCatalogFromOriginal(bytes);
+      backgroundRemoved = false;
+    }
+
     final tripoSource = _prepareTripoSource(bytes, fileExtension);
 
     session.log(
-      'Stored catalog on white (${catalogBytes.length} B); '
-      'Tripo source original (${tripoSource.bytes.length} B, '
-      'bgRemoved=${tripoSource.backgroundRemoved})',
+      'Stored catalog (${catalogBytes.length} B, bgRemoved=$backgroundRemoved); '
+      'Tripo source original (${tripoSource.bytes.length} B)',
       level: LogLevel.info,
     );
 
@@ -100,10 +115,36 @@ class ProductImageProcessor {
       catalog: ProcessedProductImage(
         bytes: catalogBytes,
         extension: '.jpg',
-        backgroundRemoved: true,
+        backgroundRemoved: backgroundRemoved,
       ),
       tripoSource: tripoSource,
     );
+  }
+
+  /// Tries `product` then `auto`; returns null when segmentation fails.
+  Future<Uint8List?> _removeBackgroundBestEffort(
+    Session session,
+    String apiKey,
+    Uint8List bytes,
+    String fileName,
+  ) async {
+    for (final type in ['product', 'auto']) {
+      final result = await _callRemoveBg(
+        apiKey,
+        bytes,
+        fileName,
+        type: type,
+      );
+      if (result != null) {
+        session.log('remove.bg succeeded (type=$type)', level: LogLevel.info);
+        return result;
+      }
+      session.log(
+        'remove.bg type=$type could not segment image — trying next mode',
+        level: LogLevel.warning,
+      );
+    }
+    return null;
   }
 
   ProcessedProductImage _prepareTripoSource(
@@ -112,7 +153,6 @@ class ProductImageProcessor {
   ) {
     final ext = _normalizeExtension(fileExtension);
 
-    // Pass through the vendor file unchanged when possible — no bg removal, no re-encode.
     final decoded = img.decodeImage(bytes);
     if (decoded == null) {
       return ProcessedProductImage(
@@ -161,14 +201,16 @@ class ProductImageProcessor {
     return '.jpg';
   }
 
-  Future<Uint8List> _removeBackground(
+  Future<Uint8List?> _callRemoveBg(
     String apiKey,
     Uint8List bytes,
-    String fileName,
-  ) async {
+    String fileName, {
+    required String type,
+  }) async {
     final request = http.MultipartRequest('POST', Uri.parse(_removeBgUrl))
       ..headers['X-Api-Key'] = apiKey
       ..fields['size'] = 'auto'
+      ..fields['type'] = type
       ..fields['format'] = 'png'
       ..fields['bg_color'] = 'FFFFFF'
       ..files.add(
@@ -186,9 +228,7 @@ class ProductImageProcessor {
       return body.bodyBytes;
     }
 
-    final detail = body.body.length > 200
-        ? '${body.body.substring(0, 200)}...'
-        : body.body;
+    final detail = _extractRemoveBgError(body.body);
 
     if (body.statusCode == 402 || body.statusCode == 403) {
       throw PlaceifyException(
@@ -197,9 +237,67 @@ class ProductImageProcessor {
       );
     }
 
-    throw PlaceifyException(
-      message: 'Background removal failed (${body.statusCode}): $detail',
-      code: 'BG_REMOVAL_FAILED',
+    if (body.statusCode == 429) {
+      throw PlaceifyException(
+        message: 'Background removal rate limit reached. Try again shortly.',
+        code: 'BG_REMOVAL_AUTH',
+      );
+    }
+
+    // Segmentation / foreground failures — caller will fall back to original.
+    if (_isSegmentationFailure(body.statusCode, detail)) {
+      return null;
+    }
+
+    // Unknown errors: still allow upload via fallback rather than block vendor.
+    return null;
+  }
+
+  bool _isSegmentationFailure(int statusCode, String detail) {
+    if (statusCode == 400 || statusCode == 422) return true;
+    final lower = detail.toLowerCase();
+    return lower.contains('foreground') ||
+        lower.contains('identify') ||
+        lower.contains('segment');
+  }
+
+  String _extractRemoveBgError(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map) {
+        final errors = decoded['errors'];
+        if (errors is List && errors.isNotEmpty) {
+          final first = errors.first;
+          if (first is Map && first['title'] is String) {
+            return first['title'] as String;
+          }
+        }
+        if (decoded['message'] is String) {
+          return decoded['message'] as String;
+        }
+      }
+    } catch (_) {
+      // Fall through to raw body snippet.
+    }
+    return body.length > 200 ? '${body.substring(0, 200)}...' : body;
+  }
+
+  /// When remove.bg fails: resize if needed and save as JPEG (room background kept).
+  Uint8List _fallbackCatalogFromOriginal(Uint8List bytes) {
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null) {
+      throw PlaceifyException(
+        message: 'Could not decode product image.',
+        code: 'IMAGE_DECODE_FAILED',
+      );
+    }
+
+    final resized = decoded.width > _maxCatalogWidth
+        ? img.copyResize(decoded, width: _maxCatalogWidth)
+        : decoded;
+
+    return Uint8List.fromList(
+      img.encodeJpg(resized, quality: _jpegQuality),
     );
   }
 

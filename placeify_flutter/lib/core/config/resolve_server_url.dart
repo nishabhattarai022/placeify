@@ -1,17 +1,19 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// Resolves the Serverpod API URL for the current platform.
 ///
-/// `assets/config.json` ships with `localhost`, which does not reach a Mac-hosted
-/// server from the Android emulator (`10.0.2.2`) or from a physical device.
+/// `assets/config.json` ships with `localhost`, which works on desktop and on
+/// Android emulators (`10.0.2.2`). For a physical phone over Wi‑Fi, set
+/// `apiUrl` to your PC's LAN address (e.g. `http://192.168.1.42:8080`).
 Future<String> resolveServerUrl() async {
   const serverUrlFromEnv = String.fromEnvironment('SERVER_URL');
   if (serverUrlFromEnv.isNotEmpty) {
-    return _normalizeLoopback(serverUrlFromEnv);
+    return _normalizeLoopback(serverUrlFromEnv, await _loopbackHost());
   }
 
   try {
@@ -19,30 +21,34 @@ Future<String> resolveServerUrl() async {
     final config = jsonDecode(data) as Map<String, dynamic>;
     final apiUrl = config['apiUrl'] as String?;
     if (apiUrl != null && apiUrl.isNotEmpty) {
-      return _normalizeLoopback(apiUrl);
+      return _normalizeLoopback(apiUrl, await _loopbackHost());
     }
   } catch (_) {}
 
-  return 'http://$_loopbackHost:8080/';
+  final loopbackHost = await _loopbackHost();
+  return 'http://$loopbackHost:8080/';
 }
 
-String _normalizeLoopback(String url) {
+String _normalizeLoopback(String url, String loopbackHost) {
   if (!_isLoopbackUrl(url)) return url;
   return url
-      .replaceAll('localhost', _loopbackHost)
-      .replaceAll('127.0.0.1', _loopbackHost);
+      .replaceAll('localhost', loopbackHost)
+      .replaceAll('127.0.0.1', loopbackHost);
 }
 
 bool _isLoopbackUrl(String url) {
   return url.contains('localhost') || url.contains('127.0.0.1');
 }
 
-String get _loopbackHost {
+Future<String> _loopbackHost() async {
   if (kIsWeb) return 'localhost';
 
   if (Platform.isAndroid) {
-    // Android emulators reach the host machine at 10.0.2.2.
-    return '10.0.2.2';
+    final androidInfo = await DeviceInfoPlugin().androidInfo;
+    if (!androidInfo.isPhysicalDevice) {
+      // Android emulators reach the host machine at 10.0.2.2.
+      return '10.0.2.2';
+    }
   }
 
   return 'localhost';
