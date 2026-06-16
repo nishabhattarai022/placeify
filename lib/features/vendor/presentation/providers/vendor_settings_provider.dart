@@ -6,13 +6,11 @@ part 'vendor_settings_provider.g.dart';
 
 class VendorSettingsState {
   const VendorSettingsState({
-    this.isLoading = true,
     this.notifications = const {},
     this.storeVisible = true,
     this.deactivateRequestedAt,
   });
 
-  final bool isLoading;
   final Map<NotificationType, bool> notifications;
   final bool storeVisible;
   final DateTime? deactivateRequestedAt;
@@ -34,14 +32,12 @@ class VendorSettingsState {
   }
 
   VendorSettingsState copyWith({
-    bool? isLoading,
     Map<NotificationType, bool>? notifications,
     bool? storeVisible,
     DateTime? deactivateRequestedAt,
     bool clearDeactivateRequestedAt = false,
   }) {
     return VendorSettingsState(
-      isLoading: isLoading ?? this.isLoading,
       notifications: notifications ?? this.notifications,
       storeVisible: storeVisible ?? this.storeVisible,
       deactivateRequestedAt: clearDeactivateRequestedAt
@@ -60,12 +56,7 @@ const _deactivateRequestedAtKey = 'vendor_deactivate_requested_at';
 class VendorSettings extends _$VendorSettings {
   @override
   VendorSettingsState build() {
-    _load();
-    return const VendorSettingsState();
-  }
-
-  Future<void> _load() async {
-    final prefs = ref.read(sharedPreferencesProvider);
+    final prefs = ref.watch(sharedPreferencesProvider);
     final notifications = <NotificationType, bool>{};
     for (final type in NotificationType.values) {
       notifications[type] = prefs.getBool(_notificationKey(type)) ?? true;
@@ -77,7 +68,7 @@ class VendorSettings extends _$VendorSettings {
         ? null
         : DateTime.tryParse(deactivateRaw);
 
-    state = VendorSettingsState(
+    return VendorSettingsState(
       notifications: notifications,
       storeVisible: storeVisible,
       deactivateRequestedAt: deactivateRequestedAt,

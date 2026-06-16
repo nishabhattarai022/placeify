@@ -17,7 +17,7 @@ abstract final class VendorRoutes {
   static const payments = '/vendor/payments';
   static const notifications = '/vendor/notifications';
   static const profile = '/vendor/profile';
-  static const settings = '/vendor/settings';
+  static const settings = '$profile/settings';
   static const register = '/vendor/register';
   static const registerSuccess = '/vendor/register/success';
   static const profileFallback = '/profile';

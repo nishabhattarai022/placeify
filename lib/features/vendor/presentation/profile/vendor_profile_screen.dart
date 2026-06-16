@@ -15,7 +15,6 @@ import 'package:placeify/core/widgets/shimmer_loader.dart';
 import 'package:placeify/core/widgets/toast_overlay.dart';
 import 'package:placeify/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify/features/vendor/domain/constants/vendor_profile_strings.dart';
-import 'package:placeify/features/vendor/domain/constants/vendor_routes.dart';
 import 'package:placeify/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_profile.dart';
 import 'package:placeify/features/vendor/domain/validators/vendor_profile_validator.dart';
@@ -462,7 +461,7 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
       await _exitEditMode();
     }
     if (!mounted) return;
-    context.push(VendorRoutes.settings);
+    context.pushNamed('vendorSettings');
   }
 
   @override
