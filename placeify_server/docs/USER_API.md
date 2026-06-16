@@ -45,6 +45,7 @@ Module: `user` endpoint · Tables: `user`, `order`, `wishlist_item`, `ar_session
 | `profile` | `user` row |
 | `orderCount` | Count of `order` for user |
 | `wishlistCount` | Count of `wishlist_item` for user |
+| `cartItemCount` | Total quantity of items in the user's cart |
 | `arSessionCount` | Count of `ar_session` for user |
 | `refundCount` | Count of `refund_request` for user |
 
@@ -102,10 +103,42 @@ Module: `refund` endpoint · Table: `refund_request`
 
 | Module | Key endpoints |
 |--------|----------------|
-| `cart` | `getCartItems`, `addToCart`, `updateCartItemQuantity`, `removeFromCart` |
-| `checkout` | `checkout` — creates `order` + `order_item` rows |
+| `cart` | `getCartItems`, `addToCart`, `updateCartItemQuantity`, `removeFromCart`, `clearCart` |
+| `checkout` | `checkout` — creates `order` + `order_item` rows, clears cart |
 | `product` | `searchProducts`, `getProduct` |
 | `notification` | `getPreferences`, `updatePreferences` |
+
+### Cart & checkout rules
+
+- User must be **signed in** (`requireLogin` on `cart` and `checkout`).
+- A Placeify `user` profile is **auto-created** on first cart/checkout call if missing.
+- `checkout` reads the **server cart** only — items added only in the UI without `cart.addToCart` will not checkout.
+- Demo catalog products are seeded on first `product.searchProducts` when the database is empty.
+
+### Checkout troubleshooting
+
+| Error code | Meaning | Fix |
+|------------|---------|-----|
+| `AUTH_REQUIRED` | No valid JWT | Sign in first |
+| `CART_EMPTY` | Server cart has no rows | Sign in, call `cart.addToCart`, then `checkout` |
+| `PRODUCT_NOT_FOUND` | Invalid or inactive product id | Use ids from `product.searchProducts` |
+| `INVALID_ADDRESS` | Empty shipping address | Pass non-empty `CheckoutRequest.shippingAddress` |
+
+### Start the backend (local)
+
+```bash
+cd placeify_server
+./scripts/start-server.sh
+```
+
+Or manually:
+
+```bash
+docker compose up -d
+dart bin/main.dart --apply-migrations
+```
+
+Server API: `http://localhost:8080` · Web: `http://localhost:8082`
 
 ---
 
@@ -125,6 +158,7 @@ dart test
 | `test/integration/user_dashboard_endpoint_test.dart` | `getDashboard`, `listMyOrders` |
 | `test/integration/wishlist_endpoint_test.dart` | Wishlist list + toggle |
 | `test/integration/refund_endpoint_test.dart` | Refund create + list + dashboard count |
+| `test/integration/checkout_flow_endpoint_test.dart` | Cart add → checkout → order list + dashboard |
 
 ---
 
