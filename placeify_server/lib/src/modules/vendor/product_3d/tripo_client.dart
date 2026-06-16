@@ -15,14 +15,29 @@ abstract final class TripoClient {
   static const _pollInterval = Duration(seconds: 3);
   static const _maxPollAttempts = 120;
 
-  /// Photo-faithful texturing: diffuse map from the source image, not glossy PBR.
-  static const _photoTextureParams = <String, dynamic>{
+  /// Photo-faithful texturing (no PBR, no autofix).
+  static const _baseTextureParams = <String, dynamic>{
     'texture': true,
     'pbr': false,
     'texture_alignment': 'original_image',
-    'texture_quality': 'detailed',
     'orientation': 'align_image',
+    'enable_image_autofix': false,
+    'smart_low_poly': false,
   };
+
+  /// Tripo task params tuned by how many reference photos are provided.
+  static Map<String, dynamic> _taskParams({required int viewCount}) {
+    final multiview = viewCount >= 2;
+    return {
+      ..._baseTextureParams,
+      // More photos → higher face budget so shape matches sides/back, not a smooth blob.
+      'face_limit': multiview
+          ? (viewCount >= 4 ? 180000 : viewCount >= 3 ? 150000 : 120000)
+          : 80000,
+      // Reward multiview uploads with sharper textures; single photo stays standard credits.
+      'texture_quality': multiview && viewCount >= 3 ? 'detailed' : 'standard',
+    };
+  }
 
   /// Uploads [imageBytes] to Tripo, runs image_to_model, returns a GLB download URL.
   static Future<String> generateModelFromImage(
@@ -43,6 +58,7 @@ abstract final class TripoClient {
       bucket: uploaded.bucket,
       key: uploaded.key,
       fileType: uploaded.fileType,
+      viewCount: 1,
     );
 
     session.log('Tripo image_to_model task created: $taskId', level: LogLevel.info);
@@ -90,7 +106,11 @@ abstract final class TripoClient {
       );
     }
 
-    final taskId = await _createMultiviewToModelTask(apiKey, uploadedViews);
+    final taskId = await _createMultiviewToModelTask(
+      apiKey,
+      uploadedViews,
+      viewCount: provided,
+    );
     session.log(
       'Tripo multiview_to_model task created: $taskId ($provided images)',
       level: LogLevel.info,
@@ -174,6 +194,7 @@ abstract final class TripoClient {
     required String bucket,
     required String key,
     required String fileType,
+    required int viewCount,
   }) async {
     final response = await http.post(
       Uri.parse('$_baseUrl/task'),
@@ -188,7 +209,7 @@ abstract final class TripoClient {
             'key': key,
           },
         },
-        ..._photoTextureParams,
+        ..._taskParams(viewCount: viewCount),
       }),
     );
     final body = _decodeResponse(response);
@@ -202,8 +223,9 @@ abstract final class TripoClient {
 
   static Future<String> _createMultiviewToModelTask(
     String apiKey,
-    List<_UploadedTripoImage?> uploadedViews,
-  ) async {
+    List<_UploadedTripoImage?> uploadedViews, {
+    required int viewCount,
+  }) async {
     final files = <Map<String, dynamic>>[];
     for (final uploaded in uploadedViews) {
       if (uploaded == null) {
@@ -226,7 +248,7 @@ abstract final class TripoClient {
         'type': 'multiview_to_model',
         'model_version': _modelVersion,
         'files': files,
-        ..._photoTextureParams,
+        ..._taskParams(viewCount: viewCount),
       }),
     );
     final body = _decodeResponse(response);

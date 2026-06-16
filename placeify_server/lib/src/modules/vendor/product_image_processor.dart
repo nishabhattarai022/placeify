@@ -19,7 +19,7 @@ class ProcessedProductImage {
   final bool backgroundRemoved;
 }
 
-/// Catalog JPEG plus lossless PNG used as Tripo 3D input (preserves fabric grain).
+/// Catalog image (white background) plus untouched original for Tripo 3D.
 class VendorProductImages {
   const VendorProductImages({
     required this.catalog,
@@ -30,14 +30,16 @@ class VendorProductImages {
   final ProcessedProductImage tripoSource;
 }
 
-/// Removes backgrounds via remove.bg and composites furniture on white (#FFFFFF).
+/// Removes backgrounds via remove.bg for catalog; keeps originals for Tripo 3D.
 class ProductImageProcessor {
   ProductImageProcessor({http.Client? httpClient})
     : _httpClient = httpClient ?? http.Client();
 
   static const _removeBgUrl = 'https://api.remove.bg/v1.0/removebg';
   static const _maxCatalogWidth = 1600;
+  static const _maxTripoWidth = 2560;
   static const _jpegQuality = 88;
+  static const _tripoJpegQuality = 98;
   static final _white = img.ColorRgb8(255, 255, 255);
 
   final http.Client _httpClient;
@@ -48,16 +50,22 @@ class ProductImageProcessor {
     Uint8List bytes,
     String fileName,
   ) async {
-    final images = await processForVendorUpload(session, bytes, fileName);
+    final images = await processForVendorUpload(
+      session,
+      bytes,
+      fileName,
+      fileExtension: _extensionFromFileName(fileName),
+    );
     return images.catalog;
   }
 
-  /// Catalog JPEG for listings and PNG for Tripo (same cutout, no JPEG texture loss).
+  /// White-background catalog JPEG + original photo for Tripo (no bg removal).
   Future<VendorProductImages> processForVendorUpload(
     Session session,
     Uint8List bytes,
-    String fileName,
-  ) async {
+    String fileName, {
+    required String fileExtension,
+  }) async {
     final apiKey = RemoveBgApiKeyConfig.apiKey();
     if (apiKey == null || apiKey.isEmpty) {
       throw PlaceifyException(
@@ -70,7 +78,7 @@ class ProductImageProcessor {
     }
 
     session.log(
-      'Removing product image background via remove.bg',
+      'Removing product image background via remove.bg (catalog only)',
       level: LogLevel.info,
     );
 
@@ -79,11 +87,12 @@ class ProductImageProcessor {
     final catalogBytes = Uint8List.fromList(
       img.encodeJpg(composited, quality: _jpegQuality),
     );
-    final tripoBytes = Uint8List.fromList(img.encodePng(composited));
+    final tripoSource = _prepareTripoSource(bytes, fileExtension);
 
     session.log(
-      'Product image processed on white background '
-      '(catalog ${catalogBytes.length} B, tripo ${tripoBytes.length} B)',
+      'Stored catalog on white (${catalogBytes.length} B); '
+      'Tripo source original (${tripoSource.bytes.length} B, '
+      'bgRemoved=${tripoSource.backgroundRemoved})',
       level: LogLevel.info,
     );
 
@@ -93,12 +102,57 @@ class ProductImageProcessor {
         extension: '.jpg',
         backgroundRemoved: true,
       ),
-      tripoSource: ProcessedProductImage(
-        bytes: tripoBytes,
-        extension: '.png',
-        backgroundRemoved: true,
-      ),
+      tripoSource: tripoSource,
     );
+  }
+
+  ProcessedProductImage _prepareTripoSource(
+    Uint8List bytes,
+    String fileExtension,
+  ) {
+    final ext = _normalizeExtension(fileExtension);
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null) {
+      return ProcessedProductImage(
+        bytes: bytes,
+        extension: ext,
+        backgroundRemoved: false,
+      );
+    }
+
+    final resized = decoded.width > _maxTripoWidth
+        ? img.copyResize(decoded, width: _maxTripoWidth)
+        : decoded;
+
+    final encoded = switch (ext) {
+      '.png' => Uint8List.fromList(img.encodePng(resized)),
+      '.webp' => Uint8List.fromList(img.encodeJpg(resized, quality: _tripoJpegQuality)),
+      _ => Uint8List.fromList(img.encodeJpg(resized, quality: _tripoJpegQuality)),
+    };
+
+    return ProcessedProductImage(
+      bytes: encoded,
+      extension: ext == '.webp' ? '.jpg' : ext,
+      backgroundRemoved: false,
+    );
+  }
+
+  String _normalizeExtension(String extension) {
+    final lower = extension.toLowerCase();
+    if (lower == '.jpeg') return '.jpg';
+    if (lower == '.png' || lower == '.webp' || lower == '.jpg') {
+      return lower == '.jpeg' ? '.jpg' : lower;
+    }
+    return '.jpg';
+  }
+
+  String _extensionFromFileName(String fileName) {
+    final lower = fileName.toLowerCase();
+    if (lower.endsWith('.png')) return '.png';
+    if (lower.endsWith('.webp')) return '.webp';
+    if (lower.endsWith('.jpeg')) return '.jpg';
+    if (lower.endsWith('.jpg')) return '.jpg';
+    return '.jpg';
   }
 
   Future<Uint8List> _removeBackground(
