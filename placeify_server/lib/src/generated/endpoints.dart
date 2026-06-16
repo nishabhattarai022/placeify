@@ -39,10 +39,11 @@ import 'package:placeify_server/src/generated/vendor_profile_update_input.dart'
 import 'dart:typed_data' as _i25;
 import 'package:placeify_server/src/generated/vendor_product_upload_input.dart'
     as _i26;
+import 'package:placeify_server/src/generated/delivery_stage.dart' as _i27;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
-    as _i27;
-import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _i28;
+import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+    as _i29;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -1752,6 +1753,131 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['orderId'],
                   ),
         ),
+        'acceptShopOrder': _i1.MethodConnector(
+          name: 'acceptShopOrder',
+          params: {
+            'orderId': _i1.ParameterDescription(
+              name: 'orderId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i14.VendorEndpoint).acceptShopOrder(
+                    session,
+                    params['orderId'],
+                  ),
+        ),
+        'rejectShopOrder': _i1.MethodConnector(
+          name: 'rejectShopOrder',
+          params: {
+            'orderId': _i1.ParameterDescription(
+              name: 'orderId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'reason': _i1.ParameterDescription(
+              name: 'reason',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i14.VendorEndpoint).rejectShopOrder(
+                    session,
+                    params['orderId'],
+                    params['reason'],
+                  ),
+        ),
+        'listDeliveryUpdates': _i1.MethodConnector(
+          name: 'listDeliveryUpdates',
+          params: {
+            'orderId': _i1.ParameterDescription(
+              name: 'orderId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['vendor'] as _i14.VendorEndpoint)
+                  .listDeliveryUpdates(
+                    session,
+                    params['orderId'],
+                  ),
+        ),
+        'submitDeliveryUpdate': _i1.MethodConnector(
+          name: 'submitDeliveryUpdate',
+          params: {
+            'orderId': _i1.ParameterDescription(
+              name: 'orderId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'stage': _i1.ParameterDescription(
+              name: 'stage',
+              type: _i1.getType<_i27.DeliveryStage>(),
+              nullable: false,
+            ),
+            'note': _i1.ParameterDescription(
+              name: 'note',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'photoUrl': _i1.ParameterDescription(
+              name: 'photoUrl',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['vendor'] as _i14.VendorEndpoint)
+                  .submitDeliveryUpdate(
+                    session,
+                    params['orderId'],
+                    params['stage'],
+                    note: params['note'],
+                    photoUrl: params['photoUrl'],
+                  ),
+        ),
+        'uploadDeliveryProof': _i1.MethodConnector(
+          name: 'uploadDeliveryProof',
+          params: {
+            'fileData': _i1.ParameterDescription(
+              name: 'fileData',
+              type: _i1.getType<_i25.ByteData>(),
+              nullable: false,
+            ),
+            'fileName': _i1.ParameterDescription(
+              name: 'fileName',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['vendor'] as _i14.VendorEndpoint)
+                  .uploadDeliveryProof(
+                    session,
+                    params['fileData'],
+                    params['fileName'],
+                  ),
+        ),
       },
     );
     connectors['wishlist'] = _i1.EndpointConnector(
@@ -1855,9 +1981,9 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
-    modules['serverpod_auth_core'] = _i27.Endpoints()
+    modules['serverpod_auth_core'] = _i28.Endpoints()
       ..initializeEndpoints(server);
-    modules['serverpod_auth_idp'] = _i28.Endpoints()
+    modules['serverpod_auth_idp'] = _i29.Endpoints()
       ..initializeEndpoints(server);
   }
 }

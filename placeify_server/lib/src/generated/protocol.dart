@@ -27,48 +27,52 @@ import 'checkout_result.dart' as _i12;
 import 'complaint.dart' as _i13;
 import 'complaint_status.dart' as _i14;
 import 'customization_request.dart' as _i15;
-import 'greetings/greeting.dart' as _i16;
-import 'notification_preference.dart' as _i17;
-import 'order.dart' as _i18;
-import 'order_item.dart' as _i19;
-import 'order_page.dart' as _i20;
-import 'order_status.dart' as _i21;
-import 'pagination_input.dart' as _i22;
-import 'placeify_exception.dart' as _i23;
-import 'product.dart' as _i24;
-import 'product_page.dart' as _i25;
-import 'product_search_input.dart' as _i26;
-import 'product_status.dart' as _i27;
-import 'request_status.dart' as _i28;
-import 'review.dart' as _i29;
-import 'user.dart' as _i30;
-import 'user_account_status.dart' as _i31;
-import 'user_ar_session_summary.dart' as _i32;
-import 'user_dashboard.dart' as _i33;
-import 'user_order_summary.dart' as _i34;
-import 'user_role.dart' as _i35;
-import 'vendor.dart' as _i36;
-import 'vendor_dashboard.dart' as _i37;
-import 'vendor_order_line_item.dart' as _i38;
-import 'vendor_order_summary.dart' as _i39;
-import 'vendor_product_stat.dart' as _i40;
-import 'vendor_product_upload_input.dart' as _i41;
-import 'vendor_profile_detail.dart' as _i42;
-import 'vendor_profile_update_input.dart' as _i43;
-import 'vendor_shop_order.dart' as _i44;
-import 'wishlist_item.dart' as _i45;
-import 'wishlist_page.dart' as _i46;
-import 'package:placeify_server/src/generated/user_role.dart' as _i47;
-import 'package:placeify_server/src/generated/user_order_summary.dart' as _i48;
+import 'delivery_stage.dart' as _i16;
+import 'greetings/greeting.dart' as _i17;
+import 'notification_preference.dart' as _i18;
+import 'order.dart' as _i19;
+import 'order_delivery_update.dart' as _i20;
+import 'order_item.dart' as _i21;
+import 'order_page.dart' as _i22;
+import 'order_status.dart' as _i23;
+import 'pagination_input.dart' as _i24;
+import 'placeify_exception.dart' as _i25;
+import 'product.dart' as _i26;
+import 'product_page.dart' as _i27;
+import 'product_search_input.dart' as _i28;
+import 'product_status.dart' as _i29;
+import 'request_status.dart' as _i30;
+import 'review.dart' as _i31;
+import 'user.dart' as _i32;
+import 'user_account_status.dart' as _i33;
+import 'user_ar_session_summary.dart' as _i34;
+import 'user_dashboard.dart' as _i35;
+import 'user_order_summary.dart' as _i36;
+import 'user_role.dart' as _i37;
+import 'vendor.dart' as _i38;
+import 'vendor_dashboard.dart' as _i39;
+import 'vendor_order_line_item.dart' as _i40;
+import 'vendor_order_summary.dart' as _i41;
+import 'vendor_product_stat.dart' as _i42;
+import 'vendor_product_upload_input.dart' as _i43;
+import 'vendor_profile_detail.dart' as _i44;
+import 'vendor_profile_update_input.dart' as _i45;
+import 'vendor_shop_order.dart' as _i46;
+import 'wishlist_item.dart' as _i47;
+import 'wishlist_page.dart' as _i48;
+import 'package:placeify_server/src/generated/user_role.dart' as _i49;
+import 'package:placeify_server/src/generated/user_order_summary.dart' as _i50;
 import 'package:placeify_server/src/generated/user_ar_session_summary.dart'
-    as _i49;
-import 'package:placeify_server/src/generated/complaint.dart' as _i50;
-import 'package:placeify_server/src/generated/ar_session.dart' as _i51;
-import 'package:placeify_server/src/generated/cart_item.dart' as _i52;
-import 'package:placeify_server/src/generated/category.dart' as _i53;
-import 'package:placeify_server/src/generated/product.dart' as _i54;
-import 'package:placeify_server/src/generated/review.dart' as _i55;
-import 'package:placeify_server/src/generated/vendor_shop_order.dart' as _i56;
+    as _i51;
+import 'package:placeify_server/src/generated/complaint.dart' as _i52;
+import 'package:placeify_server/src/generated/ar_session.dart' as _i53;
+import 'package:placeify_server/src/generated/cart_item.dart' as _i54;
+import 'package:placeify_server/src/generated/category.dart' as _i55;
+import 'package:placeify_server/src/generated/product.dart' as _i56;
+import 'package:placeify_server/src/generated/review.dart' as _i57;
+import 'package:placeify_server/src/generated/vendor_shop_order.dart' as _i58;
+import 'package:placeify_server/src/generated/order_delivery_update.dart'
+    as _i59;
 export 'admin.dart';
 export 'admin_type.dart';
 export 'ar_session.dart';
@@ -80,9 +84,11 @@ export 'checkout_result.dart';
 export 'complaint.dart';
 export 'complaint_status.dart';
 export 'customization_request.dart';
+export 'delivery_stage.dart';
 export 'greetings/greeting.dart';
 export 'notification_preference.dart';
 export 'order.dart';
+export 'order_delivery_update.dart';
 export 'order_item.dart';
 export 'order_page.dart';
 export 'order_status.dart';
@@ -1021,6 +1027,12 @@ class Protocol extends _i1.SerializationManagerServer {
           dartType: 'String',
         ),
         _i2.ColumnDefinition(
+          name: 'rejectionReason',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
           name: 'placedAt',
           columnType: _i2.ColumnType.timestampWithoutTimeZone,
           isNullable: false,
@@ -1068,6 +1080,113 @@ class Protocol extends _i1.SerializationManagerServer {
             _i2.IndexElementDefinition(
               type: _i2.IndexElementDefinitionType.column,
               definition: 'userId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
+      name: 'order_delivery_update',
+      dartName: 'OrderDeliveryUpdate',
+      schema: 'public',
+      module: 'placeify',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'nextval(\'order_delivery_update_id_seq\'::regclass)',
+        ),
+        _i2.ColumnDefinition(
+          name: 'orderId',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'vendorId',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _i2.ColumnDefinition(
+          name: 'stage',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:DeliveryStage',
+        ),
+        _i2.ColumnDefinition(
+          name: 'note',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'photoUrl',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+          columnDefault: 'CURRENT_TIMESTAMP',
+        ),
+      ],
+      foreignKeys: [
+        _i2.ForeignKeyDefinition(
+          constraintName: 'order_delivery_update_fk_0',
+          columns: ['orderId'],
+          referenceTable: 'order',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _i2.ForeignKeyAction.noAction,
+          onDelete: _i2.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+        _i2.ForeignKeyDefinition(
+          constraintName: 'order_delivery_update_fk_1',
+          columns: ['vendorId'],
+          referenceTable: 'vendor',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _i2.ForeignKeyAction.noAction,
+          onDelete: _i2.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'order_delivery_update_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'order_delivery_update_order_vendor',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'orderId',
+            ),
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'vendorId',
             ),
           ],
           type: 'btree',
@@ -2052,98 +2171,104 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i15.CustomizationRequest) {
       return _i15.CustomizationRequest.fromJson(data) as T;
     }
-    if (t == _i16.Greeting) {
-      return _i16.Greeting.fromJson(data) as T;
+    if (t == _i16.DeliveryStage) {
+      return _i16.DeliveryStage.fromJson(data) as T;
     }
-    if (t == _i17.NotificationPreference) {
-      return _i17.NotificationPreference.fromJson(data) as T;
+    if (t == _i17.Greeting) {
+      return _i17.Greeting.fromJson(data) as T;
     }
-    if (t == _i18.Order) {
-      return _i18.Order.fromJson(data) as T;
+    if (t == _i18.NotificationPreference) {
+      return _i18.NotificationPreference.fromJson(data) as T;
     }
-    if (t == _i19.OrderItem) {
-      return _i19.OrderItem.fromJson(data) as T;
+    if (t == _i19.Order) {
+      return _i19.Order.fromJson(data) as T;
     }
-    if (t == _i20.OrderPage) {
-      return _i20.OrderPage.fromJson(data) as T;
+    if (t == _i20.OrderDeliveryUpdate) {
+      return _i20.OrderDeliveryUpdate.fromJson(data) as T;
     }
-    if (t == _i21.OrderStatus) {
-      return _i21.OrderStatus.fromJson(data) as T;
+    if (t == _i21.OrderItem) {
+      return _i21.OrderItem.fromJson(data) as T;
     }
-    if (t == _i22.PaginationInput) {
-      return _i22.PaginationInput.fromJson(data) as T;
+    if (t == _i22.OrderPage) {
+      return _i22.OrderPage.fromJson(data) as T;
     }
-    if (t == _i23.PlaceifyException) {
-      return _i23.PlaceifyException.fromJson(data) as T;
+    if (t == _i23.OrderStatus) {
+      return _i23.OrderStatus.fromJson(data) as T;
     }
-    if (t == _i24.Product) {
-      return _i24.Product.fromJson(data) as T;
+    if (t == _i24.PaginationInput) {
+      return _i24.PaginationInput.fromJson(data) as T;
     }
-    if (t == _i25.ProductPage) {
-      return _i25.ProductPage.fromJson(data) as T;
+    if (t == _i25.PlaceifyException) {
+      return _i25.PlaceifyException.fromJson(data) as T;
     }
-    if (t == _i26.ProductSearchInput) {
-      return _i26.ProductSearchInput.fromJson(data) as T;
+    if (t == _i26.Product) {
+      return _i26.Product.fromJson(data) as T;
     }
-    if (t == _i27.ProductStatus) {
-      return _i27.ProductStatus.fromJson(data) as T;
+    if (t == _i27.ProductPage) {
+      return _i27.ProductPage.fromJson(data) as T;
     }
-    if (t == _i28.RequestStatus) {
-      return _i28.RequestStatus.fromJson(data) as T;
+    if (t == _i28.ProductSearchInput) {
+      return _i28.ProductSearchInput.fromJson(data) as T;
     }
-    if (t == _i29.Review) {
-      return _i29.Review.fromJson(data) as T;
+    if (t == _i29.ProductStatus) {
+      return _i29.ProductStatus.fromJson(data) as T;
     }
-    if (t == _i30.User) {
-      return _i30.User.fromJson(data) as T;
+    if (t == _i30.RequestStatus) {
+      return _i30.RequestStatus.fromJson(data) as T;
     }
-    if (t == _i31.UserAccountStatus) {
-      return _i31.UserAccountStatus.fromJson(data) as T;
+    if (t == _i31.Review) {
+      return _i31.Review.fromJson(data) as T;
     }
-    if (t == _i32.UserArSessionSummary) {
-      return _i32.UserArSessionSummary.fromJson(data) as T;
+    if (t == _i32.User) {
+      return _i32.User.fromJson(data) as T;
     }
-    if (t == _i33.UserDashboard) {
-      return _i33.UserDashboard.fromJson(data) as T;
+    if (t == _i33.UserAccountStatus) {
+      return _i33.UserAccountStatus.fromJson(data) as T;
     }
-    if (t == _i34.UserOrderSummary) {
-      return _i34.UserOrderSummary.fromJson(data) as T;
+    if (t == _i34.UserArSessionSummary) {
+      return _i34.UserArSessionSummary.fromJson(data) as T;
     }
-    if (t == _i35.UserRole) {
-      return _i35.UserRole.fromJson(data) as T;
+    if (t == _i35.UserDashboard) {
+      return _i35.UserDashboard.fromJson(data) as T;
     }
-    if (t == _i36.Vendor) {
-      return _i36.Vendor.fromJson(data) as T;
+    if (t == _i36.UserOrderSummary) {
+      return _i36.UserOrderSummary.fromJson(data) as T;
     }
-    if (t == _i37.VendorDashboard) {
-      return _i37.VendorDashboard.fromJson(data) as T;
+    if (t == _i37.UserRole) {
+      return _i37.UserRole.fromJson(data) as T;
     }
-    if (t == _i38.VendorOrderLineItem) {
-      return _i38.VendorOrderLineItem.fromJson(data) as T;
+    if (t == _i38.Vendor) {
+      return _i38.Vendor.fromJson(data) as T;
     }
-    if (t == _i39.VendorOrderSummary) {
-      return _i39.VendorOrderSummary.fromJson(data) as T;
+    if (t == _i39.VendorDashboard) {
+      return _i39.VendorDashboard.fromJson(data) as T;
     }
-    if (t == _i40.VendorProductStat) {
-      return _i40.VendorProductStat.fromJson(data) as T;
+    if (t == _i40.VendorOrderLineItem) {
+      return _i40.VendorOrderLineItem.fromJson(data) as T;
     }
-    if (t == _i41.VendorProductUploadInput) {
-      return _i41.VendorProductUploadInput.fromJson(data) as T;
+    if (t == _i41.VendorOrderSummary) {
+      return _i41.VendorOrderSummary.fromJson(data) as T;
     }
-    if (t == _i42.VendorProfileDetail) {
-      return _i42.VendorProfileDetail.fromJson(data) as T;
+    if (t == _i42.VendorProductStat) {
+      return _i42.VendorProductStat.fromJson(data) as T;
     }
-    if (t == _i43.VendorProfileUpdateInput) {
-      return _i43.VendorProfileUpdateInput.fromJson(data) as T;
+    if (t == _i43.VendorProductUploadInput) {
+      return _i43.VendorProductUploadInput.fromJson(data) as T;
     }
-    if (t == _i44.VendorShopOrder) {
-      return _i44.VendorShopOrder.fromJson(data) as T;
+    if (t == _i44.VendorProfileDetail) {
+      return _i44.VendorProfileDetail.fromJson(data) as T;
     }
-    if (t == _i45.WishlistItem) {
-      return _i45.WishlistItem.fromJson(data) as T;
+    if (t == _i45.VendorProfileUpdateInput) {
+      return _i45.VendorProfileUpdateInput.fromJson(data) as T;
     }
-    if (t == _i46.WishlistPage) {
-      return _i46.WishlistPage.fromJson(data) as T;
+    if (t == _i46.VendorShopOrder) {
+      return _i46.VendorShopOrder.fromJson(data) as T;
+    }
+    if (t == _i47.WishlistItem) {
+      return _i47.WishlistItem.fromJson(data) as T;
+    }
+    if (t == _i48.WishlistPage) {
+      return _i48.WishlistPage.fromJson(data) as T;
     }
     if (t == _i1.getType<_i5.Admin?>()) {
       return (data != null ? _i5.Admin.fromJson(data) : null) as T;
@@ -2179,186 +2304,199 @@ class Protocol extends _i1.SerializationManagerServer {
       return (data != null ? _i15.CustomizationRequest.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i16.Greeting?>()) {
-      return (data != null ? _i16.Greeting.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i16.DeliveryStage?>()) {
+      return (data != null ? _i16.DeliveryStage.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i17.NotificationPreference?>()) {
-      return (data != null ? _i17.NotificationPreference.fromJson(data) : null)
+    if (t == _i1.getType<_i17.Greeting?>()) {
+      return (data != null ? _i17.Greeting.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i18.NotificationPreference?>()) {
+      return (data != null ? _i18.NotificationPreference.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i18.Order?>()) {
-      return (data != null ? _i18.Order.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i19.Order?>()) {
+      return (data != null ? _i19.Order.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i19.OrderItem?>()) {
-      return (data != null ? _i19.OrderItem.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i20.OrderPage?>()) {
-      return (data != null ? _i20.OrderPage.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i21.OrderStatus?>()) {
-      return (data != null ? _i21.OrderStatus.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i22.PaginationInput?>()) {
-      return (data != null ? _i22.PaginationInput.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i23.PlaceifyException?>()) {
-      return (data != null ? _i23.PlaceifyException.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i24.Product?>()) {
-      return (data != null ? _i24.Product.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i25.ProductPage?>()) {
-      return (data != null ? _i25.ProductPage.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i26.ProductSearchInput?>()) {
-      return (data != null ? _i26.ProductSearchInput.fromJson(data) : null)
+    if (t == _i1.getType<_i20.OrderDeliveryUpdate?>()) {
+      return (data != null ? _i20.OrderDeliveryUpdate.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i27.ProductStatus?>()) {
-      return (data != null ? _i27.ProductStatus.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i21.OrderItem?>()) {
+      return (data != null ? _i21.OrderItem.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i28.RequestStatus?>()) {
-      return (data != null ? _i28.RequestStatus.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i22.OrderPage?>()) {
+      return (data != null ? _i22.OrderPage.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i29.Review?>()) {
-      return (data != null ? _i29.Review.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i23.OrderStatus?>()) {
+      return (data != null ? _i23.OrderStatus.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i30.User?>()) {
-      return (data != null ? _i30.User.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i24.PaginationInput?>()) {
+      return (data != null ? _i24.PaginationInput.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i31.UserAccountStatus?>()) {
-      return (data != null ? _i31.UserAccountStatus.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i25.PlaceifyException?>()) {
+      return (data != null ? _i25.PlaceifyException.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i32.UserArSessionSummary?>()) {
-      return (data != null ? _i32.UserArSessionSummary.fromJson(data) : null)
+    if (t == _i1.getType<_i26.Product?>()) {
+      return (data != null ? _i26.Product.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i27.ProductPage?>()) {
+      return (data != null ? _i27.ProductPage.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i28.ProductSearchInput?>()) {
+      return (data != null ? _i28.ProductSearchInput.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i33.UserDashboard?>()) {
-      return (data != null ? _i33.UserDashboard.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i29.ProductStatus?>()) {
+      return (data != null ? _i29.ProductStatus.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i34.UserOrderSummary?>()) {
-      return (data != null ? _i34.UserOrderSummary.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i30.RequestStatus?>()) {
+      return (data != null ? _i30.RequestStatus.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i35.UserRole?>()) {
-      return (data != null ? _i35.UserRole.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i31.Review?>()) {
+      return (data != null ? _i31.Review.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i36.Vendor?>()) {
-      return (data != null ? _i36.Vendor.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i32.User?>()) {
+      return (data != null ? _i32.User.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i37.VendorDashboard?>()) {
-      return (data != null ? _i37.VendorDashboard.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i33.UserAccountStatus?>()) {
+      return (data != null ? _i33.UserAccountStatus.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i38.VendorOrderLineItem?>()) {
-      return (data != null ? _i38.VendorOrderLineItem.fromJson(data) : null)
+    if (t == _i1.getType<_i34.UserArSessionSummary?>()) {
+      return (data != null ? _i34.UserArSessionSummary.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i39.VendorOrderSummary?>()) {
-      return (data != null ? _i39.VendorOrderSummary.fromJson(data) : null)
+    if (t == _i1.getType<_i35.UserDashboard?>()) {
+      return (data != null ? _i35.UserDashboard.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i36.UserOrderSummary?>()) {
+      return (data != null ? _i36.UserOrderSummary.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i37.UserRole?>()) {
+      return (data != null ? _i37.UserRole.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i38.Vendor?>()) {
+      return (data != null ? _i38.Vendor.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i39.VendorDashboard?>()) {
+      return (data != null ? _i39.VendorDashboard.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i40.VendorOrderLineItem?>()) {
+      return (data != null ? _i40.VendorOrderLineItem.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i40.VendorProductStat?>()) {
-      return (data != null ? _i40.VendorProductStat.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i41.VendorOrderSummary?>()) {
+      return (data != null ? _i41.VendorOrderSummary.fromJson(data) : null)
+          as T;
     }
-    if (t == _i1.getType<_i41.VendorProductUploadInput?>()) {
+    if (t == _i1.getType<_i42.VendorProductStat?>()) {
+      return (data != null ? _i42.VendorProductStat.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i43.VendorProductUploadInput?>()) {
       return (data != null
-              ? _i41.VendorProductUploadInput.fromJson(data)
+              ? _i43.VendorProductUploadInput.fromJson(data)
               : null)
           as T;
     }
-    if (t == _i1.getType<_i42.VendorProfileDetail?>()) {
-      return (data != null ? _i42.VendorProfileDetail.fromJson(data) : null)
+    if (t == _i1.getType<_i44.VendorProfileDetail?>()) {
+      return (data != null ? _i44.VendorProfileDetail.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i43.VendorProfileUpdateInput?>()) {
+    if (t == _i1.getType<_i45.VendorProfileUpdateInput?>()) {
       return (data != null
-              ? _i43.VendorProfileUpdateInput.fromJson(data)
+              ? _i45.VendorProfileUpdateInput.fromJson(data)
               : null)
           as T;
     }
-    if (t == _i1.getType<_i44.VendorShopOrder?>()) {
-      return (data != null ? _i44.VendorShopOrder.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i46.VendorShopOrder?>()) {
+      return (data != null ? _i46.VendorShopOrder.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i45.WishlistItem?>()) {
-      return (data != null ? _i45.WishlistItem.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i47.WishlistItem?>()) {
+      return (data != null ? _i47.WishlistItem.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i46.WishlistPage?>()) {
-      return (data != null ? _i46.WishlistPage.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i48.WishlistPage?>()) {
+      return (data != null ? _i48.WishlistPage.fromJson(data) : null) as T;
     }
-    if (t == List<_i18.Order>) {
-      return (data as List).map((e) => deserialize<_i18.Order>(e)).toList()
+    if (t == List<_i19.Order>) {
+      return (data as List).map((e) => deserialize<_i19.Order>(e)).toList()
           as T;
     }
-    if (t == List<_i24.Product>) {
-      return (data as List).map((e) => deserialize<_i24.Product>(e)).toList()
+    if (t == List<_i26.Product>) {
+      return (data as List).map((e) => deserialize<_i26.Product>(e)).toList()
           as T;
     }
-    if (t == List<_i39.VendorOrderSummary>) {
+    if (t == List<_i41.VendorOrderSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i39.VendorOrderSummary>(e))
+              .map((e) => deserialize<_i41.VendorOrderSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i40.VendorProductStat>) {
+    if (t == List<_i42.VendorProductStat>) {
       return (data as List)
-              .map((e) => deserialize<_i40.VendorProductStat>(e))
+              .map((e) => deserialize<_i42.VendorProductStat>(e))
               .toList()
           as T;
     }
-    if (t == List<_i38.VendorOrderLineItem>) {
+    if (t == List<_i40.VendorOrderLineItem>) {
       return (data as List)
-              .map((e) => deserialize<_i38.VendorOrderLineItem>(e))
+              .map((e) => deserialize<_i40.VendorOrderLineItem>(e))
               .toList()
           as T;
     }
-    if (t == List<_i45.WishlistItem>) {
+    if (t == List<_i47.WishlistItem>) {
       return (data as List)
-              .map((e) => deserialize<_i45.WishlistItem>(e))
+              .map((e) => deserialize<_i47.WishlistItem>(e))
               .toList()
           as T;
     }
-    if (t == Set<_i47.UserRole>) {
-      return (data as List).map((e) => deserialize<_i47.UserRole>(e)).toSet()
+    if (t == Set<_i49.UserRole>) {
+      return (data as List).map((e) => deserialize<_i49.UserRole>(e)).toSet()
           as T;
     }
-    if (t == List<_i48.UserOrderSummary>) {
+    if (t == List<_i50.UserOrderSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i48.UserOrderSummary>(e))
+              .map((e) => deserialize<_i50.UserOrderSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i49.UserArSessionSummary>) {
+    if (t == List<_i51.UserArSessionSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i49.UserArSessionSummary>(e))
+              .map((e) => deserialize<_i51.UserArSessionSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i50.Complaint>) {
-      return (data as List).map((e) => deserialize<_i50.Complaint>(e)).toList()
+    if (t == List<_i52.Complaint>) {
+      return (data as List).map((e) => deserialize<_i52.Complaint>(e)).toList()
           as T;
     }
-    if (t == List<_i51.ARSession>) {
-      return (data as List).map((e) => deserialize<_i51.ARSession>(e)).toList()
+    if (t == List<_i53.ARSession>) {
+      return (data as List).map((e) => deserialize<_i53.ARSession>(e)).toList()
           as T;
     }
-    if (t == List<_i52.CartItem>) {
-      return (data as List).map((e) => deserialize<_i52.CartItem>(e)).toList()
+    if (t == List<_i54.CartItem>) {
+      return (data as List).map((e) => deserialize<_i54.CartItem>(e)).toList()
           as T;
     }
-    if (t == List<_i53.Category>) {
-      return (data as List).map((e) => deserialize<_i53.Category>(e)).toList()
+    if (t == List<_i55.Category>) {
+      return (data as List).map((e) => deserialize<_i55.Category>(e)).toList()
           as T;
     }
-    if (t == List<_i54.Product>) {
-      return (data as List).map((e) => deserialize<_i54.Product>(e)).toList()
+    if (t == List<_i56.Product>) {
+      return (data as List).map((e) => deserialize<_i56.Product>(e)).toList()
           as T;
     }
-    if (t == List<_i55.Review>) {
-      return (data as List).map((e) => deserialize<_i55.Review>(e)).toList()
+    if (t == List<_i57.Review>) {
+      return (data as List).map((e) => deserialize<_i57.Review>(e)).toList()
           as T;
     }
-    if (t == List<_i56.VendorShopOrder>) {
+    if (t == List<_i58.VendorShopOrder>) {
       return (data as List)
-              .map((e) => deserialize<_i56.VendorShopOrder>(e))
+              .map((e) => deserialize<_i58.VendorShopOrder>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i59.OrderDeliveryUpdate>) {
+      return (data as List)
+              .map((e) => deserialize<_i59.OrderDeliveryUpdate>(e))
               .toList()
           as T;
     }
@@ -2387,37 +2525,39 @@ class Protocol extends _i1.SerializationManagerServer {
       _i13.Complaint => 'Complaint',
       _i14.ComplaintStatus => 'ComplaintStatus',
       _i15.CustomizationRequest => 'CustomizationRequest',
-      _i16.Greeting => 'Greeting',
-      _i17.NotificationPreference => 'NotificationPreference',
-      _i18.Order => 'Order',
-      _i19.OrderItem => 'OrderItem',
-      _i20.OrderPage => 'OrderPage',
-      _i21.OrderStatus => 'OrderStatus',
-      _i22.PaginationInput => 'PaginationInput',
-      _i23.PlaceifyException => 'PlaceifyException',
-      _i24.Product => 'Product',
-      _i25.ProductPage => 'ProductPage',
-      _i26.ProductSearchInput => 'ProductSearchInput',
-      _i27.ProductStatus => 'ProductStatus',
-      _i28.RequestStatus => 'RequestStatus',
-      _i29.Review => 'Review',
-      _i30.User => 'User',
-      _i31.UserAccountStatus => 'UserAccountStatus',
-      _i32.UserArSessionSummary => 'UserArSessionSummary',
-      _i33.UserDashboard => 'UserDashboard',
-      _i34.UserOrderSummary => 'UserOrderSummary',
-      _i35.UserRole => 'UserRole',
-      _i36.Vendor => 'Vendor',
-      _i37.VendorDashboard => 'VendorDashboard',
-      _i38.VendorOrderLineItem => 'VendorOrderLineItem',
-      _i39.VendorOrderSummary => 'VendorOrderSummary',
-      _i40.VendorProductStat => 'VendorProductStat',
-      _i41.VendorProductUploadInput => 'VendorProductUploadInput',
-      _i42.VendorProfileDetail => 'VendorProfileDetail',
-      _i43.VendorProfileUpdateInput => 'VendorProfileUpdateInput',
-      _i44.VendorShopOrder => 'VendorShopOrder',
-      _i45.WishlistItem => 'WishlistItem',
-      _i46.WishlistPage => 'WishlistPage',
+      _i16.DeliveryStage => 'DeliveryStage',
+      _i17.Greeting => 'Greeting',
+      _i18.NotificationPreference => 'NotificationPreference',
+      _i19.Order => 'Order',
+      _i20.OrderDeliveryUpdate => 'OrderDeliveryUpdate',
+      _i21.OrderItem => 'OrderItem',
+      _i22.OrderPage => 'OrderPage',
+      _i23.OrderStatus => 'OrderStatus',
+      _i24.PaginationInput => 'PaginationInput',
+      _i25.PlaceifyException => 'PlaceifyException',
+      _i26.Product => 'Product',
+      _i27.ProductPage => 'ProductPage',
+      _i28.ProductSearchInput => 'ProductSearchInput',
+      _i29.ProductStatus => 'ProductStatus',
+      _i30.RequestStatus => 'RequestStatus',
+      _i31.Review => 'Review',
+      _i32.User => 'User',
+      _i33.UserAccountStatus => 'UserAccountStatus',
+      _i34.UserArSessionSummary => 'UserArSessionSummary',
+      _i35.UserDashboard => 'UserDashboard',
+      _i36.UserOrderSummary => 'UserOrderSummary',
+      _i37.UserRole => 'UserRole',
+      _i38.Vendor => 'Vendor',
+      _i39.VendorDashboard => 'VendorDashboard',
+      _i40.VendorOrderLineItem => 'VendorOrderLineItem',
+      _i41.VendorOrderSummary => 'VendorOrderSummary',
+      _i42.VendorProductStat => 'VendorProductStat',
+      _i43.VendorProductUploadInput => 'VendorProductUploadInput',
+      _i44.VendorProfileDetail => 'VendorProfileDetail',
+      _i45.VendorProfileUpdateInput => 'VendorProfileUpdateInput',
+      _i46.VendorShopOrder => 'VendorShopOrder',
+      _i47.WishlistItem => 'WishlistItem',
+      _i48.WishlistPage => 'WishlistPage',
       _ => null,
     };
   }
@@ -2454,67 +2594,71 @@ class Protocol extends _i1.SerializationManagerServer {
         return 'ComplaintStatus';
       case _i15.CustomizationRequest():
         return 'CustomizationRequest';
-      case _i16.Greeting():
+      case _i16.DeliveryStage():
+        return 'DeliveryStage';
+      case _i17.Greeting():
         return 'Greeting';
-      case _i17.NotificationPreference():
+      case _i18.NotificationPreference():
         return 'NotificationPreference';
-      case _i18.Order():
+      case _i19.Order():
         return 'Order';
-      case _i19.OrderItem():
+      case _i20.OrderDeliveryUpdate():
+        return 'OrderDeliveryUpdate';
+      case _i21.OrderItem():
         return 'OrderItem';
-      case _i20.OrderPage():
+      case _i22.OrderPage():
         return 'OrderPage';
-      case _i21.OrderStatus():
+      case _i23.OrderStatus():
         return 'OrderStatus';
-      case _i22.PaginationInput():
+      case _i24.PaginationInput():
         return 'PaginationInput';
-      case _i23.PlaceifyException():
+      case _i25.PlaceifyException():
         return 'PlaceifyException';
-      case _i24.Product():
+      case _i26.Product():
         return 'Product';
-      case _i25.ProductPage():
+      case _i27.ProductPage():
         return 'ProductPage';
-      case _i26.ProductSearchInput():
+      case _i28.ProductSearchInput():
         return 'ProductSearchInput';
-      case _i27.ProductStatus():
+      case _i29.ProductStatus():
         return 'ProductStatus';
-      case _i28.RequestStatus():
+      case _i30.RequestStatus():
         return 'RequestStatus';
-      case _i29.Review():
+      case _i31.Review():
         return 'Review';
-      case _i30.User():
+      case _i32.User():
         return 'User';
-      case _i31.UserAccountStatus():
+      case _i33.UserAccountStatus():
         return 'UserAccountStatus';
-      case _i32.UserArSessionSummary():
+      case _i34.UserArSessionSummary():
         return 'UserArSessionSummary';
-      case _i33.UserDashboard():
+      case _i35.UserDashboard():
         return 'UserDashboard';
-      case _i34.UserOrderSummary():
+      case _i36.UserOrderSummary():
         return 'UserOrderSummary';
-      case _i35.UserRole():
+      case _i37.UserRole():
         return 'UserRole';
-      case _i36.Vendor():
+      case _i38.Vendor():
         return 'Vendor';
-      case _i37.VendorDashboard():
+      case _i39.VendorDashboard():
         return 'VendorDashboard';
-      case _i38.VendorOrderLineItem():
+      case _i40.VendorOrderLineItem():
         return 'VendorOrderLineItem';
-      case _i39.VendorOrderSummary():
+      case _i41.VendorOrderSummary():
         return 'VendorOrderSummary';
-      case _i40.VendorProductStat():
+      case _i42.VendorProductStat():
         return 'VendorProductStat';
-      case _i41.VendorProductUploadInput():
+      case _i43.VendorProductUploadInput():
         return 'VendorProductUploadInput';
-      case _i42.VendorProfileDetail():
+      case _i44.VendorProfileDetail():
         return 'VendorProfileDetail';
-      case _i43.VendorProfileUpdateInput():
+      case _i45.VendorProfileUpdateInput():
         return 'VendorProfileUpdateInput';
-      case _i44.VendorShopOrder():
+      case _i46.VendorShopOrder():
         return 'VendorShopOrder';
-      case _i45.WishlistItem():
+      case _i47.WishlistItem():
         return 'WishlistItem';
-      case _i46.WishlistPage():
+      case _i48.WishlistPage():
         return 'WishlistPage';
     }
     className = _i2.Protocol().getClassNameForObject(data);
@@ -2571,98 +2715,104 @@ class Protocol extends _i1.SerializationManagerServer {
     if (dataClassName == 'CustomizationRequest') {
       return deserialize<_i15.CustomizationRequest>(data['data']);
     }
+    if (dataClassName == 'DeliveryStage') {
+      return deserialize<_i16.DeliveryStage>(data['data']);
+    }
     if (dataClassName == 'Greeting') {
-      return deserialize<_i16.Greeting>(data['data']);
+      return deserialize<_i17.Greeting>(data['data']);
     }
     if (dataClassName == 'NotificationPreference') {
-      return deserialize<_i17.NotificationPreference>(data['data']);
+      return deserialize<_i18.NotificationPreference>(data['data']);
     }
     if (dataClassName == 'Order') {
-      return deserialize<_i18.Order>(data['data']);
+      return deserialize<_i19.Order>(data['data']);
+    }
+    if (dataClassName == 'OrderDeliveryUpdate') {
+      return deserialize<_i20.OrderDeliveryUpdate>(data['data']);
     }
     if (dataClassName == 'OrderItem') {
-      return deserialize<_i19.OrderItem>(data['data']);
+      return deserialize<_i21.OrderItem>(data['data']);
     }
     if (dataClassName == 'OrderPage') {
-      return deserialize<_i20.OrderPage>(data['data']);
+      return deserialize<_i22.OrderPage>(data['data']);
     }
     if (dataClassName == 'OrderStatus') {
-      return deserialize<_i21.OrderStatus>(data['data']);
+      return deserialize<_i23.OrderStatus>(data['data']);
     }
     if (dataClassName == 'PaginationInput') {
-      return deserialize<_i22.PaginationInput>(data['data']);
+      return deserialize<_i24.PaginationInput>(data['data']);
     }
     if (dataClassName == 'PlaceifyException') {
-      return deserialize<_i23.PlaceifyException>(data['data']);
+      return deserialize<_i25.PlaceifyException>(data['data']);
     }
     if (dataClassName == 'Product') {
-      return deserialize<_i24.Product>(data['data']);
+      return deserialize<_i26.Product>(data['data']);
     }
     if (dataClassName == 'ProductPage') {
-      return deserialize<_i25.ProductPage>(data['data']);
+      return deserialize<_i27.ProductPage>(data['data']);
     }
     if (dataClassName == 'ProductSearchInput') {
-      return deserialize<_i26.ProductSearchInput>(data['data']);
+      return deserialize<_i28.ProductSearchInput>(data['data']);
     }
     if (dataClassName == 'ProductStatus') {
-      return deserialize<_i27.ProductStatus>(data['data']);
+      return deserialize<_i29.ProductStatus>(data['data']);
     }
     if (dataClassName == 'RequestStatus') {
-      return deserialize<_i28.RequestStatus>(data['data']);
+      return deserialize<_i30.RequestStatus>(data['data']);
     }
     if (dataClassName == 'Review') {
-      return deserialize<_i29.Review>(data['data']);
+      return deserialize<_i31.Review>(data['data']);
     }
     if (dataClassName == 'User') {
-      return deserialize<_i30.User>(data['data']);
+      return deserialize<_i32.User>(data['data']);
     }
     if (dataClassName == 'UserAccountStatus') {
-      return deserialize<_i31.UserAccountStatus>(data['data']);
+      return deserialize<_i33.UserAccountStatus>(data['data']);
     }
     if (dataClassName == 'UserArSessionSummary') {
-      return deserialize<_i32.UserArSessionSummary>(data['data']);
+      return deserialize<_i34.UserArSessionSummary>(data['data']);
     }
     if (dataClassName == 'UserDashboard') {
-      return deserialize<_i33.UserDashboard>(data['data']);
+      return deserialize<_i35.UserDashboard>(data['data']);
     }
     if (dataClassName == 'UserOrderSummary') {
-      return deserialize<_i34.UserOrderSummary>(data['data']);
+      return deserialize<_i36.UserOrderSummary>(data['data']);
     }
     if (dataClassName == 'UserRole') {
-      return deserialize<_i35.UserRole>(data['data']);
+      return deserialize<_i37.UserRole>(data['data']);
     }
     if (dataClassName == 'Vendor') {
-      return deserialize<_i36.Vendor>(data['data']);
+      return deserialize<_i38.Vendor>(data['data']);
     }
     if (dataClassName == 'VendorDashboard') {
-      return deserialize<_i37.VendorDashboard>(data['data']);
+      return deserialize<_i39.VendorDashboard>(data['data']);
     }
     if (dataClassName == 'VendorOrderLineItem') {
-      return deserialize<_i38.VendorOrderLineItem>(data['data']);
+      return deserialize<_i40.VendorOrderLineItem>(data['data']);
     }
     if (dataClassName == 'VendorOrderSummary') {
-      return deserialize<_i39.VendorOrderSummary>(data['data']);
+      return deserialize<_i41.VendorOrderSummary>(data['data']);
     }
     if (dataClassName == 'VendorProductStat') {
-      return deserialize<_i40.VendorProductStat>(data['data']);
+      return deserialize<_i42.VendorProductStat>(data['data']);
     }
     if (dataClassName == 'VendorProductUploadInput') {
-      return deserialize<_i41.VendorProductUploadInput>(data['data']);
+      return deserialize<_i43.VendorProductUploadInput>(data['data']);
     }
     if (dataClassName == 'VendorProfileDetail') {
-      return deserialize<_i42.VendorProfileDetail>(data['data']);
+      return deserialize<_i44.VendorProfileDetail>(data['data']);
     }
     if (dataClassName == 'VendorProfileUpdateInput') {
-      return deserialize<_i43.VendorProfileUpdateInput>(data['data']);
+      return deserialize<_i45.VendorProfileUpdateInput>(data['data']);
     }
     if (dataClassName == 'VendorShopOrder') {
-      return deserialize<_i44.VendorShopOrder>(data['data']);
+      return deserialize<_i46.VendorShopOrder>(data['data']);
     }
     if (dataClassName == 'WishlistItem') {
-      return deserialize<_i45.WishlistItem>(data['data']);
+      return deserialize<_i47.WishlistItem>(data['data']);
     }
     if (dataClassName == 'WishlistPage') {
-      return deserialize<_i46.WishlistPage>(data['data']);
+      return deserialize<_i48.WishlistPage>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
@@ -2714,22 +2864,24 @@ class Protocol extends _i1.SerializationManagerServer {
         return _i13.Complaint.t;
       case _i15.CustomizationRequest:
         return _i15.CustomizationRequest.t;
-      case _i17.NotificationPreference:
-        return _i17.NotificationPreference.t;
-      case _i18.Order:
-        return _i18.Order.t;
-      case _i19.OrderItem:
-        return _i19.OrderItem.t;
-      case _i24.Product:
-        return _i24.Product.t;
-      case _i29.Review:
-        return _i29.Review.t;
-      case _i30.User:
-        return _i30.User.t;
-      case _i36.Vendor:
-        return _i36.Vendor.t;
-      case _i45.WishlistItem:
-        return _i45.WishlistItem.t;
+      case _i18.NotificationPreference:
+        return _i18.NotificationPreference.t;
+      case _i19.Order:
+        return _i19.Order.t;
+      case _i20.OrderDeliveryUpdate:
+        return _i20.OrderDeliveryUpdate.t;
+      case _i21.OrderItem:
+        return _i21.OrderItem.t;
+      case _i26.Product:
+        return _i26.Product.t;
+      case _i31.Review:
+        return _i31.Review.t;
+      case _i32.User:
+        return _i32.User.t;
+      case _i38.Vendor:
+        return _i38.Vendor.t;
+      case _i47.WishlistItem:
+        return _i47.WishlistItem.t;
     }
     return null;
   }

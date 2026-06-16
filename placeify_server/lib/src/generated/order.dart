@@ -25,6 +25,7 @@ abstract class Order implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     _i2.OrderStatus? status,
     required this.totalAmount,
     required this.shippingAddress,
+    this.rejectionReason,
     DateTime? placedAt,
     DateTime? updatedAt,
   }) : status = status ?? _i2.OrderStatus.pending,
@@ -38,6 +39,7 @@ abstract class Order implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     _i2.OrderStatus? status,
     required double totalAmount,
     required String shippingAddress,
+    String? rejectionReason,
     DateTime? placedAt,
     DateTime? updatedAt,
   }) = _OrderImpl;
@@ -54,6 +56,7 @@ abstract class Order implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
           : _i2.OrderStatus.fromJson((jsonSerialization['status'] as String)),
       totalAmount: (jsonSerialization['totalAmount'] as num).toDouble(),
       shippingAddress: jsonSerialization['shippingAddress'] as String,
+      rejectionReason: jsonSerialization['rejectionReason'] as String?,
       placedAt: jsonSerialization['placedAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['placedAt']),
@@ -80,6 +83,8 @@ abstract class Order implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
 
   String shippingAddress;
 
+  String? rejectionReason;
+
   DateTime placedAt;
 
   DateTime updatedAt;
@@ -97,6 +102,7 @@ abstract class Order implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     _i2.OrderStatus? status,
     double? totalAmount,
     String? shippingAddress,
+    String? rejectionReason,
     DateTime? placedAt,
     DateTime? updatedAt,
   });
@@ -110,6 +116,7 @@ abstract class Order implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       'status': status.toJson(),
       'totalAmount': totalAmount,
       'shippingAddress': shippingAddress,
+      if (rejectionReason != null) 'rejectionReason': rejectionReason,
       'placedAt': placedAt.toJson(),
       'updatedAt': updatedAt.toJson(),
     };
@@ -125,6 +132,7 @@ abstract class Order implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       'status': status.toJson(),
       'totalAmount': totalAmount,
       'shippingAddress': shippingAddress,
+      if (rejectionReason != null) 'rejectionReason': rejectionReason,
       'placedAt': placedAt.toJson(),
       'updatedAt': updatedAt.toJson(),
     };
@@ -170,6 +178,7 @@ class _OrderImpl extends Order {
     _i2.OrderStatus? status,
     required double totalAmount,
     required String shippingAddress,
+    String? rejectionReason,
     DateTime? placedAt,
     DateTime? updatedAt,
   }) : super._(
@@ -179,6 +188,7 @@ class _OrderImpl extends Order {
          status: status,
          totalAmount: totalAmount,
          shippingAddress: shippingAddress,
+         rejectionReason: rejectionReason,
          placedAt: placedAt,
          updatedAt: updatedAt,
        );
@@ -194,6 +204,7 @@ class _OrderImpl extends Order {
     _i2.OrderStatus? status,
     double? totalAmount,
     String? shippingAddress,
+    Object? rejectionReason = _Undefined,
     DateTime? placedAt,
     DateTime? updatedAt,
   }) {
@@ -204,6 +215,9 @@ class _OrderImpl extends Order {
       status: status ?? this.status,
       totalAmount: totalAmount ?? this.totalAmount,
       shippingAddress: shippingAddress ?? this.shippingAddress,
+      rejectionReason: rejectionReason is String?
+          ? rejectionReason
+          : this.rejectionReason,
       placedAt: placedAt ?? this.placedAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -234,6 +248,12 @@ class OrderUpdateTable extends _i1.UpdateTable<OrderTable> {
   _i1.ColumnValue<String, String> shippingAddress(String value) =>
       _i1.ColumnValue(
         table.shippingAddress,
+        value,
+      );
+
+  _i1.ColumnValue<String, String> rejectionReason(String? value) =>
+      _i1.ColumnValue(
+        table.rejectionReason,
         value,
       );
 
@@ -271,6 +291,10 @@ class OrderTable extends _i1.Table<int?> {
       'shippingAddress',
       this,
     );
+    rejectionReason = _i1.ColumnString(
+      'rejectionReason',
+      this,
+    );
     placedAt = _i1.ColumnDateTime(
       'placedAt',
       this,
@@ -294,6 +318,8 @@ class OrderTable extends _i1.Table<int?> {
   late final _i1.ColumnDouble totalAmount;
 
   late final _i1.ColumnString shippingAddress;
+
+  late final _i1.ColumnString rejectionReason;
 
   late final _i1.ColumnDateTime placedAt;
 
@@ -319,6 +345,7 @@ class OrderTable extends _i1.Table<int?> {
     status,
     totalAmount,
     shippingAddress,
+    rejectionReason,
     placedAt,
     updatedAt,
   ];

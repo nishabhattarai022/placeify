@@ -10,3 +10,4 @@ fields:
   vendorTotal: double
   itemCount: int
   items: List<VendorOrderLineItem>
+  rejectionReason: String?

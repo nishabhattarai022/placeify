@@ -23,13 +23,18 @@ abstract final class UserOrderMappers {
       1 => _pendingStatuses,
       2 => [OrderStatus.shipped],
       3 => [OrderStatus.delivered],
-      _ => [OrderStatus.cancelled],
+      _ => [OrderStatus.cancelled, OrderStatus.rejected],
     };
 
     return orders.where((order) => status.contains(order.status)).toList();
   }
 
-  static const _pendingStatuses = [OrderStatus.pending, OrderStatus.confirmed];
+  static const _pendingStatuses = [
+    OrderStatus.pending,
+    OrderStatus.confirmed,
+    OrderStatus.accepted,
+    OrderStatus.processing,
+  ];
 
   static String productTitle(UserOrderSummary order) {
     final name = order.primaryProductName?.trim();
@@ -59,6 +64,9 @@ abstract final class UserOrderMappers {
     return switch (status) {
       OrderStatus.pending => 'Pending',
       OrderStatus.confirmed => 'Confirmed',
+      OrderStatus.accepted => 'Accepted',
+      OrderStatus.rejected => 'Rejected',
+      OrderStatus.processing => 'Processing',
       OrderStatus.shipped => 'Shipped',
       OrderStatus.delivered => 'Delivered',
       OrderStatus.cancelled => 'Cancelled',
@@ -69,7 +77,11 @@ abstract final class UserOrderMappers {
     OrderStatus status,
   ) {
     return switch (status) {
-      OrderStatus.pending || OrderStatus.confirmed => (
+      OrderStatus.pending ||
+      OrderStatus.confirmed ||
+      OrderStatus.accepted ||
+      OrderStatus.processing =>
+        (
           background: AppColors.accentBg,
           foreground: AppColors.accent,
         ),
@@ -81,7 +93,7 @@ abstract final class UserOrderMappers {
           background: AppColors.tealBg,
           foreground: AppColors.teal,
         ),
-      OrderStatus.cancelled => (
+      OrderStatus.cancelled || OrderStatus.rejected => (
           background: const Color(0x1A9B4A2A),
           foreground: AppColors.rust,
         ),
@@ -91,10 +103,11 @@ abstract final class UserOrderMappers {
   static int progressStep(OrderStatus status) {
     return switch (status) {
       OrderStatus.pending => 0,
-      OrderStatus.confirmed => 1,
+      OrderStatus.confirmed || OrderStatus.accepted || OrderStatus.processing =>
+        1,
       OrderStatus.shipped => 2,
       OrderStatus.delivered => 3,
-      OrderStatus.cancelled => 0,
+      OrderStatus.cancelled || OrderStatus.rejected => 0,
     };
   }
 }
