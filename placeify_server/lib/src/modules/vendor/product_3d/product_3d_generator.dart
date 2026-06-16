@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
@@ -90,9 +91,26 @@ class Product3dGenerator {
         );
       }
 
+      final slotSources = TripoViewMapper.slotSourceLabels(
+        front: views.front,
+        left: views.left,
+        back: views.back,
+        right: views.right,
+        frontLeft: views.frontLeft,
+        frontRight: views.frontRight,
+      );
+
       session.log(
-        'Tripo 3D using $providedViews vendor photos mapped to '
-        '$tripoViewCount Tripo multiview slots',
+        'Tripo 3D: $providedViews vendor photos → $tripoViewCount API slots '
+        '(sources: ${slotSources.join(', ')}). '
+        'Note: Tripo multiview accepts 4 images [front, left, back, right]; '
+        '45° views fill side slots when higher detail.',
+        level: LogLevel.info,
+      );
+
+      session.log(
+        'Tripo task params preview: '
+        '${jsonEncode(TripoClient.taskParamsForLogging(viewCount: providedViews))}',
         level: LogLevel.info,
       );
 
@@ -100,6 +118,7 @@ class Product3dGenerator {
         session,
         views: tripoSlots,
         sourceViewCount: providedViews,
+        slotLabels: slotSources,
       );
 
       final glbBytes = await _downloadGlb(remoteModelUrl);
@@ -174,11 +193,15 @@ class Product3dGenerator {
       final bytes = await catalogFile.readAsBytes();
       final prepared = _preprocessor.prepareCatalogFrame(bytes);
       session.log(
-        'Tripo 3D prepared catalog frame $trimmed '
-        '(${prepared.length} bytes, centered white background)',
+        'Tripo frame $trimmed: ${prepared.width}x${prepared.height} '
+        '${prepared.format} ${prepared.bytes.length}B '
+        '(source ${prepared.sourceBytes}B, centered, no aggressive downscale)',
         level: LogLevel.info,
       );
-      return TripoViewImage(bytes: prepared, format: 'jpeg');
+      return TripoViewImage(
+        bytes: prepared.bytes,
+        format: prepared.format,
+      );
     }
 
     for (final tripoPath
@@ -193,10 +216,15 @@ class Product3dGenerator {
         tripoFile.uri.pathSegments.last,
       );
       session.log(
-        'Tripo 3D preprocessed original $tripoPath for generation',
+        'Tripo frame $tripoPath: ${prepared.width}x${prepared.height} '
+        '${prepared.format} ${prepared.bytes.length}B '
+        '(source ${prepared.sourceBytes}B, bg-removed + centered)',
         level: LogLevel.info,
       );
-      return TripoViewImage(bytes: prepared, format: 'jpeg');
+      return TripoViewImage(
+        bytes: prepared.bytes,
+        format: prepared.format,
+      );
     }
 
     session.log(

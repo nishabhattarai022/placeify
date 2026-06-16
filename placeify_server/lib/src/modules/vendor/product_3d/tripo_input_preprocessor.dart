@@ -5,29 +5,47 @@ import 'package:serverpod/serverpod.dart';
 
 import '../product_image_processor.dart';
 
-/// Normalizes catalog / cutout frames before Tripo multiview generation.
+/// Result of preparing a frame for Tripo upload.
+final class PreparedTripoFrame {
+  const PreparedTripoFrame({
+    required this.bytes,
+    required this.format,
+    required this.width,
+    required this.height,
+    required this.sourceBytes,
+  });
+
+  final Uint8List bytes;
+  final String format;
+  final int width;
+  final int height;
+  final int sourceBytes;
+}
+
+/// Centers furniture on white background without unnecessary downscaling.
 class TripoInputPreprocessor {
   TripoInputPreprocessor({ProductImageProcessor? imageProcessor})
       : _imageProcessor = imageProcessor ?? ProductImageProcessor();
 
-  static const _canvasSize = 2048;
-  static const _marginRatio = 0.08;
-  static const _jpegQuality = 95;
+  /// Max edge length sent to Tripo — only downscale above this (no upscaling).
+  static const maxTripoEdge = 4096;
+  static const marginRatio = 0.08;
+  static const jpegQuality = 98;
   static final _white = img.ColorRgb8(255, 255, 255);
 
   final ProductImageProcessor _imageProcessor;
 
-  /// White-background catalog JPEG → centered square frame at fixed resolution.
-  Uint8List prepareCatalogFrame(Uint8List catalogBytes) {
+  /// White-background catalog image → centered frame, resolution preserved when possible.
+  PreparedTripoFrame prepareCatalogFrame(Uint8List catalogBytes) {
     final decoded = img.decodeImage(catalogBytes);
     if (decoded == null) {
       throw TripoInputPreprocessorException('Could not decode catalog image.');
     }
-    return _encodeJpeg(_centerOnSquareCanvas(decoded));
+    return _prepareFrame(decoded, sourceBytes: catalogBytes.length);
   }
 
-  /// Original vendor photo → bg removal, white composite, center, normalize.
-  Future<Uint8List> prepareOriginalFrame(
+  /// Original vendor photo → bg removal, white composite, center, minimal resize.
+  Future<PreparedTripoFrame> prepareOriginalFrame(
     Session session,
     Uint8List bytes,
     String fileName,
@@ -40,65 +58,75 @@ class TripoInputPreprocessor {
     return prepareCatalogFrame(processed.bytes);
   }
 
-  img.Image _centerOnSquareCanvas(img.Image source) {
-    final bounds = _subjectBounds(source);
-    if (bounds == null) {
-      return _fitOnSquare(source);
-    }
+  PreparedTripoFrame _prepareFrame(img.Image source, {required int sourceBytes}) {
+    final framed = _centerOnSquareCanvas(source);
+    final usePng = _shouldUsePng(source);
+    final encoded = usePng
+        ? Uint8List.fromList(img.encodePng(framed))
+        : Uint8List.fromList(img.encodeJpg(framed, quality: jpegQuality));
 
-    final cropped = img.copyCrop(
-      source,
-      x: bounds.left,
-      y: bounds.top,
-      width: bounds.width,
-      height: bounds.height,
+    return PreparedTripoFrame(
+      bytes: encoded,
+      format: usePng ? 'png' : 'jpeg',
+      width: framed.width,
+      height: framed.height,
+      sourceBytes: sourceBytes,
     );
-
-    final margin = (_canvasSize * _marginRatio).round();
-    final maxSubject = _canvasSize - (margin * 2);
-    final scale = maxSubject /
-        (cropped.width > cropped.height ? cropped.width : cropped.height);
-    final targetW = (cropped.width * scale).round().clamp(1, maxSubject);
-    final targetH = (cropped.height * scale).round().clamp(1, maxSubject);
-    final resized = img.copyResize(
-      cropped,
-      width: targetW,
-      height: targetH,
-      interpolation: img.Interpolation.average,
-    );
-
-    final canvas = img.Image(width: _canvasSize, height: _canvasSize);
-    img.fill(canvas, color: _white);
-    img.compositeImage(
-      canvas,
-      resized,
-      dstX: ((_canvasSize - targetW) / 2).round(),
-      dstY: ((_canvasSize - targetH) / 2).round(),
-    );
-    return canvas;
   }
 
-  img.Image _fitOnSquare(img.Image source) {
-    final margin = (_canvasSize * _marginRatio).round();
-    final maxSubject = _canvasSize - (margin * 2);
-    final scale = maxSubject /
-        (source.width > source.height ? source.width : source.height);
-    final targetW = (source.width * scale).round().clamp(1, maxSubject);
-    final targetH = (source.height * scale).round().clamp(1, maxSubject);
-    final resized = img.copyResize(
-      source,
-      width: targetW,
-      height: targetH,
-      interpolation: img.Interpolation.average,
-    );
+  bool _shouldUsePng(img.Image source) {
+    for (var y = 0; y < source.height; y += 8) {
+      for (var x = 0; x < source.width; x += 8) {
+        if (source.getPixel(x, y).a < 250) return true;
+      }
+    }
+    return false;
+  }
 
-    final canvas = img.Image(width: _canvasSize, height: _canvasSize);
+  img.Image _centerOnSquareCanvas(img.Image source) {
+    final bounds = _subjectBounds(source);
+    final subject = bounds == null
+        ? source
+        : img.copyCrop(
+            source,
+            x: bounds.left,
+            y: bounds.top,
+            width: bounds.width,
+            height: bounds.height,
+          );
+
+    final longestEdge = subject.width > subject.height
+        ? subject.width
+        : subject.height;
+    final margin = (longestEdge * marginRatio).round().clamp(8, 512);
+    var canvasSize = longestEdge + (margin * 2);
+
+    if (canvasSize > maxTripoEdge) {
+      canvasSize = maxTripoEdge;
+    }
+
+    final maxSubject = canvasSize - (margin * 2);
+    final needsDownscale = subject.width > maxSubject || subject.height > maxSubject;
+    final placed = needsDownscale
+        ? img.copyResize(
+            subject,
+            width: subject.width > subject.height
+                ? maxSubject
+                : (subject.width * maxSubject / subject.height).round(),
+            height: subject.height >= subject.width
+                ? maxSubject
+                : (subject.height * maxSubject / subject.width).round(),
+            interpolation: img.Interpolation.cubic,
+          )
+        : subject;
+
+    final canvas = img.Image(width: canvasSize, height: canvasSize);
     img.fill(canvas, color: _white);
     img.compositeImage(
       canvas,
-      resized,
-      dstX: ((_canvasSize - targetW) / 2).round(),
-      dstY: ((_canvasSize - targetH) / 2).round(),
+      placed,
+      dstX: ((canvasSize - placed.width) / 2).round(),
+      dstY: ((canvasSize - placed.height) / 2).round(),
     );
     return canvas;
   }
@@ -140,10 +168,6 @@ class TripoInputPreprocessor {
     if (alpha < 16) return false;
     if (alpha < 250) return true;
     return pixel.r < 245 || pixel.g < 245 || pixel.b < 245;
-  }
-
-  Uint8List _encodeJpeg(img.Image image) {
-    return Uint8List.fromList(img.encodeJpg(image, quality: _jpegQuality));
   }
 }
 

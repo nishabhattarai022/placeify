@@ -146,6 +146,7 @@ class _ProductDetailGalleryState extends State<ProductDetailGallery> {
                                 );
                               }
                               return Product3dPreview(
+                                productId: widget.product.id,
                                 modelSrc: src,
                                 productName: widget.product.name,
                               );
