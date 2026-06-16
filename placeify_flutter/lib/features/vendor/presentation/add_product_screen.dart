@@ -350,9 +350,9 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                         step: 1,
                         title: 'Product photos',
                         subtitle:
-                            'Add all four angles when you can — 3D is built from '
-                            'these photos only (not from dimensions). Same lighting '
-                            'and the same item in every shot.',
+                            'Add all four angles when you can. Avoid bright windows '
+                            'behind the chair — use even light. 3D uses your original '
+                            'photos only (catalog white-background images are not used).',
                         children: [
                           DecoratedBox(
                             decoration: BoxDecoration(

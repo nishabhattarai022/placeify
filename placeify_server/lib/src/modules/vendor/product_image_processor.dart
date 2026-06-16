@@ -111,6 +111,8 @@ class ProductImageProcessor {
     String fileExtension,
   ) {
     final ext = _normalizeExtension(fileExtension);
+
+    // Pass through the vendor file unchanged when possible — no bg removal, no re-encode.
     final decoded = img.decodeImage(bytes);
     if (decoded == null) {
       return ProcessedProductImage(
@@ -120,13 +122,17 @@ class ProductImageProcessor {
       );
     }
 
-    final resized = decoded.width > _maxTripoWidth
-        ? img.copyResize(decoded, width: _maxTripoWidth)
-        : decoded;
+    if (decoded.width <= _maxTripoWidth) {
+      return ProcessedProductImage(
+        bytes: bytes,
+        extension: ext,
+        backgroundRemoved: false,
+      );
+    }
 
+    final resized = img.copyResize(decoded, width: _maxTripoWidth);
     final encoded = switch (ext) {
       '.png' => Uint8List.fromList(img.encodePng(resized)),
-      '.webp' => Uint8List.fromList(img.encodeJpg(resized, quality: _tripoJpegQuality)),
       _ => Uint8List.fromList(img.encodeJpg(resized, quality: _tripoJpegQuality)),
     };
 

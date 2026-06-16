@@ -14,5 +14,4 @@ When you are finished, you can shut down Serverpod with `Ctrl-C`, then stop Post
 
     docker compose stop
 
-
 multiple image to upload by vendor.
