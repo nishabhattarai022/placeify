@@ -58,6 +58,7 @@ import '../../features/profile/presentation/profile_settings_screen.dart';
 import '../../features/profile/presentation/profile_wishlist_screen.dart';
 import '../../features/product_detail/presentation/product_detail_screen.dart';
 import '../../features/cart/presentation/cart_screen.dart';
+import '../../features/user/presentation/user_cart_page.dart';
 import '../../features/user/presentation/user_dashboard_pages.dart';
 import '../../features/user/presentation/user_dashboard_screen.dart';
 import '../../features/user/presentation/user_orders_page.dart';
