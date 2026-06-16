@@ -12,7 +12,7 @@ class CheckoutStore {
     final address = request.shippingAddress.trim();
     if (address.isEmpty) {
       throw PlaceifyException(
-        'Shipping address is required.',
+        'Enter a shipping address before checkout.',
         code: 'INVALID_ADDRESS',
       );
     }
@@ -27,7 +27,10 @@ class CheckoutStore {
     );
 
     if (cartItems.isEmpty) {
-      throw PlaceifyException('Your cart is empty.', code: 'CART_EMPTY');
+      throw PlaceifyException(
+        'Your cart is empty. Sign in, add products, then checkout again.',
+        code: 'CART_EMPTY',
+      );
     }
 
     final totalAmount = cartItems.fold<double>(
