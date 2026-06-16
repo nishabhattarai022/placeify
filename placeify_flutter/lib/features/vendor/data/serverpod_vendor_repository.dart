@@ -316,6 +316,12 @@ class ServerpodVendorRepository implements VendorRepository {
         code: 'MODEL3D_THUMBNAIL_MISSING',
       );
     }
+    if (message.contains('MODEL3D_TRIPO_SOURCE_MISSING')) {
+      return VendorRepositoryException(
+        'Re-upload all product photos so 3D can use your originals (not white-background catalog images), then try Build 3D again.',
+        code: 'MODEL3D_TRIPO_SOURCE_MISSING',
+      );
+    }
     if (message.contains('MODEL3D_TRIPO_FAILED')) {
       final detail = message.split(': ').skip(1).join(': ').trim();
       return VendorRepositoryException(

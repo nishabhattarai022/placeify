@@ -34,6 +34,30 @@ class Product3dGenerator {
     }
 
     try {
+      final catalogFile = ServerStaticPaths.fileFromUrlPath(thumbnail);
+      if (!catalogFile.existsSync()) {
+        return Product3dGenerationResult.failure(
+          code: 'MODEL3D_THUMBNAIL_MISSING',
+          message:
+              'Product photo file is missing on the server. '
+              'Re-upload the product photo, then try Build 3D again.',
+        );
+      }
+
+      final hasTripoOriginal = Product3dImagePaths
+          .tripoSourceCandidatesForCatalog(thumbnail)
+          .any(
+            (path) => ServerStaticPaths.fileFromUrlPath(path).existsSync(),
+          );
+      if (!hasTripoOriginal) {
+        return Product3dGenerationResult.failure(
+          code: 'MODEL3D_TRIPO_SOURCE_MISSING',
+          message:
+              '3D needs your original photos (not catalog cutouts). '
+              'Re-upload all product photos, then try Build 3D again.',
+        );
+      }
+
       final views = await _loadTripoViews(session, product);
       if (views == null) {
         return Product3dGenerationResult.failure(
@@ -45,6 +69,14 @@ class Product3dGenerator {
       }
 
       final providedViews = views.whereType<TripoViewImage>().length;
+      if (providedViews == 0) {
+        return Product3dGenerationResult.failure(
+          code: 'MODEL3D_TRIPO_SOURCE_MISSING',
+          message:
+              '3D needs your original photos (not catalog cutouts). '
+              'Re-upload all product photos, then try Build 3D again.',
+        );
+      }
       final remoteModelUrl = providedViews >= 2
           ? await TripoClient.generateModelFromMultiview(
               session,
@@ -89,7 +121,7 @@ class Product3dGenerator {
     }
   }
 
-  /// Loads Tripo view slots [front, left, back, right]. Returns null if front is missing.
+  /// Loads view slots [front, left, back, right]. Returns null if front is missing.
   Future<List<TripoViewImage?>?> _loadTripoViews(
     Session session,
     Product product,
@@ -122,24 +154,15 @@ class Product3dGenerator {
     final trimmed = urlPath?.trim();
     if (trimmed == null || trimmed.isEmpty) return null;
 
-    var resolvedPath = trimmed;
-    for (final tripoPath
-        in Product3dImagePaths.tripoSourceCandidatesForCatalog(trimmed)) {
-      final tripoFile = ServerStaticPaths.fileFromUrlPath(tripoPath);
-      if (tripoFile.existsSync()) {
-        resolvedPath = tripoPath;
-        session.log(
-          'Using Tripo original photo $tripoPath',
-          level: LogLevel.info,
-        );
-        break;
-      }
+    final tripoPath = _resolveTripoOriginalPath(session, trimmed);
+    if (tripoPath == null) {
+      return null;
     }
 
-    final file = ServerStaticPaths.fileFromUrlPath(resolvedPath);
+    final file = ServerStaticPaths.fileFromUrlPath(tripoPath);
     if (!file.existsSync()) {
       session.log(
-        'View image missing for 3D generation: ${file.path}',
+        'Tripo original missing for 3D generation: ${file.path}',
         level: LogLevel.warning,
       );
       return null;
@@ -151,6 +174,27 @@ class Product3dGenerator {
       throw TripoClientException('Product photo must be JPG, PNG, or WEBP.');
     }
     return TripoViewImage(bytes: bytes, format: format);
+  }
+
+  /// Tripo always uses `_tripo` originals — never white-background catalog JPEGs.
+  String? _resolveTripoOriginalPath(Session session, String catalogUrlPath) {
+    for (final tripoPath
+        in Product3dImagePaths.tripoSourceCandidatesForCatalog(catalogUrlPath)) {
+      final tripoFile = ServerStaticPaths.fileFromUrlPath(tripoPath);
+      if (tripoFile.existsSync()) {
+        session.log(
+          'Tripo 3D using original photo $tripoPath (catalog bg removal not used)',
+          level: LogLevel.info,
+        );
+        return tripoPath;
+      }
+    }
+
+    session.log(
+      'No original Tripo photo for $catalogUrlPath — re-upload product photos',
+      level: LogLevel.warning,
+    );
+    return null;
   }
 
   Future<List<int>> _downloadGlb(String url) async {
