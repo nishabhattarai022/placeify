@@ -8,6 +8,22 @@ import 'serverpod_test_tools.dart';
 
 typedef AuthenticatedTestSession = TestSessionBuilder;
 
+/// Auth session without a Placeify profile row (for backfill tests).
+Future<AuthenticatedTestSession> createAuthSessionOnly(
+  TestSessionBuilder sessionBuilder,
+) async {
+  final setupSession = sessionBuilder.build();
+  final authUser = await AuthUsers().create(setupSession);
+  await setupSession.close();
+
+  return sessionBuilder.copyWith(
+    authentication: AuthenticationOverride.authenticationInfo(
+      authUser.id.toString(),
+      {},
+    ),
+  );
+}
+
 /// Creates an authenticated test session with a Placeify user profile.
 Future<({AuthenticatedTestSession session, User profile})>
     createAuthenticatedUser(
