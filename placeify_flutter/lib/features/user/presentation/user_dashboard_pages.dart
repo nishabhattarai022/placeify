@@ -3,19 +3,6 @@ import 'package:flutter/material.dart';
 import '../domain/user_dashboard_nav.dart';
 import 'widgets/user_placeholder_page.dart';
 
-class UserCartPage extends StatelessWidget {
-  const UserCartPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const UserPlaceholderPage(
-      title: 'Cart',
-      description: 'Saved cart items will be managed from this page.',
-      icon: Icons.shopping_cart_outlined,
-    );
-  }
-}
-
 class UserRefundPage extends StatelessWidget {
   const UserRefundPage({super.key});
 
