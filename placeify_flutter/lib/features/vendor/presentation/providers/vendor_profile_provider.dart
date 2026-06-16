@@ -1,5 +1,5 @@
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
-import 'package:placeify_flutter/features/vendor/data/mock_vendor_repository.dart';
+import 'package:placeify_flutter/features/vendor/data/hybrid_vendor_repository.dart';
 import 'package:placeify_flutter/features/vendor/data/serverpod_vendor_product_repository.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_profile.dart'
@@ -12,7 +12,7 @@ part 'vendor_profile_provider.g.dart';
 
 @Riverpod(keepAlive: true)
 VendorRepository vendorRepository(Ref ref) {
-  return MockVendorRepository();
+  return HybridVendorRepository();
 }
 
 @Riverpod(keepAlive: true)

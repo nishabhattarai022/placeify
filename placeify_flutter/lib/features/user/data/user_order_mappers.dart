@@ -100,7 +100,17 @@ abstract final class UserOrderMappers {
     };
   }
 
-  static int progressStep(OrderStatus status) {
+  static int progressStep(OrderStatus status, {DeliveryStage? latestStage}) {
+    if (latestStage != null) {
+      return switch (latestStage) {
+        DeliveryStage.orderPlaced => 1,
+        DeliveryStage.packed => 2,
+        DeliveryStage.shipped => 2,
+        DeliveryStage.outForDelivery => 3,
+        DeliveryStage.delivered => 3,
+      };
+    }
+
     return switch (status) {
       OrderStatus.pending => 0,
       OrderStatus.confirmed || OrderStatus.accepted || OrderStatus.processing =>
@@ -108,6 +118,33 @@ abstract final class UserOrderMappers {
       OrderStatus.shipped => 2,
       OrderStatus.delivered => 3,
       OrderStatus.cancelled || OrderStatus.rejected => 0,
+    };
+  }
+
+  static bool showsDeliveryProgress(OrderStatus status) {
+    return switch (status) {
+      OrderStatus.accepted ||
+      OrderStatus.processing ||
+      OrderStatus.shipped ||
+      OrderStatus.delivered =>
+        true,
+      _ => false,
+    };
+  }
+
+  static String? latestUpdateLabel(UserOrderSummary order) {
+    final note = order.latestDeliveryNote?.trim();
+    if (note != null && note.isNotEmpty) return note;
+
+    final stage = order.latestDeliveryStage;
+    if (stage == null) return null;
+
+    return switch (stage) {
+      DeliveryStage.orderPlaced => 'Order confirmed by the shop',
+      DeliveryStage.packed => 'Your order has been packed',
+      DeliveryStage.shipped => 'Your order is on the way',
+      DeliveryStage.outForDelivery => 'Out for delivery',
+      DeliveryStage.delivered => 'Delivered',
     };
   }
 }

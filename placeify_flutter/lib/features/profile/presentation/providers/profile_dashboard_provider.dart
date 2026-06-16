@@ -43,6 +43,18 @@ class ProfileOrders extends _$ProfileOrders {
     final repo = ref.watch(profileRepositoryProvider);
     return repo.listOrders();
   }
+
+  Future<void> refresh() async {
+    if (!client.auth.isAuthenticated) {
+      state = const AsyncData([]);
+      return;
+    }
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final repo = ref.read(profileRepositoryProvider);
+      return repo.listOrders();
+    });
+  }
 }
 
 @Riverpod(keepAlive: true)

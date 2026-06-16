@@ -9,11 +9,7 @@ import 'package:placeify_flutter/features/vendor/domain/models/vendor_profile.da
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_stats.dart';
 import 'package:placeify_flutter/features/vendor/domain/repositories/vendor_repository.dart';
 
-class VendorOrderActionException implements Exception {
-  VendorOrderActionException(this.message);
-
-  final String message;
-}
+import 'vendor_order_exceptions.dart';
 
 class MockVendorRepository implements VendorRepository {
   MockVendorRepository();

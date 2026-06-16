@@ -13,7 +13,12 @@ class UserOrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = UserOrderMappers.statusColors(order.status);
-    final showProgress = order.status == OrderStatus.shipped;
+    final showProgress = UserOrderMappers.showsDeliveryProgress(order.status);
+    final progressStep = UserOrderMappers.progressStep(
+      order.status,
+      latestStage: order.latestDeliveryStage,
+    );
+    final latestUpdate = UserOrderMappers.latestUpdateLabel(order);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -85,10 +90,22 @@ class UserOrderCard extends StatelessWidget {
             ],
           ),
           if (showProgress)
-            OrderProgressTracker(
-              activeStep: UserOrderMappers.progressStep(order.status),
+            OrderProgressTracker(activeStep: progressStep),
+          if (latestUpdate != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              latestUpdate,
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+                height: 1.35,
+              ),
             ),
-          Divider(color: AppColors.creamDark, height: showProgress ? 12 : 24),
+          ],
+          Divider(
+            color: AppColors.creamDark,
+            height: showProgress || latestUpdate != null ? 12 : 24,
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
