@@ -1,25 +1,44 @@
 import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
+import '../modules/user/user_repository.dart';
 import 'placeify_exception.dart';
 
 /// Resolves authenticated Placeify users and their carts.
 abstract final class SessionService {
+  /// Returns the Placeify profile for the signed-in auth user, creating one if
+  /// missing (e.g. accounts registered before [onAfterAccountCreated] ran).
   static Future<User> requireUser(Session session) async {
     final auth = session.authenticated;
     if (auth == null) {
-      throw PlaceifyException('Authentication required.', code: 'AUTH_REQUIRED');
+      throw PlaceifyException(
+        'Sign in to continue.',
+        code: 'AUTH_REQUIRED',
+      );
     }
 
     final authUserId = UuidValue.fromString(auth.userIdentifier);
-    final user = await User.db.findFirstRow(
-      session,
-      where: (row) => row.authUserId.equals(authUserId),
-    );
-    if (user == null) {
-      throw PlaceifyException('User profile not found.', code: 'PROFILE_NOT_FOUND');
-    }
-    return user;
+    return _resolveOrCreateProfile(session, authUserId);
+  }
+
+  /// Same as [requireUser] but returns null when the session is not authenticated.
+  static Future<User?> resolveUserIfAuthenticated(Session session) async {
+    final auth = session.authenticated;
+    if (auth == null) return null;
+
+    final authUserId = UuidValue.fromString(auth.userIdentifier);
+    return _resolveOrCreateProfile(session, authUserId);
+  }
+
+  static Future<User> _resolveOrCreateProfile(
+    Session session,
+    UuidValue authUserId,
+  ) async {
+    final store = UserProfileStore();
+    final existing = await store.findByAuthUserId(session, authUserId);
+    if (existing != null) return existing;
+
+    return store.upsertProfile(session, authUserId, 'User');
   }
 
   static Future<Cart> requireCart(Session session) async {
