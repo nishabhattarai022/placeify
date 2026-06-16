@@ -14,7 +14,6 @@ import 'package:placeify_flutter/core/widgets/shimmer_loader.dart';
 import 'package:placeify_flutter/core/widgets/toast_overlay.dart';
 import 'package:placeify_flutter/data/furniture_categories.dart';
 import 'package:placeify_flutter/features/profile/presentation/widgets/shared/profile_form_field.dart';
-import 'package:placeify_flutter/features/vendor/domain/constants/vendor_routes.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_profile.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_profile_editor_state.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_profile_editor_provider.dart';
@@ -370,7 +369,7 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
               if (!canLeave) return;
             }
             if (!mounted) return;
-            context.push(VendorRoutes.settings);
+            context.pushNamed('vendorSettings');
           },
         ),
         const SizedBox(height: BottomNavTokens.scrollBottomPadding),

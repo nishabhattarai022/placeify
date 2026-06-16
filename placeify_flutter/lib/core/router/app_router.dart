@@ -702,14 +702,16 @@ List<RouteBase> get _appRoutes => [
                     state: state,
                     child: const VendorProfileScreen(),
                   ),
-                ),
-                GoRoute(
-                  path: VendorRoutes.settings,
-                  name: 'vendorSettings',
-                  pageBuilder: (context, state) => _slidePage(
-                    key: ValueKey<String>(state.uri.toString()),
-                    child: const VendorSettingsScreen(),
-                  ),
+                  routes: [
+                    GoRoute(
+                      path: 'settings',
+                      name: 'vendorSettings',
+                      pageBuilder: (context, state) => _slidePage(
+                        key: ValueKey<String>(state.uri.toString()),
+                        child: const VendorSettingsScreen(),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
