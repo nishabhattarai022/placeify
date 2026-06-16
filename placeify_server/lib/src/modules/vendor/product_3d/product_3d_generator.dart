@@ -6,6 +6,7 @@ import 'package:serverpod/serverpod.dart';
 import '../../../generated/protocol.dart';
 import '../../../shared/server_static_paths.dart';
 import 'product_3d_generation_result.dart';
+import 'product_3d_image_paths.dart';
 import 'tripo_client.dart';
 
 /// Generates a per-product GLB via the Tripo image-to-model API.
@@ -120,7 +121,20 @@ class Product3dGenerator {
     final trimmed = urlPath?.trim();
     if (trimmed == null || trimmed.isEmpty) return null;
 
-    final file = ServerStaticPaths.fileFromUrlPath(trimmed);
+    var resolvedPath = trimmed;
+    final tripoPath = Product3dImagePaths.tripoSourcePathForCatalog(trimmed);
+    if (tripoPath != null) {
+      final tripoFile = ServerStaticPaths.fileFromUrlPath(tripoPath);
+      if (tripoFile.existsSync()) {
+        resolvedPath = tripoPath;
+        session.log(
+          'Using Tripo source image $tripoPath',
+          level: LogLevel.info,
+        );
+      }
+    }
+
+    final file = ServerStaticPaths.fileFromUrlPath(resolvedPath);
     if (!file.existsSync()) {
       session.log(
         'View image missing for 3D generation: ${file.path}',
