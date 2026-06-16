@@ -53,9 +53,12 @@ import 'dart:typed_data' as _i34;
 import 'package:placeify_client/src/protocol/vendor_product_upload_input.dart'
     as _i35;
 import 'package:placeify_client/src/protocol/vendor_shop_order.dart' as _i36;
-import 'package:placeify_client/src/protocol/wishlist_page.dart' as _i37;
-import 'package:placeify_client/src/protocol/wishlist_item.dart' as _i38;
-import 'protocol.dart' as _i39;
+import 'package:placeify_client/src/protocol/order_delivery_update.dart'
+    as _i37;
+import 'package:placeify_client/src/protocol/delivery_stage.dart' as _i38;
+import 'package:placeify_client/src/protocol/wishlist_page.dart' as _i39;
+import 'package:placeify_client/src/protocol/wishlist_item.dart' as _i40;
+import 'protocol.dart' as _i41;
 
 /// By extending [EmailIdpBaseEndpoint], the email identity provider endpoints
 /// are made available on the server and enable the corresponding sign-in widget
@@ -1012,6 +1015,60 @@ class EndpointVendor extends _i2.EndpointRef {
         'getShopOrder',
         {'orderId': orderId},
       );
+
+  _i3.Future<_i36.VendorShopOrder> acceptShopOrder(int orderId) =>
+      caller.callServerEndpoint<_i36.VendorShopOrder>(
+        'vendor',
+        'acceptShopOrder',
+        {'orderId': orderId},
+      );
+
+  _i3.Future<_i36.VendorShopOrder> rejectShopOrder(
+    int orderId,
+    String reason,
+  ) => caller.callServerEndpoint<_i36.VendorShopOrder>(
+    'vendor',
+    'rejectShopOrder',
+    {
+      'orderId': orderId,
+      'reason': reason,
+    },
+  );
+
+  _i3.Future<List<_i37.OrderDeliveryUpdate>> listDeliveryUpdates(int orderId) =>
+      caller.callServerEndpoint<List<_i37.OrderDeliveryUpdate>>(
+        'vendor',
+        'listDeliveryUpdates',
+        {'orderId': orderId},
+      );
+
+  _i3.Future<_i37.OrderDeliveryUpdate> submitDeliveryUpdate(
+    int orderId,
+    _i38.DeliveryStage stage, {
+    String? note,
+    String? photoUrl,
+  }) => caller.callServerEndpoint<_i37.OrderDeliveryUpdate>(
+    'vendor',
+    'submitDeliveryUpdate',
+    {
+      'orderId': orderId,
+      'stage': stage,
+      'note': note,
+      'photoUrl': photoUrl,
+    },
+  );
+
+  _i3.Future<String> uploadDeliveryProof(
+    _i34.ByteData fileData,
+    String fileName,
+  ) => caller.callServerEndpoint<String>(
+    'vendor',
+    'uploadDeliveryProof',
+    {
+      'fileData': fileData,
+      'fileName': fileName,
+    },
+  );
 }
 
 /// Wishlist management for authenticated customers.
@@ -1022,16 +1079,16 @@ class EndpointWishlist extends _i2.EndpointRef {
   @override
   String get name => 'wishlist';
 
-  _i3.Future<_i37.WishlistPage> listMyWishlist({
+  _i3.Future<_i39.WishlistPage> listMyWishlist({
     _i25.PaginationInput? pagination,
-  }) => caller.callServerEndpoint<_i37.WishlistPage>(
+  }) => caller.callServerEndpoint<_i39.WishlistPage>(
     'wishlist',
     'listMyWishlist',
     {'pagination': pagination},
   );
 
-  _i3.Future<_i38.WishlistItem> addToWishlist(int productId) =>
-      caller.callServerEndpoint<_i38.WishlistItem>(
+  _i3.Future<_i40.WishlistItem> addToWishlist(int productId) =>
+      caller.callServerEndpoint<_i40.WishlistItem>(
         'wishlist',
         'addToWishlist',
         {'productId': productId},
@@ -1090,7 +1147,7 @@ class Client extends _i2.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i39.Protocol(),
+         _i41.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,

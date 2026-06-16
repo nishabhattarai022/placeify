@@ -12,36 +12,29 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 
-enum OrderStatus implements _i1.SerializableModel {
-  pending,
-  confirmed,
-  accepted,
-  rejected,
-  processing,
+enum DeliveryStage implements _i1.SerializableModel {
+  orderPlaced,
+  packed,
   shipped,
-  delivered,
-  cancelled;
+  outForDelivery,
+  delivered;
 
-  static OrderStatus fromJson(String name) {
+  static DeliveryStage fromJson(String name) {
     switch (name) {
-      case 'pending':
-        return OrderStatus.pending;
-      case 'confirmed':
-        return OrderStatus.confirmed;
-      case 'accepted':
-        return OrderStatus.accepted;
-      case 'rejected':
-        return OrderStatus.rejected;
-      case 'processing':
-        return OrderStatus.processing;
+      case 'orderPlaced':
+        return DeliveryStage.orderPlaced;
+      case 'packed':
+        return DeliveryStage.packed;
       case 'shipped':
-        return OrderStatus.shipped;
+        return DeliveryStage.shipped;
+      case 'outForDelivery':
+        return DeliveryStage.outForDelivery;
       case 'delivered':
-        return OrderStatus.delivered;
-      case 'cancelled':
-        return OrderStatus.cancelled;
+        return DeliveryStage.delivered;
       default:
-        return OrderStatus.pending;
+        throw ArgumentError(
+          'Value "$name" cannot be converted to "DeliveryStage"',
+        );
     }
   }
 

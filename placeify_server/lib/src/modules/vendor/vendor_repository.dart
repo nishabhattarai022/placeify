@@ -961,6 +961,251 @@ class VendorStore {
     return orders.first;
   }
 
+  Future<VendorShopOrder> acceptShopOrder(Session session, int orderId) async {
+    final vendor = await requireOwnedVendor(session);
+    final order = await _requireMutableVendorOrder(session, vendor.id!, orderId);
+
+    if (order.status != OrderStatus.pending) {
+      throw PlaceifyException(
+        message: 'Only pending orders can be accepted.',
+        code: 'INVALID_ORDER_STATUS',
+      );
+    }
+
+    final now = DateTime.now();
+    await Order.db.updateRow(
+      session,
+      order.copyWith(
+        status: OrderStatus.accepted,
+        rejectionReason: null,
+        updatedAt: now,
+      ),
+    );
+
+    final existingUpdates = await _deliveryUpdatesFor(session, vendor.id!, orderId);
+    if (existingUpdates.isEmpty) {
+      await OrderDeliveryUpdate.db.insertRow(
+        session,
+        OrderDeliveryUpdate(
+          orderId: orderId,
+          vendorId: vendor.id!,
+          stage: DeliveryStage.orderPlaced,
+          note: 'Order confirmed by vendor.',
+          createdAt: now,
+        ),
+      );
+    }
+
+    return getShopOrder(session, orderId);
+  }
+
+  Future<VendorShopOrder> rejectShopOrder(
+    Session session,
+    int orderId,
+    String reason,
+  ) async {
+    final vendor = await requireOwnedVendor(session);
+    final trimmedReason = reason.trim();
+    if (trimmedReason.isEmpty) {
+      throw PlaceifyException(
+        message: 'A rejection reason is required.',
+        code: 'INVALID_REJECTION_REASON',
+      );
+    }
+
+    final order = await _requireMutableVendorOrder(session, vendor.id!, orderId);
+    if (order.status != OrderStatus.pending) {
+      throw PlaceifyException(
+        message: 'Only pending orders can be rejected.',
+        code: 'INVALID_ORDER_STATUS',
+      );
+    }
+
+    await Order.db.updateRow(
+      session,
+      order.copyWith(
+        status: OrderStatus.rejected,
+        rejectionReason: trimmedReason,
+        updatedAt: DateTime.now(),
+      ),
+    );
+
+    return getShopOrder(session, orderId);
+  }
+
+  Future<List<OrderDeliveryUpdate>> listDeliveryUpdates(
+    Session session,
+    int orderId,
+  ) async {
+    final vendor = await requireOwnedVendor(session);
+    await _assertVendorOwnsOrder(session, vendor.id!, orderId);
+    return _deliveryUpdatesFor(session, vendor.id!, orderId);
+  }
+
+  Future<OrderDeliveryUpdate> submitDeliveryUpdate(
+    Session session,
+    int orderId,
+    DeliveryStage stage, {
+    String? note,
+    String? photoUrl,
+  }) async {
+    final vendor = await requireOwnedVendor(session);
+    final order = await _requireMutableVendorOrder(session, vendor.id!, orderId);
+
+    if (order.status == OrderStatus.pending) {
+      throw PlaceifyException(
+        message: 'Accept the order before posting delivery updates.',
+        code: 'ORDER_NOT_ACCEPTED',
+      );
+    }
+
+    if (order.status == OrderStatus.rejected ||
+        order.status == OrderStatus.cancelled) {
+      throw PlaceifyException(
+        message: 'Delivery updates are not available for this order.',
+        code: 'INVALID_ORDER_STATUS',
+      );
+    }
+
+    if (order.status == OrderStatus.delivered) {
+      throw PlaceifyException(
+        message: 'This order is already delivered.',
+        code: 'ORDER_ALREADY_DELIVERED',
+      );
+    }
+
+    final existing = await _deliveryUpdatesFor(session, vendor.id!, orderId);
+    final expected = _nextDeliveryStage(existing);
+    if (expected == null) {
+      throw PlaceifyException(
+        message: 'All delivery stages are complete.',
+        code: 'DELIVERY_COMPLETE',
+      );
+    }
+
+    if (stage != expected) {
+      throw PlaceifyException(
+        message:
+            'Updates must advance one stage at a time. Next stage: ${_stageLabel(expected)}.',
+        code: 'INVALID_DELIVERY_STAGE',
+      );
+    }
+
+    if (existing.any((update) => update.stage == stage)) {
+      throw PlaceifyException(
+        message: 'This delivery stage was already recorded.',
+        code: 'DUPLICATE_DELIVERY_STAGE',
+      );
+    }
+
+    final now = DateTime.now();
+    final update = await OrderDeliveryUpdate.db.insertRow(
+      session,
+      OrderDeliveryUpdate(
+        orderId: orderId,
+        vendorId: vendor.id!,
+        stage: stage,
+        note: note?.trim(),
+        photoUrl: photoUrl?.trim(),
+        createdAt: now,
+      ),
+    );
+
+    await Order.db.updateRow(
+      session,
+      order.copyWith(
+        status: _statusForDeliveryStage(stage),
+        updatedAt: now,
+      ),
+    );
+
+    return update;
+  }
+
+  Future<String> uploadDeliveryProof(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) async {
+    await requireOwnedVendor(session);
+    return _persistProductImage(session, fileData, fileName);
+  }
+
+  Future<Order> _requireMutableVendorOrder(
+    Session session,
+    UuidValue vendorId,
+    int orderId,
+  ) async {
+    await _assertVendorOwnsOrder(session, vendorId, orderId);
+    final order = await Order.db.findById(session, orderId);
+    if (order == null) {
+      throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
+    }
+    return order;
+  }
+
+  Future<void> _assertVendorOwnsOrder(
+    Session session,
+    UuidValue vendorId,
+    int orderId,
+  ) async {
+    final ownsOrder = await OrderItem.db.findFirstRow(
+      session,
+      where: (row) =>
+          row.vendorId.equals(vendorId) & row.orderId.equals(orderId),
+    );
+    if (ownsOrder == null) {
+      throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
+    }
+  }
+
+  Future<List<OrderDeliveryUpdate>> _deliveryUpdatesFor(
+    Session session,
+    UuidValue vendorId,
+    int orderId,
+  ) {
+    return OrderDeliveryUpdate.db.find(
+      session,
+      where: (row) =>
+          row.vendorId.equals(vendorId) & row.orderId.equals(orderId),
+      orderBy: (row) => row.createdAt,
+    );
+  }
+
+  DeliveryStage? _nextDeliveryStage(List<OrderDeliveryUpdate> existing) {
+    if (existing.isEmpty) return DeliveryStage.orderPlaced;
+
+    var maxIndex = -1;
+    for (final update in existing) {
+      final index = DeliveryStage.values.indexOf(update.stage);
+      if (index > maxIndex) maxIndex = index;
+    }
+
+    final nextIndex = maxIndex + 1;
+    if (nextIndex >= DeliveryStage.values.length) return null;
+    return DeliveryStage.values[nextIndex];
+  }
+
+  OrderStatus _statusForDeliveryStage(DeliveryStage stage) {
+    return switch (stage) {
+      DeliveryStage.orderPlaced => OrderStatus.accepted,
+      DeliveryStage.packed => OrderStatus.processing,
+      DeliveryStage.shipped => OrderStatus.shipped,
+      DeliveryStage.outForDelivery => OrderStatus.shipped,
+      DeliveryStage.delivered => OrderStatus.delivered,
+    };
+  }
+
+  String _stageLabel(DeliveryStage stage) {
+    return switch (stage) {
+      DeliveryStage.orderPlaced => 'Order placed',
+      DeliveryStage.packed => 'Packed',
+      DeliveryStage.shipped => 'Shipped',
+      DeliveryStage.outForDelivery => 'Out for delivery',
+      DeliveryStage.delivered => 'Delivered',
+    };
+  }
+
   Future<List<OrderItem>> _loadVendorOrderItems(
     Session session,
     UuidValue vendorId,
@@ -1023,6 +1268,7 @@ class VendorStore {
           vendorTotal: vendorTotal,
           itemCount: itemCount,
           items: lineItems,
+          rejectionReason: order.rejectionReason,
         ),
       );
     }

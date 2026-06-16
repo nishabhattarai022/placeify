@@ -189,4 +189,47 @@ class VendorService {
   Future<VendorShopOrder> getShopOrder(Session session, int orderId) {
     return _repository.getShopOrder(session, orderId);
   }
+
+  Future<VendorShopOrder> acceptShopOrder(Session session, int orderId) {
+    return _repository.acceptShopOrder(session, orderId);
+  }
+
+  Future<VendorShopOrder> rejectShopOrder(
+    Session session,
+    int orderId,
+    String reason,
+  ) {
+    return _repository.rejectShopOrder(session, orderId, reason);
+  }
+
+  Future<List<OrderDeliveryUpdate>> listDeliveryUpdates(
+    Session session,
+    int orderId,
+  ) {
+    return _repository.listDeliveryUpdates(session, orderId);
+  }
+
+  Future<OrderDeliveryUpdate> submitDeliveryUpdate(
+    Session session,
+    int orderId,
+    DeliveryStage stage, {
+    String? note,
+    String? photoUrl,
+  }) {
+    return _repository.submitDeliveryUpdate(
+      session,
+      orderId,
+      stage,
+      note: note,
+      photoUrl: photoUrl,
+    );
+  }
+
+  Future<String> uploadDeliveryProof(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) {
+    return _repository.uploadDeliveryProof(session, fileData, fileName);
+  }
 }

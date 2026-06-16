@@ -81,6 +81,11 @@ vendor:
   - regenerateProductModel3d:
   - listShopOrders:
   - getShopOrder:
+  - acceptShopOrder:
+  - rejectShopOrder:
+  - listDeliveryUpdates:
+  - submitDeliveryUpdate:
+  - uploadDeliveryProof:
 wishlist:
   - listMyWishlist:
   - addToWishlist:

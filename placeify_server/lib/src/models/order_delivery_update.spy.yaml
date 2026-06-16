@@ -1,0 +1,14 @@
+### Vendor-posted delivery milestone for a customer order.
+class: OrderDeliveryUpdate
+table: order_delivery_update
+fields:
+  order: Order?, relation(onDelete=Cascade)
+  vendor: Vendor?, relation(onDelete=Cascade)
+  stage: DeliveryStage
+  note: String?
+  photoUrl: String?
+  createdAt: DateTime, default=now
+
+indexes:
+  order_delivery_update_order_vendor:
+    fields: orderId, vendorId
