@@ -3,9 +3,7 @@ import 'package:model_viewer_plus/model_viewer_plus.dart';
 
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/widgets/toast_overlay.dart';
-import '../../data/product_3d_model_loader.dart';
 import '../ar_room_screen.dart';
-import '../model_3d_fullscreen_screen.dart';
 import '../product_detail_tokens.dart';
 
 /// Interactive glTF / GLB viewer with in-app AR room preview.
@@ -33,49 +31,19 @@ class _Product3dPreviewState extends State<Product3dPreview> {
     setState(() => _openingAr = true);
     HapticService.medium();
 
-    if (!ArRoomScreen.isSupported) {
-      final localModel = await Product3dModelLoader.prepareForAr(
-        remoteUrl: widget.modelSrc,
+    try {
+      final result = await ArRoomLauncher.open(
+        context: context,
+        remoteModelUrl: widget.modelSrc,
         productId: widget.productId,
+        productName: widget.productName,
       );
+
       if (!mounted) return;
-      setState(() => _openingAr = false);
-      if (localModel == null) {
-        PlaceifyToast.show(
-          context,
-          'Could not load the 3D model. Is the server running?',
-        );
-        return;
-      }
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          fullscreenDialog: true,
-          builder: (context) => Model3dFullscreenScreen(
-            modelSrc: widget.modelSrc,
-            productName: widget.productName,
-          ),
-        ),
-      );
-      return;
-    }
 
-    final result = await ArRoomLauncher.open(
-      context: context,
-      remoteModelUrl: widget.modelSrc,
-      productId: widget.productId,
-      productName: widget.productName,
-    );
-
-    if (mounted) {
-      setState(() => _openingAr = false);
       switch (result) {
         case ArRoomOpenResult.opened:
           break;
-        case ArRoomOpenResult.unsupported:
-          PlaceifyToast.show(
-            context,
-            'Try in my room works on Android and iPhone with AR support.',
-          );
         case ArRoomOpenResult.permissionDenied:
           PlaceifyToast.show(
             context,
@@ -84,9 +52,11 @@ class _Product3dPreviewState extends State<Product3dPreview> {
         case ArRoomOpenResult.modelDownloadFailed:
           PlaceifyToast.show(
             context,
-            'Could not load the 3D model. Check your connection and try again.',
+            'Could not open the AR experience. Please try again.',
           );
       }
+    } finally {
+      if (mounted) setState(() => _openingAr = false);
     }
   }
 
@@ -137,7 +107,7 @@ class _Product3dPreviewState extends State<Product3dPreview> {
                       )
                     : const Icon(Icons.view_in_ar_outlined, size: 20),
                 label: Text(
-                  _openingAr ? 'Preparing model…' : 'Try in my room',
+                  _openingAr ? 'Opening camera…' : 'Try in my room',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
