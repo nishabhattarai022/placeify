@@ -47,18 +47,20 @@ import 'package:placeify_client/src/protocol/product_page.dart' as _i29;
 import 'package:placeify_client/src/protocol/product_search_input.dart' as _i30;
 import 'package:placeify_client/src/protocol/vendor_profile_detail.dart'
     as _i31;
-import 'package:placeify_client/src/protocol/review.dart' as _i32;
-import 'package:placeify_client/src/protocol/vendor_dashboard.dart' as _i33;
+import 'package:placeify_client/src/protocol/refund_request_summary.dart'
+    as _i32;
+import 'package:placeify_client/src/protocol/review.dart' as _i33;
+import 'package:placeify_client/src/protocol/vendor_dashboard.dart' as _i34;
 import 'package:placeify_client/src/protocol/vendor_profile_update_input.dart'
-    as _i34;
-import 'dart:typed_data' as _i35;
+    as _i35;
+import 'dart:typed_data' as _i36;
 import 'package:placeify_client/src/protocol/vendor_product_upload_input.dart'
-    as _i36;
-import 'package:placeify_client/src/protocol/vendor_shop_order.dart' as _i37;
-import 'package:placeify_client/src/protocol/delivery_stage.dart' as _i38;
-import 'package:placeify_client/src/protocol/wishlist_page.dart' as _i39;
-import 'package:placeify_client/src/protocol/wishlist_item.dart' as _i40;
-import 'protocol.dart' as _i41;
+    as _i37;
+import 'package:placeify_client/src/protocol/vendor_shop_order.dart' as _i38;
+import 'package:placeify_client/src/protocol/delivery_stage.dart' as _i39;
+import 'package:placeify_client/src/protocol/wishlist_page.dart' as _i40;
+import 'package:placeify_client/src/protocol/wishlist_item.dart' as _i41;
+import 'protocol.dart' as _i42;
 
 /// By extending [EmailIdpBaseEndpoint], the email identity provider endpoints
 /// are made available on the server and enable the corresponding sign-in widget
@@ -774,6 +776,42 @@ class EndpointProduct extends _i2.EndpointRef {
   );
 }
 
+/// Refund and return requests for authenticated customers.
+/// {@category Endpoint}
+class EndpointRefund extends _i2.EndpointRef {
+  EndpointRefund(_i2.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'refund';
+
+  _i3.Future<List<_i32.RefundRequestSummary>> listMyRefundRequests({
+    _i25.PaginationInput? pagination,
+  }) => caller.callServerEndpoint<List<_i32.RefundRequestSummary>>(
+    'refund',
+    'listMyRefundRequests',
+    {'pagination': pagination},
+  );
+
+  _i3.Future<_i32.RefundRequestSummary> getRefundRequest(int refundId) =>
+      caller.callServerEndpoint<_i32.RefundRequestSummary>(
+        'refund',
+        'getRefundRequest',
+        {'refundId': refundId},
+      );
+
+  _i3.Future<_i32.RefundRequestSummary> createRefundRequest(
+    int orderId,
+    String reason,
+  ) => caller.callServerEndpoint<_i32.RefundRequestSummary>(
+    'refund',
+    'createRefundRequest',
+    {
+      'orderId': orderId,
+      'reason': reason,
+    },
+  );
+}
+
 /// Product reviews from verified purchasers.
 /// {@category Endpoint}
 class EndpointReview extends _i2.EndpointRef {
@@ -782,12 +820,12 @@ class EndpointReview extends _i2.EndpointRef {
   @override
   String get name => 'review';
 
-  _i3.Future<_i32.Review> submitReview(
+  _i3.Future<_i33.Review> submitReview(
     int productId,
     int orderId,
     int rating, {
     String? comment,
-  }) => caller.callServerEndpoint<_i32.Review>(
+  }) => caller.callServerEndpoint<_i33.Review>(
     'review',
     'submitReview',
     {
@@ -798,11 +836,11 @@ class EndpointReview extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<List<_i32.Review>> listProductReviews(
+  _i3.Future<List<_i33.Review>> listProductReviews(
     int productId, {
     required int limit,
     required int offset,
-  }) => caller.callServerEndpoint<List<_i32.Review>>(
+  }) => caller.callServerEndpoint<List<_i33.Review>>(
     'review',
     'listProductReviews',
     {
@@ -827,8 +865,8 @@ class EndpointVendor extends _i2.EndpointRef {
     {},
   );
 
-  _i3.Future<_i33.VendorDashboard> getDashboard() =>
-      caller.callServerEndpoint<_i33.VendorDashboard>(
+  _i3.Future<_i34.VendorDashboard> getDashboard() =>
+      caller.callServerEndpoint<_i34.VendorDashboard>(
         'vendor',
         'getDashboard',
         {},
@@ -868,7 +906,7 @@ class EndpointVendor extends _i2.EndpointRef {
       );
 
   _i3.Future<_i31.VendorProfileDetail> updateMyProfile(
-    _i34.VendorProfileUpdateInput input,
+    _i35.VendorProfileUpdateInput input,
   ) => caller.callServerEndpoint<_i31.VendorProfileDetail>(
     'vendor',
     'updateMyProfile',
@@ -876,7 +914,7 @@ class EndpointVendor extends _i2.EndpointRef {
   );
 
   _i3.Future<String> uploadShopLogo(
-    _i35.ByteData fileData,
+    _i36.ByteData fileData,
     String fileName,
   ) => caller.callServerEndpoint<String>(
     'vendor',
@@ -888,7 +926,7 @@ class EndpointVendor extends _i2.EndpointRef {
   );
 
   _i3.Future<String> uploadShopBanner(
-    _i35.ByteData fileData,
+    _i36.ByteData fileData,
     String fileName,
   ) => caller.callServerEndpoint<String>(
     'vendor',
@@ -958,8 +996,8 @@ class EndpointVendor extends _i2.EndpointRef {
 
   /// Creates a vendor product and stores the uploaded photo in one call.
   _i3.Future<_i16.Product> uploadProduct(
-    _i36.VendorProductUploadInput input,
-    _i35.ByteData imageData,
+    _i37.VendorProductUploadInput input,
+    _i36.ByteData imageData,
     String imageFileName,
   ) => caller.callServerEndpoint<_i16.Product>(
     'vendor',
@@ -984,7 +1022,7 @@ class EndpointVendor extends _i2.EndpointRef {
   );
 
   _i3.Future<String> uploadProductImage(
-    _i35.ByteData fileData,
+    _i36.ByteData fileData,
     String fileName,
   ) => caller.callServerEndpoint<String>(
     'vendor',
@@ -1002,11 +1040,11 @@ class EndpointVendor extends _i2.EndpointRef {
         {'productId': productId},
       );
 
-  _i3.Future<List<_i37.VendorShopOrder>> listShopOrders({
+  _i3.Future<List<_i38.VendorShopOrder>> listShopOrders({
     required int limit,
     required int offset,
     _i9.OrderStatus? status,
-  }) => caller.callServerEndpoint<List<_i37.VendorShopOrder>>(
+  }) => caller.callServerEndpoint<List<_i38.VendorShopOrder>>(
     'vendor',
     'listShopOrders',
     {
@@ -1016,24 +1054,24 @@ class EndpointVendor extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<_i37.VendorShopOrder> getShopOrder(int orderId) =>
-      caller.callServerEndpoint<_i37.VendorShopOrder>(
+  _i3.Future<_i38.VendorShopOrder> getShopOrder(int orderId) =>
+      caller.callServerEndpoint<_i38.VendorShopOrder>(
         'vendor',
         'getShopOrder',
         {'orderId': orderId},
       );
 
-  _i3.Future<_i37.VendorShopOrder> acceptShopOrder(int orderId) =>
-      caller.callServerEndpoint<_i37.VendorShopOrder>(
+  _i3.Future<_i38.VendorShopOrder> acceptShopOrder(int orderId) =>
+      caller.callServerEndpoint<_i38.VendorShopOrder>(
         'vendor',
         'acceptShopOrder',
         {'orderId': orderId},
       );
 
-  _i3.Future<_i37.VendorShopOrder> rejectShopOrder(
+  _i3.Future<_i38.VendorShopOrder> rejectShopOrder(
     int orderId,
     String reason,
-  ) => caller.callServerEndpoint<_i37.VendorShopOrder>(
+  ) => caller.callServerEndpoint<_i38.VendorShopOrder>(
     'vendor',
     'rejectShopOrder',
     {
@@ -1051,7 +1089,7 @@ class EndpointVendor extends _i2.EndpointRef {
 
   _i3.Future<_i27.OrderDeliveryUpdate> submitDeliveryUpdate(
     int orderId,
-    _i38.DeliveryStage stage, {
+    _i39.DeliveryStage stage, {
     String? note,
     String? photoUrl,
   }) => caller.callServerEndpoint<_i27.OrderDeliveryUpdate>(
@@ -1066,7 +1104,7 @@ class EndpointVendor extends _i2.EndpointRef {
   );
 
   _i3.Future<String> uploadDeliveryProof(
-    _i35.ByteData fileData,
+    _i36.ByteData fileData,
     String fileName,
   ) => caller.callServerEndpoint<String>(
     'vendor',
@@ -1086,16 +1124,16 @@ class EndpointWishlist extends _i2.EndpointRef {
   @override
   String get name => 'wishlist';
 
-  _i3.Future<_i39.WishlistPage> listMyWishlist({
+  _i3.Future<_i40.WishlistPage> listMyWishlist({
     _i25.PaginationInput? pagination,
-  }) => caller.callServerEndpoint<_i39.WishlistPage>(
+  }) => caller.callServerEndpoint<_i40.WishlistPage>(
     'wishlist',
     'listMyWishlist',
     {'pagination': pagination},
   );
 
-  _i3.Future<_i40.WishlistItem> addToWishlist(int productId) =>
-      caller.callServerEndpoint<_i40.WishlistItem>(
+  _i3.Future<_i41.WishlistItem> addToWishlist(int productId) =>
+      caller.callServerEndpoint<_i41.WishlistItem>(
         'wishlist',
         'addToWishlist',
         {'productId': productId},
@@ -1154,7 +1192,7 @@ class Client extends _i2.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i41.Protocol(),
+         _i42.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,
@@ -1174,6 +1212,7 @@ class Client extends _i2.ServerpodClientShared {
     notification = EndpointNotification(this);
     order = EndpointOrder(this);
     product = EndpointProduct(this);
+    refund = EndpointRefund(this);
     review = EndpointReview(this);
     vendor = EndpointVendor(this);
     wishlist = EndpointWishlist(this);
@@ -1202,6 +1241,8 @@ class Client extends _i2.ServerpodClientShared {
 
   late final EndpointProduct product;
 
+  late final EndpointRefund refund;
+
   late final EndpointReview review;
 
   late final EndpointVendor vendor;
@@ -1223,6 +1264,7 @@ class Client extends _i2.ServerpodClientShared {
     'notification': notification,
     'order': order,
     'product': product,
+    'refund': refund,
     'review': review,
     'vendor': vendor,
     'wishlist': wishlist,

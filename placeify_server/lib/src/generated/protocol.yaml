@@ -61,6 +61,10 @@ product:
   - getProduct:
   - getShopProfile:
   - listProducts:
+refund:
+  - listMyRefundRequests:
+  - getRefundRequest:
+  - createRefundRequest:
 review:
   - submitReview:
   - listProductReviews:

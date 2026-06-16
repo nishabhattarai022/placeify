@@ -2,17 +2,21 @@ import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
 import '../ar/ar_repository.dart';
+import '../refund/refund_repository.dart';
 import '../wishlist/wishlist_repository.dart';
 
 class UserProfileStore {
   UserProfileStore({
     WishlistStore? wishlistStore,
     ArSessionStore? arSessionStore,
+    RefundStore? refundStore,
   })  : _wishlistStore = wishlistStore ?? WishlistStore(),
-        _arSessionStore = arSessionStore ?? ArSessionStore();
+        _arSessionStore = arSessionStore ?? ArSessionStore(),
+        _refundStore = refundStore ?? RefundStore();
 
   final WishlistStore _wishlistStore;
   final ArSessionStore _arSessionStore;
+  final RefundStore _refundStore;
 
   Future<User?> findByAuthUserId(Session session, UuidValue authUserId) {
     return User.db.findFirstRow(
@@ -57,6 +61,20 @@ class UserProfileStore {
     );
   }
 
+  Future<int> _countCartItems(Session session, UuidValue userId) async {
+    final cart = await Cart.db.findFirstRow(
+      session,
+      where: (row) => row.userId.equals(userId),
+    );
+    if (cart?.id == null) return 0;
+
+    final items = await CartItem.db.find(
+      session,
+      where: (row) => row.cartId.equals(cart!.id!),
+    );
+    return items.fold<int>(0, (sum, item) => sum + item.quantity);
+  }
+
   Future<UserDashboard> buildDashboard(Session session, User user) async {
     final userId = user.id!;
 
@@ -67,13 +85,16 @@ class UserProfileStore {
 
     final wishlistCount = await _wishlistStore.countForUser(session, userId);
     final arSessionCount = await _arSessionStore.countForUser(session, userId);
+    final refundCount = await _refundStore.countForUser(session, userId);
+    final cartItemCount = await _countCartItems(session, userId);
 
     return UserDashboard(
       profile: user,
       orderCount: orderCount,
       wishlistCount: wishlistCount,
+      cartItemCount: cartItemCount,
       arSessionCount: arSessionCount,
-      refundCount: 0,
+      refundCount: refundCount,
     );
   }
 }

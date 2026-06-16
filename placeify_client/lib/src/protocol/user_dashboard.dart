@@ -20,6 +20,7 @@ abstract class UserDashboard implements _i1.SerializableModel {
     required this.profile,
     required this.orderCount,
     required this.wishlistCount,
+    required this.cartItemCount,
     required this.arSessionCount,
     required this.refundCount,
   });
@@ -28,6 +29,7 @@ abstract class UserDashboard implements _i1.SerializableModel {
     required _i2.User profile,
     required int orderCount,
     required int wishlistCount,
+    required int cartItemCount,
     required int arSessionCount,
     required int refundCount,
   }) = _UserDashboardImpl;
@@ -39,6 +41,7 @@ abstract class UserDashboard implements _i1.SerializableModel {
       ),
       orderCount: jsonSerialization['orderCount'] as int,
       wishlistCount: jsonSerialization['wishlistCount'] as int,
+      cartItemCount: jsonSerialization['cartItemCount'] as int,
       arSessionCount: jsonSerialization['arSessionCount'] as int,
       refundCount: jsonSerialization['refundCount'] as int,
     );
@@ -49,6 +52,8 @@ abstract class UserDashboard implements _i1.SerializableModel {
   int orderCount;
 
   int wishlistCount;
+
+  int cartItemCount;
 
   int arSessionCount;
 
@@ -61,6 +66,7 @@ abstract class UserDashboard implements _i1.SerializableModel {
     _i2.User? profile,
     int? orderCount,
     int? wishlistCount,
+    int? cartItemCount,
     int? arSessionCount,
     int? refundCount,
   });
@@ -71,6 +77,7 @@ abstract class UserDashboard implements _i1.SerializableModel {
       'profile': profile.toJson(),
       'orderCount': orderCount,
       'wishlistCount': wishlistCount,
+      'cartItemCount': cartItemCount,
       'arSessionCount': arSessionCount,
       'refundCount': refundCount,
     };
@@ -87,12 +94,14 @@ class _UserDashboardImpl extends UserDashboard {
     required _i2.User profile,
     required int orderCount,
     required int wishlistCount,
+    required int cartItemCount,
     required int arSessionCount,
     required int refundCount,
   }) : super._(
          profile: profile,
          orderCount: orderCount,
          wishlistCount: wishlistCount,
+         cartItemCount: cartItemCount,
          arSessionCount: arSessionCount,
          refundCount: refundCount,
        );
@@ -105,6 +114,7 @@ class _UserDashboardImpl extends UserDashboard {
     _i2.User? profile,
     int? orderCount,
     int? wishlistCount,
+    int? cartItemCount,
     int? arSessionCount,
     int? refundCount,
   }) {
@@ -112,6 +122,7 @@ class _UserDashboardImpl extends UserDashboard {
       profile: profile ?? this.profile.copyWith(),
       orderCount: orderCount ?? this.orderCount,
       wishlistCount: wishlistCount ?? this.wishlistCount,
+      cartItemCount: cartItemCount ?? this.cartItemCount,
       arSessionCount: arSessionCount ?? this.arSessionCount,
       refundCount: refundCount ?? this.refundCount,
     );
