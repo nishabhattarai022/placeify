@@ -207,6 +207,7 @@ class VendorStore {
     String? logoUrl,
     String? phone,
     String? address,
+    String? shopCategory,
   }) async {
     final user = await SessionService.requireUser(session);
     final existing = await Vendor.db.findFirstRow(
@@ -264,6 +265,7 @@ class VendorStore {
         shopName: trimmedName,
         description: trimmedDescription,
         businessAddress: trimmedAddress,
+        shopCategory: shopCategory?.trim(),
         logoUrl: logoUrl?.trim(),
       ),
     );
@@ -282,8 +284,169 @@ class VendorStore {
         shopName: shopName.trim(),
         description: description?.trim(),
         logoUrl: logoUrl?.trim(),
+        updatedAt: DateTime.now(),
       ),
     );
+  }
+
+  Future<VendorProfileDetail> getMyProfile(Session session) async {
+    final vendor = await requireOwnedVendor(session);
+    return _loadProfileDetail(session, vendor);
+  }
+
+  Future<VendorProfileDetail?> getShopProfile(
+    Session session,
+    UuidValue vendorId,
+  ) async {
+    final vendor = await Vendor.db.findById(
+      session,
+      vendorId,
+      include: Vendor.include(user: User.include()),
+    );
+    if (vendor == null) return null;
+
+    final user = vendor.user;
+    if (user == null ||
+        user.role != UserRole.vendor ||
+        user.status != UserAccountStatus.approved ||
+        !user.isActive) {
+      return null;
+    }
+
+    return _mapProfileDetail(vendor, user);
+  }
+
+  Future<VendorProfileDetail> updateMyProfile(
+    Session session,
+    VendorProfileUpdateInput input,
+  ) async {
+    final vendor = await requireOwnedVendor(session);
+    final user = await User.db.findById(session, vendor.userId);
+    if (user == null) {
+      throw PlaceifyException(
+        message: 'User account not found.',
+        code: 'USER_NOT_FOUND',
+      );
+    }
+
+    final businessName = input.businessName?.trim();
+    if (businessName != null && businessName.isEmpty) {
+      throw PlaceifyException(
+        message: 'Business name is required.',
+        code: 'INVALID_BUSINESS_NAME',
+      );
+    }
+
+    final phone = input.phone?.trim();
+    if (phone != null && phone.isEmpty) {
+      throw PlaceifyException(
+        message: 'Phone number is required.',
+        code: 'INVALID_PHONE',
+      );
+    }
+
+    final address = input.address?.trim();
+    if (address != null && address.isEmpty) {
+      throw PlaceifyException(
+        message: 'Address is required.',
+        code: 'INVALID_ADDRESS',
+      );
+    }
+
+    final now = DateTime.now();
+    final updatedUser = await User.db.updateRow(
+      session,
+      user.copyWith(
+        phone: phone ?? user.phone,
+        address: address ?? user.address,
+        updatedAt: now,
+      ),
+    );
+
+    final updatedVendor = await Vendor.db.updateRow(
+      session,
+      vendor.copyWith(
+        shopName: businessName ?? vendor.shopName,
+        description: input.bio?.trim() ?? vendor.description,
+        businessAddress: address ?? vendor.businessAddress,
+        shopCategory: input.category?.trim() ?? vendor.shopCategory,
+        logoUrl: _nullableTrim(input.logoUrl) ?? vendor.logoUrl,
+        bannerUrl: _nullableTrim(input.bannerUrl) ?? vendor.bannerUrl,
+        instagramHandle:
+            input.instagramHandle?.trim() ?? vendor.instagramHandle,
+        facebookHandle: input.facebookHandle?.trim() ?? vendor.facebookHandle,
+        operatingHours: input.operatingHours?.trim() ?? vendor.operatingHours,
+        updatedAt: now,
+      ),
+    );
+
+    return _mapProfileDetail(updatedVendor, updatedUser);
+  }
+
+  Future<String> uploadShopLogo(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) async {
+    final vendor = await requireOwnedVendor(session);
+    final logoUrl = await _persistProductImage(session, fileData, fileName);
+    await Vendor.db.updateRow(
+      session,
+      vendor.copyWith(logoUrl: logoUrl, updatedAt: DateTime.now()),
+    );
+    return logoUrl;
+  }
+
+  Future<String> uploadShopBanner(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) async {
+    final vendor = await requireOwnedVendor(session);
+    final bannerUrl = await _persistProductImage(session, fileData, fileName);
+    await Vendor.db.updateRow(
+      session,
+      vendor.copyWith(bannerUrl: bannerUrl, updatedAt: DateTime.now()),
+    );
+    return bannerUrl;
+  }
+
+  Future<VendorProfileDetail> _loadProfileDetail(
+    Session session,
+    Vendor vendor,
+  ) async {
+    final user = await User.db.findById(session, vendor.userId);
+    if (user == null) {
+      throw PlaceifyException(
+        message: 'User account not found.',
+        code: 'USER_NOT_FOUND',
+      );
+    }
+    return _mapProfileDetail(vendor, user);
+  }
+
+  VendorProfileDetail _mapProfileDetail(Vendor vendor, User user) {
+    return VendorProfileDetail(
+      id: vendor.id!,
+      businessName: vendor.shopName,
+      email: user.email ?? '',
+      phone: user.phone ?? '',
+      address: vendor.businessAddress ?? user.address ?? '',
+      category: vendor.shopCategory ?? '',
+      logoUrl: vendor.logoUrl,
+      bio: vendor.description ?? '',
+      bannerUrl: vendor.bannerUrl,
+      instagramHandle: vendor.instagramHandle ?? '',
+      facebookHandle: vendor.facebookHandle ?? '',
+      operatingHours: vendor.operatingHours ?? '',
+      createdAt: vendor.createdAt,
+    );
+  }
+
+  String? _nullableTrim(String? value) {
+    if (value == null) return null;
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
   }
 
   Future<List<Product>> listMyProducts(Session session) async {

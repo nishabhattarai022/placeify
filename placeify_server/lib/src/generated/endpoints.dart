@@ -34,13 +34,15 @@ import 'package:placeify_server/src/generated/checkout_request.dart' as _i21;
 import 'package:placeify_server/src/generated/pagination_input.dart' as _i22;
 import 'package:placeify_server/src/generated/product_search_input.dart'
     as _i23;
-import 'package:placeify_server/src/generated/vendor_product_upload_input.dart'
+import 'package:placeify_server/src/generated/vendor_profile_update_input.dart'
     as _i24;
 import 'dart:typed_data' as _i25;
-import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+import 'package:placeify_server/src/generated/vendor_product_upload_input.dart'
     as _i26;
-import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _i27;
+import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+    as _i28;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -1173,6 +1175,25 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['productId'],
                   ),
         ),
+        'getShopProfile': _i1.MethodConnector(
+          name: 'getShopProfile',
+          params: {
+            'vendorId': _i1.ParameterDescription(
+              name: 'vendorId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['product'] as _i12.ProductEndpoint).getShopProfile(
+                    session,
+                    params['vendorId'],
+                  ),
+        ),
         'listProducts': _i1.MethodConnector(
           name: 'listProducts',
           params: {
@@ -1343,6 +1364,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<String?>(),
               nullable: true,
             ),
+            'shopCategory': _i1.ParameterDescription(
+              name: 'shopCategory',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -1356,6 +1382,86 @@ class Endpoints extends _i1.EndpointDispatch {
                     logoUrl: params['logoUrl'],
                     phone: params['phone'],
                     address: params['address'],
+                    shopCategory: params['shopCategory'],
+                  ),
+        ),
+        'getMyProfile': _i1.MethodConnector(
+          name: 'getMyProfile',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['vendor'] as _i14.VendorEndpoint)
+                  .getMyProfile(session),
+        ),
+        'updateMyProfile': _i1.MethodConnector(
+          name: 'updateMyProfile',
+          params: {
+            'input': _i1.ParameterDescription(
+              name: 'input',
+              type: _i1.getType<_i24.VendorProfileUpdateInput>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i14.VendorEndpoint).updateMyProfile(
+                    session,
+                    params['input'],
+                  ),
+        ),
+        'uploadShopLogo': _i1.MethodConnector(
+          name: 'uploadShopLogo',
+          params: {
+            'fileData': _i1.ParameterDescription(
+              name: 'fileData',
+              type: _i1.getType<_i25.ByteData>(),
+              nullable: false,
+            ),
+            'fileName': _i1.ParameterDescription(
+              name: 'fileName',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i14.VendorEndpoint).uploadShopLogo(
+                    session,
+                    params['fileData'],
+                    params['fileName'],
+                  ),
+        ),
+        'uploadShopBanner': _i1.MethodConnector(
+          name: 'uploadShopBanner',
+          params: {
+            'fileData': _i1.ParameterDescription(
+              name: 'fileData',
+              type: _i1.getType<_i25.ByteData>(),
+              nullable: false,
+            ),
+            'fileName': _i1.ParameterDescription(
+              name: 'fileName',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i14.VendorEndpoint).uploadShopBanner(
+                    session,
+                    params['fileData'],
+                    params['fileName'],
                   ),
         ),
         'updateShop': _i1.MethodConnector(
@@ -1501,7 +1607,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'input': _i1.ParameterDescription(
               name: 'input',
-              type: _i1.getType<_i24.VendorProductUploadInput>(),
+              type: _i1.getType<_i26.VendorProductUploadInput>(),
               nullable: false,
             ),
             'imageData': _i1.ParameterDescription(
@@ -1749,9 +1855,9 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
-    modules['serverpod_auth_core'] = _i26.Endpoints()
+    modules['serverpod_auth_core'] = _i27.Endpoints()
       ..initializeEndpoints(server);
-    modules['serverpod_auth_idp'] = _i27.Endpoints()
+    modules['serverpod_auth_idp'] = _i28.Endpoints()
       ..initializeEndpoints(server);
   }
 }

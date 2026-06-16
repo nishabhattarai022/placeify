@@ -58,6 +58,7 @@ product:
   - listCategories:
   - searchProducts:
   - getProduct:
+  - getShopProfile:
   - listProducts:
 review:
   - submitReview:
@@ -67,6 +68,10 @@ vendor:
   - getDashboard:
   - hasShop:
   - createShop:
+  - getMyProfile:
+  - updateMyProfile:
+  - uploadShopLogo:
+  - uploadShopBanner:
   - updateShop:
   - listMyProducts:
   - createProduct:

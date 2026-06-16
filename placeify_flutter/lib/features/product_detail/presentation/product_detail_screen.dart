@@ -9,6 +9,8 @@ import '../../home/presentation/providers/catalog_provider.dart';
 import '../../../core/services/haptic_service.dart';
 import '../data/product_detail_content.dart';
 import 'product_detail_tokens.dart';
+import '../../shops/presentation/providers/consumer_shop_provider.dart';
+import 'widgets/product_detail_sold_by_row.dart';
 import 'widgets/product_detail_cart_bar.dart';
 import 'widgets/product_detail_gallery.dart';
 import 'widgets/product_detail_header.dart';
@@ -117,6 +119,9 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
   Widget _buildProductDetail(BuildContext context, Product product) {
     final content = ProductDetailContentRepository.forProduct(product);
     final top = MediaQuery.paddingOf(context).top;
+    final vendorId = product.vendorId;
+    final shopAsync =
+        vendorId != null ? ref.watch(shopListingProvider(vendorId)) : null;
 
     return Scaffold(
       backgroundColor: ProductDetailTokens.screenBg,
@@ -149,6 +154,18 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                 const SizedBox(
                   height: ProductDetailTokens.infoCardTopGap,
                 ),
+                if (vendorId != null)
+                  shopAsync?.maybeWhen(
+                    data: (shop) {
+                      if (shop == null) return const SizedBox.shrink();
+                      return ProductDetailSoldByRow(
+                        vendorId: vendorId,
+                        businessName: shop.businessName,
+                      );
+                    },
+                    orElse: () => const SizedBox.shrink(),
+                  ) ??
+                  const SizedBox.shrink(),
                 SlideTransition(
                   position: _infoSlide,
                   child: FadeTransition(

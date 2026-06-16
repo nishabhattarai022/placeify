@@ -22,6 +22,7 @@ class VendorService {
     String? logoUrl,
     String? phone,
     String? address,
+    String? shopCategory,
   }) {
     return _repository.createShop(
       session,
@@ -30,7 +31,42 @@ class VendorService {
       logoUrl: logoUrl,
       phone: phone,
       address: address,
+      shopCategory: shopCategory,
     );
+  }
+
+  Future<VendorProfileDetail> getMyProfile(Session session) {
+    return _repository.getMyProfile(session);
+  }
+
+  Future<VendorProfileDetail?> getShopProfile(
+    Session session,
+    UuidValue vendorId,
+  ) {
+    return _repository.getShopProfile(session, vendorId);
+  }
+
+  Future<VendorProfileDetail> updateMyProfile(
+    Session session,
+    VendorProfileUpdateInput input,
+  ) {
+    return _repository.updateMyProfile(session, input);
+  }
+
+  Future<String> uploadShopLogo(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) {
+    return _repository.uploadShopLogo(session, fileData, fileName);
+  }
+
+  Future<String> uploadShopBanner(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) {
+    return _repository.uploadShopBanner(session, fileData, fileName);
   }
 
   Future<Vendor> updateShop(

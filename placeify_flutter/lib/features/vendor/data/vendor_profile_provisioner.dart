@@ -33,7 +33,7 @@ abstract final class VendorProfileProvisioner {
         phone: registration.business.phone,
         address:
             '${address.street}, ${address.city}, ${address.state} ${address.postalCode}',
-        category: registration.category.category,
+        tags: [registration.category.category],
         bio: registration.category.description,
         createdAt: submittedAt,
       ),

@@ -9,7 +9,9 @@ import 'package:placeify_flutter/features/vendor/domain/models/vendor_notificati
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_order.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_payout.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product.dart';
+import 'package:placeify_flutter/features/vendor/domain/models/vendor_operating_day.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_profile.dart';
+import 'package:placeify_flutter/features/vendor/domain/models/vendor_social_links.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_stats.dart';
 
 /// Seed data for mock vendor repositories and legacy dashboard widgets.
@@ -71,13 +73,16 @@ abstract final class VendorMockConfig {
     email: 'vendor@placeify.demo',
     phone: '+977 9800000000',
     address: 'Lazimpat, Kathmandu',
-    category: 'Furniture',
+    tags: const ['Chairs', 'Tables'],
+    schedule: defaultVendorWeekSchedule(),
+    socialLinks: const VendorSocialLinks(
+      instagram: 'harmonyhome.np',
+      facebook: 'harmonyhomefurnishings',
+      website: 'https://harmonyhome.np',
+    ),
     bio:
         'Curated modern furniture and decor for Nepali homes. Custom orders welcome.',
     bannerUrl: null,
-    instagramHandle: 'harmonyhome.np',
-    facebookHandle: 'harmonyhomefurnishings',
-    operatingHours: 'Sun–Fri 10:00–18:00, Sat 11:00–16:00',
     createdAt: DateTime(2025, 11, 1),
   );
 
@@ -88,6 +93,8 @@ abstract final class VendorMockConfig {
     viewCount: 1280,
     conversionRate: 0.036,
     periodLabel: 'Last 30 days',
+    averageRating: 4.6,
+    responseRate: 0.92,
   );
 
   static final products = [
@@ -560,6 +567,8 @@ abstract final class VendorMockConfig {
         viewCount: 0,
         conversionRate: 0,
         periodLabel: 'Last 30 days',
+        averageRating: 0,
+        responseRate: 0,
       );
     }
     return stats;

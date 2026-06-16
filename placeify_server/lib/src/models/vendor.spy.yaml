@@ -7,7 +7,13 @@ fields:
   shopName: String
   description: String?
   businessAddress: String?
+  ### Vendor business type (e.g. furniture, decor) — not product Category.
+  shopCategory: String?
   logoUrl: String?
+  bannerUrl: String?
+  instagramHandle: String?
+  facebookHandle: String?
+  operatingHours: String?
   rating: double, default=0
   ### Admin who approved this vendor shop.
   approvedBy: Admin?, relation(optional)
