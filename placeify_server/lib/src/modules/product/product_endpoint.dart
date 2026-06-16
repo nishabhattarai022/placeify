@@ -22,6 +22,13 @@ class ProductEndpoint extends Endpoint {
     return _service.getProduct(session, productId);
   }
 
+  Future<VendorProfileDetail?> getShopProfile(
+    Session session,
+    UuidValue vendorId,
+  ) {
+    return _service.getShopProfile(session, vendorId);
+  }
+
   /// Backward-compatible list without pagination wrapper.
   Future<List<Product>> listProducts(
     Session session, {

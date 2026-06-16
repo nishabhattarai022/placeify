@@ -26,7 +26,12 @@ abstract class Vendor
     required this.shopName,
     this.description,
     this.businessAddress,
+    this.shopCategory,
     this.logoUrl,
+    this.bannerUrl,
+    this.instagramHandle,
+    this.facebookHandle,
+    this.operatingHours,
     double? rating,
     this.approvedById,
     this.approvedBy,
@@ -44,7 +49,12 @@ abstract class Vendor
     required String shopName,
     String? description,
     String? businessAddress,
+    String? shopCategory,
     String? logoUrl,
+    String? bannerUrl,
+    String? instagramHandle,
+    String? facebookHandle,
+    String? operatingHours,
     double? rating,
     _i1.UuidValue? approvedById,
     _i3.Admin? approvedBy,
@@ -65,7 +75,12 @@ abstract class Vendor
       shopName: jsonSerialization['shopName'] as String,
       description: jsonSerialization['description'] as String?,
       businessAddress: jsonSerialization['businessAddress'] as String?,
+      shopCategory: jsonSerialization['shopCategory'] as String?,
       logoUrl: jsonSerialization['logoUrl'] as String?,
+      bannerUrl: jsonSerialization['bannerUrl'] as String?,
+      instagramHandle: jsonSerialization['instagramHandle'] as String?,
+      facebookHandle: jsonSerialization['facebookHandle'] as String?,
+      operatingHours: jsonSerialization['operatingHours'] as String?,
       rating: (jsonSerialization['rating'] as num?)?.toDouble(),
       approvedById: jsonSerialization['approvedById'] == null
           ? null
@@ -106,7 +121,18 @@ abstract class Vendor
 
   String? businessAddress;
 
+  /// Vendor business type (e.g. furniture, decor) — not product Category.
+  String? shopCategory;
+
   String? logoUrl;
+
+  String? bannerUrl;
+
+  String? instagramHandle;
+
+  String? facebookHandle;
+
+  String? operatingHours;
 
   double rating;
 
@@ -134,7 +160,12 @@ abstract class Vendor
     String? shopName,
     String? description,
     String? businessAddress,
+    String? shopCategory,
     String? logoUrl,
+    String? bannerUrl,
+    String? instagramHandle,
+    String? facebookHandle,
+    String? operatingHours,
     double? rating,
     _i1.UuidValue? approvedById,
     _i3.Admin? approvedBy,
@@ -152,7 +183,12 @@ abstract class Vendor
       'shopName': shopName,
       if (description != null) 'description': description,
       if (businessAddress != null) 'businessAddress': businessAddress,
+      if (shopCategory != null) 'shopCategory': shopCategory,
       if (logoUrl != null) 'logoUrl': logoUrl,
+      if (bannerUrl != null) 'bannerUrl': bannerUrl,
+      if (instagramHandle != null) 'instagramHandle': instagramHandle,
+      if (facebookHandle != null) 'facebookHandle': facebookHandle,
+      if (operatingHours != null) 'operatingHours': operatingHours,
       'rating': rating,
       if (approvedById != null) 'approvedById': approvedById?.toJson(),
       if (approvedBy != null) 'approvedBy': approvedBy?.toJson(),
@@ -172,7 +208,12 @@ abstract class Vendor
       'shopName': shopName,
       if (description != null) 'description': description,
       if (businessAddress != null) 'businessAddress': businessAddress,
+      if (shopCategory != null) 'shopCategory': shopCategory,
       if (logoUrl != null) 'logoUrl': logoUrl,
+      if (bannerUrl != null) 'bannerUrl': bannerUrl,
+      if (instagramHandle != null) 'instagramHandle': instagramHandle,
+      if (facebookHandle != null) 'facebookHandle': facebookHandle,
+      if (operatingHours != null) 'operatingHours': operatingHours,
       'rating': rating,
       if (approvedById != null) 'approvedById': approvedById?.toJson(),
       if (approvedBy != null) 'approvedBy': approvedBy?.toJsonForProtocol(),
@@ -228,7 +269,12 @@ class _VendorImpl extends Vendor {
     required String shopName,
     String? description,
     String? businessAddress,
+    String? shopCategory,
     String? logoUrl,
+    String? bannerUrl,
+    String? instagramHandle,
+    String? facebookHandle,
+    String? operatingHours,
     double? rating,
     _i1.UuidValue? approvedById,
     _i3.Admin? approvedBy,
@@ -242,7 +288,12 @@ class _VendorImpl extends Vendor {
          shopName: shopName,
          description: description,
          businessAddress: businessAddress,
+         shopCategory: shopCategory,
          logoUrl: logoUrl,
+         bannerUrl: bannerUrl,
+         instagramHandle: instagramHandle,
+         facebookHandle: facebookHandle,
+         operatingHours: operatingHours,
          rating: rating,
          approvedById: approvedById,
          approvedBy: approvedBy,
@@ -262,7 +313,12 @@ class _VendorImpl extends Vendor {
     String? shopName,
     Object? description = _Undefined,
     Object? businessAddress = _Undefined,
+    Object? shopCategory = _Undefined,
     Object? logoUrl = _Undefined,
+    Object? bannerUrl = _Undefined,
+    Object? instagramHandle = _Undefined,
+    Object? facebookHandle = _Undefined,
+    Object? operatingHours = _Undefined,
     double? rating,
     Object? approvedById = _Undefined,
     Object? approvedBy = _Undefined,
@@ -279,7 +335,18 @@ class _VendorImpl extends Vendor {
       businessAddress: businessAddress is String?
           ? businessAddress
           : this.businessAddress,
+      shopCategory: shopCategory is String? ? shopCategory : this.shopCategory,
       logoUrl: logoUrl is String? ? logoUrl : this.logoUrl,
+      bannerUrl: bannerUrl is String? ? bannerUrl : this.bannerUrl,
+      instagramHandle: instagramHandle is String?
+          ? instagramHandle
+          : this.instagramHandle,
+      facebookHandle: facebookHandle is String?
+          ? facebookHandle
+          : this.facebookHandle,
+      operatingHours: operatingHours is String?
+          ? operatingHours
+          : this.operatingHours,
       rating: rating ?? this.rating,
       approvedById: approvedById is _i1.UuidValue?
           ? approvedById
@@ -319,10 +386,39 @@ class VendorUpdateTable extends _i1.UpdateTable<VendorTable> {
         value,
       );
 
+  _i1.ColumnValue<String, String> shopCategory(String? value) =>
+      _i1.ColumnValue(
+        table.shopCategory,
+        value,
+      );
+
   _i1.ColumnValue<String, String> logoUrl(String? value) => _i1.ColumnValue(
     table.logoUrl,
     value,
   );
+
+  _i1.ColumnValue<String, String> bannerUrl(String? value) => _i1.ColumnValue(
+    table.bannerUrl,
+    value,
+  );
+
+  _i1.ColumnValue<String, String> instagramHandle(String? value) =>
+      _i1.ColumnValue(
+        table.instagramHandle,
+        value,
+      );
+
+  _i1.ColumnValue<String, String> facebookHandle(String? value) =>
+      _i1.ColumnValue(
+        table.facebookHandle,
+        value,
+      );
+
+  _i1.ColumnValue<String, String> operatingHours(String? value) =>
+      _i1.ColumnValue(
+        table.operatingHours,
+        value,
+      );
 
   _i1.ColumnValue<double, double> rating(double value) => _i1.ColumnValue(
     table.rating,
@@ -374,8 +470,28 @@ class VendorTable extends _i1.Table<_i1.UuidValue?> {
       'businessAddress',
       this,
     );
+    shopCategory = _i1.ColumnString(
+      'shopCategory',
+      this,
+    );
     logoUrl = _i1.ColumnString(
       'logoUrl',
+      this,
+    );
+    bannerUrl = _i1.ColumnString(
+      'bannerUrl',
+      this,
+    );
+    instagramHandle = _i1.ColumnString(
+      'instagramHandle',
+      this,
+    );
+    facebookHandle = _i1.ColumnString(
+      'facebookHandle',
+      this,
+    );
+    operatingHours = _i1.ColumnString(
+      'operatingHours',
       this,
     );
     rating = _i1.ColumnDouble(
@@ -415,7 +531,18 @@ class VendorTable extends _i1.Table<_i1.UuidValue?> {
 
   late final _i1.ColumnString businessAddress;
 
+  /// Vendor business type (e.g. furniture, decor) — not product Category.
+  late final _i1.ColumnString shopCategory;
+
   late final _i1.ColumnString logoUrl;
+
+  late final _i1.ColumnString bannerUrl;
+
+  late final _i1.ColumnString instagramHandle;
+
+  late final _i1.ColumnString facebookHandle;
+
+  late final _i1.ColumnString operatingHours;
 
   late final _i1.ColumnDouble rating;
 
@@ -463,7 +590,12 @@ class VendorTable extends _i1.Table<_i1.UuidValue?> {
     shopName,
     description,
     businessAddress,
+    shopCategory,
     logoUrl,
+    bannerUrl,
+    instagramHandle,
+    facebookHandle,
+    operatingHours,
     rating,
     approvedById,
     approvedAt,

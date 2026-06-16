@@ -134,7 +134,7 @@ class MockConsumerShopRepository implements ConsumerShopRepository {
       vendorId: profile.id,
       businessName: profile.businessName,
       locality: _localityFromAddress(profile.address),
-      tags: profile.category.isNotEmpty ? [profile.category] : const [],
+      tags: profile.tags,
       logoUrl: profile.logoUrl,
       bannerUrl: profile.bannerUrl,
       productCount: productCount,

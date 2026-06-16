@@ -31,6 +31,7 @@ class VendorEndpoint extends Endpoint {
     String? logoUrl,
     String? phone,
     String? address,
+    String? shopCategory,
   }) {
     return _service.createShop(
       session,
@@ -39,7 +40,35 @@ class VendorEndpoint extends Endpoint {
       logoUrl: logoUrl,
       phone: phone,
       address: address,
+      shopCategory: shopCategory,
     );
+  }
+
+  Future<VendorProfileDetail> getMyProfile(Session session) {
+    return _service.getMyProfile(session);
+  }
+
+  Future<VendorProfileDetail> updateMyProfile(
+    Session session,
+    VendorProfileUpdateInput input,
+  ) {
+    return _service.updateMyProfile(session, input);
+  }
+
+  Future<String> uploadShopLogo(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) {
+    return _service.uploadShopLogo(session, fileData, fileName);
+  }
+
+  Future<String> uploadShopBanner(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) {
+    return _service.uploadShopBanner(session, fileData, fileName);
   }
 
   Future<Vendor> updateShop(

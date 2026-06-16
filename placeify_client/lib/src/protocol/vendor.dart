@@ -24,7 +24,12 @@ abstract class Vendor implements _i1.SerializableModel {
     required this.shopName,
     this.description,
     this.businessAddress,
+    this.shopCategory,
     this.logoUrl,
+    this.bannerUrl,
+    this.instagramHandle,
+    this.facebookHandle,
+    this.operatingHours,
     double? rating,
     this.approvedById,
     this.approvedBy,
@@ -42,7 +47,12 @@ abstract class Vendor implements _i1.SerializableModel {
     required String shopName,
     String? description,
     String? businessAddress,
+    String? shopCategory,
     String? logoUrl,
+    String? bannerUrl,
+    String? instagramHandle,
+    String? facebookHandle,
+    String? operatingHours,
     double? rating,
     _i1.UuidValue? approvedById,
     _i3.Admin? approvedBy,
@@ -63,7 +73,12 @@ abstract class Vendor implements _i1.SerializableModel {
       shopName: jsonSerialization['shopName'] as String,
       description: jsonSerialization['description'] as String?,
       businessAddress: jsonSerialization['businessAddress'] as String?,
+      shopCategory: jsonSerialization['shopCategory'] as String?,
       logoUrl: jsonSerialization['logoUrl'] as String?,
+      bannerUrl: jsonSerialization['bannerUrl'] as String?,
+      instagramHandle: jsonSerialization['instagramHandle'] as String?,
+      facebookHandle: jsonSerialization['facebookHandle'] as String?,
+      operatingHours: jsonSerialization['operatingHours'] as String?,
       rating: (jsonSerialization['rating'] as num?)?.toDouble(),
       approvedById: jsonSerialization['approvedById'] == null
           ? null
@@ -102,7 +117,18 @@ abstract class Vendor implements _i1.SerializableModel {
 
   String? businessAddress;
 
+  /// Vendor business type (e.g. furniture, decor) — not product Category.
+  String? shopCategory;
+
   String? logoUrl;
+
+  String? bannerUrl;
+
+  String? instagramHandle;
+
+  String? facebookHandle;
+
+  String? operatingHours;
 
   double rating;
 
@@ -127,7 +153,12 @@ abstract class Vendor implements _i1.SerializableModel {
     String? shopName,
     String? description,
     String? businessAddress,
+    String? shopCategory,
     String? logoUrl,
+    String? bannerUrl,
+    String? instagramHandle,
+    String? facebookHandle,
+    String? operatingHours,
     double? rating,
     _i1.UuidValue? approvedById,
     _i3.Admin? approvedBy,
@@ -145,7 +176,12 @@ abstract class Vendor implements _i1.SerializableModel {
       'shopName': shopName,
       if (description != null) 'description': description,
       if (businessAddress != null) 'businessAddress': businessAddress,
+      if (shopCategory != null) 'shopCategory': shopCategory,
       if (logoUrl != null) 'logoUrl': logoUrl,
+      if (bannerUrl != null) 'bannerUrl': bannerUrl,
+      if (instagramHandle != null) 'instagramHandle': instagramHandle,
+      if (facebookHandle != null) 'facebookHandle': facebookHandle,
+      if (operatingHours != null) 'operatingHours': operatingHours,
       'rating': rating,
       if (approvedById != null) 'approvedById': approvedById?.toJson(),
       if (approvedBy != null) 'approvedBy': approvedBy?.toJson(),
@@ -171,7 +207,12 @@ class _VendorImpl extends Vendor {
     required String shopName,
     String? description,
     String? businessAddress,
+    String? shopCategory,
     String? logoUrl,
+    String? bannerUrl,
+    String? instagramHandle,
+    String? facebookHandle,
+    String? operatingHours,
     double? rating,
     _i1.UuidValue? approvedById,
     _i3.Admin? approvedBy,
@@ -185,7 +226,12 @@ class _VendorImpl extends Vendor {
          shopName: shopName,
          description: description,
          businessAddress: businessAddress,
+         shopCategory: shopCategory,
          logoUrl: logoUrl,
+         bannerUrl: bannerUrl,
+         instagramHandle: instagramHandle,
+         facebookHandle: facebookHandle,
+         operatingHours: operatingHours,
          rating: rating,
          approvedById: approvedById,
          approvedBy: approvedBy,
@@ -205,7 +251,12 @@ class _VendorImpl extends Vendor {
     String? shopName,
     Object? description = _Undefined,
     Object? businessAddress = _Undefined,
+    Object? shopCategory = _Undefined,
     Object? logoUrl = _Undefined,
+    Object? bannerUrl = _Undefined,
+    Object? instagramHandle = _Undefined,
+    Object? facebookHandle = _Undefined,
+    Object? operatingHours = _Undefined,
     double? rating,
     Object? approvedById = _Undefined,
     Object? approvedBy = _Undefined,
@@ -222,7 +273,18 @@ class _VendorImpl extends Vendor {
       businessAddress: businessAddress is String?
           ? businessAddress
           : this.businessAddress,
+      shopCategory: shopCategory is String? ? shopCategory : this.shopCategory,
       logoUrl: logoUrl is String? ? logoUrl : this.logoUrl,
+      bannerUrl: bannerUrl is String? ? bannerUrl : this.bannerUrl,
+      instagramHandle: instagramHandle is String?
+          ? instagramHandle
+          : this.instagramHandle,
+      facebookHandle: facebookHandle is String?
+          ? facebookHandle
+          : this.facebookHandle,
+      operatingHours: operatingHours is String?
+          ? operatingHours
+          : this.operatingHours,
       rating: rating ?? this.rating,
       approvedById: approvedById is _i1.UuidValue?
           ? approvedById

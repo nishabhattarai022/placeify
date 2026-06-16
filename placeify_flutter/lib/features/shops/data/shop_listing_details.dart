@@ -72,8 +72,7 @@ class ShopListingDetails {
 
   static ShopListingDetails _fallback(VendorProfile profile) {
     final year = profile.createdAt.year;
-    final tags =
-        profile.category.isNotEmpty ? [profile.category] : <String>[];
+    final tags = profile.tags;
     final bio = profile.bio.trim();
 
     return ShopListingDetails(

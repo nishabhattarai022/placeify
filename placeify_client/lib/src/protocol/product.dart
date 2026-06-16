@@ -17,7 +17,6 @@ import 'category.dart' as _i4;
 import 'admin.dart' as _i5;
 import 'package:placeify_client/src/protocol/protocol.dart' as _i6;
 
-/// Furniture product listed by a vendor in the marketplace.
 abstract class Product implements _i1.SerializableModel {
   Product._({
     this.id,
