@@ -187,9 +187,9 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
 
   bool get _hasPhoto => _photos.containsKey(ProductPhotoView.front);
 
-  int get _extraPhotoCount => _photos.keys
-      .where((view) => view != ProductPhotoView.front)
-      .length;
+  bool get _hasMinimumPhotos => _photos.length >= kMinProductPhotosFor3d;
+
+  int get _photoCount => _photos.length;
 
   bool get _hasCategory => _selectedCategoryId != null;
 
@@ -222,6 +222,12 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       return;
     }
 
+    if (!_hasMinimumPhotos) {
+      setState(() => _showPhotoError = true);
+      PlaceifyToast.show(context, kMinProductPhotosMessage);
+      return;
+    }
+
     if (!_hasCategory) {
       setState(() => _showCategoryError = true);
       PlaceifyToast.show(context, 'Select a furniture category');
@@ -244,6 +250,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
           ProductPhotoView.left,
           ProductPhotoView.back,
           ProductPhotoView.right,
+          ProductPhotoView.frontLeft,
+          ProductPhotoView.frontRight,
         ])
           _photos[view],
       ];
@@ -272,9 +280,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       if (!mounted) return;
       PlaceifyToast.show(
         context,
-        _extraPhotoCount > 0
-            ? 'Product published — Build 3D will use your ${_extraPhotoCount + 1} photos'
-            : 'Product published — tap Build 3D in your dashboard to create a preview',
+        'Product published — Build 3D will use your $_photoCount photos',
       );
       context.pop();
     } on VendorRepositoryException catch (error) {
@@ -338,7 +344,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                       const SizedBox(height: 16),
                       VendorFormChecklist(
                         items: [
-                          (label: 'Photo', done: _hasPhoto),
+                          (label: 'Photo', done: _hasMinimumPhotos),
                           (label: 'Category', done: _hasCategory),
                           (label: 'Basics', done: _hasBasics && _hasValidPrice),
                           (label: 'Specs', done: _hasSpecs),
@@ -350,9 +356,9 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                         step: 1,
                         title: 'Product photos',
                         subtitle:
-                            'Add all four angles when you can. Avoid bright windows '
-                            'behind the chair — use even light. 3D uses your original '
-                            'photos only (catalog white-background images are not used).',
+                            'Upload at least 5 photos (recommended 6): front, sides, '
+                            'back, and 45° angles. Use even light — 3D uses white-background '
+                            'preprocessed frames sent to Tripo.',
                         children: [
                           DecoratedBox(
                             decoration: BoxDecoration(
@@ -378,9 +384,11 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                           ),
                           if (_showPhotoError) ...[
                             const SizedBox(height: 8),
-                            const Text(
-                              'A product photo is required',
-                              style: TextStyle(
+                            Text(
+                              _hasPhoto
+                                  ? kMinProductPhotosMessage
+                                  : 'A product photo is required',
+                              style: const TextStyle(
                                 fontSize: 12,
                                 color: AppColors.rust,
                                 fontWeight: FontWeight.w500,

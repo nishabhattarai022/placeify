@@ -17,7 +17,8 @@ fields:
   warranty: String?
   model3dUrl: String?
   thumbnailUrl: String?
-  ### Extra catalog photos for Tripo multiview 3D: [left, back, right].
+  /// Extra catalog photos for Tripo multiview 3D:
+  /// [left, back, right, frontLeft, frontRight].
   viewImageUrls: List<String>?
   status: ProductStatus, default=active
   createdAt: DateTime, default=now

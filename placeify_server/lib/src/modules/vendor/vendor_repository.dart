@@ -6,8 +6,9 @@ import 'package:serverpod/serverpod.dart' hide Order;
 import '../../generated/protocol.dart';
 import '../../shared/server_static_paths.dart';
 import '../../shared/session_service.dart';
-import 'product_3d/product_3d_generation_result.dart';
 import 'product_3d/product_3d_generator.dart';
+import 'product_3d/product_3d_generation_result.dart';
+import 'product_3d/product_3d_views.dart';
 import 'product_image_processor.dart';
 
 class VendorStore {
@@ -376,7 +377,7 @@ class VendorStore {
       return product;
     }
 
-    final generator = const Product3dGenerator();
+    final generator = Product3dGenerator();
     final result = await generator.generateForProduct(
       session,
       product: product,
@@ -512,12 +513,12 @@ class VendorStore {
     return '/uploads/$storedName';
   }
 
-  /// Keeps Tripo view order [left, back, right], dropping trailing empty slots.
+  /// Keeps Tripo view order [left, back, right, frontLeft, frontRight].
   List<String>? _normalizeViewImageUrls(List<String>? urls) {
     if (urls == null || urls.isEmpty) return null;
 
     final normalized = urls
-        .take(3)
+        .take(Product3dViews.extraSlotCount)
         .map((url) => url.trim())
         .toList(growable: false);
     if (normalized.every((url) => url.isEmpty)) return null;

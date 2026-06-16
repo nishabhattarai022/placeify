@@ -108,7 +108,7 @@ class ServerpodVendorRepository implements VendorRepository {
       );
 
       final viewImageUrls = <String>[];
-      for (final photo in extraViewPhotos.take(3)) {
+      for (final photo in extraViewPhotos.take(5)) {
         if (photo == null) {
           if (viewImageUrls.isNotEmpty) viewImageUrls.add('');
           continue;
@@ -314,6 +314,12 @@ class ServerpodVendorRepository implements VendorRepository {
       return VendorRepositoryException(
         'Product photo file is missing on the server. Re-upload the photo, then try Build 3D again.',
         code: 'MODEL3D_THUMBNAIL_MISSING',
+      );
+    }
+    if (message.contains('MODEL3D_INSUFFICIENT_VIEWS')) {
+      return VendorRepositoryException(
+        'Please upload at least 5 images for accurate 3D reconstruction.',
+        code: 'MODEL3D_INSUFFICIENT_VIEWS',
       );
     }
     if (message.contains('MODEL3D_TRIPO_SOURCE_MISSING')) {

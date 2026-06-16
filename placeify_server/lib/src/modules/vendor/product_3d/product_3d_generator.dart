@@ -7,11 +7,17 @@ import '../../../generated/protocol.dart';
 import '../../../shared/server_static_paths.dart';
 import 'product_3d_generation_result.dart';
 import 'product_3d_image_paths.dart';
+import 'product_3d_views.dart';
 import 'tripo_client.dart';
+import 'tripo_input_preprocessor.dart';
+import 'tripo_view_mapper.dart';
 
-/// Generates a per-product GLB via the Tripo image-to-model API.
+/// Generates a per-product GLB via the Tripo multiview API.
 class Product3dGenerator {
-  const Product3dGenerator();
+  Product3dGenerator({TripoInputPreprocessor? preprocessor})
+      : _preprocessor = preprocessor ?? TripoInputPreprocessor();
+
+  final TripoInputPreprocessor _preprocessor;
 
   Future<Product3dGenerationResult> generateForProduct(
     Session session, {
@@ -34,31 +40,7 @@ class Product3dGenerator {
     }
 
     try {
-      final catalogFile = ServerStaticPaths.fileFromUrlPath(thumbnail);
-      if (!catalogFile.existsSync()) {
-        return Product3dGenerationResult.failure(
-          code: 'MODEL3D_THUMBNAIL_MISSING',
-          message:
-              'Product photo file is missing on the server. '
-              'Re-upload the product photo, then try Build 3D again.',
-        );
-      }
-
-      final hasTripoOriginal = Product3dImagePaths
-          .tripoSourceCandidatesForCatalog(thumbnail)
-          .any(
-            (path) => ServerStaticPaths.fileFromUrlPath(path).existsSync(),
-          );
-      if (!hasTripoOriginal) {
-        return Product3dGenerationResult.failure(
-          code: 'MODEL3D_TRIPO_SOURCE_MISSING',
-          message:
-              '3D needs your original photos (not catalog cutouts). '
-              'Re-upload all product photos, then try Build 3D again.',
-        );
-      }
-
-      final views = await _loadTripoViews(session, product);
+      final views = await _loadProductViews(session, product);
       if (views == null) {
         return Product3dGenerationResult.failure(
           code: 'MODEL3D_THUMBNAIL_MISSING',
@@ -68,33 +50,64 @@ class Product3dGenerator {
         );
       }
 
-      final providedViews = views.whereType<TripoViewImage>().length;
-      if (providedViews == 0) {
+      final providedViews = TripoViewMapper.countProvidedViews(
+        front: views.front,
+        left: views.left,
+        back: views.back,
+        right: views.right,
+        frontLeft: views.frontLeft,
+        frontRight: views.frontRight,
+      );
+
+      if (providedViews < Product3dViews.minImages) {
         return Product3dGenerationResult.failure(
-          code: 'MODEL3D_TRIPO_SOURCE_MISSING',
-          message:
-              '3D needs your original photos (not catalog cutouts). '
-              'Re-upload all product photos, then try Build 3D again.',
+          code: 'MODEL3D_INSUFFICIENT_VIEWS',
+          message: Product3dViews.insufficientViewsMessage,
         );
       }
-      final remoteModelUrl = providedViews >= 2
-          ? await TripoClient.generateModelFromMultiview(
-              session,
-              views: views,
-            )
-          : await TripoClient.generateModelFromImage(
-              session,
-              imageBytes: views.first!.bytes,
-              imageFormat: views.first!.format,
-            );
+
+      if (views.front == null) {
+        return Product3dGenerationResult.failure(
+          code: 'MODEL3D_INSUFFICIENT_VIEWS',
+          message: Product3dViews.insufficientViewsMessage,
+        );
+      }
+
+      final tripoSlots = TripoViewMapper.toTripoMultiviewSlots(
+        front: views.front,
+        left: views.left,
+        back: views.back,
+        right: views.right,
+        frontLeft: views.frontLeft,
+        frontRight: views.frontRight,
+      );
+
+      final tripoViewCount = tripoSlots.whereType<TripoViewImage>().length;
+      if (tripoViewCount < 4) {
+        return Product3dGenerationResult.failure(
+          code: 'MODEL3D_INSUFFICIENT_VIEWS',
+          message: Product3dViews.insufficientViewsMessage,
+        );
+      }
+
+      session.log(
+        'Tripo 3D using $providedViews vendor photos mapped to '
+        '$tripoViewCount Tripo multiview slots',
+        level: LogLevel.info,
+      );
+
+      final remoteModelUrl = await TripoClient.generateModelFromMultiview(
+        session,
+        views: tripoSlots,
+        sourceViewCount: providedViews,
+      );
 
       final glbBytes = await _downloadGlb(remoteModelUrl);
       final localUrl = await _storeGlb(productId, glbBytes);
 
       session.log(
         'Tripo 3D model saved for product $productId at $localUrl '
-        '($providedViews view${providedViews == 1 ? '' : 's'}, '
-        'multiview=${providedViews >= 2})',
+        '($providedViews photos, multiview)',
         level: LogLevel.info,
       );
       return Product3dGenerationResult.success(localUrl);
@@ -105,6 +118,15 @@ class Product3dGenerator {
       );
       return Product3dGenerationResult.failure(
         code: 'MODEL3D_TRIPO_FAILED',
+        message: error.message,
+      );
+    } on TripoInputPreprocessorException catch (error) {
+      session.log(
+        'Tripo image preprocessing failed for product $productId: $error',
+        level: LogLevel.warning,
+      );
+      return Product3dGenerationResult.failure(
+        code: 'MODEL3D_PREPROCESS_FAILED',
         message: error.message,
       );
     } catch (error, stackTrace) {
@@ -121,77 +143,64 @@ class Product3dGenerator {
     }
   }
 
-  /// Loads view slots [front, left, back, right]. Returns null if front is missing.
-  Future<List<TripoViewImage?>?> _loadTripoViews(
+  Future<_ProductViews?> _loadProductViews(
     Session session,
     Product product,
   ) async {
-    final front = await _loadViewImage(session, product.thumbnailUrl);
+    final front = await _loadPreparedView(session, product.thumbnailUrl);
     if (front == null) return null;
 
     final extraUrls = product.viewImageUrls ?? const <String>[];
-    final left = extraUrls.isNotEmpty
-        ? await _loadViewImage(session, extraUrls.elementAtOrNull(0))
-        : null;
-    final back = extraUrls.length > 1
-        ? await _loadViewImage(session, extraUrls.elementAtOrNull(1))
-        : null;
-    final right = extraUrls.length > 2
-        ? await _loadViewImage(session, extraUrls.elementAtOrNull(2))
-        : null;
-
-    if (left == null && back == null && right == null) {
-      return [front];
-    }
-
-    return [front, left, back, right];
+    return _ProductViews(
+      front: front,
+      left: await _loadPreparedView(session, extraUrls.elementAtOrNull(0)),
+      back: await _loadPreparedView(session, extraUrls.elementAtOrNull(1)),
+      right: await _loadPreparedView(session, extraUrls.elementAtOrNull(2)),
+      frontLeft: await _loadPreparedView(session, extraUrls.elementAtOrNull(3)),
+      frontRight:
+          await _loadPreparedView(session, extraUrls.elementAtOrNull(4)),
+    );
   }
 
-  Future<TripoViewImage?> _loadViewImage(
+  Future<TripoViewImage?> _loadPreparedView(
     Session session,
-    String? urlPath,
+    String? catalogUrlPath,
   ) async {
-    final trimmed = urlPath?.trim();
+    final trimmed = catalogUrlPath?.trim();
     if (trimmed == null || trimmed.isEmpty) return null;
 
-    final tripoPath = _resolveTripoOriginalPath(session, trimmed);
-    if (tripoPath == null) {
-      return null;
-    }
-
-    final file = ServerStaticPaths.fileFromUrlPath(tripoPath);
-    if (!file.existsSync()) {
+    final catalogFile = ServerStaticPaths.fileFromUrlPath(trimmed);
+    if (catalogFile.existsSync()) {
+      final bytes = await catalogFile.readAsBytes();
+      final prepared = _preprocessor.prepareCatalogFrame(bytes);
       session.log(
-        'Tripo original missing for 3D generation: ${file.path}',
-        level: LogLevel.warning,
+        'Tripo 3D prepared catalog frame $trimmed '
+        '(${prepared.length} bytes, centered white background)',
+        level: LogLevel.info,
       );
-      return null;
+      return TripoViewImage(bytes: prepared, format: 'jpeg');
     }
 
-    final bytes = await file.readAsBytes();
-    final format = TripoClient.detectImageFormat(bytes);
-    if (format == null) {
-      throw TripoClientException('Product photo must be JPG, PNG, or WEBP.');
-    }
-    return TripoViewImage(bytes: bytes, format: format);
-  }
-
-  /// Tripo always uses `_tripo` originals — never white-background catalog JPEGs.
-  String? _resolveTripoOriginalPath(Session session, String catalogUrlPath) {
     for (final tripoPath
-        in Product3dImagePaths.tripoSourceCandidatesForCatalog(catalogUrlPath)) {
+        in Product3dImagePaths.tripoSourceCandidatesForCatalog(trimmed)) {
       final tripoFile = ServerStaticPaths.fileFromUrlPath(tripoPath);
-      if (tripoFile.existsSync()) {
-        session.log(
-          'Tripo 3D using original photo $tripoPath (catalog bg removal not used)',
-          level: LogLevel.info,
-        );
-        return tripoPath;
-      }
+      if (!tripoFile.existsSync()) continue;
+
+      final bytes = await tripoFile.readAsBytes();
+      final prepared = await _preprocessor.prepareOriginalFrame(
+        session,
+        bytes,
+        tripoFile.uri.pathSegments.last,
+      );
+      session.log(
+        'Tripo 3D preprocessed original $tripoPath for generation',
+        level: LogLevel.info,
+      );
+      return TripoViewImage(bytes: prepared, format: 'jpeg');
     }
 
     session.log(
-      'No original Tripo photo for $catalogUrlPath — re-upload product photos',
+      'Missing catalog/original photo for $trimmed',
       level: LogLevel.warning,
     );
     return null;
@@ -221,4 +230,22 @@ class Product3dGenerator {
     await File(outputPath).writeAsBytes(bytes);
     return '/uploads/models/product_$productId.glb';
   }
+}
+
+final class _ProductViews {
+  const _ProductViews({
+    required this.front,
+    required this.left,
+    required this.back,
+    required this.right,
+    required this.frontLeft,
+    required this.frontRight,
+  });
+
+  final TripoViewImage? front;
+  final TripoViewImage? left;
+  final TripoViewImage? back;
+  final TripoViewImage? right;
+  final TripoViewImage? frontLeft;
+  final TripoViewImage? frontRight;
 }
