@@ -59,7 +59,7 @@ class UserDashboardScreen extends ConsumerWidget {
   Future<void> _refreshDashboard(WidgetRef ref) async {
     await Future.wait([
       ref.read(profileDashboardProvider.notifier).refresh(),
-      ref.refresh(profileOrdersProvider.future),
+      ref.read(profileOrdersProvider.notifier).refresh(),
     ]);
   }
 }

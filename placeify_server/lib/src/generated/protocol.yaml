@@ -54,6 +54,7 @@ notification:
 order:
   - listMyOrders:
   - getOrder:
+  - listDeliveryUpdates:
 product:
   - listCategories:
   - searchProducts:

@@ -23,9 +23,17 @@ class UserOrdersPage extends ConsumerStatefulWidget {
 class _UserOrdersPageState extends ConsumerState<UserOrdersPage> {
   int _filterIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(profileOrdersProvider.notifier).refresh();
+    });
+  }
+
   Future<void> _refresh() async {
-    ref.invalidate(profileOrdersProvider);
-    await ref.read(profileOrdersProvider.future);
+    await ref.read(profileOrdersProvider.notifier).refresh();
   }
 
   @override

@@ -8,7 +8,7 @@ import 'package:placeify_flutter/features/profile/presentation/widgets/profile_s
 import 'package:placeify_flutter/features/profile/presentation/widgets/shared/profile_form_field.dart';
 import 'package:placeify_flutter/features/profile/presentation/widgets/shared/profile_submit_button.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
-import 'package:placeify_flutter/features/vendor/data/mock_vendor_repository.dart';
+import 'package:placeify_flutter/features/vendor/data/vendor_order_exceptions.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/delivery_stage.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/order_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/delivery_update.dart';

@@ -25,4 +25,11 @@ class OrderEndpoint extends Endpoint {
   Future<Order?> getOrder(Session session, int orderId) {
     return _service.getOrder(session, orderId);
   }
+
+  Future<List<OrderDeliveryUpdate>> listDeliveryUpdates(
+    Session session,
+    int orderId,
+  ) {
+    return _service.listDeliveryUpdates(session, orderId);
+  }
 }

@@ -83,6 +83,13 @@ class UserEndpoint extends PlaceifyAuthenticatedEndpoint {
               ? '$primaryName × $totalQuantity'
               : primaryName;
 
+      final latestUpdate = await OrderDeliveryUpdate.db.findFirstRow(
+        session,
+        where: (row) => row.orderId.equals(orderId),
+        orderBy: (row) => row.createdAt,
+        orderDescending: true,
+      );
+
       summaries.add(
         UserOrderSummary(
           id: orderId,
@@ -92,6 +99,8 @@ class UserEndpoint extends PlaceifyAuthenticatedEndpoint {
           placedAt: order.placedAt,
           itemCount: totalQuantity,
           primaryProductName: displayName,
+          latestDeliveryStage: latestUpdate?.stage,
+          latestDeliveryNote: latestUpdate?.note,
         ),
       );
     }

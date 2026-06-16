@@ -1122,6 +1122,25 @@ class Endpoints extends _i1.EndpointDispatch {
                 params['orderId'],
               ),
         ),
+        'listDeliveryUpdates': _i1.MethodConnector(
+          name: 'listDeliveryUpdates',
+          params: {
+            'orderId': _i1.ParameterDescription(
+              name: 'orderId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['order'] as _i11.OrderEndpoint)
+                  .listDeliveryUpdates(
+                    session,
+                    params['orderId'],
+                  ),
+        ),
       },
     );
     connectors['product'] = _i1.EndpointConnector(

@@ -12,6 +12,7 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'order_status.dart' as _i2;
+import 'delivery_stage.dart' as _i3;
 
 /// Order row for the customer profile orders list.
 abstract class UserOrderSummary implements _i1.SerializableModel {
@@ -23,6 +24,8 @@ abstract class UserOrderSummary implements _i1.SerializableModel {
     required this.placedAt,
     required this.itemCount,
     this.primaryProductName,
+    this.latestDeliveryStage,
+    this.latestDeliveryNote,
   });
 
   factory UserOrderSummary({
@@ -33,6 +36,8 @@ abstract class UserOrderSummary implements _i1.SerializableModel {
     required DateTime placedAt,
     required int itemCount,
     String? primaryProductName,
+    _i3.DeliveryStage? latestDeliveryStage,
+    String? latestDeliveryNote,
   }) = _UserOrderSummaryImpl;
 
   factory UserOrderSummary.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -46,6 +51,12 @@ abstract class UserOrderSummary implements _i1.SerializableModel {
       ),
       itemCount: jsonSerialization['itemCount'] as int,
       primaryProductName: jsonSerialization['primaryProductName'] as String?,
+      latestDeliveryStage: jsonSerialization['latestDeliveryStage'] == null
+          ? null
+          : _i3.DeliveryStage.fromJson(
+              (jsonSerialization['latestDeliveryStage'] as String),
+            ),
+      latestDeliveryNote: jsonSerialization['latestDeliveryNote'] as String?,
     );
   }
 
@@ -63,6 +74,10 @@ abstract class UserOrderSummary implements _i1.SerializableModel {
 
   String? primaryProductName;
 
+  _i3.DeliveryStage? latestDeliveryStage;
+
+  String? latestDeliveryNote;
+
   /// Returns a shallow copy of this [UserOrderSummary]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -74,6 +89,8 @@ abstract class UserOrderSummary implements _i1.SerializableModel {
     DateTime? placedAt,
     int? itemCount,
     String? primaryProductName,
+    _i3.DeliveryStage? latestDeliveryStage,
+    String? latestDeliveryNote,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -86,6 +103,9 @@ abstract class UserOrderSummary implements _i1.SerializableModel {
       'placedAt': placedAt.toJson(),
       'itemCount': itemCount,
       if (primaryProductName != null) 'primaryProductName': primaryProductName,
+      if (latestDeliveryStage != null)
+        'latestDeliveryStage': latestDeliveryStage?.toJson(),
+      if (latestDeliveryNote != null) 'latestDeliveryNote': latestDeliveryNote,
     };
   }
 
@@ -106,6 +126,8 @@ class _UserOrderSummaryImpl extends UserOrderSummary {
     required DateTime placedAt,
     required int itemCount,
     String? primaryProductName,
+    _i3.DeliveryStage? latestDeliveryStage,
+    String? latestDeliveryNote,
   }) : super._(
          id: id,
          orderNumber: orderNumber,
@@ -114,6 +136,8 @@ class _UserOrderSummaryImpl extends UserOrderSummary {
          placedAt: placedAt,
          itemCount: itemCount,
          primaryProductName: primaryProductName,
+         latestDeliveryStage: latestDeliveryStage,
+         latestDeliveryNote: latestDeliveryNote,
        );
 
   /// Returns a shallow copy of this [UserOrderSummary]
@@ -128,6 +152,8 @@ class _UserOrderSummaryImpl extends UserOrderSummary {
     DateTime? placedAt,
     int? itemCount,
     Object? primaryProductName = _Undefined,
+    Object? latestDeliveryStage = _Undefined,
+    Object? latestDeliveryNote = _Undefined,
   }) {
     return UserOrderSummary(
       id: id ?? this.id,
@@ -139,6 +165,12 @@ class _UserOrderSummaryImpl extends UserOrderSummary {
       primaryProductName: primaryProductName is String?
           ? primaryProductName
           : this.primaryProductName,
+      latestDeliveryStage: latestDeliveryStage is _i3.DeliveryStage?
+          ? latestDeliveryStage
+          : this.latestDeliveryStage,
+      latestDeliveryNote: latestDeliveryNote is String?
+          ? latestDeliveryNote
+          : this.latestDeliveryNote,
     );
   }
 }

@@ -54,4 +54,21 @@ class OrderStore {
     if (order == null || order.userId != user.id) return null;
     return order;
   }
+
+  Future<List<OrderDeliveryUpdate>> listDeliveryUpdates(
+    Session session,
+    int orderId,
+  ) async {
+    final user = await SessionService.requireUser(session);
+    final order = await Order.db.findById(session, orderId);
+    if (order == null || order.userId != user.id) {
+      return [];
+    }
+
+    return OrderDeliveryUpdate.db.find(
+      session,
+      where: (row) => row.orderId.equals(orderId),
+      orderBy: (row) => row.createdAt,
+    );
+  }
 }

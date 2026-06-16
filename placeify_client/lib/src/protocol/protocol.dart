@@ -62,12 +62,12 @@ import 'package:placeify_client/src/protocol/user_ar_session_summary.dart'
 import 'package:placeify_client/src/protocol/complaint.dart' as _i49;
 import 'package:placeify_client/src/protocol/ar_session.dart' as _i50;
 import 'package:placeify_client/src/protocol/cart_item.dart' as _i51;
-import 'package:placeify_client/src/protocol/category.dart' as _i52;
-import 'package:placeify_client/src/protocol/product.dart' as _i53;
-import 'package:placeify_client/src/protocol/review.dart' as _i54;
-import 'package:placeify_client/src/protocol/vendor_shop_order.dart' as _i55;
 import 'package:placeify_client/src/protocol/order_delivery_update.dart'
-    as _i56;
+    as _i52;
+import 'package:placeify_client/src/protocol/category.dart' as _i53;
+import 'package:placeify_client/src/protocol/product.dart' as _i54;
+import 'package:placeify_client/src/protocol/review.dart' as _i55;
+import 'package:placeify_client/src/protocol/vendor_shop_order.dart' as _i56;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _i57;
 import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
@@ -490,27 +490,27 @@ class Protocol extends _i1.SerializationManager {
       return (data as List).map((e) => deserialize<_i51.CartItem>(e)).toList()
           as T;
     }
-    if (t == List<_i52.Category>) {
-      return (data as List).map((e) => deserialize<_i52.Category>(e)).toList()
-          as T;
-    }
-    if (t == List<_i53.Product>) {
-      return (data as List).map((e) => deserialize<_i53.Product>(e)).toList()
-          as T;
-    }
-    if (t == List<_i54.Review>) {
-      return (data as List).map((e) => deserialize<_i54.Review>(e)).toList()
-          as T;
-    }
-    if (t == List<_i55.VendorShopOrder>) {
+    if (t == List<_i52.OrderDeliveryUpdate>) {
       return (data as List)
-              .map((e) => deserialize<_i55.VendorShopOrder>(e))
+              .map((e) => deserialize<_i52.OrderDeliveryUpdate>(e))
               .toList()
           as T;
     }
-    if (t == List<_i56.OrderDeliveryUpdate>) {
+    if (t == List<_i53.Category>) {
+      return (data as List).map((e) => deserialize<_i53.Category>(e)).toList()
+          as T;
+    }
+    if (t == List<_i54.Product>) {
+      return (data as List).map((e) => deserialize<_i54.Product>(e)).toList()
+          as T;
+    }
+    if (t == List<_i55.Review>) {
+      return (data as List).map((e) => deserialize<_i55.Review>(e)).toList()
+          as T;
+    }
+    if (t == List<_i56.VendorShopOrder>) {
       return (data as List)
-              .map((e) => deserialize<_i56.OrderDeliveryUpdate>(e))
+              .map((e) => deserialize<_i56.VendorShopOrder>(e))
               .toList()
           as T;
     }
