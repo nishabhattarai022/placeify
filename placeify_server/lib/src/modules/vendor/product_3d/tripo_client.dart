@@ -15,6 +15,15 @@ abstract final class TripoClient {
   static const _pollInterval = Duration(seconds: 3);
   static const _maxPollAttempts = 120;
 
+  /// Photo-faithful texturing: diffuse map from the source image, not glossy PBR.
+  static const _photoTextureParams = <String, dynamic>{
+    'texture': true,
+    'pbr': false,
+    'texture_alignment': 'original_image',
+    'texture_quality': 'detailed',
+    'orientation': 'align_image',
+  };
+
   /// Uploads [imageBytes] to Tripo, runs image_to_model, returns a GLB download URL.
   static Future<String> generateModelFromImage(
     Session session, {
@@ -179,7 +188,7 @@ abstract final class TripoClient {
             'key': key,
           },
         },
-        'texture': true,
+        ..._photoTextureParams,
       }),
     );
     final body = _decodeResponse(response);
@@ -217,8 +226,7 @@ abstract final class TripoClient {
         'type': 'multiview_to_model',
         'model_version': _modelVersion,
         'files': files,
-        'texture': true,
-        'pbr': true,
+        ..._photoTextureParams,
       }),
     );
     final body = _decodeResponse(response);
@@ -289,7 +297,7 @@ abstract final class TripoClient {
   }
 
   static String? _pickModelUrl(Map<String, dynamic> output) {
-    for (final key in ['pbr_model', 'model', 'base_model']) {
+    for (final key in ['model', 'base_model', 'pbr_model']) {
       final url = _extractUrl(output[key]);
       if (url != null) return url;
     }

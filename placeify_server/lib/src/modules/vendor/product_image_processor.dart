@@ -19,6 +19,17 @@ class ProcessedProductImage {
   final bool backgroundRemoved;
 }
 
+/// Catalog JPEG plus lossless PNG used as Tripo 3D input (preserves fabric grain).
+class VendorProductImages {
+  const VendorProductImages({
+    required this.catalog,
+    required this.tripoSource,
+  });
+
+  final ProcessedProductImage catalog;
+  final ProcessedProductImage tripoSource;
+}
+
 /// Removes backgrounds via remove.bg and composites furniture on white (#FFFFFF).
 class ProductImageProcessor {
   ProductImageProcessor({http.Client? httpClient})
@@ -33,6 +44,16 @@ class ProductImageProcessor {
 
   /// Removes the background, composites on white, and returns catalog-ready JPEG.
   Future<ProcessedProductImage> processForCatalog(
+    Session session,
+    Uint8List bytes,
+    String fileName,
+  ) async {
+    final images = await processForVendorUpload(session, bytes, fileName);
+    return images.catalog;
+  }
+
+  /// Catalog JPEG for listings and PNG for Tripo (same cutout, no JPEG texture loss).
+  Future<VendorProductImages> processForVendorUpload(
     Session session,
     Uint8List bytes,
     String fileName,
@@ -54,17 +75,29 @@ class ProductImageProcessor {
     );
 
     final cutout = await _removeBackground(apiKey, bytes, fileName);
-    final catalogBytes = _compositeOnWhite(cutout);
+    final composited = _compositedOnWhiteImage(cutout);
+    final catalogBytes = Uint8List.fromList(
+      img.encodeJpg(composited, quality: _jpegQuality),
+    );
+    final tripoBytes = Uint8List.fromList(img.encodePng(composited));
 
     session.log(
-      'Product image processed on white background (${catalogBytes.length} bytes)',
+      'Product image processed on white background '
+      '(catalog ${catalogBytes.length} B, tripo ${tripoBytes.length} B)',
       level: LogLevel.info,
     );
 
-    return ProcessedProductImage(
-      bytes: catalogBytes,
-      extension: '.jpg',
-      backgroundRemoved: true,
+    return VendorProductImages(
+      catalog: ProcessedProductImage(
+        bytes: catalogBytes,
+        extension: '.jpg',
+        backgroundRemoved: true,
+      ),
+      tripoSource: ProcessedProductImage(
+        bytes: tripoBytes,
+        extension: '.png',
+        backgroundRemoved: true,
+      ),
     );
   }
 
@@ -110,7 +143,7 @@ class ProductImageProcessor {
     );
   }
 
-  Uint8List _compositeOnWhite(Uint8List cutoutPngBytes) {
+  img.Image _compositedOnWhiteImage(Uint8List cutoutPngBytes) {
     final decoded = img.decodeImage(cutoutPngBytes);
     if (decoded == null) {
       throw PlaceifyException(
@@ -129,10 +162,7 @@ class ProductImageProcessor {
     );
     img.fill(canvas, color: _white);
     img.compositeImage(canvas, resized);
-
-    return Uint8List.fromList(
-      img.encodeJpg(canvas, quality: _jpegQuality),
-    );
+    return canvas;
   }
 
   String _uploadFileName(String fileName) {

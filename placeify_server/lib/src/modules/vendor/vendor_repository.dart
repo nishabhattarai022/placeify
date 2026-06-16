@@ -480,7 +480,7 @@ class VendorStore {
     }
 
     final processor = ProductImageProcessor();
-    final processed = await processor.processForCatalog(
+    final processed = await processor.processForVendorUpload(
       session,
       bytes,
       sanitized,
@@ -492,15 +492,20 @@ class VendorStore {
     }
 
     final baseName = sanitized.replaceAll(RegExp(r'\.[^.]+$'), '');
-    final storedName =
-        '${DateTime.now().millisecondsSinceEpoch}_$baseName${processed.extension}';
-    final file = File(
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final storedName = '${timestamp}_$baseName${processed.catalog.extension}';
+    final tripoStoredName = '${timestamp}_${baseName}_tripo.png';
+
+    await File(
       '${uploadsDir.path}${Platform.pathSeparator}$storedName',
-    );
-    await file.writeAsBytes(processed.bytes);
+    ).writeAsBytes(processed.catalog.bytes);
+    await File(
+      '${uploadsDir.path}${Platform.pathSeparator}$tripoStoredName',
+    ).writeAsBytes(processed.tripoSource.bytes);
+
     session.log(
-      'Stored catalog image $storedName (white background, '
-      'bgRemoved=${processed.backgroundRemoved})',
+      'Stored catalog image $storedName and Tripo source $tripoStoredName '
+      '(white background, bgRemoved=${processed.catalog.backgroundRemoved})',
       level: LogLevel.info,
     );
     return '/uploads/$storedName';
