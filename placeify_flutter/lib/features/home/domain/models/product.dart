@@ -17,6 +17,7 @@ abstract class Product with _$Product {
     @Default(false) bool isWishlisted,
     required String categoryId,
     required ProductDimensions dimensions,
+    String? vendorId,
   }) = _Product;
 
   const Product._();

@@ -1,4 +1,4 @@
-### Furniture product listed by a vendor in the marketplace.
+ ### Furniture product listed by a vendor in the marketplace.
 class: Product
 table: product
 fields:
