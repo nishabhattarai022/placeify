@@ -350,8 +350,9 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                         step: 1,
                         title: 'Product photos',
                         subtitle:
-                            'Front photo is required. Add left, back, and right views '
-                            'when you can — Tripo uses them for sharper 3D previews.',
+                            'Add all four angles when you can — 3D is built from '
+                            'these photos only (not from dimensions). Same lighting '
+                            'and the same item in every shot.',
                         children: [
                           DecoratedBox(
                             decoration: BoxDecoration(
@@ -393,8 +394,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                         step: 2,
                         title: 'Furniture type',
                         subtitle:
-                            'Pick the category that best matches your item. '
-                            'This selects the 3D shape we scale to your dimensions.',
+                            'Pick the category customers browse under. Width, depth, '
+                            'and height are for the listing only — 3D uses your photos.',
                         children: [
                           FutureBuilder<List<Category>>(
                             future: _categoriesFuture,

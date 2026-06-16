@@ -484,6 +484,7 @@ class VendorStore {
       session,
       bytes,
       sanitized,
+      fileExtension: extension,
     );
 
     final uploadsDir = Directory(ServerStaticPaths.uploadsDir());
@@ -494,7 +495,8 @@ class VendorStore {
     final baseName = sanitized.replaceAll(RegExp(r'\.[^.]+$'), '');
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final storedName = '${timestamp}_$baseName${processed.catalog.extension}';
-    final tripoStoredName = '${timestamp}_${baseName}_tripo.png';
+    final tripoStoredName =
+        '${timestamp}_${baseName}_tripo${processed.tripoSource.extension}';
 
     await File(
       '${uploadsDir.path}${Platform.pathSeparator}$storedName',
@@ -504,8 +506,7 @@ class VendorStore {
     ).writeAsBytes(processed.tripoSource.bytes);
 
     session.log(
-      'Stored catalog image $storedName and Tripo source $tripoStoredName '
-      '(white background, bgRemoved=${processed.catalog.backgroundRemoved})',
+      'Stored catalog image $storedName and Tripo original $tripoStoredName',
       level: LogLevel.info,
     );
     return '/uploads/$storedName';

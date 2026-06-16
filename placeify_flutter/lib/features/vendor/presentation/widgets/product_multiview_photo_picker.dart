@@ -6,10 +6,10 @@ import '../../data/product_image_service.dart';
 
 /// Tripo multiview slots in API order: front, left, back, right.
 enum ProductPhotoView {
-  front('Front', 'Required — main listing photo'),
-  left('Left', 'Optional side view'),
-  back('Back', 'Optional rear view'),
-  right('Right', 'Optional side view');
+  front('Front', 'Required — face the product directly'),
+  left('Left', 'Same item, camera on the left side'),
+  back('Back', 'Same item, straight from behind'),
+  right('Right', 'Same item, camera on the right side');
 
   const ProductPhotoView(this.label, this.hint);
 
@@ -56,7 +56,9 @@ class ProductMultiviewPhotoPicker extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         const Text(
-          'Add a front photo plus up to three side/back views for sharper 3D previews.',
+          'Add front, left, back, and right photos of the same piece. '
+          'Use the same lighting for all — 3D copies texture from these images '
+          '(front → left → back → right).',
           style: TextStyle(
             fontSize: 12,
             color: AppColors.textMuted,

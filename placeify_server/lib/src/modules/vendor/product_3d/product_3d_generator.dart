@@ -61,7 +61,8 @@ class Product3dGenerator {
 
       session.log(
         'Tripo 3D model saved for product $productId at $localUrl '
-        '($providedViews view${providedViews == 1 ? '' : 's'})',
+        '($providedViews view${providedViews == 1 ? '' : 's'}, '
+        'multiview=${providedViews >= 2})',
         level: LogLevel.info,
       );
       return Product3dGenerationResult.success(localUrl);
@@ -122,15 +123,16 @@ class Product3dGenerator {
     if (trimmed == null || trimmed.isEmpty) return null;
 
     var resolvedPath = trimmed;
-    final tripoPath = Product3dImagePaths.tripoSourcePathForCatalog(trimmed);
-    if (tripoPath != null) {
+    for (final tripoPath
+        in Product3dImagePaths.tripoSourceCandidatesForCatalog(trimmed)) {
       final tripoFile = ServerStaticPaths.fileFromUrlPath(tripoPath);
       if (tripoFile.existsSync()) {
         resolvedPath = tripoPath;
         session.log(
-          'Using Tripo source image $tripoPath',
+          'Using Tripo original photo $tripoPath',
           level: LogLevel.info,
         );
+        break;
       }
     }
 
