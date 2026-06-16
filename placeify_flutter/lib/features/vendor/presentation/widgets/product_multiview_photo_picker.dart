@@ -4,19 +4,35 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radii.dart';
 import '../../data/product_image_service.dart';
 
-/// Tripo multiview slots in API order: front, left, back, right.
+/// Minimum photos required for Tripo 3D generation.
+const int kMinProductPhotosFor3d = 5;
+
+/// Recommended photo count for best Tripo multiview results.
+const int kRecommendedProductPhotosFor3d = 6;
+
+const String kMinProductPhotosMessage =
+    'Please upload at least 5 images for accurate 3D reconstruction.';
+
+/// Tripo capture slots: front + [left, back, right, frontLeft, frontRight].
 enum ProductPhotoView {
-  front('Front', 'Required — face the product directly'),
-  left('Left', 'Same item, camera on the left side'),
-  back('Back', 'Same item, straight from behind'),
-  right('Right', 'Same item, camera on the right side');
+  front('Front', 'Face the product directly'),
+  left('Left', 'Camera on the left side'),
+  back('Back', 'Straight from behind'),
+  right('Right', 'Camera on the right side'),
+  frontLeft('Front-left 45°', 'Angled between front and left'),
+  frontRight('Front-right 45°', 'Angled between front and right (recommended)');
 
   const ProductPhotoView(this.label, this.hint);
 
   final String label;
   final String hint;
 
-  bool get isRequired => this == ProductPhotoView.front;
+  bool get isRequiredForMinimum =>
+      this == ProductPhotoView.front ||
+      this == ProductPhotoView.left ||
+      this == ProductPhotoView.back ||
+      this == ProductPhotoView.right ||
+      this == ProductPhotoView.frontLeft;
 }
 
 class ProductMultiviewPhotoPicker extends StatelessWidget {
@@ -55,14 +71,25 @@ class ProductMultiviewPhotoPicker extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        const Text(
-          'Add front, left, back, and right photos of the same piece. '
-          'Use the same lighting for all — 3D copies texture from these images '
-          '(front → left → back → right).',
-          style: TextStyle(
+        Text(
+          'Upload at least $kMinProductPhotosFor3d photos (recommended '
+          '$kRecommendedProductPhotosFor3d): front, sides, back, and 45° angles. '
+          'Use even light and the same item in every shot.',
+          style: const TextStyle(
             fontSize: 12,
             color: AppColors.textMuted,
             height: 1.35,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '${photos.length}/$kRecommendedProductPhotosFor3d photos added',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: photos.length >= kMinProductPhotosFor3d
+                ? AppColors.sage
+                : AppColors.textMuted,
           ),
         ),
         const SizedBox(height: 12),
@@ -190,6 +217,7 @@ class _ViewSlotChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final requiredLabel = view.isRequiredForMinimum ? ' *' : '';
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -215,7 +243,7 @@ class _ViewSlotChip extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             Text(
-              view.isRequired ? '${view.label} *' : view.label,
+              '${view.label}$requiredLabel',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
@@ -244,6 +272,7 @@ class _EmptySlotState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isRequired = view.isRequiredForMinimum;
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -258,9 +287,9 @@ class _EmptySlotState extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            view.isRequired
+            isRequired
                 ? 'Add the ${view.label.toLowerCase()} photo'
-                : 'Add ${view.label.toLowerCase()} view (optional)',
+                : 'Add ${view.label.toLowerCase()} (recommended)',
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 14,

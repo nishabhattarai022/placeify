@@ -15,7 +15,20 @@ abstract final class TripoClient {
   static const _pollInterval = Duration(seconds: 3);
   static const _maxPollAttempts = 120;
 
-  /// Photo-faithful texturing (no PBR, no autofix).
+  /// Realism-oriented generation (prompt fields may be ignored by multiview API).
+  static const _realismPrompt =
+      'Create a highly realistic, production-quality 3D model of furniture '
+      'using the provided multi-view images. The model must preserve accurate '
+      'real-world proportions, correct geometry, sharp edges, and physically '
+      'realistic structure. It should be suitable for e-commerce display and '
+      'AR visualization. Ensure true-to-life material representation and avoid '
+      'any form of stylization.';
+
+  static const _negativePrompt =
+      'cartoon, toy, stylized, anime, game asset, low-poly, exaggerated '
+      'proportions, soft edges, plastic look, fictional design';
+
+  /// Photo-faithful texturing with preprocessing handled server-side.
   static const _baseTextureParams = <String, dynamic>{
     'texture': true,
     'pbr': false,
@@ -23,19 +36,26 @@ abstract final class TripoClient {
     'orientation': 'align_image',
     'enable_image_autofix': false,
     'smart_low_poly': false,
+    'prompt': _realismPrompt,
+    'negative_prompt': _negativePrompt,
   };
 
   /// Tripo task params tuned by how many reference photos are provided.
   static Map<String, dynamic> _taskParams({required int viewCount}) {
-    final multiview = viewCount >= 2;
     return {
       ..._baseTextureParams,
-      // More photos → higher face budget so shape matches sides/back, not a smooth blob.
-      'face_limit': multiview
-          ? (viewCount >= 4 ? 180000 : viewCount >= 3 ? 150000 : 120000)
-          : 80000,
-      // Reward multiview uploads with sharper textures; single photo stays standard credits.
-      'texture_quality': multiview && viewCount >= 3 ? 'detailed' : 'standard',
+      'face_limit': viewCount >= 5
+          ? 200000
+          : viewCount >= 4
+          ? 180000
+          : viewCount >= 3
+          ? 150000
+          : 120000,
+      'texture_quality': viewCount >= 5
+          ? 'extreme'
+          : viewCount >= 3
+          ? 'detailed'
+          : 'standard',
     };
   }
 
@@ -72,6 +92,7 @@ abstract final class TripoClient {
   static Future<String> generateModelFromMultiview(
     Session session, {
     required List<TripoViewImage?> views,
+    int? sourceViewCount,
   }) async {
     if (views.length != 4) {
       throw TripoClientException(
@@ -109,7 +130,7 @@ abstract final class TripoClient {
     final taskId = await _createMultiviewToModelTask(
       apiKey,
       uploadedViews,
-      viewCount: provided,
+      viewCount: sourceViewCount ?? provided,
     );
     session.log(
       'Tripo multiview_to_model task created: $taskId ($provided images)',
