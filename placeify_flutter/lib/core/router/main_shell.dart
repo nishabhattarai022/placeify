@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:placeify_flutter/features/admin/domain/constants/admin_routes.dart';
+import 'package:placeify_flutter/features/shops/domain/constants/shop_routes.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_routes.dart';
 
 import '../widgets/placeify_bottom_nav.dart';
@@ -12,12 +13,14 @@ class MainShell extends StatelessWidget {
 
   int _consumerActiveIndex(String location) {
     if (location == '/home') return 0;
-    if (location == '/browse') return 1;
-    if (location == '/bookmarks') return 2;
+    if (location == ShopRoutes.shops) return 1;
+    if (location == '/browse') return 2;
+    if (location == '/bookmarks') return 3;
     if (location == '/profile' || location.startsWith('/profile/')) {
-      return 3;
+      return 4;
     }
-    if (location.startsWith('/browse/category') ||
+    if (location.startsWith('${ShopRoutes.shops}/') ||
+        location.startsWith('/browse/category') ||
         location.startsWith('/category') ||
         location.startsWith('/product')) {
       return -1;
@@ -52,6 +55,7 @@ class MainShell extends StatelessWidget {
     if (location.startsWith(AdminRoutes.prefix)) return false;
     if (location.startsWith('/vendor')) return false;
     if (location.startsWith('/product/')) return false;
+    if (location.startsWith('${ShopRoutes.shops}/')) return false;
     if (location.startsWith('/browse/category')) return false;
     if (location == '/cart') return false;
     if (location == '/profile/augmented-reality') return false;

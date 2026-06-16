@@ -5,7 +5,7 @@ import '../../services/haptic_service.dart';
 import '../../theme/app_fonts.dart';
 import 'bottom_nav_tokens.dart';
 
-/// Floating black pill nav: white "Home" chip + 3 dark circular icon buttons.
+/// Floating black pill nav: white "Home" chip + 4 dark circular icon buttons.
 class ConsumerBottomNav extends StatelessWidget {
   const ConsumerBottomNav({
     required this.activeIndex,
@@ -15,6 +15,7 @@ class ConsumerBottomNav extends StatelessWidget {
   final int activeIndex;
 
   static void _goHome(BuildContext context) => context.go('/home');
+  static void _goShops(BuildContext context) => context.go('/shops');
   static void _goBrowse(BuildContext context) => context.go('/browse');
   static void _goBookmarks(BuildContext context) => context.go('/bookmarks');
   static void _goProfile(BuildContext context) => context.go('/profile');
@@ -55,8 +56,18 @@ class ConsumerBottomNav extends StatelessWidget {
             ),
             const SizedBox(width: BottomNavTokens.navItemGap),
             _NavIconButton(
-              icon: Icons.shopping_bag_outlined,
+              icon: Icons.storefront_outlined,
               isSelected: index == 1,
+              semanticLabel: 'Shops',
+              onTap: () {
+                HapticService.light();
+                _goShops(context);
+              },
+            ),
+            const SizedBox(width: BottomNavTokens.navItemGap),
+            _NavIconButton(
+              icon: Icons.shopping_bag_outlined,
+              isSelected: index == 2,
               semanticLabel: 'Browse',
               onTap: () {
                 HapticService.light();
@@ -66,7 +77,7 @@ class ConsumerBottomNav extends StatelessWidget {
             const SizedBox(width: BottomNavTokens.navItemGap),
             _NavIconButton(
               icon: Icons.star_outline,
-              isSelected: index == 2,
+              isSelected: index == 3,
               semanticLabel: 'Bookmarks',
               onTap: () {
                 HapticService.light();
@@ -76,7 +87,7 @@ class ConsumerBottomNav extends StatelessWidget {
             const SizedBox(width: BottomNavTokens.navItemGap),
             _NavIconButton(
               icon: Icons.person_outline,
-              isSelected: index == 3,
+              isSelected: index == 4,
               semanticLabel: 'Profile',
               onTap: () {
                 HapticService.light();
