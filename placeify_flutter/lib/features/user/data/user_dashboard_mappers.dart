@@ -50,6 +50,13 @@ abstract final class UserDashboardMappers {
         backgroundColor: AppColors.coralBg,
       ),
       UserOverviewMetric(
+        label: 'Cart Items',
+        value: '${dashboard.cartItemCount}',
+        icon: Icons.shopping_cart_outlined,
+        accentColor: AppColors.forest,
+        backgroundColor: AppColors.sageBg,
+      ),
+      UserOverviewMetric(
         label: 'Refund Requests',
         value: '${dashboard.refundCount}',
         icon: Icons.replay_outlined,

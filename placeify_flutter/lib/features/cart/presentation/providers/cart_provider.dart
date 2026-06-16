@@ -50,6 +50,8 @@ class Cart extends _$Cart {
     } catch (_) {}
   }
 
+  Future<void> refresh() => _refreshFromServer();
+
   Future<void> addProduct(String productId, {int quantity = 1}) async {
     final items = [...state];
     final index = items.indexWhere((e) => e.productId == productId);
