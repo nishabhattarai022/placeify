@@ -28,7 +28,22 @@ class AppUser {
 
   bool get isVendorMode => role == UserRole.vendor;
 
-  bool get canOpenVendorDashboard => hasVendorShop;
+  /// True when the backend recognizes this account as a shop owner.
+  bool get isVendorAccount => role == UserRole.vendor || hasVendorShop;
+
+  bool get canOpenVendorDashboard => isVendorAccount;
+
+  /// Whether Rosika vendor portal screens should load for this session.
+  bool get canLoadVendorPortal {
+    if (vendorStatus == VendorStatus.suspended) return false;
+    if (isVendorAccount) {
+      return vendorStatus == VendorStatus.approved ||
+          vendorStatus == VendorStatus.pending;
+    }
+    if (vendorId == null) return false;
+    return vendorStatus == VendorStatus.approved ||
+        vendorStatus == VendorStatus.pending;
+  }
 
   /// Maps serverpod shop state to the Nishabhattarai vendor UI model.
   VendorStatus get vendorStatus {

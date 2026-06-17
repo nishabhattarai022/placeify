@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:placeify_client/placeify_client.dart';
 
 import '../../../core/widgets/toast_overlay.dart';
 import '../domain/repositories/auth_repository.dart';
@@ -10,15 +11,18 @@ Future<void> openVendorExperience(
   BuildContext context,
   WidgetRef ref,
 ) async {
-  final user = ref.read(currentUserProvider).value;
+  var user = ref.read(currentUserProvider).value;
   if (user == null) {
     context.push('/login');
     return;
   }
 
-  if (user.hasVendorShop && !user.isVendorMode) {
+  final shouldSwitchMode =
+      user.isVendorAccount && user.role != UserRole.vendor;
+  if (shouldSwitchMode) {
     try {
       await ref.read(currentUserProvider.notifier).switchToVendorMode();
+      user = ref.read(currentUserProvider).value ?? user;
     } on AuthException catch (error) {
       if (context.mounted) PlaceifyToast.show(context, error.message);
       return;
@@ -32,7 +36,7 @@ Future<void> openVendorExperience(
 
   if (!context.mounted) return;
 
-  if (user.hasVendorShop) {
+  if (user.isVendorAccount || user.canLoadVendorPortal) {
     context.go('/vendor');
   } else {
     context.push('/vendor/register');

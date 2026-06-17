@@ -18,7 +18,21 @@ class FoggyImageBackground extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        CoverAssetImage(asset: imageAsset),
+        CoverAssetImage(
+          asset: imageAsset,
+          errorBuilder: (_, __, ___) => const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF1A1410),
+                  AppColors.onboardingBg,
+                ],
+              ),
+            ),
+          ),
+        ),
         ClipRect(
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),

@@ -10,6 +10,7 @@ import '../../../core/widgets/toast_overlay.dart';
 import '../../../core/config/placeify_server_client.dart';
 import '../../auth/domain/models/app_user.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
+import '../domain/constants/vendor_routes.dart';
 import '../domain/repositories/vendor_commerce_repository.dart';
 import 'providers/vendor_dashboard_provider.dart';
 import 'widgets/vendor_form_widgets.dart';
@@ -64,7 +65,14 @@ class _VendorOnboardingScreenState extends ConsumerState<VendorOnboardingScreen>
             address: _addressController.text.trim(),
           );
       if (!mounted) return;
+      try {
+        await ref.read(currentUserProvider.notifier).switchToVendorMode();
+      } catch (_) {
+        // Dashboard still works in consumer role when vendor mode switch fails.
+      }
+      if (!mounted) return;
       PlaceifyToast.show(context, 'Your shop is live — welcome aboard!');
+      context.go(VendorRoutes.dashboard);
     } on VendorCommerceRepositoryException catch (error) {
       if (mounted) PlaceifyToast.show(context, error.message);
     } catch (_) {

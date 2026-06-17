@@ -8,3 +8,8 @@ pubspec_overrides.yaml
 
 # Accidental browser-save asset folders
 **/*_files/
+
+# Local merge staging (teammate branch pulls — not part of the app)
+.merge-temp-*/
+.rosika-merge-backup/
+.nishabhattarai-merge-backup/

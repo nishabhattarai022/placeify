@@ -1,7 +1,0 @@
-### Privilege tier for platform administrators.
-enum: AdminType
-serialized: byName
-default: moderator
-values:
-  - super_admin
-  - moderator

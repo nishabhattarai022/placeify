@@ -1,9 +1,0 @@
-### Resolution workflow for a product complaint or damage report.
-enum: ComplaintStatus
-serialized: byName
-default: pending
-values:
-  - pending
-  - reviewed
-  - resolved
-  - rejected

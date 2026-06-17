@@ -135,7 +135,7 @@ class _AccountModeBody extends ConsumerWidget {
           Text(
             isVendor
                 ? 'Switch to shopping to browse furniture, use AR preview, and place orders.'
-                : user.hasVendorShop
+                : user.isVendorAccount
                     ? 'Your shop is registered. Switch anytime to manage products and orders.'
                     : 'Register your shop once, then switch between buying and selling with one login.',
             style: const TextStyle(
@@ -152,7 +152,7 @@ class _AccountModeBody extends ConsumerWidget {
               filled: true,
               onTap: () => openConsumerExperience(context, ref),
             )
-          else if (user.hasVendorShop)
+          else if (user.isVendorAccount)
             _ModeButton(
               label: 'Open vendor dashboard',
               icon: Icons.storefront_outlined,

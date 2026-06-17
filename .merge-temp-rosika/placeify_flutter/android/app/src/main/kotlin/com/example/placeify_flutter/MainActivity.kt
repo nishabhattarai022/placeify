@@ -1,5 +1,0 @@
-package com.example.placeify_flutter
-
-import io.flutter.embedding.android.FlutterActivity
-
-class MainActivity : FlutterActivity()

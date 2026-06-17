@@ -1,20 +1,72 @@
 # placeify_server
 
-This is the starting point for your Serverpod server.
+Serverpod backend for Placeify.
 
-Then start Postgres and Redis:
+## Quick start (local development)
 
-    docker compose up --build --detach
+**Terminal 1 — database**
 
-Apply migrations and start the Serverpod server (first run or after pulling schema changes):
+```powershell
+cd placeify_server
+docker compose up -d
+```
 
-    dart bin/main.dart --apply-migrations
+**Terminal 2 — API server** (keep this running)
 
-For later runs when the schema is already up to date:
+```powershell
+cd placeify_server
+dart bin/main.dart --apply-migrations
+```
 
-    dart bin/main.dart
+First run applies migrations. Later runs:
 
-### App database tables
+```powershell
+dart bin/main.dart
+```
+
+API: `http://localhost:8080`
+
+**Terminal 3 — Flutter app**
+
+```powershell
+cd placeify_flutter
+flutter run -d chrome
+```
+
+Or on a phone/emulator:
+
+```powershell
+flutter run
+```
+
+Update `placeify_flutter/assets/config.json` → `physicalApiUrl` with your PC's LAN IP when testing on a physical device.
+
+## Demo login
+
+In the app: **Log In** → **Use demo account**
+
+- Email: `demo@placeify.app`
+- Password: `demo1234`
+
+Registration verification code in development: `123456`
+
+## Tripo 3D (optional)
+
+```powershell
+copy config\tripo_api_key.example.yaml config\tripo_api_key.yaml
+```
+
+Add your key from https://platform.tripo3d.ai/api-keys
+
+## Database reset (deletes all data)
+
+```powershell
+docker compose down -v
+docker compose up -d
+dart bin/main.dart --apply-migrations
+```
+
+## App database tables
 
 | Table | Purpose |
 |-------|---------|
@@ -32,6 +84,8 @@ For later runs when the schema is already up to date:
 
 Auth and Serverpod internal tables are created automatically with migrations.
 
-When you are finished, shut down Serverpod with `Ctrl-C`, then stop Postgres and Redis:
+When finished, stop the server with `Ctrl+C`, then:
 
-    docker compose stop
+```powershell
+docker compose stop
+```

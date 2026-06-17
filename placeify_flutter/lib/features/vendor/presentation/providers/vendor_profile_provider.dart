@@ -1,9 +1,11 @@
+import 'package:placeify_flutter/core/config/placeify_server_client.dart';
+import 'package:placeify_flutter/features/auth/domain/models/app_user.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify_flutter/features/vendor/data/hybrid_vendor_repository.dart';
 import 'package:placeify_flutter/features/vendor/data/serverpod_vendor_product_repository.dart';
-import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_profile.dart'
     as models;
+import 'package:placeify_flutter/features/vendor/domain/models/vendor_social_links.dart';
 import 'package:placeify_flutter/features/vendor/domain/repositories/vendor_product_repository.dart';
 import 'package:placeify_flutter/features/vendor/domain/repositories/vendor_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -24,12 +26,55 @@ VendorProductRepository vendorProductRepository(Ref ref) {
 class VendorProfile extends _$VendorProfile {
   @override
   Future<models.VendorProfile?> build() async {
-    final user = await ref.watch(currentUserProvider.future);
-    if (user?.vendorStatus != VendorStatus.approved || user?.vendorId == null) {
+    final user = ref.watch(currentUserProvider).value;
+    if (user == null || !user.canLoadVendorPortal) {
       return null;
     }
+
+    if (user.isVendorAccount) {
+      try {
+        return await _loadServerShopProfile();
+      } catch (_) {
+        return _fallbackProfile(user);
+      }
+    }
+
+    final vendorId = user.vendorId;
+    if (vendorId == null) return null;
+
     final repo = ref.watch(vendorRepositoryProvider);
-    return repo.getProfile(user!.vendorId!);
+    return repo.getProfile(vendorId);
+  }
+
+  Future<models.VendorProfile> _loadServerShopProfile() async {
+    final detail = await client.vendor.getMyProfile();
+    return models.VendorProfile(
+      id: detail.id.toString(),
+      businessName: detail.businessName,
+      email: detail.email,
+      phone: detail.phone,
+      address: detail.address,
+      logoUrl: detail.logoUrl,
+      bio: detail.bio,
+      bannerUrl: detail.bannerUrl,
+      tags: detail.category.trim().isEmpty ? const [] : [detail.category],
+      socialLinks: VendorSocialLinks(
+        instagram: detail.instagramHandle,
+        facebook: detail.facebookHandle,
+      ),
+      createdAt: detail.createdAt,
+    );
+  }
+
+  models.VendorProfile _fallbackProfile(AppUser user) {
+    return models.VendorProfile(
+      id: user.vendorId ?? user.id,
+      businessName: user.fullName,
+      email: user.email,
+      phone: user.phone ?? '',
+      address: user.address ?? '',
+      createdAt: DateTime.now(),
+    );
   }
 
   Future<void> updateProfile(models.VendorProfile updated) async {

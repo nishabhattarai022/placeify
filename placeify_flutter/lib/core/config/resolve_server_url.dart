@@ -1,9 +1,12 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'resolve_server_url_io.dart'
+    if (dart.library.html) 'resolve_server_url_web.dart' as io;
 
 const _cachedServerUrlKey = 'placeify_server_url';
 const _defaultPort = 8080;
@@ -21,7 +24,7 @@ Future<void> clearCachedServerUrl() async {
 /// can outlive a server that starts slightly after Flutter.
 Future<String> resolveServerUrl({
   bool forceRefresh = false,
-  int retries = 2,
+  int retries = 1,
 }) async {
   const serverUrlFromEnv = String.fromEnvironment('SERVER_URL');
   if (serverUrlFromEnv.isNotEmpty) {
@@ -71,9 +74,12 @@ bool _cacheMatchesPlatform(String url) {
   final uri = Uri.tryParse(url);
   if (uri == null) return false;
 
-  // A desktop/simulator session may cache localhost; phones must re-probe LAN hosts.
+  if (kIsWeb) {
+    return uri.host == 'localhost' || uri.host == '127.0.0.1';
+  }
+
   if (uri.host == 'localhost' || uri.host == '127.0.0.1') {
-    return !(Platform.isAndroid || Platform.isIOS);
+    return !io.isMobilePlatform;
   }
 
   return true;
@@ -90,37 +96,45 @@ Future<List<String>> _buildCandidates() async {
     }
   }
 
+  if (kIsWeb || io.isDesktopPlatform) {
+    add('http://localhost:$_defaultPort');
+  }
+
   try {
     final data = await rootBundle.loadString('assets/config.json');
     final config = jsonDecode(data) as Map<String, dynamic>;
-    add(config['physicalApiUrl'] as String?);
 
     final apiUrl = config['apiUrl'] as String?;
     if (apiUrl != null && apiUrl.trim().isNotEmpty) {
       add(_normalizeLoopback(apiUrl.trim()));
     }
+
+    add(config['physicalApiUrl'] as String?);
   } catch (_) {}
 
-  if (Platform.isAndroid) {
+  if (io.isAndroid) {
     add('http://10.0.2.2:$_defaultPort');
   }
 
-  add('http://$_desktopLoopbackHost:$_defaultPort');
+  if (!kIsWeb) {
+    add('http://${io.loopbackHost}:$_defaultPort');
+  }
+
+  if (candidates.isEmpty) {
+    add('http://localhost:$_defaultPort');
+  }
+
   return candidates;
 }
 
 Future<bool> _canReachServer(String url) async {
-  final client = HttpClient();
-  client.connectionTimeout = const Duration(seconds: 3);
   try {
-    final request = await client.getUrl(Uri.parse(_ensureTrailingSlash(url)));
-    final response = await request.close();
-    await response.drain<void>();
+    final response = await http
+        .get(Uri.parse(_ensureTrailingSlash(url)))
+        .timeout(const Duration(seconds: 2));
     return response.statusCode == 200;
   } catch (_) {
     return false;
-  } finally {
-    client.close(force: true);
   }
 }
 
@@ -130,17 +144,12 @@ String _ensureTrailingSlash(String url) {
 
 String _normalizeLoopback(String url) {
   if (!_isLoopbackUrl(url)) return url;
+  final host = kIsWeb ? 'localhost' : io.loopbackHost;
   return url
-      .replaceAll('localhost', _desktopLoopbackHost)
-      .replaceAll('127.0.0.1', _desktopLoopbackHost);
+      .replaceAll('localhost', host)
+      .replaceAll('127.0.0.1', host);
 }
 
 bool _isLoopbackUrl(String url) {
   return url.contains('localhost') || url.contains('127.0.0.1');
-}
-
-String get _desktopLoopbackHost {
-  if (kIsWeb) return 'localhost';
-  if (Platform.isAndroid) return '10.0.2.2';
-  return 'localhost';
 }

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:placeify_client/placeify_client.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -249,7 +250,23 @@ class ServerpodAuthRepository implements AuthRepository {
     if (profile == null) {
       throw AuthException('User profile not found');
     }
-    final hasVendorShop = await _loadHasVendorShop();
+    var hasVendorShop = await _loadHasVendorShop();
+    if (!hasVendorShop && profile.role == UserRole.vendor) {
+      hasVendorShop = true;
+    }
+    if (!hasVendorShop) {
+      final vendorStatus = _vendorStatusFromServer(
+        profile,
+        hasVendorShop: false,
+      );
+      // Keep vendor prefs only when the server still treats this user as a vendor.
+      if (vendorStatus == null) {
+        await _prefs.remove(_vendorStatusKey);
+        await _prefs.remove(_vendorIdKey);
+      }
+    } else {
+      await _persistVendorIdFromShop();
+    }
     final vendorStatus = _vendorStatusFromServer(
       profile,
       hasVendorShop: hasVendorShop,
@@ -265,12 +282,26 @@ class ServerpodAuthRepository implements AuthRepository {
     );
   }
 
-  Future<bool> _loadHasVendorShop() async {
+  Future<void> _persistVendorIdFromShop() async {
     try {
-      return await client.vendor.hasShop();
+      final shopProfile = await client.vendor.getMyProfile();
+      await _prefs.setString(_vendorIdKey, shopProfile.id.toString());
     } catch (_) {
-      return false;
+      // Shop profile may not be ready yet during onboarding.
     }
+  }
+
+  Future<bool> _loadHasVendorShop() async {
+    for (var attempt = 0; attempt < 2; attempt++) {
+      try {
+        return await client.vendor.hasShop();
+      } catch (_) {
+        if (attempt == 0) {
+          await Future<void>.delayed(const Duration(milliseconds: 250));
+        }
+      }
+    }
+    return false;
   }
 
   AppUser _toAppUser(
@@ -462,7 +493,7 @@ class ServerpodAuthRepository implements AuthRepository {
         'Cannot reach the server at $serverUrl. '
         'Start it with: cd placeify_server && dart bin/main.dart --apply-migrations';
 
-    if (Platform.isAndroid || Platform.isIOS) {
+    if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
       return '$base\n\n'
           'On a physical phone, set your Mac Wi‑Fi IP in '
           'placeify_flutter/assets/config.json → physicalApiUrl, '

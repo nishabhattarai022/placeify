@@ -9,6 +9,7 @@ import 'package:placeify_flutter/core/constants/app_typography.dart';
 import 'package:placeify_flutter/core/services/haptic_service.dart';
 import 'package:placeify_flutter/core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import 'package:placeify_flutter/core/widgets/shimmer_loader.dart';
+import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_routes.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_dashboard_data.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_metric.dart';
@@ -55,7 +56,8 @@ class _VendorDashboardScreenState extends ConsumerState<VendorDashboardScreen> {
   }
 
   Future<void> _onRefresh() async {
-    await ref.read(vendorStatsProvider.notifier).refresh();
+    await ref.read(currentUserProvider.notifier).refresh();
+    ref.invalidate(vendorStatsProvider);
     ref.invalidate(vendorProfileProvider);
   }
 

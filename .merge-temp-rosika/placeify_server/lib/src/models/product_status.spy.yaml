@@ -1,8 +1,0 @@
-### Catalog visibility and admin moderation state for products.
-enum: ProductStatus
-serialized: byName
-default: active
-values:
-  - active
-  - flagged
-  - removed

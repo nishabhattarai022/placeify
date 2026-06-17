@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/placeify_bottom_nav.dart';
 import '../../../core/widgets/toast_overlay.dart';
+import '../../auth/presentation/account_mode_actions.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import '../../vendor/domain/constants/vendor_routes.dart';
 import '../../vendor/domain/enums/vendor_status.dart';
@@ -101,6 +102,12 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
   }
 
   void _onVendorTileTap(VendorStatus status) {
+    final user = ref.read(currentUserProvider).value;
+    if (user?.isVendorAccount == true || user?.canLoadVendorPortal == true) {
+      openVendorExperience(context, ref);
+      return;
+    }
+
     switch (status) {
       case VendorStatus.none:
         context.push(VendorRoutes.register);

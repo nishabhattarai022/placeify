@@ -1,5 +1,0 @@
-### Application-level error with a stable code for API clients.
-exception: PlaceifyException
-fields:
-  message: String
-  code: String
