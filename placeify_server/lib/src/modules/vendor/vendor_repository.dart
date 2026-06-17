@@ -476,6 +476,7 @@ class VendorStore {
     String? warranty,
     String? model3dUrl,
     String? thumbnailUrl,
+    List<String>? viewImageUrls,
   }) async {
     final vendor = await requireOwnedVendor(session);
     if (name.trim().isEmpty || description.trim().isEmpty) {
@@ -539,6 +540,7 @@ class VendorStore {
         warranty: warranty?.trim(),
         model3dUrl: model3dUrl?.trim(),
         thumbnailUrl: thumbnailUrl?.trim(),
+        viewImageUrls: viewImageUrls,
         status: ProductStatus.active,
       ),
     );

@@ -135,6 +135,7 @@ class ServerpodVendorRepository implements VendorCommerceRepository {
         careInstructions: careInstructions,
         warranty: warranty,
         thumbnailUrl: thumbnailUrl,
+        viewImageUrls: viewImageUrls.isEmpty ? null : viewImageUrls,
       );
     } catch (error) {
       throw _mapError(error);

@@ -542,6 +542,15 @@ class Protocol extends _i1.SerializationManager {
       return (data as List).map((e) => deserialize<_i58.Review>(e)).toList()
           as T;
     }
+    if (t == List<String>) {
+      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
+    }
+    if (t == _i1.getType<List<String>?>()) {
+      return (data != null
+              ? (data as List).map((e) => deserialize<String>(e)).toList()
+              : null)
+          as T;
+    }
     if (t == List<_i59.VendorShopOrder>) {
       return (data as List)
               .map((e) => deserialize<_i59.VendorShopOrder>(e))
