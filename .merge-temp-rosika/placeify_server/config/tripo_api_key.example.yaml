@@ -1,0 +1,8 @@
+# Copy this file to tripo_api_key.yaml and paste your Tripo API key.
+# Get a free key at https://platform.tripo3d.ai/api-keys
+#
+#   cp config/tripo_api_key.example.yaml config/tripo_api_key.yaml
+#
+# tripo_api_key.yaml is gitignored — never commit your real key.
+
+apiKey: 'tsk_your_key_here'

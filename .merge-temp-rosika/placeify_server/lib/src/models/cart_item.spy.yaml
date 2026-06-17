@@ -1,0 +1,13 @@
+### Item in a user's shopping cart.
+class: CartItem
+table: cart_item
+fields:
+  cart: Cart?, relation(onDelete=Cascade)
+  product: Product?, relation(onDelete=Cascade)
+  quantity: int, default=1
+  unitPrice: double
+
+indexes:
+  cart_item_cart_product:
+    fields: cartId, productId
+    unique: true

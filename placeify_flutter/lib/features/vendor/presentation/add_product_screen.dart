@@ -11,7 +11,7 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../core/widgets/form_text_field.dart';
 import '../../../core/widgets/toast_overlay.dart';
 import '../data/product_image_service.dart';
-import '../domain/repositories/vendor_repository.dart';
+import '../domain/repositories/vendor_commerce_repository.dart';
 import 'providers/vendor_dashboard_provider.dart';
 import 'widgets/product_multiview_photo_picker.dart';
 import 'widgets/vendor_form_widgets.dart';
@@ -283,7 +283,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         'Product published — Build 3D will use your $_photoCount photos',
       );
       context.pop();
-    } on VendorRepositoryException catch (error) {
+    } on VendorCommerceRepositoryException catch (error) {
       if (mounted) PlaceifyToast.show(context, error.message);
     } catch (_) {
       if (mounted) {

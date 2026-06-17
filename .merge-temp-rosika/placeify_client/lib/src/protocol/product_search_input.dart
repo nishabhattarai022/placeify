@@ -1,0 +1,125 @@
+/* AUTOMATICALLY GENERATED CODE DO NOT MODIFY */
+/*   To generate run: "serverpod generate"    */
+
+// ignore_for_file: implementation_imports
+// ignore_for_file: library_private_types_in_public_api
+// ignore_for_file: non_constant_identifier_names
+// ignore_for_file: public_member_api_docs
+// ignore_for_file: type_literal_in_constant_pattern
+// ignore_for_file: use_super_parameters
+// ignore_for_file: invalid_use_of_internal_member
+
+// ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:serverpod_client/serverpod_client.dart' as _i1;
+import 'pagination_input.dart' as _i2;
+import 'package:placeify_client/src/protocol/protocol.dart' as _i3;
+
+/// Search and filter parameters for product browsing.
+abstract class ProductSearchInput implements _i1.SerializableModel {
+  ProductSearchInput._({
+    this.query,
+    this.categoryName,
+    this.minPrice,
+    this.maxPrice,
+    this.pagination,
+  });
+
+  factory ProductSearchInput({
+    String? query,
+    String? categoryName,
+    double? minPrice,
+    double? maxPrice,
+    _i2.PaginationInput? pagination,
+  }) = _ProductSearchInputImpl;
+
+  factory ProductSearchInput.fromJson(Map<String, dynamic> jsonSerialization) {
+    return ProductSearchInput(
+      query: jsonSerialization['query'] as String?,
+      categoryName: jsonSerialization['categoryName'] as String?,
+      minPrice: (jsonSerialization['minPrice'] as num?)?.toDouble(),
+      maxPrice: (jsonSerialization['maxPrice'] as num?)?.toDouble(),
+      pagination: jsonSerialization['pagination'] == null
+          ? null
+          : _i3.Protocol().deserialize<_i2.PaginationInput>(
+              jsonSerialization['pagination'],
+            ),
+    );
+  }
+
+  String? query;
+
+  String? categoryName;
+
+  double? minPrice;
+
+  double? maxPrice;
+
+  _i2.PaginationInput? pagination;
+
+  /// Returns a shallow copy of this [ProductSearchInput]
+  /// with some or all fields replaced by the given arguments.
+  @_i1.useResult
+  ProductSearchInput copyWith({
+    String? query,
+    String? categoryName,
+    double? minPrice,
+    double? maxPrice,
+    _i2.PaginationInput? pagination,
+  });
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      '__className__': 'ProductSearchInput',
+      if (query != null) 'query': query,
+      if (categoryName != null) 'categoryName': categoryName,
+      if (minPrice != null) 'minPrice': minPrice,
+      if (maxPrice != null) 'maxPrice': maxPrice,
+      if (pagination != null) 'pagination': pagination?.toJson(),
+    };
+  }
+
+  @override
+  String toString() {
+    return _i1.SerializationManager.encode(this);
+  }
+}
+
+class _Undefined {}
+
+class _ProductSearchInputImpl extends ProductSearchInput {
+  _ProductSearchInputImpl({
+    String? query,
+    String? categoryName,
+    double? minPrice,
+    double? maxPrice,
+    _i2.PaginationInput? pagination,
+  }) : super._(
+         query: query,
+         categoryName: categoryName,
+         minPrice: minPrice,
+         maxPrice: maxPrice,
+         pagination: pagination,
+       );
+
+  /// Returns a shallow copy of this [ProductSearchInput]
+  /// with some or all fields replaced by the given arguments.
+  @_i1.useResult
+  @override
+  ProductSearchInput copyWith({
+    Object? query = _Undefined,
+    Object? categoryName = _Undefined,
+    Object? minPrice = _Undefined,
+    Object? maxPrice = _Undefined,
+    Object? pagination = _Undefined,
+  }) {
+    return ProductSearchInput(
+      query: query is String? ? query : this.query,
+      categoryName: categoryName is String? ? categoryName : this.categoryName,
+      minPrice: minPrice is double? ? minPrice : this.minPrice,
+      maxPrice: maxPrice is double? ? maxPrice : this.maxPrice,
+      pagination: pagination is _i2.PaginationInput?
+          ? pagination
+          : this.pagination?.copyWith(),
+    );
+  }
+}

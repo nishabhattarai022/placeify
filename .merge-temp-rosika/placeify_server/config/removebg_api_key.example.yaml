@@ -1,0 +1,8 @@
+# Copy to removebg_api_key.yaml and paste your remove.bg API key.
+# Free tier: https://www.remove.bg/api (50 preview calls / month).
+#
+#   cp config/removebg_api_key.example.yaml config/removebg_api_key.yaml
+#
+# removebg_api_key.yaml is gitignored — never commit your real key.
+
+apiKey: 'your_remove_bg_api_key_here'

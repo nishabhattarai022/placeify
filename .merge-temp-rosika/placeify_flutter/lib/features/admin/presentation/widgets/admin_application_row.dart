@@ -1,0 +1,125 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:placeify_flutter/core/constants/app_colors.dart';
+import 'package:placeify_flutter/core/constants/app_radii.dart';
+import 'package:placeify_flutter/core/services/haptic_service.dart';
+import 'package:placeify_flutter/core/utils/formatters.dart';
+import 'package:placeify_flutter/features/admin/domain/constants/admin_routes.dart';
+import 'package:placeify_flutter/features/admin/domain/models/vendor_application.dart';
+import 'package:placeify_flutter/features/admin/presentation/widgets/admin_status_chip.dart';
+
+class AdminApplicationRow extends StatefulWidget {
+  const AdminApplicationRow({
+    required this.application,
+    super.key,
+  });
+
+  final VendorApplication application;
+
+  @override
+  State<AdminApplicationRow> createState() => _AdminApplicationRowState();
+}
+
+class _AdminApplicationRowState extends State<AdminApplicationRow> {
+  double _translateX = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final application = widget.application;
+    final isNew = DateTime.now().difference(application.submittedAt).inHours < 24;
+    final applicant = application.registration.business.contactName;
+    final category = application.registration.category.category;
+    final meta =
+        '$applicant · $category · ${Formatters.shortDate(application.submittedAt)}';
+
+    return GestureDetector(
+      onTap: () {
+        HapticService.light();
+        context.push(AdminRoutes.approvalDetail(application.vendorId));
+      },
+      onTapDown: (_) => setState(() => _translateX = 5),
+      onTapUp: (_) => setState(() => _translateX = 0),
+      onTapCancel: () => setState(() => _translateX = 0),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        margin: const EdgeInsets.only(bottom: 10),
+        transform: Matrix4.translationValues(_translateX, 0, 0),
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
+        decoration: BoxDecoration(
+          color: AppColors.warmWhite,
+          borderRadius: AppRadii.md,
+          border: Border.all(color: AppColors.creamDark, width: 1.5),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: AppColors.cream,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                application.businessName.isNotEmpty
+                    ? application.businessName[0].toUpperCase()
+                    : '?',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.bark,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    application.businessName,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    meta,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textMuted,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            if (isNew) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.accentBg,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: const Text(
+                  'New',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.accent,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+            ],
+            AdminStatusChip(status: application.status),
+          ],
+        ),
+      ),
+    );
+  }
+}

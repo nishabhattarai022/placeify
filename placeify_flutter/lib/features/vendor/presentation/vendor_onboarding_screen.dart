@@ -7,10 +7,10 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/widgets/form_text_field.dart';
 import '../../../core/widgets/toast_overlay.dart';
-import '../../../main.dart' show client;
+import '../../../core/config/placeify_server_client.dart';
 import '../../auth/domain/models/app_user.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
-import '../domain/repositories/vendor_repository.dart';
+import '../domain/repositories/vendor_commerce_repository.dart';
 import 'providers/vendor_dashboard_provider.dart';
 import 'widgets/vendor_form_widgets.dart';
 
@@ -65,7 +65,7 @@ class _VendorOnboardingScreenState extends ConsumerState<VendorOnboardingScreen>
           );
       if (!mounted) return;
       PlaceifyToast.show(context, 'Your shop is live — welcome aboard!');
-    } on VendorRepositoryException catch (error) {
+    } on VendorCommerceRepositoryException catch (error) {
       if (mounted) PlaceifyToast.show(context, error.message);
     } catch (_) {
       if (mounted) {

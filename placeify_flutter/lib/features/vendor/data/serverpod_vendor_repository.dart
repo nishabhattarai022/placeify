@@ -3,11 +3,11 @@ import 'dart:typed_data';
 import 'package:placeify_client/placeify_client.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
-import '../../../../main.dart' show client;
+import '../../../core/config/placeify_server_client.dart';
 import '../domain/models/picked_product_image.dart';
-import '../domain/repositories/vendor_repository.dart';
+import '../domain/repositories/vendor_commerce_repository.dart';
 
-class ServerpodVendorRepository implements VendorRepository {
+class ServerpodVendorRepository implements VendorCommerceRepository {
   @override
   Future<VendorDashboard> getDashboard() async {
     _requireAuthenticated();
@@ -135,7 +135,6 @@ class ServerpodVendorRepository implements VendorRepository {
         careInstructions: careInstructions,
         warranty: warranty,
         thumbnailUrl: thumbnailUrl,
-        viewImageUrls: viewImageUrls.isEmpty ? null : viewImageUrls,
       );
     } catch (error) {
       throw _mapError(error);
@@ -154,15 +153,15 @@ class ServerpodVendorRepository implements VendorRepository {
 
   void _requireAuthenticated() {
     if (!client.auth.isAuthenticated) {
-      throw VendorRepositoryException(
+      throw VendorCommerceRepositoryException(
         'Sign in to manage your shop.',
         code: 'AUTH_REQUIRED',
       );
     }
   }
 
-  VendorRepositoryException _mapError(Object error) {
-    if (error is VendorRepositoryException) return error;
+  VendorCommerceRepositoryException _mapError(Object error) {
+    if (error is VendorCommerceRepositoryException) return error;
     if (error is PlaceifyException) {
       return _fromPlaceifyException(error);
     }
@@ -171,7 +170,7 @@ class ServerpodVendorRepository implements VendorRepository {
         : error.toString();
     if (message.contains('NoSuchMethodError') &&
         message.contains('regenerateProductModel3d')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'App is out of date. Stop Flutter and run `flutter run` again (not hot reload).',
         code: 'CLIENT_OUT_OF_DATE',
       );
@@ -179,107 +178,107 @@ class ServerpodVendorRepository implements VendorRepository {
     if (message.contains('Not found') ||
         message.contains('No method') ||
         message.contains('Method not found')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'Server is missing Build 3D. Run `serverpod generate` in placeify_server, then restart the server.',
         code: 'SERVER_OUT_OF_DATE',
       );
     }
     if (message.contains('SHOP_NOT_FOUND') ||
         message.contains('Vendor profile not found')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'Create your shop to get started.',
         code: 'SHOP_NOT_FOUND',
       );
     }
     if (message.contains('FORBIDDEN') ||
         message.contains('permission')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'You do not have permission to perform this action.',
         code: 'FORBIDDEN',
       );
     }
     if (message.contains('VENDOR_EXISTS')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'You already have a shop.',
         code: 'VENDOR_EXISTS',
       );
     }
     if (message.contains('INVALID_SHOP_NAME')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'Enter a shop name.',
         code: 'INVALID_SHOP_NAME',
       );
     }
     if (message.contains('INVALID_SHOP_DESCRIPTION')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'Enter a shop description.',
         code: 'INVALID_SHOP_DESCRIPTION',
       );
     }
     if (message.contains('INVALID_PHONE')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'Enter a phone number.',
         code: 'INVALID_PHONE',
       );
     }
     if (message.contains('INVALID_ADDRESS')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'Enter your shop address.',
         code: 'INVALID_ADDRESS',
       );
     }
     if (message.contains('INVALID_MATERIALS')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'List the product materials.',
         code: 'INVALID_MATERIALS',
       );
     }
     if (message.contains('INVALID_DIMENSIONS')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'Enter valid width, depth, and height.',
         code: 'INVALID_DIMENSIONS',
       );
     }
     if (message.contains('INVALID_CARE')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'Add care instructions for customers.',
         code: 'INVALID_CARE',
       );
     }
     if (message.contains('FILE_TOO_LARGE')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'Image is too large. Use a photo under 8 MB.',
         code: 'FILE_TOO_LARGE',
       );
     }
     if (message.contains('ORDER_NOT_FOUND')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'Order not found.',
         code: 'ORDER_NOT_FOUND',
       );
     }
     if (message.contains('INVALID_FILE_TYPE')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'Use a JPG, PNG, or WEBP image.',
         code: 'INVALID_FILE_TYPE',
       );
     }
     if (message.contains('BG_REMOVAL_NOT_CONFIGURED')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'Photo processing is not set up on the server. '
         'Add a remove.bg API key to config/removebg_api_key.yaml.',
         code: 'BG_REMOVAL_NOT_CONFIGURED',
       );
     }
     if (message.contains('BG_REMOVAL_AUTH')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'Background removal quota or API key issue. Check your remove.bg account.',
         code: 'BG_REMOVAL_AUTH',
       );
     }
     if (message.contains('BG_REMOVAL_FAILED')) {
       final detail = message.split(': ').skip(1).join(': ').trim();
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         detail.isNotEmpty
             ? detail
             : 'Could not process the photo background. Try another image.',
@@ -287,50 +286,50 @@ class ServerpodVendorRepository implements VendorRepository {
       );
     }
     if (message.contains('INVALID_FILE')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'Add a product photo before publishing.',
         code: 'INVALID_FILE',
       );
     }
     if (message.contains('INVALID_PRICE')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'Enter a price greater than zero.',
         code: 'INVALID_PRICE',
       );
     }
     if (message.contains('INVALID_PRODUCT')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'Enter a product name and description.',
         code: 'INVALID_PRODUCT',
       );
     }
     if (message.contains('MODEL3D_NO_THUMBNAIL')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'Add a product photo before building a 3D preview.',
         code: 'MODEL3D_NO_THUMBNAIL',
       );
     }
     if (message.contains('MODEL3D_THUMBNAIL_MISSING')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'Product photo file is missing on the server. Re-upload the photo, then try Build 3D again.',
         code: 'MODEL3D_THUMBNAIL_MISSING',
       );
     }
     if (message.contains('MODEL3D_INSUFFICIENT_VIEWS')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'Please upload at least 5 images for accurate 3D reconstruction.',
         code: 'MODEL3D_INSUFFICIENT_VIEWS',
       );
     }
     if (message.contains('MODEL3D_TRIPO_SOURCE_MISSING')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'Re-upload all product photos so 3D can use your originals (not white-background catalog images), then try Build 3D again.',
         code: 'MODEL3D_TRIPO_SOURCE_MISSING',
       );
     }
     if (message.contains('MODEL3D_TRIPO_FAILED')) {
       final detail = message.split(': ').skip(1).join(': ').trim();
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         detail.isNotEmpty
             ? detail
             : '3D generation failed. Add your Tripo key to config/tripo_api_key.yaml on the server.',
@@ -339,7 +338,7 @@ class ServerpodVendorRepository implements VendorRepository {
     }
     if (message.contains('MODEL3D_GENERATION_FAILED')) {
       final detail = message.split(': ').skip(1).join(': ').trim();
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         detail.isNotEmpty
             ? detail
             : '3D model could not be generated. Re-upload the photo and try again.',
@@ -347,14 +346,14 @@ class ServerpodVendorRepository implements VendorRepository {
       );
     }
     if (message.contains('PRODUCT_NOT_FOUND')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'Product not found.',
         code: 'PRODUCT_NOT_FOUND',
       );
     }
     if (message.contains('Method not found') ||
         message.contains('regenerateProductModel3d')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'Server is out of date. Restart placeify_server after pulling the latest code.',
         code: 'SERVER_OUT_OF_DATE',
       );
@@ -362,18 +361,18 @@ class ServerpodVendorRepository implements VendorRepository {
     if (message.contains('SocketException') ||
         message.contains('Connection refused') ||
         message.contains('Failed host lookup')) {
-      return VendorRepositoryException(
+      return VendorCommerceRepositoryException(
         'Cannot reach the server. Make sure placeify_server is running.',
         code: 'NETWORK',
       );
     }
     if (message.isNotEmpty) {
-      return VendorRepositoryException(message);
+      return VendorCommerceRepositoryException(message);
     }
-    return VendorRepositoryException('Something went wrong. Try again.');
+    return VendorCommerceRepositoryException('Something went wrong. Try again.');
   }
 
-  VendorRepositoryException _fromPlaceifyException(PlaceifyException error) {
+  VendorCommerceRepositoryException _fromPlaceifyException(PlaceifyException error) {
     return _mapError('${error.code}: ${error.message}');
   }
 }

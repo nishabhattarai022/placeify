@@ -1,0 +1,5 @@
+### Result returned after a successful checkout.
+class: CheckoutResult
+fields:
+  order: Order
+  itemCount: int

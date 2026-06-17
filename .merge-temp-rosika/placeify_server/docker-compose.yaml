@@ -1,0 +1,44 @@
+services:
+  # Development services
+  postgres:
+    image: pgvector/pgvector:pg16
+    ports:
+      - "8090:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: placeify
+      POSTGRES_PASSWORD: "P-noAmM0ExkfSxz5pCS_iOnJ6SwkE71B"
+    volumes:
+      - placeify_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:6.2.6
+    ports:
+      - "8091:6379"
+    command: redis-server --requirepass "UFox4R-3vSC8hPsPRodDaUaLRU1n4Dsr"
+    environment:
+      - REDIS_REPLICATION_MODE=master
+
+  # Test services
+  postgres_test:
+    image: pgvector/pgvector:pg16
+    ports:
+      - "9090:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: placeify_test
+      POSTGRES_PASSWORD: "ajzc6u1uPyDjeg0SXp61RXK22hm7mqsJ"
+    volumes:
+      - placeify_test_data:/var/lib/postgresql/data
+
+  redis_test:
+    image: redis:6.2.6
+    ports:
+      - "9091:6379"
+    command: redis-server --requirepass "Ae3cNAo_yL9CdlS4MIJa_DycO050OwG6"
+    environment:
+      - REDIS_REPLICATION_MODE=master
+
+volumes:
+  placeify_data:
+  placeify_test_data:
