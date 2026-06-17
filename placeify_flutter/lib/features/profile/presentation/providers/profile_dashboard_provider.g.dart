@@ -124,7 +124,7 @@ final class ProfileOrdersProvider
   ProfileOrders create() => ProfileOrders();
 }
 
-String _$profileOrdersHash() => r'33038782148228bb358b886b0a65d5d9c55dd1ab';
+String _$profileOrdersHash() => r'bc876c35d538b2c8c6217053aefa195abb43821c';
 
 abstract class _$ProfileOrders extends $AsyncNotifier<List<UserOrderSummary>> {
   FutureOr<List<UserOrderSummary>> build();

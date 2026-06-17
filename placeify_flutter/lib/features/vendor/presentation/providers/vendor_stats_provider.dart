@@ -1,9 +1,10 @@
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
-import 'package:placeify_flutter/features/vendor/data/config/vendor_mock_config.dart';
+import 'package:placeify_flutter/features/vendor/data/vendor_dashboard_mapper.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_dashboard_data.dart';
-import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_profile_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import '../../../../core/config/placeify_server_client.dart';
 
 part 'vendor_stats_provider.g.dart';
 
@@ -23,16 +24,16 @@ class VendorStats extends _$VendorStats {
     }
 
     final vendorId = user!.vendorId!;
-    final repo = ref.watch(vendorRepositoryProvider);
-
-    final stats = await repo.getStats(vendorId);
-    final recentOrders = await repo.getOrders(vendorId, limit: 5);
+    final dashboard = await client.vendor.getDashboard();
 
     return VendorDashboardData(
-      stats: stats,
-      revenueSeries: VendorMockConfig.revenueSeriesFor(vendorId),
-      recentOrders: recentOrders,
-      topProducts: VendorMockConfig.topProductsFor(vendorId),
+      stats: VendorDashboardMapper.statsFromDashboard(dashboard),
+      revenueSeries: VendorDashboardMapper.revenueSeriesFromDashboard(dashboard),
+      recentOrders: VendorDashboardMapper.recentOrdersFromDashboard(
+        dashboard,
+        vendorId: vendorId,
+      ),
+      topProducts: VendorDashboardMapper.topProductsFromDashboard(dashboard),
     );
   }
 }
