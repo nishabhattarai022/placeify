@@ -3,17 +3,17 @@ import 'package:placeify_client/placeify_client.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
-import '../../../../main.dart' show client;
+import '../../../../core/config/placeify_server_client.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../home/presentation/providers/catalog_provider.dart';
 import '../../data/serverpod_vendor_repository.dart';
 import '../../domain/models/picked_product_image.dart';
-import '../../domain/repositories/vendor_repository.dart';
+import '../../domain/repositories/vendor_commerce_repository.dart';
 
 part 'vendor_dashboard_provider.g.dart';
 
 @Riverpod(keepAlive: true)
-VendorRepository vendorRepository(Ref ref) {
+VendorCommerceRepository vendorCommerceRepository(Ref ref) {
   return ServerpodVendorRepository();
 }
 
@@ -22,7 +22,7 @@ final vendorProductsProvider = FutureProvider.autoDispose<List<Product>>((
 ) async {
   final dashboard = await ref.watch(vendorDashboardStateProvider.future);
   if (dashboard == null) return [];
-  final repo = ref.read(vendorRepositoryProvider);
+  final repo = ref.read(vendorCommerceRepositoryProvider);
   return repo.listMyProducts();
 });
 
@@ -50,12 +50,12 @@ class VendorDashboardState extends _$VendorDashboardState {
 
   Future<VendorDashboard?> _loadDashboard() async {
     if (!client.auth.isAuthenticated) return null;
-    final repo = ref.read(vendorRepositoryProvider);
+    final repo = ref.read(vendorCommerceRepositoryProvider);
     try {
       final hasShop = await repo.hasShop();
       if (!hasShop) return null;
       return await repo.getDashboard();
-    } on VendorRepositoryException catch (error) {
+    } on VendorCommerceRepositoryException catch (error) {
       if (error.isShopNotFound) return null;
       rethrow;
     }
@@ -76,7 +76,7 @@ class VendorDashboardState extends _$VendorDashboardState {
     required String phone,
     required String address,
   }) async {
-    final repo = ref.read(vendorRepositoryProvider);
+    final repo = ref.read(vendorCommerceRepositoryProvider);
     await repo.createShop(
       shopName,
       description: description,
@@ -87,7 +87,7 @@ class VendorDashboardState extends _$VendorDashboardState {
     try {
       final dashboard = await repo.getDashboard();
       state = AsyncData(dashboard);
-    } on VendorRepositoryException catch (error) {
+    } on VendorCommerceRepositoryException catch (error) {
       if (error.isShopNotFound) {
         state = const AsyncData(null);
       } else {
@@ -113,7 +113,7 @@ class VendorDashboardState extends _$VendorDashboardState {
     String? assemblyNote,
     String? warranty,
   }) async {
-    final repo = ref.read(vendorRepositoryProvider);
+    final repo = ref.read(vendorCommerceRepositoryProvider);
     await repo.createProduct(
       name: name,
       description: description,

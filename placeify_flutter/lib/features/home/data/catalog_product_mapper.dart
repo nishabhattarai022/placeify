@@ -43,14 +43,14 @@ abstract final class CatalogProductMapper {
     final model3dUrl = product.model3dUrl?.trim();
     final has3dPreview = model3dUrl != null && model3dUrl.isNotEmpty;
     if (has3dPreview) {
-      Product3dModelResolver.setModelUrl(uiId, model3dUrl);
+      final resolved = await resolveMediaUrl(model3dUrl);
+      Product3dModelResolver.setModelUrl(uiId, resolved);
     }
 
     return Product(
       id: uiId,
       name: product.name,
       brand: shopName,
-      shopName: shopName,
       sku: 'PF${id.toString().padLeft(5, '0')}',
       price: product.price,
       imageUrl: imageUrl.isEmpty
@@ -60,12 +60,6 @@ abstract final class CatalogProductMapper {
       hasArView: has3dPreview,
       categoryId: categoryId,
       dimensions: dimensions,
-      description: product.description,
-      materials: product.materials ?? '',
-      careInstructions: product.careInstructions ?? '',
-      warranty: product.warranty,
-      assemblyNote: product.assemblyNote,
-      weightKg: product.weightKg,
     );
   }
 

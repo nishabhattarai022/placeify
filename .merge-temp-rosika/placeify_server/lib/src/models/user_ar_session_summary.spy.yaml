@@ -1,0 +1,9 @@
+### AR session row for the customer profile AR history list.
+class: UserArSessionSummary
+fields:
+  id: int
+  productId: int
+  productName: String
+  startedAt: DateTime
+  deviceInfo: String?
+  snapshotUrl: String?

@@ -10,7 +10,7 @@ import '../../../../core/constants/app_typography.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/toast_overlay.dart';
 import '../../../home/presentation/providers/catalog_provider.dart';
-import '../../domain/repositories/vendor_repository.dart';
+import '../../domain/repositories/vendor_commerce_repository.dart';
 import '../providers/vendor_dashboard_provider.dart';
 
 class VendorProductsSection extends ConsumerWidget {
@@ -60,11 +60,11 @@ class VendorProductsSection extends ConsumerWidget {
     int productId,
   ) async {
     try {
-      final repo = ref.read(vendorRepositoryProvider);
+      final repo = ref.read(vendorCommerceRepositoryProvider);
       final product = await repo.regenerateProductModel3d(productId);
       final modelUrl = product.model3dUrl?.trim();
       if (modelUrl == null || modelUrl.isEmpty) {
-        throw VendorRepositoryException(
+        throw VendorCommerceRepositoryException(
           '3D preview was not created. Re-upload the product photo and try again.',
           code: 'MODEL3D_GENERATION_FAILED',
         );
@@ -82,7 +82,7 @@ class VendorProductsSection extends ConsumerWidget {
           '3D preview generated — buyers can view it on the product page',
         );
       }
-    } on VendorRepositoryException catch (error) {
+    } on VendorCommerceRepositoryException catch (error) {
       if (context.mounted) {
         PlaceifyToast.show(context, error.message);
       }

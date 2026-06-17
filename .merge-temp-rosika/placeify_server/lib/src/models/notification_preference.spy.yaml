@@ -1,0 +1,17 @@
+### Per-user notification settings for the profile screen.
+class: NotificationPreference
+table: notification_preference
+fields:
+  user: User?, relation(onDelete=Cascade)
+  orderUpdates: bool, default=true
+  refundStatus: bool, default=true
+  arReminders: bool, default=true
+  priceDropAlerts: bool, default=false
+  vendorMessages: bool, default=true
+  promotions: bool, default=false
+  updatedAt: DateTime, default=now
+
+indexes:
+  notification_preference_user_id:
+    fields: userId
+    unique: true

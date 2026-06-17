@@ -9,51 +9,53 @@ part of 'vendor_dashboard_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(vendorRepository)
-final vendorRepositoryProvider = VendorRepositoryProvider._();
+@ProviderFor(vendorCommerceRepository)
+final vendorCommerceRepositoryProvider = VendorCommerceRepositoryProvider._();
 
-final class VendorRepositoryProvider
+final class VendorCommerceRepositoryProvider
     extends
         $FunctionalProvider<
-          VendorRepository,
-          VendorRepository,
-          VendorRepository
+          VendorCommerceRepository,
+          VendorCommerceRepository,
+          VendorCommerceRepository
         >
-    with $Provider<VendorRepository> {
-  VendorRepositoryProvider._()
+    with $Provider<VendorCommerceRepository> {
+  VendorCommerceRepositoryProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'vendorRepositoryProvider',
+        name: r'vendorCommerceRepositoryProvider',
         isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$vendorRepositoryHash();
+  String debugGetCreateSourceHash() => _$vendorCommerceRepositoryHash();
 
   @$internal
   @override
-  $ProviderElement<VendorRepository> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $ProviderElement<VendorCommerceRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
-  VendorRepository create(Ref ref) {
-    return vendorRepository(ref);
+  VendorCommerceRepository create(Ref ref) {
+    return vendorCommerceRepository(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(VendorRepository value) {
+  Override overrideWithValue(VendorCommerceRepository value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<VendorRepository>(value),
+      providerOverride: $SyncValueProvider<VendorCommerceRepository>(value),
     );
   }
 }
 
-String _$vendorRepositoryHash() => r'3acdf015012ffce0c9a58b0c8fe72d042fa119f4';
+String _$vendorCommerceRepositoryHash() =>
+    r'27674bffe6587852421ccff8b751f3397b817261';
 
 @ProviderFor(VendorDashboardState)
 final vendorDashboardStateProvider = VendorDashboardStateProvider._();
@@ -80,7 +82,7 @@ final class VendorDashboardStateProvider
 }
 
 String _$vendorDashboardStateHash() =>
-    r'8ef8903e1a615813c33e83edc03300e9c3f691bb';
+    r'a3c87e01ef0b47a9a7ab88b8a5b4fd309485ead3';
 
 abstract class _$VendorDashboardState extends $AsyncNotifier<VendorDashboard?> {
   FutureOr<VendorDashboard?> build();

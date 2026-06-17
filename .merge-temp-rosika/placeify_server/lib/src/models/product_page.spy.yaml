@@ -1,0 +1,7 @@
+### Paginated product list response.
+class: ProductPage
+fields:
+  items: List<Product>
+  total: int
+  page: int
+  pageSize: int

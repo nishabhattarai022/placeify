@@ -1,0 +1,23 @@
+### Platform administrator profile linked 1:1 to a User account.
+### Audit actions (approve, remove, resolve) reference this table's id, not user.id.
+class: Admin
+table: admin
+fields:
+  id: UuidValue?, defaultPersist=random_v7
+  user: User?, relation(onDelete=Cascade)
+  fullName: String
+  email: String
+  phoneNumber: String?
+  adminType: AdminType, default=moderator
+  isActive: bool, default=true
+  lastLoginAt: DateTime?
+  createdAt: DateTime, default=now
+  updatedAt: DateTime, default=now
+
+indexes:
+  admin_user_id:
+    fields: userId
+    unique: true
+  admin_email:
+    fields: email
+    unique: true

@@ -1,0 +1,17 @@
+### Customization request or design idea shared by a user with a vendor.
+class: CustomizationRequest
+table: customization_request
+fields:
+  user: User?, relation(onDelete=Cascade)
+  vendor: Vendor?, relation(onDelete=Cascade)
+  product: Product?, relation(onDelete=Cascade)
+  description: String
+  attachmentUrl: String?
+  status: RequestStatus, default=pending
+  createdAt: DateTime, default=now
+
+indexes:
+  customization_request_vendor_id:
+    fields: vendorId
+  customization_request_user_id:
+    fields: userId
