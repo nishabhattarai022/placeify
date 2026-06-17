@@ -124,7 +124,7 @@ class _GetStartedViewState extends State<GetStartedView>
                             text: TextSpan(
                               children: [
                                 TextSpan(
-                                  text: 'प्ले',
+                                  text: 'Place',
                                   style: AppFonts.poppins(
                                     fontSize: compact ? 48 : 58,
                                     fontWeight: FontWeight.w700,
@@ -134,7 +134,7 @@ class _GetStartedViewState extends State<GetStartedView>
                                   ),
                                 ),
                                 TextSpan(
-                                  text: 'सिफाइ',
+                                  text: 'ify',
                                   style: AppFonts.poppins(
                                     fontSize: compact ? 48 : 58,
                                     fontWeight: FontWeight.w700,

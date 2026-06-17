@@ -1,8 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:placeify_client/placeify_client.dart';
 import 'package:placeify_flutter/features/admin/data/mock/mock_vendor_application_repository.dart';
 import 'package:placeify_flutter/features/auth/data/mock_auth_repository.dart';
 import 'package:placeify_flutter/features/auth/domain/models/app_user.dart';
 import 'package:placeify_flutter/features/vendor/data/mock_vendor_registration_repository.dart';
+import 'package:placeify_flutter/features/vendor/domain/constants/vendor_routes.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_registration.dart';
 import 'package:placeify_flutter/features/vendor/presentation/guards/vendor_auth_guard.dart';
@@ -114,6 +116,57 @@ void main() {
         user: declined,
       );
       expect(guard?.location, '/vendor/register');
+    });
+
+    test('vendor role with approved status can open dashboard', () {
+      const user = AppUser(
+        id: '1',
+        fullName: 'Shop Owner',
+        email: 'shop@test.com',
+        role: UserRole.vendor,
+        registeredVendorStatus: VendorStatus.approved,
+      );
+
+      final guard = VendorAuthGuard.evaluate(
+        location: '/vendor',
+        user: user,
+      );
+      expect(guard, isNull);
+    });
+
+    test('pending vendor with shop can open dashboard', () {
+      const user = AppUser(
+        id: '1',
+        fullName: 'Shop Owner',
+        email: 'shop@test.com',
+        role: UserRole.consumer,
+        hasVendorShop: true,
+        registeredVendorStatus: VendorStatus.pending,
+        registeredVendorId: '42',
+      );
+
+      final guard = VendorAuthGuard.evaluate(
+        location: '/vendor',
+        user: user,
+      );
+      expect(guard, isNull);
+    });
+
+    test('pending vendor without shop stays blocked', () {
+      const user = AppUser(
+        id: '1',
+        fullName: 'Applicant',
+        email: 'apply@test.com',
+        role: UserRole.consumer,
+        registeredVendorStatus: VendorStatus.pending,
+        registeredVendorId: 'mock-vendor',
+      );
+
+      final guard = VendorAuthGuard.evaluate(
+        location: '/vendor',
+        user: user,
+      );
+      expect(guard?.location, VendorRoutes.profileFallback);
     });
   });
 }

@@ -741,7 +741,7 @@ class VendorStore {
       return product;
     }
 
-    const generator = Product3dGenerator();
+    final generator = Product3dGenerator();
     final result = await generator.generateForProduct(
       session,
       product: product,

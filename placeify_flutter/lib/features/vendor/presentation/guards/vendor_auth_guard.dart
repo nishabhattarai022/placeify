@@ -1,3 +1,5 @@
+import 'package:placeify_client/placeify_client.dart';
+
 import 'package:placeify_flutter/features/auth/domain/models/app_user.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_routes.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_strings.dart';
@@ -19,9 +21,15 @@ abstract final class VendorAuthGuard {
 
     final status = user?.vendorStatus ?? VendorStatus.none;
 
+    final hasShop = user?.hasVendorShop ?? false;
+    final isVendorAccount = user?.isVendorAccount ?? false;
+
     if (_isRegistrationRoute(location)) {
       return switch (status) {
         VendorStatus.approved => const VendorAuthRedirect(
+            location: VendorRoutes.dashboard,
+          ),
+        VendorStatus.pending when hasShop => const VendorAuthRedirect(
             location: VendorRoutes.dashboard,
           ),
         VendorStatus.pending || VendorStatus.suspended => const VendorAuthRedirect(
@@ -32,9 +40,12 @@ abstract final class VendorAuthGuard {
     }
 
     return switch (status) {
+      VendorStatus.none when isVendorAccount || user?.role == UserRole.vendor =>
+        null,
       VendorStatus.none => const VendorAuthRedirect(
           location: VendorRoutes.register,
         ),
+      VendorStatus.pending when hasShop || isVendorAccount => null,
       VendorStatus.pending => const VendorAuthRedirect(
           location: VendorRoutes.profileFallback,
           toastMessage: VendorStrings.guardPendingToast,

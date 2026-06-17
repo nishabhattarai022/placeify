@@ -1,8 +1,0 @@
-### Search and filter parameters for product browsing.
-class: ProductSearchInput
-fields:
-  query: String?
-  categoryName: String?
-  minPrice: double?
-  maxPrice: double?
-  pagination: PaginationInput?

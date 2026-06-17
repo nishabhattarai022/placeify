@@ -1,9 +1,0 @@
-### Moderation status for customer and vendor accounts (admin approve/suspend).
-enum: UserAccountStatus
-serialized: byName
-default: approved
-values:
-  - pending
-  - approved
-  - rejected
-  - suspended

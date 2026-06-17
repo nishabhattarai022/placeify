@@ -1,8 +1,0 @@
-enum: RequestStatus
-serialized: byName
-default: pending
-values:
-  - pending
-  - inProgress
-  - completed
-  - rejected
