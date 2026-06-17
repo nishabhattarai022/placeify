@@ -17,6 +17,7 @@ class ProductService {
   final VendorService _vendorService;
 
   Future<void> _ensureCatalog(Session session) async {
+    await CatalogSeed.ensureCategories(session);
     try {
       await CatalogSeed.ensureDemoCatalog(session);
     } on PlaceifyException catch (error) {
@@ -25,7 +26,7 @@ class ProductService {
   }
 
   Future<List<Category>> listCategories(Session session) async {
-    await _ensureCatalog(session);
+    await CatalogSeed.ensureCategories(session);
     return _repository.listCategories(session);
   }
 

@@ -75,8 +75,16 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _categoriesFuture ??=
-        ref.read(catalogRepositoryProvider).listCategories();
+    if (_categoriesFuture == null) {
+      _reloadCategories();
+    }
+  }
+
+  void _reloadCategories() {
+    setState(() {
+      _categoriesFuture =
+          ref.read(catalogRepositoryProvider).listCategories();
+    });
   }
 
   void _applyPickedImage(PickedProductImage picked) {
@@ -423,40 +431,87 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                                   ),
                                 );
                               }
-                              if (snapshot.hasError || !snapshot.hasData) {
-                                return const Text(
-                                  'Could not load categories. Try again later.',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: AppColors.rust,
-                                  ),
+                              if (snapshot.hasError) {
+                                return _CategoryLoadIssue(
+                                  message:
+                                      'Could not load categories. Make sure placeify_server is running.',
+                                  onRetry: _reloadCategories,
                                 );
                               }
                               final categories = List<Category>.from(
-                                snapshot.data!,
+                                snapshot.data ?? const [],
                               )..sort((a, b) => a.name.compareTo(b.name));
+                              final selectable = [
+                                for (final category in categories)
+                                  if (category.id != null) category,
+                              ];
+                              if (selectable.isEmpty) {
+                                return _CategoryLoadIssue(
+                                  message:
+                                      'No furniture categories are available yet.',
+                                  onRetry: _reloadCategories,
+                                );
+                              }
                               return Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  DropdownButtonFormField<int>(
+                                    value: _selectedCategoryId,
+                                    isExpanded: true,
+                                    decoration: InputDecoration(
+                                      labelText: 'Furniture category',
+                                      hintText: 'Select a category',
+                                      filled: true,
+                                      fillColor: AppColors.warmWhite,
+                                      border: OutlineInputBorder(
+                                        borderRadius: AppRadii.md,
+                                        borderSide: const BorderSide(
+                                          color: AppColors.creamDark,
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: AppRadii.md,
+                                        borderSide: BorderSide(
+                                          color: _showCategoryError
+                                              ? AppColors.rust
+                                              : AppColors.creamDark,
+                                        ),
+                                      ),
+                                    ),
+                                    items: [
+                                      for (final category in selectable)
+                                        DropdownMenuItem<int>(
+                                          value: category.id,
+                                          child: Text(
+                                            _categoryLabel(category.name),
+                                          ),
+                                        ),
+                                    ],
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _selectedCategoryId = value;
+                                        _showCategoryError = false;
+                                      });
+                                    },
+                                  ),
+                                  const SizedBox(height: 12),
                                   Wrap(
                                     spacing: 8,
                                     runSpacing: 8,
                                     children: [
-                                      for (final category in categories)
-                                        if (category.id != null)
-                                          _CategoryChip(
-                                            label: _categoryLabel(category.name),
-                                            selected:
-                                                _selectedCategoryId ==
-                                                    category.id,
-                                            onTap: () {
-                                              setState(() {
-                                                _selectedCategoryId =
-                                                    category.id;
-                                                _showCategoryError = false;
-                                              });
-                                            },
-                                          ),
+                                      for (final category in selectable)
+                                        _CategoryChip(
+                                          label: _categoryLabel(category.name),
+                                          selected: _selectedCategoryId ==
+                                              category.id,
+                                          onTap: () {
+                                            setState(() {
+                                              _selectedCategoryId =
+                                                  category.id;
+                                              _showCategoryError = false;
+                                            });
+                                          },
+                                        ),
                                     ],
                                   ),
                                   if (_showCategoryError) ...[
@@ -715,6 +770,38 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   String _categoryLabel(String name) {
     if (name.isEmpty) return 'Other';
     return name[0].toUpperCase() + name.substring(1);
+  }
+}
+
+class _CategoryLoadIssue extends StatelessWidget {
+  const _CategoryLoadIssue({
+    required this.message,
+    required this.onRetry,
+  });
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          message,
+          style: const TextStyle(
+            fontSize: 13,
+            color: AppColors.rust,
+            height: 1.35,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextButton(
+          onPressed: onRetry,
+          child: const Text('Retry'),
+        ),
+      ],
+    );
   }
 }
 

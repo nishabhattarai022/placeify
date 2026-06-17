@@ -39,13 +39,11 @@ class ProductImageProcessor {
   ) async {
     final apiKey = RemoveBgApiKeyConfig.apiKey();
     if (apiKey == null || apiKey.isEmpty) {
-      throw PlaceifyException(
-        message:
-            'Background removal is not configured. Copy '
-            'config/removebg_api_key.example.yaml to config/removebg_api_key.yaml '
-            'and add your remove.bg API key.',
-        code: 'BG_REMOVAL_NOT_CONFIGURED',
+      session.log(
+        'remove.bg not configured; saving catalog image without background removal',
+        level: LogLevel.info,
       );
+      return _processLocally(bytes);
     }
 
     session.log(
@@ -65,6 +63,35 @@ class ProductImageProcessor {
       bytes: catalogBytes,
       extension: '.jpg',
       backgroundRemoved: true,
+    );
+  }
+
+  ProcessedProductImage _processLocally(Uint8List bytes) {
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null) {
+      throw PlaceifyException(
+        message: 'Could not decode image.',
+        code: 'IMAGE_DECODE_FAILED',
+      );
+    }
+
+    final resized = decoded.width > _maxCatalogWidth
+        ? img.copyResize(decoded, width: _maxCatalogWidth)
+        : decoded;
+
+    final canvas = img.Image(
+      width: resized.width,
+      height: resized.height,
+    );
+    img.fill(canvas, color: _white);
+    img.compositeImage(canvas, resized);
+
+    return ProcessedProductImage(
+      bytes: Uint8List.fromList(
+        img.encodeJpg(canvas, quality: _jpegQuality),
+      ),
+      extension: '.jpg',
+      backgroundRemoved: false,
     );
   }
 

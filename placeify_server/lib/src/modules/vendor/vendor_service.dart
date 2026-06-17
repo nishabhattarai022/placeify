@@ -111,6 +111,7 @@ class VendorService {
     String? warranty,
     String? model3dUrl,
     String? thumbnailUrl,
+    List<String>? viewImageUrls,
   }) {
     return _repository.createProduct(
       session,
@@ -128,6 +129,7 @@ class VendorService {
       warranty: warranty,
       model3dUrl: model3dUrl,
       thumbnailUrl: thumbnailUrl,
+      viewImageUrls: viewImageUrls,
     );
   }
 
