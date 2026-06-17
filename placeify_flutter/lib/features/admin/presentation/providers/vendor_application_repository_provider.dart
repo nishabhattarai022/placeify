@@ -1,5 +1,7 @@
 import 'package:placeify_flutter/core/providers/shared_preferences_provider.dart';
 import 'package:placeify_flutter/features/admin/data/mock/mock_vendor_application_repository.dart';
+import 'package:placeify_flutter/features/admin/data/serverpod_admin_api.dart';
+import 'package:placeify_flutter/features/admin/data/serverpod_vendor_application_repository.dart';
 import 'package:placeify_flutter/features/admin/domain/repositories/vendor_application_repository.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -12,5 +14,9 @@ Future<VendorApplicationRepository> vendorApplicationRepository(
 ) async {
   final authRepo = await ref.watch(authRepositoryProvider.future);
   final prefs = ref.watch(sharedPreferencesProvider);
-  return MockVendorApplicationRepository(authRepo, prefs);
+  final fallback = MockVendorApplicationRepository(authRepo, prefs);
+  return ServerpodVendorApplicationRepository(
+    fallback,
+    const ServerpodAdminApi(),
+  );
 }

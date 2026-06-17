@@ -7,6 +7,7 @@ import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/server_static_paths.dart';
 import '../../shared/session_service.dart';
+import '../notification/order_notification_service.dart';
 import 'product_3d/product_3d_generation_result.dart';
 import 'product_3d/product_3d_generator.dart';
 import 'product_image_processor.dart';
@@ -996,6 +997,15 @@ class VendorStore {
       );
     }
 
+    final acceptedOrder = await Order.db.findById(session, orderId);
+    if (acceptedOrder != null) {
+      await OrderNotificationService.notifyOrderAccepted(
+        session,
+        order: acceptedOrder,
+        vendorId: vendor.id!,
+      );
+    }
+
     return getShopOrder(session, orderId);
   }
 
@@ -1118,6 +1128,16 @@ class VendorStore {
         updatedAt: now,
       ),
     );
+
+    final refreshedOrder = await Order.db.findById(session, orderId);
+    if (refreshedOrder != null) {
+      await OrderNotificationService.notifyDeliveryStage(
+        session,
+        order: refreshedOrder,
+        stage: stage,
+        vendorId: vendor.id!,
+      );
+    }
 
     return update;
   }
