@@ -7,6 +7,7 @@ import '../../../../core/services/haptic_service.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../domain/models/product.dart';
 import '../providers/catalog_provider.dart';
+import '../providers/category_provider.dart';
 import '../theme/home_screen_tokens.dart';
 
 class HomeLiveProductsRow extends ConsumerWidget {
@@ -23,8 +24,7 @@ class HomeLiveProductsRow extends ConsumerWidget {
       ),
       error: (_, __) => const SizedBox.shrink(),
       data: (_) {
-        final products = ref.watch(catalogProductsProvider);
-        final featured = products.take(2).toList();
+        final featured = ref.watch(homeFeaturedProductsProvider);
         if (featured.isEmpty) return const SizedBox.shrink();
 
         return Row(

@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/utils/formatters.dart';
-import '../../../cart/data/cart_display_config.dart';
 import '../../../cart/presentation/cart_actions.dart';
 import '../../domain/models/product.dart';
 import '../chairs_catalog_tokens.dart';
@@ -23,7 +22,7 @@ class ChairsCatalogCompactCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final unitPrice = CartDisplayConfig.priceFor(product.id, product.price);
+    final unitPrice = product.price;
     final onSale = product.isOnSale;
     final original = product.originalPrice;
 
@@ -95,12 +94,7 @@ class ChairsCatalogCompactCard extends ConsumerWidget {
                         const SizedBox(height: 4),
                         if (onSale && original != null) ...[
                           Text(
-                            Formatters.currencyDecimal(
-                              CartDisplayConfig.priceFor(
-                                product.id,
-                                original,
-                              ),
-                            ),
+                            Formatters.currencyDecimal(original),
                             style: const TextStyle(
                               fontSize: 11,
                               color: ChairsCatalogTokens.skuMuted,

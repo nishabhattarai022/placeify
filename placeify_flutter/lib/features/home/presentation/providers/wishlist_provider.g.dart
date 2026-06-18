@@ -8,15 +8,18 @@ part of 'wishlist_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Product id → time saved (newest first when listed).
+/// Product id → time saved. Backed by [userWishlistProvider] for a single
+/// source of truth across home hearts, bookmarks, and profile wishlist.
 
 @ProviderFor(Wishlist)
 final wishlistProvider = WishlistProvider._();
 
-/// Product id → time saved (newest first when listed).
+/// Product id → time saved. Backed by [userWishlistProvider] for a single
+/// source of truth across home hearts, bookmarks, and profile wishlist.
 final class WishlistProvider
     extends $NotifierProvider<Wishlist, Map<String, DateTime>> {
-  /// Product id → time saved (newest first when listed).
+  /// Product id → time saved. Backed by [userWishlistProvider] for a single
+  /// source of truth across home hearts, bookmarks, and profile wishlist.
   WishlistProvider._()
     : super(
         from: null,
@@ -44,9 +47,10 @@ final class WishlistProvider
   }
 }
 
-String _$wishlistHash() => r'5ee08885f8839c6a0ce31fbbe5f8a487e33dd247';
+String _$wishlistHash() => r'8a0fd53d28439eeb95e2d894845b7e47cfa18e92';
 
-/// Product id → time saved (newest first when listed).
+/// Product id → time saved. Backed by [userWishlistProvider] for a single
+/// source of truth across home hearts, bookmarks, and profile wishlist.
 
 abstract class _$Wishlist extends $Notifier<Map<String, DateTime>> {
   Map<String, DateTime> build();

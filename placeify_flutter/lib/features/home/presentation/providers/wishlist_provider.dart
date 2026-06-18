@@ -1,31 +1,27 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../user/presentation/providers/user_wishlist_provider.dart';
+
 part 'wishlist_provider.g.dart';
 
-/// Product id → time saved (newest first when listed).
+/// Product id → time saved. Backed by [userWishlistProvider] for a single
+/// source of truth across home hearts, bookmarks, and profile wishlist.
 @riverpod
 class Wishlist extends _$Wishlist {
   @override
   Map<String, DateTime> build() {
-    final now = DateTime.now();
-    return {
-      'p6': now.subtract(const Duration(minutes: 12)),
-      'p4': now.subtract(const Duration(hours: 2)),
-      'p2': now.subtract(const Duration(hours: 5)),
-      'p5': now.subtract(const Duration(days: 1)),
-      'p1': now.subtract(const Duration(days: 2)),
-      'p3': now.subtract(const Duration(days: 3)),
-    };
+    final entries = ref.watch(userWishlistProvider);
+    return entries.maybeWhen(
+      data: (list) => {
+        for (final entry in list) entry.product.id: entry.savedAt,
+      },
+      orElse: () => {},
+    );
   }
 
   bool isLiked(String productId) => state.containsKey(productId);
 
-  void toggle(String productId) {
-    if (state.containsKey(productId)) {
-      state = Map<String, DateTime>.from(state)..remove(productId);
-    } else {
-      state = Map<String, DateTime>.from(state)
-        ..[productId] = DateTime.now();
-    }
+  Future<void> toggle(String productId) async {
+    await ref.read(userWishlistProvider.notifier).toggle(productId);
   }
 }

@@ -84,7 +84,7 @@ final class CatalogIndexProvider
   CatalogIndex create() => CatalogIndex();
 }
 
-String _$catalogIndexHash() => r'b3d33623518c37634f8563dcdba7074d49391571';
+String _$catalogIndexHash() => r'16cee1fd781725627a50bca666e5c9717c1b2cc5';
 
 /// All active marketplace products (seed + vendor listings).
 
