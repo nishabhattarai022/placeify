@@ -44,8 +44,8 @@ class TripoInputPreprocessor {
     return _prepareFrame(decoded, sourceBytes: catalogBytes.length);
   }
 
-  /// Original vendor photo → bg removal, white composite, center, minimal resize.
-  Future<PreparedTripoFrame> prepareOriginalFrame(
+  /// Original vendor upload → bg removal on full-resolution source, then center.
+  Future<PreparedTripoFrame> prepareVendorOriginalFrame(
     Session session,
     Uint8List bytes,
     String fileName,

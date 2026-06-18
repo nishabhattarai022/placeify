@@ -9,6 +9,7 @@ import '../../shared/server_static_paths.dart';
 import '../../shared/session_service.dart';
 import 'product_3d/product_3d_generation_result.dart';
 import 'product_3d/product_3d_generator.dart';
+import 'product_3d/product_3d_image_paths.dart';
 import 'product_image_processor.dart';
 
 class VendorStore {
@@ -877,6 +878,22 @@ class VendorStore {
       'bgRemoved=${processed.backgroundRemoved})',
       level: LogLevel.info,
     );
+
+    final tripoRelativePath = Product3dImagePaths.tripoStoragePathForCatalog(
+      catalogStoragePath: '/uploads/$storedName',
+      originalExtension: extension,
+    );
+    if (tripoRelativePath.isNotEmpty) {
+      final tripoFile = ServerStaticPaths.fileFromUrlPath(tripoRelativePath);
+      await tripoFile.parent.create(recursive: true);
+      await tripoFile.writeAsBytes(bytes);
+      session.log(
+        'Stored Tripo source ${tripoFile.uri.pathSegments.last} '
+        '(${bytes.length} bytes, original upload)',
+        level: LogLevel.info,
+      );
+    }
+
     return '/uploads/$storedName';
   }
 

@@ -188,35 +188,19 @@ class Product3dGenerator {
     final trimmed = catalogUrlPath?.trim();
     if (trimmed == null || trimmed.isEmpty) return null;
 
-    final catalogFile = ServerStaticPaths.fileFromUrlPath(trimmed);
-    if (catalogFile.existsSync()) {
-      final bytes = await catalogFile.readAsBytes();
-      final prepared = _preprocessor.prepareCatalogFrame(bytes);
-      session.log(
-        'Tripo frame $trimmed: ${prepared.width}x${prepared.height} '
-        '${prepared.format} ${prepared.bytes.length}B '
-        '(source ${prepared.sourceBytes}B, centered, no aggressive downscale)',
-        level: LogLevel.info,
-      );
-      return TripoViewImage(
-        bytes: prepared.bytes,
-        format: prepared.format,
-      );
-    }
-
     for (final tripoPath
         in Product3dImagePaths.tripoSourceCandidatesForCatalog(trimmed)) {
       final tripoFile = ServerStaticPaths.fileFromUrlPath(tripoPath);
       if (!tripoFile.existsSync()) continue;
 
       final bytes = await tripoFile.readAsBytes();
-      final prepared = await _preprocessor.prepareOriginalFrame(
+      final prepared = await _preprocessor.prepareVendorOriginalFrame(
         session,
         bytes,
         tripoFile.uri.pathSegments.last,
       );
       session.log(
-        'Tripo frame $tripoPath: ${prepared.width}x${prepared.height} '
+        'Tripo frame $tripoPath (vendor original): ${prepared.width}x${prepared.height} '
         '${prepared.format} ${prepared.bytes.length}B '
         '(source ${prepared.sourceBytes}B, bg-removed + centered)',
         level: LogLevel.info,
@@ -227,8 +211,24 @@ class Product3dGenerator {
       );
     }
 
+    final catalogFile = ServerStaticPaths.fileFromUrlPath(trimmed);
+    if (catalogFile.existsSync()) {
+      final bytes = await catalogFile.readAsBytes();
+      final prepared = _preprocessor.prepareCatalogFrame(bytes);
+      session.log(
+        'Tripo frame $trimmed (catalog fallback): ${prepared.width}x${prepared.height} '
+        '${prepared.format} ${prepared.bytes.length}B '
+        '(source ${prepared.sourceBytes}B, centered)',
+        level: LogLevel.info,
+      );
+      return TripoViewImage(
+        bytes: prepared.bytes,
+        format: prepared.format,
+      );
+    }
+
     session.log(
-      'Missing catalog/original photo for $trimmed',
+      'Missing vendor original and catalog photo for $trimmed',
       level: LogLevel.warning,
     );
     return null;
