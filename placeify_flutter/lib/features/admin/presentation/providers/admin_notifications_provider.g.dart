@@ -35,7 +35,7 @@ final class AdminNotificationsProvider
 }
 
 String _$adminNotificationsHash() =>
-    r'39337d557172db6748537b1e4d8d805da0c822e8';
+    r'73bad9c608f4dbf8b2d52b5fb7b0a504912a0368';
 
 abstract class _$AdminNotifications
     extends $AsyncNotifier<List<AdminNotification>> {

@@ -38,6 +38,10 @@ class UserEndpoint extends PlaceifyAuthenticatedEndpoint {
     return _service.getDashboard(session);
   }
 
+  Future<User> ensureDemoAdmin(Session session) {
+    return _service.ensureDemoAdmin(session);
+  }
+
   Future<List<UserOrderSummary>> listMyOrders(
     Session session, {
     int limit = 20,

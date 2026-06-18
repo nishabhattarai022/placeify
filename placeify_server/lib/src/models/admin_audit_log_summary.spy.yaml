@@ -1,0 +1,9 @@
+### Recent admin moderation activity for the dashboard.
+class: AdminAuditLogSummary
+fields:
+  id: String
+  actionType: String
+  actorAdminId: UuidValue
+  targetUserId: UuidValue
+  timestamp: DateTime
+  note: String?

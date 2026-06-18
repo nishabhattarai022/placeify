@@ -4,7 +4,6 @@ import '../../../cart/data/product_id_codec.dart';
 import '../../data/mock_product_repository.dart';
 import '../../domain/models/category.dart';
 import '../../domain/models/product.dart';
-import '../../../shops/data/mock_consumer_shop_repository.dart';
 import 'catalog_provider.dart';
 
 part 'category_provider.g.dart';
@@ -45,16 +44,9 @@ Product? productById(Ref ref, String id) {
   final catalogAsync = ref.watch(catalogIndexProvider);
 
   return catalogAsync.when(
-    data: (catalog) =>
-        catalog[id] ?? MockConsumerShopRepository.productByIdSync(id),
-    loading: () => MockConsumerShopRepository.productByIdSync(id),
-    error: (_, __) {
-      try {
-        return MockProductRepository.products.firstWhere((p) => p.id == id);
-      } catch (_) {
-        return MockConsumerShopRepository.productByIdSync(id);
-      }
-    },
+    data: (catalog) => catalog[id],
+    loading: () => null,
+    error: (_, __) => null,
   );
 }
 

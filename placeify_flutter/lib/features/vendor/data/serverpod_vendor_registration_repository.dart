@@ -1,27 +1,14 @@
-import 'dart:convert';
-
-import 'package:placeify_client/placeify_client.dart';
+import 'package:placeify_client/placeify_client.dart' hide Product;
 import 'package:placeify_flutter/core/config/placeify_server_client.dart';
-import 'package:placeify_flutter/features/admin/data/config/admin_seed_data.dart';
-import 'package:placeify_flutter/features/admin/domain/enums/admin_notification_type.dart';
-import 'package:placeify_flutter/features/admin/domain/models/admin_notification.dart';
-import 'package:placeify_flutter/features/auth/domain/repositories/auth_repository.dart';
+import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_registration_field_keys.dart';
-import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_registration.dart';
 import 'package:placeify_flutter/features/vendor/domain/repositories/vendor_registration_repository.dart';
-import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 /// Persists vendor registration submissions to PostgreSQL via [client.vendor.createShop].
 class ServerpodVendorRegistrationRepository
     implements VendorRegistrationRepository {
-  ServerpodVendorRegistrationRepository(this._authRepository, this._prefs);
-
-  final AuthRepository _authRepository;
-  final SharedPreferences _prefs;
-
-  static const _registrationsKey = 'placeify_vendor_registrations';
+  ServerpodVendorRegistrationRepository();
 
   @override
   bool simulateNetworkError = false;
@@ -88,24 +75,7 @@ class ServerpodVendorRegistrationRepository
         shopCategory: category.category.trim(),
       );
 
-      final vendorId = vendor.id.toString();
-
-      try {
-        await _authRepository.updateVendorStatus(
-          status: VendorStatus.pending,
-          vendorId: vendorId,
-        );
-      } catch (_) {
-        // Shop is already persisted; profile refresh will sync vendor state.
-      }
-
-      await _persistRegistration(vendorId, registration);
-      await _appendAdminNotification(
-        vendorId: vendorId,
-        businessName: shopName,
-      );
-
-      return vendorId;
+      return vendor.id.toString();
     } catch (error) {
       throw VendorRegistrationException(_mapError(error));
     }
@@ -137,59 +107,5 @@ class ServerpodVendorRegistrationRepository
       return 'Cannot reach the server. Make sure placeify_server is running.';
     }
     return 'Could not submit registration. Please try again.';
-  }
-
-  Future<void> _appendAdminNotification({
-    required String vendorId,
-    required String businessName,
-  }) async {
-    final raw = _prefs.getString(AdminSeedData.notificationsKey);
-    final existing = <AdminNotification>[];
-    if (raw != null && raw.isNotEmpty) {
-      final list = jsonDecode(raw) as List<dynamic>;
-      existing.addAll(
-        list.map(
-          (e) => AdminNotification.fromJson(e as Map<String, dynamic>),
-        ),
-      );
-    }
-
-    existing.insert(
-      0,
-      AdminNotification(
-        id: 'admin-n-${DateTime.now().millisecondsSinceEpoch}',
-        title: 'New vendor application',
-        body: '$businessName submitted a registration request.',
-        createdAt: DateTime.now(),
-        type: AdminNotificationType.newApplication,
-        linkedVendorId: vendorId,
-      ),
-    );
-
-    await _prefs.setString(
-      AdminSeedData.notificationsKey,
-      jsonEncode(existing.map((n) => n.toJson()).toList()),
-    );
-  }
-
-  Future<void> _persistRegistration(
-    String vendorId,
-    VendorRegistration registration,
-  ) async {
-    final existing = _loadRegistrations();
-    existing[vendorId] = {
-      'vendorId': vendorId,
-      'submittedAt': DateTime.now().toIso8601String(),
-      ...registration.toJson(),
-    };
-    await _prefs.setString(_registrationsKey, jsonEncode(existing));
-  }
-
-  Map<String, dynamic> _loadRegistrations() {
-    final raw = _prefs.getString(_registrationsKey);
-    if (raw == null || raw.isEmpty) return {};
-
-    final decoded = jsonDecode(raw) as Map<String, dynamic>;
-    return Map<String, dynamic>.from(decoded);
   }
 }

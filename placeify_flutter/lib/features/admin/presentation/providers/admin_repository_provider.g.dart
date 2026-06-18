@@ -14,12 +14,8 @@ final adminRepositoryProvider = AdminRepositoryProvider._();
 
 final class AdminRepositoryProvider
     extends
-        $FunctionalProvider<
-          AsyncValue<AdminRepository>,
-          AdminRepository,
-          FutureOr<AdminRepository>
-        >
-    with $FutureModifier<AdminRepository>, $FutureProvider<AdminRepository> {
+        $FunctionalProvider<AdminRepository, AdminRepository, AdminRepository>
+    with $Provider<AdminRepository> {
   AdminRepositoryProvider._()
     : super(
         from: null,
@@ -36,14 +32,21 @@ final class AdminRepositoryProvider
 
   @$internal
   @override
-  $FutureProviderElement<AdminRepository> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
+  $ProviderElement<AdminRepository> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
-  FutureOr<AdminRepository> create(Ref ref) {
+  AdminRepository create(Ref ref) {
     return adminRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AdminRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AdminRepository>(value),
+    );
   }
 }
 
-String _$adminRepositoryHash() => r'1c592dd0dc1e5a4ac3ee157767b139f3785c5a36';
+String _$adminRepositoryHash() => r'09afe09011fa90ee65ebb01314fe9ea8c6097781';

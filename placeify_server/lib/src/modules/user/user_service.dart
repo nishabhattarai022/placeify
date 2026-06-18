@@ -75,4 +75,29 @@ class UserService {
     final user = await SessionService.requireUser(session);
     return _repository.buildDashboard(session, user);
   }
+
+  /// Promotes the configured demo admin account for local dashboard access.
+  Future<User> ensureDemoAdmin(Session session) async {
+    const demoAdminEmail = 'admin@placeify.com';
+    final user = await SessionService.requireUser(session);
+    final email = user.email?.trim().toLowerCase();
+    if (email != demoAdminEmail) {
+      throw PlaceifyException(
+        message: 'Demo admin access is limited to $demoAdminEmail.',
+        code: 'DEMO_ADMIN_ONLY',
+      );
+    }
+
+    if (user.role == UserRole.admin) return user;
+
+    return User.db.updateRow(
+      session,
+      user.copyWith(
+        role: UserRole.admin,
+        status: UserAccountStatus.approved,
+        isActive: true,
+        updatedAt: DateTime.now(),
+      ),
+    );
+  }
 }

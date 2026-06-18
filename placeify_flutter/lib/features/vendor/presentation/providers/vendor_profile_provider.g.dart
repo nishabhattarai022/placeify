@@ -53,7 +53,7 @@ final class VendorRepositoryProvider
   }
 }
 
-String _$vendorRepositoryHash() => r'191268f9dfc88de62c3fa98c4fdd8c0c826f81e0';
+String _$vendorRepositoryHash() => r'0b84333ce646af247cf3b1021e3a844ca896e941';
 
 @ProviderFor(vendorProductRepository)
 final vendorProductRepositoryProvider = VendorProductRepositoryProvider._();
@@ -127,7 +127,7 @@ final class VendorProfileProvider
   VendorProfile create() => VendorProfile();
 }
 
-String _$vendorProfileHash() => r'2a69871c1bc95e70fc408d9b6e27e8b5025056ce';
+String _$vendorProfileHash() => r'2fdcc1354ba4fe5c568137a61851a808f25ef9af';
 
 abstract class _$VendorProfile extends $AsyncNotifier<models.VendorProfile?> {
   FutureOr<models.VendorProfile?> build();

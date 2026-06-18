@@ -1,0 +1,9 @@
+### Vendor onboarding application list item.
+class: VendorApplicationSummary
+fields:
+  vendorId: UuidValue
+  userId: UuidValue
+  businessName: String
+  contactEmail: String
+  submittedAt: DateTime
+  status: UserAccountStatus
