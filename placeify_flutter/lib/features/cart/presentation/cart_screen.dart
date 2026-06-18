@@ -86,13 +86,27 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                               item: item,
                               product: product,
                               editMode: editMode,
-                              onIncrement: () =>
-                                  cart.increment(item.productId),
-                              onDecrement: () =>
-                                  cart.decrement(item.productId),
-                              onRemove: () {
+                              onIncrement: () async {
+                                final message =
+                                    await cart.increment(item.productId);
+                                if (message != null && context.mounted) {
+                                  PlaceifyToast.show(context, message);
+                                }
+                              },
+                              onDecrement: () async {
+                                final message =
+                                    await cart.decrement(item.productId);
+                                if (message != null && context.mounted) {
+                                  PlaceifyToast.show(context, message);
+                                }
+                              },
+                              onRemove: () async {
                                 HapticService.light();
-                                cart.remove(item.productId);
+                                final message =
+                                    await cart.remove(item.productId);
+                                if (message != null && context.mounted) {
+                                  PlaceifyToast.show(context, message);
+                                }
                               },
                             );
                           },
