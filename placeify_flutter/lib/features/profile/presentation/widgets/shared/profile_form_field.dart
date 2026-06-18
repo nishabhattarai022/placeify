@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../../core/constants/app_colors.dart';
 
@@ -42,7 +43,13 @@ class ProfileTextInput extends StatelessWidget {
     this.hint,
     this.obscureText = false,
     this.onChanged,
+    this.onEditingComplete,
     this.suffix,
+    this.keyboardType,
+    this.maxLines = 1,
+    this.inputFormatters,
+    this.validator,
+    this.fieldKey,
     super.key,
   });
 
@@ -50,41 +57,82 @@ class ProfileTextInput extends StatelessWidget {
   final String? hint;
   final bool obscureText;
   final ValueChanged<String>? onChanged;
+  final VoidCallback? onEditingComplete;
   final Widget? suffix;
+  final TextInputType? keyboardType;
+  final int maxLines;
+  final List<TextInputFormatter>? inputFormatters;
+  final FormFieldValidator<String>? validator;
+  final GlobalKey<FormFieldState<String>>? fieldKey;
+
+  InputDecoration _decoration() {
+    final borderRadius = BorderRadius.circular(14);
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(
+        fontSize: 14,
+        color: AppColors.textMuted,
+      ),
+      filled: true,
+      fillColor: AppColors.cream,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+      suffixIcon: suffix,
+      border: OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: const BorderSide(color: AppColors.creamDark, width: 1.5),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: const BorderSide(color: AppColors.creamDark, width: 1.5),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: const BorderSide(color: Colors.red, width: 1.5),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: const BorderSide(color: Colors.red, width: 1.5),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    const style = TextStyle(
+      fontSize: 14,
+      color: AppColors.espresso,
+    );
+
+    if (validator != null) {
+      return TextFormField(
+        key: fieldKey,
+        controller: controller,
+        obscureText: obscureText,
+        onChanged: onChanged,
+        onEditingComplete: onEditingComplete,
+        keyboardType: keyboardType,
+        maxLines: maxLines,
+        inputFormatters: inputFormatters,
+        validator: validator,
+        style: style,
+        decoration: _decoration(),
+      );
+    }
+
     return TextField(
       controller: controller,
       obscureText: obscureText,
       onChanged: onChanged,
-      style: const TextStyle(
-        fontSize: 14,
-        color: AppColors.espresso,
-      ),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(
-          fontSize: 14,
-          color: AppColors.textMuted,
-        ),
-        filled: true,
-        fillColor: AppColors.cream,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-        suffixIcon: suffix,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.creamDark, width: 1.5),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.creamDark, width: 1.5),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
-        ),
-      ),
+      onEditingComplete: onEditingComplete,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      inputFormatters: inputFormatters,
+      style: style,
+      decoration: _decoration(),
     );
   }
 }

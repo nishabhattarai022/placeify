@@ -67,7 +67,7 @@ class UserWishlistCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    product.shopName,
+                    product.brand,
                     style: AppTypography.metricLabel.copyWith(
                       color: AppColors.textMuted,
                     ),

@@ -31,6 +31,7 @@ class VendorEndpoint extends Endpoint {
     String? logoUrl,
     String? phone,
     String? address,
+    String? shopCategory,
   }) {
     return _service.createShop(
       session,
@@ -39,7 +40,35 @@ class VendorEndpoint extends Endpoint {
       logoUrl: logoUrl,
       phone: phone,
       address: address,
+      shopCategory: shopCategory,
     );
+  }
+
+  Future<VendorProfileDetail> getMyProfile(Session session) {
+    return _service.getMyProfile(session);
+  }
+
+  Future<VendorProfileDetail> updateMyProfile(
+    Session session,
+    VendorProfileUpdateInput input,
+  ) {
+    return _service.updateMyProfile(session, input);
+  }
+
+  Future<String> uploadShopLogo(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) {
+    return _service.uploadShopLogo(session, fileData, fileName);
+  }
+
+  Future<String> uploadShopBanner(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) {
+    return _service.uploadShopBanner(session, fileData, fileName);
   }
 
   Future<Vendor> updateShop(
@@ -96,6 +125,21 @@ class VendorEndpoint extends Endpoint {
     );
   }
 
+  /// Creates a vendor product and stores the uploaded photo in one call.
+  Future<Product> uploadProduct(
+    Session session,
+    VendorProductUploadInput input,
+    ByteData imageData,
+    String imageFileName,
+  ) {
+    return _service.uploadProduct(
+      session,
+      input,
+      imageData,
+      imageFileName,
+    );
+  }
+
   Future<Product> updateProductThumbnail(
     Session session,
     int productId,
@@ -110,6 +154,13 @@ class VendorEndpoint extends Endpoint {
     String fileName,
   ) {
     return _service.uploadProductImage(session, fileData, fileName);
+  }
+
+  Future<Product> regenerateProductModel3d(
+    Session session,
+    int productId,
+  ) {
+    return _service.regenerateProductModel3d(session, productId);
   }
 
   Future<List<VendorShopOrder>> listShopOrders(
@@ -128,5 +179,48 @@ class VendorEndpoint extends Endpoint {
 
   Future<VendorShopOrder> getShopOrder(Session session, int orderId) {
     return _service.getShopOrder(session, orderId);
+  }
+
+  Future<VendorShopOrder> acceptShopOrder(Session session, int orderId) {
+    return _service.acceptShopOrder(session, orderId);
+  }
+
+  Future<VendorShopOrder> rejectShopOrder(
+    Session session,
+    int orderId,
+    String reason,
+  ) {
+    return _service.rejectShopOrder(session, orderId, reason);
+  }
+
+  Future<List<OrderDeliveryUpdate>> listDeliveryUpdates(
+    Session session,
+    int orderId,
+  ) {
+    return _service.listDeliveryUpdates(session, orderId);
+  }
+
+  Future<OrderDeliveryUpdate> submitDeliveryUpdate(
+    Session session,
+    int orderId,
+    DeliveryStage stage, {
+    String? note,
+    String? photoUrl,
+  }) {
+    return _service.submitDeliveryUpdate(
+      session,
+      orderId,
+      stage,
+      note: note,
+      photoUrl: photoUrl,
+    );
+  }
+
+  Future<String> uploadDeliveryProof(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) {
+    return _service.uploadDeliveryProof(session, fileData, fileName);
   }
 }

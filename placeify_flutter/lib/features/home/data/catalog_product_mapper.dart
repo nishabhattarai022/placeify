@@ -2,6 +2,7 @@ import 'package:placeify_client/placeify_client.dart' as api;
 
 import '../../../core/config/resolve_media_url.dart';
 import '../../cart/data/product_id_codec.dart';
+import '../../product_detail/data/product_model_3d_urls.dart';
 import '../domain/models/product.dart';
 
 abstract final class CatalogProductMapper {
@@ -38,27 +39,26 @@ abstract final class CatalogProductMapper {
         : await resolveMediaUrl(thumbnail);
 
     final dimensions = _dimensionsFromApi(product);
+    final uiId = ProductIdCodec.fromDatabaseId(id);
+    final model3dUrl = product.model3dUrl?.trim();
+    final has3dPreview = model3dUrl != null && model3dUrl.isNotEmpty;
+    if (has3dPreview) {
+      ProductModel3dUrls.set(uiId, await resolveMediaUrl(model3dUrl));
+    }
 
     return Product(
-      id: ProductIdCodec.fromDatabaseId(id),
+      id: uiId,
       name: product.name,
       brand: shopName,
-      shopName: shopName,
       sku: 'PF${id.toString().padLeft(5, '0')}',
       price: product.price,
       imageUrl: imageUrl.isEmpty
           ? 'assets/images/categories/chair.jpg'
           : imageUrl,
       svgIconPath: _categoryIcons[categoryId] ?? 'assets/icons/ic_chair.svg',
-      hasArView: product.model3dUrl != null && product.model3dUrl!.isNotEmpty,
+      hasArView: has3dPreview,
       categoryId: categoryId,
       dimensions: dimensions,
-      description: product.description,
-      materials: product.materials ?? '',
-      careInstructions: product.careInstructions ?? '',
-      warranty: product.warranty,
-      assemblyNote: product.assemblyNote,
-      weightKg: product.weightKg,
     );
   }
 

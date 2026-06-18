@@ -98,7 +98,7 @@ class _CatalogProductCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              product.shopName.isNotEmpty ? product.shopName : product.brand,
+              product.brand,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(

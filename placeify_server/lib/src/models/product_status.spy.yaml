@@ -1,6 +1,8 @@
+### Catalog visibility and admin moderation state for products.
 enum: ProductStatus
 serialized: byName
 default: active
 values:
   - active
-  - inactive
+  - flagged
+  - removed

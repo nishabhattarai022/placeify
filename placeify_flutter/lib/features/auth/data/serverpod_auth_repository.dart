@@ -1,8 +1,13 @@
+import 'dart:io';
+
 import 'package:placeify_client/placeify_client.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../main.dart' show client;
+import '../../../core/config/placeify_server_client.dart';
+import '../../vendor/domain/enums/vendor_status.dart';
+import '../constants/demo_credentials.dart';
+import '../data/mock_auth_repository.dart';
 import '../domain/models/app_user.dart';
 import '../domain/repositories/auth_repository.dart';
 
@@ -13,6 +18,8 @@ class ServerpodAuthRepository implements AuthRepository {
   final SharedPreferences _prefs;
 
   static const _sessionEmailKey = 'placeify_auth_session_email';
+  static const _vendorStatusKey = 'placeify_vendor_status';
+  static const _vendorIdKey = 'placeify_vendor_id';
   static const _devVerificationCode = '123456';
 
   static Future<ServerpodAuthRepository> create() async {
@@ -22,6 +29,20 @@ class ServerpodAuthRepository implements AuthRepository {
 
   @override
   Future<AppUser> register({
+    required String fullName,
+    required String email,
+    required String password,
+  }) async {
+    return _withConnectionRetry(
+      () => _register(
+        fullName: fullName,
+        email: email,
+        password: password,
+      ),
+    );
+  }
+
+  Future<AppUser> _register({
     required String fullName,
     required String email,
     required String password,
@@ -42,22 +63,78 @@ class ServerpodAuthRepository implements AuthRepository {
       );
       await client.auth.updateSignedInUser(authSuccess);
 
-      final profile = await client.user.updateProfile(
+      await client.user.updateProfile(
         fullName.trim(),
         phone: null,
         address: null,
       );
 
-      await client.auth.signOutDevice();
-
-      return _toAppUser(profile, normalizedEmail);
+      await _prefs.setString(_sessionEmailKey, normalizedEmail);
+      return _loadAppUser(normalizedEmail);
     } catch (error) {
       throw _mapError(error);
     }
   }
 
+  /// Signs in with the built-in demo account, registering it first if needed.
+  Future<AppUser> signInWithDemoCredentials() async {
+    try {
+      return await signIn(
+        email: DemoCredentials.email,
+        password: DemoCredentials.password,
+      );
+    } on AuthException catch (error) {
+      if (!_isMissingAccountError(error.message)) rethrow;
+
+      await register(
+        fullName: DemoCredentials.fullName,
+        email: DemoCredentials.email,
+        password: DemoCredentials.password,
+      );
+      return signIn(
+        email: DemoCredentials.email,
+        password: DemoCredentials.password,
+      );
+    }
+  }
+
+  /// Signs in with the demo admin account for local admin dashboard access.
+  Future<AppUser> signInWithDemoAdminCredentials() async {
+    AppUser user;
+    try {
+      user = await signIn(
+        email: DemoCredentials.adminEmail,
+        password: DemoCredentials.adminPassword,
+      );
+    } on AuthException catch (error) {
+      if (!_isMissingAccountError(error.message)) rethrow;
+
+      await register(
+        fullName: DemoCredentials.adminFullName,
+        email: DemoCredentials.adminEmail,
+        password: DemoCredentials.adminPassword,
+      );
+      user = await signIn(
+        email: DemoCredentials.adminEmail,
+        password: DemoCredentials.adminPassword,
+      );
+    }
+
+    // Admin UI uses mock repositories; grant admin role for the demo account.
+    return user.copyWith(role: UserRole.admin);
+  }
+
   @override
   Future<AppUser> signIn({
+    required String email,
+    required String password,
+  }) async {
+    return _withConnectionRetry(
+      () => _signIn(email: email, password: password),
+    );
+  }
+
+  Future<AppUser> _signIn({
     required String email,
     required String password,
   }) async {
@@ -94,21 +171,58 @@ class ServerpodAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<AppUser> updateVendorStatus({
+    required VendorStatus status,
+    String? vendorId,
+  }) async {
+    _requireAuthenticated();
+    await _prefs.setString(_vendorStatusKey, status.name);
+    if (vendorId != null) {
+      await _prefs.setString(_vendorIdKey, vendorId);
+    }
+    final email = _prefs.getString(_sessionEmailKey);
+    if (email == null) {
+      throw AuthException('User profile not found');
+    }
+    return _loadAppUser(email);
+  }
+
+  @override
   Future<void> signOut() async {
     await client.auth.signOutDevice();
     await _prefs.remove(_sessionEmailKey);
+    await _prefs.remove(_vendorStatusKey);
+    await _prefs.remove(_vendorIdKey);
+  }
+
+  @override
+  Future<List<AppUser>> getAllUsers() async {
+    return MockAuthRepository(_prefs).getAllUsers();
+  }
+
+  @override
+  Future<void> updateVendorStatusForUser({
+    required String userId,
+    required VendorStatus status,
+    String? vendorId,
+  }) async {
+    await MockAuthRepository(_prefs).updateVendorStatusForUser(
+      userId: userId,
+      status: status,
+      vendorId: vendorId,
+    );
   }
 
   @override
   Future<AppUser> becomeVendor() async {
     _requireAuthenticated();
     try {
-      final profile = await client.user.becomeVendor();
+      await client.user.becomeVendor();
       final email = _prefs.getString(_sessionEmailKey);
       if (email == null) {
         throw AuthException('User profile not found');
       }
-      return _toAppUser(profile, email, hasVendorShop: true);
+      return _loadAppUser(email);
     } catch (error) {
       throw _mapError(error);
     }
@@ -136,10 +250,18 @@ class ServerpodAuthRepository implements AuthRepository {
       throw AuthException('User profile not found');
     }
     final hasVendorShop = await _loadHasVendorShop();
+    final vendorStatus = _vendorStatusFromServer(
+      profile,
+      hasVendorShop: hasVendorShop,
+    );
+    if (vendorStatus != null) {
+      await _prefs.setString(_vendorStatusKey, vendorStatus.name);
+    }
     return _toAppUser(
       profile,
       email,
       hasVendorShop: hasVendorShop,
+      vendorStatus: vendorStatus,
     );
   }
 
@@ -155,6 +277,7 @@ class ServerpodAuthRepository implements AuthRepository {
     User profile,
     String email, {
     bool? hasVendorShop,
+    VendorStatus? vendorStatus,
   }) {
     return AppUser(
       id: profile.id.toString(),
@@ -164,7 +287,30 @@ class ServerpodAuthRepository implements AuthRepository {
       phone: profile.phone,
       address: profile.address,
       hasVendorShop: hasVendorShop ?? false,
+      registeredVendorStatus: vendorStatus ?? _readVendorStatus(),
+      registeredVendorId: _prefs.getString(_vendorIdKey),
     );
+  }
+
+  /// Maps server moderation status for vendor accounts.
+  VendorStatus? _vendorStatusFromServer(
+    User profile, {
+    required bool hasVendorShop,
+  }) {
+    if (!hasVendorShop && profile.role != UserRole.vendor) return null;
+
+    return switch (profile.status) {
+      UserAccountStatus.approved => VendorStatus.approved,
+      UserAccountStatus.pending => VendorStatus.pending,
+      UserAccountStatus.suspended => VendorStatus.suspended,
+      UserAccountStatus.rejected => VendorStatus.none,
+    };
+  }
+
+  VendorStatus? _readVendorStatus() {
+    final raw = _prefs.getString(_vendorStatusKey);
+    if (raw == null) return null;
+    return VendorStatus.values.asNameMap()[raw];
   }
 
   void _requireAuthenticated() {
@@ -173,18 +319,72 @@ class ServerpodAuthRepository implements AuthRepository {
     }
   }
 
+  Future<T> _withConnectionRetry<T>(Future<T> Function() action) async {
+    try {
+      return await action();
+    } catch (error) {
+      if (!_looksLikeConnectionError(error)) rethrow;
+      await reconnectPlaceifyClient(forceRefresh: true);
+      try {
+        return await action();
+      } catch (retryError) {
+        throw _mapError(retryError);
+      }
+    }
+  }
+
   AuthException _mapError(Object error) {
     if (error is AuthException) return error;
+
+    final errorText = error.toString();
+
+    if (errorText.contains('EmailAccountLoginException')) {
+      if (errorText.contains('invalidCredentials')) {
+        return AuthException(
+          'No account found for this email, or the password is wrong.',
+        );
+      }
+      if (errorText.contains('tooManyAttempts')) {
+        return AuthException(
+          'Too many failed attempts. Wait a moment and try again.',
+        );
+      }
+    }
+
+    if (errorText.contains('EmailAccountRequestException')) {
+      if (errorText.contains('policyViolation') ||
+          errorText.contains('EmailPasswordPolicyViolationException')) {
+        return AuthException(
+          'Password is too weak. Use at least 8 characters with letters and numbers.',
+        );
+      }
+      if (errorText.contains('tooManyAttempts')) {
+        return AuthException(
+          'Too many verification attempts. Wait a moment and try again.',
+        );
+      }
+      if (errorText.contains('expired')) {
+        return AuthException(
+          'Verification code expired. Go back and start registration again.',
+        );
+      }
+      return AuthException(
+        'Could not verify email. If you already have an account, try logging in instead.',
+      );
+    }
+
+    if (errorText.contains('EmailAccountAlreadyRegisteredException') ||
+        (errorText.contains('already') && errorText.contains('email'))) {
+      return AuthException('An account with this email already exists. Try logging in.');
+    }
 
     final rawMessage = error is ServerpodClientException
         ? error.message
         : error.toString();
     final message = rawMessage.toLowerCase();
 
-    if (_isConnectionError(message)) {
-      return AuthException(
-        'Cannot reach the server. Start placeify_server and try again.',
-      );
+    if (_isConnectionError(message) || _looksLikeConnectionError(error)) {
+      return AuthException(_connectionHelpMessage());
     }
     if (message.contains('password') &&
         (message.contains('invalid') || message.contains('incorrect'))) {
@@ -229,6 +429,13 @@ class ServerpodAuthRepository implements AuthRepository {
     return AuthException('Something went wrong. Please try again.');
   }
 
+  bool _isMissingAccountError(String message) {
+    final normalized = message.toLowerCase();
+    return normalized.contains('no account') ||
+        normalized.contains('password is wrong') ||
+        normalized.contains('invalidcredentials');
+  }
+
   bool _isConnectionError(String message) {
     return message.contains('socketexception') ||
         message.contains('connection refused') ||
@@ -236,6 +443,32 @@ class ServerpodAuthRepository implements AuthRepository {
         message.contains('failed host lookup') ||
         message.contains('network is unreachable') ||
         message.contains('timed out') ||
-        message.contains('no route to host');
+        message.contains('no route to host') ||
+        message.contains('connection closed') ||
+        message.contains('handshake') ||
+        message.contains('network error');
+  }
+
+  bool _looksLikeConnectionError(Object error) {
+    if (error is ServerpodClientException) {
+      final message = error.message.toLowerCase();
+      return _isConnectionError(message);
+    }
+    return _isConnectionError(error.toString().toLowerCase());
+  }
+
+  String _connectionHelpMessage() {
+    final base =
+        'Cannot reach the server at $serverUrl. '
+        'Start it with: cd placeify_server && dart bin/main.dart --apply-migrations';
+
+    if (Platform.isAndroid || Platform.isIOS) {
+      return '$base\n\n'
+          'On a physical phone, set your Mac Wi‑Fi IP in '
+          'placeify_flutter/assets/config.json → physicalApiUrl, '
+          'then rebuild the app. Mac and phone must be on the same Wi‑Fi.';
+    }
+
+    return base;
   }
 }

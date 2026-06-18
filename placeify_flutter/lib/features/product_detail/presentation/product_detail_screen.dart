@@ -3,13 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../home/domain/models/product.dart';
-import '../../cart/data/cart_display_config.dart';
 import '../../cart/presentation/providers/cart_provider.dart';
+import '../../home/domain/models/product.dart';
 import '../../home/presentation/providers/catalog_provider.dart';
 import '../../../core/services/haptic_service.dart';
 import '../data/product_detail_content.dart';
 import 'product_detail_tokens.dart';
+import '../../shops/presentation/providers/consumer_shop_provider.dart';
+import 'widgets/product_detail_sold_by_row.dart';
 import 'widgets/product_detail_cart_bar.dart';
 import 'widgets/product_detail_gallery.dart';
 import 'widgets/product_detail_header.dart';
@@ -110,7 +111,6 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
             ),
           );
         }
-
         return _buildProductDetail(context, product);
       },
     );
@@ -118,9 +118,10 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
 
   Widget _buildProductDetail(BuildContext context, Product product) {
     final content = ProductDetailContentRepository.forProduct(product);
-    final displayPrice =
-        CartDisplayConfig.priceFor(product.id, product.price);
     final top = MediaQuery.paddingOf(context).top;
+    final vendorId = product.vendorId;
+    final shopAsync =
+        vendorId != null ? ref.watch(shopListingProvider(vendorId)) : null;
 
     return Scaffold(
       backgroundColor: ProductDetailTokens.screenBg,
@@ -142,6 +143,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                   child: FadeTransition(
                     opacity: _galleryOpacity,
                     child: ProductDetailGallery(
+                      product: product,
                       images: content.galleryImages,
                       selectedIndex: _selectedImageIndex,
                       onSelected: (i) =>
@@ -152,13 +154,24 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                 const SizedBox(
                   height: ProductDetailTokens.infoCardTopGap,
                 ),
+                if (vendorId != null)
+                  shopAsync?.maybeWhen(
+                    data: (shop) {
+                      if (shop == null) return const SizedBox.shrink();
+                      return ProductDetailSoldByRow(
+                        vendorId: vendorId,
+                        businessName: shop.businessName,
+                      );
+                    },
+                    orElse: () => const SizedBox.shrink(),
+                  ) ??
+                  const SizedBox.shrink(),
                 SlideTransition(
                   position: _infoSlide,
                   child: FadeTransition(
                     opacity: _infoOpacity,
                     child: ProductDetailInfoSection(
                       title: content.displayTitle ?? product.name,
-                      shopName: content.shopName,
                       shortDescription: content.shortDescription,
                       fullDescription:
                           content.extendedDescription ?? content.description,
@@ -205,7 +218,9 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
               child: FadeTransition(
                 opacity: _cartBarOpacity,
                 child: ProductDetailCartBar(
-                  totalPrice: displayPrice,
+                  onTryInMyRoom: () {
+                    context.push('/profile/augmented-reality');
+                  },
                   onAddToCart: () {
                     ref
                         .read(cartProvider.notifier)

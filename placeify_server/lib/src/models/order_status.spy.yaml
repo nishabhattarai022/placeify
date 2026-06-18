@@ -4,6 +4,9 @@ default: pending
 values:
   - pending
   - confirmed
+  - accepted
+  - rejected
+  - processing
   - shipped
   - delivered
   - cancelled

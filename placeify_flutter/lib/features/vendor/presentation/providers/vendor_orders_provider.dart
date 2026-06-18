@@ -1,42 +1,128 @@
-import 'package:placeify_client/placeify_client.dart';
+import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
+import 'package:placeify_flutter/features/vendor/data/vendor_order_exceptions.dart';
+import 'package:placeify_flutter/features/vendor/domain/enums/order_status.dart';
+import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
+import 'package:placeify_flutter/features/vendor/domain/models/vendor_order.dart';
+import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_order_detail_provider.dart';
+import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_profile_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
-
-import '../../../../main.dart' show client;
-import 'vendor_dashboard_provider.dart';
 
 part 'vendor_orders_provider.g.dart';
 
-@Riverpod(keepAlive: true)
-class VendorShopOrders extends _$VendorShopOrders {
+@riverpod
+class VendorOrders extends _$VendorOrders {
   @override
-  Future<List<VendorShopOrder>> build() async {
-    if (!client.auth.isAuthenticated) return [];
-    final repo = ref.read(vendorRepositoryProvider);
-    return repo.listShopOrders();
-  }
+  Future<List<VendorOrder>> build() => _load();
 
   Future<void> refresh() async {
-    if (!client.auth.isAuthenticated) {
-      state = const AsyncData([]);
-      return;
-    }
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final repo = ref.read(vendorRepositoryProvider);
-      return repo.listShopOrders();
-    });
+    state = await AsyncValue.guard(_load);
   }
-}
 
-@riverpod
-Future<VendorShopOrder> vendorShopOrderDetail(
-  Ref ref,
-  int orderId,
-) async {
-  if (!client.auth.isAuthenticated) {
-    throw StateError('Authentication required');
+  Future<List<VendorOrder>> _load() async {
+    final user = await ref.watch(currentUserProvider.future);
+    if (user?.vendorStatus != VendorStatus.approved || user?.vendorId == null) {
+      return [];
+    }
+
+    final repo = ref.watch(vendorRepositoryProvider);
+    return repo.getOrders(user!.vendorId!);
   }
-  final repo = ref.read(vendorRepositoryProvider);
-  return repo.getShopOrder(orderId);
+
+  Future<String?> acceptOrder(String orderId) async {
+    final previous = state;
+    final orders = state.value;
+    if (orders == null) return 'Orders are still loading.';
+
+    final index = orders.indexWhere((order) => order.id == orderId);
+    if (index < 0) return 'Order not found.';
+
+    final current = orders[index];
+    if (current.status != OrderStatus.pending) {
+      return 'Only pending orders can be accepted.';
+    }
+
+    final optimistic = current.copyWith(status: OrderStatus.accepted);
+    state = AsyncData([
+      ...orders.sublist(0, index),
+      optimistic,
+      ...orders.sublist(index + 1),
+    ]);
+
+    try {
+      final user = await ref.read(currentUserProvider.future);
+      final vendorId = user?.vendorId;
+      if (vendorId == null) {
+        state = previous;
+        return 'Vendor account not found.';
+      }
+
+      final repo = ref.read(vendorRepositoryProvider);
+      final updated = await repo.acceptOrder(vendorId, orderId);
+
+      final synced = [...state.value!];
+      synced[index] = updated;
+      state = AsyncData(synced);
+      ref.invalidate(vendorOrderDetailProvider(orderId));
+      return null;
+    } on VendorOrderActionException catch (e) {
+      state = previous;
+      return e.message;
+    } catch (_) {
+      state = previous;
+      return 'Could not accept order. Try again.';
+    }
+  }
+
+  Future<String?> rejectOrder(String orderId, {required String reason}) async {
+    if (reason.trim().isEmpty) {
+      return 'Select a rejection reason.';
+    }
+
+    final previous = state;
+    final orders = state.value;
+    if (orders == null) return 'Orders are still loading.';
+
+    final index = orders.indexWhere((order) => order.id == orderId);
+    if (index < 0) return 'Order not found.';
+
+    final current = orders[index];
+    if (current.status != OrderStatus.pending) {
+      return 'Only pending orders can be rejected.';
+    }
+
+    final optimistic = current.copyWith(status: OrderStatus.rejected);
+    state = AsyncData([
+      ...orders.sublist(0, index),
+      optimistic,
+      ...orders.sublist(index + 1),
+    ]);
+
+    try {
+      final user = await ref.read(currentUserProvider.future);
+      final vendorId = user?.vendorId;
+      if (vendorId == null) {
+        state = previous;
+        return 'Vendor account not found.';
+      }
+
+      final repo = ref.read(vendorRepositoryProvider);
+      final updated = await repo.rejectOrder(
+        vendorId,
+        orderId,
+        reason: reason.trim(),
+      );
+
+      final synced = [...state.value!];
+      synced[index] = updated;
+      state = AsyncData(synced);
+      ref.invalidate(vendorOrderDetailProvider(orderId));
+      return null;
+    } on VendorOrderActionException catch (e) {
+      state = previous;
+      return e.message;
+    } catch (_) {
+      state = previous;
+      return 'Could not reject order. Try again.';
+    }
+  }
 }

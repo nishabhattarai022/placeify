@@ -8,3 +8,5 @@ fields:
   placedAt: DateTime
   itemCount: int
   primaryProductName: String?
+  latestDeliveryStage: DeliveryStage?
+  latestDeliveryNote: String?

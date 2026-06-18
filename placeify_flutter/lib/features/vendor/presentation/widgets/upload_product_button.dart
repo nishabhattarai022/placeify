@@ -1,31 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:placeify_flutter/features/vendor/presentation/vendor_product_upload_navigation.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radii.dart';
 import '../../../../core/constants/app_shadows.dart';
 import '../../../../core/widgets/animated_scale_tap.dart';
-class UploadProductButton extends StatefulWidget {
-  const UploadProductButton({required this.onTap, super.key});
 
-  final VoidCallback onTap;
-
-  @override
-  State<UploadProductButton> createState() => _UploadProductButtonState();
-}
-
-class _UploadProductButtonState extends State<UploadProductButton> {
-  bool _pressed = false;
+class UploadProductButton extends StatelessWidget {
+  const UploadProductButton({super.key});
 
   @override
   Widget build(BuildContext context) {
     return AnimatedScaleTap(
       pressScale: 0.97,
-      onTap: widget.onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+      onTap: () => openVendorProductUpload(context),
+      child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         decoration: BoxDecoration(
-          color: _pressed ? const Color(0xFF3D2215) : AppColors.espresso,
+          color: AppColors.espresso,
           borderRadius: AppRadii.md,
           boxShadow: AppShadows.soft,
         ),

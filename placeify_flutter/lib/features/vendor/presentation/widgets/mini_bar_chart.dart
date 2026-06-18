@@ -1,24 +1,35 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radii.dart';
-import '../../../vendor/data/mock_vendor_repository.dart';
 
 class MiniBarChart extends StatelessWidget {
-  const MiniBarChart({super.key});
+  const MiniBarChart({
+    required this.heights,
+    super.key,
+  });
+
+  final List<double> heights;
 
   @override
   Widget build(BuildContext context) {
-    final heights = MockVendorRepository.barHeights;
+    if (heights.isEmpty) {
+      return const SizedBox(height: 50);
+    }
+
+    final maxHeight = heights.reduce((a, b) => a > b ? a : b);
+    final normalized = maxHeight == 0
+        ? List<double>.filled(heights.length, 0.08)
+        : heights;
 
     return SizedBox(
       height: 50,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
-        children: List.generate(heights.length, (i) {
+        children: List.generate(normalized.length, (i) {
           return Expanded(
             child: _MiniBar(
-              heightFraction: heights[i],
-              isActive: i == heights.length - 1,
+              heightFraction: normalized[i],
+              isActive: i == normalized.length - 1,
               delay: Duration(milliseconds: 100 + i * 60),
             ),
           );
@@ -56,8 +67,10 @@ class _MiniBarState extends State<_MiniBar> {
 
   @override
   Widget build(BuildContext context) {
+    final target = widget.heightFraction > 0 ? widget.heightFraction : 0.08;
+
     return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: _started ? widget.heightFraction : 0),
+      tween: Tween(begin: 0, end: _started ? target : 0),
       duration: const Duration(milliseconds: 600),
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {

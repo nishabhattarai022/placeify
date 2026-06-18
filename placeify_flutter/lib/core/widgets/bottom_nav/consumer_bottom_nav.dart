@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../features/home/presentation/providers/catalog_provider.dart';
 import '../../services/haptic_service.dart';
 import '../../theme/app_fonts.dart';
 import 'bottom_nav_tokens.dart';
 
-/// Floating black pill nav: white "Home" chip + 3 dark circular icon buttons.
-class ConsumerBottomNav extends ConsumerWidget {
+/// Floating black pill nav: white "Home" chip + 4 dark circular icon buttons.
+class ConsumerBottomNav extends StatelessWidget {
   const ConsumerBottomNav({
     required this.activeIndex,
     super.key,
@@ -16,17 +14,14 @@ class ConsumerBottomNav extends ConsumerWidget {
 
   final int activeIndex;
 
-  void _goHome(BuildContext context, WidgetRef ref) {
-    ref.read(catalogIndexProvider.notifier).refresh();
-    context.go('/home');
-  }
+  static void _goHome(BuildContext context) => context.go('/home');
+  static void _goShops(BuildContext context) => context.go('/shops');
   static void _goBrowse(BuildContext context) => context.go('/browse');
   static void _goBookmarks(BuildContext context) => context.go('/bookmarks');
   static void _goProfile(BuildContext context) => context.go('/profile');
-  static void _goVendor(BuildContext context) => context.go('/vendor');
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final index = activeIndex;
 
     return Container(
@@ -56,27 +51,33 @@ class ConsumerBottomNav extends ConsumerWidget {
               isSelected: index == 0,
               onTap: () {
                 HapticService.light();
-                _goHome(context, ref);
+                _goHome(context);
+              },
+            ),
+            const SizedBox(width: BottomNavTokens.navItemGap),
+            _NavIconButton(
+              icon: Icons.storefront_outlined,
+              isSelected: index == 1,
+              semanticLabel: 'Shops',
+              onTap: () {
+                HapticService.light();
+                _goShops(context);
               },
             ),
             const SizedBox(width: BottomNavTokens.navItemGap),
             _NavIconButton(
               icon: Icons.shopping_bag_outlined,
-              isSelected: index == 1,
+              isSelected: index == 2,
               semanticLabel: 'Browse',
               onTap: () {
                 HapticService.light();
                 _goBrowse(context);
               },
-              onLongPress: () {
-                HapticService.medium();
-                _goVendor(context);
-              },
             ),
             const SizedBox(width: BottomNavTokens.navItemGap),
             _NavIconButton(
               icon: Icons.star_outline,
-              isSelected: index == 2,
+              isSelected: index == 3,
               semanticLabel: 'Bookmarks',
               onTap: () {
                 HapticService.light();
@@ -86,7 +87,7 @@ class ConsumerBottomNav extends ConsumerWidget {
             const SizedBox(width: BottomNavTokens.navItemGap),
             _NavIconButton(
               icon: Icons.person_outline,
-              isSelected: index == 3,
+              isSelected: index == 4,
               semanticLabel: 'Profile',
               onTap: () {
                 HapticService.light();
@@ -169,14 +170,12 @@ class _NavIconButton extends StatefulWidget {
     required this.isSelected,
     required this.semanticLabel,
     required this.onTap,
-    this.onLongPress,
   });
 
   final IconData icon;
   final bool isSelected;
   final String semanticLabel;
   final VoidCallback onTap;
-  final VoidCallback? onLongPress;
 
   @override
   State<_NavIconButton> createState() => _NavIconButtonState();
@@ -195,7 +194,6 @@ class _NavIconButtonState extends State<_NavIconButton> {
       selected: isSelected,
       child: GestureDetector(
         onTap: widget.onTap,
-        onLongPress: widget.onLongPress,
         onTapDown: (_) => setState(() => _pressed = true),
         onTapUp: (_) => setState(() => _pressed = false),
         onTapCancel: () => setState(() => _pressed = false),

@@ -22,6 +22,7 @@ class VendorService {
     String? logoUrl,
     String? phone,
     String? address,
+    String? shopCategory,
   }) {
     return _repository.createShop(
       session,
@@ -30,7 +31,42 @@ class VendorService {
       logoUrl: logoUrl,
       phone: phone,
       address: address,
+      shopCategory: shopCategory,
     );
+  }
+
+  Future<VendorProfileDetail> getMyProfile(Session session) {
+    return _repository.getMyProfile(session);
+  }
+
+  Future<VendorProfileDetail?> getShopProfile(
+    Session session,
+    UuidValue vendorId,
+  ) {
+    return _repository.getShopProfile(session, vendorId);
+  }
+
+  Future<VendorProfileDetail> updateMyProfile(
+    Session session,
+    VendorProfileUpdateInput input,
+  ) {
+    return _repository.updateMyProfile(session, input);
+  }
+
+  Future<String> uploadShopLogo(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) {
+    return _repository.uploadShopLogo(session, fileData, fileName);
+  }
+
+  Future<String> uploadShopBanner(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) {
+    return _repository.uploadShopBanner(session, fileData, fileName);
   }
 
   Future<Vendor> updateShop(
@@ -95,6 +131,20 @@ class VendorService {
     );
   }
 
+  Future<Product> uploadProduct(
+    Session session,
+    VendorProductUploadInput input,
+    ByteData imageData,
+    String imageFileName,
+  ) {
+    return _repository.uploadProduct(
+      session,
+      input,
+      imageData,
+      imageFileName,
+    );
+  }
+
   Future<Product> updateProductThumbnail(
     Session session,
     int productId,
@@ -115,6 +165,13 @@ class VendorService {
     return _repository.uploadProductImage(session, fileData, fileName);
   }
 
+  Future<Product> regenerateProductModel3d(
+    Session session,
+    int productId,
+  ) {
+    return _repository.regenerateProductModel3d(session, productId);
+  }
+
   Future<List<VendorShopOrder>> listShopOrders(
     Session session, {
     int limit = 50,
@@ -131,5 +188,48 @@ class VendorService {
 
   Future<VendorShopOrder> getShopOrder(Session session, int orderId) {
     return _repository.getShopOrder(session, orderId);
+  }
+
+  Future<VendorShopOrder> acceptShopOrder(Session session, int orderId) {
+    return _repository.acceptShopOrder(session, orderId);
+  }
+
+  Future<VendorShopOrder> rejectShopOrder(
+    Session session,
+    int orderId,
+    String reason,
+  ) {
+    return _repository.rejectShopOrder(session, orderId, reason);
+  }
+
+  Future<List<OrderDeliveryUpdate>> listDeliveryUpdates(
+    Session session,
+    int orderId,
+  ) {
+    return _repository.listDeliveryUpdates(session, orderId);
+  }
+
+  Future<OrderDeliveryUpdate> submitDeliveryUpdate(
+    Session session,
+    int orderId,
+    DeliveryStage stage, {
+    String? note,
+    String? photoUrl,
+  }) {
+    return _repository.submitDeliveryUpdate(
+      session,
+      orderId,
+      stage,
+      note: note,
+      photoUrl: photoUrl,
+    );
+  }
+
+  Future<String> uploadDeliveryProof(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) {
+    return _repository.uploadDeliveryProof(session, fileData, fileName);
   }
 }

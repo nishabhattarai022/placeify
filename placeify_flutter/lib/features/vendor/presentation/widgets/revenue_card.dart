@@ -10,10 +10,14 @@ import 'mini_bar_chart.dart';
 class RevenueCard extends StatefulWidget {
   const RevenueCard({
     required this.revenue,
+    required this.trendLabel,
+    required this.revenueSeries,
     super.key,
   });
 
   final double revenue;
+  final String trendLabel;
+  final List<double> revenueSeries;
 
   @override
   State<RevenueCard> createState() => _RevenueCardState();
@@ -62,11 +66,11 @@ class _RevenueCardState extends State<RevenueCard> {
           const SizedBox(height: 6),
           _TrendRow(
             iconPath: 'assets/icons/ic_trending_up.svg',
-            label: widget.revenue > 0 ? 'Total sales' : 'No sales yet',
+            label: widget.trendLabel,
             color: AppColors.accentLight,
           ),
           const SizedBox(height: 12),
-          const MiniBarChart(),
+          MiniBarChart(heights: widget.revenueSeries),
         ],
       ),
     );
@@ -94,9 +98,12 @@ class _TrendRow extends StatelessWidget {
           colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
         ),
         const SizedBox(width: 6),
-        Text(
-          label,
-          style: AppTypography.trendText.copyWith(color: color),
+        Flexible(
+          child: Text(
+            label,
+            style: AppTypography.trendText.copyWith(color: color),
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );

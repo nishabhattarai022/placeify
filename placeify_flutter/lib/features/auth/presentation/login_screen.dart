@@ -47,9 +47,47 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _signInWithDemo() async {
-    _emailController.text = DemoCredentials.email;
-    _passwordController.text = DemoCredentials.password;
-    await _submit();
+    if (_isSubmitting) return;
+
+    setState(() => _isSubmitting = true);
+    await HapticService.heavy();
+
+    try {
+      await ref.read(currentUserProvider.notifier).signInWithDemoCredentials();
+      if (!mounted) return;
+      context.go('/home');
+    } on AuthException catch (e) {
+      if (mounted) PlaceifyToast.show(context, e.message);
+    } catch (error) {
+      if (mounted) {
+        PlaceifyToast.show(context, _loginErrorMessage(error));
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  Future<void> _signInWithDemoAdmin() async {
+    if (_isSubmitting) return;
+
+    setState(() => _isSubmitting = true);
+    await HapticService.heavy();
+
+    try {
+      await ref
+          .read(currentUserProvider.notifier)
+          .signInWithDemoAdminCredentials();
+      if (!mounted) return;
+      context.go('/admin');
+    } on AuthException catch (e) {
+      if (mounted) PlaceifyToast.show(context, e.message);
+    } catch (error) {
+      if (mounted) {
+        PlaceifyToast.show(context, _loginErrorMessage(error));
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   Future<void> _submit() async {
@@ -68,11 +106,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       context.go('/home');
     } on AuthException catch (e) {
       if (mounted) PlaceifyToast.show(context, e.message);
-    } catch (_) {
-      if (mounted) PlaceifyToast.show(context, 'Log in failed. Try again.');
+    } catch (error) {
+      if (mounted) {
+        PlaceifyToast.show(context, _loginErrorMessage(error));
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
+  }
+
+  String _loginErrorMessage(Object error) {
+    if (error is AuthException) return error.message;
+    return 'Log in failed. Check your email and password.';
   }
 
   String? _required(String? value, String message) {
@@ -226,6 +271,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.onboardingAmber,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Center(
+                            child: TextButton(
+                              onPressed: _isSubmitting
+                                  ? null
+                                  : () {
+                                      HapticService.light();
+                                      _signInWithDemoAdmin();
+                                    },
+                              child: Text(
+                                'Demo Admin Access',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.onboardingTextBody.withValues(
+                                    alpha: 0.65,
+                                  ),
                                 ),
                               ),
                             ),
