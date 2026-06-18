@@ -15,6 +15,9 @@ import 'package:serverpod_client/serverpod_client.dart' as _i1;
 enum OrderStatus implements _i1.SerializableModel {
   pending,
   confirmed,
+  accepted,
+  rejected,
+  processing,
   shipped,
   delivered,
   cancelled;
@@ -25,6 +28,12 @@ enum OrderStatus implements _i1.SerializableModel {
         return OrderStatus.pending;
       case 'confirmed':
         return OrderStatus.confirmed;
+      case 'accepted':
+        return OrderStatus.accepted;
+      case 'rejected':
+        return OrderStatus.rejected;
+      case 'processing':
+        return OrderStatus.processing;
       case 'shipped':
         return OrderStatus.shipped;
       case 'delivered':

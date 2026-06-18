@@ -10,24 +10,21 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'package:serverpod/serverpod.dart' as _i1;
+import 'package:serverpod_client/serverpod_client.dart' as _i1;
 
-/// Catalog visibility and admin moderation state for products.
-enum ProductStatus implements _i1.SerializableModel {
-  active,
-  flagged,
-  removed;
+/// Privilege tier for platform administrators.
+enum AdminType implements _i1.SerializableModel {
+  super_admin,
+  moderator;
 
-  static ProductStatus fromJson(String name) {
+  static AdminType fromJson(String name) {
     switch (name) {
-      case 'active':
-        return ProductStatus.active;
-      case 'flagged':
-        return ProductStatus.flagged;
-      case 'removed':
-        return ProductStatus.removed;
+      case 'super_admin':
+        return AdminType.super_admin;
+      case 'moderator':
+        return AdminType.moderator;
       default:
-        return ProductStatus.active;
+        return AdminType.moderator;
     }
   }
 

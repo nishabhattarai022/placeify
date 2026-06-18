@@ -98,7 +98,7 @@ abstract final class CatalogSeed {
     );
     if (owner == null) {
       throw PlaceifyException(
-        'Register at least one user before loading the catalog.',
+        message: 'Register at least one user before loading the catalog.',
         code: 'CATALOG_SEED_REQUIRES_USER',
       );
     }

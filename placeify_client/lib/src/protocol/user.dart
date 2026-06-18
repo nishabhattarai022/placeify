@@ -12,33 +12,60 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'user_role.dart' as _i2;
+import 'user_account_status.dart' as _i3;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
-    as _i3;
-import 'package:placeify_client/src/protocol/protocol.dart' as _i4;
+    as _i4;
+import 'admin.dart' as _i5;
+import 'package:placeify_client/src/protocol/protocol.dart' as _i6;
 
-/// Application user account.
+/// Core Placeify account (customer / vendor / admin).
+/// Email and password are managed by Serverpod Auth via authUser — not stored here.
+/// Role `consumer` is the customer role used across the app.
 abstract class User implements _i1.SerializableModel {
   User._({
     this.id,
     required this.authUserId,
     this.authUser,
     required this.name,
+    this.email,
     this.phone,
     this.address,
+    this.profileImageUrl,
     _i2.UserRole? role,
+    _i3.UserAccountStatus? status,
+    this.approvedById,
+    this.approvedBy,
+    this.statusChangedById,
+    this.statusChangedBy,
+    bool? isActive,
+    this.deletedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) : role = role ?? _i2.UserRole.consumer,
-       createdAt = createdAt ?? DateTime.now();
+       status = status ?? _i3.UserAccountStatus.approved,
+       isActive = isActive ?? true,
+       createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
   factory User({
     _i1.UuidValue? id,
     required _i1.UuidValue authUserId,
-    _i3.AuthUser? authUser,
+    _i4.AuthUser? authUser,
     required String name,
+    String? email,
     String? phone,
     String? address,
+    String? profileImageUrl,
     _i2.UserRole? role,
+    _i3.UserAccountStatus? status,
+    _i1.UuidValue? approvedById,
+    _i5.Admin? approvedBy,
+    _i1.UuidValue? statusChangedById,
+    _i5.Admin? statusChangedBy,
+    bool? isActive,
+    DateTime? deletedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) = _UserImpl;
 
   factory User.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -51,18 +78,54 @@ abstract class User implements _i1.SerializableModel {
       ),
       authUser: jsonSerialization['authUser'] == null
           ? null
-          : _i4.Protocol().deserialize<_i3.AuthUser>(
+          : _i6.Protocol().deserialize<_i4.AuthUser>(
               jsonSerialization['authUser'],
             ),
       name: jsonSerialization['name'] as String,
+      email: jsonSerialization['email'] as String?,
       phone: jsonSerialization['phone'] as String?,
       address: jsonSerialization['address'] as String?,
+      profileImageUrl: jsonSerialization['profileImageUrl'] as String?,
       role: jsonSerialization['role'] == null
           ? null
           : _i2.UserRole.fromJson((jsonSerialization['role'] as String)),
+      status: jsonSerialization['status'] == null
+          ? null
+          : _i3.UserAccountStatus.fromJson(
+              (jsonSerialization['status'] as String),
+            ),
+      approvedById: jsonSerialization['approvedById'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(
+              jsonSerialization['approvedById'],
+            ),
+      approvedBy: jsonSerialization['approvedBy'] == null
+          ? null
+          : _i6.Protocol().deserialize<_i5.Admin>(
+              jsonSerialization['approvedBy'],
+            ),
+      statusChangedById: jsonSerialization['statusChangedById'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(
+              jsonSerialization['statusChangedById'],
+            ),
+      statusChangedBy: jsonSerialization['statusChangedBy'] == null
+          ? null
+          : _i6.Protocol().deserialize<_i5.Admin>(
+              jsonSerialization['statusChangedBy'],
+            ),
+      isActive: jsonSerialization['isActive'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['isActive']),
+      deletedAt: jsonSerialization['deletedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['deletedAt']),
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
+      updatedAt: jsonSerialization['updatedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['updatedAt']),
     );
   }
 
@@ -73,17 +136,40 @@ abstract class User implements _i1.SerializableModel {
 
   _i1.UuidValue authUserId;
 
-  _i3.AuthUser? authUser;
+  _i4.AuthUser? authUser;
 
   String name;
+
+  String? email;
 
   String? phone;
 
   String? address;
 
+  String? profileImageUrl;
+
   _i2.UserRole role;
 
+  /// Default approved at signup; vendors set to pending in vendor_repository.createShop.
+  _i3.UserAccountStatus status;
+
+  _i1.UuidValue? approvedById;
+
+  /// Admin who approved this account (vendor onboarding or customer verification).
+  _i5.Admin? approvedBy;
+
+  _i1.UuidValue? statusChangedById;
+
+  /// Admin who last changed status (suspend, reject, re-approve).
+  _i5.Admin? statusChangedBy;
+
+  bool isActive;
+
+  DateTime? deletedAt;
+
   DateTime createdAt;
+
+  DateTime updatedAt;
 
   /// Returns a shallow copy of this [User]
   /// with some or all fields replaced by the given arguments.
@@ -91,12 +177,22 @@ abstract class User implements _i1.SerializableModel {
   User copyWith({
     _i1.UuidValue? id,
     _i1.UuidValue? authUserId,
-    _i3.AuthUser? authUser,
+    _i4.AuthUser? authUser,
     String? name,
+    String? email,
     String? phone,
     String? address,
+    String? profileImageUrl,
     _i2.UserRole? role,
+    _i3.UserAccountStatus? status,
+    _i1.UuidValue? approvedById,
+    _i5.Admin? approvedBy,
+    _i1.UuidValue? statusChangedById,
+    _i5.Admin? statusChangedBy,
+    bool? isActive,
+    DateTime? deletedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -106,10 +202,21 @@ abstract class User implements _i1.SerializableModel {
       'authUserId': authUserId.toJson(),
       if (authUser != null) 'authUser': authUser?.toJson(),
       'name': name,
+      if (email != null) 'email': email,
       if (phone != null) 'phone': phone,
       if (address != null) 'address': address,
+      if (profileImageUrl != null) 'profileImageUrl': profileImageUrl,
       'role': role.toJson(),
+      'status': status.toJson(),
+      if (approvedById != null) 'approvedById': approvedById?.toJson(),
+      if (approvedBy != null) 'approvedBy': approvedBy?.toJson(),
+      if (statusChangedById != null)
+        'statusChangedById': statusChangedById?.toJson(),
+      if (statusChangedBy != null) 'statusChangedBy': statusChangedBy?.toJson(),
+      'isActive': isActive,
+      if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
       'createdAt': createdAt.toJson(),
+      'updatedAt': updatedAt.toJson(),
     };
   }
 
@@ -125,21 +232,41 @@ class _UserImpl extends User {
   _UserImpl({
     _i1.UuidValue? id,
     required _i1.UuidValue authUserId,
-    _i3.AuthUser? authUser,
+    _i4.AuthUser? authUser,
     required String name,
+    String? email,
     String? phone,
     String? address,
+    String? profileImageUrl,
     _i2.UserRole? role,
+    _i3.UserAccountStatus? status,
+    _i1.UuidValue? approvedById,
+    _i5.Admin? approvedBy,
+    _i1.UuidValue? statusChangedById,
+    _i5.Admin? statusChangedBy,
+    bool? isActive,
+    DateTime? deletedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) : super._(
          id: id,
          authUserId: authUserId,
          authUser: authUser,
          name: name,
+         email: email,
          phone: phone,
          address: address,
+         profileImageUrl: profileImageUrl,
          role: role,
+         status: status,
+         approvedById: approvedById,
+         approvedBy: approvedBy,
+         statusChangedById: statusChangedById,
+         statusChangedBy: statusChangedBy,
+         isActive: isActive,
+         deletedAt: deletedAt,
          createdAt: createdAt,
+         updatedAt: updatedAt,
        );
 
   /// Returns a shallow copy of this [User]
@@ -151,22 +278,52 @@ class _UserImpl extends User {
     _i1.UuidValue? authUserId,
     Object? authUser = _Undefined,
     String? name,
+    Object? email = _Undefined,
     Object? phone = _Undefined,
     Object? address = _Undefined,
+    Object? profileImageUrl = _Undefined,
     _i2.UserRole? role,
+    _i3.UserAccountStatus? status,
+    Object? approvedById = _Undefined,
+    Object? approvedBy = _Undefined,
+    Object? statusChangedById = _Undefined,
+    Object? statusChangedBy = _Undefined,
+    bool? isActive,
+    Object? deletedAt = _Undefined,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return User(
       id: id is _i1.UuidValue? ? id : this.id,
       authUserId: authUserId ?? this.authUserId,
-      authUser: authUser is _i3.AuthUser?
+      authUser: authUser is _i4.AuthUser?
           ? authUser
           : this.authUser?.copyWith(),
       name: name ?? this.name,
+      email: email is String? ? email : this.email,
       phone: phone is String? ? phone : this.phone,
       address: address is String? ? address : this.address,
+      profileImageUrl: profileImageUrl is String?
+          ? profileImageUrl
+          : this.profileImageUrl,
       role: role ?? this.role,
+      status: status ?? this.status,
+      approvedById: approvedById is _i1.UuidValue?
+          ? approvedById
+          : this.approvedById,
+      approvedBy: approvedBy is _i5.Admin?
+          ? approvedBy
+          : this.approvedBy?.copyWith(),
+      statusChangedById: statusChangedById is _i1.UuidValue?
+          ? statusChangedById
+          : this.statusChangedById,
+      statusChangedBy: statusChangedBy is _i5.Admin?
+          ? statusChangedBy
+          : this.statusChangedBy?.copyWith(),
+      isActive: isActive ?? this.isActive,
+      deletedAt: deletedAt is DateTime? ? deletedAt : this.deletedAt,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }

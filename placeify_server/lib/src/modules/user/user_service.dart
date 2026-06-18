@@ -42,7 +42,8 @@ class UserService {
     );
     if (shop == null) {
       throw PlaceifyException(
-        'Complete vendor registration before switching to vendor mode.',
+        message:
+            'Complete vendor registration before switching to vendor mode.',
         code: 'SHOP_NOT_FOUND',
       );
     }

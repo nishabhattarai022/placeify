@@ -14,7 +14,7 @@ class ReviewStore {
   }) async {
     if (rating < 1 || rating > 5) {
       throw PlaceifyException(
-        'Rating must be between 1 and 5.',
+        message: 'Rating must be between 1 and 5.',
         code: 'INVALID_RATING',
       );
     }
@@ -22,12 +22,18 @@ class ReviewStore {
     final user = await SessionService.requireUser(session);
     final order = await Order.db.findById(session, orderId);
     if (order == null || order.userId != user.id) {
-      throw PlaceifyException('Order not found.', code: 'ORDER_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Order not found.',
+        code: 'ORDER_NOT_FOUND',
+      );
     }
 
     final product = await Product.db.findById(session, productId);
     if (product == null || product.status != ProductStatus.active) {
-      throw PlaceifyException('Product not found.', code: 'PRODUCT_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Product not found.',
+        code: 'PRODUCT_NOT_FOUND',
+      );
     }
 
     final existing = await Review.db.findFirstRow(
@@ -39,7 +45,7 @@ class ReviewStore {
     );
     if (existing != null) {
       throw PlaceifyException(
-        'You already reviewed this order item.',
+        message: 'You already reviewed this order item.',
         code: 'REVIEW_EXISTS',
       );
     }

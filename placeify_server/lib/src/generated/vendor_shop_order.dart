@@ -28,6 +28,7 @@ abstract class VendorShopOrder
     required this.vendorTotal,
     required this.itemCount,
     required this.items,
+    this.rejectionReason,
   });
 
   factory VendorShopOrder({
@@ -40,6 +41,7 @@ abstract class VendorShopOrder
     required double vendorTotal,
     required int itemCount,
     required List<_i3.VendorOrderLineItem> items,
+    String? rejectionReason,
   }) = _VendorShopOrderImpl;
 
   factory VendorShopOrder.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -57,6 +59,7 @@ abstract class VendorShopOrder
       items: _i4.Protocol().deserialize<List<_i3.VendorOrderLineItem>>(
         jsonSerialization['items'],
       ),
+      rejectionReason: jsonSerialization['rejectionReason'] as String?,
     );
   }
 
@@ -78,6 +81,8 @@ abstract class VendorShopOrder
 
   List<_i3.VendorOrderLineItem> items;
 
+  String? rejectionReason;
+
   /// Returns a shallow copy of this [VendorShopOrder]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -91,6 +96,7 @@ abstract class VendorShopOrder
     double? vendorTotal,
     int? itemCount,
     List<_i3.VendorOrderLineItem>? items,
+    String? rejectionReason,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -105,6 +111,7 @@ abstract class VendorShopOrder
       'vendorTotal': vendorTotal,
       'itemCount': itemCount,
       'items': items.toJson(valueToJson: (v) => v.toJson()),
+      if (rejectionReason != null) 'rejectionReason': rejectionReason,
     };
   }
 
@@ -121,6 +128,7 @@ abstract class VendorShopOrder
       'vendorTotal': vendorTotal,
       'itemCount': itemCount,
       'items': items.toJson(valueToJson: (v) => v.toJsonForProtocol()),
+      if (rejectionReason != null) 'rejectionReason': rejectionReason,
     };
   }
 
@@ -129,6 +137,8 @@ abstract class VendorShopOrder
     return _i1.SerializationManager.encode(this);
   }
 }
+
+class _Undefined {}
 
 class _VendorShopOrderImpl extends VendorShopOrder {
   _VendorShopOrderImpl({
@@ -141,6 +151,7 @@ class _VendorShopOrderImpl extends VendorShopOrder {
     required double vendorTotal,
     required int itemCount,
     required List<_i3.VendorOrderLineItem> items,
+    String? rejectionReason,
   }) : super._(
          orderId: orderId,
          orderNumber: orderNumber,
@@ -151,6 +162,7 @@ class _VendorShopOrderImpl extends VendorShopOrder {
          vendorTotal: vendorTotal,
          itemCount: itemCount,
          items: items,
+         rejectionReason: rejectionReason,
        );
 
   /// Returns a shallow copy of this [VendorShopOrder]
@@ -167,6 +179,7 @@ class _VendorShopOrderImpl extends VendorShopOrder {
     double? vendorTotal,
     int? itemCount,
     List<_i3.VendorOrderLineItem>? items,
+    Object? rejectionReason = _Undefined,
   }) {
     return VendorShopOrder(
       orderId: orderId ?? this.orderId,
@@ -178,6 +191,9 @@ class _VendorShopOrderImpl extends VendorShopOrder {
       vendorTotal: vendorTotal ?? this.vendorTotal,
       itemCount: itemCount ?? this.itemCount,
       items: items ?? this.items.map((e0) => e0.copyWith()).toList(),
+      rejectionReason: rejectionReason is String?
+          ? rejectionReason
+          : this.rejectionReason,
     );
   }
 }

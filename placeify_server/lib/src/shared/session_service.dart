@@ -12,7 +12,7 @@ abstract final class SessionService {
     final auth = session.authenticated;
     if (auth == null) {
       throw PlaceifyException(
-        'Sign in to continue.',
+        message: 'Sign in to continue.',
         code: 'AUTH_REQUIRED',
       );
     }
@@ -55,7 +55,7 @@ abstract final class SessionService {
     final user = await requireUser(session);
     if (!roles.contains(user.role)) {
       throw PlaceifyException(
-        'You do not have permission to perform this action.',
+        message: 'You do not have permission to perform this action.',
         code: 'FORBIDDEN',
       );
     }

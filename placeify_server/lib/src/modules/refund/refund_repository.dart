@@ -48,7 +48,10 @@ class RefundStore {
     final user = await SessionService.requireUser(session);
     final row = await RefundRequest.db.findById(session, refundId);
     if (row == null || row.userId != user.id) {
-      throw PlaceifyException('Refund request not found.', code: 'NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Refund request not found.',
+        code: 'NOT_FOUND',
+      );
     }
 
     return RefundRequestSummary(
@@ -71,19 +74,22 @@ class RefundStore {
     final trimmedReason = reason.trim();
     if (trimmedReason.isEmpty) {
       throw PlaceifyException(
-        'A reason is required for refund requests.',
+        message: 'A reason is required for refund requests.',
         code: 'INVALID_REASON',
       );
     }
 
     final order = await Order.db.findById(session, orderId);
     if (order == null || order.userId != user.id) {
-      throw PlaceifyException('Order not found.', code: 'ORDER_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Order not found.',
+        code: 'ORDER_NOT_FOUND',
+      );
     }
 
     if (order.status == OrderStatus.cancelled) {
       throw PlaceifyException(
-        'Cancelled orders cannot be refunded.',
+        message: 'Cancelled orders cannot be refunded.',
         code: 'ORDER_CANCELLED',
       );
     }
@@ -97,7 +103,8 @@ class RefundStore {
     );
     if (existingPending != null) {
       throw PlaceifyException(
-        'A pending refund request already exists for this order.',
+        message:
+            'A pending refund request already exists for this order.',
         code: 'REFUND_EXISTS',
       );
     }

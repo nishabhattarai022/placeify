@@ -12,22 +12,29 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 
-/// Catalog visibility and admin moderation state for products.
-enum ProductStatus implements _i1.SerializableModel {
-  active,
-  flagged,
-  removed;
+enum DeliveryStage implements _i1.SerializableModel {
+  orderPlaced,
+  packed,
+  shipped,
+  outForDelivery,
+  delivered;
 
-  static ProductStatus fromJson(String name) {
+  static DeliveryStage fromJson(String name) {
     switch (name) {
-      case 'active':
-        return ProductStatus.active;
-      case 'flagged':
-        return ProductStatus.flagged;
-      case 'removed':
-        return ProductStatus.removed;
+      case 'orderPlaced':
+        return DeliveryStage.orderPlaced;
+      case 'packed':
+        return DeliveryStage.packed;
+      case 'shipped':
+        return DeliveryStage.shipped;
+      case 'outForDelivery':
+        return DeliveryStage.outForDelivery;
+      case 'delivered':
+        return DeliveryStage.delivered;
       default:
-        return ProductStatus.active;
+        throw ArgumentError(
+          'Value "$name" cannot be converted to "DeliveryStage"',
+        );
     }
   }
 

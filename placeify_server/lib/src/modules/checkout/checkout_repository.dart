@@ -12,7 +12,7 @@ class CheckoutStore {
     final address = request.shippingAddress.trim();
     if (address.isEmpty) {
       throw PlaceifyException(
-        'Enter a shipping address before checkout.',
+        message: 'Enter a shipping address before checkout.',
         code: 'INVALID_ADDRESS',
       );
     }
@@ -28,7 +28,8 @@ class CheckoutStore {
 
     if (cartItems.isEmpty) {
       throw PlaceifyException(
-        'Your cart is empty. Sign in, add products, then checkout again.',
+        message:
+            'Your cart is empty. Sign in, add products, then checkout again.',
         code: 'CART_EMPTY',
       );
     }
@@ -56,7 +57,7 @@ class CheckoutStore {
         final product = item.product;
         if (product == null || product.id == null) {
           throw PlaceifyException(
-            'A cart item references a missing product.',
+            message: 'A cart item references a missing product.',
             code: 'PRODUCT_NOT_FOUND',
           );
         }

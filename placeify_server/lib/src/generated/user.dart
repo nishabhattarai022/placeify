@@ -13,11 +13,15 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
 import 'user_role.dart' as _i2;
+import 'user_account_status.dart' as _i3;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
-    as _i3;
-import 'package:placeify_server/src/generated/protocol.dart' as _i4;
+    as _i4;
+import 'admin.dart' as _i5;
+import 'package:placeify_server/src/generated/protocol.dart' as _i6;
 
-/// Application user account.
+/// Core Placeify account (customer / vendor / admin).
+/// Email and password are managed by Serverpod Auth via authUser — not stored here.
+/// Role `consumer` is the customer role used across the app.
 abstract class User
     implements _i1.TableRow<_i1.UuidValue?>, _i1.ProtocolSerialization {
   User._({
@@ -25,22 +29,45 @@ abstract class User
     required this.authUserId,
     this.authUser,
     required this.name,
+    this.email,
     this.phone,
     this.address,
+    this.profileImageUrl,
     _i2.UserRole? role,
+    _i3.UserAccountStatus? status,
+    this.approvedById,
+    this.approvedBy,
+    this.statusChangedById,
+    this.statusChangedBy,
+    bool? isActive,
+    this.deletedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) : role = role ?? _i2.UserRole.consumer,
-       createdAt = createdAt ?? DateTime.now();
+       status = status ?? _i3.UserAccountStatus.approved,
+       isActive = isActive ?? true,
+       createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
   factory User({
     _i1.UuidValue? id,
     required _i1.UuidValue authUserId,
-    _i3.AuthUser? authUser,
+    _i4.AuthUser? authUser,
     required String name,
+    String? email,
     String? phone,
     String? address,
+    String? profileImageUrl,
     _i2.UserRole? role,
+    _i3.UserAccountStatus? status,
+    _i1.UuidValue? approvedById,
+    _i5.Admin? approvedBy,
+    _i1.UuidValue? statusChangedById,
+    _i5.Admin? statusChangedBy,
+    bool? isActive,
+    DateTime? deletedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) = _UserImpl;
 
   factory User.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -53,18 +80,54 @@ abstract class User
       ),
       authUser: jsonSerialization['authUser'] == null
           ? null
-          : _i4.Protocol().deserialize<_i3.AuthUser>(
+          : _i6.Protocol().deserialize<_i4.AuthUser>(
               jsonSerialization['authUser'],
             ),
       name: jsonSerialization['name'] as String,
+      email: jsonSerialization['email'] as String?,
       phone: jsonSerialization['phone'] as String?,
       address: jsonSerialization['address'] as String?,
+      profileImageUrl: jsonSerialization['profileImageUrl'] as String?,
       role: jsonSerialization['role'] == null
           ? null
           : _i2.UserRole.fromJson((jsonSerialization['role'] as String)),
+      status: jsonSerialization['status'] == null
+          ? null
+          : _i3.UserAccountStatus.fromJson(
+              (jsonSerialization['status'] as String),
+            ),
+      approvedById: jsonSerialization['approvedById'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(
+              jsonSerialization['approvedById'],
+            ),
+      approvedBy: jsonSerialization['approvedBy'] == null
+          ? null
+          : _i6.Protocol().deserialize<_i5.Admin>(
+              jsonSerialization['approvedBy'],
+            ),
+      statusChangedById: jsonSerialization['statusChangedById'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(
+              jsonSerialization['statusChangedById'],
+            ),
+      statusChangedBy: jsonSerialization['statusChangedBy'] == null
+          ? null
+          : _i6.Protocol().deserialize<_i5.Admin>(
+              jsonSerialization['statusChangedBy'],
+            ),
+      isActive: jsonSerialization['isActive'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['isActive']),
+      deletedAt: jsonSerialization['deletedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['deletedAt']),
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
+      updatedAt: jsonSerialization['updatedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['updatedAt']),
     );
   }
 
@@ -77,17 +140,40 @@ abstract class User
 
   _i1.UuidValue authUserId;
 
-  _i3.AuthUser? authUser;
+  _i4.AuthUser? authUser;
 
   String name;
+
+  String? email;
 
   String? phone;
 
   String? address;
 
+  String? profileImageUrl;
+
   _i2.UserRole role;
 
+  /// Default approved at signup; vendors set to pending in vendor_repository.createShop.
+  _i3.UserAccountStatus status;
+
+  _i1.UuidValue? approvedById;
+
+  /// Admin who approved this account (vendor onboarding or customer verification).
+  _i5.Admin? approvedBy;
+
+  _i1.UuidValue? statusChangedById;
+
+  /// Admin who last changed status (suspend, reject, re-approve).
+  _i5.Admin? statusChangedBy;
+
+  bool isActive;
+
+  DateTime? deletedAt;
+
   DateTime createdAt;
+
+  DateTime updatedAt;
 
   @override
   _i1.Table<_i1.UuidValue?> get table => t;
@@ -98,12 +184,22 @@ abstract class User
   User copyWith({
     _i1.UuidValue? id,
     _i1.UuidValue? authUserId,
-    _i3.AuthUser? authUser,
+    _i4.AuthUser? authUser,
     String? name,
+    String? email,
     String? phone,
     String? address,
+    String? profileImageUrl,
     _i2.UserRole? role,
+    _i3.UserAccountStatus? status,
+    _i1.UuidValue? approvedById,
+    _i5.Admin? approvedBy,
+    _i1.UuidValue? statusChangedById,
+    _i5.Admin? statusChangedBy,
+    bool? isActive,
+    DateTime? deletedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -113,10 +209,21 @@ abstract class User
       'authUserId': authUserId.toJson(),
       if (authUser != null) 'authUser': authUser?.toJson(),
       'name': name,
+      if (email != null) 'email': email,
       if (phone != null) 'phone': phone,
       if (address != null) 'address': address,
+      if (profileImageUrl != null) 'profileImageUrl': profileImageUrl,
       'role': role.toJson(),
+      'status': status.toJson(),
+      if (approvedById != null) 'approvedById': approvedById?.toJson(),
+      if (approvedBy != null) 'approvedBy': approvedBy?.toJson(),
+      if (statusChangedById != null)
+        'statusChangedById': statusChangedById?.toJson(),
+      if (statusChangedBy != null) 'statusChangedBy': statusChangedBy?.toJson(),
+      'isActive': isActive,
+      if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
       'createdAt': createdAt.toJson(),
+      'updatedAt': updatedAt.toJson(),
     };
   }
 
@@ -128,15 +235,35 @@ abstract class User
       'authUserId': authUserId.toJson(),
       if (authUser != null) 'authUser': authUser?.toJsonForProtocol(),
       'name': name,
+      if (email != null) 'email': email,
       if (phone != null) 'phone': phone,
       if (address != null) 'address': address,
+      if (profileImageUrl != null) 'profileImageUrl': profileImageUrl,
       'role': role.toJson(),
+      'status': status.toJson(),
+      if (approvedById != null) 'approvedById': approvedById?.toJson(),
+      if (approvedBy != null) 'approvedBy': approvedBy?.toJsonForProtocol(),
+      if (statusChangedById != null)
+        'statusChangedById': statusChangedById?.toJson(),
+      if (statusChangedBy != null)
+        'statusChangedBy': statusChangedBy?.toJsonForProtocol(),
+      'isActive': isActive,
+      if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
       'createdAt': createdAt.toJson(),
+      'updatedAt': updatedAt.toJson(),
     };
   }
 
-  static UserInclude include({_i3.AuthUserInclude? authUser}) {
-    return UserInclude._(authUser: authUser);
+  static UserInclude include({
+    _i4.AuthUserInclude? authUser,
+    _i5.AdminInclude? approvedBy,
+    _i5.AdminInclude? statusChangedBy,
+  }) {
+    return UserInclude._(
+      authUser: authUser,
+      approvedBy: approvedBy,
+      statusChangedBy: statusChangedBy,
+    );
   }
 
   static UserIncludeList includeList({
@@ -171,21 +298,41 @@ class _UserImpl extends User {
   _UserImpl({
     _i1.UuidValue? id,
     required _i1.UuidValue authUserId,
-    _i3.AuthUser? authUser,
+    _i4.AuthUser? authUser,
     required String name,
+    String? email,
     String? phone,
     String? address,
+    String? profileImageUrl,
     _i2.UserRole? role,
+    _i3.UserAccountStatus? status,
+    _i1.UuidValue? approvedById,
+    _i5.Admin? approvedBy,
+    _i1.UuidValue? statusChangedById,
+    _i5.Admin? statusChangedBy,
+    bool? isActive,
+    DateTime? deletedAt,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) : super._(
          id: id,
          authUserId: authUserId,
          authUser: authUser,
          name: name,
+         email: email,
          phone: phone,
          address: address,
+         profileImageUrl: profileImageUrl,
          role: role,
+         status: status,
+         approvedById: approvedById,
+         approvedBy: approvedBy,
+         statusChangedById: statusChangedById,
+         statusChangedBy: statusChangedBy,
+         isActive: isActive,
+         deletedAt: deletedAt,
          createdAt: createdAt,
+         updatedAt: updatedAt,
        );
 
   /// Returns a shallow copy of this [User]
@@ -197,22 +344,52 @@ class _UserImpl extends User {
     _i1.UuidValue? authUserId,
     Object? authUser = _Undefined,
     String? name,
+    Object? email = _Undefined,
     Object? phone = _Undefined,
     Object? address = _Undefined,
+    Object? profileImageUrl = _Undefined,
     _i2.UserRole? role,
+    _i3.UserAccountStatus? status,
+    Object? approvedById = _Undefined,
+    Object? approvedBy = _Undefined,
+    Object? statusChangedById = _Undefined,
+    Object? statusChangedBy = _Undefined,
+    bool? isActive,
+    Object? deletedAt = _Undefined,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return User(
       id: id is _i1.UuidValue? ? id : this.id,
       authUserId: authUserId ?? this.authUserId,
-      authUser: authUser is _i3.AuthUser?
+      authUser: authUser is _i4.AuthUser?
           ? authUser
           : this.authUser?.copyWith(),
       name: name ?? this.name,
+      email: email is String? ? email : this.email,
       phone: phone is String? ? phone : this.phone,
       address: address is String? ? address : this.address,
+      profileImageUrl: profileImageUrl is String?
+          ? profileImageUrl
+          : this.profileImageUrl,
       role: role ?? this.role,
+      status: status ?? this.status,
+      approvedById: approvedById is _i1.UuidValue?
+          ? approvedById
+          : this.approvedById,
+      approvedBy: approvedBy is _i5.Admin?
+          ? approvedBy
+          : this.approvedBy?.copyWith(),
+      statusChangedById: statusChangedById is _i1.UuidValue?
+          ? statusChangedById
+          : this.statusChangedById,
+      statusChangedBy: statusChangedBy is _i5.Admin?
+          ? statusChangedBy
+          : this.statusChangedBy?.copyWith(),
+      isActive: isActive ?? this.isActive,
+      deletedAt: deletedAt is DateTime? ? deletedAt : this.deletedAt,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }
@@ -232,6 +409,11 @@ class UserUpdateTable extends _i1.UpdateTable<UserTable> {
     value,
   );
 
+  _i1.ColumnValue<String, String> email(String? value) => _i1.ColumnValue(
+    table.email,
+    value,
+  );
+
   _i1.ColumnValue<String, String> phone(String? value) => _i1.ColumnValue(
     table.phone,
     value,
@@ -242,15 +424,59 @@ class UserUpdateTable extends _i1.UpdateTable<UserTable> {
     value,
   );
 
+  _i1.ColumnValue<String, String> profileImageUrl(String? value) =>
+      _i1.ColumnValue(
+        table.profileImageUrl,
+        value,
+      );
+
   _i1.ColumnValue<_i2.UserRole, _i2.UserRole> role(_i2.UserRole value) =>
       _i1.ColumnValue(
         table.role,
         value,
       );
 
+  _i1.ColumnValue<_i3.UserAccountStatus, _i3.UserAccountStatus> status(
+    _i3.UserAccountStatus value,
+  ) => _i1.ColumnValue(
+    table.status,
+    value,
+  );
+
+  _i1.ColumnValue<_i1.UuidValue, _i1.UuidValue> approvedById(
+    _i1.UuidValue? value,
+  ) => _i1.ColumnValue(
+    table.approvedById,
+    value,
+  );
+
+  _i1.ColumnValue<_i1.UuidValue, _i1.UuidValue> statusChangedById(
+    _i1.UuidValue? value,
+  ) => _i1.ColumnValue(
+    table.statusChangedById,
+    value,
+  );
+
+  _i1.ColumnValue<bool, bool> isActive(bool value) => _i1.ColumnValue(
+    table.isActive,
+    value,
+  );
+
+  _i1.ColumnValue<DateTime, DateTime> deletedAt(DateTime? value) =>
+      _i1.ColumnValue(
+        table.deletedAt,
+        value,
+      );
+
   _i1.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
       _i1.ColumnValue(
         table.createdAt,
+        value,
+      );
+
+  _i1.ColumnValue<DateTime, DateTime> updatedAt(DateTime value) =>
+      _i1.ColumnValue(
+        table.updatedAt,
         value,
       );
 }
@@ -266,6 +492,10 @@ class UserTable extends _i1.Table<_i1.UuidValue?> {
       'name',
       this,
     );
+    email = _i1.ColumnString(
+      'email',
+      this,
+    );
     phone = _i1.ColumnString(
       'phone',
       this,
@@ -274,14 +504,46 @@ class UserTable extends _i1.Table<_i1.UuidValue?> {
       'address',
       this,
     );
+    profileImageUrl = _i1.ColumnString(
+      'profileImageUrl',
+      this,
+    );
     role = _i1.ColumnEnum(
       'role',
       this,
       _i1.EnumSerialization.byName,
       hasDefault: true,
     );
+    status = _i1.ColumnEnum(
+      'status',
+      this,
+      _i1.EnumSerialization.byName,
+      hasDefault: true,
+    );
+    approvedById = _i1.ColumnUuid(
+      'approvedById',
+      this,
+    );
+    statusChangedById = _i1.ColumnUuid(
+      'statusChangedById',
+      this,
+    );
+    isActive = _i1.ColumnBool(
+      'isActive',
+      this,
+      hasDefault: true,
+    );
+    deletedAt = _i1.ColumnDateTime(
+      'deletedAt',
+      this,
+    );
     createdAt = _i1.ColumnDateTime(
       'createdAt',
+      this,
+      hasDefault: true,
+    );
+    updatedAt = _i1.ColumnDateTime(
+      'updatedAt',
       this,
       hasDefault: true,
     );
@@ -291,29 +553,78 @@ class UserTable extends _i1.Table<_i1.UuidValue?> {
 
   late final _i1.ColumnUuid authUserId;
 
-  _i3.AuthUserTable? _authUser;
+  _i4.AuthUserTable? _authUser;
 
   late final _i1.ColumnString name;
+
+  late final _i1.ColumnString email;
 
   late final _i1.ColumnString phone;
 
   late final _i1.ColumnString address;
 
+  late final _i1.ColumnString profileImageUrl;
+
   late final _i1.ColumnEnum<_i2.UserRole> role;
+
+  /// Default approved at signup; vendors set to pending in vendor_repository.createShop.
+  late final _i1.ColumnEnum<_i3.UserAccountStatus> status;
+
+  late final _i1.ColumnUuid approvedById;
+
+  /// Admin who approved this account (vendor onboarding or customer verification).
+  _i5.AdminTable? _approvedBy;
+
+  late final _i1.ColumnUuid statusChangedById;
+
+  /// Admin who last changed status (suspend, reject, re-approve).
+  _i5.AdminTable? _statusChangedBy;
+
+  late final _i1.ColumnBool isActive;
+
+  late final _i1.ColumnDateTime deletedAt;
 
   late final _i1.ColumnDateTime createdAt;
 
-  _i3.AuthUserTable get authUser {
+  late final _i1.ColumnDateTime updatedAt;
+
+  _i4.AuthUserTable get authUser {
     if (_authUser != null) return _authUser!;
     _authUser = _i1.createRelationTable(
       relationFieldName: 'authUser',
       field: User.t.authUserId,
-      foreignField: _i3.AuthUser.t.id,
+      foreignField: _i4.AuthUser.t.id,
       tableRelation: tableRelation,
       createTable: (foreignTableRelation) =>
-          _i3.AuthUserTable(tableRelation: foreignTableRelation),
+          _i4.AuthUserTable(tableRelation: foreignTableRelation),
     );
     return _authUser!;
+  }
+
+  _i5.AdminTable get approvedBy {
+    if (_approvedBy != null) return _approvedBy!;
+    _approvedBy = _i1.createRelationTable(
+      relationFieldName: 'approvedBy',
+      field: User.t.approvedById,
+      foreignField: _i5.Admin.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i5.AdminTable(tableRelation: foreignTableRelation),
+    );
+    return _approvedBy!;
+  }
+
+  _i5.AdminTable get statusChangedBy {
+    if (_statusChangedBy != null) return _statusChangedBy!;
+    _statusChangedBy = _i1.createRelationTable(
+      relationFieldName: 'statusChangedBy',
+      field: User.t.statusChangedById,
+      foreignField: _i5.Admin.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i5.AdminTable(tableRelation: foreignTableRelation),
+    );
+    return _statusChangedBy!;
   }
 
   @override
@@ -321,10 +632,18 @@ class UserTable extends _i1.Table<_i1.UuidValue?> {
     id,
     authUserId,
     name,
+    email,
     phone,
     address,
+    profileImageUrl,
     role,
+    status,
+    approvedById,
+    statusChangedById,
+    isActive,
+    deletedAt,
     createdAt,
+    updatedAt,
   ];
 
   @override
@@ -332,19 +651,39 @@ class UserTable extends _i1.Table<_i1.UuidValue?> {
     if (relationField == 'authUser') {
       return authUser;
     }
+    if (relationField == 'approvedBy') {
+      return approvedBy;
+    }
+    if (relationField == 'statusChangedBy') {
+      return statusChangedBy;
+    }
     return null;
   }
 }
 
 class UserInclude extends _i1.IncludeObject {
-  UserInclude._({_i3.AuthUserInclude? authUser}) {
+  UserInclude._({
+    _i4.AuthUserInclude? authUser,
+    _i5.AdminInclude? approvedBy,
+    _i5.AdminInclude? statusChangedBy,
+  }) {
     _authUser = authUser;
+    _approvedBy = approvedBy;
+    _statusChangedBy = statusChangedBy;
   }
 
-  _i3.AuthUserInclude? _authUser;
+  _i4.AuthUserInclude? _authUser;
+
+  _i5.AdminInclude? _approvedBy;
+
+  _i5.AdminInclude? _statusChangedBy;
 
   @override
-  Map<String, _i1.Include?> get includes => {'authUser': _authUser};
+  Map<String, _i1.Include?> get includes => {
+    'authUser': _authUser,
+    'approvedBy': _approvedBy,
+    'statusChangedBy': _statusChangedBy,
+  };
 
   @override
   _i1.Table<_i1.UuidValue?> get table => User.t;
@@ -374,6 +713,8 @@ class UserRepository {
   const UserRepository._();
 
   final attachRow = const UserAttachRowRepository._();
+
+  final detachRow = const UserDetachRowRepository._();
 
   /// Returns a list of [User]s matching the given query parameters.
   ///
@@ -673,7 +1014,7 @@ class UserAttachRowRepository {
   Future<void> authUser(
     _i1.DatabaseSession session,
     User user,
-    _i3.AuthUser authUser, {
+    _i4.AuthUser authUser, {
     _i1.Transaction? transaction,
   }) async {
     if (user.id == null) {
@@ -687,6 +1028,100 @@ class UserAttachRowRepository {
     await session.db.updateRow<User>(
       $user,
       columns: [User.t.authUserId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between the given [User] and [Admin]
+  /// by setting the [User]'s foreign key `approvedById` to refer to the [Admin].
+  Future<void> approvedBy(
+    _i1.DatabaseSession session,
+    User user,
+    _i5.Admin approvedBy, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (user.id == null) {
+      throw ArgumentError.notNull('user.id');
+    }
+    if (approvedBy.id == null) {
+      throw ArgumentError.notNull('approvedBy.id');
+    }
+
+    var $user = user.copyWith(approvedById: approvedBy.id);
+    await session.db.updateRow<User>(
+      $user,
+      columns: [User.t.approvedById],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between the given [User] and [Admin]
+  /// by setting the [User]'s foreign key `statusChangedById` to refer to the [Admin].
+  Future<void> statusChangedBy(
+    _i1.DatabaseSession session,
+    User user,
+    _i5.Admin statusChangedBy, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (user.id == null) {
+      throw ArgumentError.notNull('user.id');
+    }
+    if (statusChangedBy.id == null) {
+      throw ArgumentError.notNull('statusChangedBy.id');
+    }
+
+    var $user = user.copyWith(statusChangedById: statusChangedBy.id);
+    await session.db.updateRow<User>(
+      $user,
+      columns: [User.t.statusChangedById],
+      transaction: transaction,
+    );
+  }
+}
+
+class UserDetachRowRepository {
+  const UserDetachRowRepository._();
+
+  /// Detaches the relation between this [User] and the [Admin] set in `approvedBy`
+  /// by setting the [User]'s foreign key `approvedById` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> approvedBy(
+    _i1.DatabaseSession session,
+    User user, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (user.id == null) {
+      throw ArgumentError.notNull('user.id');
+    }
+
+    var $user = user.copyWith(approvedById: null);
+    await session.db.updateRow<User>(
+      $user,
+      columns: [User.t.approvedById],
+      transaction: transaction,
+    );
+  }
+
+  /// Detaches the relation between this [User] and the [Admin] set in `statusChangedBy`
+  /// by setting the [User]'s foreign key `statusChangedById` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> statusChangedBy(
+    _i1.DatabaseSession session,
+    User user, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (user.id == null) {
+      throw ArgumentError.notNull('user.id');
+    }
+
+    var $user = user.copyWith(statusChangedById: null);
+    await session.db.updateRow<User>(
+      $user,
+      columns: [User.t.statusChangedById],
       transaction: transaction,
     );
   }

@@ -21,6 +21,22 @@ user:
   - requireRole:
 greeting:
   - hello:
+admin:
+  - hasAdminProfile:
+  - getMyAdmin:
+  - getMyProfile:
+  - updateMyProfile:
+  - approveVendor:
+  - rejectVendor:
+  - updateUserStatus:
+  - deactivateUser:
+  - removeProduct:
+  - flagProduct:
+  - fileComplaint:
+  - listComplaints:
+  - resolveComplaint:
+  - requirePlaceifyUser:
+  - requireRole:
 ar:
   - recordSession:
   - listMySessions:
@@ -55,13 +71,24 @@ vendor:
   - getDashboard:
   - hasShop:
   - createShop:
+  - getMyProfile:
+  - updateMyProfile:
+  - uploadShopLogo:
+  - uploadShopBanner:
   - updateShop:
   - listMyProducts:
   - createProduct:
+  - uploadProduct:
   - updateProductThumbnail:
   - uploadProductImage:
+  - regenerateProductModel3d:
   - listShopOrders:
   - getShopOrder:
+  - acceptShopOrder:
+  - rejectShopOrder:
+  - listDeliveryUpdates:
+  - submitDeliveryUpdate:
+  - uploadDeliveryProof:
 wishlist:
   - listMyWishlist:
   - addToWishlist:

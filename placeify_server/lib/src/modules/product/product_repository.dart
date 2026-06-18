@@ -97,7 +97,7 @@ class CatalogRepository {
     final product = await getProduct(session, productId);
     if (product == null || product.status != ProductStatus.active) {
       throw PlaceifyException(
-        'Product not found or is no longer available.',
+        message: 'Product not found or is no longer available.',
         code: 'PRODUCT_NOT_FOUND',
       );
     }
