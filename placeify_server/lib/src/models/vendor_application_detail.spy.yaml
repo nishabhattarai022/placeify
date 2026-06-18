@@ -1,0 +1,22 @@
+### Full vendor application detail for admin review screens.
+class: VendorApplicationDetail
+fields:
+  vendorId: UuidValue
+  userId: UuidValue
+  status: UserAccountStatus
+  submittedAt: DateTime
+  businessName: String
+  contactName: String
+  contactEmail: String
+  phone: String
+  taxId: String?
+  street: String
+  city: String
+  state: String
+  postalCode: String
+  country: String
+  category: String
+  description: String
+  businessLicenseUrl: String?
+  governmentIdUrl: String?
+  taxCertificateUrl: String?

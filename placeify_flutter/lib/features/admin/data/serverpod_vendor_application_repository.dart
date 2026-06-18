@@ -1,30 +1,46 @@
-import 'package:placeify_flutter/features/admin/data/mock/mock_vendor_application_repository.dart';
-import 'package:placeify_flutter/features/admin/data/serverpod_admin_api.dart';
-import 'package:placeify_flutter/features/admin/domain/enums/vendor_application_list_filter.dart';
-import 'package:placeify_flutter/features/admin/domain/models/vendor_application.dart';
-import 'package:placeify_flutter/features/admin/domain/repositories/vendor_application_repository.dart';
+import 'package:placeify_client/placeify_client.dart';
+import 'package:serverpod_client/serverpod_client.dart';
 
-/// Uses live admin APIs for approve/reject while listing still reads local seed
-/// data until a server-side application list endpoint exists.
+import '../../../core/config/placeify_server_client.dart';
+import '../domain/enums/vendor_application_list_filter.dart';
+import '../domain/models/vendor_application.dart';
+import '../domain/repositories/vendor_application_repository.dart';
+import 'admin_platform_mapper.dart';
+import 'serverpod_admin_api.dart';
+
+/// Lists and moderates vendor applications via Serverpod admin APIs.
 class ServerpodVendorApplicationRepository
     implements VendorApplicationRepository {
-  ServerpodVendorApplicationRepository(
-    this._fallback,
-    this._api,
-  );
+  ServerpodVendorApplicationRepository(this._api);
 
-  final VendorApplicationRepository _fallback;
   final ServerpodAdminApi _api;
 
   @override
   Future<List<VendorApplication>> listApplications({
     VendorApplicationListFilter? filter,
-  }) =>
-      _fallback.listApplications(filter: filter);
+  }) async {
+    try {
+      final applications = await client.admin.listVendorApplications(
+        status: AdminPlatformMapper.toApiStatus(filter),
+      );
+      return applications.map(AdminPlatformMapper.toVendorApplication).toList();
+    } catch (error) {
+      throw AdminApiException(_mapError(error));
+    }
+  }
 
   @override
-  Future<VendorApplication?> getByVendorId(String vendorId) =>
-      _fallback.getByVendorId(vendorId);
+  Future<VendorApplication?> getByVendorId(String vendorId) async {
+    try {
+      final detail = await client.admin.getVendorApplication(
+        UuidValue.fromString(vendorId),
+      );
+      if (detail == null) return null;
+      return AdminPlatformMapper.toVendorApplicationDetail(detail);
+    } catch (error) {
+      throw AdminApiException(_mapError(error));
+    }
+  }
 
   @override
   Future<void> approve({
@@ -32,7 +48,6 @@ class ServerpodVendorApplicationRepository
     required String vendorId,
   }) async {
     await _api.approveVendor(userId);
-    await _fallback.approve(userId: userId, vendorId: vendorId);
   }
 
   @override
@@ -41,6 +56,12 @@ class ServerpodVendorApplicationRepository
     String? note,
   }) async {
     await _api.rejectVendor(userId);
-    await _fallback.decline(userId: userId, note: note);
+  }
+
+  String _mapError(Object error) {
+    if (error is AdminApiException) return error.message;
+    if (error is PlaceifyException) return error.message;
+    if (error is ServerpodClientException) return error.message;
+    return error.toString();
   }
 }

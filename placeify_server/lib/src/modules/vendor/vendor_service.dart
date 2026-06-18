@@ -50,6 +50,13 @@ class VendorService {
     return _repository.getShopProfile(session, vendorId);
   }
 
+  Future<List<ShopListingSummary>> listApprovedShops(
+    Session session, {
+    String? query,
+  }) {
+    return _repository.listApprovedShops(session, query: query);
+  }
+
   Future<VendorProfileDetail> updateMyProfile(
     Session session,
     VendorProfileUpdateInput input,

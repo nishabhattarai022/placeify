@@ -56,7 +56,7 @@ final class VendorApplicationsListProvider
 }
 
 String _$vendorApplicationsListHash() =>
-    r'd1715c19f7a5f5eea84c68721cfcebe4fcb68433';
+    r'ef1fb524c8ad1e5e08964e1d143f3266718ba68c';
 
 final class VendorApplicationsListFamily extends $Family
     with
@@ -172,7 +172,7 @@ final class VendorApplicationDetailProvider
 }
 
 String _$vendorApplicationDetailHash() =>
-    r'eefe683f45b35f054e543372dc042f5d523a3b4a';
+    r'e76d7310601c3130f4172fe28f40e975b03cf0e3';
 
 final class VendorApplicationDetailFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<VendorApplication?>, String> {
@@ -217,7 +217,7 @@ final class VendorApplicationActionsProvider
 }
 
 String _$vendorApplicationActionsHash() =>
-    r'8ec7f9081a0c6facdf9a10b5ae6eaf6c2680c99c';
+    r'0c17388c1acb47ec19433a012937d316e31466ef';
 
 abstract class _$VendorApplicationActions extends $AsyncNotifier<void> {
   FutureOr<void> build();

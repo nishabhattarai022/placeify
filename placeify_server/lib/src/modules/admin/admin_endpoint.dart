@@ -95,4 +95,37 @@ class AdminEndpoint extends PlaceifyAuthenticatedEndpoint {
   Future<Complaint> resolveComplaint(Session session, UuidValue complaintId) {
     return _service.resolveComplaint(session, complaintId);
   }
+
+  Future<AdminPlatformStats> getPlatformStats(Session session) {
+    return _service.getPlatformStats(session);
+  }
+
+  Future<List<PlatformUserSummary>> listUsers(
+    Session session, {
+    String? query,
+    UserRole? role,
+  }) {
+    return _service.listUsers(session, query: query, role: role);
+  }
+
+  Future<List<VendorApplicationSummary>> listVendorApplications(
+    Session session, {
+    UserAccountStatus? status,
+  }) {
+    return _service.listVendorApplications(session, status: status);
+  }
+
+  Future<VendorApplicationDetail?> getVendorApplication(
+    Session session,
+    UuidValue vendorId,
+  ) {
+    return _service.getVendorApplication(session, vendorId);
+  }
+
+  Future<List<AdminAuditLogSummary>> getAuditLog(
+    Session session, {
+    int limit = 50,
+  }) {
+    return _service.getAuditLog(session, limit: limit);
+  }
 }

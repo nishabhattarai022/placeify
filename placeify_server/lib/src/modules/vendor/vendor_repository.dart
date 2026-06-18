@@ -1527,4 +1527,73 @@ class VendorStore {
     orders.sort((a, b) => b.placedAt.compareTo(a.placedAt));
     return orders;
   }
+
+  Future<List<ShopListingSummary>> listApprovedShops(
+    Session session, {
+    String? query,
+  }) async {
+    final normalizedQuery = query?.trim().toLowerCase();
+    final vendors = await Vendor.db.find(
+      session,
+      include: Vendor.include(user: User.include()),
+      orderBy: (row) => row.shopName,
+    );
+
+    final listings = <ShopListingSummary>[];
+    for (final vendor in vendors) {
+      final user = vendor.user;
+      final vendorId = vendor.id;
+      if (user == null || vendorId == null) continue;
+      if (user.role != UserRole.vendor ||
+          user.status != UserAccountStatus.approved ||
+          !user.isActive) {
+        continue;
+      }
+
+      final productCount = await Product.db.count(
+        session,
+        where: (row) =>
+            row.vendorId.equals(vendorId) &
+            row.status.equals(ProductStatus.active),
+      );
+
+      final locality = vendor.city?.trim().isNotEmpty == true
+          ? vendor.city!.trim()
+          : _localityFromAddress(vendor.businessAddress);
+      final tags = vendor.shopCategory?.trim().isNotEmpty == true
+          ? [vendor.shopCategory!.trim()]
+          : <String>[];
+
+      final listing = ShopListingSummary(
+        vendorId: vendorId,
+        businessName: vendor.shopName,
+        locality: locality,
+        tags: tags,
+        logoUrl: vendor.logoUrl,
+        bannerUrl: vendor.bannerUrl,
+        productCount: productCount,
+        averageRating: vendor.rating,
+      );
+
+      if (normalizedQuery != null && normalizedQuery.isNotEmpty) {
+        final haystack =
+            '${listing.businessName} ${listing.locality} ${tags.join(' ')}'
+                .toLowerCase();
+        if (!haystack.contains(normalizedQuery)) continue;
+      }
+
+      listings.add(listing);
+    }
+
+    return listings;
+  }
+
+  String _localityFromAddress(String? address) {
+    if (address == null || address.trim().isEmpty) return '';
+    final parts = address.split(',');
+    if (parts.length >= 2) {
+      return parts[parts.length - 2].trim();
+    }
+    return parts.first.trim();
+  }
 }

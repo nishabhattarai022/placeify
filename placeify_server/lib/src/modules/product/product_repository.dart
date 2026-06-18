@@ -44,6 +44,9 @@ class CatalogRepository {
         if (categoryId != null) {
           expression = expression & row.categoryId.equals(categoryId);
         }
+        if (input.vendorId != null) {
+          expression = expression & row.vendorId.equals(input.vendorId!);
+        }
         return expression;
       },
       include: Product.include(

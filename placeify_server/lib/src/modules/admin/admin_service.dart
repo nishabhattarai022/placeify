@@ -2,17 +2,21 @@ import 'package:serverpod/serverpod.dart';
 
 import '../../generated/protocol.dart';
 import 'admin_moderation_repository.dart';
+import 'admin_platform_repository.dart';
 import 'admin_repository.dart';
 
 class AdminService {
   AdminService({
     AdminStore? repository,
     AdminModerationStore? moderation,
+    AdminPlatformStore? platform,
   })  : _repository = repository ?? AdminStore(),
-        _moderation = moderation ?? AdminModerationStore();
+        _moderation = moderation ?? AdminModerationStore(),
+        _platform = platform ?? AdminPlatformStore();
 
   final AdminStore _repository;
   final AdminModerationStore _moderation;
+  final AdminPlatformStore _platform;
 
   Future<bool> hasAdminProfile(Session session) {
     return _repository.hasAdminProfile(session);
@@ -105,5 +109,38 @@ class AdminService {
 
   Future<Complaint> resolveComplaint(Session session, UuidValue complaintId) {
     return _moderation.resolveComplaint(session, complaintId);
+  }
+
+  Future<AdminPlatformStats> getPlatformStats(Session session) {
+    return _platform.getPlatformStats(session);
+  }
+
+  Future<List<PlatformUserSummary>> listUsers(
+    Session session, {
+    String? query,
+    UserRole? role,
+  }) {
+    return _platform.listUsers(session, query: query, role: role);
+  }
+
+  Future<List<VendorApplicationSummary>> listVendorApplications(
+    Session session, {
+    UserAccountStatus? status,
+  }) {
+    return _platform.listVendorApplications(session, status: status);
+  }
+
+  Future<VendorApplicationDetail?> getVendorApplication(
+    Session session,
+    UuidValue vendorId,
+  ) {
+    return _platform.getVendorApplication(session, vendorId);
+  }
+
+  Future<List<AdminAuditLogSummary>> getAuditLog(
+    Session session, {
+    int limit = 50,
+  }) {
+    return _platform.getAuditLog(session, limit: limit);
   }
 }

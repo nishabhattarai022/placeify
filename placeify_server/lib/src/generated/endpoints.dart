@@ -423,6 +423,16 @@ class Endpoints extends _i1.EndpointDispatch {
               ) async =>
                   (endpoints['user'] as _i4.UserEndpoint).getDashboard(session),
         ),
+        'ensureDemoAdmin': _i1.MethodConnector(
+          name: 'ensureDemoAdmin',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['user'] as _i4.UserEndpoint)
+                  .ensureDemoAdmin(session),
+        ),
         'listMyOrders': _i1.MethodConnector(
           name: 'listMyOrders',
           params: {
@@ -808,6 +818,96 @@ class Endpoints extends _i1.EndpointDispatch {
                     session,
                     params['complaintId'],
                   ),
+        ),
+        'getPlatformStats': _i1.MethodConnector(
+          name: 'getPlatformStats',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i6.AdminEndpoint)
+                  .getPlatformStats(session),
+        ),
+        'listUsers': _i1.MethodConnector(
+          name: 'listUsers',
+          params: {
+            'query': _i1.ParameterDescription(
+              name: 'query',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'role': _i1.ParameterDescription(
+              name: 'role',
+              type: _i1.getType<_i18.UserRole?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i6.AdminEndpoint).listUsers(
+                session,
+                query: params['query'],
+                role: params['role'],
+              ),
+        ),
+        'listVendorApplications': _i1.MethodConnector(
+          name: 'listVendorApplications',
+          params: {
+            'status': _i1.ParameterDescription(
+              name: 'status',
+              type: _i1.getType<_i20.UserAccountStatus?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i6.AdminEndpoint)
+                  .listVendorApplications(
+                    session,
+                    status: params['status'],
+                  ),
+        ),
+        'getVendorApplication': _i1.MethodConnector(
+          name: 'getVendorApplication',
+          params: {
+            'vendorId': _i1.ParameterDescription(
+              name: 'vendorId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i6.AdminEndpoint)
+                  .getVendorApplication(
+                    session,
+                    params['vendorId'],
+                  ),
+        ),
+        'getAuditLog': _i1.MethodConnector(
+          name: 'getAuditLog',
+          params: {
+            'limit': _i1.ParameterDescription(
+              name: 'limit',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i6.AdminEndpoint).getAuditLog(
+                session,
+                limit: params['limit'],
+              ),
         ),
         'requirePlaceifyUser': _i1.MethodConnector(
           name: 'requirePlaceifyUser',
@@ -1221,6 +1321,25 @@ class Endpoints extends _i1.EndpointDispatch {
                   (endpoints['product'] as _i12.ProductEndpoint).getShopProfile(
                     session,
                     params['vendorId'],
+                  ),
+        ),
+        'listApprovedShops': _i1.MethodConnector(
+          name: 'listApprovedShops',
+          params: {
+            'query': _i1.ParameterDescription(
+              name: 'query',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['product'] as _i12.ProductEndpoint)
+                  .listApprovedShops(
+                    session,
+                    query: params['query'],
                   ),
         ),
         'listProducts': _i1.MethodConnector(

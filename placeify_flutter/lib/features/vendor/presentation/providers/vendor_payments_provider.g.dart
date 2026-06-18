@@ -55,7 +55,7 @@ final class VendorPaymentRepositoryProvider
 }
 
 String _$vendorPaymentRepositoryHash() =>
-    r'30158af7819c20395cc149d9f8ddaef925fb6ad9';
+    r'664c57bb8614f1222c63bf401474244f2a092169';
 
 @ProviderFor(VendorPayments)
 final vendorPaymentsProvider = VendorPaymentsProvider._();

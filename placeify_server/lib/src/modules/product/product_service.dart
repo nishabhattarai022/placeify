@@ -48,4 +48,11 @@ class ProductService {
   ) {
     return _vendorService.getShopProfile(session, vendorId);
   }
+
+  Future<List<ShopListingSummary>> listApprovedShops(
+    Session session, {
+    String? query,
+  }) {
+    return _vendorService.listApprovedShops(session, query: query);
+  }
 }

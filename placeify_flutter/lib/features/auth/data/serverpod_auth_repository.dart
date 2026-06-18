@@ -7,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/config/placeify_server_client.dart';
 import '../../vendor/domain/enums/vendor_status.dart';
 import '../constants/demo_credentials.dart';
-import '../data/mock_auth_repository.dart';
 import '../domain/models/app_user.dart';
 import '../domain/repositories/auth_repository.dart';
 
@@ -18,8 +17,6 @@ class ServerpodAuthRepository implements AuthRepository {
   final SharedPreferences _prefs;
 
   static const _sessionEmailKey = 'placeify_auth_session_email';
-  static const _vendorStatusKey = 'placeify_vendor_status';
-  static const _vendorIdKey = 'placeify_vendor_id';
   static const _devVerificationCode = '123456';
 
   static Future<ServerpodAuthRepository> create() async {
@@ -120,8 +117,8 @@ class ServerpodAuthRepository implements AuthRepository {
       );
     }
 
-    // Admin UI uses mock repositories; grant admin role for the demo account.
-    return user.copyWith(role: UserRole.admin);
+    await client.user.ensureDemoAdmin();
+    return _loadAppUser(DemoCredentials.adminEmail);
   }
 
   @override
@@ -176,11 +173,6 @@ class ServerpodAuthRepository implements AuthRepository {
     String? vendorId,
   }) async {
     _requireAuthenticated();
-    await _prefs.setString(_vendorStatusKey, status.name);
-    if (vendorId != null) {
-      await _prefs.setString(_vendorIdKey, vendorId);
-    }
-
     final cachedEmail = _prefs.getString(_sessionEmailKey);
     if (cachedEmail != null) {
       return _loadAppUser(cachedEmail);
@@ -197,16 +189,10 @@ class ServerpodAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> signOut() async {
-    await client.auth.signOutDevice();
-    await _prefs.remove(_sessionEmailKey);
-    await _prefs.remove(_vendorStatusKey);
-    await _prefs.remove(_vendorIdKey);
-  }
-
-  @override
   Future<List<AppUser>> getAllUsers() async {
-    return MockAuthRepository(_prefs).getAllUsers();
+    throw UnsupportedError(
+      'Use AdminRepository.listUsers for platform user listing.',
+    );
   }
 
   @override
@@ -215,11 +201,15 @@ class ServerpodAuthRepository implements AuthRepository {
     required VendorStatus status,
     String? vendorId,
   }) async {
-    await MockAuthRepository(_prefs).updateVendorStatusForUser(
-      userId: userId,
-      status: status,
-      vendorId: vendorId,
+    throw UnsupportedError(
+      'Use AdminRepository moderation APIs for vendor status changes.',
     );
+  }
+
+  @override
+  Future<void> signOut() async {
+    await client.auth.signOutDevice();
+    await _prefs.remove(_sessionEmailKey);
   }
 
   @override
@@ -241,13 +231,12 @@ class ServerpodAuthRepository implements AuthRepository {
   Future<AppUser> becomeConsumer() async {
     _requireAuthenticated();
     try {
-      final profile = await client.user.becomeConsumer();
+      await client.user.becomeConsumer();
       final email = _prefs.getString(_sessionEmailKey);
       if (email == null) {
         throw AuthException('User profile not found');
       }
-      final hasVendorShop = await _loadHasVendorShop();
-      return _toAppUser(profile, email, hasVendorShop: hasVendorShop);
+      return _loadAppUser(email);
     } catch (error) {
       throw _mapError(error);
     }
@@ -259,21 +248,18 @@ class ServerpodAuthRepository implements AuthRepository {
       throw AuthException('User profile not found');
     }
     final hasVendorShop = await _loadHasVendorShop();
+    final vendorId = hasVendorShop ? await _loadVendorId() : null;
     final vendorStatus = _vendorStatusFromServer(
       profile,
       hasVendorShop: hasVendorShop,
     );
-    if (vendorStatus != null) {
-      await _prefs.setString(_vendorStatusKey, vendorStatus.name);
-    }
-    if (hasVendorShop) {
-      await _syncVendorIdFromServer();
-    }
+
     return _toAppUser(
       profile,
       email,
       hasVendorShop: hasVendorShop,
       vendorStatus: vendorStatus,
+      vendorId: vendorId,
     );
   }
 
@@ -285,15 +271,12 @@ class ServerpodAuthRepository implements AuthRepository {
     }
   }
 
-  Future<void> _syncVendorIdFromServer() async {
+  Future<String?> _loadVendorId() async {
     try {
       final shop = await client.vendor.getMyShop();
-      final id = shop.id?.toString();
-      if (id != null && id.isNotEmpty) {
-        await _prefs.setString(_vendorIdKey, id);
-      }
+      return shop.id?.toString();
     } catch (_) {
-      // Shop lookup is best-effort during profile refresh.
+      return null;
     }
   }
 
@@ -302,6 +285,7 @@ class ServerpodAuthRepository implements AuthRepository {
     String email, {
     bool? hasVendorShop,
     VendorStatus? vendorStatus,
+    String? vendorId,
   }) {
     return AppUser(
       id: profile.id.toString(),
@@ -311,12 +295,11 @@ class ServerpodAuthRepository implements AuthRepository {
       phone: profile.phone,
       address: profile.address,
       hasVendorShop: hasVendorShop ?? false,
-      registeredVendorStatus: vendorStatus ?? _readVendorStatus(),
-      registeredVendorId: _prefs.getString(_vendorIdKey),
+      registeredVendorStatus: vendorStatus,
+      registeredVendorId: vendorId,
     );
   }
 
-  /// Maps server moderation status for vendor accounts.
   VendorStatus? _vendorStatusFromServer(
     User profile, {
     required bool hasVendorShop,
@@ -329,12 +312,6 @@ class ServerpodAuthRepository implements AuthRepository {
       UserAccountStatus.suspended => VendorStatus.suspended,
       UserAccountStatus.rejected => VendorStatus.none,
     };
-  }
-
-  VendorStatus? _readVendorStatus() {
-    final raw = _prefs.getString(_vendorStatusKey);
-    if (raw == null) return null;
-    return VendorStatus.values.asNameMap()[raw];
   }
 
   void _requireAuthenticated() {

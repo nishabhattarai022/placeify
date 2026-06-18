@@ -15,6 +15,7 @@ user:
   - becomeVendor:
   - becomeConsumer:
   - getDashboard:
+  - ensureDemoAdmin:
   - listMyOrders:
   - listMyArSessions:
   - requirePlaceifyUser:
@@ -35,6 +36,11 @@ admin:
   - fileComplaint:
   - listComplaints:
   - resolveComplaint:
+  - getPlatformStats:
+  - listUsers:
+  - listVendorApplications:
+  - getVendorApplication:
+  - getAuditLog:
   - requirePlaceifyUser:
   - requireRole:
 ar:
@@ -60,6 +66,7 @@ product:
   - searchProducts:
   - getProduct:
   - getShopProfile:
+  - listApprovedShops:
   - listProducts:
 refund:
   - listMyRefundRequests:

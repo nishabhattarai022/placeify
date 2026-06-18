@@ -33,7 +33,7 @@ final class AdminAuditLogProvider
   AdminAuditLog create() => AdminAuditLog();
 }
 
-String _$adminAuditLogHash() => r'752fb1c9faaba186f159952b9ba6b6eb72ea7eae';
+String _$adminAuditLogHash() => r'e0ff3d37ae8491103d17aed392b01a7bca349b1a';
 
 abstract class _$AdminAuditLog
     extends $AsyncNotifier<List<AdminAuditLogEntry>> {

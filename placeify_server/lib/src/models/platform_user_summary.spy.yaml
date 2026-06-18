@@ -1,0 +1,10 @@
+### Platform user row for admin user management.
+class: PlatformUserSummary
+fields:
+  id: UuidValue
+  name: String
+  email: String
+  role: UserRole
+  status: UserAccountStatus
+  vendorId: UuidValue?
+  createdAt: DateTime
