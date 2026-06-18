@@ -6,7 +6,6 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../home/presentation/providers/catalog_provider.dart';
 import '../../../home/presentation/providers/category_provider.dart';
 import '../../data/cart_api_errors.dart';
-import '../../data/cart_display_config.dart';
 import '../../data/serverpod_cart_repository.dart';
 import '../../domain/cart_line_item.dart';
 
@@ -48,6 +47,9 @@ class Cart extends _$Cart {
     if (!client.auth.isAuthenticated) return;
     try {
       state = await _cartRepository.fetchItems();
+      await ref
+          .read(catalogIndexProvider.notifier)
+          .ensureProducts(state.map((item) => item.productId));
     } catch (_) {
       // Keep last known server snapshot on transient refresh failures.
     }
@@ -217,17 +219,13 @@ CartTotals cartTotals(Ref ref) {
   for (final item in items) {
     final product = ref.watch(productByIdProvider(item.productId));
     if (product == null) continue;
-    final unit = CartDisplayConfig.priceFor(product.id, product.price);
-    subtotal += unit * item.quantity;
+    subtotal += product.price * item.quantity;
   }
-
-  final discount = _roundMoney(subtotal * CartDisplayConfig.discountRate);
-  final total = _roundMoney(subtotal - discount);
 
   return CartTotals(
     subtotal: _roundMoney(subtotal),
-    discount: discount,
-    total: total,
+    discount: 0,
+    total: _roundMoney(subtotal),
   );
 }
 

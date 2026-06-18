@@ -51,7 +51,12 @@ abstract final class VendorMappers {
   static OrderStatus mapOrderStatus(api.VendorOrderSummary row) {
     if (row.isCustomizationRequest) return OrderStatus.customRequest;
     return switch (row.status) {
-      api.OrderStatus.pending || api.OrderStatus.confirmed => OrderStatus.pending,
+      api.OrderStatus.pending ||
+      api.OrderStatus.confirmed ||
+      api.OrderStatus.accepted ||
+      api.OrderStatus.processing ||
+      api.OrderStatus.rejected =>
+        OrderStatus.pending,
       api.OrderStatus.shipped || api.OrderStatus.delivered => OrderStatus.shipped,
       api.OrderStatus.cancelled => OrderStatus.pending,
     };

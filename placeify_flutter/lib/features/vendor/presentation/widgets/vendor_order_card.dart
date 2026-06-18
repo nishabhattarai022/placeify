@@ -110,7 +110,12 @@ class VendorOrderCard extends StatelessWidget {
 
   ui.OrderStatus _mapStatus(OrderStatus status) {
     return switch (status) {
-      OrderStatus.pending || OrderStatus.confirmed => ui.OrderStatus.pending,
+      OrderStatus.pending ||
+      OrderStatus.confirmed ||
+      OrderStatus.accepted =>
+        ui.OrderStatus.pending,
+      OrderStatus.processing => ui.OrderStatus.pending,
+      OrderStatus.rejected => ui.OrderStatus.pending,
       OrderStatus.shipped || OrderStatus.delivered => ui.OrderStatus.shipped,
       OrderStatus.cancelled => ui.OrderStatus.pending,
     };

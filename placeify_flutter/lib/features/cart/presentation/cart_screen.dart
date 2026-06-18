@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/services/haptic_service.dart';
 import '../../../core/widgets/toast_overlay.dart';
+import '../../home/presentation/providers/catalog_provider.dart';
 import '../../home/presentation/providers/category_provider.dart';
 import 'cart_tokens.dart';
 import 'providers/cart_provider.dart';
@@ -78,7 +79,9 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                               productByIdProvider(item.productId),
                             );
                             if (product == null) {
-                              return const SizedBox.shrink();
+                              return _CartLineLoading(
+                                productId: item.productId,
+                              );
                             }
                             final cart = ref.read(cartProvider.notifier);
                             return CartLineCard(
@@ -189,6 +192,43 @@ class _CartEmptyState extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CartLineLoading extends ConsumerStatefulWidget {
+  const _CartLineLoading({required this.productId});
+
+  final String productId;
+
+  @override
+  ConsumerState<_CartLineLoading> createState() => _CartLineLoadingState();
+}
+
+class _CartLineLoadingState extends ConsumerState<_CartLineLoading> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref
+          .read(catalogIndexProvider.notifier)
+          .ensureProducts([widget.productId]);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.only(bottom: CartTokens.cardSpacing),
+      child: SizedBox(
+        height: CartTokens.cardImageSize + 32,
+        child: Center(
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: CartTokens.textSecondary,
+          ),
         ),
       ),
     );
