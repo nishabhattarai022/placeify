@@ -6,6 +6,7 @@ import '../../../../../core/widgets/placeify_bottom_sheet.dart';
 import '../../../../../data/furniture_categories.dart';
 import '../../../../profile/presentation/widgets/shared/profile_form_field.dart';
 import '../../../domain/models/vendor_registration.dart';
+import '../../../domain/constants/vendor_registration_field_keys.dart';
 import '../../providers/vendor_registration_provider.dart';
 
 class CategoryStep extends ConsumerStatefulWidget {
@@ -38,6 +39,8 @@ class _CategoryStepState extends ConsumerState<CategoryStep> {
   @override
   Widget build(BuildContext context) {
     final selected = ref.watch(vendorRegistrationProvider).form.category.category;
+    final categoryError =
+        ref.watch(vendorRegistrationProvider).fieldErrors[VendorRegistrationFieldKeys.category];
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
@@ -62,6 +65,7 @@ class _CategoryStepState extends ConsumerState<CategoryStep> {
         const SizedBox(height: 20),
         ProfileFormField(
           label: 'Primary Category',
+          errorText: categoryError,
           child: Container(
             decoration: BoxDecoration(
               color: AppColors.cream,

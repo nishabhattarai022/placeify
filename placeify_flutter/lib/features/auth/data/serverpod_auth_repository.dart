@@ -180,11 +180,20 @@ class ServerpodAuthRepository implements AuthRepository {
     if (vendorId != null) {
       await _prefs.setString(_vendorIdKey, vendorId);
     }
-    final email = _prefs.getString(_sessionEmailKey);
-    if (email == null) {
-      throw AuthException('User profile not found');
+
+    final cachedEmail = _prefs.getString(_sessionEmailKey);
+    if (cachedEmail != null) {
+      return _loadAppUser(cachedEmail);
     }
-    return _loadAppUser(email);
+
+    final profile = await client.user.getCurrentUser();
+    if (profile?.email != null && profile!.email!.trim().isNotEmpty) {
+      final email = profile.email!.trim().toLowerCase();
+      await _prefs.setString(_sessionEmailKey, email);
+      return _loadAppUser(email);
+    }
+
+    throw AuthException('User profile not found');
   }
 
   @override
@@ -257,6 +266,9 @@ class ServerpodAuthRepository implements AuthRepository {
     if (vendorStatus != null) {
       await _prefs.setString(_vendorStatusKey, vendorStatus.name);
     }
+    if (hasVendorShop) {
+      await _syncVendorIdFromServer();
+    }
     return _toAppUser(
       profile,
       email,
@@ -270,6 +282,18 @@ class ServerpodAuthRepository implements AuthRepository {
       return await client.vendor.hasShop();
     } catch (_) {
       return false;
+    }
+  }
+
+  Future<void> _syncVendorIdFromServer() async {
+    try {
+      final shop = await client.vendor.getMyShop();
+      final id = shop.id?.toString();
+      if (id != null && id.isNotEmpty) {
+        await _prefs.setString(_vendorIdKey, id);
+      }
+    } catch (_) {
+      // Shop lookup is best-effort during profile refresh.
     }
   }
 

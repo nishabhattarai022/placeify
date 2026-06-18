@@ -8,9 +8,15 @@ import '../../shared/placeify_exception.dart';
 import '../../shared/server_static_paths.dart';
 import '../../shared/session_service.dart';
 import '../notification/order_notification_service.dart';
+import '../notification/notification_repository.dart';
 import 'product_3d/product_3d_generation_result.dart';
 import 'product_3d/product_3d_generator.dart';
 import 'product_image_processor.dart';
+import 'vendor_document_storage.dart';
+import 'vendor_profile_audit_log.dart';
+import 'vendor_profile_mapper.dart';
+import 'vendor_profile_validation.dart';
+import 'vendor_sales_metrics.dart';
 
 class VendorStore {
   Future<VendorDashboard> getDashboard(Session session) async {
@@ -34,14 +40,18 @@ class VendorStore {
         products.where((p) => p.status == ProductStatus.active).length;
 
     final orderItems = await _loadVendorOrderItems(session, vendorId);
-
-    final revenue = orderItems.fold<double>(
-      0,
-      (sum, item) => sum + item.unitPrice * item.quantity,
+    final deliveredOrderIds = VendorSalesMetricsCalculator.deliveredItems(
+      orderItems,
+    ).map((item) => item.orderId).toSet();
+    final refundedOrderIds =
+        await _loadCompletedRefundOrderIds(session, deliveredOrderIds);
+    final sales = VendorSalesMetricsCalculator.compute(
+      orderItems: orderItems,
+      completedRefundOrderIds: refundedOrderIds,
     );
 
     final productSales = <int, ({String name, int units, double revenue})>{};
-    for (final item in orderItems) {
+    for (final item in sales.deliveredItems) {
       final productId = item.productId;
       final name = item.product?.name ?? 'Product';
       final lineRevenue = item.unitPrice * item.quantity;
@@ -128,8 +138,8 @@ class VendorStore {
       shop: vendor,
       productCount: products.length,
       activeProductCount: activeProducts,
-      orderCount: orderItems.length,
-      revenue: revenue,
+      orderCount: sales.deliveredOrderCount,
+      revenue: sales.netRevenue,
       recentOrders: recentOrders.take(6).toList(),
       topProducts: topProducts,
     );
@@ -208,6 +218,8 @@ class VendorStore {
     String? logoUrl,
     String? phone,
     String? address,
+    String? city,
+    String? country,
     String? shopCategory,
   }) async {
     final user = await SessionService.requireUser(session);
@@ -224,29 +236,52 @@ class VendorStore {
     final trimmedName = shopName.trim();
     final trimmedDescription = description?.trim();
     if (trimmedName.isEmpty) {
-      throw PlaceifyException(message: 'Shop name is required.',
+      throw PlaceifyException(
+        message: 'Shop name is required.',
         code: 'INVALID_SHOP_NAME',
       );
     }
     if (trimmedDescription == null || trimmedDescription.isEmpty) {
-      throw PlaceifyException(message: 'Shop description is required.',
-        code: 'INVALID_SHOP_DESCRIPTION',
+      throw PlaceifyException(
+        message: 'Shop description is required.',
+        code: 'INVALID_DESCRIPTION',
       );
     }
 
     final trimmedPhone = phone?.trim();
     if (trimmedPhone == null || trimmedPhone.isEmpty) {
-      throw PlaceifyException(message: 'Phone number is required.',
+      throw PlaceifyException(
+        message: 'Phone number is required.',
         code: 'INVALID_PHONE',
       );
     }
 
     final trimmedAddress = address?.trim();
     if (trimmedAddress == null || trimmedAddress.isEmpty) {
-      throw PlaceifyException(message: 'Shop address is required.',
-        code: 'INVALID_ADDRESS',
+      throw PlaceifyException(
+        message: 'Shop address is required.',
+        code: 'MISSING_REQUIRED_FIELD',
       );
     }
+
+    final trimmedCategory = shopCategory?.trim();
+    if (trimmedCategory == null || trimmedCategory.isEmpty) {
+      throw PlaceifyException(
+        message: 'A shop category is required.',
+        code: 'MISSING_REQUIRED_FIELD',
+      );
+    }
+
+    VendorProfileValidation.validateUpdate(
+      businessName: trimmedName,
+      phone: trimmedPhone,
+      address: trimmedAddress,
+      city: city,
+      country: country,
+      bio: trimmedDescription,
+    );
+
+    await _requireRegistrationDocuments(session, user.id!);
 
     await User.db.updateRow(
       session,
@@ -259,17 +294,129 @@ class VendorStore {
       ),
     );
 
-    return Vendor.db.insertRow(
+    final vendor = await Vendor.db.insertRow(
       session,
       Vendor(
         userId: user.id!,
         shopName: trimmedName,
         description: trimmedDescription,
         businessAddress: trimmedAddress,
-        shopCategory: shopCategory?.trim(),
+        city: _nullableTrim(city),
+        country: _nullableTrim(country),
+        shopCategory: trimmedCategory,
         logoUrl: logoUrl?.trim(),
       ),
     );
+
+    await _linkPendingDocuments(session, user.id!, vendor.id!);
+    return vendor;
+  }
+
+  /// Uploads a verification document for the logged-in user (before or after shop creation).
+  Future<String> uploadDocument(
+    Session session,
+    VendorDocumentType documentType,
+    ByteData fileData,
+    String fileName,
+  ) async {
+    final user = await SessionService.requireUser(session);
+    final vendor = await Vendor.db.findFirstRow(
+      session,
+      where: (row) => row.userId.equals(user.id!),
+    );
+
+    if (vendor != null && vendor.userId != user.id) {
+      throw PlaceifyException(
+        message: 'You can only upload documents for your own shop.',
+        code: 'UNAUTHORIZED',
+      );
+    }
+
+    final ownerSegment =
+        vendor?.id?.toString() ?? 'user_${user.id.toString()}';
+    final fileUrl = await VendorDocumentStorage.persist(
+      session: session,
+      ownerSegment: ownerSegment,
+      fileData: fileData,
+      fileName: fileName,
+    );
+
+    final existing = await VendorDocument.db.findFirstRow(
+      session,
+      where: (row) =>
+          row.userId.equals(user.id!) &
+          row.documentType.equals(documentType),
+    );
+
+    if (existing != null) {
+      await VendorDocument.db.updateRow(
+        session,
+        existing.copyWith(
+          fileUrl: fileUrl,
+          vendorId: vendor?.id ?? existing.vendorId,
+        ),
+      );
+    } else {
+      await VendorDocument.db.insertRow(
+        session,
+        VendorDocument(
+          userId: user.id!,
+          vendorId: vendor?.id,
+          documentType: documentType,
+          fileUrl: fileUrl,
+        ),
+      );
+    }
+
+    session.log(
+      'vendor_document_upload userId=${user.id} type=$documentType',
+      level: LogLevel.info,
+    );
+
+    return fileUrl;
+  }
+
+  Future<void> _linkPendingDocuments(
+    Session session,
+    UuidValue userId,
+    UuidValue vendorId,
+  ) async {
+    final documents = await VendorDocument.db.find(
+      session,
+      where: (row) => row.userId.equals(userId),
+    );
+
+    for (final document in documents) {
+      if (document.vendorId == vendorId) continue;
+      await VendorDocument.db.updateRow(
+        session,
+        document.copyWith(vendorId: vendorId),
+      );
+    }
+  }
+
+  Future<void> _requireRegistrationDocuments(
+    Session session,
+    UuidValue userId,
+  ) async {
+    const requiredTypes = [
+      VendorDocumentType.businessLicense,
+      VendorDocumentType.governmentId,
+    ];
+
+    for (final type in requiredTypes) {
+      final document = await VendorDocument.db.findFirstRow(
+        session,
+        where: (row) =>
+            row.userId.equals(userId) & row.documentType.equals(type),
+      );
+      if (document == null || document.fileUrl.trim().isEmpty) {
+        throw PlaceifyException(
+          message: 'Upload all required verification documents before submitting.',
+          code: 'MISSING_REQUIRED_FIELD',
+        );
+      }
+    }
   }
 
   Future<Vendor> updateShop(
@@ -292,7 +439,7 @@ class VendorStore {
 
   Future<VendorProfileDetail> getMyProfile(Session session) async {
     final vendor = await requireOwnedVendor(session);
-    return _loadProfileDetail(session, vendor);
+    return _loadProfileDetail(session, vendor, includeNotificationPrefs: true);
   }
 
   Future<VendorProfileDetail?> getShopProfile(
@@ -314,7 +461,7 @@ class VendorStore {
       return null;
     }
 
-    return _mapProfileDetail(vendor, user);
+    return _loadProfileDetail(session, vendor, user: user);
   }
 
   Future<VendorProfileDetail> updateMyProfile(
@@ -331,28 +478,20 @@ class VendorStore {
     }
 
     final businessName = input.businessName?.trim();
-    if (businessName != null && businessName.isEmpty) {
-      throw PlaceifyException(
-        message: 'Business name is required.',
-        code: 'INVALID_BUSINESS_NAME',
-      );
-    }
-
     final phone = input.phone?.trim();
-    if (phone != null && phone.isEmpty) {
-      throw PlaceifyException(
-        message: 'Phone number is required.',
-        code: 'INVALID_PHONE',
-      );
-    }
-
     final address = input.address?.trim();
-    if (address != null && address.isEmpty) {
-      throw PlaceifyException(
-        message: 'Address is required.',
-        code: 'INVALID_ADDRESS',
-      );
-    }
+    final city = input.city?.trim();
+    final country = input.country?.trim();
+    final bio = input.bio?.trim();
+
+    VendorProfileValidation.validateUpdate(
+      businessName: businessName,
+      phone: phone,
+      address: address,
+      city: city,
+      country: country,
+      bio: bio,
+    );
 
     final now = DateTime.now();
     final updatedUser = await User.db.updateRow(
@@ -368,20 +507,35 @@ class VendorStore {
       session,
       vendor.copyWith(
         shopName: businessName ?? vendor.shopName,
-        description: input.bio?.trim() ?? vendor.description,
+        description: bio ?? vendor.description,
         businessAddress: address ?? vendor.businessAddress,
+        city: city ?? vendor.city,
+        country: country ?? vendor.country,
         shopCategory: input.category?.trim() ?? vendor.shopCategory,
         logoUrl: _nullableTrim(input.logoUrl) ?? vendor.logoUrl,
         bannerUrl: _nullableTrim(input.bannerUrl) ?? vendor.bannerUrl,
+        coverUrl: _nullableTrim(input.coverUrl) ?? vendor.coverUrl,
         instagramHandle:
             input.instagramHandle?.trim() ?? vendor.instagramHandle,
         facebookHandle: input.facebookHandle?.trim() ?? vendor.facebookHandle,
         operatingHours: input.operatingHours?.trim() ?? vendor.operatingHours,
+        isOpen: input.isOpen ?? vendor.isOpen,
         updatedAt: now,
       ),
     );
 
-    return _mapProfileDetail(updatedVendor, updatedUser);
+    VendorProfileAuditLog.profileUpdated(
+      session,
+      vendorId: updatedVendor.id!,
+      action: 'profile_update',
+    );
+
+    return _loadProfileDetail(
+      session,
+      updatedVendor,
+      user: updatedUser,
+      includeNotificationPrefs: true,
+    );
   }
 
   Future<String> uploadShopLogo(
@@ -395,6 +549,7 @@ class VendorStore {
       session,
       vendor.copyWith(logoUrl: logoUrl, updatedAt: DateTime.now()),
     );
+    VendorProfileAuditLog.logoUploaded(session, vendor.id!);
     return logoUrl;
   }
 
@@ -409,39 +564,115 @@ class VendorStore {
       session,
       vendor.copyWith(bannerUrl: bannerUrl, updatedAt: DateTime.now()),
     );
+    VendorProfileAuditLog.bannerUploaded(session, vendor.id!);
     return bannerUrl;
+  }
+
+  /// Stores the shop cover image and updates the vendor profile record.
+  Future<String> uploadShopCover(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) async {
+    final vendor = await requireOwnedVendor(session);
+    final coverUrl = await _persistProductImage(session, fileData, fileName);
+    await Vendor.db.updateRow(
+      session,
+      vendor.copyWith(coverUrl: coverUrl, updatedAt: DateTime.now()),
+    );
+    VendorProfileAuditLog.coverUploaded(session, vendor.id!);
+    return coverUrl;
   }
 
   Future<VendorProfileDetail> _loadProfileDetail(
     Session session,
-    Vendor vendor,
-  ) async {
-    final user = await User.db.findById(session, vendor.userId);
-    if (user == null) {
+    Vendor vendor, {
+    User? user,
+    bool includeNotificationPrefs = false,
+  }) async {
+    final resolvedUser =
+        user ?? await User.db.findById(session, vendor.userId);
+    if (resolvedUser == null) {
       throw PlaceifyException(
         message: 'User account not found.',
         code: 'USER_NOT_FOUND',
       );
     }
-    return _mapProfileDetail(vendor, user);
+
+    final metrics = await _loadVendorMetrics(session, vendor.id!);
+    NotificationPreference? notificationPreferences;
+    if (includeNotificationPrefs) {
+      notificationPreferences =
+          await NotificationStore().getPreferences(session);
+    }
+
+    return VendorProfileMapper.toDetail(
+      vendor: vendor,
+      user: resolvedUser,
+      metrics: metrics,
+      notificationPreferences: notificationPreferences,
+    );
   }
 
-  VendorProfileDetail _mapProfileDetail(Vendor vendor, User user) {
-    return VendorProfileDetail(
-      id: vendor.id!,
-      businessName: vendor.shopName,
-      email: user.email ?? '',
-      phone: user.phone ?? '',
-      address: vendor.businessAddress ?? user.address ?? '',
-      category: vendor.shopCategory ?? '',
-      logoUrl: vendor.logoUrl,
-      bio: vendor.description ?? '',
-      bannerUrl: vendor.bannerUrl,
-      instagramHandle: vendor.instagramHandle ?? '',
-      facebookHandle: vendor.facebookHandle ?? '',
-      operatingHours: vendor.operatingHours ?? '',
-      createdAt: vendor.createdAt,
+  /// Loads product and delivered-order sales aggregates for profile metrics.
+  Future<VendorProfileMetrics> _loadVendorMetrics(
+    Session session,
+    UuidValue vendorId,
+  ) async {
+    final totalProducts = await Product.db.count(
+      session,
+      where: (row) => row.vendorId.equals(vendorId),
     );
+
+    final sales = await _loadVendorSalesMetrics(session, vendorId);
+
+    return (
+      totalProducts: totalProducts,
+      totalOrders: sales.deliveredOrderCount,
+      totalRevenue: sales.netRevenue,
+    );
+  }
+
+  /// Loads vendor order lines with parent order status in a single query.
+  Future<VendorSalesMetrics> _loadVendorSalesMetrics(
+    Session session,
+    UuidValue vendorId,
+  ) async {
+    final orderItems = await OrderItem.db.find(
+      session,
+      where: (row) => row.vendorId.equals(vendorId),
+      include: OrderItem.include(order: Order.include()),
+    );
+
+    final deliveredOrderIds = VendorSalesMetricsCalculator.deliveredItems(
+      orderItems,
+    ).map((item) => item.orderId).toSet();
+
+    final refundedOrderIds =
+        await _loadCompletedRefundOrderIds(session, deliveredOrderIds);
+
+    return VendorSalesMetricsCalculator.compute(
+      orderItems: orderItems,
+      completedRefundOrderIds: refundedOrderIds,
+    );
+  }
+
+  /// Returns order IDs with completed refunds that belong to [orderIds].
+  Future<Set<int>> _loadCompletedRefundOrderIds(
+    Session session,
+    Set<int> orderIds,
+  ) async {
+    if (orderIds.isEmpty) return {};
+
+    final refunds = await RefundRequest.db.find(
+      session,
+      where: (row) => row.status.equals(RequestStatus.completed),
+    );
+
+    return refunds
+        .where((refund) => orderIds.contains(refund.orderId))
+        .map((refund) => refund.orderId)
+        .toSet();
   }
 
   String? _nullableTrim(String? value) {

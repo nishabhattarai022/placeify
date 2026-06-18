@@ -38,13 +38,15 @@ import 'package:placeify_server/src/generated/product_search_input.dart'
 import 'package:placeify_server/src/generated/vendor_profile_update_input.dart'
     as _i25;
 import 'dart:typed_data' as _i26;
-import 'package:placeify_server/src/generated/vendor_product_upload_input.dart'
+import 'package:placeify_server/src/generated/vendor_document_type.dart'
     as _i27;
-import 'package:placeify_server/src/generated/delivery_stage.dart' as _i28;
+import 'package:placeify_server/src/generated/vendor_product_upload_input.dart'
+    as _i28;
+import 'package:placeify_server/src/generated/delivery_stage.dart' as _i29;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
-    as _i29;
-import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _i30;
+import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+    as _i31;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -1460,6 +1462,16 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<String?>(),
               nullable: true,
             ),
+            'city': _i1.ParameterDescription(
+              name: 'city',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'country': _i1.ParameterDescription(
+              name: 'country',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
             'shopCategory': _i1.ParameterDescription(
               name: 'shopCategory',
               type: _i1.getType<String?>(),
@@ -1478,6 +1490,8 @@ class Endpoints extends _i1.EndpointDispatch {
                     logoUrl: params['logoUrl'],
                     phone: params['phone'],
                     address: params['address'],
+                    city: params['city'],
+                    country: params['country'],
                     shopCategory: params['shopCategory'],
                   ),
         ),
@@ -1555,6 +1569,112 @@ class Endpoints extends _i1.EndpointDispatch {
                 Map<String, dynamic> params,
               ) async =>
                   (endpoints['vendor'] as _i15.VendorEndpoint).uploadShopBanner(
+                    session,
+                    params['fileData'],
+                    params['fileName'],
+                  ),
+        ),
+        'uploadShopCover': _i1.MethodConnector(
+          name: 'uploadShopCover',
+          params: {
+            'fileData': _i1.ParameterDescription(
+              name: 'fileData',
+              type: _i1.getType<_i26.ByteData>(),
+              nullable: false,
+            ),
+            'fileName': _i1.ParameterDescription(
+              name: 'fileName',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i15.VendorEndpoint).uploadShopCover(
+                    session,
+                    params['fileData'],
+                    params['fileName'],
+                  ),
+        ),
+        'uploadDocument': _i1.MethodConnector(
+          name: 'uploadDocument',
+          params: {
+            'documentType': _i1.ParameterDescription(
+              name: 'documentType',
+              type: _i1.getType<_i27.VendorDocumentType>(),
+              nullable: false,
+            ),
+            'fileData': _i1.ParameterDescription(
+              name: 'fileData',
+              type: _i1.getType<_i26.ByteData>(),
+              nullable: false,
+            ),
+            'fileName': _i1.ParameterDescription(
+              name: 'fileName',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i15.VendorEndpoint).uploadDocument(
+                    session,
+                    params['documentType'],
+                    params['fileData'],
+                    params['fileName'],
+                  ),
+        ),
+        'uploadLogo': _i1.MethodConnector(
+          name: 'uploadLogo',
+          params: {
+            'fileData': _i1.ParameterDescription(
+              name: 'fileData',
+              type: _i1.getType<_i26.ByteData>(),
+              nullable: false,
+            ),
+            'fileName': _i1.ParameterDescription(
+              name: 'fileName',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i15.VendorEndpoint).uploadLogo(
+                    session,
+                    params['fileData'],
+                    params['fileName'],
+                  ),
+        ),
+        'uploadBanner': _i1.MethodConnector(
+          name: 'uploadBanner',
+          params: {
+            'fileData': _i1.ParameterDescription(
+              name: 'fileData',
+              type: _i1.getType<_i26.ByteData>(),
+              nullable: false,
+            ),
+            'fileName': _i1.ParameterDescription(
+              name: 'fileName',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i15.VendorEndpoint).uploadBanner(
                     session,
                     params['fileData'],
                     params['fileName'],
@@ -1703,7 +1823,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'input': _i1.ParameterDescription(
               name: 'input',
-              type: _i1.getType<_i27.VendorProductUploadInput>(),
+              type: _i1.getType<_i28.VendorProductUploadInput>(),
               nullable: false,
             ),
             'imageData': _i1.ParameterDescription(
@@ -1921,7 +2041,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'stage': _i1.ParameterDescription(
               name: 'stage',
-              type: _i1.getType<_i28.DeliveryStage>(),
+              type: _i1.getType<_i29.DeliveryStage>(),
               nullable: false,
             ),
             'note': _i1.ParameterDescription(
@@ -2076,9 +2196,9 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
-    modules['serverpod_auth_core'] = _i29.Endpoints()
+    modules['serverpod_auth_core'] = _i30.Endpoints()
       ..initializeEndpoints(server);
-    modules['serverpod_auth_idp'] = _i30.Endpoints()
+    modules['serverpod_auth_idp'] = _i31.Endpoints()
       ..initializeEndpoints(server);
   }
 }

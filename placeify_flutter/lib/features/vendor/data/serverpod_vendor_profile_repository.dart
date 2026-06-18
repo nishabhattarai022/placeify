@@ -44,6 +44,12 @@ class ServerpodVendorProfileRepository {
         working = working.copyWith(bannerUrl: uploaded);
       }
 
+      final coverPath = profile.coverUrl;
+      if (coverPath != null && LocalImagePath.isLocal(coverPath)) {
+        final uploaded = await _uploadCover(coverPath);
+        working = working.copyWith(coverUrl: uploaded);
+      }
+
       final detail = await client.vendor.updateMyProfile(
         VendorProfileMapper.toUpdateInput(working),
       );
@@ -56,6 +62,8 @@ class ServerpodVendorProfileRepository {
   Future<String> uploadLogo(String localPath) => _uploadLogo(localPath);
 
   Future<String> uploadBanner(String localPath) => _uploadBanner(localPath);
+
+  Future<String> uploadCover(String localPath) => _uploadCover(localPath);
 
   Future<VendorStats> getStats(String vendorId) async {
     try {
@@ -87,6 +95,14 @@ class ServerpodVendorProfileRepository {
   Future<String> _uploadBanner(String localPath) async {
     final bytes = await _readFile(localPath);
     return client.vendor.uploadShopBanner(
+      ByteData.sublistView(bytes),
+      _fileName(localPath),
+    );
+  }
+
+  Future<String> _uploadCover(String localPath) async {
+    final bytes = await _readFile(localPath);
+    return client.vendor.uploadShopCover(
       ByteData.sublistView(bytes),
       _fileName(localPath),
     );

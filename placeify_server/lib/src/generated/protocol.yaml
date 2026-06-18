@@ -77,6 +77,10 @@ vendor:
   - updateMyProfile:
   - uploadShopLogo:
   - uploadShopBanner:
+  - uploadShopCover:
+  - uploadDocument:
+  - uploadLogo:
+  - uploadBanner:
   - updateShop:
   - listMyProducts:
   - createProduct:

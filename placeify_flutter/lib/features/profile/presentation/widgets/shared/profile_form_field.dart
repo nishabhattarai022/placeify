@@ -7,11 +7,13 @@ class ProfileFormField extends StatelessWidget {
   const ProfileFormField({
     required this.label,
     required this.child,
+    this.errorText,
     super.key,
   });
 
   final String label;
   final Widget child;
+  final String? errorText;
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +33,17 @@ class ProfileFormField extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           child,
+          if (errorText != null && errorText!.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              errorText!,
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.rust,
+                height: 1.3,
+              ),
+            ),
+          ],
         ],
       ),
     );

@@ -1,0 +1,16 @@
+### Verification document uploaded during vendor onboarding.
+class: VendorDocument
+table: vendor_document
+fields:
+  user: User?, relation(onDelete=Cascade)
+  vendor: Vendor?, relation(onDelete=Cascade, optional)
+  documentType: VendorDocumentType
+  fileUrl: String
+  createdAt: DateTime, default=now
+
+indexes:
+  vendor_document_user_type:
+    fields: userId, documentType
+    unique: true
+  vendor_document_vendor_id:
+    fields: vendorId
