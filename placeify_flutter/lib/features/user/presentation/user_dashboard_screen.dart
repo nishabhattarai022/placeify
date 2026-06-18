@@ -9,7 +9,7 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../main.dart' show client;
 import '../../profile/presentation/providers/profile_dashboard_provider.dart';
-import '../data/user_dashboard_mock_data.dart';
+import '../data/user_overview_metric.dart';
 import '../data/user_dashboard_mappers.dart';
 import 'widgets/user_overview_card.dart';
 

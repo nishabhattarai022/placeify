@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/services/haptic_service.dart';
 import '../../data/profile_mock_data.dart';
+import '../providers/profile_dashboard_provider.dart';
+import '../providers/profile_refunds_provider.dart';
 
-class ProfileStatsStrip extends StatelessWidget {
+class ProfileStatsStrip extends ConsumerWidget {
   const ProfileStatsStrip({
     required this.onStatTap,
     super.key,
@@ -12,7 +15,32 @@ class ProfileStatsStrip extends StatelessWidget {
   final void Function(int index) onStatTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dashboard = ref.watch(profileDashboardProvider).whenOrNull(
+          data: (value) => value,
+        );
+    final arCount = ref.watch(profileArSessionsProvider).whenOrNull(
+              data: (sessions) => sessions.length,
+            ) ??
+        0;
+    final refundCount = ref.watch(profileRefundsProvider).whenOrNull(
+              data: (state) => state.active.length + state.completed.length,
+            ) ??
+        0;
+
+    final stats = [
+      ProfileStat(
+        value: '${dashboard?.orderCount ?? 0}',
+        label: 'Orders',
+      ),
+      ProfileStat(
+        value: '${dashboard?.wishlistCount ?? 0}',
+        label: 'Wishlist',
+      ),
+      ProfileStat(value: '$arCount', label: 'AR Tries'),
+      ProfileStat(value: '$refundCount', label: 'Refunds'),
+    ];
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(22, 20, 22, 0),
       child: Container(
@@ -24,7 +52,7 @@ class ProfileStatsStrip extends StatelessWidget {
         child: IntrinsicHeight(
           child: Row(
             children: [
-              for (var i = 0; i < ProfileMockData.stats.length; i++) ...[
+              for (var i = 0; i < stats.length; i++) ...[
                 if (i > 0)
                   VerticalDivider(
                     width: 1,
@@ -33,7 +61,7 @@ class ProfileStatsStrip extends StatelessWidget {
                   ),
                 Expanded(
                   child: _StatCell(
-                    stat: ProfileMockData.stats[i],
+                    stat: stats[i],
                     onTap: () {
                       HapticService.light();
                       onStatTap(i);

@@ -81,7 +81,7 @@ final class UserWishlistProvider
   UserWishlist create() => UserWishlist();
 }
 
-String _$userWishlistHash() => r'bbc17b1a175480892e551646e335ea2cfdedea77';
+String _$userWishlistHash() => r'03dc855e92ec00e25ed49e6d3f7b3f32269f0c29';
 
 abstract class _$UserWishlist extends $AsyncNotifier<List<UserWishlistEntry>> {
   FutureOr<List<UserWishlistEntry>> build();

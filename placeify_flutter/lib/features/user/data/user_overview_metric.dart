@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Overview card model for the user dashboard grid.
+/// Overview card model for the `/user/dashboard` metrics grid.
 class UserOverviewMetric {
   const UserOverviewMetric({
     required this.label,

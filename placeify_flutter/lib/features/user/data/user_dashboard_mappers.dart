@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:placeify_client/placeify_client.dart';
 
 import '../../../core/constants/app_colors.dart';
-import 'user_dashboard_mock_data.dart';
+import 'user_overview_metric.dart';
 
 abstract final class UserDashboardMappers {
   static int countPendingOrders(List<UserOrderSummary> orders) {

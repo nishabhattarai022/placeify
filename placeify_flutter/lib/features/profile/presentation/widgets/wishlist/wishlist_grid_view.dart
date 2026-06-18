@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
-import '../../../../home/data/mock_product_repository.dart';
-import '../../../../home/presentation/providers/wishlist_provider.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/services/haptic_service.dart';
 import '../../../../../core/widgets/animated_scale_tap.dart';
 import '../../../../../core/widgets/placeify_bottom_nav.dart';
+import '../../../../../main.dart' show client;
 import '../../../../../screens/widgets/category_product_list_tile.dart';
+import '../../../../user/presentation/providers/user_wishlist_provider.dart';
 import 'wishlist_sort.dart';
 import 'wishlist_sort_provider.dart';
 import 'wishlist_sort_sheet.dart';
@@ -28,88 +29,148 @@ class WishlistGridView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final savedAt = ref.watch(wishlistProvider);
+    if (!client.auth.isAuthenticated) {
+      return _WishlistAuthRequired(onLogin: () => context.push('/login'));
+    }
+
+    final wishlistAsync = ref.watch(userWishlistProvider);
     final sort = ref.watch(wishlistSortProvider);
-    final byId = {
-      for (final p in MockProductRepository.products) p.id: p,
-    };
-    final sortedProducts = sortWishlistProducts(
-      products: [
-        for (final id in savedAt.keys)
-          if (byId.containsKey(id)) byId[id]!,
-      ],
-      savedAt: savedAt,
-      sort: sort,
-    );
 
-    final query = searchQuery.trim().toLowerCase();
-    final products = query.isEmpty
-        ? sortedProducts
-        : sortedProducts
-            .where((p) => p.name.toLowerCase().contains(query))
-            .toList();
-
-    if (savedAt.isEmpty) {
-      return const _WishlistEmptyState();
-    }
-
-    if (products.isEmpty) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _WishlistSortBarSection(
-            sort: sort,
-            onTap: () => WishlistSortSheet.show(context, ref, sort),
-          ),
-          Expanded(
-            child: _WishlistNoSearchResultsState(
-              query: searchQuery.trim(),
-            ),
-          ),
-        ],
-      );
-    }
-
-    final bottom = showBottomPadding
-        ? BottomNavTokens.scrollBottomPadding +
-            MediaQuery.paddingOf(context).bottom
-        : 32.0;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _WishlistSortBarSection(
+    return wishlistAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, __) => Center(
+        child: TextButton(
+          onPressed: () => ref.invalidate(userWishlistProvider),
+          child: const Text('Retry'),
+        ),
+      ),
+      data: (entries) {
+        final savedAt = {
+          for (final entry in entries) entry.product.id: entry.savedAt,
+        };
+        final sortedProducts = sortWishlistProducts(
+          products: [for (final entry in entries) entry.product],
+          savedAt: savedAt,
           sort: sort,
-          onTap: () => WishlistSortSheet.show(context, ref, sort),
-        ),
-        Expanded(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            switchInCurve: Curves.easeOut,
-            switchOutCurve: Curves.easeIn,
-            child: ListView.separated(
-              key: ValueKey(sort.name),
-              padding: EdgeInsets.fromLTRB(
-                AppSpacing.screenPadding,
-                0,
-                AppSpacing.screenPadding,
-                bottom,
+        );
+
+        final query = searchQuery.trim().toLowerCase();
+        final products = query.isEmpty
+            ? sortedProducts
+            : sortedProducts
+                .where((p) => p.name.toLowerCase().contains(query))
+                .toList();
+
+        if (entries.isEmpty) {
+          return const _WishlistEmptyState();
+        }
+
+        if (products.isEmpty) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _WishlistSortBarSection(
+                sort: sort,
+                onTap: () => WishlistSortSheet.show(context, ref, sort),
               ),
-              itemCount: products.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 32),
-              itemBuilder: (context, index) {
-                final product = products[index];
-                return CategoryProductListTile(
-                  product: product,
-                  onRemoveFromWishlist: () {
-                    ref.read(wishlistProvider.notifier).toggle(product.id);
-                  },
-                );
-              },
+              Expanded(
+                child: _WishlistNoSearchResultsState(
+                  query: searchQuery.trim(),
+                ),
+              ),
+            ],
+          );
+        }
+
+        final bottom = showBottomPadding
+            ? BottomNavTokens.scrollBottomPadding +
+                MediaQuery.paddingOf(context).bottom
+            : 32.0;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _WishlistSortBarSection(
+              sort: sort,
+              onTap: () => WishlistSortSheet.show(context, ref, sort),
             ),
-          ),
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                child: ListView.separated(
+                  key: ValueKey(sort.name),
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.screenPadding,
+                    0,
+                    AppSpacing.screenPadding,
+                    bottom,
+                  ),
+                  itemCount: products.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 32),
+                  itemBuilder: (context, index) {
+                    final product = products[index];
+                    return CategoryProductListTile(
+                      product: product,
+                      onRemoveFromWishlist: () {
+                        ref
+                            .read(userWishlistProvider.notifier)
+                            .remove(product.id);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _WishlistAuthRequired extends StatelessWidget {
+  const _WishlistAuthRequired({required this.onLogin});
+
+  final VoidCallback onLogin;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.lock_outline,
+              size: 40,
+              color: AppColors.textMuted,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Sign in to view your wishlist',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Fraunces',
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: AppColors.espresso,
+              ),
+            ),
+            const SizedBox(height: 20),
+            FilledButton(
+              onPressed: onLogin,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.espresso,
+                foregroundColor: AppColors.warmWhite,
+              ),
+              child: const Text('Go to login'),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../home/data/mock_product_repository.dart';
 import '../../../../home/presentation/providers/wishlist_provider.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_spacing.dart';
@@ -29,18 +28,11 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
 
   int _visibleProductCount() {
     final savedAt = ref.read(wishlistProvider);
-    final byId = {
-      for (final p in MockProductRepository.products) p.id: p,
-    };
-    final products = [
-      for (final id in savedAt.keys)
-        if (byId.containsKey(id)) byId[id]!,
-    ];
-
     final query = _searchQuery.trim().toLowerCase();
-    if (query.isEmpty) return products.length;
+    if (query.isEmpty) return savedAt.length;
 
-    return products.where((p) => p.name.toLowerCase().contains(query)).length;
+    // Count is approximate until search runs in the grid; grid filters by name.
+    return savedAt.length;
   }
 
   @override
@@ -122,4 +114,3 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
     );
   }
 }
-

@@ -40,14 +40,14 @@ extension UserDashboardNavX on UserDashboardNav {
 
   String get routePath => switch (this) {
         UserDashboardNav.dashboard => '/user/dashboard',
-        UserDashboardNav.orders => '/user/orders',
-        UserDashboardNav.cart => '/user/cart',
-        UserDashboardNav.wishlist => '/user/wishlist',
-        UserDashboardNav.refund => '/user/refund',
-        UserDashboardNav.notifications => '/user/notifications',
-        UserDashboardNav.profile => '/user/account',
-        UserDashboardNav.settings => '/user/settings',
-        UserDashboardNav.tryMe => '/user/try-me',
+        UserDashboardNav.orders => '/profile/orders',
+        UserDashboardNav.cart => '/cart',
+        UserDashboardNav.wishlist => '/bookmarks',
+        UserDashboardNav.refund => '/profile/refund',
+        UserDashboardNav.notifications => '/profile/notifications',
+        UserDashboardNav.profile => '/profile',
+        UserDashboardNav.settings => '/profile/settings',
+        UserDashboardNav.tryMe => '/profile/augmented-reality',
       };
 
   String get pageTitle => switch (this) {
