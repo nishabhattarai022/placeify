@@ -1,6 +1,6 @@
 import 'package:placeify_flutter/core/providers/shared_preferences_provider.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
-import 'package:placeify_flutter/features/vendor/data/mock_vendor_registration_repository.dart';
+import 'package:placeify_flutter/features/vendor/data/serverpod_vendor_registration_repository.dart';
 import 'package:placeify_flutter/features/vendor/domain/repositories/vendor_registration_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -12,5 +12,5 @@ Future<VendorRegistrationRepository> vendorRegistrationRepository(
 ) async {
   final authRepo = await ref.watch(authRepositoryProvider.future);
   final prefs = ref.watch(sharedPreferencesProvider);
-  return MockVendorRegistrationRepository(authRepo, prefs);
+  return ServerpodVendorRegistrationRepository(authRepo, prefs);
 }

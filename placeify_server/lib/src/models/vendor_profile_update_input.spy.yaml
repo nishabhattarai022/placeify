@@ -4,10 +4,14 @@ fields:
   businessName: String?
   phone: String?
   address: String?
+  city: String?
+  country: String?
   category: String?
   bio: String?
   logoUrl: String?
   bannerUrl: String?
+  coverUrl: String?
   instagramHandle: String?
   facebookHandle: String?
   operatingHours: String?
+  isOpen: bool?

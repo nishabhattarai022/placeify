@@ -10,6 +10,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../profile/presentation/widgets/shared/profile_submit_button.dart';
 import '../../domain/constants/vendor_routes.dart';
 import '../../domain/constants/vendor_strings.dart';
+import '../providers/vendor_profile_provider.dart';
 import '../providers/vendor_registration_provider.dart';
 import 'steps/address_step.dart';
 import 'steps/bank_details_step.dart';
@@ -77,6 +78,7 @@ class _VendorRegistrationScreenState
       }
 
       await ref.read(currentUserProvider.notifier).refresh();
+      ref.invalidate(vendorProfileProvider);
       if (!mounted) return;
 
       HapticService.medium();
@@ -85,13 +87,13 @@ class _VendorRegistrationScreenState
       return;
     }
 
-    final error = notifier.validateStep(uiState.currentStep);
-    if (error != null) {
-      PlaceifyToast.show(context, error);
+    if (!notifier.nextStep()) {
+      final errors = ref.read(vendorRegistrationProvider).fieldErrors;
+      if (errors.isNotEmpty && mounted) {
+        PlaceifyToast.show(context, errors.values.first);
+      }
       return;
     }
-
-    if (!notifier.nextStep()) return;
 
     await _pageController.nextPage(
       duration: AppDurations.mid,

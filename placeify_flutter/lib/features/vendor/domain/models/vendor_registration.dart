@@ -45,7 +45,7 @@ abstract class VendorCategoryInfo with _$VendorCategoryInfo {
       _$VendorCategoryInfoFromJson(json);
 }
 
-/// Step 4 — uploaded document local paths (mock; real API would use remote URLs).
+/// Step 4 — uploaded verification document URLs from the server.
 @freezed
 abstract class VendorDocuments with _$VendorDocuments {
   const factory VendorDocuments({

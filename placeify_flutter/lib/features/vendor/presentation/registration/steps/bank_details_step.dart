@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../profile/presentation/widgets/shared/profile_form_field.dart';
+import '../../../domain/constants/vendor_registration_field_keys.dart';
 import '../../../domain/constants/vendor_strings.dart';
 import '../../../domain/models/vendor_registration.dart';
 import '../../providers/vendor_registration_provider.dart';
@@ -44,6 +45,8 @@ class _BankDetailsStepState extends ConsumerState<BankDetailsStep> {
 
   @override
   Widget build(BuildContext context) {
+    final fieldErrors = ref.watch(vendorRegistrationProvider).fieldErrors;
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
       children: [
@@ -67,6 +70,7 @@ class _BankDetailsStepState extends ConsumerState<BankDetailsStep> {
         const SizedBox(height: 20),
         ProfileFormField(
           label: 'Account Holder Name',
+          errorText: fieldErrors[VendorRegistrationFieldKeys.accountHolderName],
           child: ProfileTextInput(
             controller: _accountHolder,
             hint: 'Name on the account',
@@ -78,6 +82,7 @@ class _BankDetailsStepState extends ConsumerState<BankDetailsStep> {
         ),
         ProfileFormField(
           label: 'Bank Name',
+          errorText: fieldErrors[VendorRegistrationFieldKeys.bankName],
           child: ProfileTextInput(
             controller: _bankName,
             hint: VendorFormStrings.bankNameHint,
@@ -89,6 +94,7 @@ class _BankDetailsStepState extends ConsumerState<BankDetailsStep> {
         ),
         ProfileFormField(
           label: 'Account Number',
+          errorText: fieldErrors[VendorRegistrationFieldKeys.accountNumber],
           child: ProfileTextInput(
             controller: _accountNumber,
             hint: '••••••••••',
@@ -100,6 +106,7 @@ class _BankDetailsStepState extends ConsumerState<BankDetailsStep> {
         ),
         ProfileFormField(
           label: VendorFormStrings.branchSwiftLabel,
+          errorText: fieldErrors[VendorRegistrationFieldKeys.routingNumber],
           child: ProfileTextInput(
             controller: _routingNumber,
             hint: VendorFormStrings.branchSwiftHint,

@@ -18,26 +18,34 @@ abstract class VendorProfileUpdateInput implements _i1.SerializableModel {
     this.businessName,
     this.phone,
     this.address,
+    this.city,
+    this.country,
     this.category,
     this.bio,
     this.logoUrl,
     this.bannerUrl,
+    this.coverUrl,
     this.instagramHandle,
     this.facebookHandle,
     this.operatingHours,
+    this.isOpen,
   });
 
   factory VendorProfileUpdateInput({
     String? businessName,
     String? phone,
     String? address,
+    String? city,
+    String? country,
     String? category,
     String? bio,
     String? logoUrl,
     String? bannerUrl,
+    String? coverUrl,
     String? instagramHandle,
     String? facebookHandle,
     String? operatingHours,
+    bool? isOpen,
   }) = _VendorProfileUpdateInputImpl;
 
   factory VendorProfileUpdateInput.fromJson(
@@ -47,13 +55,19 @@ abstract class VendorProfileUpdateInput implements _i1.SerializableModel {
       businessName: jsonSerialization['businessName'] as String?,
       phone: jsonSerialization['phone'] as String?,
       address: jsonSerialization['address'] as String?,
+      city: jsonSerialization['city'] as String?,
+      country: jsonSerialization['country'] as String?,
       category: jsonSerialization['category'] as String?,
       bio: jsonSerialization['bio'] as String?,
       logoUrl: jsonSerialization['logoUrl'] as String?,
       bannerUrl: jsonSerialization['bannerUrl'] as String?,
+      coverUrl: jsonSerialization['coverUrl'] as String?,
       instagramHandle: jsonSerialization['instagramHandle'] as String?,
       facebookHandle: jsonSerialization['facebookHandle'] as String?,
       operatingHours: jsonSerialization['operatingHours'] as String?,
+      isOpen: jsonSerialization['isOpen'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['isOpen']),
     );
   }
 
@@ -63,6 +77,10 @@ abstract class VendorProfileUpdateInput implements _i1.SerializableModel {
 
   String? address;
 
+  String? city;
+
+  String? country;
+
   String? category;
 
   String? bio;
@@ -71,11 +89,15 @@ abstract class VendorProfileUpdateInput implements _i1.SerializableModel {
 
   String? bannerUrl;
 
+  String? coverUrl;
+
   String? instagramHandle;
 
   String? facebookHandle;
 
   String? operatingHours;
+
+  bool? isOpen;
 
   /// Returns a shallow copy of this [VendorProfileUpdateInput]
   /// with some or all fields replaced by the given arguments.
@@ -84,13 +106,17 @@ abstract class VendorProfileUpdateInput implements _i1.SerializableModel {
     String? businessName,
     String? phone,
     String? address,
+    String? city,
+    String? country,
     String? category,
     String? bio,
     String? logoUrl,
     String? bannerUrl,
+    String? coverUrl,
     String? instagramHandle,
     String? facebookHandle,
     String? operatingHours,
+    bool? isOpen,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -99,13 +125,17 @@ abstract class VendorProfileUpdateInput implements _i1.SerializableModel {
       if (businessName != null) 'businessName': businessName,
       if (phone != null) 'phone': phone,
       if (address != null) 'address': address,
+      if (city != null) 'city': city,
+      if (country != null) 'country': country,
       if (category != null) 'category': category,
       if (bio != null) 'bio': bio,
       if (logoUrl != null) 'logoUrl': logoUrl,
       if (bannerUrl != null) 'bannerUrl': bannerUrl,
+      if (coverUrl != null) 'coverUrl': coverUrl,
       if (instagramHandle != null) 'instagramHandle': instagramHandle,
       if (facebookHandle != null) 'facebookHandle': facebookHandle,
       if (operatingHours != null) 'operatingHours': operatingHours,
+      if (isOpen != null) 'isOpen': isOpen,
     };
   }
 
@@ -122,24 +152,32 @@ class _VendorProfileUpdateInputImpl extends VendorProfileUpdateInput {
     String? businessName,
     String? phone,
     String? address,
+    String? city,
+    String? country,
     String? category,
     String? bio,
     String? logoUrl,
     String? bannerUrl,
+    String? coverUrl,
     String? instagramHandle,
     String? facebookHandle,
     String? operatingHours,
+    bool? isOpen,
   }) : super._(
          businessName: businessName,
          phone: phone,
          address: address,
+         city: city,
+         country: country,
          category: category,
          bio: bio,
          logoUrl: logoUrl,
          bannerUrl: bannerUrl,
+         coverUrl: coverUrl,
          instagramHandle: instagramHandle,
          facebookHandle: facebookHandle,
          operatingHours: operatingHours,
+         isOpen: isOpen,
        );
 
   /// Returns a shallow copy of this [VendorProfileUpdateInput]
@@ -150,22 +188,29 @@ class _VendorProfileUpdateInputImpl extends VendorProfileUpdateInput {
     Object? businessName = _Undefined,
     Object? phone = _Undefined,
     Object? address = _Undefined,
+    Object? city = _Undefined,
+    Object? country = _Undefined,
     Object? category = _Undefined,
     Object? bio = _Undefined,
     Object? logoUrl = _Undefined,
     Object? bannerUrl = _Undefined,
+    Object? coverUrl = _Undefined,
     Object? instagramHandle = _Undefined,
     Object? facebookHandle = _Undefined,
     Object? operatingHours = _Undefined,
+    Object? isOpen = _Undefined,
   }) {
     return VendorProfileUpdateInput(
       businessName: businessName is String? ? businessName : this.businessName,
       phone: phone is String? ? phone : this.phone,
       address: address is String? ? address : this.address,
+      city: city is String? ? city : this.city,
+      country: country is String? ? country : this.country,
       category: category is String? ? category : this.category,
       bio: bio is String? ? bio : this.bio,
       logoUrl: logoUrl is String? ? logoUrl : this.logoUrl,
       bannerUrl: bannerUrl is String? ? bannerUrl : this.bannerUrl,
+      coverUrl: coverUrl is String? ? coverUrl : this.coverUrl,
       instagramHandle: instagramHandle is String?
           ? instagramHandle
           : this.instagramHandle,
@@ -175,6 +220,7 @@ class _VendorProfileUpdateInputImpl extends VendorProfileUpdateInput {
       operatingHours: operatingHours is String?
           ? operatingHours
           : this.operatingHours,
+      isOpen: isOpen is bool? ? isOpen : this.isOpen,
     );
   }
 }

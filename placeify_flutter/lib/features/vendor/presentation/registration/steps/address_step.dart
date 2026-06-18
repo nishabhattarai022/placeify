@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../profile/presentation/widgets/shared/profile_form_field.dart';
+import '../../../domain/constants/vendor_registration_field_keys.dart';
 import '../../../domain/constants/vendor_strings.dart';
 import '../../../domain/models/vendor_registration.dart';
 import '../../providers/vendor_registration_provider.dart';
@@ -55,6 +56,8 @@ class _AddressStepState extends ConsumerState<AddressStep> {
 
   @override
   Widget build(BuildContext context) {
+    final fieldErrors = ref.watch(vendorRegistrationProvider).fieldErrors;
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
       children: [
@@ -78,6 +81,7 @@ class _AddressStepState extends ConsumerState<AddressStep> {
         const SizedBox(height: 20),
         ProfileFormField(
           label: 'Street Address',
+          errorText: fieldErrors[VendorRegistrationFieldKeys.street],
           child: ProfileTextInput(
             controller: _street,
             hint: VendorFormStrings.streetHint,
@@ -89,6 +93,7 @@ class _AddressStepState extends ConsumerState<AddressStep> {
         ),
         ProfileFormField(
           label: 'City',
+          errorText: fieldErrors[VendorRegistrationFieldKeys.city],
           child: ProfileTextInput(
             controller: _city,
             hint: VendorFormStrings.cityHint,
@@ -100,6 +105,7 @@ class _AddressStepState extends ConsumerState<AddressStep> {
         ),
         ProfileFormField(
           label: 'State / Province',
+          errorText: fieldErrors[VendorRegistrationFieldKeys.state],
           child: ProfileTextInput(
             controller: _state,
             hint: VendorFormStrings.stateHint,
@@ -111,6 +117,7 @@ class _AddressStepState extends ConsumerState<AddressStep> {
         ),
         ProfileFormField(
           label: 'Postal Code',
+          errorText: fieldErrors[VendorRegistrationFieldKeys.postalCode],
           child: ProfileTextInput(
             controller: _postalCode,
             hint: VendorFormStrings.postalCodeHint,
@@ -122,6 +129,7 @@ class _AddressStepState extends ConsumerState<AddressStep> {
         ),
         ProfileFormField(
           label: 'Country',
+          errorText: fieldErrors[VendorRegistrationFieldKeys.country],
           child: ProfileTextInput(
             controller: _country,
             hint: VendorFormStrings.countryHint,

@@ -1,0 +1,6 @@
+enum: VendorDocumentType
+serialized: byName
+values:
+  - businessLicense
+  - governmentId
+  - taxCertificate
