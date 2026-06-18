@@ -43,9 +43,16 @@ class _HomeRecommendProductCardState
     context.push('/product/${widget.product.productId}');
   }
 
-  void _onAddToCart() {
+  Future<void> _onAddToCart() async {
     HapticService.medium();
-    ref.read(cartProvider.notifier).addProduct(widget.product.productId);
+    final message = await ref
+        .read(cartProvider.notifier)
+        .addProduct(widget.product.productId);
+    if (!mounted) return;
+    if (message != null) {
+      PlaceifyToast.show(context, message);
+      return;
+    }
     PlaceifyToast.show(
       context,
       '${widget.product.displayName} added to cart',

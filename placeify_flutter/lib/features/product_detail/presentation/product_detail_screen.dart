@@ -7,6 +7,7 @@ import '../../cart/presentation/providers/cart_provider.dart';
 import '../../home/domain/models/product.dart';
 import '../../home/presentation/providers/catalog_provider.dart';
 import '../../../core/services/haptic_service.dart';
+import '../../../core/widgets/toast_overlay.dart';
 import '../data/product_detail_content.dart';
 import 'product_detail_tokens.dart';
 import '../../shops/presentation/providers/consumer_shop_provider.dart';
@@ -221,11 +222,17 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                   onTryInMyRoom: () {
                     context.push('/profile/augmented-reality');
                   },
-                  onAddToCart: () {
-                    ref
+                  onAddToCart: () async {
+                    final message = await ref
                         .read(cartProvider.notifier)
                         .addProduct(product.id);
+                    if (!context.mounted) return;
                     HapticService.medium();
+                    if (message != null) {
+                      PlaceifyToast.show(context, message);
+                      return;
+                    }
+                    PlaceifyToast.show(context, '${product.name} added to cart');
                     context.push('/cart');
                   },
                 ),
