@@ -26,7 +26,7 @@ class ProductImageProcessor {
 
   static const _removeBgUrl = 'https://api.remove.bg/v1.0/removebg';
   static const _maxCatalogWidth = 1600;
-  static const _jpegQuality = 88;
+  static const _jpegQuality = 95;
   static final _white = img.ColorRgb8(255, 255, 255);
 
   final http.Client _httpClient;

@@ -11,27 +11,25 @@ import 'aws_s3_put.dart';
 /// API key: [TripoApiKeyConfig.configFileName] or [TripoApiKeyConfig.apiKeyEnv].
 abstract final class TripoClient {
   static const _baseUrl = 'https://api.tripo3d.ai/v2/openapi';
-  static const _modelVersion = 'v2.5-20250123';
+  /// H3 multiview — better geometry/texture than v2.5 for furniture.
+  static const _modelVersion = 'v3.1-20260211';
   static const _pollInterval = Duration(seconds: 3);
   static const _maxPollAttempts = 120;
 
-  /// Texture-fidelity prompt (may be ignored by multiview API; included per Tripo docs).
-  static const textureFidelityPrompt =
-      'Generate a highly realistic furniture 3D model from the provided '
-      'multi-view images. Preserve all visible surface details from the input '
-      'images, including wood grain, fabric weave, stitching, seams, leather '
-      'texture, surface imperfections, patterns, and material characteristics. '
-      'Maintain high texture fidelity and accurate material appearance. Do not '
-      'smooth, blur, simplify, average, or remove surface texture details. '
-      'Preserve fine details exactly as observed in the source images. The '
-      'result should look like a real furniture product suitable for e-commerce '
-      'and AR visualization.';
+  /// Guides shape + materials for furniture multiview reconstruction.
+  static const multiviewPrompt =
+      'Reconstruct this exact furniture piece from the multi-view photos. '
+      'Match the true proportions, silhouette, backrest shape, armrest curves, '
+      'seat depth, leg style, and all distinctive design features visible in '
+      'the photos. Preserve wood grain, fabric weave, stitching, seams, '
+      'patterns, and material characteristics. Do not simplify, smooth, or '
+      'genericize the design. The result must look like the same real product '
+      'for e-commerce and AR.';
 
-  static const textureNegativePrompt =
-      'smooth texture, blurred texture, simplified texture, averaged texture, '
-      'cartoon texture, stylized texture, low detail texture, plastic appearance, '
-      'artificial material appearance, texture loss, texture cleanup, texture '
-      'simplification, toy-like appearance';
+  static const multiviewNegativePrompt =
+      'wrong proportions, generic chair, simplified shape, missing back cutout, '
+      'smooth texture, blurred texture, plastic appearance, toy-like, stylized, '
+      'cartoon, low detail, averaged texture, different furniture design';
 
   /// Maximum texture fidelity — no autofix, low-poly, PBR regen, or compression.
   static const _baseTextureParams = <String, dynamic>{
@@ -43,8 +41,9 @@ abstract final class TripoClient {
     'smart_low_poly': false,
     'quad': false,
     'generate_parts': false,
-    'prompt': textureFidelityPrompt,
-    'negative_prompt': textureNegativePrompt,
+    'geometry_quality': 'detailed',
+    'prompt': multiviewPrompt,
+    'negative_prompt': multiviewNegativePrompt,
   };
 
   /// Tripo task params tuned for furniture multiview texture fidelity.
@@ -55,7 +54,7 @@ abstract final class TripoClient {
   static Map<String, dynamic> _taskParams({required int viewCount}) {
     return {
       ..._baseTextureParams,
-      'face_limit': viewCount >= 5 ? 200000 : 180000,
+      'face_limit': viewCount >= 5 ? 800000 : 600000,
       'texture_quality': 'extreme',
     };
   }
