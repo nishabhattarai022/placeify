@@ -153,9 +153,15 @@ class VendorEndpoint extends Endpoint {
   Future<String> uploadProductImage(
     Session session,
     ByteData fileData,
-    String fileName,
-  ) {
-    return _service.uploadProductImage(session, fileData, fileName);
+    String fileName, {
+    bool removeBackground = false,
+  }) {
+    return _service.uploadProductImage(
+      session,
+      fileData,
+      fileName,
+      removeBackground: removeBackground,
+    );
   }
 
   Future<Product> regenerateProductModel3d(

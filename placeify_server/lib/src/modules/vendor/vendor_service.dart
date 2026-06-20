@@ -162,9 +162,15 @@ class VendorService {
   Future<String> uploadProductImage(
     Session session,
     ByteData fileData,
-    String fileName,
-  ) {
-    return _repository.uploadProductImage(session, fileData, fileName);
+    String fileName, {
+    bool removeBackground = false,
+  }) {
+    return _repository.uploadProductImage(
+      session,
+      fileData,
+      fileName,
+      removeBackground: removeBackground,
+    );
   }
 
   Future<Product> regenerateProductModel3d(

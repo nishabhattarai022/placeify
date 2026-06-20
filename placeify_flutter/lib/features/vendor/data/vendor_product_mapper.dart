@@ -2,7 +2,7 @@ import 'package:placeify_client/placeify_client.dart' as api;
 
 import '../../../core/config/resolve_media_url.dart';
 import '../../cart/data/product_id_codec.dart';
-import '../../product_detail/data/product_model_3d_urls.dart';
+import '../../product_detail/data/product_3d_model_resolver.dart';
 import '../domain/models/vendor_product.dart';
 
 abstract final class VendorProductMapper {
@@ -25,7 +25,7 @@ abstract final class VendorProductMapper {
     final model3dUrl = product.model3dUrl?.trim();
     final has3dPreview = model3dUrl != null && model3dUrl.isNotEmpty;
     if (has3dPreview) {
-      ProductModel3dUrls.set(uiId, await resolveMediaUrl(model3dUrl));
+      Product3dModelResolver.setModelUrl(uiId, await resolveMediaUrl(model3dUrl));
     }
 
     return VendorProduct(

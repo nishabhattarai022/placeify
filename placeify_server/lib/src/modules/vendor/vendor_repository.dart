@@ -9,7 +9,7 @@ import '../../shared/server_static_paths.dart';
 import '../../shared/session_service.dart';
 import 'product_3d/product_3d_generation_result.dart';
 import 'product_3d/product_3d_generator.dart';
-import 'product_3d/product_3d_image_paths.dart';
+import 'product_3d/product_3d_views.dart';
 import 'product_image_processor.dart';
 
 class VendorStore {
@@ -390,7 +390,12 @@ class VendorStore {
     String fileName,
   ) async {
     final vendor = await requireOwnedVendor(session);
-    final logoUrl = await _persistProductImage(session, fileData, fileName);
+    final logoUrl = await _persistProductImage(
+      session,
+      fileData,
+      fileName,
+      removeBackground: true,
+    );
     await Vendor.db.updateRow(
       session,
       vendor.copyWith(logoUrl: logoUrl, updatedAt: DateTime.now()),
@@ -404,7 +409,12 @@ class VendorStore {
     String fileName,
   ) async {
     final vendor = await requireOwnedVendor(session);
-    final bannerUrl = await _persistProductImage(session, fileData, fileName);
+    final bannerUrl = await _persistProductImage(
+      session,
+      fileData,
+      fileName,
+      removeBackground: true,
+    );
     await Vendor.db.updateRow(
       session,
       vendor.copyWith(bannerUrl: bannerUrl, updatedAt: DateTime.now()),
@@ -541,7 +551,7 @@ class VendorStore {
         warranty: warranty?.trim(),
         model3dUrl: model3dUrl?.trim(),
         thumbnailUrl: thumbnailUrl?.trim(),
-        viewImageUrls: viewImageUrls,
+        viewImageUrls: _normalizeViewImageUrls(viewImageUrls),
         status: ProductStatus.active,
       ),
     );
@@ -580,6 +590,7 @@ class VendorStore {
       session,
       imageData,
       imageFileName,
+      removeBackground: true,
     );
 
     var product = await createProduct(
@@ -675,6 +686,7 @@ class VendorStore {
         session,
         imageData,
         imageFileName,
+        removeBackground: true,
       );
     }
 
@@ -820,17 +832,24 @@ class VendorStore {
   Future<String> uploadProductImage(
     Session session,
     ByteData fileData,
-    String fileName,
-  ) async {
+    String fileName, {
+    bool removeBackground = false,
+  }) async {
     await requireOwnedVendor(session);
-    return _persistProductImage(session, fileData, fileName);
+    return _persistProductImage(
+      session,
+      fileData,
+      fileName,
+      removeBackground: removeBackground,
+    );
   }
 
   Future<String> _persistProductImage(
     Session session,
     ByteData fileData,
-    String fileName,
-  ) async {
+    String fileName, {
+    required bool removeBackground,
+  }) async {
     final bytes = fileData.buffer.asUint8List(
       fileData.offsetInBytes,
       fileData.lengthInBytes,
@@ -855,46 +874,66 @@ class VendorStore {
     }
 
     final processor = ProductImageProcessor();
-    final processed = await processor.processForCatalog(
-      session,
-      bytes,
-      sanitized,
-    );
-
     final uploadsDir = Directory(ServerStaticPaths.uploadsDir());
     if (!uploadsDir.existsSync()) {
       uploadsDir.createSync(recursive: true);
     }
 
     final baseName = sanitized.replaceAll(RegExp(r'\.[^.]+$'), '');
-    final storedName =
-        '${DateTime.now().millisecondsSinceEpoch}_$baseName${processed.extension}';
-    final file = File(
-      '${uploadsDir.path}${Platform.pathSeparator}$storedName',
-    );
-    await file.writeAsBytes(processed.bytes);
-    session.log(
-      'Stored catalog image $storedName (white background, '
-      'bgRemoved=${processed.backgroundRemoved})',
-      level: LogLevel.info,
-    );
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
 
-    final tripoRelativePath = Product3dImagePaths.tripoStoragePathForCatalog(
-      catalogStoragePath: '/uploads/$storedName',
-      originalExtension: extension,
-    );
-    if (tripoRelativePath.isNotEmpty) {
-      final tripoFile = ServerStaticPaths.fileFromUrlPath(tripoRelativePath);
-      await tripoFile.parent.create(recursive: true);
-      await tripoFile.writeAsBytes(bytes);
+    if (removeBackground) {
+      final processed = await processor.processForVendorUpload(
+        session,
+        bytes,
+        sanitized,
+        fileExtension: extension,
+      );
+
+      final storedName = '${timestamp}_$baseName${processed.catalog.extension}';
+      final tripoStoredName =
+          '${timestamp}_${baseName}_tripo${processed.tripoSource.extension}';
+
+      await File(
+        '${uploadsDir.path}${Platform.pathSeparator}$storedName',
+      ).writeAsBytes(processed.catalog.bytes);
+      await File(
+        '${uploadsDir.path}${Platform.pathSeparator}$tripoStoredName',
+      ).writeAsBytes(processed.tripoSource.bytes);
+
       session.log(
-        'Stored Tripo source ${tripoFile.uri.pathSegments.last} '
-        '(${bytes.length} bytes, original upload)',
+        'Stored catalog thumbnail $storedName and Tripo raw $tripoStoredName',
         level: LogLevel.info,
       );
+      return '/uploads/$storedName';
     }
 
+    final storedName = '${timestamp}_$baseName$extension';
+    await File(
+      '${uploadsDir.path}${Platform.pathSeparator}$storedName',
+    ).writeAsBytes(bytes);
+    session.log(
+      'Stored raw product photo $storedName (${bytes.length} bytes, no bg removal)',
+      level: LogLevel.info,
+    );
     return '/uploads/$storedName';
+  }
+
+  /// Keeps Tripo view order [left, back, right].
+  List<String>? _normalizeViewImageUrls(List<String>? urls) {
+    if (urls == null || urls.isEmpty) return null;
+
+    final normalized = urls
+        .take(Product3dViews.extraSlotCount)
+        .map((url) => url.trim())
+        .toList(growable: false);
+    if (normalized.every((url) => url.isEmpty)) return null;
+
+    final trimmed = List<String>.from(normalized);
+    while (trimmed.isNotEmpty && trimmed.last.isEmpty) {
+      trimmed.removeLast();
+    }
+    return trimmed.isEmpty ? null : trimmed;
   }
 
   String? _imageExtension(String fileName) {
@@ -1147,7 +1186,12 @@ class VendorStore {
     String fileName,
   ) async {
     await requireOwnedVendor(session);
-    return _persistProductImage(session, fileData, fileName);
+    return _persistProductImage(
+      session,
+      fileData,
+      fileName,
+      removeBackground: false,
+    );
   }
 
   Future<Order> _requireMutableVendorOrder(

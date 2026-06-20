@@ -11,42 +11,25 @@ import 'aws_s3_put.dart';
 /// API key: [TripoApiKeyConfig.configFileName] or [TripoApiKeyConfig.apiKeyEnv].
 abstract final class TripoClient {
   static const _baseUrl = 'https://api.tripo3d.ai/v2/openapi';
-  /// H3 multiview — better geometry/texture than v2.5 for furniture.
-  static const _modelVersion = 'v3.1-20260211';
-  static const _pollInterval = Duration(seconds: 3);
-  static const _maxPollAttempts = 120;
+  /// v2.5 multiview — fastest stable option for live demos (~1–2 min).
+  static const _modelVersion = 'v2.5-20250123';
+  static const _pollInterval = Duration(seconds: 2);
+  static const _maxPollAttempts = 60;
 
-  /// Guides shape + materials for furniture multiview reconstruction.
-  static const multiviewPrompt =
-      'Reconstruct this exact furniture piece from the multi-view photos. '
-      'Match the true proportions, silhouette, backrest shape, armrest curves, '
-      'seat depth, leg style, and all distinctive design features visible in '
-      'the photos. Preserve wood grain, fabric weave, stitching, seams, '
-      'patterns, and material characteristics. Do not simplify, smooth, or '
-      'genericize the design. The result must look like the same real product '
-      'for e-commerce and AR.';
-
-  static const multiviewNegativePrompt =
-      'wrong proportions, generic chair, simplified shape, missing back cutout, '
-      'smooth texture, blurred texture, plastic appearance, toy-like, stylized, '
-      'cartoon, low detail, averaged texture, different furniture design';
-
-  /// Maximum texture fidelity — no autofix, low-poly, PBR regen, or compression.
+  /// Fast demo profile: textured but not extreme/PBR (saves several minutes).
   static const _baseTextureParams = <String, dynamic>{
     'texture': true,
     'pbr': false,
     'texture_alignment': 'original_image',
+    'texture_quality': 'standard',
     'orientation': 'align_image',
     'enable_image_autofix': false,
+    'export_uv': false,
     'smart_low_poly': false,
     'quad': false,
     'generate_parts': false,
-    'geometry_quality': 'detailed',
-    'prompt': multiviewPrompt,
-    'negative_prompt': multiviewNegativePrompt,
   };
 
-  /// Tripo task params tuned for furniture multiview texture fidelity.
   static Map<String, dynamic> taskParamsForLogging({required int viewCount}) {
     return _taskParams(viewCount: viewCount);
   }
@@ -54,8 +37,7 @@ abstract final class TripoClient {
   static Map<String, dynamic> _taskParams({required int viewCount}) {
     return {
       ..._baseTextureParams,
-      'face_limit': viewCount >= 5 ? 800000 : 600000,
-      'texture_quality': 'extreme',
+      'face_limit': 50000,
     };
   }
 
@@ -112,21 +94,17 @@ abstract final class TripoClient {
     }
 
     final apiKey = _requireApiKey();
-    final uploadedViews = <_UploadedTripoImage?>[];
-    for (final view in views) {
-      if (view == null) {
-        uploadedViews.add(null);
-        continue;
-      }
-      uploadedViews.add(
-        await _uploadImage(
+    final uploadedViews = await Future.wait(
+      views.map((view) async {
+        if (view == null) return null;
+        return _uploadImage(
           session,
           apiKey: apiKey,
           imageBytes: view.bytes,
           imageFormat: view.format,
-        ),
-      );
-    }
+        );
+      }),
+    );
 
     final taskParams = _taskParams(viewCount: sourceViewCount ?? provided);
     _logTextureGenerationSettings(
@@ -381,17 +359,18 @@ abstract final class TripoClient {
     }
 
     throw TripoClientException(
-      'Tripo generation timed out. Try again in a few minutes.',
+      'Tripo generation timed out after ${(_maxPollAttempts * _pollInterval.inSeconds) ~/ 60} '
+      'minutes. Try again — Tripo may be busy.',
     );
   }
 
   static String? _pickModelUrl(Map<String, dynamic> output) {
-    // Prefer non-PBR textured model to keep photo-projected materials.
-    for (final key in ['model', 'base_model']) {
+    // Prefer fully textured model (HD diffuse + PBR when enabled).
+    for (final key in ['model', 'pbr_model', 'base_model']) {
       final url = _extractUrl(output[key]);
       if (url != null) return url;
     }
-    return _extractUrl(output['pbr_model']);
+    return null;
   }
 
   static String? _extractUrl(dynamic value) {

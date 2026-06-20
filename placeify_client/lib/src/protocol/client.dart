@@ -1025,13 +1025,15 @@ class EndpointVendor extends _i2.EndpointRef {
 
   _i3.Future<String> uploadProductImage(
     _i36.ByteData fileData,
-    String fileName,
-  ) => caller.callServerEndpoint<String>(
+    String fileName, {
+    required bool removeBackground,
+  }) => caller.callServerEndpoint<String>(
     'vendor',
     'uploadProductImage',
     {
       'fileData': fileData,
       'fileName': fileName,
+      'removeBackground': removeBackground,
     },
   );
 

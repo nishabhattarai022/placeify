@@ -1,8 +1,8 @@
-/// Resolves original photo paths stored alongside catalog JPEG uploads.
+/// Resolves Tripo source paths stored alongside catalog JPEG uploads.
 abstract final class Product3dImagePaths {
-  /// Candidate Tripo source paths for a catalog URL (vendor originals).
+  /// Candidate raw originals for a catalog URL (thumbnail white-bg JPEG).
   ///
-  /// `/uploads/123_chair.jpg` → `/uploads/123_chair_tripo.jpg`, `_tripo.png`, etc.
+  /// `/uploads/123_chair.jpg` → `/uploads/123_chair_tripo.jpg`, etc.
   static List<String> tripoSourceCandidatesForCatalog(String catalogUrlPath) {
     final trimmed = catalogUrlPath.trim();
     if (trimmed.isEmpty) return const [];
@@ -18,7 +18,6 @@ abstract final class Product3dImagePaths {
     ];
   }
 
-  /// Storage path for the high-fidelity original saved next to a catalog JPEG.
   static String tripoStoragePathForCatalog({
     required String catalogStoragePath,
     required String originalExtension,

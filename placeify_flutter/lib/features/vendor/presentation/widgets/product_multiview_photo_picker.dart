@@ -4,35 +4,28 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radii.dart';
 import '../../data/product_image_service.dart';
 
-/// Minimum photos required for Tripo 3D generation.
-const int kMinProductPhotosFor3d = 5;
+/// Minimum photos required for Tripo 3D generation (matches Tripo API).
+const int kMinProductPhotosFor3d = 4;
 
-/// Recommended photo count for best Tripo multiview results.
-const int kRecommendedProductPhotosFor3d = 6;
+/// Same as minimum — Tripo accepts exactly four views.
+const int kRecommendedProductPhotosFor3d = 4;
 
 const String kMinProductPhotosMessage =
-    'Please upload at least 5 images for accurate 3D reconstruction.';
+    'Please upload 4 photos: front, left, back, and right.';
 
-/// Tripo capture slots: front + [left, back, right, frontLeft, frontRight].
+/// Tripo capture slots: front, left, back, right.
 enum ProductPhotoView {
   front('Front', 'Face the product directly'),
-  left('Left', 'Camera on the left side'),
+  left('Left', 'Camera on the left side (90°)'),
   back('Back', 'Straight from behind'),
-  right('Right', 'Camera on the right side'),
-  frontLeft('Front-left 45°', 'Angled between front and left'),
-  frontRight('Front-right 45°', 'Angled between front and right (recommended)');
+  right('Right', 'Camera on the right side (90°)');
 
   const ProductPhotoView(this.label, this.hint);
 
   final String label;
   final String hint;
 
-  bool get isRequiredForMinimum =>
-      this == ProductPhotoView.front ||
-      this == ProductPhotoView.left ||
-      this == ProductPhotoView.back ||
-      this == ProductPhotoView.right ||
-      this == ProductPhotoView.frontLeft;
+  bool get isRequiredForMinimum => true;
 }
 
 class ProductMultiviewPhotoPicker extends StatelessWidget {
@@ -72,9 +65,9 @@ class ProductMultiviewPhotoPicker extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          'Upload at least $kMinProductPhotosFor3d photos (recommended '
-          '$kRecommendedProductPhotosFor3d): front, sides, back, and 45° angles. '
-          'Use even light and the same item in every shot.',
+          'Upload $kMinProductPhotosFor3d photos for Tripo: front, left, back, right. '
+          'Only the front photo gets a white catalog background; Tripo receives '
+          'your original camera files for all four angles.',
           style: const TextStyle(
             fontSize: 12,
             color: AppColors.textMuted,

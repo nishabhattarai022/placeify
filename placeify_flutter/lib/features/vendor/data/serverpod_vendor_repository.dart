@@ -105,10 +105,11 @@ class ServerpodVendorRepository implements VendorCommerceRepository {
       final thumbnailUrl = await client.vendor.uploadProductImage(
         ByteData.sublistView(Uint8List.fromList(imageBytes)),
         imageFileName,
+        removeBackground: true,
       );
 
       final viewImageUrls = <String>[];
-      for (final photo in extraViewPhotos.take(5)) {
+      for (final photo in extraViewPhotos.take(3)) {
         if (photo == null) {
           if (viewImageUrls.isNotEmpty) viewImageUrls.add('');
           continue;
@@ -117,6 +118,7 @@ class ServerpodVendorRepository implements VendorCommerceRepository {
           await client.vendor.uploadProductImage(
             ByteData.sublistView(photo.bytes),
             photo.fileName,
+            removeBackground: false,
           ),
         );
       }
@@ -318,7 +320,7 @@ class ServerpodVendorRepository implements VendorCommerceRepository {
     }
     if (message.contains('MODEL3D_INSUFFICIENT_VIEWS')) {
       return VendorCommerceRepositoryException(
-        'Please upload at least 5 images for accurate 3D reconstruction.',
+        'Please upload 4 photos (front, left, back, right) for 3D generation.',
         code: 'MODEL3D_INSUFFICIENT_VIEWS',
       );
     }

@@ -16,7 +16,7 @@ abstract final class Product3dModelResolver {
 
   static bool hasPreview(Product product) {
     final url = modelUrlFor(product.id);
-    return product.hasArView || (url != null && url.isNotEmpty);
+    return url != null && url.isNotEmpty;
   }
 
   /// Resolves the glb source for [product] (remote URL from [model3dUrl]).
