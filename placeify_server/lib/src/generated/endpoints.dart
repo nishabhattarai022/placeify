@@ -1773,6 +1773,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<String>(),
               nullable: false,
             ),
+            'removeBackground': _i1.ParameterDescription(
+              name: 'removeBackground',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            ),
           },
           call:
               (
@@ -1783,6 +1788,7 @@ class Endpoints extends _i1.EndpointDispatch {
                     session,
                     params['fileData'],
                     params['fileName'],
+                    removeBackground: params['removeBackground'],
                   ),
         ),
         'regenerateProductModel3d': _i1.MethodConnector(

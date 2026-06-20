@@ -195,9 +195,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
 
   bool get _hasPhoto => _photos.containsKey(ProductPhotoView.front);
 
-  bool get _hasMinimumPhotos => _photos.length >= kMinProductPhotosFor3d;
-
-  int get _photoCount => _photos.length;
+  bool get _hasMinimumPhotos =>
+      ProductPhotoView.values.every(_photos.containsKey);
 
   bool get _hasCategory => _selectedCategoryId != null;
 
@@ -258,8 +257,6 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
           ProductPhotoView.left,
           ProductPhotoView.back,
           ProductPhotoView.right,
-          ProductPhotoView.frontLeft,
-          ProductPhotoView.frontRight,
         ])
           _photos[view],
       ];
@@ -288,7 +285,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       if (!mounted) return;
       PlaceifyToast.show(
         context,
-        'Product published — Build 3D will use your $_photoCount photos',
+        'Product published — Build 3D will use your 4 Tripo photos',
       );
       context.pop();
     } on VendorCommerceRepositoryException catch (error) {
@@ -364,9 +361,9 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                         step: 1,
                         title: 'Product photos',
                         subtitle:
-                            'Upload at least 5 photos (recommended 6): front, sides, '
-                            'back, and 45° angles. Use even light — 3D uses white-background '
-                            'preprocessed frames sent to Tripo.',
+                            'Upload 4 photos for Tripo: front, left, back, right. '
+                            'Only the front gets a white catalog background; Tripo '
+                            'uses your original camera files.',
                         children: [
                           DecoratedBox(
                             decoration: BoxDecoration(
