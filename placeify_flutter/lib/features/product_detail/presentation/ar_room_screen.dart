@@ -47,7 +47,7 @@ class ArRoomScreen extends StatefulWidget {
 
 enum _ArPhase {
   loadingModel,
-  scanning,
+  preview,
   readyToPlace,
   placed,
 }
@@ -60,6 +60,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
 
   ARNode? _placedNode;
   ARPlaneAnchor? _placedAnchor;
+  bool _isAnchored = false;
 
   String? _modelUri;
   _ArPhase _phase = _ArPhase.loadingModel;
@@ -88,7 +89,10 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   @override
   Widget build(BuildContext context) {
     final showScanOverlay =
-        !_surfaceDetected && _phase != _ArPhase.loadingModel && !_isPlacing;
+        !_isAnchored &&
+        !_surfaceDetected &&
+        _phase != _ArPhase.loadingModel &&
+        !_isPlacing;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -171,7 +175,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     if (state == 'TRACKING' && !_surfaceDetected) {
       setState(() {
         _surfaceDetected = true;
-        if (_phase == _ArPhase.scanning) {
+        if (_phase == _ArPhase.preview) {
           _phase = _ArPhase.readyToPlace;
         }
       });
@@ -193,7 +197,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
 
     if (localModel == null) {
       setState(() {
-        _phase = _ArPhase.scanning;
+        _phase = _ArPhase.preview;
         _statusMessage =
             'Could not load the 3D model. Check your connection and try again.';
       });
@@ -202,8 +206,43 @@ class _ArRoomScreenState extends State<ArRoomScreen>
 
     setState(() {
       _modelUri = localModel.arNodeUri;
-      _phase = _ArPhase.scanning;
+      _phase = _ArPhase.preview;
       _statusMessage = null;
+    });
+
+    await _showPreviewModel();
+  }
+
+  /// Shows the furniture in the scene immediately (floating preview, not anchored).
+  Future<void> _showPreviewModel() async {
+    final objectManager = _objectManager;
+    final modelUri = _modelUri;
+    if (objectManager == null || modelUri == null || _placedNode != null) {
+      return;
+    }
+
+    final node = ARNode(
+      type: NodeType.fileSystemAppFolderGLB,
+      uri: modelUri,
+      scale: Vector3.all(_kFurnitureScale),
+      position: Vector3(0, -0.25, -0.85),
+      rotation: Vector4(1, 0, 0, 0),
+    );
+
+    final didAddNode = await objectManager.addNode(node);
+    if (!mounted) return;
+
+    if (didAddNode != true) {
+      setState(() {
+        _statusMessage =
+            'Could not show the 3D model. Check your connection and try again.';
+      });
+      return;
+    }
+
+    setState(() {
+      _placedNode = node;
+      _isAnchored = false;
     });
   }
 
@@ -235,7 +274,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     setState(() {
       _surfaceDetected = true;
       _statusMessage = null;
-      if (_phase == _ArPhase.scanning) {
+      if (_phase == _ArPhase.preview) {
         _phase = _ArPhase.readyToPlace;
       }
     });
@@ -266,6 +305,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       final didAddAnchor = await anchorManager.addAnchor(anchor);
       if (didAddAnchor != true) {
         _showStatus('Could not anchor to this surface. Try another spot.');
+        await _showPreviewModel();
         return;
       }
 
@@ -281,6 +321,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       if (didAddNode != true) {
         await anchorManager.removeAnchor(anchor);
         _showStatus('Could not place the model. Try another spot.');
+        await _showPreviewModel();
         return;
       }
 
@@ -288,6 +329,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       setState(() {
         _placedAnchor = anchor;
         _placedNode = node;
+        _isAnchored = true;
         _phase = _ArPhase.placed;
         _statusMessage = null;
       });
@@ -313,6 +355,8 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       await anchorManager.removeAnchor(anchor);
       _placedAnchor = null;
     }
+
+    _isAnchored = false;
   }
 }
 
@@ -469,8 +513,8 @@ class _InstructionBanner extends StatelessWidget {
   String _defaultMessage() {
     return switch (phase) {
       _ArPhase.loadingModel => 'Loading $productName…',
-      _ArPhase.scanning =>
-        'Slowly scan the floor or a flat table. White grids mark detected surfaces.',
+      _ArPhase.preview =>
+        '$productName is ready. Scan a flat surface, then tap to place it in your room.',
       _ArPhase.readyToPlace =>
         'Tap a highlighted surface to place $productName.',
       _ArPhase.placed =>
