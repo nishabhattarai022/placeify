@@ -57,8 +57,8 @@ class VendorApplicationActions extends _$VendorApplicationActions {
       await repo.approve(userId: userId, vendorId: vendorId);
       _invalidateAfterDecision(vendorId);
       return null;
-    } catch (_) {
-      return 'Could not approve application';
+    } catch (e) {
+      return 'Could not approve application: $e';
     }
   }
 

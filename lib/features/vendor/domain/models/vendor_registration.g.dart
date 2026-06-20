@@ -104,10 +104,21 @@ _VendorRegistration _$VendorRegistrationFromJson(Map<String, dynamic> json) =>
       address: json['address'] == null
           ? const VendorAddress()
           : VendorAddress.fromJson(json['address'] as Map<String, dynamic>),
-      category: json['category'] == null
-          ? const VendorCategoryInfo()
-          : VendorCategoryInfo.fromJson(
-              json['category'] as Map<String, dynamic>),
+      category: (() {
+        final raw = json['category'];
+        if (raw == null) return const VendorCategoryInfo();
+        if (raw is Map<String, dynamic>) {
+          return VendorCategoryInfo.fromJson(raw);
+        }
+        // Backward compatibility for legacy payloads that stored category
+        // as a plain string.
+        if (raw is String && raw.trim().isNotEmpty) {
+          return VendorCategoryInfo(
+            categories: [raw.trim()],
+          );
+        }
+        return const VendorCategoryInfo();
+      })(),
       documents: json['documents'] == null
           ? const VendorDocuments()
           : VendorDocuments.fromJson(json['documents'] as Map<String, dynamic>),
