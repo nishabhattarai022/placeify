@@ -16,10 +16,14 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:vector_math/vector_math_64.dart' hide Colors;
 
+import '../../../../core/widgets/ar_corner_bracket.dart';
 import '../data/product_3d_model_loader.dart';
 import 'webcam_ar_room_screen.dart';
 
-/// Full-screen in-app AR: live camera feed with the product GLB placed in the scene.
+/// Default scale for Tripo GLB furniture in AR (meters-ish after native factors).
+const _kFurnitureScale = 0.35;
+
+/// Full-screen in-app AR: plane scan → tap to place → anchored furniture.
 class ArRoomScreen extends StatefulWidget {
   const ArRoomScreen({
     required this.remoteModelUrl,
@@ -41,7 +45,15 @@ class ArRoomScreen extends StatefulWidget {
   State<ArRoomScreen> createState() => _ArRoomScreenState();
 }
 
-class _ArRoomScreenState extends State<ArRoomScreen> {
+enum _ArPhase {
+  loadingModel,
+  scanning,
+  readyToPlace,
+  placed,
+}
+
+class _ArRoomScreenState extends State<ArRoomScreen>
+    with SingleTickerProviderStateMixin {
   ARSessionManager? _sessionManager;
   ARObjectManager? _objectManager;
   ARAnchorManager? _anchorManager;
@@ -50,18 +62,34 @@ class _ArRoomScreenState extends State<ArRoomScreen> {
   ARPlaneAnchor? _placedAnchor;
 
   String? _modelUri;
-  bool _modelLoading = true;
-  bool _placed = false;
+  _ArPhase _phase = _ArPhase.loadingModel;
+  bool _surfaceDetected = false;
+  bool _isPlacing = false;
   String? _statusMessage;
+
+  late final AnimationController _scanPulseController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scanPulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
+  }
 
   @override
   void dispose() {
+    _scanPulseController.dispose();
     _sessionManager?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final showScanOverlay =
+        !_surfaceDetected && _phase != _ArPhase.loadingModel && !_isPlacing;
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -71,6 +99,12 @@ class _ArRoomScreenState extends State<ArRoomScreen> {
             onARViewCreated: _onArViewCreated,
             planeDetectionConfig: PlaneDetectionConfig.horizontal,
           ),
+          if (showScanOverlay)
+            IgnorePointer(
+              child: _PlaneScanOverlay(
+                pulse: _scanPulseController,
+              ),
+            ),
           SafeArea(
             child: Column(
               children: [
@@ -85,11 +119,15 @@ class _ArRoomScreenState extends State<ArRoomScreen> {
                     icon: const Icon(Icons.close),
                   ),
                 ),
+                if (_surfaceDetected && _phase != _ArPhase.placed)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8),
+                    child: _SurfaceDetectedChip(),
+                  ),
                 const Spacer(),
                 _InstructionBanner(
                   productName: widget.productName,
-                  placed: _placed,
-                  modelLoading: _modelLoading,
+                  phase: _phase,
                   statusMessage: _statusMessage,
                 ),
               ],
@@ -110,16 +148,34 @@ class _ArRoomScreenState extends State<ArRoomScreen> {
     _objectManager = objectManager;
     _anchorManager = anchorManager;
 
+    sessionManager.onTrackingStateChanged = _onTrackingStateChanged;
+    sessionManager.onPlaneOrPointTap = _onPlaneTapped;
+
     sessionManager.onInitialize(
+      showAnimatedGuide: true,
+      autoHideCoachingOverlay: true,
       showFeaturePoints: false,
       showPlanes: true,
       showWorldOrigin: false,
+      handleTaps: true,
     );
     objectManager.onInitialize();
 
-    sessionManager.onPlaneOrPointTap = _onPlaneTapped;
+    _loadModel();
+  }
 
-    _loadModelAndPlace();
+  void _onTrackingStateChanged(String state, String reason) {
+    if (!mounted || _phase == _ArPhase.loadingModel) return;
+
+    // ARCore reports TRACKING when the session is stable enough to detect planes.
+    if (state == 'TRACKING' && !_surfaceDetected) {
+      setState(() {
+        _surfaceDetected = true;
+        if (_phase == _ArPhase.scanning) {
+          _phase = _ArPhase.readyToPlace;
+        }
+      });
+    }
   }
 
   void _showStatus(String message) {
@@ -127,7 +183,7 @@ class _ArRoomScreenState extends State<ArRoomScreen> {
     setState(() => _statusMessage = message);
   }
 
-  Future<void> _loadModelAndPlace() async {
+  Future<void> _loadModel() async {
     final localModel = await Product3dModelLoader.prepareForAr(
       remoteUrl: widget.remoteModelUrl,
       productId: widget.productId,
@@ -137,7 +193,7 @@ class _ArRoomScreenState extends State<ArRoomScreen> {
 
     if (localModel == null) {
       setState(() {
-        _modelLoading = false;
+        _phase = _ArPhase.scanning;
         _statusMessage =
             'Could not load the 3D model. Check your connection and try again.';
       });
@@ -146,42 +202,8 @@ class _ArRoomScreenState extends State<ArRoomScreen> {
 
     setState(() {
       _modelUri = localModel.arNodeUri;
-      _modelLoading = false;
-    });
-
-    await _placeModelInFront();
-  }
-
-  Future<void> _placeModelInFront() async {
-    final objectManager = _objectManager;
-    final modelUri = _modelUri;
-    if (objectManager == null || modelUri == null || _placedNode != null) {
-      return;
-    }
-
-    final node = ARNode(
-      type: NodeType.fileSystemAppFolderGLB,
-      uri: modelUri,
-      scale: Vector3(0.35, 0.35, 0.35),
-      position: Vector3(0, -0.25, -0.85),
-      rotation: Vector4(1, 0, 0, 0),
-    );
-
-    final didAddNode = await objectManager.addNode(node);
-    if (!mounted) return;
-
-    if (didAddNode != true) {
-      _showStatus(
-        'Model loaded but could not be placed. Tap the floor to try again.',
-      );
-      return;
-    }
-
-    setState(() {
-      _placed = true;
-      _placedNode = node;
-      _statusMessage =
-          'Move around to view ${widget.productName}. Tap the floor to reposition.';
+      _phase = _ArPhase.scanning;
+      _statusMessage = null;
     });
   }
 
@@ -189,84 +211,226 @@ class _ArRoomScreenState extends State<ArRoomScreen> {
     final objectManager = _objectManager;
     final anchorManager = _anchorManager;
     final modelUri = _modelUri;
+
     if (objectManager == null ||
         anchorManager == null ||
         modelUri == null ||
-        _modelLoading) {
+        _phase == _ArPhase.loadingModel ||
+        _isPlacing) {
       return;
     }
 
     final planeHits = hitTestResults
         .where((result) => result.type == ARHitTestResultType.plane)
-        .toList();
+        .toList()
+      ..sort((a, b) => a.distance.compareTo(b.distance));
+
     if (planeHits.isEmpty) {
-      _showStatus('Move your phone slowly to find the floor, then tap again.');
+      _showStatus(
+        'No surface detected here. Move your phone slowly until white grids appear, then tap again.',
+      );
       return;
     }
 
-    if (_placedNode != null) {
-      await objectManager.removeNode(_placedNode!);
+    setState(() {
+      _surfaceDetected = true;
+      _statusMessage = null;
+      if (_phase == _ArPhase.scanning) {
+        _phase = _ArPhase.readyToPlace;
+      }
+    });
+
+    await _placeFurnitureAtHit(
+      objectManager: objectManager,
+      anchorManager: anchorManager,
+      modelUri: modelUri,
+      hit: planeHits.first,
+    );
+  }
+
+  Future<void> _placeFurnitureAtHit({
+    required ARObjectManager objectManager,
+    required ARAnchorManager anchorManager,
+    required String modelUri,
+    required ARHitTestResult hit,
+  }) async {
+    setState(() => _isPlacing = true);
+
+    try {
+      await _removePlacedFurniture(
+        objectManager: objectManager,
+        anchorManager: anchorManager,
+      );
+
+      final anchor = ARPlaneAnchor(transformation: hit.worldTransform);
+      final didAddAnchor = await anchorManager.addAnchor(anchor);
+      if (didAddAnchor != true) {
+        _showStatus('Could not anchor to this surface. Try another spot.');
+        return;
+      }
+
+      final node = ARNode(
+        type: NodeType.fileSystemAppFolderGLB,
+        uri: modelUri,
+        scale: Vector3.all(_kFurnitureScale),
+        position: Vector3.zero(),
+        rotation: Vector4(1, 0, 0, 0),
+      );
+
+      final didAddNode = await objectManager.addNode(node, planeAnchor: anchor);
+      if (didAddNode != true) {
+        await anchorManager.removeAnchor(anchor);
+        _showStatus('Could not place the model. Try another spot.');
+        return;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _placedAnchor = anchor;
+        _placedNode = node;
+        _phase = _ArPhase.placed;
+        _statusMessage = null;
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isPlacing = false);
+      }
+    }
+  }
+
+  Future<void> _removePlacedFurniture({
+    required ARObjectManager objectManager,
+    required ARAnchorManager anchorManager,
+  }) async {
+    final node = _placedNode;
+    if (node != null) {
+      await objectManager.removeNode(node);
       _placedNode = null;
     }
-    if (_placedAnchor != null) {
-      await anchorManager.removeAnchor(_placedAnchor!);
+
+    final anchor = _placedAnchor;
+    if (anchor != null) {
+      await anchorManager.removeAnchor(anchor);
       _placedAnchor = null;
     }
+  }
+}
 
-    final hit = planeHits.first;
-    final anchor = ARPlaneAnchor(transformation: hit.worldTransform);
-    final didAddAnchor = await anchorManager.addAnchor(anchor);
-    if (didAddAnchor != true) {
-      _showStatus('Could not anchor the model. Try tapping another spot.');
-      return;
-    }
+class _PlaneScanOverlay extends StatelessWidget {
+  const _PlaneScanOverlay({required this.pulse});
 
-    final node = ARNode(
-      type: NodeType.fileSystemAppFolderGLB,
-      uri: modelUri,
-      scale: Vector3(0.35, 0.35, 0.35),
-      position: Vector3.zero(),
-      rotation: Vector4(1, 0, 0, 0),
+  final Animation<double> pulse;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: AnimatedBuilder(
+        animation: pulse,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: 0.92 + (pulse.value * 0.08),
+            child: child,
+          );
+        },
+        child: SizedBox(
+          width: 220,
+          height: 220,
+          child: Stack(
+            children: const [
+              Positioned(
+                top: 0,
+                left: 0,
+                child: ArCornerBracket(
+                  corner: BracketCorner.topLeft,
+                  color: Colors.white,
+                  size: 28,
+                  strokeWidth: 3,
+                ),
+              ),
+              Positioned(
+                top: 0,
+                right: 0,
+                child: ArCornerBracket(
+                  corner: BracketCorner.topRight,
+                  color: Colors.white,
+                  size: 28,
+                  strokeWidth: 3,
+                ),
+              ),
+              Positioned(
+                bottom: 0,
+                left: 0,
+                child: ArCornerBracket(
+                  corner: BracketCorner.bottomLeft,
+                  color: Colors.white,
+                  size: 28,
+                  strokeWidth: 3,
+                ),
+              ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: ArCornerBracket(
+                  corner: BracketCorner.bottomRight,
+                  color: Colors.white,
+                  size: 28,
+                  strokeWidth: 3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
+  }
+}
 
-    final didAddNode = await objectManager.addNode(node, planeAnchor: anchor);
-    if (didAddNode != true) {
-      await anchorManager.removeAnchor(anchor);
-      _showStatus('Could not place the model. Try another spot.');
-      return;
-    }
+class _SurfaceDetectedChip extends StatelessWidget {
+  const _SurfaceDetectedChip();
 
-    if (!mounted) return;
-    setState(() {
-      _placed = true;
-      _placedAnchor = anchor;
-      _placedNode = node;
-      _statusMessage = null;
-    });
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.green.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
+            SizedBox(width: 6),
+            Text(
+              'Surface detected',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
 class _InstructionBanner extends StatelessWidget {
   const _InstructionBanner({
     required this.productName,
-    required this.placed,
-    required this.modelLoading,
+    required this.phase,
     this.statusMessage,
   });
 
   final String productName;
-  final bool placed;
-  final bool modelLoading;
+  final _ArPhase phase;
   final String? statusMessage;
 
   @override
   Widget build(BuildContext context) {
-    final message = statusMessage ??
-        (modelLoading
-            ? 'Camera is on. Loading $productName…'
-            : placed
-                ? 'Move around to view $productName. Tap the floor to reposition.'
-                : 'Scan the floor — placing $productName in your room.');
+    final message = statusMessage ?? _defaultMessage();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
@@ -280,7 +444,7 @@ class _InstructionBanner extends StatelessWidget {
           child: Row(
             children: [
               Icon(
-                placed ? Icons.check_circle_outline : Icons.view_in_ar_outlined,
+                _iconForPhase(),
                 color: Colors.white,
                 size: 22,
               ),
@@ -300,6 +464,29 @@ class _InstructionBanner extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _defaultMessage() {
+    return switch (phase) {
+      _ArPhase.loadingModel => 'Loading $productName…',
+      _ArPhase.scanning =>
+        'Slowly scan the floor or a flat table. White grids mark detected surfaces.',
+      _ArPhase.readyToPlace =>
+        'Tap a highlighted surface to place $productName.',
+      _ArPhase.placed =>
+        'Walk around to preview $productName. Tap another surface to move it.',
+    };
+  }
+
+  IconData _iconForPhase() {
+    if (statusMessage != null) {
+      return Icons.info_outline;
+    }
+    return switch (phase) {
+      _ArPhase.placed => Icons.check_circle_outline,
+      _ArPhase.readyToPlace => Icons.touch_app_outlined,
+      _ => Icons.view_in_ar_outlined,
+    };
   }
 }
 
