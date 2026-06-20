@@ -62,4 +62,7 @@ abstract final class VendorFormStrings {
   static const bankNameHint = 'e.g. Nabil Bank, NIC Asia';
   static const branchSwiftLabel = 'Branch / SWIFT Code';
   static const branchSwiftHint = 'e.g. NIBLNPKT';
+
+  static const fixValidationErrors =
+      'Please fix the highlighted fields below before continuing';
 }

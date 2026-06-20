@@ -7,7 +7,9 @@ import '../../../../../core/widgets/placeify_bottom_sheet.dart';
 import '../../../../../data/furniture_categories.dart';
 import '../../../../profile/presentation/widgets/shared/profile_form_field.dart';
 import '../../../domain/models/vendor_registration.dart';
+import '../../../domain/validators/vendor_registration_validator.dart';
 import '../../providers/vendor_registration_provider.dart';
+import '../widgets/vendor_registration_error_banner.dart';
 
 class CategoryStep extends ConsumerStatefulWidget {
   const CategoryStep({super.key});
@@ -44,13 +46,21 @@ class _CategoryStepState extends ConsumerState<CategoryStep> {
     } else {
       selected.add(name);
     }
-    _sync(current.copyWith(categories: selected));
+    final notifier = ref.read(vendorRegistrationProvider.notifier);
+    notifier.updateCategory(current.copyWith(categories: selected));
+    if (selected.isNotEmpty) {
+      notifier.clearFieldError(VendorRegistrationFieldKeys.categories);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final selected =
-        ref.watch(vendorRegistrationProvider).form.category.categories;
+    final uiState = ref.watch(vendorRegistrationProvider);
+    final selected = uiState.form.category.categories;
+    final fieldErrors = uiState.fieldErrors;
+    final categoriesError = fieldErrors[VendorRegistrationFieldKeys.categories];
+    final hasCategoriesError =
+        fieldErrors.containsKey(VendorRegistrationFieldKeys.categories);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
@@ -73,13 +83,20 @@ class _CategoryStepState extends ConsumerState<CategoryStep> {
           ),
         ),
         const SizedBox(height: 20),
+        VendorRegistrationErrorBanner(errors: fieldErrors),
         ProfileFormField(
           label: 'Categories',
+          error: categoriesError,
           child: Container(
             decoration: BoxDecoration(
               color: AppColors.cream,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.creamDark, width: 1.5),
+              border: Border.all(
+                color: hasCategoriesError
+                    ? AppColors.coral
+                    : AppColors.creamDark,
+                width: 1.5,
+              ),
             ),
             child: Column(
               children: [
@@ -131,7 +148,9 @@ class _CategoryIcon extends StatelessWidget {
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        color: selected ? bgColor.withValues(alpha: 0.35) : bgColor.withValues(alpha: 0.22),
+        color: selected
+            ? bgColor.withValues(alpha: 0.35)
+            : bgColor.withValues(alpha: 0.22),
         borderRadius: BorderRadius.circular(10),
       ),
       alignment: Alignment.center,
