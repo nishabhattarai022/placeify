@@ -3,13 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:placeify/core/constants/app_colors.dart';
 import 'package:placeify/core/services/haptic_service.dart';
 import 'package:placeify/core/theme/app_fonts.dart';
+import 'package:placeify/features/shops/data/shop_listing_images.dart';
 import 'package:placeify/features/shops/domain/models/shop_listing.dart';
+import 'package:placeify/features/shops/presentation/widgets/shop_listing_image.dart';
 
 const _kCardRadiusMinimal = 22.0;
 
 /// Tier C — shown when [ShopListing.productCount] is 0.
 ///
-/// Quieter outlined card: storefront icon + shop name + "Opening soon" badge.
+/// Quieter outlined card: shop image + name + "Opening soon" badge.
 class VendorCardMinimal extends StatefulWidget {
   const VendorCardMinimal({
     required this.shop,
@@ -69,10 +71,8 @@ class _VendorCardMinimalState extends State<VendorCardMinimal> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Icon ─────────────────────────────────────────
-                    _ShopIconBox(vendorId: shop.vendorId),
+                    _ShopImagePreview(shop: shop),
                     const SizedBox(height: 12),
-                    // ── Name ─────────────────────────────────────────
                     Text(
                       shop.businessName,
                       maxLines: 2,
@@ -95,7 +95,6 @@ class _VendorCardMinimalState extends State<VendorCardMinimal> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    // ── "Opening soon" badge ──────────────────────────
                     const _OpeningSoonBadge(),
                   ],
                 ),
@@ -108,40 +107,23 @@ class _VendorCardMinimalState extends State<VendorCardMinimal> {
   }
 }
 
-// ── Sub-widgets ────────────────────────────────────────────────────────────────
+class _ShopImagePreview extends StatelessWidget {
+  const _ShopImagePreview({required this.shop});
 
-class _ShopIconBox extends StatelessWidget {
-  const _ShopIconBox({required this.vendorId});
-
-  final String vendorId;
-
-  static const _palette = [
-    Color(0xFFB5654B),
-    Color(0xFF7A8C6E),
-    Color(0xFF4A9B8F),
-    Color(0xFFC17F3C),
-    Color(0xFF8B7EC8),
-    Color(0xFF2C7873),
-    Color(0xFF9B4A2A),
-    Color(0xFF5B7FA6),
-  ];
+  final ShopListing shop;
 
   @override
   Widget build(BuildContext context) {
-    final color = _palette[vendorId.hashCode.abs() % _palette.length];
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      alignment: Alignment.center,
-      child: Icon(
-        Icons.storefront_outlined,
-        size: 22,
-        color: color.withValues(alpha: 0.65),
-      ),
+    final imageUrl = shop.bannerUrl ??
+        shop.logoUrl ??
+        ShopListingImages.defaultBanner;
+
+    return ShopListingImage(
+      imageUrl: imageUrl,
+      width: double.infinity,
+      height: 88,
+      borderRadius: BorderRadius.circular(12),
+      fallbackUrl: ShopListingImages.defaultBanner,
     );
   }
 }

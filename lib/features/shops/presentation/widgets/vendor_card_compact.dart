@@ -1,12 +1,13 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import 'package:placeify/core/constants/app_colors.dart';
 import 'package:placeify/core/services/haptic_service.dart';
 import 'package:placeify/core/theme/app_fonts.dart';
+import 'package:placeify/features/shops/data/shop_listing_images.dart';
 import 'package:placeify/features/shops/data/shop_listing_details.dart';
 import 'package:placeify/features/shops/domain/constants/shop_strings.dart';
 import 'package:placeify/features/shops/domain/models/shop_listing.dart';
+import 'package:placeify/features/shops/presentation/widgets/shop_listing_image.dart';
 
 const _kAccentCompact = Color(0xFFB5654B);
 const _kCardRadiusCompact = 22.0;
@@ -72,7 +73,6 @@ class _VendorCardCompactState extends State<VendorCardCompact> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Logo + name row ───────────────────────────────
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -113,7 +113,6 @@ class _VendorCardCompactState extends State<VendorCardCompact> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    // ── Count pill ────────────────────────────────────
                     _CountPillCompact(count: shop.productCount),
                   ],
                 ),
@@ -126,8 +125,6 @@ class _VendorCardCompactState extends State<VendorCardCompact> {
   }
 }
 
-// ── Sub-widgets ────────────────────────────────────────────────────────────────
-
 class _LogoSquare extends StatelessWidget {
   const _LogoSquare({required this.shop});
 
@@ -135,74 +132,15 @@ class _LogoSquare extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final logoUrl = shop.logoUrl;
     const size = 56.0;
+    final logoUrl = shop.logoUrl ?? ShopListingImages.defaultLogo;
 
-    Widget content;
-    if (logoUrl != null && logoUrl.isNotEmpty) {
-      if (logoUrl.startsWith('assets/')) {
-        content = Image.asset(
-          logoUrl,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _LogoFallback(shop: shop),
-        );
-      } else {
-        content = CachedNetworkImage(
-          imageUrl: logoUrl,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          errorWidget: (_, __, ___) => _LogoFallback(shop: shop),
-        );
-      }
-    } else {
-      content = _LogoFallback(shop: shop);
-    }
-
-    return ClipRRect(
+    return ShopListingImage(
+      imageUrl: logoUrl,
+      width: size,
+      height: size,
       borderRadius: BorderRadius.circular(14),
-      child: SizedBox(width: size, height: size, child: content),
-    );
-  }
-}
-
-class _LogoFallback extends StatelessWidget {
-  const _LogoFallback({required this.shop});
-
-  final ShopListing shop;
-
-  static const _palette = [
-    Color(0xFFB5654B),
-    Color(0xFF7A8C6E),
-    Color(0xFF4A9B8F),
-    Color(0xFFC17F3C),
-    Color(0xFF8B7EC8),
-    Color(0xFF2C7873),
-    Color(0xFF9B4A2A),
-    Color(0xFF5B7FA6),
-  ];
-
-  String get _initial {
-    final name = shop.businessName.trim();
-    return name.isNotEmpty ? name[0].toUpperCase() : '?';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final color = _palette[shop.vendorId.hashCode.abs() % _palette.length];
-    return Container(
-      color: color.withValues(alpha: 0.14),
-      alignment: Alignment.center,
-      child: Text(
-        _initial,
-        style: AppFonts.cormorantGaramond(
-          fontSize: 26,
-          fontWeight: FontWeight.w600,
-          color: color.withValues(alpha: 0.70),
-        ),
-      ),
+      fallbackUrl: ShopListingImages.defaultLogo,
     );
   }
 }

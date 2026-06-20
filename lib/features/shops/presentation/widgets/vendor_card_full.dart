@@ -1,13 +1,13 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:shimmer/shimmer.dart';
 
 import 'package:placeify/core/constants/app_colors.dart';
 import 'package:placeify/core/services/haptic_service.dart';
 import 'package:placeify/core/theme/app_fonts.dart';
+import 'package:placeify/features/shops/data/shop_listing_images.dart';
 import 'package:placeify/features/shops/data/shop_listing_details.dart';
 import 'package:placeify/features/shops/domain/constants/shop_strings.dart';
 import 'package:placeify/features/shops/domain/models/shop_listing.dart';
+import 'package:placeify/features/shops/presentation/widgets/shop_listing_image.dart';
 
 const _kAccent = Color(0xFFB5654B);
 const _kCardRadius = 22.0;
@@ -60,9 +60,7 @@ class _VendorCardFullState extends State<VendorCardFull> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Banner + avatar badge ────────────────────────────────
                 _BannerSection(shop: shop, tileWidth: tileWidth),
-                // ── Text content ─────────────────────────────────────────
                 Padding(
                   padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
                   child: Column(
@@ -104,8 +102,6 @@ class _VendorCardFullState extends State<VendorCardFull> {
   }
 }
 
-// ── Sub-widgets ────────────────────────────────────────────────────────────────
-
 class _CardShell extends StatelessWidget {
   const _CardShell({required this.child});
 
@@ -141,87 +137,28 @@ class _BannerSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bannerUrl = shop.bannerUrl;
-    final logoUrl = shop.logoUrl;
+    final bannerUrl =
+        shop.bannerUrl ?? ShopListingImages.defaultBanner;
+    final logoUrl = shop.logoUrl ?? ShopListingImages.defaultLogo;
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        // Banner image
         AspectRatio(
           aspectRatio: 4 / 3,
-          child: _BannerImage(
-            shop: shop,
-            bannerUrl: bannerUrl,
-            tileWidth: tileWidth,
+          child: ShopListingImage(
+            imageUrl: bannerUrl,
+            width: double.infinity,
+            memCacheWidth: tileWidth,
+            fallbackUrl: ShopListingImages.defaultBanner,
           ),
         ),
-        // Avatar badge at bottom-left, overlapping into card body
-        if (logoUrl != null && logoUrl.isNotEmpty)
-          Positioned(
-            bottom: -14,
-            left: 12,
-            child: _AvatarBadge(logoUrl: logoUrl),
-          ),
+        Positioned(
+          bottom: -14,
+          left: 12,
+          child: _AvatarBadge(logoUrl: logoUrl),
+        ),
       ],
-    );
-  }
-}
-
-class _BannerImage extends StatelessWidget {
-  const _BannerImage({
-    required this.shop,
-    required this.bannerUrl,
-    required this.tileWidth,
-  });
-
-  final ShopListing shop;
-  final String? bannerUrl;
-  final int tileWidth;
-
-  @override
-  Widget build(BuildContext context) {
-    final url = bannerUrl;
-    if (url != null && url.isNotEmpty) {
-      if (url.startsWith('assets/')) {
-        return Image.asset(
-          url,
-          fit: BoxFit.cover,
-          width: double.infinity,
-          errorBuilder: (_, __, ___) => _VendorPatternBox(
-            vendorId: shop.vendorId,
-            businessName: shop.businessName,
-          ),
-        );
-      }
-      return CachedNetworkImage(
-        imageUrl: url,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        memCacheWidth: tileWidth,
-        placeholder: (_, __) => const _BannerShimmer(),
-        errorWidget: (_, __, ___) => _VendorPatternBox(
-          vendorId: shop.vendorId,
-          businessName: shop.businessName,
-        ),
-      );
-    }
-    return _VendorPatternBox(
-      vendorId: shop.vendorId,
-      businessName: shop.businessName,
-    );
-  }
-}
-
-class _BannerShimmer extends StatelessWidget {
-  const _BannerShimmer();
-
-  @override
-  Widget build(BuildContext context) {
-    return Shimmer.fromColors(
-      baseColor: AppColors.creamDark,
-      highlightColor: AppColors.cream,
-      child: Container(color: AppColors.creamDark),
     );
   }
 }
@@ -230,21 +167,6 @@ class _AvatarBadge extends StatelessWidget {
   const _AvatarBadge({required this.logoUrl});
 
   final String logoUrl;
-
-  Widget _image() {
-    if (logoUrl.startsWith('assets/')) {
-      return Image.asset(
-        logoUrl,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const _StorefrontIcon(),
-      );
-    }
-    return CachedNetworkImage(
-      imageUrl: logoUrl,
-      fit: BoxFit.cover,
-      errorWidget: (_, __, ___) => const _StorefrontIcon(),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -263,82 +185,18 @@ class _AvatarBadge extends StatelessWidget {
           ),
         ],
       ),
-      child: ClipOval(child: _image()),
-    );
-  }
-}
-
-class _StorefrontIcon extends StatelessWidget {
-  const _StorefrontIcon();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFFF0EDE6),
-      alignment: Alignment.center,
-      child: const Icon(
-        Icons.storefront_outlined,
-        size: 20,
-        color: Color(0xFF8A8A8A),
-      ),
-    );
-  }
-}
-
-/// Generated pattern box — shown when no banner URL is available.
-/// Background colour and initials are seeded from [vendorId].
-class _VendorPatternBox extends StatelessWidget {
-  const _VendorPatternBox({
-    required this.vendorId,
-    required this.businessName,
-  });
-
-  final String vendorId;
-  final String businessName;
-
-  static const _palette = [
-    Color(0xFFB5654B),
-    Color(0xFF7A8C6E),
-    Color(0xFF4A9B8F),
-    Color(0xFFC17F3C),
-    Color(0xFF8B7EC8),
-    Color(0xFF2C7873),
-    Color(0xFF9B4A2A),
-    Color(0xFF5B7FA6),
-  ];
-
-  String get _initials {
-    final parts = businessName.trim().split(RegExp(r'\s+'));
-    if (parts.isEmpty) return '?';
-    if (parts.length == 1) {
-      return parts[0].isNotEmpty ? parts[0][0].toUpperCase() : '?';
-    }
-    final a = parts[0].isNotEmpty ? parts[0][0] : '';
-    final b = parts[1].isNotEmpty ? parts[1][0] : '';
-    return '$a$b'.toUpperCase();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final color = _palette[vendorId.hashCode.abs() % _palette.length];
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      color: color.withValues(alpha: 0.12),
-      alignment: Alignment.center,
-      child: Text(
-        _initials,
-        style: AppFonts.cormorantGaramond(
-          fontSize: 52,
-          fontWeight: FontWeight.w600,
-          color: color.withValues(alpha: 0.60),
+      child: ClipOval(
+        child: ShopListingImage(
+          imageUrl: logoUrl,
+          width: 40,
+          height: 40,
+          fallbackUrl: ShopListingImages.defaultLogo,
         ),
       ),
     );
   }
 }
 
-/// Small pill showing product count.
 class _CountPill extends StatelessWidget {
   const _CountPill({required this.count});
 
