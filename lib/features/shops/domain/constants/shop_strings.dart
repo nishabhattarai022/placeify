@@ -21,4 +21,12 @@ abstract final class ShopStrings {
   static const soldByPrefix = 'Sold by';
   static const establishedLabel = 'Est.';
   static const ratingLabel = 'rating';
+
+  // Search empty state
+  static String emptySearch(String q) => 'No shops match "$q" yet';
+  static const emptySearchCta = 'Clear search';
+
+  // Error state
+  static const errorTitle = 'Could not load shops';
+  static const errorCta = 'Try again';
 }
