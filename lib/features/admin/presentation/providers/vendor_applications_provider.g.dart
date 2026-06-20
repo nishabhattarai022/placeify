@@ -199,7 +199,7 @@ final class VendorApplicationActionsProvider
           argument: null,
           retry: null,
           name: r'vendorApplicationActionsProvider',
-          isAutoDispose: true,
+          isAutoDispose: false,
           dependencies: null,
           $allTransitiveDependencies: null,
         );

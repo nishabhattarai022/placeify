@@ -13,8 +13,7 @@ import 'package:placeify/features/admin/presentation/providers/vendor_applicatio
 
 abstract final class VendorApplicationApproveSheet {
   static Future<void> show(
-    BuildContext context,
-    WidgetRef ref, {
+    BuildContext context, {
     required VendorApplication application,
     required VoidCallback onApproved,
   }) {
@@ -24,7 +23,6 @@ abstract final class VendorApplicationApproveSheet {
       builder: (sheetContext) => _VendorApplicationApproveSheetBody(
         parentContext: context,
         sheetContext: sheetContext,
-        ref: ref,
         application: application,
         onApproved: onApproved,
       ),
@@ -32,28 +30,26 @@ abstract final class VendorApplicationApproveSheet {
   }
 }
 
-class _VendorApplicationApproveSheetBody extends StatefulWidget {
+class _VendorApplicationApproveSheetBody extends ConsumerStatefulWidget {
   const _VendorApplicationApproveSheetBody({
     required this.parentContext,
     required this.sheetContext,
-    required this.ref,
     required this.application,
     required this.onApproved,
   });
 
   final BuildContext parentContext;
   final BuildContext sheetContext;
-  final WidgetRef ref;
   final VendorApplication application;
   final VoidCallback onApproved;
 
   @override
-  State<_VendorApplicationApproveSheetBody> createState() =>
+  ConsumerState<_VendorApplicationApproveSheetBody> createState() =>
       _VendorApplicationApproveSheetBodyState();
 }
 
 class _VendorApplicationApproveSheetBodyState
-    extends State<_VendorApplicationApproveSheetBody> {
+    extends ConsumerState<_VendorApplicationApproveSheetBody> {
   bool _isSubmitting = false;
 
   Future<void> _confirmApprove() async {
@@ -61,21 +57,24 @@ class _VendorApplicationApproveSheetBodyState
 
     setState(() => _isSubmitting = true);
     HapticService.medium();
-    Navigator.pop(widget.sheetContext);
 
-    final error = await widget.ref
-        .read(vendorApplicationActionsProvider.notifier)
-        .approve(
-          userId: widget.application.userId,
-          vendorId: widget.application.vendorId,
-        );
+    final actions = ref.read(vendorApplicationActionsProvider.notifier);
+    final error = await actions.approve(
+      userId: widget.application.userId,
+      vendorId: widget.application.vendorId,
+    );
 
-    if (!widget.parentContext.mounted) return;
+    if (!mounted) return;
 
     if (error != null) {
+      setState(() => _isSubmitting = false);
       PlaceifyToast.show(widget.parentContext, error);
       return;
     }
+
+    Navigator.pop(widget.sheetContext);
+
+    if (!widget.parentContext.mounted) return;
 
     widget.onApproved();
     PlaceifyToast.show(widget.parentContext, AdminStrings.vendorApproved);

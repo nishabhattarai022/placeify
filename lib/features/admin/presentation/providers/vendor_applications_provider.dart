@@ -38,7 +38,10 @@ Future<VendorApplication?> vendorApplicationDetail(
   return repo.getByVendorId(vendorId);
 }
 
-@riverpod
+/// Long-lived action channel for admin approve/decline flows.
+///
+/// Must stay alive across async gaps triggered from bottom sheets.
+@Riverpod(keepAlive: true)
 class VendorApplicationActions extends _$VendorApplicationActions {
   @override
   FutureOr<void> build() {}
@@ -48,17 +51,23 @@ class VendorApplicationActions extends _$VendorApplicationActions {
     required String vendorId,
   }) async {
     final repo = await ref.read(vendorApplicationRepositoryProvider.future);
+    if (!ref.mounted) return 'Could not approve application';
+
     try {
       await ref.read(currentUserProvider.notifier).updateVendorStatusForUser(
             userId: userId,
             status: VendorStatus.approved,
             vendorId: vendorId,
           );
+      if (!ref.mounted) return 'Could not approve application';
+
       await repo.approve(userId: userId, vendorId: vendorId);
+      if (!ref.mounted) return 'Could not approve application';
+
       _invalidateAfterDecision(vendorId);
       return null;
-    } catch (e) {
-      return 'Could not approve application: $e';
+    } catch (_) {
+      return 'Could not approve application';
     }
   }
 
@@ -68,13 +77,19 @@ class VendorApplicationActions extends _$VendorApplicationActions {
     String? note,
   }) async {
     final repo = await ref.read(vendorApplicationRepositoryProvider.future);
+    if (!ref.mounted) return 'Could not decline application';
+
     try {
       await ref.read(currentUserProvider.notifier).updateVendorStatusForUser(
             userId: userId,
             status: VendorStatus.none,
             vendorId: null,
           );
+      if (!ref.mounted) return 'Could not decline application';
+
       await repo.decline(userId: userId, note: note);
+      if (!ref.mounted) return 'Could not decline application';
+
       _invalidateAfterDecision(vendorId);
       return null;
     } catch (_) {
@@ -83,6 +98,8 @@ class VendorApplicationActions extends _$VendorApplicationActions {
   }
 
   void _invalidateAfterDecision(String vendorId) {
+    if (!ref.mounted) return;
+
     ref.invalidate(vendorApplicationDetailProvider(vendorId));
     ref.invalidate(vendorApplicationsListProvider);
     ref.invalidate(adminStatsProvider);
