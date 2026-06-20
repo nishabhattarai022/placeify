@@ -1,0 +1,13 @@
+### Admin view of a vendor payout request.
+class: AdminVendorPayoutSummary
+fields:
+  id: int
+  vendorId: UuidValue
+  businessName: String
+  amount: double
+  status: VendorPayoutStatus
+  reference: String
+  payoutMethod: String
+  scheduledAt: DateTime?
+  paidAt: DateTime?
+  createdAt: DateTime

@@ -31,3 +31,5 @@ indexes:
     fields: vendorId
   product_status:
     fields: status
+  product_category_id:
+    fields: categoryId

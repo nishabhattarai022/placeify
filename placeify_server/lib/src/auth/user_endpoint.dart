@@ -65,16 +65,39 @@ class UserEndpoint extends PlaceifyAuthenticatedEndpoint {
       offset: offset,
     );
 
+    if (orders.isEmpty) return [];
+
+    final orderIds = orders.map((order) => order.id).whereType<int>().toSet();
+
+    final allItems = await OrderItem.db.find(
+      session,
+      where: (item) => item.orderId.inSet(orderIds),
+      include: OrderItem.include(product: Product.include()),
+    );
+
+    final itemsByOrderId = <int, List<OrderItem>>{};
+    for (final item in allItems) {
+      itemsByOrderId.putIfAbsent(item.orderId, () => []).add(item);
+    }
+
+    final allUpdates = await OrderDeliveryUpdate.db.find(
+      session,
+      where: (row) => row.orderId.inSet(orderIds),
+      orderBy: (row) => row.createdAt,
+      orderDescending: true,
+    );
+
+    final latestUpdateByOrderId = <int, OrderDeliveryUpdate>{};
+    for (final update in allUpdates) {
+      latestUpdateByOrderId.putIfAbsent(update.orderId, () => update);
+    }
+
     final summaries = <UserOrderSummary>[];
     for (final order in orders) {
       final orderId = order.id;
       if (orderId == null) continue;
 
-      final items = await OrderItem.db.find(
-        session,
-        where: (item) => item.orderId.equals(orderId),
-        include: OrderItem.include(product: Product.include()),
-      );
+      final items = itemsByOrderId[orderId] ?? const <OrderItem>[];
 
       final primaryName = items.isEmpty
           ? null
@@ -87,12 +110,7 @@ class UserEndpoint extends PlaceifyAuthenticatedEndpoint {
               ? '$primaryName × $totalQuantity'
               : primaryName;
 
-      final latestUpdate = await OrderDeliveryUpdate.db.findFirstRow(
-        session,
-        where: (row) => row.orderId.equals(orderId),
-        orderBy: (row) => row.createdAt,
-        orderDescending: true,
-      );
+      final latestUpdate = latestUpdateByOrderId[orderId];
 
       summaries.add(
         UserOrderSummary(

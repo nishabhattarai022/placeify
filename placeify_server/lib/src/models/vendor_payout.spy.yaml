@@ -1,0 +1,21 @@
+### Vendor settlement payout request.
+class: VendorPayout
+table: vendor_payout
+fields:
+  vendor: Vendor?, relation(onDelete=Cascade)
+  amount: double
+  status: VendorPayoutStatus, default=pending
+  payoutMethod: String
+  reference: String
+  scheduledAt: DateTime?
+  paidAt: DateTime?
+  createdAt: DateTime, default=now
+
+indexes:
+  vendor_payout_vendor_id:
+    fields: vendorId
+  vendor_payout_status:
+    fields: status
+  vendor_payout_reference:
+    fields: reference
+    unique: true

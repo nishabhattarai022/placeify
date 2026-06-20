@@ -1,0 +1,7 @@
+enum: VendorPayoutStatus
+serialized: byName
+default: pending
+values:
+  - pending
+  - paid
+  - failed

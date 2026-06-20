@@ -90,6 +90,58 @@ class ServerpodAdminApi {
     }
   }
 
+  Future<List<AdminVendorPayoutSummary>> listVendorPayouts({
+    VendorPayoutStatus? status,
+  }) async {
+    try {
+      return await client.admin.listVendorPayouts(status: status);
+    } catch (error) {
+      throw AdminApiException(_mapError(error));
+    }
+  }
+
+  Future<AdminVendorPayoutSummary> approveVendorPayout(int payoutId) async {
+    try {
+      return await client.admin.approveVendorPayout(payoutId);
+    } catch (error) {
+      throw AdminApiException(_mapError(error));
+    }
+  }
+
+  Future<AdminVendorPayoutSummary> failVendorPayout(int payoutId) async {
+    try {
+      return await client.admin.failVendorPayout(payoutId);
+    } catch (error) {
+      throw AdminApiException(_mapError(error));
+    }
+  }
+
+  Future<List<AdminRefundRequestSummary>> listRefundRequests({
+    RequestStatus? status,
+  }) async {
+    try {
+      return await client.admin.listRefundRequests(status: status);
+    } catch (error) {
+      throw AdminApiException(_mapError(error));
+    }
+  }
+
+  Future<AdminRefundRequestSummary> approveRefundRequest(int refundId) async {
+    try {
+      return await client.admin.approveRefundRequest(refundId);
+    } catch (error) {
+      throw AdminApiException(_mapError(error));
+    }
+  }
+
+  Future<AdminRefundRequestSummary> rejectRefundRequest(int refundId) async {
+    try {
+      return await client.admin.rejectRefundRequest(refundId);
+    } catch (error) {
+      throw AdminApiException(_mapError(error));
+    }
+  }
+
   String _mapError(Object error) {
     if (error is AdminApiException) return error.message;
     if (error is PlaceifyException) return error.message;

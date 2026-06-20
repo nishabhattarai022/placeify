@@ -41,6 +41,12 @@ admin:
   - listVendorApplications:
   - getVendorApplication:
   - getAuditLog:
+  - listVendorPayouts:
+  - approveVendorPayout:
+  - failVendorPayout:
+  - listRefundRequests:
+  - approveRefundRequest:
+  - rejectRefundRequest:
   - requirePlaceifyUser:
   - requireRole:
 ar:
@@ -61,6 +67,11 @@ order:
   - listMyOrders:
   - getOrder:
   - listDeliveryUpdates:
+payment:
+  - getOverview:
+  - listPaymentUpdates:
+  - updateOrderPaymentStatus:
+  - requestPayout:
 product:
   - listCategories:
   - searchProducts:

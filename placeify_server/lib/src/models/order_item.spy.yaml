@@ -11,3 +11,7 @@ fields:
 indexes:
   order_item_order_id:
     fields: orderId
+  order_item_vendor_id:
+    fields: vendorId
+  order_item_vendor_order:
+    fields: vendorId, orderId

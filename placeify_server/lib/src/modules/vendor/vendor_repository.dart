@@ -1539,6 +1539,19 @@ class VendorStore {
       orderBy: (row) => row.shopName,
     );
 
+    final activeProducts = await Product.db.find(
+      session,
+      where: (row) => row.status.equals(ProductStatus.active),
+    );
+    final productCountByVendor = <UuidValue, int>{};
+    for (final product in activeProducts) {
+      productCountByVendor.update(
+        product.vendorId,
+        (count) => count + 1,
+        ifAbsent: () => 1,
+      );
+    }
+
     final listings = <ShopListingSummary>[];
     for (final vendor in vendors) {
       final user = vendor.user;
@@ -1550,12 +1563,7 @@ class VendorStore {
         continue;
       }
 
-      final productCount = await Product.db.count(
-        session,
-        where: (row) =>
-            row.vendorId.equals(vendorId) &
-            row.status.equals(ProductStatus.active),
-      );
+      final productCount = productCountByVendor[vendorId] ?? 0;
 
       final locality = vendor.city?.trim().isNotEmpty == true
           ? vendor.city!.trim()

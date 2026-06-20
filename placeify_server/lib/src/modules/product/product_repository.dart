@@ -37,49 +37,32 @@ class CatalogRepository {
       }
     }
 
-    final all = await Product.db.find(
+    final where = _productSearchWhere(
+      categoryId: categoryId,
+      vendorId: input.vendorId,
+      minPrice: input.minPrice,
+      maxPrice: input.maxPrice,
+      query: query,
+    );
+
+    final total = await Product.db.count(session, where: where);
+
+    final items = await Product.db.find(
       session,
-      where: (row) {
-        var expression = row.status.equals(ProductStatus.active);
-        if (categoryId != null) {
-          expression = expression & row.categoryId.equals(categoryId);
-        }
-        if (input.vendorId != null) {
-          expression = expression & row.vendorId.equals(input.vendorId!);
-        }
-        return expression;
-      },
+      where: where,
       include: Product.include(
         vendor: Vendor.include(),
         category: Category.include(),
       ),
       orderBy: (row) => row.createdAt,
       orderDescending: true,
+      limit: paging.pageSize,
+      offset: paging.offset,
     );
 
-    final filtered = all.where((product) {
-      if (input.minPrice != null && product.price < input.minPrice!) {
-        return false;
-      }
-      if (input.maxPrice != null && product.price > input.maxPrice!) {
-        return false;
-      }
-      if (query != null && query.isNotEmpty) {
-        final haystack =
-            '${product.name} ${product.description}'.toLowerCase();
-        if (!haystack.contains(query)) return false;
-      }
-      return true;
-    }).toList();
-
-    final slice = filtered
-        .skip(paging.offset)
-        .take(paging.pageSize)
-        .toList(growable: false);
-
     return ProductPage(
-      items: slice,
-      total: filtered.length,
+      items: items,
+      total: total,
       page: paging.page,
       pageSize: paging.pageSize,
     );
@@ -94,6 +77,36 @@ class CatalogRepository {
         category: Category.include(),
       ),
     );
+  }
+
+  WhereExpressionBuilder<ProductTable> _productSearchWhere({
+    int? categoryId,
+    UuidValue? vendorId,
+    double? minPrice,
+    double? maxPrice,
+    String? query,
+  }) {
+    return (row) {
+      var expression = row.status.equals(ProductStatus.active);
+      if (categoryId != null) {
+        expression = expression & row.categoryId.equals(categoryId);
+      }
+      if (vendorId != null) {
+        expression = expression & row.vendorId.equals(vendorId);
+      }
+      if (minPrice != null) {
+        expression = expression & (row.price >= minPrice);
+      }
+      if (maxPrice != null) {
+        expression = expression & (row.price <= maxPrice);
+      }
+      if (query != null && query.isNotEmpty) {
+        final pattern = '%$query%';
+        expression = expression &
+            (row.name.ilike(pattern) | row.description.ilike(pattern));
+      }
+      return expression;
+    };
   }
 
   Future<Product> requireActiveProduct(Session session, int productId) async {

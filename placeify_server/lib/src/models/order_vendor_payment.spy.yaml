@@ -1,0 +1,20 @@
+### Per-vendor payment allocation for a multi-vendor order.
+class: OrderVendorPayment
+table: order_vendor_payment
+fields:
+  order: Order?, relation(onDelete=Cascade)
+  vendor: Vendor?, relation(onDelete=Cascade)
+  amount: double
+  status: PaymentTransactionStatus, default=pending
+  note: String?
+  createdAt: DateTime, default=now
+  updatedAt: DateTime, default=now
+
+indexes:
+  order_vendor_payment_order_vendor:
+    fields: orderId, vendorId
+    unique: true
+  order_vendor_payment_vendor_id:
+    fields: vendorId
+  order_vendor_payment_status:
+    fields: status
