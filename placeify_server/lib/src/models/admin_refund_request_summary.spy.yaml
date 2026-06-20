@@ -1,0 +1,12 @@
+### Admin view of a customer refund request.
+class: AdminRefundRequestSummary
+fields:
+  id: int
+  orderId: int
+  userId: UuidValue
+  customerName: String
+  customerEmail: String
+  reason: String
+  refundAmount: double
+  status: RequestStatus
+  createdAt: DateTime

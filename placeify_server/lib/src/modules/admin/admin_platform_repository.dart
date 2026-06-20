@@ -32,14 +32,15 @@ class AdminPlatformStore {
     final suspendedCount =
         vendorUsers.where((user) => user.status == UserAccountStatus.suspended).length;
 
-    final deliveredOrders = await Order.db.find(
-      session,
-      where: (row) => row.status.equals(OrderStatus.delivered),
+    final gmvResult = await session.db.unsafeQuery(
+      'SELECT COALESCE(SUM("totalAmount"), 0) AS gmv FROM "order" WHERE "status" = @status',
+      parameters: QueryParameters.named({
+        'status': OrderStatus.delivered.name,
+      }),
     );
-    final platformGmv = deliveredOrders.fold<double>(
-      0,
-      (sum, order) => sum + order.totalAmount,
-    );
+    final platformGmv = gmvResult.isEmpty
+        ? 0.0
+        : (gmvResult.first.toColumnMap()['gmv'] as num?)?.toDouble() ?? 0.0;
 
     final recentApplications = await listVendorApplications(
       session,

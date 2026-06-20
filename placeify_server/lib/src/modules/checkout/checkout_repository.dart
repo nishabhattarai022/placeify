@@ -3,8 +3,13 @@ import 'package:serverpod/serverpod.dart' hide Order;
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
+import '../payment/payment_repository.dart';
 
 class CheckoutStore {
+  CheckoutStore({PaymentStore? paymentStore})
+      : _paymentStore = paymentStore ?? PaymentStore();
+
+  final PaymentStore _paymentStore;
   Future<CheckoutResult> checkout(
     Session session,
     CheckoutRequest request,
@@ -72,6 +77,14 @@ class CheckoutStore {
       await CartItem.db.deleteWhere(
         session,
         where: (row) => row.cartId.equals(cart.id!),
+        transaction: transaction,
+      );
+
+      await _paymentStore.createForOrder(
+        session,
+        orderId: created.id!,
+        userId: user.id!,
+        amount: totalAmount,
         transaction: transaction,
       );
 

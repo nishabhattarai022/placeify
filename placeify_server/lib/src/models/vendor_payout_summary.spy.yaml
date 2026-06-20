@@ -1,0 +1,9 @@
+### Vendor payout row for the payments screen.
+class: VendorPayoutSummary
+fields:
+  id: int
+  amount: double
+  status: VendorPayoutStatus
+  paidAt: DateTime?
+  reference: String
+  createdAt: DateTime

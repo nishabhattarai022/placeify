@@ -128,4 +128,47 @@ class AdminEndpoint extends PlaceifyAuthenticatedEndpoint {
   }) {
     return _service.getAuditLog(session, limit: limit);
   }
+
+  Future<List<AdminVendorPayoutSummary>> listVendorPayouts(
+    Session session, {
+    VendorPayoutStatus? status,
+  }) {
+    return _service.listVendorPayouts(session, status: status);
+  }
+
+  Future<AdminVendorPayoutSummary> approveVendorPayout(
+    Session session,
+    int payoutId,
+  ) {
+    return _service.approveVendorPayout(session, payoutId);
+  }
+
+  Future<AdminVendorPayoutSummary> failVendorPayout(
+    Session session,
+    int payoutId, {
+    String? reason,
+  }) {
+    return _service.failVendorPayout(session, payoutId, reason: reason);
+  }
+
+  Future<List<AdminRefundRequestSummary>> listRefundRequests(
+    Session session, {
+    RequestStatus? status,
+  }) {
+    return _service.listRefundRequests(session, status: status);
+  }
+
+  Future<AdminRefundRequestSummary> approveRefundRequest(
+    Session session,
+    int refundId,
+  ) {
+    return _service.approveRefundRequest(session, refundId);
+  }
+
+  Future<AdminRefundRequestSummary> rejectRefundRequest(
+    Session session,
+    int refundId,
+  ) {
+    return _service.rejectRefundRequest(session, refundId);
+  }
 }
