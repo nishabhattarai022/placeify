@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/constants/app_colors.dart';
+import '../../../domain/models/vendor_registration.dart';
 import '../../providers/vendor_registration_provider.dart';
 
 class ReviewSubmitStep extends ConsumerWidget {
@@ -56,7 +57,7 @@ class ReviewSubmitStep extends ConsumerWidget {
         _ReviewSection(
           title: 'Category',
           rows: [
-            _ReviewRow('Category', form.category.category),
+            _ReviewRow('Categories', form.category.categoriesLabel),
             if (form.category.description.trim().isNotEmpty)
               _ReviewRow('Description', form.category.description),
           ],

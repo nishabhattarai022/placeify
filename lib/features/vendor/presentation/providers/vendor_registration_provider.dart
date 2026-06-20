@@ -110,8 +110,8 @@ class VendorRegistrationNotifier extends _$VendorRegistrationNotifier {
         if (a.country.trim().isEmpty) return 'Enter your country';
         return null;
       case 2:
-        if (form.category.category.trim().isEmpty) {
-          return 'Select a product category';
+        if (form.category.categories.isEmpty) {
+          return 'Select at least one product category';
         }
         return null;
       case 3:

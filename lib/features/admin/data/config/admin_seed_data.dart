@@ -139,7 +139,7 @@ abstract final class AdminSeedData {
             country: 'Nepal',
           ),
           category: const VendorCategoryInfo(
-            category: 'Handicrafts',
+            categories: ['Handicrafts'],
             description: 'Traditional Nepali crafts and souvenirs.',
           ),
           documents: const VendorDocuments(
@@ -173,7 +173,7 @@ abstract final class AdminSeedData {
             country: 'Nepal',
           ),
           category: const VendorCategoryInfo(
-            category: 'Furniture',
+            categories: ['Furniture'],
             description: 'Locally sourced wooden furniture.',
           ),
           documents: const VendorDocuments(
@@ -206,7 +206,7 @@ abstract final class AdminSeedData {
             country: 'Nepal',
           ),
           category: const VendorCategoryInfo(
-            category: 'Decor',
+            categories: ['Decor'],
             description: 'Modern decor inspired by Himalayan aesthetics.',
           ),
           documents: const VendorDocuments(
@@ -239,7 +239,7 @@ abstract final class AdminSeedData {
             country: 'Nepal',
           ),
           category: const VendorCategoryInfo(
-            category: 'Furniture',
+            categories: ['Furniture'],
             description: 'Curated modern furniture for Nepali homes.',
           ),
           documents: const VendorDocuments(
@@ -274,7 +274,7 @@ abstract final class AdminSeedData {
             country: 'Nepal',
           ),
           category: const VendorCategoryInfo(
-            category: 'General',
+            categories: ['General'],
             description: 'Imported household goods.',
           ),
           documents: const VendorDocuments(

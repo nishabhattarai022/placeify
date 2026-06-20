@@ -804,7 +804,7 @@ class __$VendorAddressCopyWithImpl<$Res>
 
 /// @nodoc
 mixin _$VendorCategoryInfo {
-  String get category;
+  List<String> get categories;
   String get description;
 
   /// Create a copy of VendorCategoryInfo
@@ -823,19 +823,20 @@ mixin _$VendorCategoryInfo {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is VendorCategoryInfo &&
-            (identical(other.category, category) ||
-                other.category == category) &&
+            const DeepCollectionEquality()
+                .equals(other.categories, categories) &&
             (identical(other.description, description) ||
                 other.description == description));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, category, description);
+  int get hashCode =>
+      Object.hash(runtimeType, const DeepCollectionEquality().hash(categories), description);
 
   @override
   String toString() {
-    return 'VendorCategoryInfo(category: $category, description: $description)';
+    return 'VendorCategoryInfo(categories: $categories, description: $description)';
   }
 }
 
@@ -845,7 +846,7 @@ abstract mixin class $VendorCategoryInfoCopyWith<$Res> {
           VendorCategoryInfo value, $Res Function(VendorCategoryInfo) _then) =
       _$VendorCategoryInfoCopyWithImpl;
   @useResult
-  $Res call({String category, String description});
+  $Res call({List<String> categories, String description});
 }
 
 /// @nodoc
@@ -861,14 +862,14 @@ class _$VendorCategoryInfoCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? category = null,
+    Object? categories = null,
     Object? description = null,
   }) {
     return _then(_self.copyWith(
-      category: null == category
-          ? _self.category
-          : category // ignore: cast_nullable_to_non_nullable
-              as String,
+      categories: null == categories
+          ? _self.categories
+          : categories // ignore: cast_nullable_to_non_nullable
+              as List<String>,
       description: null == description
           ? _self.description
           : description // ignore: cast_nullable_to_non_nullable
@@ -970,13 +971,13 @@ extension VendorCategoryInfoPatterns on VendorCategoryInfo {
 
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
-    TResult Function(String category, String description)? $default, {
+    TResult Function(List<String> categories, String description)? $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _VendorCategoryInfo() when $default != null:
-        return $default(_that.category, _that.description);
+        return $default(_that.categories, _that.description);
       case _:
         return orElse();
     }
@@ -997,12 +998,12 @@ extension VendorCategoryInfoPatterns on VendorCategoryInfo {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(String category, String description) $default,
+    TResult Function(List<String> categories, String description) $default,
   ) {
     final _that = this;
     switch (_that) {
       case _VendorCategoryInfo():
-        return $default(_that.category, _that.description);
+        return $default(_that.categories, _that.description);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -1022,12 +1023,12 @@ extension VendorCategoryInfoPatterns on VendorCategoryInfo {
 
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(String category, String description)? $default,
+    TResult? Function(List<String> categories, String description)? $default,
   ) {
     final _that = this;
     switch (_that) {
       case _VendorCategoryInfo() when $default != null:
-        return $default(_that.category, _that.description);
+        return $default(_that.categories, _that.description);
       case _:
         return null;
     }
@@ -1035,15 +1036,40 @@ extension VendorCategoryInfoPatterns on VendorCategoryInfo {
 }
 
 /// @nodoc
-@JsonSerializable()
 class _VendorCategoryInfo implements VendorCategoryInfo {
-  const _VendorCategoryInfo({this.category = '', this.description = ''});
-  factory _VendorCategoryInfo.fromJson(Map<String, dynamic> json) =>
-      _$VendorCategoryInfoFromJson(json);
+  const _VendorCategoryInfo(
+      {final List<String> categories = const [], this.description = ''})
+      : _categories = categories;
 
+  factory _VendorCategoryInfo.fromJson(Map<String, dynamic> json) {
+    final raw = json['categories'];
+    final categories = raw is List
+        ? raw
+            .map((e) => e.toString().trim())
+            .where((name) => name.isNotEmpty)
+            .toList()
+        : <String>[];
+    if (categories.isEmpty) {
+      final legacy = json['category'] as String? ?? '';
+      if (legacy.trim().isNotEmpty) {
+        categories.add(legacy.trim());
+      }
+    }
+    return _VendorCategoryInfo(
+      categories: categories,
+      description: json['description'] as String? ?? '',
+    );
+  }
+
+  final List<String> _categories;
   @override
   @JsonKey()
-  final String category;
+  List<String> get categories {
+    if (_categories is EqualUnmodifiableListView) return _categories;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_categories);
+  }
+
   @override
   @JsonKey()
   final String description;
@@ -1057,30 +1083,30 @@ class _VendorCategoryInfo implements VendorCategoryInfo {
       __$VendorCategoryInfoCopyWithImpl<_VendorCategoryInfo>(this, _$identity);
 
   @override
-  Map<String, dynamic> toJson() {
-    return _$VendorCategoryInfoToJson(
-      this,
-    );
-  }
+  Map<String, dynamic> toJson() => {
+        'categories': categories,
+        'description': description,
+      };
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _VendorCategoryInfo &&
-            (identical(other.category, category) ||
-                other.category == category) &&
+            const DeepCollectionEquality()
+                .equals(other._categories, _categories) &&
             (identical(other.description, description) ||
                 other.description == description));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, category, description);
+  int get hashCode => Object.hash(
+      runtimeType, const DeepCollectionEquality().hash(_categories), description);
 
   @override
   String toString() {
-    return 'VendorCategoryInfo(category: $category, description: $description)';
+    return 'VendorCategoryInfo(categories: $categories, description: $description)';
   }
 }
 
@@ -1092,7 +1118,7 @@ abstract mixin class _$VendorCategoryInfoCopyWith<$Res>
       __$VendorCategoryInfoCopyWithImpl;
   @override
   @useResult
-  $Res call({String category, String description});
+  $Res call({List<String> categories, String description});
 }
 
 /// @nodoc
@@ -1108,14 +1134,14 @@ class __$VendorCategoryInfoCopyWithImpl<$Res>
   @override
   @pragma('vm:prefer-inline')
   $Res call({
-    Object? category = null,
+    Object? categories = null,
     Object? description = null,
   }) {
     return _then(_VendorCategoryInfo(
-      category: null == category
-          ? _self.category
-          : category // ignore: cast_nullable_to_non_nullable
-              as String,
+      categories: null == categories
+          ? _self._categories
+          : categories // ignore: cast_nullable_to_non_nullable
+              as List<String>,
       description: null == description
           ? _self.description
           : description // ignore: cast_nullable_to_non_nullable

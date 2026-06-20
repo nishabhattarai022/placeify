@@ -42,17 +42,28 @@ Map<String, dynamic> _$VendorAddressToJson(_VendorAddress instance) =>
       'country': instance.country,
     };
 
-_VendorCategoryInfo _$VendorCategoryInfoFromJson(Map<String, dynamic> json) =>
-    _VendorCategoryInfo(
-      category: json['category'] as String? ?? '',
-      description: json['description'] as String? ?? '',
-    );
+_VendorCategoryInfo _$VendorCategoryInfoFromJson(Map<String, dynamic> json) {
+  final raw = json['categories'];
+  final categories = raw is List
+      ? raw
+          .map((e) => e.toString().trim())
+          .where((name) => name.isNotEmpty)
+          .toList()
+      : <String>[];
+  if (categories.isEmpty) {
+    final legacy = json['category'] as String? ?? '';
+    if (legacy.trim().isNotEmpty) {
+      categories.add(legacy.trim());
+    }
+  }
+  return _VendorCategoryInfo(
+    categories: categories,
+    description: json['description'] as String? ?? '',
+  );
+}
 
 Map<String, dynamic> _$VendorCategoryInfoToJson(_VendorCategoryInfo instance) =>
-    <String, dynamic>{
-      'category': instance.category,
-      'description': instance.description,
-    };
+    instance.toJson();
 
 _VendorDocuments _$VendorDocumentsFromJson(Map<String, dynamic> json) =>
     _VendorDocuments(
