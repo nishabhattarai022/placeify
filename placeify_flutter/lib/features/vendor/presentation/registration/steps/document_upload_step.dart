@@ -1,17 +1,12 @@
-import 'dart:io';
-
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:placeify_client/placeify_client.dart';
 
-import '../../../../../core/config/placeify_server_client.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/services/haptic_service.dart';
-import '../../../../../core/utils/local_image_path.dart';
-import '../../../domain/constants/vendor_registration_field_keys.dart';
 import '../../../domain/models/vendor_registration.dart';
+import '../../../domain/validators/vendor_registration_validator.dart';
 import '../../providers/vendor_registration_provider.dart';
+import '../widgets/vendor_registration_error_banner.dart';
 
 class DocumentUploadStep extends ConsumerWidget {
   const DocumentUploadStep({super.key});
@@ -20,6 +15,7 @@ class DocumentUploadStep extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final uiState = ref.watch(vendorRegistrationProvider);
     final documents = uiState.form.documents;
+    final fieldErrors = uiState.fieldErrors;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
@@ -34,7 +30,7 @@ class DocumentUploadStep extends ConsumerWidget {
         ),
         const SizedBox(height: 6),
         const Text(
-          'Upload JPG, PNG, or PDF files up to 5 MB. Documents are stored securely on the server.',
+          'Upload documents to verify your business. Files are stored locally in this demo.',
           style: TextStyle(
             fontSize: 13,
             color: Color(0xFF6B6055),
@@ -42,19 +38,19 @@ class DocumentUploadStep extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 20),
+        VendorRegistrationErrorBanner(errors: fieldErrors),
         _DocumentTile(
           title: 'Business License',
           subtitle: 'Required',
           path: documents.businessLicensePath,
-          fieldKey: VendorRegistrationFieldKeys.businessLicense,
-          errorText: uiState.fieldError(VendorRegistrationFieldKeys.businessLicense),
-          isUploading: uiState.uploadingDocuments
-              .contains(VendorRegistrationFieldKeys.businessLicense),
-          onUpload: () => _pickAndUpload(
+          mockFileName: 'business_license.pdf',
+          error: fieldErrors[VendorRegistrationFieldKeys.businessLicense],
+          onUpload: () => _setDocument(
             ref,
-            documentType: VendorDocumentType.businessLicense,
-            fieldKey: VendorRegistrationFieldKeys.businessLicense,
-            applyUrl: (docs, url) => docs.copyWith(businessLicensePath: url),
+            documents.copyWith(
+              businessLicensePath: '/mock/business_license.pdf',
+            ),
+            clearErrorFor: VendorRegistrationFieldKeys.businessLicense,
           ),
           onRemove: () => _setDocument(
             ref,
@@ -66,15 +62,12 @@ class DocumentUploadStep extends ConsumerWidget {
           title: 'Government ID',
           subtitle: 'Required',
           path: documents.governmentIdPath,
-          fieldKey: VendorRegistrationFieldKeys.governmentId,
-          errorText: uiState.fieldError(VendorRegistrationFieldKeys.governmentId),
-          isUploading: uiState.uploadingDocuments
-              .contains(VendorRegistrationFieldKeys.governmentId),
-          onUpload: () => _pickAndUpload(
+          mockFileName: 'government_id.jpg',
+          error: fieldErrors[VendorRegistrationFieldKeys.governmentId],
+          onUpload: () => _setDocument(
             ref,
-            documentType: VendorDocumentType.governmentId,
-            fieldKey: VendorRegistrationFieldKeys.governmentId,
-            applyUrl: (docs, url) => docs.copyWith(governmentIdPath: url),
+            documents.copyWith(governmentIdPath: '/mock/government_id.jpg'),
+            clearErrorFor: VendorRegistrationFieldKeys.governmentId,
           ),
           onRemove: () => _setDocument(
             ref,
@@ -86,15 +79,10 @@ class DocumentUploadStep extends ConsumerWidget {
           title: 'Tax Certificate',
           subtitle: 'Optional',
           path: documents.taxCertificatePath,
-          fieldKey: VendorRegistrationFieldKeys.taxCertificate,
-          errorText: uiState.fieldError(VendorRegistrationFieldKeys.taxCertificate),
-          isUploading: uiState.uploadingDocuments
-              .contains(VendorRegistrationFieldKeys.taxCertificate),
-          onUpload: () => _pickAndUpload(
+          mockFileName: 'tax_certificate.pdf',
+          onUpload: () => _setDocument(
             ref,
-            documentType: VendorDocumentType.taxCertificate,
-            fieldKey: VendorRegistrationFieldKeys.taxCertificate,
-            applyUrl: (docs, url) => docs.copyWith(taxCertificatePath: url),
+            documents.copyWith(taxCertificatePath: '/mock/tax_certificate.pdf'),
           ),
           onRemove: () => _setDocument(
             ref,
@@ -105,31 +93,14 @@ class DocumentUploadStep extends ConsumerWidget {
     );
   }
 
-  Future<void> _pickAndUpload(
-    WidgetRef ref, {
-    required VendorDocumentType documentType,
-    required String fieldKey,
-    required VendorDocuments Function(VendorDocuments documents, String url)
-        applyUrl,
-  }) async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: const ['jpg', 'jpeg', 'png', 'pdf'],
-      withData: false,
-    );
-    final path = result?.files.single.path;
-    if (path == null || path.isEmpty) return;
-
-    await ref.read(vendorRegistrationProvider.notifier).uploadDocument(
-          documentType: documentType,
-          fieldKey: fieldKey,
-          localPath: path,
-          applyUrl: applyUrl,
-        );
-  }
-
-  void _setDocument(WidgetRef ref, VendorDocuments documents) {
-    ref.read(vendorRegistrationProvider.notifier).updateDocuments(documents);
+  void _setDocument(
+    WidgetRef ref,
+    VendorDocuments documents, {
+    String? clearErrorFor,
+  }) {
+    final notifier = ref.read(vendorRegistrationProvider.notifier);
+    notifier.updateDocuments(documents);
+    if (clearErrorFor != null) notifier.clearFieldError(clearErrorFor);
   }
 }
 
@@ -138,26 +109,24 @@ class _DocumentTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.path,
-    required this.fieldKey,
+    required this.mockFileName,
     required this.onUpload,
     required this.onRemove,
-    this.errorText,
-    this.isUploading = false,
+    this.error,
   });
 
   final String title;
   final String subtitle;
   final String? path;
-  final String fieldKey;
-  final String? errorText;
-  final bool isUploading;
+  final String mockFileName;
   final VoidCallback onUpload;
   final VoidCallback onRemove;
+  final String? error;
 
   @override
   Widget build(BuildContext context) {
-    final hasFile = isUploadedVendorDocument(path);
-    final displayName = _displayName(path);
+    final hasFile = path != null;
+    final hasError = error != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,8 +137,8 @@ class _DocumentTile extends StatelessWidget {
             color: AppColors.cream,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: errorText != null
-                  ? AppColors.rust
+              color: hasError
+                  ? AppColors.coral
                   : hasFile
                       ? AppColors.vendorForest
                       : AppColors.creamDark,
@@ -178,7 +147,22 @@ class _DocumentTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              _Preview(path: path, isUploading: isUploading),
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: hasError
+                      ? AppColors.coralBg
+                      : AppColors.vendorForestBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  hasFile ? Icons.check_circle_outline : Icons.upload_file_outlined,
+                  color: hasError ? AppColors.coral : AppColors.vendorForest,
+                  size: 22,
+                ),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -194,11 +178,7 @@ class _DocumentTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      isUploading
-                          ? 'Uploading...'
-                          : hasFile
-                              ? displayName
-                              : subtitle,
+                      hasFile ? mockFileName : subtitle,
                       style: TextStyle(
                         fontSize: 12,
                         color: hasFile ? AppColors.sage : AppColors.textMuted,
@@ -207,108 +187,32 @@ class _DocumentTile extends StatelessWidget {
                   ],
                 ),
               ),
-              if (isUploading)
-                const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              else
-                TextButton(
-                  onPressed: () {
-                    HapticService.light();
-                    if (hasFile) {
-                      onRemove();
-                    } else {
-                      onUpload();
-                    }
-                  },
-                  child: Text(hasFile ? 'Remove' : 'Upload'),
-                ),
+              TextButton(
+                onPressed: () {
+                  HapticService.light();
+                  if (hasFile) {
+                    onRemove();
+                  } else {
+                    onUpload();
+                  }
+                },
+                child: Text(hasFile ? 'Remove' : 'Upload'),
+              ),
             ],
           ),
         ),
-        if (errorText != null && errorText!.isNotEmpty) ...[
+        if (error != null) ...[
           const SizedBox(height: 6),
           Text(
-            errorText!,
-            style: const TextStyle(fontSize: 12, color: AppColors.rust),
+            error!,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.coral,
+              height: 1.35,
+            ),
           ),
         ],
       ],
-    );
-  }
-
-  String _displayName(String? value) {
-    if (value == null) return subtitle;
-    final normalized = value.replaceAll('\\', '/');
-    final index = normalized.lastIndexOf('/');
-    return index == -1 ? normalized : normalized.substring(index + 1);
-  }
-}
-
-class _Preview extends StatelessWidget {
-  const _Preview({required this.path, required this.isUploading});
-
-  final String? path;
-  final bool isUploading;
-
-  @override
-  Widget build(BuildContext context) {
-    final hasFile = isUploadedVendorDocument(path);
-
-    if (isUploading) {
-      return _iconBox(Icons.cloud_upload_outlined);
-    }
-
-    if (hasFile && path != null) {
-      final lower = path!.toLowerCase();
-      if (lower.endsWith('.pdf')) {
-        return _iconBox(Icons.picture_as_pdf_outlined);
-      }
-
-      final imageProvider = _imageProvider(path!);
-      if (imageProvider != null) {
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Image(
-            image: imageProvider,
-            width: 44,
-            height: 44,
-            fit: BoxFit.cover,
-          ),
-        );
-      }
-    }
-
-    return _iconBox(
-      hasFile ? Icons.check_circle_outline : Icons.upload_file_outlined,
-    );
-  }
-
-  ImageProvider? _imageProvider(String value) {
-    if (value.startsWith('http://') || value.startsWith('https://')) {
-      return NetworkImage(value);
-    }
-    if (value.startsWith('/uploads/')) {
-      return NetworkImage('$serverUrl$value');
-    }
-    if (LocalImagePath.isLocal(value)) {
-      return FileImage(File(LocalImagePath.normalize(value)));
-    }
-    return null;
-  }
-
-  Widget _iconBox(IconData icon) {
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        color: AppColors.vendorForestBg,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      alignment: Alignment.center,
-      child: Icon(icon, color: AppColors.vendorForest, size: 22),
     );
   }
 }

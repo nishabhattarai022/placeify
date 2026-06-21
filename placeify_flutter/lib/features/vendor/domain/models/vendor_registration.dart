@@ -36,8 +36,6 @@ abstract class VendorAddress with _$VendorAddress {
 /// Step 3 — product categories and optional description.
 @Freezed(fromJson: false, toJson: false)
 abstract class VendorCategoryInfo with _$VendorCategoryInfo {
-  const VendorCategoryInfo._();
-
   const factory VendorCategoryInfo({
     @Default([]) List<String> categories,
     @Default('') String description,

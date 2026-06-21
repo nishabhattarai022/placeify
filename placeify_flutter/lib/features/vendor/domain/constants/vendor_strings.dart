@@ -14,7 +14,6 @@ abstract final class VendorStrings {
   // Toasts
   static const applicationSubmitted =
       "Application submitted! We'll review within 24 hours";
-  static const productUploaded = 'Product uploaded successfully';
   static const noChangesToSave = 'No changes to save';
   static const guardPendingToast =
       'Your vendor application is still under review';
@@ -43,6 +42,7 @@ abstract final class VendorStrings {
 
   // Product form
   static const uploadProduct = 'Upload Product';
+  static const productUploaded = 'Product uploaded successfully';
   static const saveChanges = 'Save Changes';
   static const noChangesLabel = 'No Changes';
   static const productSaved = 'Product saved successfully';

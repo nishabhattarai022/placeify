@@ -192,18 +192,22 @@ final class VendorApplicationDetailFamily extends $Family
   String toString() => r'vendorApplicationDetailProvider';
 }
 
+/// Long-lived action channel for admin approve/decline flows.
+
 @ProviderFor(VendorApplicationActions)
 final vendorApplicationActionsProvider = VendorApplicationActionsProvider._();
 
+/// Long-lived action channel for admin approve/decline flows.
 final class VendorApplicationActionsProvider
     extends $AsyncNotifierProvider<VendorApplicationActions, void> {
+  /// Long-lived action channel for admin approve/decline flows.
   VendorApplicationActionsProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
         name: r'vendorApplicationActionsProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -217,7 +221,9 @@ final class VendorApplicationActionsProvider
 }
 
 String _$vendorApplicationActionsHash() =>
-    r'0c17388c1acb47ec19433a012937d316e31466ef';
+    r'f844bb6a7a8406eeb43c583fc8999a753e91c7bd';
+
+/// Long-lived action channel for admin approve/decline flows.
 
 abstract class _$VendorApplicationActions extends $AsyncNotifier<void> {
   FutureOr<void> build();
