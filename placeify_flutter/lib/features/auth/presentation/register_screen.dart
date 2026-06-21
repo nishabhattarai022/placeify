@@ -63,8 +63,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             password: _passwordController.text,
           );
       if (!mounted) return;
-      PlaceifyToast.show(context, 'Account created — sign in to continue');
-      context.go('/login');
+      PlaceifyToast.show(context, 'Welcome to Placeify!');
+      context.go('/home');
     } on AuthException catch (e) {
       if (mounted) PlaceifyToast.show(context, e.message);
     } catch (_) {

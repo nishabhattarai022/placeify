@@ -83,6 +83,7 @@ class PlaceifySelectTile extends StatelessWidget {
     required this.selected,
     required this.onTap,
     this.icon,
+    this.leading,
     this.semanticsLabel,
     super.key,
   });
@@ -91,6 +92,7 @@ class PlaceifySelectTile extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
   final IconData? icon;
+  final Widget? leading;
   final String? semanticsLabel;
 
   @override
@@ -116,7 +118,10 @@ class PlaceifySelectTile extends StatelessWidget {
             ),
             child: Row(
               children: [
-                if (icon != null) ...[
+                if (leading != null) ...[
+                  leading!,
+                  const SizedBox(width: 12),
+                ] else if (icon != null) ...[
                   Icon(
                     icon,
                     size: 20,

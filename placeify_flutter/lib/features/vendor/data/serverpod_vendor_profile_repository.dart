@@ -78,6 +78,7 @@ class ServerpodVendorProfileRepository {
             : dashboard.orderCount / dashboard.productCount.clamp(1, 999999),
         periodLabel: 'All time',
         averageRating: dashboard.shop.rating,
+        responseRate: 0,
       );
     } catch (error) {
       throw VendorOrderActionException(_mapError(error));

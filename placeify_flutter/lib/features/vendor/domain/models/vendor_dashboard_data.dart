@@ -24,6 +24,8 @@ class VendorDashboardData {
       viewCount: 0,
       conversionRate: 0,
       periodLabel: 'Last 30 days',
+      averageRating: 0,
+      responseRate: 0,
     ),
     revenueSeries: [],
     recentOrders: [],

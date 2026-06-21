@@ -84,7 +84,9 @@ abstract final class AdminPlatformMapper {
           country: detail.country,
         ),
         category: VendorCategoryInfo(
-          category: detail.category,
+          categories: detail.category.trim().isEmpty
+              ? const []
+              : [detail.category.trim()],
           description: detail.description,
         ),
         documents: VendorDocuments(

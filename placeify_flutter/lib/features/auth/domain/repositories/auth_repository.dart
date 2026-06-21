@@ -1,4 +1,5 @@
-import '../../../vendor/domain/enums/vendor_status.dart';
+import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
+
 import '../models/app_user.dart';
 
 /// Auth API contract (mock implementation persists locally until a real API exists).
@@ -16,24 +17,29 @@ abstract interface class AuthRepository {
 
   Future<AppUser?> getCurrentUser();
 
-  Future<AppUser> becomeVendor();
+  /// All registered users (admin user-management and application joins).
+  Future<List<AppUser>> getAllUsers();
 
-  Future<AppUser> becomeConsumer();
+  Future<void> signOut();
 
-  Future<AppUser> updateVendorStatus({
+  /// Updates vendor onboarding status for the active session user.
+  Future<void> updateVendorStatus({
     required VendorStatus status,
     String? vendorId,
   });
 
-  Future<List<AppUser>> getAllUsers();
+  /// Switches the active session to vendor mode (Serverpod role).
+  Future<AppUser> becomeVendor();
 
+  /// Switches the active session to consumer mode (Serverpod role).
+  Future<AppUser> becomeConsumer();
+
+  /// Updates vendor onboarding status for any user (admin cross-user writes).
   Future<void> updateVendorStatusForUser({
     required String userId,
     required VendorStatus status,
     String? vendorId,
   });
-
-  Future<void> signOut();
 }
 
 class AuthException implements Exception {

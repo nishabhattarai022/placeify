@@ -16,12 +16,14 @@ class PhoneInputField extends StatefulWidget {
     this.initialPhone,
     this.onChanged,
     this.onEditingComplete,
+    this.hasError = false,
     super.key,
   });
 
   final String? initialPhone;
   final ValueChanged<String>? onChanged;
   final VoidCallback? onEditingComplete;
+  final bool hasError;
 
   @override
   State<PhoneInputField> createState() => _PhoneInputFieldState();
@@ -130,13 +132,16 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
   @override
   Widget build(BuildContext context) {
     const borderRadius = BorderRadius.all(Radius.circular(14));
-    const borderSide = BorderSide(color: AppColors.creamDark, width: 1.5);
+    final borderColor =
+        widget.hasError ? AppColors.coral : AppColors.creamDark;
 
     return Container(
       decoration: BoxDecoration(
         color: AppColors.cream,
         borderRadius: borderRadius,
-        border: const Border.fromBorderSide(borderSide),
+        border: Border.fromBorderSide(
+          BorderSide(color: borderColor, width: 1.5),
+        ),
       ),
       child: Row(
         children: [

@@ -39,9 +39,13 @@ class MetricCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
               ],
-              Text(
-                metric.trendLabel,
-                style: AppTypography.trendText.copyWith(color: metric.trendColor),
+              Flexible(
+                child: Text(
+                  metric.trendLabel,
+                  style: AppTypography.trendText.copyWith(color: metric.trendColor),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),

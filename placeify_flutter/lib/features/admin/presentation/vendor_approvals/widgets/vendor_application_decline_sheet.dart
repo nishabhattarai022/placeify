@@ -14,8 +14,7 @@ import 'package:placeify_flutter/features/admin/presentation/providers/vendor_ap
 
 abstract final class VendorApplicationDeclineSheet {
   static Future<void> show(
-    BuildContext context,
-    WidgetRef ref, {
+    BuildContext context, {
     required VendorApplication application,
     required VoidCallback onDeclined,
   }) {
@@ -25,7 +24,6 @@ abstract final class VendorApplicationDeclineSheet {
       builder: (sheetContext) => _VendorApplicationDeclineSheetBody(
         parentContext: context,
         sheetContext: sheetContext,
-        ref: ref,
         application: application,
         onDeclined: onDeclined,
       ),
@@ -33,28 +31,26 @@ abstract final class VendorApplicationDeclineSheet {
   }
 }
 
-class _VendorApplicationDeclineSheetBody extends StatefulWidget {
+class _VendorApplicationDeclineSheetBody extends ConsumerStatefulWidget {
   const _VendorApplicationDeclineSheetBody({
     required this.parentContext,
     required this.sheetContext,
-    required this.ref,
     required this.application,
     required this.onDeclined,
   });
 
   final BuildContext parentContext;
   final BuildContext sheetContext;
-  final WidgetRef ref;
   final VendorApplication application;
   final VoidCallback onDeclined;
 
   @override
-  State<_VendorApplicationDeclineSheetBody> createState() =>
+  ConsumerState<_VendorApplicationDeclineSheetBody> createState() =>
       _VendorApplicationDeclineSheetBodyState();
 }
 
 class _VendorApplicationDeclineSheetBodyState
-    extends State<_VendorApplicationDeclineSheetBody> {
+    extends ConsumerState<_VendorApplicationDeclineSheetBody> {
   bool _isSubmitting = false;
   DeclineReason? _selectedReason;
   final _otherController = TextEditingController();
@@ -78,25 +74,28 @@ class _VendorApplicationDeclineSheetBodyState
 
     setState(() => _isSubmitting = true);
     HapticService.medium();
-    Navigator.pop(widget.sheetContext);
 
     final note = _selectedReason!.formatNote(
       otherDetail: _otherController.text,
     );
-    final error = await widget.ref
-        .read(vendorApplicationActionsProvider.notifier)
-        .decline(
-          userId: widget.application.userId,
-          vendorId: widget.application.vendorId,
-          note: note,
-        );
+    final actions = ref.read(vendorApplicationActionsProvider.notifier);
+    final error = await actions.decline(
+      userId: widget.application.userId,
+      vendorId: widget.application.vendorId,
+      note: note,
+    );
 
-    if (!widget.parentContext.mounted) return;
+    if (!mounted) return;
 
     if (error != null) {
+      setState(() => _isSubmitting = false);
       PlaceifyToast.show(widget.parentContext, error);
       return;
     }
+
+    Navigator.pop(widget.sheetContext);
+
+    if (!widget.parentContext.mounted) return;
 
     widget.onDeclined();
     PlaceifyToast.show(widget.parentContext, AdminStrings.vendorDeclined);
@@ -149,7 +148,9 @@ class _VendorApplicationDeclineSheetBodyState
                     ),
                   )
                   .toList(),
-              onChanged: (value) => setState(() => _selectedReason = value),
+              onChanged: _isSubmitting
+                  ? null
+                  : (value) => setState(() => _selectedReason = value),
             ),
           ),
         ),
@@ -157,6 +158,7 @@ class _VendorApplicationDeclineSheetBodyState
           const SizedBox(height: 12),
           TextField(
             controller: _otherController,
+            enabled: !_isSubmitting,
             onChanged: (_) => setState(() {}),
             maxLines: 3,
             decoration: InputDecoration(

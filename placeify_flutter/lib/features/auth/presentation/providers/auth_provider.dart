@@ -112,9 +112,10 @@ class CurrentUser extends _$CurrentUser {
     String? vendorId,
   }) async {
     final repo = await ref.read(authRepositoryProvider.future);
-    state = await AsyncValue.guard(
-      () => repo.updateVendorStatus(status: status, vendorId: vendorId),
-    );
+    state = await AsyncValue.guard(() async {
+      await repo.updateVendorStatus(status: status, vendorId: vendorId);
+      return repo.getCurrentUser();
+    });
     if (state.hasError) throw _unwrapError(state.error!);
   }
 
@@ -133,5 +134,6 @@ class CurrentUser extends _$CurrentUser {
 }
 
 Never _unwrapError(Object error) {
+  if (error is AuthException) throw error;
   throw error is Exception ? error : Exception(error.toString());
 }

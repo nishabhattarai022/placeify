@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -7,47 +6,32 @@ import '../core/constants/app_spacing.dart';
 import '../core/services/haptic_service.dart';
 import '../core/widgets/placeify_bottom_sheet.dart';
 import '../data/furniture_categories.dart';
-import '../features/cart/data/product_id_codec.dart';
 import '../features/home/data/mock_product_repository.dart';
 import '../features/home/domain/models/product.dart';
-import '../features/home/presentation/providers/catalog_provider.dart';
 import 'widgets/category_product_list_tile.dart';
 
 enum _SortOption { featured, priceAsc, priceDesc, nameAsc }
 
-class CategoryScreen extends ConsumerStatefulWidget {
+class CategoryScreen extends StatefulWidget {
   const CategoryScreen({required this.category, super.key});
 
   final FurnitureCategory category;
 
   @override
-  ConsumerState<CategoryScreen> createState() => _CategoryScreenState();
+  State<CategoryScreen> createState() => _CategoryScreenState();
 }
 
-class _CategoryScreenState extends ConsumerState<CategoryScreen> {
+class _CategoryScreenState extends State<CategoryScreen> {
   _SortOption _sort = _SortOption.featured;
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(catalogIndexProvider.notifier).refresh();
-    });
-  }
-
-  List<Product> _products(Map<String, Product>? catalog) {
-    final list = catalog != null
-        ? catalog.values
-            .where((p) => p.categoryId == widget.category.id)
-            .toList()
-        : MockProductRepository.products
-            .where((p) => p.categoryId == widget.category.id)
-            .toList();
+  List<Product> get _products {
+    final list = MockProductRepository.products
+        .where((p) => p.categoryId == widget.category.id)
+        .toList();
 
     switch (_sort) {
       case _SortOption.featured:
-        return List<Product>.from(list)
-          ..sort((a, b) => ProductIdCodec.compareNewestFirst(a.id, b.id));
+        return list;
       case _SortOption.priceAsc:
         return List<Product>.from(list)
           ..sort((a, b) => a.price.compareTo(b.price));
@@ -110,12 +94,7 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final catalogAsync = ref.watch(catalogIndexProvider);
-    final products = catalogAsync.when(
-      data: _products,
-      loading: () => _products(null),
-      error: (_, __) => _products(null),
-    );
+    final products = _products;
     final count = products.length;
     final displayName = categoryDisplayName(widget.category);
 

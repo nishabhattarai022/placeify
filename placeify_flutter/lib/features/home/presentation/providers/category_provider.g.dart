@@ -147,7 +147,7 @@ final class FilteredProductsProvider
   }
 }
 
-String _$filteredProductsHash() => r'7eac90bfcd2fa15bbc72464939138ef0bbaa240a';
+String _$filteredProductsHash() => r'8ba15e7c9cfee506b0bf88a70aa25d22ccdbc3b4';
 
 @ProviderFor(productById)
 final productByIdProvider = ProductByIdFamily._();
@@ -206,7 +206,7 @@ final class ProductByIdProvider
   }
 }
 
-String _$productByIdHash() => r'fdc39d680e67f0ea39ff14f77ad8822d882fc8d0';
+String _$productByIdHash() => r'ff16204132afc4fed3135d1e54adde1d1f7cb032';
 
 final class ProductByIdFamily extends $Family
     with $FunctionalFamilyOverride<Product?, String> {

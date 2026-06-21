@@ -14,6 +14,7 @@ abstract final class VendorStrings {
   // Toasts
   static const applicationSubmitted =
       "Application submitted! We'll review within 24 hours";
+  static const productUploaded = 'Product uploaded successfully';
   static const noChangesToSave = 'No changes to save';
   static const guardPendingToast =
       'Your vendor application is still under review';
@@ -45,7 +46,6 @@ abstract final class VendorStrings {
   static const saveChanges = 'Save Changes';
   static const noChangesLabel = 'No Changes';
   static const productSaved = 'Product saved successfully';
-  static const productUploaded = 'Product uploaded successfully ✓';
   static const changesSaved = 'Changes saved';
 }
 
@@ -63,4 +63,7 @@ abstract final class VendorFormStrings {
   static const bankNameHint = 'e.g. Nabil Bank, NIC Asia';
   static const branchSwiftLabel = 'Branch / SWIFT Code';
   static const branchSwiftHint = 'e.g. NIBLNPKT';
+
+  static const fixValidationErrors =
+      'Please fix the highlighted fields below before continuing';
 }

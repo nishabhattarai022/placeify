@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/constants/app_colors.dart';
+import '../../../domain/constants/vendor_registration_field_keys.dart';
+import '../../../domain/models/vendor_registration.dart';
 import '../../providers/vendor_registration_provider.dart';
 
 class ReviewSubmitStep extends ConsumerWidget {
@@ -56,7 +58,7 @@ class ReviewSubmitStep extends ConsumerWidget {
         _ReviewSection(
           title: 'Category',
           rows: [
-            _ReviewRow('Category', form.category.category),
+            _ReviewRow('Categories', form.category.categoriesLabel),
             if (form.category.description.trim().isNotEmpty)
               _ReviewRow('Description', form.category.description),
           ],
@@ -66,15 +68,21 @@ class ReviewSubmitStep extends ConsumerWidget {
           rows: [
             _ReviewRow(
               'Business License',
-              form.documents.businessLicensePath != null ? 'Uploaded' : 'Missing',
+              isUploadedVendorDocument(form.documents.businessLicensePath)
+                  ? 'Uploaded'
+                  : 'Missing',
             ),
             _ReviewRow(
               'Government ID',
-              form.documents.governmentIdPath != null ? 'Uploaded' : 'Missing',
+              isUploadedVendorDocument(form.documents.governmentIdPath)
+                  ? 'Uploaded'
+                  : 'Missing',
             ),
             _ReviewRow(
               'Tax Certificate',
-              form.documents.taxCertificatePath != null ? 'Uploaded' : 'Not provided',
+              isUploadedVendorDocument(form.documents.taxCertificatePath)
+                  ? 'Uploaded'
+                  : 'Not provided',
             ),
           ],
         ),

@@ -97,9 +97,8 @@ class VendorBottomNav extends ConsumerWidget {
                 child: _VendorTabButton(
                   tab: _tabs[i],
                   isActive: i == active,
-                  badgeCount: _tabs[i].showNotificationBadge
-                      ? notificationBadgeCount
-                      : 0,
+                  badgeCount:
+                      _tabs[i].showNotificationBadge ? notificationBadgeCount : 0,
                   onTap: () {
                     HapticService.light();
                     _tabs[i].onTap(context);
@@ -142,7 +141,7 @@ class _VendorTabButton extends StatelessWidget {
       child: NavIconTap(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -159,18 +158,25 @@ class _VendorTabButton extends StatelessWidget {
                   if (badgeCount > 0)
                     Positioned(
                       top: -4,
-                      right: -6,
+                      right: -4,
                       child: _NotificationBadge(count: badgeCount),
                     ),
                 ],
               ),
-              const SizedBox(height: 3),
-              Text(
-                tab.label,
-                style: TextStyle(
-                  fontSize: BottomNavTokens.vendorLabelSize,
-                  fontWeight: FontWeight.w500,
-                  color: labelColor,
+              const SizedBox(height: 2),
+              SizedBox(
+                width: double.infinity,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    tab.label,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: BottomNavTokens.vendorLabelSize,
+                      fontWeight: FontWeight.w500,
+                      color: labelColor,
+                    ),
+                  ),
                 ),
               ),
             ],

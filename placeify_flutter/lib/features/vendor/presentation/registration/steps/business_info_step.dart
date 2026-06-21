@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:placeify_flutter/core/widgets/phone_input_field.dart';
 
 import '../../../../profile/presentation/widgets/shared/profile_form_field.dart';
-import '../../../domain/constants/vendor_registration_field_keys.dart';
 import '../../../domain/constants/vendor_strings.dart';
 import '../../../domain/models/vendor_registration.dart';
+import '../../../domain/validators/vendor_registration_validator.dart';
 import '../../providers/vendor_registration_provider.dart';
+import '../widgets/vendor_registration_error_banner.dart';
 
 class BusinessInfoStep extends ConsumerStatefulWidget {
   const BusinessInfoStep({super.key});
@@ -40,8 +41,10 @@ class _BusinessInfoStepState extends ConsumerState<BusinessInfoStep> {
     super.dispose();
   }
 
-  void _sync(VendorBusinessInfo business) {
-    ref.read(vendorRegistrationProvider.notifier).updateBusiness(business);
+  void _sync(VendorBusinessInfo business, {String? clearErrorFor}) {
+    final notifier = ref.read(vendorRegistrationProvider.notifier);
+    notifier.updateBusiness(business);
+    if (clearErrorFor != null) notifier.clearFieldError(clearErrorFor);
   }
 
   @override
@@ -69,62 +72,76 @@ class _BusinessInfoStepState extends ConsumerState<BusinessInfoStep> {
           ),
         ),
         const SizedBox(height: 20),
+        VendorRegistrationErrorBanner(errors: fieldErrors),
         ProfileFormField(
           label: 'Business Name',
-          errorText: fieldErrors[VendorRegistrationFieldKeys.businessName],
+          error: fieldErrors[VendorRegistrationFieldKeys.businessName],
           child: ProfileTextInput(
             controller: _businessName,
             hint: VendorFormStrings.businessNameHint,
+            hasError: fieldErrors
+                .containsKey(VendorRegistrationFieldKeys.businessName),
             onChanged: (v) => _sync(
               ref.read(vendorRegistrationProvider).form.business
                   .copyWith(businessName: v),
+              clearErrorFor: VendorRegistrationFieldKeys.businessName,
             ),
           ),
         ),
         ProfileFormField(
           label: 'Contact Name',
-          errorText: fieldErrors[VendorRegistrationFieldKeys.contactName],
+          error: fieldErrors[VendorRegistrationFieldKeys.contactName],
           child: ProfileTextInput(
             controller: _contactName,
             hint: VendorFormStrings.contactNameHint,
+            hasError: fieldErrors
+                .containsKey(VendorRegistrationFieldKeys.contactName),
             onChanged: (v) => _sync(
               ref.read(vendorRegistrationProvider).form.business
                   .copyWith(contactName: v),
+              clearErrorFor: VendorRegistrationFieldKeys.contactName,
             ),
           ),
         ),
         ProfileFormField(
           label: 'Email',
-          errorText: fieldErrors[VendorRegistrationFieldKeys.email],
+          error: fieldErrors[VendorRegistrationFieldKeys.email],
           child: ProfileTextInput(
             controller: _email,
             hint: 'vendor@example.com',
+            keyboardType: TextInputType.emailAddress,
+            hasError: fieldErrors.containsKey(VendorRegistrationFieldKeys.email),
             onChanged: (v) => _sync(
               ref.read(vendorRegistrationProvider).form.business
                   .copyWith(email: v),
+              clearErrorFor: VendorRegistrationFieldKeys.email,
             ),
           ),
         ),
         ProfileFormField(
           label: 'Phone',
-          errorText: fieldErrors[VendorRegistrationFieldKeys.phone],
+          error: fieldErrors[VendorRegistrationFieldKeys.phone],
           child: PhoneInputField(
             initialPhone: ref.watch(vendorRegistrationProvider).form.business.phone,
+            hasError: fieldErrors.containsKey(VendorRegistrationFieldKeys.phone),
             onChanged: (full) => _sync(
               ref.read(vendorRegistrationProvider).form.business
                   .copyWith(phone: full),
+              clearErrorFor: VendorRegistrationFieldKeys.phone,
             ),
           ),
         ),
         ProfileFormField(
           label: VendorFormStrings.taxIdLabel,
-          errorText: fieldErrors[VendorRegistrationFieldKeys.taxId],
+          error: fieldErrors[VendorRegistrationFieldKeys.taxId],
           child: ProfileTextInput(
             controller: _taxId,
             hint: VendorFormStrings.taxIdHint,
+            hasError: fieldErrors.containsKey(VendorRegistrationFieldKeys.taxId),
             onChanged: (v) => _sync(
               ref.read(vendorRegistrationProvider).form.business
                   .copyWith(taxId: v),
+              clearErrorFor: VendorRegistrationFieldKeys.taxId,
             ),
           ),
         ),
