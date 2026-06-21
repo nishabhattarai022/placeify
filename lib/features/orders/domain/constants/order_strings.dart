@@ -6,10 +6,19 @@ import 'package:placeify/features/orders/domain/enums/payment_status.dart';
 abstract final class OrderStrings {
   // — List screen —
   static const myOrdersTitle = 'My Orders';
+  static const myOrdersItalicLine = 'deliveries & returns';
   static const profileMenuTitle = 'My Orders';
+
+  static const filterSheetTitle = 'Filter by';
+  static const filterSheetSubtitle = 'Choose which orders to show';
 
   static String ordersCountSubtitle(int count) =>
       count == 1 ? '1 order' : '$count orders';
+
+  static const searchHint = 'Search by order ID or vendor';
+  static String noSearchResults(String query) => 'No results for "$query"';
+  static const noSearchResultsSubtitle =
+      'Try a different order ID or vendor name.';
 
   static String ordersSubtitle(int count, int inTransit) {
     final orderPart = count == 1 ? '1 order' : '$count orders';

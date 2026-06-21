@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_radii.dart';
-import '../../../../core/constants/app_typography.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../domain/constants/order_strings.dart';
 import '../../domain/enums/order_list_filter.dart';
@@ -30,57 +28,64 @@ class OrdersEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+        padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 56,
-              height: 56,
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
                 color: AppColors.warmWhite,
-                borderRadius: AppRadii.md,
-                border: Border.all(color: AppColors.creamDark, width: 1.5),
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.creamDark),
               ),
-              child: Icon(_icon, size: 28, color: AppColors.textMuted),
+              child: Icon(
+                _icon,
+                size: 32,
+                color: AppColors.sage.withValues(alpha: 0.85),
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
               OrderStrings.emptyTitle(filter),
-              style: AppTypography.sectionTitle.copyWith(fontSize: 18),
               textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontFamily: 'Fraunces',
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
+                color: AppColors.espresso,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               OrderStrings.emptySubtitle(filter),
-              style: AppTypography.bodyLight.copyWith(
-                color: AppColors.textSecondary,
-              ),
               textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textMuted,
+                height: 1.5,
+              ),
             ),
             if (_showBrowseCta) ...[
-              const SizedBox(height: 20),
-              GestureDetector(
-                onTap: () {
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: () {
                   HapticService.light();
                   context.pushNamed('browse');
                 },
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: AppColors.espresso,
-                    borderRadius: AppRadii.pill,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.espresso,
+                  foregroundColor: AppColors.warmWhite,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 14,
                   ),
-                  child: Text(
-                    OrderStrings.emptyCta,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.warmWhite,
-                    ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
                   ),
                 ),
+                child: Text(OrderStrings.emptyCta),
               ),
             ],
           ],

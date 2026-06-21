@@ -8,10 +8,12 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radii.dart';
 import '../../../../core/services/haptic_service.dart';
+import '../../../../core/theme/app_fonts.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/animated_scale_tap.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
 import '../../../../core/widgets/toast_overlay.dart';
+import '../../../home/presentation/chairs_catalog_tokens.dart';
 import '../../domain/constants/order_strings.dart';
 import '../../domain/enums/consumer_order_status.dart';
 import '../../domain/models/order.dart';
@@ -29,8 +31,13 @@ class OrderCard extends ConsumerWidget {
   final Order order;
   final VoidCallback? onLongPress;
 
+  OrderItem get _heroItem => order.items.first;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final heroItem = _heroItem;
+    final extraItems = order.items.length - 1;
+
     return GestureDetector(
       onLongPress: onLongPress,
       child: AnimatedScaleTap(
@@ -42,66 +49,139 @@ class OrderCard extends ConsumerWidget {
           );
         },
         child: Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.warmWhite,
-            borderRadius: AppRadii.lg,
-            border: Border.all(color: AppColors.creamDark, width: 1.5),
+            color: ChairsCatalogTokens.imageWell,
+            borderRadius:
+                BorderRadius.circular(ChairsCatalogTokens.wideCardRadius),
+            boxShadow: ChairsCatalogTokens.cardShadow,
           ),
+          clipBehavior: Clip.antiAlias,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  Expanded(
-                    child: Text(
-                      order.orderNumber,
-                      style: GoogleFonts.dmSans(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.espresso,
+                  AspectRatio(
+                    aspectRatio: 16 / 10,
+                    child: ColoredBox(
+                      color: AppColors.cream,
+                      child: _OrderHeroImage(item: heroItem),
+                    ),
+                  ),
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: ConsumerOrderStatusChip(status: order.status),
+                  ),
+                  if (extraItems > 0)
+                    Positioned(
+                      left: 12,
+                      bottom: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.92),
+                          borderRadius: BorderRadius.circular(999),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          OrderStrings.moreItemsLabel(extraItems),
+                          style: GoogleFonts.dmSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.espresso,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  ConsumerOrderStatusChip(status: order.status),
                 ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                '${order.vendorName} · ${Formatters.shortDate(order.placedAt)}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textMuted,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                order.orderNumber,
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                  height: 1.2,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                heroItem.productName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${order.vendorName} · ${Formatters.shortDate(order.placedAt)}',
+                                style: AppFonts.dmSerifDisplay(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w400,
+                                  fontStyle: FontStyle.italic,
+                                  color: AppColors.textMuted,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              Formatters.currencyFull(order.total),
+                              style: GoogleFonts.dmSans(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              order.itemCount == 1
+                                  ? '1 item'
+                                  : '${order.itemCount} items',
+                              style: GoogleFonts.dmSans(
+                                fontSize: 12,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    ..._buildActions(context, ref),
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
-              _OrderThumbnailRow(items: order.items),
-              const SizedBox(height: 14),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    Formatters.currencyFull(order.total),
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.espresso,
-                    ),
-                  ),
-                  Text(
-                    order.itemCount == 1
-                        ? '1 item'
-                        : '${order.itemCount} items',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                ],
-              ),
-              ..._buildActions(context, ref),
             ],
           ),
         ),
@@ -114,7 +194,7 @@ class OrderCard extends ConsumerWidget {
     if (actions.isEmpty) return const [];
 
     return [
-      const SizedBox(height: 12),
+      const SizedBox(height: 14),
       Row(
         children: [
           for (var i = 0; i < actions.length; i++) ...[
@@ -180,102 +260,30 @@ class OrderCard extends ConsumerWidget {
   }
 }
 
-class _OrderThumbnailRow extends StatelessWidget {
-  const _OrderThumbnailRow({required this.items});
+class _OrderHeroImage extends StatelessWidget {
+  const _OrderHeroImage({required this.item});
 
-  final List<OrderItem> items;
+  final OrderItem item;
 
-  static const _thumbSize = 60.0;
-  static const _overlap = 14.0;
-
-  @override
-  Widget build(BuildContext context) {
-    final visible = items.take(3).toList();
-    final extra = items.length - visible.length;
-
-    return SizedBox(
-      height: _thumbSize,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          for (var i = 0; i < visible.length; i++)
-            Positioned(
-              left: i * (_thumbSize - _overlap),
-              child: _OrderItemThumbnail(imageUrl: visible[i].productImageUrl),
-            ),
-          if (extra > 0)
-            Positioned(
-              left: visible.length * (_thumbSize - _overlap),
-              child: Container(
-                width: _thumbSize,
-                height: _thumbSize,
-                decoration: BoxDecoration(
-                  color: AppColors.cream,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.creamDark, width: 1.5),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  OrderStrings.moreItemsLabel(extra),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _OrderItemThumbnail extends StatelessWidget {
-  const _OrderItemThumbnail({required this.imageUrl});
-
-  final String imageUrl;
+  bool get _isAsset => item.productImageUrl.startsWith('assets/');
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        color: AppColors.cream,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.creamDark, width: 1.5),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: _OrderItemImage(imageUrl: imageUrl),
-    );
-  }
-}
-
-class _OrderItemImage extends StatelessWidget {
-  const _OrderItemImage({required this.imageUrl});
-
-  final String imageUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final fit =
-        imageUrl.startsWith('assets/') ? BoxFit.contain : BoxFit.cover;
-
-    if (imageUrl.startsWith('assets/')) {
-      return Padding(
-        padding: const EdgeInsets.all(6),
-        child: Image.asset(
-          imageUrl,
-          fit: fit,
-          errorBuilder: (_, __, ___) => _fallbackIcon(),
-        ),
+    if (_isAsset) {
+      return Image.asset(
+        item.productImageUrl,
+        fit: BoxFit.contain,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (_, __, ___) => _fallbackIcon(),
       );
     }
 
     return CachedNetworkImage(
-      imageUrl: imageUrl,
-      fit: fit,
+      imageUrl: item.productImageUrl,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
       placeholder: (_, __) => const ShimmerLoader(),
       errorWidget: (_, __, ___) => _fallbackIcon(),
     );
@@ -285,7 +293,7 @@ class _OrderItemImage extends StatelessWidget {
     return Center(
       child: SvgPicture.asset(
         'assets/icons/ic_chair.svg',
-        width: 24,
+        width: 48,
         colorFilter: const ColorFilter.mode(
           AppColors.bark,
           BlendMode.srcIn,
