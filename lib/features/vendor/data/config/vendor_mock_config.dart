@@ -108,6 +108,8 @@ abstract final class VendorMockConfig {
       imageUrls: const [],
       categoryId: 'chairs',
       createdAt: DateTime(2025, 12, 10),
+      warrantyNote: '2-year limited warranty',
+      shippingNote: 'Ships in 5–7 business days',
     ),
     VendorProduct(
       id: 'p2',

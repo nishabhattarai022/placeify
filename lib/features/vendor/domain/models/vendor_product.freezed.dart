@@ -34,6 +34,8 @@ mixin _$VendorProduct {
   double get weightKg;
   bool get hasArView;
   String get materials;
+  String get warrantyNote;
+  String get shippingNote;
   int get lowStockThreshold;
 
   /// Create a copy of VendorProduct
@@ -83,6 +85,10 @@ mixin _$VendorProduct {
                 other.hasArView == hasArView) &&
             (identical(other.materials, materials) ||
                 other.materials == materials) &&
+            (identical(other.warrantyNote, warrantyNote) ||
+                other.warrantyNote == warrantyNote) &&
+            (identical(other.shippingNote, shippingNote) ||
+                other.shippingNote == shippingNote) &&
             (identical(other.lowStockThreshold, lowStockThreshold) ||
                 other.lowStockThreshold == lowStockThreshold));
   }
@@ -111,12 +117,14 @@ mixin _$VendorProduct {
         weightKg,
         hasArView,
         materials,
+        warrantyNote,
+        shippingNote,
         lowStockThreshold
       ]);
 
   @override
   String toString() {
-    return 'VendorProduct(id: $id, vendorId: $vendorId, name: $name, sku: $sku, price: $price, stock: $stock, imageUrls: $imageUrls, categoryId: $categoryId, isActive: $isActive, createdAt: $createdAt, description: $description, brand: $brand, originalPrice: $originalPrice, offerLabel: $offerLabel, widthCm: $widthCm, depthCm: $depthCm, heightCm: $heightCm, weightKg: $weightKg, hasArView: $hasArView, materials: $materials, lowStockThreshold: $lowStockThreshold)';
+    return 'VendorProduct(id: $id, vendorId: $vendorId, name: $name, sku: $sku, price: $price, stock: $stock, imageUrls: $imageUrls, categoryId: $categoryId, isActive: $isActive, createdAt: $createdAt, description: $description, brand: $brand, originalPrice: $originalPrice, offerLabel: $offerLabel, widthCm: $widthCm, depthCm: $depthCm, heightCm: $heightCm, weightKg: $weightKg, hasArView: $hasArView, materials: $materials, warrantyNote: $warrantyNote, shippingNote: $shippingNote, lowStockThreshold: $lowStockThreshold)';
   }
 }
 
@@ -147,6 +155,8 @@ abstract mixin class $VendorProductCopyWith<$Res> {
       double weightKg,
       bool hasArView,
       String materials,
+      String warrantyNote,
+      String shippingNote,
       int lowStockThreshold});
 }
 
@@ -183,6 +193,8 @@ class _$VendorProductCopyWithImpl<$Res>
     Object? weightKg = null,
     Object? hasArView = null,
     Object? materials = null,
+    Object? warrantyNote = null,
+    Object? shippingNote = null,
     Object? lowStockThreshold = null,
   }) {
     return _then(_self.copyWith(
@@ -265,6 +277,14 @@ class _$VendorProductCopyWithImpl<$Res>
       materials: null == materials
           ? _self.materials
           : materials // ignore: cast_nullable_to_non_nullable
+              as String,
+      warrantyNote: null == warrantyNote
+          ? _self.warrantyNote
+          : warrantyNote // ignore: cast_nullable_to_non_nullable
+              as String,
+      shippingNote: null == shippingNote
+          ? _self.shippingNote
+          : shippingNote // ignore: cast_nullable_to_non_nullable
               as String,
       lowStockThreshold: null == lowStockThreshold
           ? _self.lowStockThreshold
@@ -388,6 +408,8 @@ extension VendorProductPatterns on VendorProduct {
             double weightKg,
             bool hasArView,
             String materials,
+            String warrantyNote,
+            String shippingNote,
             int lowStockThreshold)?
         $default, {
     required TResult orElse(),
@@ -416,6 +438,8 @@ extension VendorProductPatterns on VendorProduct {
             _that.weightKg,
             _that.hasArView,
             _that.materials,
+            _that.warrantyNote,
+            _that.shippingNote,
             _that.lowStockThreshold);
       case _:
         return orElse();
@@ -458,6 +482,8 @@ extension VendorProductPatterns on VendorProduct {
             double weightKg,
             bool hasArView,
             String materials,
+            String warrantyNote,
+            String shippingNote,
             int lowStockThreshold)
         $default,
   ) {
@@ -485,6 +511,8 @@ extension VendorProductPatterns on VendorProduct {
             _that.weightKg,
             _that.hasArView,
             _that.materials,
+            _that.warrantyNote,
+            _that.shippingNote,
             _that.lowStockThreshold);
       case _:
         throw StateError('Unexpected subclass');
@@ -526,6 +554,8 @@ extension VendorProductPatterns on VendorProduct {
             double weightKg,
             bool hasArView,
             String materials,
+            String warrantyNote,
+            String shippingNote,
             int lowStockThreshold)?
         $default,
   ) {
@@ -553,6 +583,8 @@ extension VendorProductPatterns on VendorProduct {
             _that.weightKg,
             _that.hasArView,
             _that.materials,
+            _that.warrantyNote,
+            _that.shippingNote,
             _that.lowStockThreshold);
       case _:
         return null;
@@ -584,6 +616,8 @@ class _VendorProduct extends VendorProduct {
       this.weightKg = 0,
       this.hasArView = false,
       this.materials = '',
+      this.warrantyNote = '',
+      this.shippingNote = '',
       this.lowStockThreshold = 5})
       : _imageUrls = imageUrls,
         super._();
@@ -649,6 +683,12 @@ class _VendorProduct extends VendorProduct {
   final String materials;
   @override
   @JsonKey()
+  final String warrantyNote;
+  @override
+  @JsonKey()
+  final String shippingNote;
+  @override
+  @JsonKey()
   final int lowStockThreshold;
 
   /// Create a copy of VendorProduct
@@ -703,6 +743,10 @@ class _VendorProduct extends VendorProduct {
                 other.hasArView == hasArView) &&
             (identical(other.materials, materials) ||
                 other.materials == materials) &&
+            (identical(other.warrantyNote, warrantyNote) ||
+                other.warrantyNote == warrantyNote) &&
+            (identical(other.shippingNote, shippingNote) ||
+                other.shippingNote == shippingNote) &&
             (identical(other.lowStockThreshold, lowStockThreshold) ||
                 other.lowStockThreshold == lowStockThreshold));
   }
@@ -731,12 +775,14 @@ class _VendorProduct extends VendorProduct {
         weightKg,
         hasArView,
         materials,
+        warrantyNote,
+        shippingNote,
         lowStockThreshold
       ]);
 
   @override
   String toString() {
-    return 'VendorProduct(id: $id, vendorId: $vendorId, name: $name, sku: $sku, price: $price, stock: $stock, imageUrls: $imageUrls, categoryId: $categoryId, isActive: $isActive, createdAt: $createdAt, description: $description, brand: $brand, originalPrice: $originalPrice, offerLabel: $offerLabel, widthCm: $widthCm, depthCm: $depthCm, heightCm: $heightCm, weightKg: $weightKg, hasArView: $hasArView, materials: $materials, lowStockThreshold: $lowStockThreshold)';
+    return 'VendorProduct(id: $id, vendorId: $vendorId, name: $name, sku: $sku, price: $price, stock: $stock, imageUrls: $imageUrls, categoryId: $categoryId, isActive: $isActive, createdAt: $createdAt, description: $description, brand: $brand, originalPrice: $originalPrice, offerLabel: $offerLabel, widthCm: $widthCm, depthCm: $depthCm, heightCm: $heightCm, weightKg: $weightKg, hasArView: $hasArView, materials: $materials, warrantyNote: $warrantyNote, shippingNote: $shippingNote, lowStockThreshold: $lowStockThreshold)';
   }
 }
 
@@ -769,6 +815,8 @@ abstract mixin class _$VendorProductCopyWith<$Res>
       double weightKg,
       bool hasArView,
       String materials,
+      String warrantyNote,
+      String shippingNote,
       int lowStockThreshold});
 }
 
@@ -805,6 +853,8 @@ class __$VendorProductCopyWithImpl<$Res>
     Object? weightKg = null,
     Object? hasArView = null,
     Object? materials = null,
+    Object? warrantyNote = null,
+    Object? shippingNote = null,
     Object? lowStockThreshold = null,
   }) {
     return _then(_VendorProduct(
@@ -887,6 +937,14 @@ class __$VendorProductCopyWithImpl<$Res>
       materials: null == materials
           ? _self.materials
           : materials // ignore: cast_nullable_to_non_nullable
+              as String,
+      warrantyNote: null == warrantyNote
+          ? _self.warrantyNote
+          : warrantyNote // ignore: cast_nullable_to_non_nullable
+              as String,
+      shippingNote: null == shippingNote
+          ? _self.shippingNote
+          : shippingNote // ignore: cast_nullable_to_non_nullable
               as String,
       lowStockThreshold: null == lowStockThreshold
           ? _self.lowStockThreshold

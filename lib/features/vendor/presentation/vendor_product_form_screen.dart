@@ -50,6 +50,8 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
   late final TextEditingController _brand;
   late final TextEditingController _sku;
   late final TextEditingController _materials;
+  late final TextEditingController _warrantyNote;
+  late final TextEditingController _shippingNote;
   late final TextEditingController _listPrice;
   late final TextEditingController _discountPercent;
   late final TextEditingController _offerLabel;
@@ -69,6 +71,8 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     _brand = TextEditingController(text: form.brand);
     _sku = TextEditingController(text: form.sku);
     _materials = TextEditingController(text: form.materials);
+    _warrantyNote = TextEditingController(text: form.warrantyNote);
+    _shippingNote = TextEditingController(text: form.shippingNote);
     _listPrice = TextEditingController(text: form.listPrice);
     _discountPercent = TextEditingController(text: form.discountPercent);
     _offerLabel = TextEditingController(text: form.offerLabel);
@@ -102,6 +106,8 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     _brand.dispose();
     _sku.dispose();
     _materials.dispose();
+    _warrantyNote.dispose();
+    _shippingNote.dispose();
     _listPrice.dispose();
     _discountPercent.dispose();
     _offerLabel.dispose();
@@ -129,6 +135,8 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     setIfDifferent(_brand, form.brand);
     setIfDifferent(_sku, form.sku);
     setIfDifferent(_materials, form.materials);
+    setIfDifferent(_warrantyNote, form.warrantyNote);
+    setIfDifferent(_shippingNote, form.shippingNote);
     setIfDifferent(_listPrice, form.listPrice);
     setIfDifferent(_discountPercent, form.discountPercent);
     setIfDifferent(_offerLabel, form.offerLabel);
@@ -149,6 +157,8 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
         brand: _brand.text,
         sku: _sku.text,
         materials: _materials.text,
+        warrantyNote: _warrantyNote.text,
+        shippingNote: _shippingNote.text,
         listPrice: _listPrice.text,
         discountPercent: _discountPercent.text,
         offerLabel: _offerLabel.text,
@@ -527,6 +537,50 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                     onChanged: (value) {
                       notifier.update(
                         (state) => state.copyWith(materials: value),
+                      );
+                      _markDirty();
+                    },
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Warranty & shipping',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.espresso,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Shown on the product page when customers expand details.',
+                  style: AppTypography.bodyLight.copyWith(
+                    color: AppColors.textSecondary,
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                ProfileFormField(
+                  label: 'Warranty',
+                  child: ProfileTextInput(
+                    controller: _warrantyNote,
+                    hint: 'e.g. 2-year limited warranty',
+                    onChanged: (value) {
+                      notifier.update(
+                        (state) => state.copyWith(warrantyNote: value),
+                      );
+                      _markDirty();
+                    },
+                  ),
+                ),
+                ProfileFormField(
+                  label: 'Shipping',
+                  child: ProfileTextInput(
+                    controller: _shippingNote,
+                    hint: 'e.g. Ships in 5–7 business days',
+                    onChanged: (value) {
+                      notifier.update(
+                        (state) => state.copyWith(shippingNote: value),
                       );
                       _markDirty();
                     },

@@ -31,6 +31,8 @@ _VendorProduct _$VendorProductFromJson(Map<String, dynamic> json) =>
       weightKg: (json['weightKg'] as num?)?.toDouble() ?? 0,
       hasArView: json['hasArView'] as bool? ?? false,
       materials: json['materials'] as String? ?? '',
+      warrantyNote: json['warrantyNote'] as String? ?? '',
+      shippingNote: json['shippingNote'] as String? ?? '',
       lowStockThreshold: (json['lowStockThreshold'] as num?)?.toInt() ?? 5,
     );
 
@@ -56,5 +58,7 @@ Map<String, dynamic> _$VendorProductToJson(_VendorProduct instance) =>
       'weightKg': instance.weightKg,
       'hasArView': instance.hasArView,
       'materials': instance.materials,
+      'warrantyNote': instance.warrantyNote,
+      'shippingNote': instance.shippingNote,
       'lowStockThreshold': instance.lowStockThreshold,
     };
