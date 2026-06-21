@@ -41,7 +41,7 @@ final class VendorSettingsProvider
   }
 }
 
-String _$vendorSettingsHash() => r'bee315c2c887bc836164057915f324b3bcaaae3e';
+String _$vendorSettingsHash() => r'5ab3eb68ddb4b0e4fa5716031482b3a455be79fa';
 
 abstract class _$VendorSettings extends $Notifier<VendorSettingsState> {
   VendorSettingsState build();

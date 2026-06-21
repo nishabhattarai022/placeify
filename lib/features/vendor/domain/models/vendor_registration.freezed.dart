@@ -815,9 +815,6 @@ mixin _$VendorCategoryInfo {
       _$VendorCategoryInfoCopyWithImpl<VendorCategoryInfo>(
           this as VendorCategoryInfo, _$identity);
 
-  /// Serializes this VendorCategoryInfo to a JSON map.
-  Map<String, dynamic> toJson();
-
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -829,10 +826,9 @@ mixin _$VendorCategoryInfo {
                 other.description == description));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, const DeepCollectionEquality().hash(categories), description);
+  int get hashCode => Object.hash(runtimeType,
+      const DeepCollectionEquality().hash(categories), description);
 
   @override
   String toString() {
@@ -1036,30 +1032,11 @@ extension VendorCategoryInfoPatterns on VendorCategoryInfo {
 }
 
 /// @nodoc
+
 class _VendorCategoryInfo implements VendorCategoryInfo {
   const _VendorCategoryInfo(
       {final List<String> categories = const [], this.description = ''})
       : _categories = categories;
-
-  factory _VendorCategoryInfo.fromJson(Map<String, dynamic> json) {
-    final raw = json['categories'];
-    final categories = raw is List
-        ? raw
-            .map((e) => e.toString().trim())
-            .where((name) => name.isNotEmpty)
-            .toList()
-        : <String>[];
-    if (categories.isEmpty) {
-      final legacy = json['category'] as String? ?? '';
-      if (legacy.trim().isNotEmpty) {
-        categories.add(legacy.trim());
-      }
-    }
-    return _VendorCategoryInfo(
-      categories: categories,
-      description: json['description'] as String? ?? '',
-    );
-  }
 
   final List<String> _categories;
   @override
@@ -1083,12 +1060,6 @@ class _VendorCategoryInfo implements VendorCategoryInfo {
       __$VendorCategoryInfoCopyWithImpl<_VendorCategoryInfo>(this, _$identity);
 
   @override
-  Map<String, dynamic> toJson() => {
-        'categories': categories,
-        'description': description,
-      };
-
-  @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
@@ -1099,10 +1070,9 @@ class _VendorCategoryInfo implements VendorCategoryInfo {
                 other.description == description));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, const DeepCollectionEquality().hash(_categories), description);
+  int get hashCode => Object.hash(runtimeType,
+      const DeepCollectionEquality().hash(_categories), description);
 
   @override
   String toString() {

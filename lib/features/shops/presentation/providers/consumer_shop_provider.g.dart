@@ -46,7 +46,7 @@ final class ConsumerShopRepositoryProvider extends $FunctionalProvider<
 }
 
 String _$consumerShopRepositoryHash() =>
-    r'a1b2c3d4e5f6789012345678abcdef9012345678';
+    r'358668e5f5f834a50f745e367d46d72fdf86e591';
 
 @ProviderFor(consumerShops)
 final consumerShopsProvider = ConsumerShopsFamily._();
@@ -55,7 +55,9 @@ final class ConsumerShopsProvider extends $FunctionalProvider<
         AsyncValue<List<ShopListing>>,
         List<ShopListing>,
         FutureOr<List<ShopListing>>>
-    with $FutureModifier<List<ShopListing>>, $FutureProvider<List<ShopListing>> {
+    with
+        $FutureModifier<List<ShopListing>>,
+        $FutureProvider<List<ShopListing>> {
   ConsumerShopsProvider._(
       {required ConsumerShopsFamily super.from, required String super.argument})
       : super(
@@ -102,7 +104,7 @@ final class ConsumerShopsProvider extends $FunctionalProvider<
   }
 }
 
-String _$consumerShopsHash() => r'b2c3d4e5f6789012345678abcdef90123456789a';
+String _$consumerShopsHash() => r'2f79f4b2097cbed75ac1457a3115b1a770cfa49c';
 
 final class ConsumerShopsFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<ShopListing>>, String> {
@@ -128,9 +130,7 @@ final class ConsumerShopsFamily extends $Family
 final shopListingProvider = ShopListingFamily._();
 
 final class ShopListingProvider extends $FunctionalProvider<
-        AsyncValue<ShopListing?>,
-        ShopListing?,
-        FutureOr<ShopListing?>>
+        AsyncValue<ShopListing?>, ShopListing?, FutureOr<ShopListing?>>
     with $FutureModifier<ShopListing?>, $FutureProvider<ShopListing?> {
   ShopListingProvider._(
       {required ShopListingFamily super.from, required String super.argument})
@@ -178,7 +178,7 @@ final class ShopListingProvider extends $FunctionalProvider<
   }
 }
 
-String _$shopListingHash() => r'c3d4e5f6789012345678abcdef90123456789abc';
+String _$shopListingHash() => r'ac97609a0bed95a7dd68636485e2e1b10832e33a';
 
 final class ShopListingFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<ShopListing?>, String> {
@@ -204,9 +204,7 @@ final class ShopListingFamily extends $Family
 final shopProductsProvider = ShopProductsFamily._();
 
 final class ShopProductsProvider extends $FunctionalProvider<
-        AsyncValue<List<Product>>,
-        List<Product>,
-        FutureOr<List<Product>>>
+        AsyncValue<List<Product>>, List<Product>, FutureOr<List<Product>>>
     with $FutureModifier<List<Product>>, $FutureProvider<List<Product>> {
   ShopProductsProvider._(
       {required ShopProductsFamily super.from, required String super.argument})
@@ -254,7 +252,7 @@ final class ShopProductsProvider extends $FunctionalProvider<
   }
 }
 
-String _$shopProductsHash() => r'd4e5f6789012345678abcdef90123456789abcde';
+String _$shopProductsHash() => r'590e4449904a1f05ab893c34cef6dd03398e5178';
 
 final class ShopProductsFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<Product>>, String> {

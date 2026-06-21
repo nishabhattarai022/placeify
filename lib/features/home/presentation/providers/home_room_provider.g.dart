@@ -51,4 +51,4 @@ final class RecommendedProductsProvider extends $FunctionalProvider<
 }
 
 String _$recommendedProductsHash() =>
-    r'c3f8a1b2d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9';
+    r'6cb20aa8025d3a8ee2c29e6829183136ce1c12f0';
