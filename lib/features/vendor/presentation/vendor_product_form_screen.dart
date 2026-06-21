@@ -17,6 +17,7 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/percent_input_formatter.dart';
 import '../../../core/widgets/animated_scale_tap.dart';
 import '../../../core/widgets/placeify_bottom_sheet.dart';
 import '../../../core/widgets/toast_overlay.dart';
@@ -634,9 +635,19 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                    inputFormatters: const [
+                      PercentInputFormatter(min: 0, max: 100),
                     ],
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return null;
+                      }
+                      final parsed = double.tryParse(value.trim());
+                      if (parsed == null || parsed < 0 || parsed > 100) {
+                        return 'Discount must be between 0 and 100';
+                      }
+                      return null;
+                    },
                     onChanged: (value) {
                       notifier.update(
                         (state) => state.copyWith(discountPercent: value),
