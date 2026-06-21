@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SERVER_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SERVER_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$SERVER_DIR"
 
 if curl -sf http://127.0.0.1:8080/ >/dev/null 2>&1; then
@@ -30,6 +31,14 @@ fi
 
 echo "==> Starting Docker (Postgres + Redis)"
 docker compose up -d
+
+# Auto-fix orphan migration ids (e.g. 20260613181356657) before Serverpod starts.
+if ! "$(dirname "$0")/reconcile-migrations.sh"; then
+  echo ""
+  echo "Migration repair failed. For a clean slate run:"
+  echo "  ./scripts/reset-dev-database.sh"
+  exit 1
+fi
 
 echo "==> Starting Placeify server (Ctrl+C to stop)"
 dart bin/main.dart --apply-migrations
