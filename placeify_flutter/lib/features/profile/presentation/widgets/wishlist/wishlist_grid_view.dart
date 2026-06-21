@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../home/data/mock_product_repository.dart';
+import '../../../../home/presentation/providers/catalog_provider.dart';
 import '../../../../home/presentation/providers/wishlist_provider.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_spacing.dart';
@@ -30,9 +30,7 @@ class WishlistGridView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final savedAt = ref.watch(wishlistProvider);
     final sort = ref.watch(wishlistSortProvider);
-    final byId = {
-      for (final p in MockProductRepository.products) p.id: p,
-    };
+    final byId = ref.watch(catalogIndexProvider).value ?? const {};
     final sortedProducts = sortWishlistProducts(
       products: [
         for (final id in savedAt.keys)

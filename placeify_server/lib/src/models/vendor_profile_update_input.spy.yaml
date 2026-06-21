@@ -2,6 +2,7 @@
 class: VendorProfileUpdateInput
 fields:
   businessName: String?
+  email: String?
   phone: String?
   address: String?
   city: String?

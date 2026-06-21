@@ -1,9 +1,11 @@
-import 'package:placeify_client/placeify_client.dart' hide Product;
+import 'package:placeify_client/placeify_client.dart' hide Product, VendorBankDetails;
 import 'package:placeify_flutter/core/config/placeify_server_client.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_registration_field_keys.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_registration.dart';
 import 'package:placeify_flutter/features/vendor/domain/repositories/vendor_registration_repository.dart';
+import 'package:placeify_flutter/features/vendor/data/vendor_shop_category_codec.dart';
+import 'package:placeify_flutter/features/vendor/data/vendor_bank_details_mapper.dart';
 
 /// Persists vendor registration submissions to PostgreSQL via [client.vendor.createShop].
 class ServerpodVendorRegistrationRepository
@@ -28,12 +30,11 @@ class ServerpodVendorRegistrationRepository
     final business = registration.business;
     final address = registration.address;
     final category = registration.category;
+    final bank = registration.bank;
 
     final shopName = business.businessName.trim();
     final phone = business.phone.trim();
-    final categoryName = category.categories.isNotEmpty
-        ? category.categories.first.trim()
-        : '';
+    final contactEmail = business.email.trim();
     final streetLine = address.street.trim();
     final city = address.city.trim();
     final country = address.country.trim();
@@ -48,8 +49,12 @@ class ServerpodVendorRegistrationRepository
 
     if (shopName.isEmpty ||
         phone.isEmpty ||
-        categoryName.isEmpty ||
-        fullAddress.isEmpty) {
+        category.categories.isEmpty ||
+        fullAddress.isEmpty ||
+        bank.accountHolderName.trim().isEmpty ||
+        bank.bankName.trim().isEmpty ||
+        bank.accountNumber.trim().length < 6 ||
+        bank.routingNumber.trim().length < 6) {
       throw VendorRegistrationException(
         'Complete all required fields before submitting.',
       );
@@ -66,6 +71,9 @@ class ServerpodVendorRegistrationRepository
         ? category.description.trim()
         : '$shopName — ${category.categoriesLabel} vendor on Placeify.';
 
+    final shopCategory = VendorShopCategoryCodec.encode(category.categories);
+    final bankDetails = VendorBankDetailsMapper.toApiInput(bank);
+
     try {
       final vendor = await client.vendor.createShop(
         shopName,
@@ -74,7 +82,9 @@ class ServerpodVendorRegistrationRepository
         address: fullAddress,
         city: city.isEmpty ? null : city,
         country: country.isEmpty ? null : country,
-        shopCategory: categoryName,
+        shopCategory: shopCategory,
+        contactEmail: contactEmail.isEmpty ? null : contactEmail,
+        bankDetails: bankDetails,
       );
 
       return vendor.id.toString();
@@ -99,6 +109,11 @@ class ServerpodVendorRegistrationRepository
           error.message,
         'BUSINESS_NAME_TOO_SHORT' => error.message,
         'BUSINESS_NAME_TOO_LONG' => error.message,
+        'INVALID_ACCOUNT_HOLDER' ||
+        'INVALID_BANK_NAME' ||
+        'INVALID_ACCOUNT_NUMBER' ||
+        'INVALID_BRANCH_CODE' =>
+          error.message,
         _ => error.message,
       };
     }

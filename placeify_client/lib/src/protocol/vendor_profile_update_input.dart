@@ -16,6 +16,7 @@ import 'package:serverpod_client/serverpod_client.dart' as _i1;
 abstract class VendorProfileUpdateInput implements _i1.SerializableModel {
   VendorProfileUpdateInput._({
     this.businessName,
+    this.email,
     this.phone,
     this.address,
     this.city,
@@ -33,6 +34,7 @@ abstract class VendorProfileUpdateInput implements _i1.SerializableModel {
 
   factory VendorProfileUpdateInput({
     String? businessName,
+    String? email,
     String? phone,
     String? address,
     String? city,
@@ -53,6 +55,7 @@ abstract class VendorProfileUpdateInput implements _i1.SerializableModel {
   ) {
     return VendorProfileUpdateInput(
       businessName: jsonSerialization['businessName'] as String?,
+      email: jsonSerialization['email'] as String?,
       phone: jsonSerialization['phone'] as String?,
       address: jsonSerialization['address'] as String?,
       city: jsonSerialization['city'] as String?,
@@ -72,6 +75,8 @@ abstract class VendorProfileUpdateInput implements _i1.SerializableModel {
   }
 
   String? businessName;
+
+  String? email;
 
   String? phone;
 
@@ -104,6 +109,7 @@ abstract class VendorProfileUpdateInput implements _i1.SerializableModel {
   @_i1.useResult
   VendorProfileUpdateInput copyWith({
     String? businessName,
+    String? email,
     String? phone,
     String? address,
     String? city,
@@ -123,6 +129,7 @@ abstract class VendorProfileUpdateInput implements _i1.SerializableModel {
     return {
       '__className__': 'VendorProfileUpdateInput',
       if (businessName != null) 'businessName': businessName,
+      if (email != null) 'email': email,
       if (phone != null) 'phone': phone,
       if (address != null) 'address': address,
       if (city != null) 'city': city,
@@ -150,6 +157,7 @@ class _Undefined {}
 class _VendorProfileUpdateInputImpl extends VendorProfileUpdateInput {
   _VendorProfileUpdateInputImpl({
     String? businessName,
+    String? email,
     String? phone,
     String? address,
     String? city,
@@ -165,6 +173,7 @@ class _VendorProfileUpdateInputImpl extends VendorProfileUpdateInput {
     bool? isOpen,
   }) : super._(
          businessName: businessName,
+         email: email,
          phone: phone,
          address: address,
          city: city,
@@ -186,6 +195,7 @@ class _VendorProfileUpdateInputImpl extends VendorProfileUpdateInput {
   @override
   VendorProfileUpdateInput copyWith({
     Object? businessName = _Undefined,
+    Object? email = _Undefined,
     Object? phone = _Undefined,
     Object? address = _Undefined,
     Object? city = _Undefined,
@@ -202,6 +212,7 @@ class _VendorProfileUpdateInputImpl extends VendorProfileUpdateInput {
   }) {
     return VendorProfileUpdateInput(
       businessName: businessName is String? ? businessName : this.businessName,
+      email: email is String? ? email : this.email,
       phone: phone is String? ? phone : this.phone,
       address: address is String? ? address : this.address,
       city: city is String? ? city : this.city,

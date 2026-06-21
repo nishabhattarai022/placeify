@@ -97,9 +97,8 @@ class ServerpodAuthRepository implements AuthRepository {
 
   /// Signs in with the demo admin account for local admin dashboard access.
   Future<AppUser> signInWithDemoAdminCredentials() async {
-    AppUser user;
     try {
-      user = await signIn(
+      await signIn(
         email: DemoCredentials.adminEmail,
         password: DemoCredentials.adminPassword,
       );
@@ -111,13 +110,12 @@ class ServerpodAuthRepository implements AuthRepository {
         email: DemoCredentials.adminEmail,
         password: DemoCredentials.adminPassword,
       );
-      user = await signIn(
+      await signIn(
         email: DemoCredentials.adminEmail,
         password: DemoCredentials.adminPassword,
       );
     }
 
-    await client.user.ensureDemoAdmin();
     return _loadAppUser(DemoCredentials.adminEmail);
   }
 
@@ -144,6 +142,9 @@ class ServerpodAuthRepository implements AuthRepository {
       );
       await client.auth.updateSignedInUser(authSuccess);
       await _prefs.setString(_sessionEmailKey, normalizedEmail);
+      if (normalizedEmail == DemoCredentials.adminEmail.trim().toLowerCase()) {
+        await client.user.ensureDemoAdmin();
+      }
       return _loadAppUser(normalizedEmail);
     } catch (error) {
       throw _mapError(error);

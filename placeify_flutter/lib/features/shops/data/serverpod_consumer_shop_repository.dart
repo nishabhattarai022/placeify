@@ -4,6 +4,7 @@ import 'package:serverpod_client/serverpod_client.dart';
 import '../../../core/config/placeify_server_client.dart';
 import '../../home/domain/models/product.dart';
 import '../../vendor/data/vendor_product_mapper.dart' as vendor_mapper;
+import '../../vendor/data/vendor_shop_category_codec.dart';
 import '../domain/models/shop_listing.dart';
 import '../domain/repositories/consumer_shop_repository.dart';
 import 'vendor_product_mapper.dart';
@@ -29,7 +30,7 @@ class ServerpodConsumerShopRepository implements ConsumerShopRepository {
       vendorId: profile.id.toString(),
       businessName: profile.businessName,
       locality: profile.city.isNotEmpty ? profile.city : profile.address,
-      tags: profile.category.isNotEmpty ? [profile.category] : const [],
+      tags: VendorShopCategoryCodec.decode(profile.category),
       logoUrl: profile.logoUrl,
       bannerUrl: profile.bannerUrl,
       productCount: profile.totalProducts,

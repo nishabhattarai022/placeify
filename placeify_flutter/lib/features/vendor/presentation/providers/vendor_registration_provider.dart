@@ -1,4 +1,4 @@
-import 'package:placeify_client/placeify_client.dart';
+import 'package:placeify_client/placeify_client.dart' hide VendorBankDetails;
 import 'package:placeify_flutter/core/constants/country_phone_codes.dart';
 import 'package:placeify_flutter/features/vendor/data/serverpod_vendor_document_repository.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_registration_field_keys.dart';

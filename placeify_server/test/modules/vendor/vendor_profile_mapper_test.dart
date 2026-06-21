@@ -80,5 +80,23 @@ void main() {
       expect(detail.totalRevenue, 24500.0);
       expect(detail.notificationPreferences?.orderUpdates, isTrue);
     });
+
+    test('prefers vendor contact email over account email', () {
+      final vendorWithContactEmail = vendor.copyWith(
+        contactEmail: 'shop-contact@example.com',
+      );
+
+      final detail = VendorProfileMapper.toDetail(
+        vendor: vendorWithContactEmail,
+        user: user,
+        metrics: (
+          totalProducts: 0,
+          totalOrders: 0,
+          totalRevenue: 0.0,
+        ),
+      );
+
+      expect(detail.email, 'shop-contact@example.com');
+    });
   });
 }

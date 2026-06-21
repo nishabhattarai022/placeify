@@ -4,6 +4,7 @@ import 'package:placeify_flutter/features/shops/data/vendor_product_mapper.dart'
 import 'package:placeify_flutter/features/vendor/data/config/vendor_mock_config.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product.dart';
 
+import '../../cart/data/product_id_codec.dart';
 import '../../home/domain/models/product.dart';
 
 /// A labeled spec row (e.g. "Frame" → "Solid oak").
@@ -53,106 +54,166 @@ class ProductDetailContent {
 }
 
 abstract final class ProductDetailContentRepository {
-  static const _sharedAngles = [
-    'assets/images/splash/Tola_Lounge_Chair_Venice_Vegan_Suede_Sage_1_0.jpg',
-    'assets/images/splash/pexels-suhailat-35160826.jpg',
-    'assets/images/splash/Diane_Sofa_Venice_Vegan_Suede_Sage_1.jpg',
-    'assets/images/splash/462222_1_800.jpg',
-  ];
+  static const _placeholderCare =
+      'See product description for care details.';
+  static const _placeholderMaterials = 'Vendor-listed materials';
 
   static ProductDetailContent forProduct(Product product) {
-    final mapped = _byProductId[product.id];
-    final defaultSpecs = _defaultSpecs(product);
+    final legacyMock = _legacyMockByProductId[product.id];
+    if (legacyMock != null) {
+      return legacyMock;
+    }
 
-    if (mapped != null) {
-      return ProductDetailContent(
-        displayTitle: mapped.displayTitle,
-        description: mapped.description,
-        extendedDescription: mapped.extendedDescription,
-        galleryImages: mapped.galleryImages.isNotEmpty
-            ? mapped.galleryImages
-            : _galleryFor(product),
-        materials: mapped.materials,
-        specs: mapped.specs.isNotEmpty ? mapped.specs : defaultSpecs,
-        careInstructions: mapped.careInstructions,
-        warranty: mapped.warranty,
-      );
+    if (_usesVendorProvidedDetails(product)) {
+      return _fromVendorProvidedDetails(product);
     }
 
     if (VendorProductMapper.isShopProductId(product.id)) {
-      return _forShopProduct(product, defaultSpecs);
+      final vendorProduct = _vendorProductForShopProduct(product);
+      if (vendorProduct != null) {
+        return _fromVendorProduct(vendorProduct, product);
+      }
     }
 
+    return _fromVendorProvidedDetails(product);
+  }
+
+  static bool _usesVendorProvidedDetails(Product product) {
+    if (product.vendorId != null) return true;
+    return ProductIdCodec.toDatabaseId(product.id) != null;
+  }
+
+  static ProductDetailContent _fromVendorProvidedDetails(Product product) {
+    final description = product.description.trim();
+    final materials = _parseListField(product.materials);
+    final care = _parseCareInstructions(product.careInstructions);
+    final warranty = _meaningfulText(product.warranty) ??
+        _meaningfulText(product.offerLabel);
+
     return ProductDetailContent(
-      description:
-          'The ${product.name} combines thoughtful craftsmanship with everyday comfort, '
-          'making it a versatile piece for modern living spaces.',
-      extendedDescription:
-          'Built with quality materials and a balanced silhouette, it pairs easily with '
-          'neutral palettes and natural textures throughout your home.',
-      galleryImages: _galleryFor(product),
-      materials: const [
-        'Kiln-dried hardwood frame',
-        'High-density foam cushioning',
-        'Performance-grade upholstery',
-      ],
-      specs: defaultSpecs,
-      careInstructions: const [
-        'Spot clean with a soft, damp cloth.',
-        'Avoid direct sunlight to preserve fabric colour.',
-        'Vacuum upholstery weekly with a soft brush.',
-      ],
-      warranty: '2-year limited warranty • Ships in 5–7 business days',
+      description: description.isNotEmpty ? description : product.name,
+      galleryImages: _galleryFromProduct(product),
+      materials: materials,
+      specs: _specsFromProduct(product),
+      careInstructions: care,
+      warranty: warranty,
     );
   }
 
-  static List<ProductSpec> _defaultSpecs(Product product) {
-    final dims = product.dimensions;
-    String fmt(double v) => v.toStringAsFixed(v % 1 == 0 ? 0 : 1);
-    return [
-      ProductSpec(
-        label: 'Dimensions',
-        value:
-            'W${fmt(dims.widthCm)} × D${fmt(dims.depthCm)} × H${fmt(dims.heightCm)} cm',
-      ),
-      const ProductSpec(label: 'Weight', value: '12 kg'),
-      const ProductSpec(label: 'Assembly', value: 'Minimal (legs only)'),
-      const ProductSpec(label: 'Origin', value: 'Designed in Kathmandu'),
-    ];
-  }
-
-  static ProductDetailContent _forShopProduct(
+  static ProductDetailContent _fromVendorProduct(
+    VendorProduct vendorProduct,
     Product product,
-    List<ProductSpec> defaultSpecs,
   ) {
-    final vendorProduct = _vendorProductForShopProduct(product);
-    final description = vendorProduct != null &&
-            vendorProduct.description.trim().isNotEmpty
-        ? vendorProduct.description
-        : 'The ${product.name} combines thoughtful craftsmanship with everyday '
-            'comfort, making it a versatile piece for modern living spaces.';
-    final galleryImages = vendorProduct != null &&
-            vendorProduct.imageUrls.isNotEmpty
-        ? vendorProduct.imageUrls
-        : _galleryFor(product);
+    final description = vendorProduct.description.trim();
+    final materials = _parseListField(vendorProduct.materials);
+    final warranty = _meaningfulText(vendorProduct.offerLabel);
 
     return ProductDetailContent(
-      description: description,
-      extendedDescription:
-          'Available from a local Placeify vendor. Built with quality materials '
-          'and a balanced silhouette for Nepali homes.',
-      galleryImages: galleryImages,
-      materials: const [
-        'Vendor-listed materials',
-        'Quality-checked before dispatch',
-      ],
-      specs: defaultSpecs,
-      careInstructions: const [
-        'Follow the care label included with your order.',
-        'Contact the vendor for product-specific maintenance advice.',
-      ],
-      warranty: 'Warranty terms provided by the vendor at checkout',
+      description: description.isNotEmpty ? description : product.name,
+      galleryImages: vendorProduct.imageUrls.isNotEmpty
+          ? vendorProduct.imageUrls
+          : _galleryFromProduct(product),
+      materials: materials,
+      specs: _specsFromProduct(
+        product.copyWith(
+          description: vendorProduct.description,
+          materials: vendorProduct.materials,
+          weightKg: vendorProduct.weightKg > 0 ? vendorProduct.weightKg : null,
+          brand: vendorProduct.brand.isNotEmpty
+              ? vendorProduct.brand
+              : product.brand,
+          dimensions: ProductDimensions(
+            widthCm: vendorProduct.widthCm,
+            depthCm: vendorProduct.depthCm,
+            heightCm: vendorProduct.heightCm,
+          ),
+          offerLabel: vendorProduct.offerLabel,
+        ),
+      ),
+      careInstructions: const [],
+      warranty: warranty,
     );
+  }
+
+  static List<ProductSpec> _specsFromProduct(Product product) {
+    final specs = <ProductSpec>[];
+    final dims = product.dimensions;
+
+    if (dims.widthCm > 0 && dims.depthCm > 0 && dims.heightCm > 0) {
+      String fmt(double v) => v.toStringAsFixed(v % 1 == 0 ? 0 : 1);
+      specs.add(
+        ProductSpec(
+          label: 'Dimensions',
+          value:
+              'W${fmt(dims.widthCm)} × D${fmt(dims.depthCm)} × H${fmt(dims.heightCm)} cm',
+        ),
+      );
+    }
+
+    final weight = product.weightKg;
+    if (weight != null && weight > 0) {
+      final formatted =
+          weight.toStringAsFixed(weight % 1 == 0 ? 0 : 1);
+      specs.add(ProductSpec(label: 'Weight', value: '$formatted kg'));
+    }
+
+    final brand = product.brand.trim();
+    if (brand.isNotEmpty && brand != 'Placeify vendor') {
+      specs.add(ProductSpec(label: 'Brand', value: brand));
+    }
+
+    final sku = product.sku.trim();
+    if (sku.isNotEmpty) {
+      specs.add(ProductSpec(label: 'SKU', value: sku));
+    }
+
+    return specs;
+  }
+
+  static List<String> _parseListField(String raw) {
+    final text = raw.trim();
+    if (text.isEmpty || text == _placeholderMaterials) return const [];
+
+    return text
+        .split(RegExp(r'[,;\n]'))
+        .map((part) => part.trim())
+        .where((part) => part.isNotEmpty)
+        .toList();
+  }
+
+  static List<String> _parseCareInstructions(String? raw) {
+    final text = _meaningfulText(raw);
+    if (text == null) return const [];
+    return [text];
+  }
+
+  static String? _meaningfulText(String? value) {
+    final text = value?.trim();
+    if (text == null || text.isEmpty) return null;
+    if (text == _placeholderCare) return null;
+    if (text == _placeholderMaterials) return null;
+    if (text == 'Warranty terms provided by the vendor at checkout') {
+      return null;
+    }
+    return text;
+  }
+
+  static List<String> _galleryFromProduct(Product product) {
+    final gallery = product.galleryImageUrls
+        .where((url) => url.trim().isNotEmpty)
+        .toList();
+    if (gallery.isNotEmpty) return gallery;
+
+    final imageUrl = product.imageUrl.trim();
+    if (imageUrl.isNotEmpty && !_isPlaceholderAsset(imageUrl)) {
+      return [imageUrl];
+    }
+    return const [];
+  }
+
+  static bool _isPlaceholderAsset(String url) {
+    return url.startsWith('assets/icons/') ||
+        url == 'assets/images/categories/chair.jpg';
   }
 
   static VendorProduct? _vendorProductForShopProduct(Product product) {
@@ -175,18 +236,8 @@ abstract final class ProductDetailContentRepository {
     return null;
   }
 
-  static List<String> _galleryFor(Product product) {
-    final images = <String>[product.imageUrl];
-    for (final asset in _sharedAngles) {
-      if (asset != product.imageUrl && !images.contains(asset)) {
-        images.add(asset);
-      }
-      if (images.length >= 5) break;
-    }
-    return images;
-  }
-
-  static const Map<String, ProductDetailContent> _byProductId = {
+  /// Legacy seeded mock copy for design previews (p1, p4, p5 only).
+  static const Map<String, ProductDetailContent> _legacyMockByProductId = {
     'p1': ProductDetailContent(
       description:
           'The Astra chair features a sculpted seat and tapered legs, '

@@ -10,7 +10,10 @@ fields:
   city: String?
   country: String?
   ### Vendor business type (e.g. furniture, decor) — not product Category.
+  ### Multiple categories are stored as a JSON array string for backward compatibility.
   shopCategory: String?
+  ### Shop contact email from vendor registration or profile edits.
+  contactEmail: String?
   logoUrl: String?
   bannerUrl: String?
   coverUrl: String?

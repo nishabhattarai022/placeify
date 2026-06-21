@@ -27,6 +27,7 @@ abstract class Vendor implements _i1.SerializableModel {
     this.city,
     this.country,
     this.shopCategory,
+    this.contactEmail,
     this.logoUrl,
     this.bannerUrl,
     this.coverUrl,
@@ -55,6 +56,7 @@ abstract class Vendor implements _i1.SerializableModel {
     String? city,
     String? country,
     String? shopCategory,
+    String? contactEmail,
     String? logoUrl,
     String? bannerUrl,
     String? coverUrl,
@@ -85,6 +87,7 @@ abstract class Vendor implements _i1.SerializableModel {
       city: jsonSerialization['city'] as String?,
       country: jsonSerialization['country'] as String?,
       shopCategory: jsonSerialization['shopCategory'] as String?,
+      contactEmail: jsonSerialization['contactEmail'] as String?,
       logoUrl: jsonSerialization['logoUrl'] as String?,
       bannerUrl: jsonSerialization['bannerUrl'] as String?,
       coverUrl: jsonSerialization['coverUrl'] as String?,
@@ -137,7 +140,11 @@ abstract class Vendor implements _i1.SerializableModel {
   String? country;
 
   /// Vendor business type (e.g. furniture, decor) — not product Category.
+  /// Multiple categories are stored as a JSON array string for backward compatibility.
   String? shopCategory;
+
+  /// Shop contact email from vendor registration or profile edits.
+  String? contactEmail;
 
   String? logoUrl;
 
@@ -180,6 +187,7 @@ abstract class Vendor implements _i1.SerializableModel {
     String? city,
     String? country,
     String? shopCategory,
+    String? contactEmail,
     String? logoUrl,
     String? bannerUrl,
     String? coverUrl,
@@ -207,6 +215,7 @@ abstract class Vendor implements _i1.SerializableModel {
       if (city != null) 'city': city,
       if (country != null) 'country': country,
       if (shopCategory != null) 'shopCategory': shopCategory,
+      if (contactEmail != null) 'contactEmail': contactEmail,
       if (logoUrl != null) 'logoUrl': logoUrl,
       if (bannerUrl != null) 'bannerUrl': bannerUrl,
       if (coverUrl != null) 'coverUrl': coverUrl,
@@ -242,6 +251,7 @@ class _VendorImpl extends Vendor {
     String? city,
     String? country,
     String? shopCategory,
+    String? contactEmail,
     String? logoUrl,
     String? bannerUrl,
     String? coverUrl,
@@ -265,6 +275,7 @@ class _VendorImpl extends Vendor {
          city: city,
          country: country,
          shopCategory: shopCategory,
+         contactEmail: contactEmail,
          logoUrl: logoUrl,
          bannerUrl: bannerUrl,
          coverUrl: coverUrl,
@@ -294,6 +305,7 @@ class _VendorImpl extends Vendor {
     Object? city = _Undefined,
     Object? country = _Undefined,
     Object? shopCategory = _Undefined,
+    Object? contactEmail = _Undefined,
     Object? logoUrl = _Undefined,
     Object? bannerUrl = _Undefined,
     Object? coverUrl = _Undefined,
@@ -320,6 +332,7 @@ class _VendorImpl extends Vendor {
       city: city is String? ? city : this.city,
       country: country is String? ? country : this.country,
       shopCategory: shopCategory is String? ? shopCategory : this.shopCategory,
+      contactEmail: contactEmail is String? ? contactEmail : this.contactEmail,
       logoUrl: logoUrl is String? ? logoUrl : this.logoUrl,
       bannerUrl: bannerUrl is String? ? bannerUrl : this.bannerUrl,
       coverUrl: coverUrl is String? ? coverUrl : this.coverUrl,

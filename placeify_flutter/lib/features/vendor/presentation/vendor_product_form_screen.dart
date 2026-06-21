@@ -195,17 +195,17 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     final success = await ref.read(vendorProductFormProvider.notifier).submit();
     if (!mounted) return;
 
-    if (success) {
+    if (success.isSuccess) {
       HapticService.medium();
-      PlaceifyToast.show(context, VendorStrings.productSaved);
+      PlaceifyToast.show(context, VendorStrings.productUploaded);
       context.pop();
       return;
     }
 
-    final error = ref.read(vendorProductFormProvider).submitError;
-    if (error != null) {
-      PlaceifyToast.show(context, error);
-    }
+    PlaceifyToast.show(
+      context,
+      success.error ?? 'Could not upload product. Try again.',
+    );
   }
 
   Future<void> _onSaveChanges() async {
@@ -221,22 +221,22 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
       return;
     }
 
-    final success = await ref
+    final result = await ref
         .read(vendorProductFormProvider.notifier)
         .submit(resetOnSuccess: false);
     if (!mounted) return;
 
-    if (success) {
+    if (result.isSuccess) {
       HapticService.medium();
       PlaceifyToast.show(context, VendorStrings.changesSaved);
-      setState(() => _isDirty = false);
+      context.pop();
       return;
     }
 
-    final error = ref.read(vendorProductFormProvider).submitError;
-    if (error != null) {
-      PlaceifyToast.show(context, error);
-    }
+    PlaceifyToast.show(
+      context,
+      result.error ?? 'Could not save changes. Try again.',
+    );
   }
 
   Future<bool> _confirmDiscardChanges() async {
@@ -399,6 +399,11 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
       resizeToAvoidBottomInset: true,
       body: Column(
         children: [
+          if (form.submitError != null && !form.isSubmitting)
+            _SubmitStatusBanner(
+              message: form.submitError!,
+              isError: true,
+            ),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(18, 8, 18, 24),
@@ -842,6 +847,60 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
         }
       },
       child: scaffold,
+    );
+  }
+}
+
+class _SubmitStatusBanner extends StatelessWidget {
+  const _SubmitStatusBanner({
+    required this.message,
+    required this.isError,
+  });
+
+  final String message;
+  final bool isError;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(18, 0, 18, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: isError
+            ? const Color(0xFFFFF0EE)
+            : const Color(0xFFEEF8F0),
+        borderRadius: AppRadii.md,
+        border: Border.all(
+          color: isError
+              ? const Color(0xFFE8B4B0)
+              : const Color(0xFFB8D9BE),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            isError ? Icons.error_outline : Icons.check_circle_outline,
+            size: 18,
+            color: isError ? const Color(0xFFB42318) : AppColors.vendorForest,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: isError
+                    ? const Color(0xFFB42318)
+                    : AppColors.vendorForest,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

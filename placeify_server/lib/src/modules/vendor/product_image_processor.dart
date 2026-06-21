@@ -31,7 +31,8 @@ class ProductImageProcessor {
 
   final http.Client _httpClient;
 
-  /// Removes the background, composites on white, and returns catalog-ready JPEG.
+  /// Returns catalog-ready JPEG bytes. Uses remove.bg when configured; otherwise
+  /// resizes and encodes locally so vendor uploads still work in development.
   Future<ProcessedProductImage> processForCatalog(
     Session session,
     Uint8List bytes,
@@ -39,13 +40,11 @@ class ProductImageProcessor {
   ) async {
     final apiKey = RemoveBgApiKeyConfig.apiKey();
     if (apiKey == null || apiKey.isEmpty) {
-      throw PlaceifyException(
-        message:
-            'Background removal is not configured. Copy '
-            'config/removebg_api_key.example.yaml to config/removebg_api_key.yaml '
-            'and add your remove.bg API key.',
-        code: 'BG_REMOVAL_NOT_CONFIGURED',
+      session.log(
+        'remove.bg not configured — storing product image without API background removal',
+        level: LogLevel.info,
       );
+      return _processWithoutBackgroundRemoval(bytes);
     }
 
     session.log(
@@ -53,18 +52,59 @@ class ProductImageProcessor {
       level: LogLevel.info,
     );
 
-    final cutout = await _removeBackground(apiKey, bytes, fileName);
-    final catalogBytes = _compositeOnWhite(cutout);
+    try {
+      final cutout = await _removeBackground(apiKey, bytes, fileName);
+      final catalogBytes = _compositeOnWhite(cutout);
 
-    session.log(
-      'Product image processed on white background (${catalogBytes.length} bytes)',
-      level: LogLevel.info,
+      session.log(
+        'Product image processed on white background (${catalogBytes.length} bytes)',
+        level: LogLevel.info,
+      );
+
+      return ProcessedProductImage(
+        bytes: catalogBytes,
+        extension: '.jpg',
+        backgroundRemoved: true,
+      );
+    } on PlaceifyException catch (error) {
+      if (error.code != 'BG_REMOVAL_AUTH' && error.code != 'BG_REMOVAL_FAILED') {
+        rethrow;
+      }
+
+      session.log(
+        'remove.bg failed (${error.code}) — falling back to original image',
+        level: LogLevel.warning,
+      );
+      return _processWithoutBackgroundRemoval(bytes);
+    }
+  }
+
+  ProcessedProductImage _processWithoutBackgroundRemoval(Uint8List bytes) {
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null) {
+      throw PlaceifyException(
+        message: 'Could not decode image.',
+        code: 'IMAGE_DECODE_FAILED',
+      );
+    }
+
+    final resized = decoded.width > _maxCatalogWidth
+        ? img.copyResize(decoded, width: _maxCatalogWidth)
+        : decoded;
+
+    final canvas = img.Image(
+      width: resized.width,
+      height: resized.height,
     );
+    img.fill(canvas, color: _white);
+    img.compositeImage(canvas, resized);
 
     return ProcessedProductImage(
-      bytes: catalogBytes,
+      bytes: Uint8List.fromList(
+        img.encodeJpg(canvas, quality: _jpegQuality),
+      ),
       extension: '.jpg',
-      backgroundRemoved: true,
+      backgroundRemoved: false,
     );
   }
 

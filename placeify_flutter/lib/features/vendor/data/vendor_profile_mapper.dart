@@ -6,6 +6,7 @@ import '../../../core/config/placeify_server_client.dart';
 import '../domain/models/vendor_operating_day.dart';
 import '../domain/models/vendor_profile.dart';
 import '../domain/models/vendor_social_links.dart';
+import 'vendor_shop_category_codec.dart';
 
 /// Maps vendor profile API models to Flutter domain models.
 abstract final class VendorProfileMapper {
@@ -23,7 +24,7 @@ abstract final class VendorProfileMapper {
       bannerUrl: _resolveMediaUrl(detail.bannerUrl),
       coverUrl: _resolveMediaUrl(detail.coverUrl),
       isOpen: detail.isOpen,
-      tags: detail.category.trim().isEmpty ? const [] : [detail.category],
+      tags: VendorShopCategoryCodec.decode(detail.category),
       schedule: _decodeSchedule(detail.operatingHours),
       socialLinks: VendorSocialLinks(
         instagram: detail.instagramHandle,
@@ -36,11 +37,12 @@ abstract final class VendorProfileMapper {
 
   static api.VendorProfileUpdateInput toUpdateInput(VendorProfile profile) {
     final category = profile.tags.isNotEmpty
-        ? profile.tags.first
+        ? VendorShopCategoryCodec.encode(profile.tags)
         : null;
 
     return api.VendorProfileUpdateInput(
       businessName: profile.businessName,
+      email: profile.email.trim().isEmpty ? null : profile.email.trim(),
       phone: profile.phone,
       address: profile.address,
       city: profile.city,

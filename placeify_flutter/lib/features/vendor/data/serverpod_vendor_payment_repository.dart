@@ -31,14 +31,14 @@ class ServerpodVendorPaymentRepository implements VendorPaymentRepository {
 
   @override
   Future<List<PaymentUpdate>> getPaymentUpdates(String orderId) async {
-    final parsedId = int.tryParse(orderId);
+    final parsedId = _parseOrderId(orderId);
     if (parsedId == null) return const [];
 
     try {
       final updates = await client.payment.listPaymentUpdates(parsedId);
       return updates.map(VendorPaymentMapper.toUpdate).toList();
-    } on PlaceifyException catch (e) {
-      throw VendorPaymentException(e.message);
+    } catch (error) {
+      throw VendorPaymentException(_mapError(error));
     }
   }
 
@@ -49,7 +49,7 @@ class ServerpodVendorPaymentRepository implements VendorPaymentRepository {
     required PaymentStatus status,
     required String note,
   }) async {
-    final parsedId = int.tryParse(orderId);
+    final parsedId = _parseOrderId(orderId);
     if (parsedId == null) {
       throw VendorPaymentException('Invalid order id.');
     }
@@ -58,11 +58,11 @@ class ServerpodVendorPaymentRepository implements VendorPaymentRepository {
       final update = await client.payment.updateOrderPaymentStatus(
         parsedId,
         VendorPaymentMapper.toApiStatus(status),
-        note: note,
+        note: _resolveNote(status, note),
       );
       return VendorPaymentMapper.toUpdate(update);
-    } on PlaceifyException catch (e) {
-      throw VendorPaymentException(e.message);
+    } catch (error) {
+      throw VendorPaymentException(_mapError(error));
     }
   }
 
@@ -71,16 +71,70 @@ class ServerpodVendorPaymentRepository implements VendorPaymentRepository {
     try {
       final payout = await client.payment.requestPayout();
       return VendorPaymentMapper.toPayout(payout);
-    } on PlaceifyException catch (e) {
-      throw VendorPaymentException(e.message);
+    } catch (error) {
+      throw VendorPaymentException(_mapError(error));
     }
   }
 
   Future<VendorPaymentsOverview> _loadOverview() async {
     try {
       return await client.payment.getOverview();
-    } on PlaceifyException catch (e) {
-      throw VendorPaymentException(e.message);
+    } catch (error) {
+      throw VendorPaymentException(_mapError(error));
     }
+  }
+
+  int? _parseOrderId(String orderId) => int.tryParse(orderId.trim());
+
+  String _resolveNote(PaymentStatus status, String note) {
+    final trimmed = note.trim();
+    if (trimmed.isNotEmpty) return trimmed;
+
+    return switch (status) {
+      PaymentStatus.paid => 'Payment marked as received.',
+      PaymentStatus.failed => 'Payment marked as failed.',
+      PaymentStatus.refunded => 'Payment marked as refunded.',
+      PaymentStatus.pending => 'Payment marked as pending.',
+      PaymentStatus.partial => 'Payment marked as partially received.',
+    };
+  }
+
+  String _mapError(Object error) {
+    if (error is VendorPaymentException) return error.message;
+    if (error is PlaceifyException) return error.message;
+
+    final raw = error is ServerpodClientException
+        ? error.message
+        : error.toString();
+
+    if (_looksLikeConnectionError(raw)) {
+      return 'Cannot reach the server. Make sure placeify_server is running.';
+    }
+
+    final colonIndex = raw.indexOf(': ');
+    if (colonIndex > 0 && colonIndex < 40) {
+      final message = raw.substring(colonIndex + 2).trim();
+      if (message.isNotEmpty && !message.startsWith('Exception')) {
+        return message.length <= 200 ? message : 'Could not update payment status.';
+      }
+    }
+
+    if (raw.contains('ORDER_NOT_FOUND')) {
+      return 'Order not found for this vendor.';
+    }
+
+    if (raw.contains('PAYMENT_LOCKED')) {
+      return 'Payment is already marked as received and cannot be changed.';
+    }
+
+    return raw.length <= 200 ? raw : 'Could not update payment status.';
+  }
+
+  bool _looksLikeConnectionError(String raw) {
+    final lower = raw.toLowerCase();
+    return lower.contains('socketexception') ||
+        lower.contains('connection refused') ||
+        lower.contains('failed host lookup') ||
+        lower.contains('network is unreachable');
   }
 }

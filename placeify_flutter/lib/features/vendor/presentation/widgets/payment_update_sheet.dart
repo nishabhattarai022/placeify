@@ -16,10 +16,11 @@ class PaymentUpdateSheet {
     WidgetRef ref, {
     required String orderId,
     required String orderLabel,
+    PaymentStatus? initialStatus,
   }) async {
     HapticService.light();
 
-    PaymentStatus selected = PaymentStatus.paid;
+    PaymentStatus selected = initialStatus ?? PaymentStatus.paid;
     final noteController = TextEditingController();
 
     await PlaceifyBottomSheet.show<void>(

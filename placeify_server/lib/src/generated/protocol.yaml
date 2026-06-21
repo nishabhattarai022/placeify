@@ -91,6 +91,8 @@ vendor:
   - getDashboard:
   - hasShop:
   - createShop:
+  - getMyBankDetails:
+  - saveMyBankDetails:
   - getMyProfile:
   - updateMyProfile:
   - uploadShopLogo:
