@@ -3,13 +3,18 @@ import 'package:serverpod/serverpod.dart';
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
+import 'user_order_store.dart';
 import 'user_repository.dart';
 
 class UserService {
-  UserService({UserProfileStore? repository})
-      : _repository = repository ?? UserProfileStore();
+  UserService({
+    UserProfileStore? repository,
+    UserOrderStore? orderStore,
+  })  : _repository = repository ?? UserProfileStore(),
+        _orderStore = orderStore ?? UserOrderStore();
 
   final UserProfileStore _repository;
+  final UserOrderStore _orderStore;
 
   Future<User?> getCurrentUser(Session session) {
     return SessionService.resolveUserIfAuthenticated(session);
@@ -68,5 +73,26 @@ class UserService {
   Future<UserDashboard> getDashboard(Session session) async {
     final user = await SessionService.requireUser(session);
     return _repository.buildDashboard(session, user);
+  }
+
+  Future<List<UserOrderSummary>> listMyOrders(
+    Session session, {
+    int limit = 20,
+    int offset = 0,
+    OrderStatus? status,
+  }) async {
+    final user = await SessionService.requireUser(session);
+    return _orderStore.listSummaries(
+      session,
+      user.id!,
+      limit: limit,
+      offset: offset,
+      status: status,
+    );
+  }
+
+  Future<UserOrderDetail> getMyOrder(Session session, int orderId) async {
+    final user = await SessionService.requireUser(session);
+    return _orderStore.getDetail(session, user.id!, orderId);
   }
 }

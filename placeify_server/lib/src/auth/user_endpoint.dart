@@ -43,60 +43,17 @@ class UserEndpoint extends PlaceifyAuthenticatedEndpoint {
     int limit = 20,
     int offset = 0,
     OrderStatus? status,
-  }) async {
-    final user = await requirePlaceifyUser(session);
-
-    final orders = await Order.db.find(
+  }) {
+    return _service.listMyOrders(
       session,
-      where: (order) {
-        var expression = order.userId.equals(user.id!);
-        if (status != null) {
-          expression = expression & order.status.equals(status);
-        }
-        return expression;
-      },
-      orderBy: (order) => order.placedAt,
-      orderDescending: true,
       limit: limit,
       offset: offset,
+      status: status,
     );
+  }
 
-    final summaries = <UserOrderSummary>[];
-    for (final order in orders) {
-      final orderId = order.id;
-      if (orderId == null) continue;
-
-      final items = await OrderItem.db.find(
-        session,
-        where: (item) => item.orderId.equals(orderId),
-        include: OrderItem.include(product: Product.include()),
-      );
-
-      final primaryName = items.isEmpty
-          ? null
-          : items.first.product?.name ?? 'Order item';
-      final totalQuantity =
-          items.fold<int>(0, (sum, item) => sum + item.quantity);
-      final displayName = primaryName == null
-          ? null
-          : totalQuantity > 1
-              ? '$primaryName × $totalQuantity'
-              : primaryName;
-
-      summaries.add(
-        UserOrderSummary(
-          id: orderId,
-          orderNumber: orderId.toString().padLeft(5, '0'),
-          status: order.status,
-          totalAmount: order.totalAmount,
-          placedAt: order.placedAt,
-          itemCount: totalQuantity,
-          primaryProductName: displayName,
-        ),
-      );
-    }
-
-    return summaries;
+  Future<UserOrderDetail> getMyOrder(Session session, int orderId) {
+    return _service.getMyOrder(session, orderId);
   }
 
   Future<List<UserArSessionSummary>> listMyArSessions(
