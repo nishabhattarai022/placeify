@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:placeify/features/profile/presentation/widgets/shared/profile_submit_button.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
@@ -9,9 +10,7 @@ import '../../../../core/widgets/toast_overlay.dart';
 import '../../domain/enums/payment_status.dart';
 import '../providers/vendor_payments_provider.dart';
 
-class PaymentUpdateSheet {
-  PaymentUpdateSheet._();
-
+abstract final class PaymentUpdateSheet {
   static Future<void> show(
     BuildContext context,
     WidgetRef ref, {
@@ -22,8 +21,10 @@ class PaymentUpdateSheet {
     return PlaceifyBottomSheet.show<void>(
       context,
       builder: (sheetContext) => _PaymentUpdateSheetBody(
+        key: const ValueKey('payment-update-sheet'),
         parentContext: context,
         sheetContext: sheetContext,
+        ref: ref,
         orderId: orderId,
         orderLabel: orderLabel,
       ),
@@ -31,38 +32,43 @@ class PaymentUpdateSheet {
   }
 }
 
-class _PaymentUpdateSheetBody extends ConsumerStatefulWidget {
+class _PaymentUpdateSheetBody extends StatefulWidget {
   const _PaymentUpdateSheetBody({
     required this.parentContext,
     required this.sheetContext,
+    required this.ref,
     required this.orderId,
     required this.orderLabel,
+    super.key,
   });
 
   final BuildContext parentContext;
   final BuildContext sheetContext;
+  final WidgetRef ref;
   final String orderId;
   final String orderLabel;
 
   @override
-  ConsumerState<_PaymentUpdateSheetBody> createState() =>
+  State<_PaymentUpdateSheetBody> createState() =>
       _PaymentUpdateSheetBodyState();
 }
 
-class _PaymentUpdateSheetBodyState extends ConsumerState<_PaymentUpdateSheetBody> {
+class _PaymentUpdateSheetBodyState extends State<_PaymentUpdateSheetBody> {
   PaymentStatus _selected = PaymentStatus.paid;
   late final TextEditingController _noteController;
+  late final FocusNode _noteFocusNode;
   bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
     _noteController = TextEditingController();
+    _noteFocusNode = FocusNode();
   }
 
   @override
   void dispose() {
-    FocusManager.instance.primaryFocus?.unfocus();
+    _noteFocusNode.dispose();
     _noteController.dispose();
     super.dispose();
   }
@@ -70,6 +76,7 @@ class _PaymentUpdateSheetBodyState extends ConsumerState<_PaymentUpdateSheetBody
   Future<void> _submit() async {
     if (_isSubmitting) return;
 
+    final note = _noteController.text.trim();
     FocusScope.of(context).unfocus();
 
     if (_selected == PaymentStatus.refunded) {
@@ -96,38 +103,41 @@ class _PaymentUpdateSheetBodyState extends ConsumerState<_PaymentUpdateSheetBody
     }
 
     setState(() => _isSubmitting = true);
-
-    final error = await ref.read(vendorPaymentsProvider.notifier).updateOrderPayment(
-          orderId: widget.orderId,
-          status: _selected,
-          note: _noteController.text.trim(),
-        );
-
-    if (!mounted) return;
-
-    if (error != null) {
-      setState(() => _isSubmitting = false);
-      if (widget.parentContext.mounted) {
-        PlaceifyToast.show(widget.parentContext, error);
-      }
-      return;
-    }
+    HapticService.light();
 
     if (widget.sheetContext.mounted) {
       Navigator.pop(widget.sheetContext);
     }
-    if (widget.parentContext.mounted) {
-      PlaceifyToast.show(widget.parentContext, 'Payment status updated');
+
+    final error = await widget.ref
+        .read(vendorPaymentsProvider.notifier)
+        .updateOrderPayment(
+          orderId: widget.orderId,
+          status: _selected,
+          note: note,
+        );
+
+    if (!widget.parentContext.mounted) return;
+
+    if (error != null) {
+      PlaceifyToast.show(widget.parentContext, error);
+      return;
     }
+
+    PlaceifyToast.show(widget.parentContext, 'Payment status updated');
   }
 
   @override
   Widget build(BuildContext context) {
-    final maxSheetHeight = MediaQuery.sizeOf(context).height * 0.75;
+    final mediaQuery = MediaQuery.of(context);
+    final availableHeight =
+        mediaQuery.size.height - mediaQuery.viewInsets.bottom;
+    final maxSheetHeight = availableHeight * 0.75;
 
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: maxSheetHeight),
       child: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -168,9 +178,11 @@ class _PaymentUpdateSheetBodyState extends ConsumerState<_PaymentUpdateSheetBody
             const SizedBox(height: 16),
             TextField(
               controller: _noteController,
+              focusNode: _noteFocusNode,
               enabled: !_isSubmitting,
               maxLines: 3,
               textInputAction: TextInputAction.done,
+              onEditingComplete: () => _noteFocusNode.unfocus(),
               decoration: InputDecoration(
                 hintText: 'Add a note (optional)',
                 filled: true,
@@ -182,13 +194,9 @@ class _PaymentUpdateSheetBodyState extends ConsumerState<_PaymentUpdateSheetBody
               ),
             ),
             const SizedBox(height: AppSpacing.xl),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.vendorForest,
-                minimumSize: const Size.fromHeight(48),
-              ),
-              onPressed: _isSubmitting ? null : _submit,
-              child: Text(_isSubmitting ? 'Saving…' : 'Save update'),
+            ProfileSubmitButton(
+              label: _isSubmitting ? 'Saving…' : 'Save update',
+              onPressed: _isSubmitting ? () {} : _submit,
             ),
           ],
         ),
