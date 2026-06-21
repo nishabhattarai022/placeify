@@ -64,7 +64,16 @@ abstract final class VendorProfileMapper {
       return trimmed;
     }
     if (trimmed.startsWith('/')) {
-      return '$serverUrl$trimmed';
+      // Static uploads are served by the Serverpod web server (port 8082).
+      final apiUri = Uri.parse(serverUrl);
+      final segments =
+          trimmed.split('/').where((segment) => segment.isNotEmpty).toList();
+      return Uri(
+        scheme: apiUri.scheme,
+        host: apiUri.host,
+        port: 8082,
+        pathSegments: segments,
+      ).toString();
     }
     return trimmed;
   }

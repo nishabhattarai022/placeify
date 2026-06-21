@@ -24,11 +24,11 @@ class VendorProfile extends _$VendorProfile {
   @override
   Future<models.VendorProfile?> build() async {
     final user = await ref.watch(currentUserProvider.future);
-    if (user?.vendorId == null || !user!.hasVendorShop) {
+    if (user == null || user.vendorId == null || !user.hasVendorShop) {
       return null;
     }
     final repo = ref.watch(vendorRepositoryProvider);
-    return repo.getProfile(user!.vendorId!);
+    return repo.getProfile(user.vendorId!);
   }
 
   Future<void> updateProfile(models.VendorProfile updated) async {
