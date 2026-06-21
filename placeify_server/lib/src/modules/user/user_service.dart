@@ -11,16 +11,8 @@ class UserService {
 
   final UserProfileStore _repository;
 
-  Future<User?> getCurrentUser(Session session) async {
-    final auth = session.authenticated;
-    if (auth == null) return null;
-
-    final authUserId = UuidValue.fromString(auth.userIdentifier);
-    final existing = await _repository.findByAuthUserId(session, authUserId);
-    if (existing != null) return existing;
-
-    // Backfill profiles for accounts created before onAfterAccountCreated ran.
-    return _repository.upsertProfile(session, authUserId, 'User');
+  Future<User?> getCurrentUser(Session session) {
+    return SessionService.resolveUserIfAuthenticated(session);
   }
 
   Future<User> updateProfile(
