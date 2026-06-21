@@ -26,7 +26,6 @@ abstract final class OrderCancelSheet {
       builder: (sheetContext) => _OrderReasonSheetBody(
         parentContext: context,
         sheetContext: sheetContext,
-        ref: ref,
         order: order,
         isCancel: true,
       ),
@@ -48,7 +47,6 @@ abstract final class OrderReturnSheet {
       builder: (sheetContext) => _OrderReasonSheetBody(
         parentContext: context,
         sheetContext: sheetContext,
-        ref: ref,
         order: order,
         isCancel: false,
       ),
@@ -56,26 +54,25 @@ abstract final class OrderReturnSheet {
   }
 }
 
-class _OrderReasonSheetBody extends StatefulWidget {
+class _OrderReasonSheetBody extends ConsumerStatefulWidget {
   const _OrderReasonSheetBody({
     required this.parentContext,
     required this.sheetContext,
-    required this.ref,
     required this.order,
     required this.isCancel,
   });
 
   final BuildContext parentContext;
   final BuildContext sheetContext;
-  final WidgetRef ref;
   final Order order;
   final bool isCancel;
 
   @override
-  State<_OrderReasonSheetBody> createState() => _OrderReasonSheetBodyState();
+  ConsumerState<_OrderReasonSheetBody> createState() =>
+      _OrderReasonSheetBodyState();
 }
 
-class _OrderReasonSheetBodyState extends State<_OrderReasonSheetBody> {
+class _OrderReasonSheetBodyState extends ConsumerState<_OrderReasonSheetBody> {
   String? _selectedReason;
   bool _isSubmitting = false;
 
@@ -85,26 +82,29 @@ class _OrderReasonSheetBodyState extends State<_OrderReasonSheetBody> {
   Future<void> _submit() async {
     if (_isSubmitting || _selectedReason == null) return;
 
+    final reason = _selectedReason!;
     setState(() => _isSubmitting = true);
     HapticService.light();
 
+    if (widget.sheetContext.mounted) {
+      Navigator.pop(widget.sheetContext);
+    }
+
     final error = widget.isCancel
-        ? await widget.ref
+        ? await ref
             .read(ordersProvider.notifier)
-            .cancelOrder(widget.order.id, _selectedReason!)
-        : await widget.ref
+            .cancelOrder(widget.order.id, reason)
+        : await ref
             .read(ordersProvider.notifier)
-            .requestReturn(widget.order.id, _selectedReason!);
+            .requestReturn(widget.order.id, reason);
 
     if (!widget.parentContext.mounted) return;
 
     if (error != null) {
-      setState(() => _isSubmitting = false);
       PlaceifyToast.show(widget.parentContext, error);
       return;
     }
 
-    Navigator.pop(widget.sheetContext);
     PlaceifyToast.show(
       widget.parentContext,
       widget.isCancel
@@ -116,70 +116,76 @@ class _OrderReasonSheetBodyState extends State<_OrderReasonSheetBody> {
   @override
   Widget build(BuildContext context) {
     final canSubmit = _selectedReason != null && !_isSubmitting;
+    final maxSheetHeight = MediaQuery.sizeOf(context).height * 0.75;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        PlaceifyBottomSheetHeader(
-          title: widget.isCancel
-              ? OrderStrings.cancelSheetTitle
-              : OrderStrings.returnSheetTitle,
-          subtitle: widget.isCancel
-              ? OrderStrings.cancelSheetSubtitle
-              : OrderStrings.returnSheetSubtitle,
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        Text(
-          OrderStrings.reasonLabel,
-          style: GoogleFonts.dmSans(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        for (final reason in _reasons)
-          PlaceifySelectTile(
-            label: reason,
-            selected: _selectedReason == reason,
-            onTap: _isSubmitting
-                ? () {}
-                : () {
-                    HapticService.selection();
-                    setState(() => _selectedReason = reason);
-                  },
-          ),
-        const SizedBox(height: AppSpacing.xl),
-        ProfileSubmitButton(
-          label: _isSubmitting
-              ? 'Submitting…'
-              : widget.isCancel
-                  ? OrderStrings.confirmCancel
-                  : OrderStrings.confirmReturn,
-          onPressed: canSubmit ? _submit : () {},
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        SizedBox(
-          width: double.infinity,
-          child: TextButton(
-            onPressed: _isSubmitting
-                ? null
-                : () {
-                    HapticService.light();
-                    Navigator.pop(widget.sheetContext);
-                  },
-            child: Text(
-              OrderStrings.keepOrder,
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxSheetHeight),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            PlaceifyBottomSheetHeader(
+              title: widget.isCancel
+                  ? OrderStrings.cancelSheetTitle
+                  : OrderStrings.returnSheetTitle,
+              subtitle: widget.isCancel
+                  ? OrderStrings.cancelSheetSubtitle
+                  : OrderStrings.returnSheetSubtitle,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              OrderStrings.reasonLabel,
               style: GoogleFonts.dmSans(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
               ),
             ),
-          ),
+            const SizedBox(height: AppSpacing.sm),
+            for (final reason in _reasons)
+              PlaceifySelectTile(
+                label: reason,
+                selected: _selectedReason == reason,
+                onTap: _isSubmitting
+                    ? () {}
+                    : () {
+                        HapticService.selection();
+                        setState(() => _selectedReason = reason);
+                      },
+              ),
+            const SizedBox(height: AppSpacing.xl),
+            ProfileSubmitButton(
+              label: _isSubmitting
+                  ? 'Submitting…'
+                  : widget.isCancel
+                      ? OrderStrings.confirmCancel
+                      : OrderStrings.confirmReturn,
+              onPressed: canSubmit ? _submit : () {},
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: _isSubmitting
+                    ? null
+                    : () {
+                        HapticService.light();
+                        Navigator.pop(widget.sheetContext);
+                      },
+                child: Text(
+                  OrderStrings.keepOrder,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

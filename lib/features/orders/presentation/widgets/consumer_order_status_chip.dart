@@ -27,27 +27,41 @@ class _ConsumerOrderStatusChipState extends State<ConsumerOrderStatusChip>
   @override
   void initState() {
     super.initState();
+    _syncShimmer();
+  }
+
+  @override
+  void deactivate() {
+    _shimmerController?.stop();
+    super.deactivate();
+  }
+
+  @override
+  void activate() {
+    super.activate();
+    _syncShimmer();
+  }
+
+  void _syncShimmer() {
     if (widget.status == ConsumerOrderStatus.inTransit) {
-      _shimmerController = AnimationController(
+      _shimmerController ??= AnimationController(
         vsync: this,
         duration: const Duration(milliseconds: 1800),
-      )..repeat(reverse: true);
+      );
+      if (!_shimmerController!.isAnimating) {
+        _shimmerController!.repeat(reverse: true);
+      }
+      return;
     }
+
+    _shimmerController?.stop();
   }
 
   @override
   void didUpdateWidget(ConsumerOrderStatusChip oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.status == ConsumerOrderStatus.inTransit &&
-        _shimmerController == null) {
-      _shimmerController = AnimationController(
-        vsync: this,
-        duration: const Duration(milliseconds: 1800),
-      )..repeat(reverse: true);
-    } else if (widget.status != ConsumerOrderStatus.inTransit &&
-        _shimmerController != null) {
-      _shimmerController!.dispose();
-      _shimmerController = null;
+    if (oldWidget.status != widget.status) {
+      _syncShimmer();
     }
   }
 
@@ -123,7 +137,7 @@ class _ConsumerOrderStatusChipState extends State<ConsumerOrderStatusChip>
       ),
     );
 
-    if (shimmer != null) {
+    if (widget.status == ConsumerOrderStatus.inTransit && shimmer != null) {
       chip = AnimatedBuilder(
         animation: shimmer,
         builder: (context, child) {

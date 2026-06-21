@@ -48,6 +48,20 @@ class _OrderTimelineState extends State<OrderTimeline>
   }
 
   @override
+  void deactivate() {
+    _pulseController.stop();
+    super.deactivate();
+  }
+
+  @override
+  void activate() {
+    super.activate();
+    if (!_pulseController.isAnimating) {
+      _pulseController.repeat(reverse: true);
+    }
+  }
+
+  @override
   void dispose() {
     _pulseController.dispose();
     super.dispose();
@@ -299,9 +313,6 @@ class _TimelineDot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isCompleted = state == _TimelineStepState.completed;
-    final scale = showPulse
-        ? Tween<double>(begin: 1.0, end: 1.04).animate(pulseAnimation)
-        : const AlwaysStoppedAnimation(1.0);
 
     Widget dot = Container(
       width: 18,
@@ -333,7 +344,7 @@ class _TimelineDot extends StatelessWidget {
         animation: pulseAnimation,
         builder: (context, child) {
           return Transform.scale(
-            scale: scale.value,
+            scale: 1.0 + pulseAnimation.value * 0.04,
             child: Stack(
               alignment: Alignment.center,
               clipBehavior: Clip.none,
