@@ -79,9 +79,13 @@ abstract final class VendorRegistrationValidator {
       errors[VendorRegistrationFieldKeys.phone] = phoneError;
     }
 
-    if (business.taxId.trim().isEmpty) {
+    final taxId = business.taxId.trim();
+    if (taxId.isEmpty) {
       errors[VendorRegistrationFieldKeys.taxId] =
           'PAN / VAT number is required';
+    } else if (taxId.length != 9 || !RegExp(r'^\d{9}$').hasMatch(taxId)) {
+      errors[VendorRegistrationFieldKeys.taxId] =
+          'PAN / VAT number must be exactly 9 digits';
     }
 
     return errors;
