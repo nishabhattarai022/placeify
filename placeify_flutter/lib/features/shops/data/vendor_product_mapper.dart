@@ -17,7 +17,7 @@ abstract final class VendorProductMapper {
   static Product toConsumerProduct(VendorProduct vendorProduct) {
     final imageUrl = vendorProduct.imageUrls.isNotEmpty
         ? vendorProduct.imageUrls.first
-        : _fallbackImageForCategory(vendorProduct.categoryId);
+        : fallbackImageForCategory(vendorProduct.categoryId);
 
     return Product(
       id: consumerProductId(
@@ -53,7 +53,7 @@ abstract final class VendorProductMapper {
     return 'assets/icons/ic_chair.svg';
   }
 
-  static String _fallbackImageForCategory(String categoryId) {
+  static String fallbackImageForCategory(String categoryId) {
     return switch (categoryId) {
       'chairs' =>
         'assets/images/splash/Tola_Lounge_Chair_Venice_Vegan_Suede_Sage_1_0.jpg',

@@ -215,7 +215,7 @@ class MockVendorApplicationRepository implements VendorApplicationRepository {
         phone: registration.business.phone,
         address:
             '${address.street}, ${address.city}, ${address.state} ${address.postalCode}',
-        tags: [registration.category.category],
+        tags: registration.category.categories,
         bio: registration.category.description,
         createdAt: submittedAt,
       ),

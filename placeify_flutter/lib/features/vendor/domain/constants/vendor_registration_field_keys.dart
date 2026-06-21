@@ -13,6 +13,7 @@ abstract final class VendorRegistrationFieldKeys {
   static const country = 'address.country';
 
   static const category = 'category.category';
+  static const categories = 'category.categories';
   static const categoryDescription = 'category.description';
 
   static const businessLicense = 'documents.businessLicense';

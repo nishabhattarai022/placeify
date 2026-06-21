@@ -47,50 +47,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _signInWithDemo() async {
-    if (_isSubmitting) return;
-
-    setState(() => _isSubmitting = true);
-    await HapticService.heavy();
-
-    try {
-      await ref.read(currentUserProvider.notifier).signInWithDemoCredentials();
-      if (!mounted) return;
-      context.go('/home');
-    } on AuthException catch (e) {
-      if (mounted) PlaceifyToast.show(context, e.message);
-    } catch (error) {
-      if (mounted) {
-        PlaceifyToast.show(context, _loginErrorMessage(error));
-      }
-    } finally {
-      if (mounted) setState(() => _isSubmitting = false);
-    }
+    _emailController.text = DemoCredentials.email;
+    _passwordController.text = DemoCredentials.password;
+    await _submit(destination: '/home');
   }
 
   Future<void> _signInWithDemoAdmin() async {
-    if (_isSubmitting) return;
-
-    setState(() => _isSubmitting = true);
-    await HapticService.heavy();
-
-    try {
-      await ref
-          .read(currentUserProvider.notifier)
-          .signInWithDemoAdminCredentials();
-      if (!mounted) return;
-      context.go('/admin');
-    } on AuthException catch (e) {
-      if (mounted) PlaceifyToast.show(context, e.message);
-    } catch (error) {
-      if (mounted) {
-        PlaceifyToast.show(context, _loginErrorMessage(error));
-      }
-    } finally {
-      if (mounted) setState(() => _isSubmitting = false);
-    }
+    _emailController.text = DemoCredentials.adminEmail;
+    _passwordController.text = DemoCredentials.adminPassword;
+    await _submit(destination: '/admin');
   }
 
-  Future<void> _submit() async {
+  Future<void> _submit({required String destination}) async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_isSubmitting) return;
 
@@ -99,25 +67,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     try {
       await ref.read(currentUserProvider.notifier).signIn(
-            email: _emailController.text,
+            email: _emailController.text.trim(),
             password: _passwordController.text,
           );
       if (!mounted) return;
-      context.go('/home');
+      context.go(destination);
     } on AuthException catch (e) {
       if (mounted) PlaceifyToast.show(context, e.message);
-    } catch (error) {
-      if (mounted) {
-        PlaceifyToast.show(context, _loginErrorMessage(error));
-      }
+    } catch (_) {
+      if (mounted) PlaceifyToast.show(context, 'Log in failed. Try again.');
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
-  }
-
-  String _loginErrorMessage(Object error) {
-    if (error is AuthException) return error.message;
-    return 'Log in failed. Check your email and password.';
   }
 
   String? _required(String? value, String message) {
@@ -254,7 +215,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           const SizedBox(height: 32),
                           PrimaryCtaButton(
                             label: _isSubmitting ? 'Logging in...' : 'Log In',
-                            onTap: _submit,
+                            onTap: () => _submit(destination: '/home'),
                           ),
                           const SizedBox(height: 12),
                           Center(

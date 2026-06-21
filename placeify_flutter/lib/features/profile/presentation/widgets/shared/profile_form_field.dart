@@ -7,13 +7,13 @@ class ProfileFormField extends StatelessWidget {
   const ProfileFormField({
     required this.label,
     required this.child,
-    this.errorText,
+    this.error,
     super.key,
   });
 
   final String label;
   final Widget child;
-  final String? errorText;
+  final String? error;
 
   @override
   Widget build(BuildContext context) {
@@ -24,23 +24,23 @@ class ProfileFormField extends StatelessWidget {
         children: [
           Text(
             label.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.espresso,
+              color: error != null ? AppColors.coral : AppColors.espresso,
               letterSpacing: 0.07 * 12,
             ),
           ),
           const SizedBox(height: 6),
           child,
-          if (errorText != null && errorText!.isNotEmpty) ...[
+          if (error != null) ...[
             const SizedBox(height: 6),
             Text(
-              errorText!,
+              error!,
               style: const TextStyle(
                 fontSize: 12,
-                color: AppColors.rust,
-                height: 1.3,
+                color: AppColors.coral,
+                height: 1.35,
               ),
             ),
           ],
@@ -63,6 +63,7 @@ class ProfileTextInput extends StatelessWidget {
     this.inputFormatters,
     this.validator,
     this.fieldKey,
+    this.hasError = false,
     super.key,
   });
 
@@ -77,9 +78,12 @@ class ProfileTextInput extends StatelessWidget {
   final List<TextInputFormatter>? inputFormatters;
   final FormFieldValidator<String>? validator;
   final GlobalKey<FormFieldState<String>>? fieldKey;
+  final bool hasError;
 
   InputDecoration _decoration() {
     final borderRadius = BorderRadius.circular(14);
+    final borderColor = hasError ? AppColors.coral : AppColors.creamDark;
+    final focusedColor = hasError ? AppColors.coral : AppColors.accent;
     return InputDecoration(
       hintText: hint,
       hintStyle: const TextStyle(
@@ -92,23 +96,23 @@ class ProfileTextInput extends StatelessWidget {
       suffixIcon: suffix,
       border: OutlineInputBorder(
         borderRadius: borderRadius,
-        borderSide: const BorderSide(color: AppColors.creamDark, width: 1.5),
+        borderSide: BorderSide(color: borderColor, width: 1.5),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: borderRadius,
-        borderSide: const BorderSide(color: AppColors.creamDark, width: 1.5),
+        borderSide: BorderSide(color: borderColor, width: 1.5),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: borderRadius,
-        borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
+        borderSide: BorderSide(color: focusedColor, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: borderRadius,
-        borderSide: const BorderSide(color: Colors.red, width: 1.5),
+        borderSide: const BorderSide(color: AppColors.coral, width: 1.5),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: borderRadius,
-        borderSide: const BorderSide(color: Colors.red, width: 1.5),
+        borderSide: const BorderSide(color: AppColors.coral, width: 1.5),
       ),
     );
   }

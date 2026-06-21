@@ -10,7 +10,6 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../profile/presentation/widgets/shared/profile_submit_button.dart';
 import '../../domain/constants/vendor_routes.dart';
 import '../../domain/constants/vendor_strings.dart';
-import '../providers/vendor_profile_provider.dart';
 import '../providers/vendor_registration_provider.dart';
 import 'steps/address_step.dart';
 import 'steps/bank_details_step.dart';
@@ -73,12 +72,21 @@ class _VendorRegistrationScreenState
         final error = ref.read(vendorRegistrationProvider).submitError;
         if (error != null) {
           PlaceifyToast.show(context, error);
+        } else if (ref.read(vendorRegistrationProvider).hasFieldErrors) {
+          HapticService.light();
+          final step = ref.read(vendorRegistrationProvider).currentStep;
+          if (_pageController.hasClients) {
+            await _pageController.animateToPage(
+              step,
+              duration: AppDurations.mid,
+              curve: Curves.easeInOutCubic,
+            );
+          }
         }
         return;
       }
 
       await ref.read(currentUserProvider.notifier).refresh();
-      ref.invalidate(vendorProfileProvider);
       if (!mounted) return;
 
       HapticService.medium();
@@ -88,10 +96,7 @@ class _VendorRegistrationScreenState
     }
 
     if (!notifier.nextStep()) {
-      final errors = ref.read(vendorRegistrationProvider).fieldErrors;
-      if (errors.isNotEmpty && mounted) {
-        PlaceifyToast.show(context, errors.values.first);
-      }
+      HapticService.light();
       return;
     }
 

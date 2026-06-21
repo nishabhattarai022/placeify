@@ -146,7 +146,6 @@ class _ApplicationDetailBody extends ConsumerWidget {
             onDecline: () {
               VendorApplicationDeclineSheet.show(
                 context,
-                ref,
                 application: application,
                 onDeclined: () {
                   if (context.mounted) context.pop();
@@ -156,7 +155,6 @@ class _ApplicationDetailBody extends ConsumerWidget {
             onApprove: () {
               VendorApplicationApproveSheet.show(
                 context,
-                ref,
                 application: application,
                 onApproved: () {
                   if (context.mounted) context.pop();

@@ -31,7 +31,9 @@ class ServerpodVendorRegistrationRepository
 
     final shopName = business.businessName.trim();
     final phone = business.phone.trim();
-    final categoryName = category.category.trim();
+    final categoryName = category.categories.isNotEmpty
+        ? category.categories.first.trim()
+        : '';
     final streetLine = address.street.trim();
     final city = address.city.trim();
     final country = address.country.trim();
@@ -62,7 +64,7 @@ class ServerpodVendorRegistrationRepository
 
     final description = category.description.trim().isNotEmpty
         ? category.description.trim()
-        : '$shopName — ${category.category.trim()} vendor on Placeify.';
+        : '$shopName — ${category.categoriesLabel} vendor on Placeify.';
 
     try {
       final vendor = await client.vendor.createShop(
@@ -72,7 +74,7 @@ class ServerpodVendorRegistrationRepository
         address: fullAddress,
         city: city.isEmpty ? null : city,
         country: country.isEmpty ? null : country,
-        shopCategory: category.category.trim(),
+        shopCategory: categoryName,
       );
 
       return vendor.id.toString();

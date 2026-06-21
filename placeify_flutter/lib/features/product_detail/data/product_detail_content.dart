@@ -1,3 +1,9 @@
+import 'package:placeify_flutter/features/admin/data/config/admin_seed_data.dart';
+import 'package:placeify_flutter/features/shops/data/consumer_shop_seed.dart';
+import 'package:placeify_flutter/features/shops/data/vendor_product_mapper.dart';
+import 'package:placeify_flutter/features/vendor/data/config/vendor_mock_config.dart';
+import 'package:placeify_flutter/features/vendor/domain/models/vendor_product.dart';
+
 import '../../home/domain/models/product.dart';
 
 /// A labeled spec row (e.g. "Frame" → "Solid oak").
@@ -73,6 +79,10 @@ abstract final class ProductDetailContentRepository {
       );
     }
 
+    if (VendorProductMapper.isShopProductId(product.id)) {
+      return _forShopProduct(product, defaultSpecs);
+    }
+
     return ProductDetailContent(
       description:
           'The ${product.name} combines thoughtful craftsmanship with everyday comfort, '
@@ -109,6 +119,60 @@ abstract final class ProductDetailContentRepository {
       const ProductSpec(label: 'Assembly', value: 'Minimal (legs only)'),
       const ProductSpec(label: 'Origin', value: 'Designed in Kathmandu'),
     ];
+  }
+
+  static ProductDetailContent _forShopProduct(
+    Product product,
+    List<ProductSpec> defaultSpecs,
+  ) {
+    final vendorProduct = _vendorProductForShopProduct(product);
+    final description = vendorProduct != null &&
+            vendorProduct.description.trim().isNotEmpty
+        ? vendorProduct.description
+        : 'The ${product.name} combines thoughtful craftsmanship with everyday '
+            'comfort, making it a versatile piece for modern living spaces.';
+    final galleryImages = vendorProduct != null &&
+            vendorProduct.imageUrls.isNotEmpty
+        ? vendorProduct.imageUrls
+        : _galleryFor(product);
+
+    return ProductDetailContent(
+      description: description,
+      extendedDescription:
+          'Available from a local Placeify vendor. Built with quality materials '
+          'and a balanced silhouette for Nepali homes.',
+      galleryImages: galleryImages,
+      materials: const [
+        'Vendor-listed materials',
+        'Quality-checked before dispatch',
+      ],
+      specs: defaultSpecs,
+      careInstructions: const [
+        'Follow the care label included with your order.',
+        'Contact the vendor for product-specific maintenance advice.',
+      ],
+      warranty: 'Warranty terms provided by the vendor at checkout',
+    );
+  }
+
+  static VendorProduct? _vendorProductForShopProduct(Product product) {
+    final vendorId = product.vendorId;
+    if (vendorId == null) return null;
+
+    final prefix = 'shop-$vendorId-';
+    if (!product.id.startsWith(prefix)) return null;
+    final productId = product.id.substring(prefix.length);
+
+    if (VendorMockConfig.isKnownVendor(vendorId)) {
+      return VendorMockConfig.productById(productId);
+    }
+    if (vendorId == AdminSeedData.approvedVendorId ||
+        ConsumerShopSeed.hasSeedProducts(vendorId)) {
+      for (final seedProduct in ConsumerShopSeed.productsFor(vendorId)) {
+        if (seedProduct.id == productId) return seedProduct;
+      }
+    }
+    return null;
   }
 
   static List<String> _galleryFor(Product product) {

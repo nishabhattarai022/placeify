@@ -8,8 +8,7 @@ abstract final class PlaceifyToast {
 
   static void show(BuildContext context, String message) {
     _currentEntry?.remove();
-    final overlay = _overlayStateFor(context);
-    if (overlay == null) return;
+    final overlay = Overlay.of(context);
     late OverlayEntry entry;
 
     entry = OverlayEntry(
@@ -24,13 +23,6 @@ abstract final class PlaceifyToast {
 
     _currentEntry = entry;
     overlay.insert(entry);
-  }
-
-  /// Prefer the root navigator overlay so toasts survive route pops (e.g. after upload).
-  static OverlayState? _overlayStateFor(BuildContext context) {
-    final rootOverlay = Navigator.maybeOf(context, rootNavigator: true)?.overlay;
-    if (rootOverlay != null) return rootOverlay;
-    return Overlay.maybeOf(context);
   }
 }
 

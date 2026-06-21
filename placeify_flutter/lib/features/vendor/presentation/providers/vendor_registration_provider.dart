@@ -1,5 +1,6 @@
 import 'package:placeify_client/placeify_client.dart';
 import 'package:placeify_flutter/core/constants/country_phone_codes.dart';
+import 'package:placeify_flutter/features/vendor/data/serverpod_vendor_document_repository.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_registration_field_keys.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_registration.dart';
 import 'package:placeify_flutter/features/vendor/domain/repositories/vendor_registration_repository.dart';
@@ -40,6 +41,7 @@ class VendorRegistrationUiState {
 
   bool get isLastStep => currentStep == stepCount - 1;
   bool get isReviewStep => currentStep == stepCount - 1;
+  bool get hasFieldErrors => fieldErrors.isNotEmpty;
 
   String? fieldError(String key) => fieldErrors[key];
 
@@ -104,6 +106,12 @@ class VendorRegistrationNotifier extends _$VendorRegistrationNotifier {
     );
   }
 
+  void clearFieldError(String fieldKey) {
+    if (!state.fieldErrors.containsKey(fieldKey)) return;
+    final next = Map<String, String>.from(state.fieldErrors)..remove(fieldKey);
+    state = state.copyWith(fieldErrors: next);
+  }
+
   void setStep(int step) {
     if (step < 0 || step >= VendorRegistrationUiState.stepCount) return;
     state = state.copyWith(currentStep: step, clearSubmitError: true);
@@ -164,9 +172,9 @@ class VendorRegistrationNotifier extends _$VendorRegistrationNotifier {
           errors[VendorRegistrationFieldKeys.country] = 'Enter your country';
         }
       case 2:
-        if (form.category.category.trim().isEmpty) {
-          errors[VendorRegistrationFieldKeys.category] =
-              'Select a product category';
+        if (form.category.categories.isEmpty) {
+          errors[VendorRegistrationFieldKeys.categories] =
+              'Select at least one product category';
         }
       case 3:
         final d = form.documents;
@@ -259,6 +267,14 @@ class VendorRegistrationNotifier extends _$VendorRegistrationNotifier {
           documents: applyUrl(state.form.documents, url),
         ),
         uploadingDocuments: {...state.uploadingDocuments}..remove(fieldKey),
+      );
+    } on VendorDocumentUploadException catch (error) {
+      state = state.copyWith(
+        uploadingDocuments: {...state.uploadingDocuments}..remove(fieldKey),
+        fieldErrors: {
+          ...state.fieldErrors,
+          fieldKey: error.message,
+        },
       );
     } catch (error) {
       state = state.copyWith(

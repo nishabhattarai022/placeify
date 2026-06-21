@@ -6,6 +6,7 @@ import 'package:placeify_flutter/core/services/haptic_service.dart';
 import 'package:placeify_flutter/core/utils/formatters.dart';
 import 'package:placeify_flutter/features/admin/domain/constants/admin_routes.dart';
 import 'package:placeify_flutter/features/admin/domain/models/vendor_application.dart';
+import 'package:placeify_flutter/features/vendor/domain/models/vendor_registration.dart';
 import 'package:placeify_flutter/features/admin/presentation/widgets/admin_status_chip.dart';
 
 class AdminApplicationRow extends StatefulWidget {
@@ -28,7 +29,7 @@ class _AdminApplicationRowState extends State<AdminApplicationRow> {
     final application = widget.application;
     final isNew = DateTime.now().difference(application.submittedAt).inHours < 24;
     final applicant = application.registration.business.contactName;
-    final category = application.registration.category.category;
+    final category = application.registration.category.categoriesLabel;
     final meta =
         '$applicant · $category · ${Formatters.shortDate(application.submittedAt)}';
 
