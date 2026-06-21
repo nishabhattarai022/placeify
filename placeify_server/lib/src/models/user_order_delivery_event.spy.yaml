@@ -1,0 +1,6 @@
+### Delivery milestone shown in the customer order timeline.
+class: UserOrderDeliveryEvent
+fields:
+  stage: DeliveryStage
+  note: String?
+  createdAt: DateTime
