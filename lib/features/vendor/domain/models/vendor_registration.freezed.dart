@@ -1033,10 +1033,11 @@ extension VendorCategoryInfoPatterns on VendorCategoryInfo {
 
 /// @nodoc
 
-class _VendorCategoryInfo implements VendorCategoryInfo {
+class _VendorCategoryInfo extends VendorCategoryInfo {
   const _VendorCategoryInfo(
       {final List<String> categories = const [], this.description = ''})
-      : _categories = categories;
+      : _categories = categories,
+        super._();
 
   final List<String> _categories;
   @override

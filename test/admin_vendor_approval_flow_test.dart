@@ -49,7 +49,7 @@ void main() {
             country: 'Nepal',
           ),
           category: VendorCategoryInfo(
-            category: 'Furniture',
+            categories: ['Furniture'],
             description: 'Test furniture store',
           ),
           documents: VendorDocuments(),
