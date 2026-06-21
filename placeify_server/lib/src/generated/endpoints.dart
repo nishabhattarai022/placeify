@@ -451,6 +451,24 @@ class Endpoints extends _i1.EndpointDispatch {
                 status: params['status'],
               ),
         ),
+        'getMyOrder': _i1.MethodConnector(
+          name: 'getMyOrder',
+          params: {
+            'orderId': _i1.ParameterDescription(
+              name: 'orderId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['user'] as _i4.UserEndpoint).getMyOrder(
+                session,
+                params['orderId'],
+              ),
+        ),
         'listMyArSessions': _i1.MethodConnector(
           name: 'listMyArSessions',
           params: {
