@@ -16,13 +16,11 @@ final vendorApplicationRepositoryProvider =
 final class VendorApplicationRepositoryProvider
     extends
         $FunctionalProvider<
-          AsyncValue<VendorApplicationRepository>,
           VendorApplicationRepository,
-          FutureOr<VendorApplicationRepository>
+          VendorApplicationRepository,
+          VendorApplicationRepository
         >
-    with
-        $FutureModifier<VendorApplicationRepository>,
-        $FutureProvider<VendorApplicationRepository> {
+    with $Provider<VendorApplicationRepository> {
   VendorApplicationRepositoryProvider._()
     : super(
         from: null,
@@ -39,15 +37,23 @@ final class VendorApplicationRepositoryProvider
 
   @$internal
   @override
-  $FutureProviderElement<VendorApplicationRepository> $createElement(
+  $ProviderElement<VendorApplicationRepository> $createElement(
     $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
+  ) => $ProviderElement(pointer);
 
   @override
-  FutureOr<VendorApplicationRepository> create(Ref ref) {
+  VendorApplicationRepository create(Ref ref) {
     return vendorApplicationRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(VendorApplicationRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<VendorApplicationRepository>(value),
+    );
   }
 }
 
 String _$vendorApplicationRepositoryHash() =>
-    r'745274d206612b81d76e54abb5716ab4b3a52418';
+    r'3d34b6ad0cedefc2bd6afd81446246b8c9ae4148';

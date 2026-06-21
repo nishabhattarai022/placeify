@@ -7,7 +7,7 @@ import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/widgets/toast_overlay.dart';
-import '../../../../main.dart' show client;
+import '../../../../core/config/placeify_server_client.dart';
 import '../../domain/models/product.dart';
 import '../providers/wishlist_provider.dart';
 

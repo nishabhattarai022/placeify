@@ -46,9 +46,7 @@ class UserService {
       where: (row) => row.userId.equals(user.id!),
     );
     if (shop == null) {
-      throw PlaceifyException(
-        message:
-            'Complete vendor registration before switching to vendor mode.',
+      throw PlaceifyException(message: 'Complete vendor registration before switching to vendor mode.',
         code: 'SHOP_NOT_FOUND',
       );
     }
@@ -75,19 +73,28 @@ class UserService {
     return _repository.buildDashboard(session, user);
   }
 
-  Future<List<UserOrderSummary>> listMyOrders(
-    Session session, {
-    int limit = 20,
-    int offset = 0,
-    OrderStatus? status,
-  }) async {
+  /// Promotes the configured demo admin account for local dashboard access.
+  Future<User> ensureDemoAdmin(Session session) async {
+    const demoAdminEmail = 'admin@placeify.com';
     final user = await SessionService.requireUser(session);
-    return _orderStore.listSummaries(
+    final email = user.email?.trim().toLowerCase();
+    if (email != demoAdminEmail) {
+      throw PlaceifyException(
+        message: 'Demo admin access is limited to $demoAdminEmail.',
+        code: 'DEMO_ADMIN_ONLY',
+      );
+    }
+
+    if (user.role == UserRole.admin) return user;
+
+    return User.db.updateRow(
       session,
-      user.id!,
-      limit: limit,
-      offset: offset,
-      status: status,
+      user.copyWith(
+        role: UserRole.admin,
+        status: UserAccountStatus.approved,
+        isActive: true,
+        updatedAt: DateTime.now(),
+      ),
     );
   }
 

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:placeify_flutter/core/services/haptic_service.dart';
+import 'package:placeify_flutter/features/shops/data/local_supplier_vendor_map.dart';
+import 'package:placeify_flutter/features/shops/domain/constants/shop_routes.dart';
 
 import '../../data/local_suppliers_config.dart';
 import '../theme/home_screen_tokens.dart';
@@ -39,15 +43,6 @@ class _SuppliersNameMarqueeState extends State<SuppliersNameMarquee>
     WidgetsBinding.instance.addPostFrameCallback((_) => _measureLoop());
   }
 
-  @override
-  void didUpdateWidget(covariant SuppliersNameMarquee oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.suppliers != widget.suppliers) {
-      _loopWidth = 0;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _measureLoop());
-    }
-  }
-
   void _measureLoop() {
     if (!mounted || _items.isEmpty) return;
 
@@ -58,10 +53,9 @@ class _SuppliersNameMarqueeState extends State<SuppliersNameMarquee>
       return;
     }
 
-    final measured = box.size.width;
-    if (measured != _loopWidth) {
-      setState(() => _loopWidth = measured);
-    }
+    setState(() {
+      _loopWidth = box.size.width;
+    });
     if (!_controller.isAnimating) {
       _controller.repeat();
     }
@@ -80,10 +74,23 @@ class _SuppliersNameMarqueeState extends State<SuppliersNameMarquee>
       children: [
         for (var i = 0; i < _items.length; i++) ...[
           if (i > 0) const SizedBox(width: _chipGap),
-          _SupplierNameChip(supplier: _items[i]),
+          _SupplierNameChip(
+            supplier: _items[i],
+            onTap: () => _onSupplierTap(context, _items[i]),
+          ),
         ],
       ],
     );
+  }
+
+  void _onSupplierTap(BuildContext context, LocalSupplier supplier) {
+    HapticService.light();
+    final vendorId = LocalSupplierVendorMap.vendorIdForSupplier(supplier.id);
+    if (vendorId != null) {
+      context.push(ShopRoutes.shopDetail(vendorId));
+      return;
+    }
+    context.go(ShopRoutes.shops);
   }
 
   @override
@@ -97,19 +104,7 @@ class _SuppliersNameMarqueeState extends State<SuppliersNameMarquee>
     return SizedBox(
       height: _marqueeHeight,
       child: Stack(
-        clipBehavior: Clip.hardEdge,
         children: [
-          // Measure one loop off-screen so the animated row is not width-constrained.
-          Positioned(
-            left: -10000,
-            top: 0,
-            child: Opacity(
-              opacity: 0,
-              child: IgnorePointer(
-                child: _supplierLoop(key: _loopMeasureKey),
-              ),
-            ),
-          ),
           ClipRect(
             child: AnimatedBuilder(
               animation: _controller,
@@ -122,17 +117,13 @@ class _SuppliersNameMarqueeState extends State<SuppliersNameMarquee>
                   child: child,
                 );
               },
-              child: OverflowBox(
-                maxWidth: double.infinity,
-                alignment: Alignment.centerLeft,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _supplierLoop(),
-                    const SizedBox(width: _chipGap),
-                    _supplierLoop(),
-                  ],
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _supplierLoop(key: _loopMeasureKey),
+                  const SizedBox(width: _chipGap),
+                  _supplierLoop(),
+                ],
               ),
             ),
           ),
@@ -177,45 +168,53 @@ class _SuppliersNameMarqueeState extends State<SuppliersNameMarquee>
 }
 
 class _SupplierNameChip extends StatelessWidget {
-  const _SupplierNameChip({required this.supplier});
+  const _SupplierNameChip({
+    required this.supplier,
+    required this.onTap,
+  });
 
   final LocalSupplier supplier;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: HomeScreenTokens.cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.black.withValues(alpha: 0.06),
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: HomeScreenTokens.cardBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.black.withValues(alpha: 0.06),
+          ),
         ),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            supplier.name,
-            style: GoogleFonts.dmSans(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-              letterSpacing: -0.2,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              supplier.name,
+              style: GoogleFonts.dmSans(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+                letterSpacing: -0.2,
+              ),
             ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            '${supplier.locality} · ${supplier.capability}',
-            style: GoogleFonts.dmSans(
-              fontSize: 11,
-              fontWeight: FontWeight.w400,
-              color: Colors.black45,
+            const SizedBox(height: 2),
+            Text(
+              '${supplier.locality} · ${supplier.capability}',
+              style: GoogleFonts.dmSans(
+                fontSize: 11,
+                fontWeight: FontWeight.w400,
+                color: Colors.black45,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

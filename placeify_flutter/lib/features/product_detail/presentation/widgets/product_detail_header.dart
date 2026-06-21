@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 import '../../../../core/services/haptic_service.dart';
-import '../../../../core/widgets/toast_overlay.dart';
-import '../../../../main.dart' show client;
 import '../../../home/domain/models/product.dart';
 import '../../../home/presentation/providers/wishlist_provider.dart';
 import '../product_detail_tokens.dart';
@@ -40,15 +36,9 @@ class ProductDetailHeader extends ConsumerWidget {
           ),
           const Spacer(),
           _HeaderCircleButton(
-            onTap: () async {
-              if (!client.auth.isAuthenticated) {
-                PlaceifyToast.show(context, 'Sign in to save items');
-                context.push('/login');
-                return;
-              }
-
+            onTap: () {
               HapticService.light();
-              await ref.read(wishlistProvider.notifier).toggle(product.id);
+              ref.read(wishlistProvider.notifier).toggle(product.id);
             },
             child: _StarSwitcher(isSaved: isSaved),
           ),

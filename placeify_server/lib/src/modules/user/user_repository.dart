@@ -29,6 +29,7 @@ class UserProfileStore {
     Session session,
     UuidValue authUserId,
     String name, {
+    String? email,
     String? phone,
     String? address,
   }) async {
@@ -39,9 +40,11 @@ class UserProfileStore {
         User(
           authUserId: authUserId,
           name: name,
+          email: email?.trim().toLowerCase(),
           phone: phone,
           address: address,
           role: UserRole.consumer,
+          status: UserAccountStatus.approved,
         ),
       );
     }
@@ -50,8 +53,10 @@ class UserProfileStore {
       session,
       existing.copyWith(
         name: name,
+        email: email?.trim().toLowerCase() ?? existing.email,
         phone: phone,
         address: address,
+        updatedAt: DateTime.now(),
       ),
     );
   }

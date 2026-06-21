@@ -7,7 +7,6 @@ import '../../../core/config/placeify_server_client.dart';
 import '../../cart/data/product_id_codec.dart';
 import '../domain/models/vendor_product.dart';
 import '../domain/repositories/vendor_product_repository.dart';
-import 'mock_vendor_product_repository.dart';
 import 'vendor_product_mapper.dart';
 
 /// Serverpod-backed vendor product catalog (create/list via [client.vendor]).

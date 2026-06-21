@@ -81,10 +81,7 @@ class RefundStore {
 
     final order = await Order.db.findById(session, orderId);
     if (order == null || order.userId != user.id) {
-      throw PlaceifyException(
-        message: 'Order not found.',
-        code: 'ORDER_NOT_FOUND',
-      );
+      throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
     }
 
     if (order.status == OrderStatus.cancelled) {
@@ -103,8 +100,7 @@ class RefundStore {
     );
     if (existingPending != null) {
       throw PlaceifyException(
-        message:
-            'A pending refund request already exists for this order.',
+        message: 'A pending refund request already exists for this order.',
         code: 'REFUND_EXISTS',
       );
     }

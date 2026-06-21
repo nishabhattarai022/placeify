@@ -1,6 +1,5 @@
 import 'package:placeify_flutter/core/services/background_removal_service.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
-import 'package:placeify_flutter/features/vendor/data/mock_vendor_product_repository.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_form_state.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_image_item.dart';
@@ -243,12 +242,6 @@ class VendorProductForm extends _$VendorProductForm {
     if (state.name.trim().isEmpty) return 'Enter a product name';
     if (state.sku.trim().isEmpty) return 'Enter a SKU';
     if (state.categoryId.trim().isEmpty) return 'Select a category';
-    if (state.description.trim().isEmpty) return 'Enter a description';
-    if (state.materials.trim().isEmpty) return 'Enter materials';
-
-    if (!state.isEditing && state.images.isEmpty) {
-      return 'Add at least one product photo';
-    }
 
     final listPrice = state.parsedListPrice;
     if (listPrice == null || listPrice <= 0) {
@@ -274,12 +267,9 @@ class VendorProductForm extends _$VendorProductForm {
       (state.weight, 'weight'),
     ]) {
       final value = field.$1.trim();
-      if (value.isEmpty) {
-        if (field.$2 == 'weight') continue;
-        return 'Enter ${field.$2}';
-      }
+      if (value.isEmpty) continue;
       final parsed = double.tryParse(value);
-      if (parsed == null || parsed <= 0) {
+      if (parsed == null || parsed < 0) {
         return 'Enter a valid ${field.$2}';
       }
     }
@@ -298,7 +288,7 @@ class VendorProductForm extends _$VendorProductForm {
 
     try {
       final user = await ref.read(currentUserProvider.future);
-      final vendorId = user?.vendorId ?? user?.id;
+      final vendorId = user?.vendorId;
       if (vendorId == null) {
         state = state.copyWith(
           isSubmitting: false,
@@ -324,9 +314,6 @@ class VendorProductForm extends _$VendorProductForm {
       }
 
       if (error != null) {
-        if (error.contains('pending admin approval')) {
-          ref.invalidate(currentUserProvider);
-        }
         state = state.copyWith(isSubmitting: false, submitError: error);
         return false;
       }
@@ -337,14 +324,10 @@ class VendorProductForm extends _$VendorProductForm {
         state = state.copyWith(isSubmitting: false, clearSubmitError: true);
       }
       return true;
-    } catch (error) {
+    } catch (_) {
       state = state.copyWith(
         isSubmitting: false,
-        submitError: error is VendorProductActionException
-            ? error.message
-            : (error is StateError
-                ? error.message
-                : 'Could not save product. Try again.'),
+        submitError: 'Could not save product. Try again.',
       );
       return false;
     }

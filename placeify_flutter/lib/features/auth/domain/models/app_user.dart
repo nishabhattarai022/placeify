@@ -37,11 +37,8 @@ class AppUser {
     return VendorStatus.approved;
   }
 
-  /// Mock vendor frontend uses a fixed demo vendor id for seed data.
-  String? get vendorId {
-    if (registeredVendorId != null) return registeredVendorId;
-    return hasVendorShop ? 'demo-vendor' : null;
-  }
+  /// Vendor shop id from the server when the account owns a shop.
+  String? get vendorId => registeredVendorId;
 
   AppUser copyWith({
     String? id,

@@ -2,14 +2,19 @@ import 'package:serverpod/serverpod.dart';
 
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
+import '../vendor/vendor_service.dart';
 import 'catalog_seed.dart';
 import 'product_repository.dart';
 
 class ProductService {
-  ProductService({CatalogRepository? repository})
-      : _repository = repository ?? CatalogRepository();
+  ProductService({
+    CatalogRepository? repository,
+    VendorService? vendorService,
+  })  : _repository = repository ?? CatalogRepository(),
+        _vendorService = vendorService ?? VendorService();
 
   final CatalogRepository _repository;
+  final VendorService _vendorService;
 
   Future<void> _ensureCatalog(Session session) async {
     try {
@@ -35,5 +40,19 @@ class ProductService {
   Future<Product?> getProduct(Session session, int productId) async {
     await _ensureCatalog(session);
     return _repository.getProduct(session, productId);
+  }
+
+  Future<VendorProfileDetail?> getShopProfile(
+    Session session,
+    UuidValue vendorId,
+  ) {
+    return _vendorService.getShopProfile(session, vendorId);
+  }
+
+  Future<List<ShopListingSummary>> listApprovedShops(
+    Session session, {
+    String? query,
+  }) {
+    return _vendorService.listApprovedShops(session, query: query);
   }
 }

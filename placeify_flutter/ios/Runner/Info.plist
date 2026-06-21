@@ -59,8 +59,13 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<key>NSCameraUsageDescription</key>
-	<string>Placeify needs camera access to photograph products for your shop.</string>
+	<string>Placeify uses the camera to photograph products and preview furniture in your room with AR.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Placeify needs photo library access to upload product images.</string>
 	<key>UISupportedInterfaceOrientations~ipad</key>

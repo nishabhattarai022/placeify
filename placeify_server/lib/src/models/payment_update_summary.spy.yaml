@@ -1,0 +1,9 @@
+### Payment status update for a vendor order audit trail.
+class: PaymentUpdateSummary
+fields:
+  id: int
+  orderId: int
+  amount: double
+  status: PaymentTransactionStatus
+  note: String
+  updatedAt: DateTime

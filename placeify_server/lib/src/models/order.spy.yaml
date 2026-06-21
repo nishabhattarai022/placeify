@@ -13,3 +13,5 @@ fields:
 indexes:
   order_user_id:
     fields: userId
+  order_status:
+    fields: status

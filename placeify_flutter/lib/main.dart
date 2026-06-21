@@ -7,8 +7,6 @@ import 'app.dart';
 import 'core/config/placeify_server_client.dart';
 import 'core/providers/shared_preferences_provider.dart';
 
-export 'core/config/placeify_server_client.dart';
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 

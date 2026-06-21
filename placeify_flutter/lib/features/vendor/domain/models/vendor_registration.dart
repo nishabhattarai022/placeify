@@ -33,16 +33,45 @@ abstract class VendorAddress with _$VendorAddress {
       _$VendorAddressFromJson(json);
 }
 
-/// Step 3 — primary product category and optional description.
-@freezed
+/// Step 3 — product categories and optional description.
+@Freezed(fromJson: false, toJson: false)
 abstract class VendorCategoryInfo with _$VendorCategoryInfo {
+  const VendorCategoryInfo._();
+
   const factory VendorCategoryInfo({
-    @Default('') String category,
+    @Default([]) List<String> categories,
     @Default('') String description,
   }) = _VendorCategoryInfo;
 
-  factory VendorCategoryInfo.fromJson(Map<String, dynamic> json) =>
-      _$VendorCategoryInfoFromJson(json);
+  factory VendorCategoryInfo.fromJson(Map<String, dynamic> json) {
+    final raw = json['categories'];
+    final categories = raw is List
+        ? raw
+            .map((e) => e.toString().trim())
+            .where((name) => name.isNotEmpty)
+            .toList()
+        : <String>[];
+    if (categories.isEmpty) {
+      final legacy = json['category'] as String? ?? '';
+      if (legacy.trim().isNotEmpty) {
+        categories.add(legacy.trim());
+      }
+    }
+    return VendorCategoryInfo(
+      categories: categories,
+      description: json['description'] as String? ?? '',
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'categories': categories,
+        'description': description,
+      };
+}
+
+extension VendorCategoryInfoX on VendorCategoryInfo {
+  String get categoriesLabel => categories.join(', ');
 }
 
 /// Step 4 — uploaded document local paths (mock; real API would use remote URLs).

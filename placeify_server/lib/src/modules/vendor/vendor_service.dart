@@ -22,6 +22,8 @@ class VendorService {
     String? logoUrl,
     String? phone,
     String? address,
+    String? city,
+    String? country,
     String? shopCategory,
   }) {
     return _repository.createShop(
@@ -31,6 +33,8 @@ class VendorService {
       logoUrl: logoUrl,
       phone: phone,
       address: address,
+      city: city,
+      country: country,
       shopCategory: shopCategory,
     );
   }
@@ -44,6 +48,13 @@ class VendorService {
     UuidValue vendorId,
   ) {
     return _repository.getShopProfile(session, vendorId);
+  }
+
+  Future<List<ShopListingSummary>> listApprovedShops(
+    Session session, {
+    String? query,
+  }) {
+    return _repository.listApprovedShops(session, query: query);
   }
 
   Future<VendorProfileDetail> updateMyProfile(
@@ -67,6 +78,46 @@ class VendorService {
     String fileName,
   ) {
     return _repository.uploadShopBanner(session, fileData, fileName);
+  }
+
+  Future<String> uploadShopCover(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) {
+    return _repository.uploadShopCover(session, fileData, fileName);
+  }
+
+  Future<String> uploadDocument(
+    Session session,
+    VendorDocumentType documentType,
+    ByteData fileData,
+    String fileName,
+  ) {
+    return _repository.uploadDocument(
+      session,
+      documentType,
+      fileData,
+      fileName,
+    );
+  }
+
+  /// Alias for [uploadShopLogo] — matches client API naming.
+  Future<String> uploadLogo(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) {
+    return uploadShopLogo(session, fileData, fileName);
+  }
+
+  /// Alias for [uploadShopBanner].
+  Future<String> uploadBanner(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) {
+    return uploadShopBanner(session, fileData, fileName);
   }
 
   Future<Vendor> updateShop(

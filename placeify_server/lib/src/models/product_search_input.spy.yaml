@@ -3,6 +3,7 @@ class: ProductSearchInput
 fields:
   query: String?
   categoryName: String?
+  vendorId: UuidValue?
   minPrice: double?
   maxPrice: double?
   pagination: PaginationInput?

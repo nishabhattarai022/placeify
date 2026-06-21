@@ -2,7 +2,7 @@ import 'package:placeify_client/placeify_client.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
-import '../../../../main.dart' show client;
+import '../../../../core/config/placeify_server_client.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../profile/data/serverpod_wishlist_repository.dart';
 import '../../data/user_wishlist_mappers.dart';
@@ -54,7 +54,6 @@ class UserWishlist extends _$UserWishlist {
     await toggle(productId);
   }
 
-  /// Adds or removes a product. Returns whether it is now saved.
   Future<bool> toggle(String productId) async {
     if (!client.auth.isAuthenticated) return false;
 
@@ -64,4 +63,3 @@ class UserWishlist extends _$UserWishlist {
     return saved;
   }
 }
-

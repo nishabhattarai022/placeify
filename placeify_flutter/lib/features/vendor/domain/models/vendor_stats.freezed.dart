@@ -216,7 +216,7 @@ return $default(_that.revenue,_that.orderCount,_that.productCount,_that.viewCoun
 @JsonSerializable()
 
 class _VendorStats implements VendorStats {
-  const _VendorStats({required this.revenue, required this.orderCount, required this.productCount, required this.viewCount, required this.conversionRate, required this.periodLabel, this.averageRating = 4.6, this.responseRate = 0.92});
+  const _VendorStats({required this.revenue, required this.orderCount, required this.productCount, required this.viewCount, required this.conversionRate, required this.periodLabel, required this.averageRating, required this.responseRate});
   factory _VendorStats.fromJson(Map<String, dynamic> json) => _$VendorStatsFromJson(json);
 
 @override final  double revenue;
@@ -225,8 +225,8 @@ class _VendorStats implements VendorStats {
 @override final  int viewCount;
 @override final  double conversionRate;
 @override final  String periodLabel;
-@override@JsonKey() final  double averageRating;
-@override@JsonKey() final  double responseRate;
+@override final  double averageRating;
+@override final  double responseRate;
 
 /// Create a copy of VendorStats
 /// with the given fields replaced by the non-null parameter values.

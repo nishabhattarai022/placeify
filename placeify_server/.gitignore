@@ -14,9 +14,17 @@ doc/api/
 # Runtime product image uploads (generated locally)
 web/static/uploads/*
 !web/static/uploads/.gitkeep
+web/static/uploads/models/*
+!web/static/uploads/models/.gitkeep
 
 # Passwords file
 config/passwords.yaml
+
+# Tripo API key (copy from tripo_api_key.example.yaml)
+config/tripo_api_key.yaml
+
+# remove.bg API key (copy from removebg_api_key.example.yaml)
+config/removebg_api_key.yaml
 
 # Firebase service account key for Firebase auth
 config/firebase_service_account_key.json

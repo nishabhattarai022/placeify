@@ -15,3 +15,5 @@ indexes:
     fields: userId
   refund_request_order_id:
     fields: orderId
+  refund_request_status:
+    fields: status

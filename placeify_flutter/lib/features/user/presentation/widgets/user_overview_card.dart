@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radii.dart';
 import '../../../../core/constants/app_typography.dart';
-import '../../data/user_overview_metric.dart';
+import '../../data/user_dashboard_mock_data.dart';
 
 class UserOverviewCard extends StatelessWidget {
   const UserOverviewCard({

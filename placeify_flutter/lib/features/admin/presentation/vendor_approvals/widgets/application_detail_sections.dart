@@ -40,9 +40,9 @@ class ApplicationDetailSections extends StatelessWidget {
           ],
         ),
         _DetailSection(
-          title: 'Category',
+          title: 'Categories',
           rows: [
-            _DetailRow('Category', form.category.category),
+            _DetailRow('Categories', form.category.categoriesLabel),
             if (form.category.description.trim().isNotEmpty)
               _DetailRow('Description', form.category.description),
           ],

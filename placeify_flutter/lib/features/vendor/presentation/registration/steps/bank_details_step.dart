@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../profile/presentation/widgets/shared/profile_form_field.dart';
 import '../../../domain/constants/vendor_strings.dart';
 import '../../../domain/models/vendor_registration.dart';
+import '../../../domain/validators/vendor_registration_validator.dart';
 import '../../providers/vendor_registration_provider.dart';
+import '../widgets/vendor_registration_error_banner.dart';
 
 class BankDetailsStep extends ConsumerStatefulWidget {
   const BankDetailsStep({super.key});
@@ -38,12 +40,16 @@ class _BankDetailsStepState extends ConsumerState<BankDetailsStep> {
     super.dispose();
   }
 
-  void _sync(VendorBankDetails bank) {
-    ref.read(vendorRegistrationProvider.notifier).updateBank(bank);
+  void _sync(VendorBankDetails bank, {String? clearErrorFor}) {
+    final notifier = ref.read(vendorRegistrationProvider.notifier);
+    notifier.updateBank(bank);
+    if (clearErrorFor != null) notifier.clearFieldError(clearErrorFor);
   }
 
   @override
   Widget build(BuildContext context) {
+    final fieldErrors = ref.watch(vendorRegistrationProvider).fieldErrors;
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
       children: [
@@ -65,47 +71,65 @@ class _BankDetailsStepState extends ConsumerState<BankDetailsStep> {
           ),
         ),
         const SizedBox(height: 20),
+        VendorRegistrationErrorBanner(errors: fieldErrors),
         ProfileFormField(
           label: 'Account Holder Name',
+          error: fieldErrors[VendorRegistrationFieldKeys.accountHolderName],
           child: ProfileTextInput(
             controller: _accountHolder,
             hint: 'Name on the account',
+            hasError: fieldErrors
+                .containsKey(VendorRegistrationFieldKeys.accountHolderName),
             onChanged: (v) => _sync(
               ref.read(vendorRegistrationProvider).form.bank
                   .copyWith(accountHolderName: v),
+              clearErrorFor: VendorRegistrationFieldKeys.accountHolderName,
             ),
           ),
         ),
         ProfileFormField(
           label: 'Bank Name',
+          error: fieldErrors[VendorRegistrationFieldKeys.bankName],
           child: ProfileTextInput(
             controller: _bankName,
             hint: VendorFormStrings.bankNameHint,
+            hasError:
+                fieldErrors.containsKey(VendorRegistrationFieldKeys.bankName),
             onChanged: (v) => _sync(
               ref.read(vendorRegistrationProvider).form.bank
                   .copyWith(bankName: v),
+              clearErrorFor: VendorRegistrationFieldKeys.bankName,
             ),
           ),
         ),
         ProfileFormField(
           label: 'Account Number',
+          error: fieldErrors[VendorRegistrationFieldKeys.accountNumber],
           child: ProfileTextInput(
             controller: _accountNumber,
             hint: '••••••••••',
+            keyboardType: TextInputType.number,
+            hasError: fieldErrors
+                .containsKey(VendorRegistrationFieldKeys.accountNumber),
             onChanged: (v) => _sync(
               ref.read(vendorRegistrationProvider).form.bank
                   .copyWith(accountNumber: v),
+              clearErrorFor: VendorRegistrationFieldKeys.accountNumber,
             ),
           ),
         ),
         ProfileFormField(
           label: VendorFormStrings.branchSwiftLabel,
+          error: fieldErrors[VendorRegistrationFieldKeys.routingNumber],
           child: ProfileTextInput(
             controller: _routingNumber,
             hint: VendorFormStrings.branchSwiftHint,
+            hasError: fieldErrors
+                .containsKey(VendorRegistrationFieldKeys.routingNumber),
             onChanged: (v) => _sync(
               ref.read(vendorRegistrationProvider).form.bank
                   .copyWith(routingNumber: v),
+              clearErrorFor: VendorRegistrationFieldKeys.routingNumber,
             ),
           ),
         ),

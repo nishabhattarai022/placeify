@@ -9,7 +9,7 @@ import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/services/haptic_service.dart';
 import '../../../../../core/widgets/animated_scale_tap.dart';
 import '../../../../../core/widgets/placeify_bottom_nav.dart';
-import '../../../../../main.dart' show client;
+import '../../../../../core/config/placeify_server_client.dart';
 import '../../../../../screens/widgets/category_product_list_tile.dart';
 import '../../../../user/presentation/providers/user_wishlist_provider.dart';
 import 'wishlist_sort.dart';

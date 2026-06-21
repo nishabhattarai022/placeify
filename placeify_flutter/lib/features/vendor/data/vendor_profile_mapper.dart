@@ -16,9 +16,13 @@ abstract final class VendorProfileMapper {
       email: detail.email,
       phone: detail.phone,
       address: detail.address,
+      city: detail.city,
+      country: detail.country,
       logoUrl: _resolveMediaUrl(detail.logoUrl),
       bio: detail.bio,
       bannerUrl: _resolveMediaUrl(detail.bannerUrl),
+      coverUrl: _resolveMediaUrl(detail.coverUrl),
+      isOpen: detail.isOpen,
       tags: detail.category.trim().isEmpty ? const [] : [detail.category],
       schedule: _decodeSchedule(detail.operatingHours),
       socialLinks: VendorSocialLinks(
@@ -39,10 +43,14 @@ abstract final class VendorProfileMapper {
       businessName: profile.businessName,
       phone: profile.phone,
       address: profile.address,
+      city: profile.city,
+      country: profile.country,
       category: category,
       bio: profile.bio,
       logoUrl: _isRemoteUrl(profile.logoUrl) ? profile.logoUrl : null,
       bannerUrl: _isRemoteUrl(profile.bannerUrl) ? profile.bannerUrl : null,
+      coverUrl: _isRemoteUrl(profile.coverUrl) ? profile.coverUrl : null,
+      isOpen: profile.isOpen,
       instagramHandle: profile.socialLinks.instagram,
       facebookHandle: profile.socialLinks.facebook,
       operatingHours: _encodeSchedule(profile.schedule, profile.socialLinks.website),
@@ -56,7 +64,16 @@ abstract final class VendorProfileMapper {
       return trimmed;
     }
     if (trimmed.startsWith('/')) {
-      return '$serverUrl$trimmed';
+      // Static uploads are served by the Serverpod web server (port 8082).
+      final apiUri = Uri.parse(serverUrl);
+      final segments =
+          trimmed.split('/').where((segment) => segment.isNotEmpty).toList();
+      return Uri(
+        scheme: apiUri.scheme,
+        host: apiUri.host,
+        port: 8082,
+        pathSegments: segments,
+      ).toString();
     }
     return trimmed;
   }

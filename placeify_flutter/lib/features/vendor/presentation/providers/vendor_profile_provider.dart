@@ -1,7 +1,6 @@
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
-import 'package:placeify_flutter/features/vendor/data/hybrid_vendor_repository.dart';
+import 'package:placeify_flutter/features/vendor/data/serverpod_vendor_repository.dart';
 import 'package:placeify_flutter/features/vendor/data/serverpod_vendor_product_repository.dart';
-import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_profile.dart'
     as models;
 import 'package:placeify_flutter/features/vendor/domain/repositories/vendor_product_repository.dart';
@@ -12,7 +11,7 @@ part 'vendor_profile_provider.g.dart';
 
 @Riverpod(keepAlive: true)
 VendorRepository vendorRepository(Ref ref) {
-  return HybridVendorRepository();
+  return const ServerpodVendorRepository();
 }
 
 @Riverpod(keepAlive: true)
@@ -25,11 +24,11 @@ class VendorProfile extends _$VendorProfile {
   @override
   Future<models.VendorProfile?> build() async {
     final user = await ref.watch(currentUserProvider.future);
-    if (user?.vendorStatus != VendorStatus.approved || user?.vendorId == null) {
+    if (user == null || user.vendorId == null || !user.hasVendorShop) {
       return null;
     }
     final repo = ref.watch(vendorRepositoryProvider);
-    return repo.getProfile(user!.vendorId!);
+    return repo.getProfile(user.vendorId!);
   }
 
   Future<void> updateProfile(models.VendorProfile updated) async {

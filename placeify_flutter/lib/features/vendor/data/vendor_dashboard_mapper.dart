@@ -20,6 +20,7 @@ abstract final class VendorDashboardMapper {
           : dashboard.orderCount / dashboard.productCount,
       periodLabel: 'All time',
       averageRating: dashboard.shop.rating,
+      responseRate: 0,
     );
   }
 

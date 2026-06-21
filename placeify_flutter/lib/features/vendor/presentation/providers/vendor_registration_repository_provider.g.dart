@@ -16,13 +16,11 @@ final vendorRegistrationRepositoryProvider =
 final class VendorRegistrationRepositoryProvider
     extends
         $FunctionalProvider<
-          AsyncValue<VendorRegistrationRepository>,
           VendorRegistrationRepository,
-          FutureOr<VendorRegistrationRepository>
+          VendorRegistrationRepository,
+          VendorRegistrationRepository
         >
-    with
-        $FutureModifier<VendorRegistrationRepository>,
-        $FutureProvider<VendorRegistrationRepository> {
+    with $Provider<VendorRegistrationRepository> {
   VendorRegistrationRepositoryProvider._()
     : super(
         from: null,
@@ -39,15 +37,23 @@ final class VendorRegistrationRepositoryProvider
 
   @$internal
   @override
-  $FutureProviderElement<VendorRegistrationRepository> $createElement(
+  $ProviderElement<VendorRegistrationRepository> $createElement(
     $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
+  ) => $ProviderElement(pointer);
 
   @override
-  FutureOr<VendorRegistrationRepository> create(Ref ref) {
+  VendorRegistrationRepository create(Ref ref) {
     return vendorRegistrationRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(VendorRegistrationRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<VendorRegistrationRepository>(value),
+    );
   }
 }
 
 String _$vendorRegistrationRepositoryHash() =>
-    r'b28a4d30f6a8238331bcd89a633d04bc86493af7';
+    r'445a68bc9bd30e062d5371e774e531db3bf2a621';

@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:placeify_flutter/core/providers/shared_preferences_provider.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_routes.dart';
-import 'package:placeify_flutter/features/vendor/presentation/vendor_product_upload_navigation.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radii.dart';
@@ -176,11 +175,7 @@ class _VendorOnboardingChecklistState
                     TextButton(
                       onPressed: () {
                         HapticService.light();
-                        if (item.route == VendorRoutes.productsUpload) {
-                          openVendorProductUpload(context);
-                        } else {
-                          context.push(item.route);
-                        }
+                        context.push(item.route);
                       },
                       child: const Text('Go'),
                     ),

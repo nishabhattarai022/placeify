@@ -42,18 +42,6 @@ Map<String, dynamic> _$VendorAddressToJson(_VendorAddress instance) =>
       'country': instance.country,
     };
 
-_VendorCategoryInfo _$VendorCategoryInfoFromJson(Map<String, dynamic> json) =>
-    _VendorCategoryInfo(
-      category: json['category'] as String? ?? '',
-      description: json['description'] as String? ?? '',
-    );
-
-Map<String, dynamic> _$VendorCategoryInfoToJson(_VendorCategoryInfo instance) =>
-    <String, dynamic>{
-      'category': instance.category,
-      'description': instance.description,
-    };
-
 _VendorDocuments _$VendorDocumentsFromJson(Map<String, dynamic> json) =>
     _VendorDocuments(
       businessLicensePath: json['businessLicensePath'] as String?,

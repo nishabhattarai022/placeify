@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../profile/presentation/widgets/shared/profile_form_field.dart';
 import '../../../domain/constants/vendor_strings.dart';
 import '../../../domain/models/vendor_registration.dart';
+import '../../../domain/validators/vendor_registration_validator.dart';
 import '../../providers/vendor_registration_provider.dart';
+import '../widgets/vendor_registration_error_banner.dart';
 
 class AddressStep extends ConsumerStatefulWidget {
   const AddressStep({super.key});
@@ -28,15 +30,11 @@ class _AddressStepState extends ConsumerState<AddressStep> {
     _city = TextEditingController(text: address.city);
     _state = TextEditingController(text: address.state);
     _postalCode = TextEditingController(text: address.postalCode);
-    final country = address.country.isEmpty
-        ? VendorFormStrings.countryHint
-        : address.country;
-    _country = TextEditingController(text: country);
-    if (address.country.isEmpty) {
-      ref
-          .read(vendorRegistrationProvider.notifier)
-          .updateAddress(address.copyWith(country: VendorFormStrings.countryHint));
-    }
+    _country = TextEditingController(
+      text: address.country.isEmpty
+          ? VendorFormStrings.countryHint
+          : address.country,
+    );
   }
 
   @override
@@ -49,12 +47,16 @@ class _AddressStepState extends ConsumerState<AddressStep> {
     super.dispose();
   }
 
-  void _sync(VendorAddress address) {
-    ref.read(vendorRegistrationProvider.notifier).updateAddress(address);
+  void _sync(VendorAddress address, {String? clearErrorFor}) {
+    final notifier = ref.read(vendorRegistrationProvider.notifier);
+    notifier.updateAddress(address);
+    if (clearErrorFor != null) notifier.clearFieldError(clearErrorFor);
   }
 
   @override
   Widget build(BuildContext context) {
+    final fieldErrors = ref.watch(vendorRegistrationProvider).fieldErrors;
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
       children: [
@@ -76,58 +78,75 @@ class _AddressStepState extends ConsumerState<AddressStep> {
           ),
         ),
         const SizedBox(height: 20),
+        VendorRegistrationErrorBanner(errors: fieldErrors),
         ProfileFormField(
           label: 'Street Address',
+          error: fieldErrors[VendorRegistrationFieldKeys.street],
           child: ProfileTextInput(
             controller: _street,
             hint: VendorFormStrings.streetHint,
+            hasError: fieldErrors.containsKey(VendorRegistrationFieldKeys.street),
             onChanged: (v) => _sync(
               ref.read(vendorRegistrationProvider).form.address
                   .copyWith(street: v),
+              clearErrorFor: VendorRegistrationFieldKeys.street,
             ),
           ),
         ),
         ProfileFormField(
           label: 'City',
+          error: fieldErrors[VendorRegistrationFieldKeys.city],
           child: ProfileTextInput(
             controller: _city,
             hint: VendorFormStrings.cityHint,
+            hasError: fieldErrors.containsKey(VendorRegistrationFieldKeys.city),
             onChanged: (v) => _sync(
-              ref.read(vendorRegistrationProvider).form.address
-                  .copyWith(city: v),
+              ref.read(vendorRegistrationProvider).form.address.copyWith(city: v),
+              clearErrorFor: VendorRegistrationFieldKeys.city,
             ),
           ),
         ),
         ProfileFormField(
           label: 'State / Province',
+          error: fieldErrors[VendorRegistrationFieldKeys.state],
           child: ProfileTextInput(
             controller: _state,
             hint: VendorFormStrings.stateHint,
+            hasError: fieldErrors.containsKey(VendorRegistrationFieldKeys.state),
             onChanged: (v) => _sync(
               ref.read(vendorRegistrationProvider).form.address
                   .copyWith(state: v),
+              clearErrorFor: VendorRegistrationFieldKeys.state,
             ),
           ),
         ),
         ProfileFormField(
           label: 'Postal Code',
+          error: fieldErrors[VendorRegistrationFieldKeys.postalCode],
           child: ProfileTextInput(
             controller: _postalCode,
             hint: VendorFormStrings.postalCodeHint,
+            hasError:
+                fieldErrors.containsKey(VendorRegistrationFieldKeys.postalCode),
             onChanged: (v) => _sync(
               ref.read(vendorRegistrationProvider).form.address
                   .copyWith(postalCode: v),
+              clearErrorFor: VendorRegistrationFieldKeys.postalCode,
             ),
           ),
         ),
         ProfileFormField(
           label: 'Country',
+          error: fieldErrors[VendorRegistrationFieldKeys.country],
           child: ProfileTextInput(
             controller: _country,
             hint: VendorFormStrings.countryHint,
+            hasError:
+                fieldErrors.containsKey(VendorRegistrationFieldKeys.country),
             onChanged: (v) => _sync(
               ref.read(vendorRegistrationProvider).form.address
                   .copyWith(country: v),
+              clearErrorFor: VendorRegistrationFieldKeys.country,
             ),
           ),
         ),

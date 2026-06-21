@@ -1,6 +1,10 @@
+import 'package:placeify_client/placeify_client.dart';
 import 'package:placeify_flutter/core/constants/country_phone_codes.dart';
+import 'package:placeify_flutter/features/vendor/data/serverpod_vendor_document_repository.dart';
+import 'package:placeify_flutter/features/vendor/domain/constants/vendor_registration_field_keys.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_registration.dart';
 import 'package:placeify_flutter/features/vendor/domain/repositories/vendor_registration_repository.dart';
+import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_document_repository_provider.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_registration_repository_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -13,6 +17,8 @@ class VendorRegistrationUiState {
     this.currentStep = 0,
     this.isSubmitting = false,
     this.submitError,
+    this.fieldErrors = const {},
+    this.uploadingDocuments = const {},
   });
 
   static const int stepCount = 6;
@@ -30,22 +36,32 @@ class VendorRegistrationUiState {
   final int currentStep;
   final bool isSubmitting;
   final String? submitError;
+  final Map<String, String> fieldErrors;
+  final Set<String> uploadingDocuments;
 
   bool get isLastStep => currentStep == stepCount - 1;
   bool get isReviewStep => currentStep == stepCount - 1;
+  bool get hasFieldErrors => fieldErrors.isNotEmpty;
+
+  String? fieldError(String key) => fieldErrors[key];
 
   VendorRegistrationUiState copyWith({
     VendorRegistration? form,
     int? currentStep,
     bool? isSubmitting,
     String? submitError,
+    Map<String, String>? fieldErrors,
+    Set<String>? uploadingDocuments,
     bool clearSubmitError = false,
+    bool clearFieldErrors = false,
   }) {
     return VendorRegistrationUiState(
       form: form ?? this.form,
       currentStep: currentStep ?? this.currentStep,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       submitError: clearSubmitError ? null : (submitError ?? this.submitError),
+      fieldErrors: clearFieldErrors ? const {} : (fieldErrors ?? this.fieldErrors),
+      uploadingDocuments: uploadingDocuments ?? this.uploadingDocuments,
     );
   }
 }
@@ -56,23 +72,44 @@ class VendorRegistrationNotifier extends _$VendorRegistrationNotifier {
   VendorRegistrationUiState build() => const VendorRegistrationUiState();
 
   void updateBusiness(VendorBusinessInfo business) {
-    state = state.copyWith(form: state.form.copyWith(business: business));
+    state = state.copyWith(
+      form: state.form.copyWith(business: business),
+      clearFieldErrors: true,
+    );
   }
 
   void updateAddress(VendorAddress address) {
-    state = state.copyWith(form: state.form.copyWith(address: address));
+    state = state.copyWith(
+      form: state.form.copyWith(address: address),
+      clearFieldErrors: true,
+    );
   }
 
   void updateCategory(VendorCategoryInfo category) {
-    state = state.copyWith(form: state.form.copyWith(category: category));
+    state = state.copyWith(
+      form: state.form.copyWith(category: category),
+      clearFieldErrors: true,
+    );
   }
 
   void updateDocuments(VendorDocuments documents) {
-    state = state.copyWith(form: state.form.copyWith(documents: documents));
+    state = state.copyWith(
+      form: state.form.copyWith(documents: documents),
+      clearFieldErrors: true,
+    );
   }
 
   void updateBank(VendorBankDetails bank) {
-    state = state.copyWith(form: state.form.copyWith(bank: bank));
+    state = state.copyWith(
+      form: state.form.copyWith(bank: bank),
+      clearFieldErrors: true,
+    );
+  }
+
+  void clearFieldError(String fieldKey) {
+    if (!state.fieldErrors.containsKey(fieldKey)) return;
+    final next = Map<String, String>.from(state.fieldErrors)..remove(fieldKey);
+    state = state.copyWith(fieldErrors: next);
   }
 
   void setStep(int step) {
@@ -80,83 +117,117 @@ class VendorRegistrationNotifier extends _$VendorRegistrationNotifier {
     state = state.copyWith(currentStep: step, clearSubmitError: true);
   }
 
-  /// Returns an error message when the step is invalid, otherwise null.
-  String? validateStep(int step) {
+  Map<String, String> validateStepFields(int step) {
+    if (step == 5) {
+      final all = <String, String>{};
+      for (var i = 0; i < 5; i++) {
+        all.addAll(validateStepFields(i));
+      }
+      return all;
+    }
+
     final form = state.form;
+    final errors = <String, String>{};
+
     switch (step) {
       case 0:
         final b = form.business;
         if (b.businessName.trim().isEmpty) {
-          return 'Enter your business name';
+          errors[VendorRegistrationFieldKeys.businessName] =
+              'Enter your business name';
         }
         if (b.contactName.trim().isEmpty) {
-          return 'Enter a contact name';
+          errors[VendorRegistrationFieldKeys.contactName] =
+              'Enter a contact name';
         }
         if (b.email.trim().isEmpty || !_isValidEmail(b.email)) {
-          return 'Enter a valid email address';
+          errors[VendorRegistrationFieldKeys.email] =
+              'Enter a valid email address';
         }
         final phoneError = CountryPhoneCodes.validatePhone(b.phone);
-        if (phoneError != null) return phoneError;
-        if (b.taxId.trim().isEmpty) {
-          return 'Enter your tax ID';
+        if (phoneError != null) {
+          errors[VendorRegistrationFieldKeys.phone] = phoneError;
         }
-        return null;
+        if (b.taxId.trim().isEmpty) {
+          errors[VendorRegistrationFieldKeys.taxId] = 'Enter your tax ID';
+        }
       case 1:
         final a = form.address;
-        if (a.street.trim().isEmpty) return 'Enter your street address';
-        if (a.city.trim().isEmpty) return 'Enter your city';
-        if (a.state.trim().isEmpty) return 'Enter your state / province';
-        if (a.postalCode.trim().isEmpty) return 'Enter your postal code';
-        if (a.country.trim().isEmpty) return 'Enter your country';
-        return null;
-      case 2:
-        if (form.category.category.trim().isEmpty) {
-          return 'Select a product category';
+        if (a.street.trim().isEmpty) {
+          errors[VendorRegistrationFieldKeys.street] =
+              'Enter your street address';
         }
-        return null;
+        if (a.city.trim().isEmpty) {
+          errors[VendorRegistrationFieldKeys.city] = 'Enter your city';
+        }
+        if (a.state.trim().isEmpty) {
+          errors[VendorRegistrationFieldKeys.state] =
+              'Enter your state / province';
+        }
+        if (a.postalCode.trim().isEmpty) {
+          errors[VendorRegistrationFieldKeys.postalCode] =
+              'Enter your postal code';
+        }
+        if (a.country.trim().isEmpty) {
+          errors[VendorRegistrationFieldKeys.country] = 'Enter your country';
+        }
+      case 2:
+        if (form.category.categories.isEmpty) {
+          errors[VendorRegistrationFieldKeys.categories] =
+              'Select at least one product category';
+        }
       case 3:
         final d = form.documents;
-        if (d.businessLicensePath == null) {
-          return 'Upload your business license';
+        if (!isUploadedVendorDocument(d.businessLicensePath)) {
+          errors[VendorRegistrationFieldKeys.businessLicense] =
+              'Upload your business license';
         }
-        if (d.governmentIdPath == null) {
-          return 'Upload a government-issued ID';
+        if (!isUploadedVendorDocument(d.governmentIdPath)) {
+          errors[VendorRegistrationFieldKeys.governmentId] =
+              'Upload a government-issued ID';
         }
-        return null;
       case 4:
         final bank = form.bank;
         if (bank.accountHolderName.trim().isEmpty) {
-          return 'Enter the account holder name';
+          errors[VendorRegistrationFieldKeys.accountHolderName] =
+              'Enter the account holder name';
         }
-        if (bank.bankName.trim().isEmpty) return 'Enter your bank name';
+        if (bank.bankName.trim().isEmpty) {
+          errors[VendorRegistrationFieldKeys.bankName] = 'Enter your bank name';
+        }
         if (bank.accountNumber.trim().length < 6) {
-          return 'Enter a valid account number';
+          errors[VendorRegistrationFieldKeys.accountNumber] =
+              'Enter a valid account number';
         }
         if (bank.routingNumber.trim().length < 6) {
-          return 'Enter a valid branch / SWIFT code';
+          errors[VendorRegistrationFieldKeys.routingNumber] =
+              'Enter a valid branch / SWIFT code';
         }
-        return null;
-      case 5:
-        for (var i = 0; i < 5; i++) {
-          final error = validateStep(i);
-          if (error != null) return error;
-        }
-        return null;
-      default:
-        return null;
     }
+
+    return errors;
   }
 
-  /// Validates the current step. Returns false when invalid.
-  bool validateCurrentStep() => validateStep(state.currentStep) == null;
+  /// Returns the first validation error for a step, if any.
+  String? validateStep(int step) {
+    final errors = validateStepFields(step);
+    if (errors.isEmpty) return null;
+    return errors.values.first;
+  }
 
-  /// Advances to the next step when the current step is valid.
+  bool validateCurrentStep() => validateStepFields(state.currentStep).isEmpty;
+
   bool nextStep() {
-    if (!validateCurrentStep()) return false;
+    final errors = validateStepFields(state.currentStep);
+    if (errors.isNotEmpty) {
+      state = state.copyWith(fieldErrors: errors);
+      return false;
+    }
     if (state.currentStep < VendorRegistrationUiState.stepCount - 1) {
       state = state.copyWith(
         currentStep: state.currentStep + 1,
         clearSubmitError: true,
+        clearFieldErrors: true,
       );
     }
     return true;
@@ -167,21 +238,70 @@ class VendorRegistrationNotifier extends _$VendorRegistrationNotifier {
       state = state.copyWith(
         currentStep: state.currentStep - 1,
         clearSubmitError: true,
+        clearFieldErrors: true,
+      );
+    }
+  }
+
+  Future<void> uploadDocument({
+    required VendorDocumentType documentType,
+    required String fieldKey,
+    required String localPath,
+    required VendorDocuments Function(VendorDocuments documents, String url)
+        applyUrl,
+  }) async {
+    final uploading = {...state.uploadingDocuments, fieldKey};
+    state = state.copyWith(
+      uploadingDocuments: uploading,
+      fieldErrors: Map<String, String>.from(state.fieldErrors)..remove(fieldKey),
+    );
+
+    try {
+      final repo = ref.read(vendorDocumentRepositoryProvider);
+      final url = await repo.upload(
+        documentType: documentType,
+        localPath: localPath,
+      );
+      state = state.copyWith(
+        form: state.form.copyWith(
+          documents: applyUrl(state.form.documents, url),
+        ),
+        uploadingDocuments: {...state.uploadingDocuments}..remove(fieldKey),
+      );
+    } on VendorDocumentUploadException catch (error) {
+      state = state.copyWith(
+        uploadingDocuments: {...state.uploadingDocuments}..remove(fieldKey),
+        fieldErrors: {
+          ...state.fieldErrors,
+          fieldKey: error.message,
+        },
+      );
+    } catch (error) {
+      state = state.copyWith(
+        uploadingDocuments: {...state.uploadingDocuments}..remove(fieldKey),
+        fieldErrors: {
+          ...state.fieldErrors,
+          fieldKey: error.toString(),
+        },
       );
     }
   }
 
   Future<String?> submit() async {
-    final validationError = validateStep(5);
-    if (validationError != null) {
-      state = state.copyWith(submitError: validationError);
+    final errors = validateStepFields(5);
+    if (errors.isNotEmpty) {
+      state = state.copyWith(fieldErrors: errors, submitError: errors.values.first);
       return null;
     }
 
-    state = state.copyWith(isSubmitting: true, clearSubmitError: true);
+    state = state.copyWith(
+      isSubmitting: true,
+      clearSubmitError: true,
+      clearFieldErrors: true,
+    );
 
     try {
-      final repo = await ref.read(vendorRegistrationRepositoryProvider.future);
+      final repo = ref.read(vendorRegistrationRepositoryProvider);
       final vendorId = await repo.submitRegistration(state.form);
       state = state.copyWith(isSubmitting: false);
       return vendorId;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:placeify_flutter/features/vendor/presentation/vendor_product_upload_navigation.dart';
+import 'package:go_router/go_router.dart';
+import 'package:placeify_flutter/features/vendor/domain/constants/vendor_routes.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radii.dart';
 import '../../../../core/constants/app_shadows.dart';
@@ -13,7 +14,7 @@ class UploadProductButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedScaleTap(
       pressScale: 0.97,
-      onTap: () => openVendorProductUpload(context),
+      onTap: () => context.push(VendorRoutes.productsUpload),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         decoration: BoxDecoration(

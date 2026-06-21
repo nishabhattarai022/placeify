@@ -22,8 +22,8 @@ class OnboardingSlide {
 }
 
 abstract final class SplashAssets {
-  /// H.264 676×1280 — optimized for mobile (replaces 4K source).
-  static const String getStartedVideo = 'assets/video/placeify_showcase.mp4';
+  static const String getStartedVideo =
+      'assets/video/7281029-uhd_2160_4096_25fps.mp4';
 
   static const String roomDecor =
       'assets/images/splash/3d-room-decor-with-furniture-minimalist-beige-tones.jpg';

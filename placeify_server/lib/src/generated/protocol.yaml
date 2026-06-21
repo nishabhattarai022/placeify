@@ -15,6 +15,7 @@ user:
   - becomeVendor:
   - becomeConsumer:
   - getDashboard:
+  - ensureDemoAdmin:
   - listMyOrders:
   - getMyOrder:
   - listMyArSessions:
@@ -36,6 +37,17 @@ admin:
   - fileComplaint:
   - listComplaints:
   - resolveComplaint:
+  - getPlatformStats:
+  - listUsers:
+  - listVendorApplications:
+  - getVendorApplication:
+  - getAuditLog:
+  - listVendorPayouts:
+  - approveVendorPayout:
+  - failVendorPayout:
+  - listRefundRequests:
+  - approveRefundRequest:
+  - rejectRefundRequest:
   - requirePlaceifyUser:
   - requireRole:
 ar:
@@ -55,10 +67,18 @@ notification:
 order:
   - listMyOrders:
   - getOrder:
+  - listDeliveryUpdates:
+payment:
+  - getOverview:
+  - listPaymentUpdates:
+  - updateOrderPaymentStatus:
+  - requestPayout:
 product:
   - listCategories:
   - searchProducts:
   - getProduct:
+  - getShopProfile:
+  - listApprovedShops:
   - listProducts:
 refund:
   - listMyRefundRequests:
@@ -76,6 +96,10 @@ vendor:
   - updateMyProfile:
   - uploadShopLogo:
   - uploadShopBanner:
+  - uploadShopCover:
+  - uploadDocument:
+  - uploadLogo:
+  - uploadBanner:
   - updateShop:
   - listMyProducts:
   - createProduct:

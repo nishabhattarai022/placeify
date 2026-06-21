@@ -58,7 +58,11 @@ import '../../features/profile/presentation/profile_settings_screen.dart';
 import '../../features/profile/presentation/profile_wishlist_screen.dart';
 import '../../features/product_detail/presentation/product_detail_screen.dart';
 import '../../features/cart/presentation/cart_screen.dart';
+import '../../features/user/presentation/user_cart_page.dart';
+import '../../features/user/presentation/user_dashboard_pages.dart';
 import '../../features/user/presentation/user_dashboard_screen.dart';
+import '../../features/user/presentation/user_orders_page.dart';
+import '../../features/user/presentation/user_wishlist_page.dart';
 import '../../features/user/presentation/user_dashboard_shell.dart';
 import 'main_shell.dart';
 
@@ -179,35 +183,67 @@ List<RouteBase> get _appRoutes => [
             ),
             GoRoute(
               path: 'orders',
-              redirect: (_, __) => '/profile/orders',
+              name: 'userOrders',
+              pageBuilder: (context, state) => _fadePage(
+                key: state.pageKey,
+                child: const UserOrdersPage(),
+              ),
             ),
             GoRoute(
               path: 'cart',
-              redirect: (_, __) => '/cart',
+              name: 'userCart',
+              pageBuilder: (context, state) => _fadePage(
+                key: state.pageKey,
+                child: const UserCartPage(),
+              ),
             ),
             GoRoute(
               path: 'wishlist',
-              redirect: (_, __) => '/bookmarks',
+              name: 'userWishlist',
+              pageBuilder: (context, state) => _fadePage(
+                key: state.pageKey,
+                child: const UserWishlistPage(),
+              ),
             ),
             GoRoute(
               path: 'refund',
-              redirect: (_, __) => '/profile/refund',
+              name: 'userRefund',
+              pageBuilder: (context, state) => _fadePage(
+                key: state.pageKey,
+                child: const UserRefundPage(),
+              ),
             ),
             GoRoute(
               path: 'notifications',
-              redirect: (_, __) => '/profile/notifications',
+              name: 'userNotifications',
+              pageBuilder: (context, state) => _fadePage(
+                key: state.pageKey,
+                child: const UserNotificationsPage(),
+              ),
             ),
             GoRoute(
               path: 'account',
-              redirect: (_, __) => '/profile',
+              name: 'userAccount',
+              pageBuilder: (context, state) => _fadePage(
+                key: state.pageKey,
+                child: const UserAccountPage(),
+              ),
             ),
             GoRoute(
               path: 'settings',
-              redirect: (_, __) => '/profile/settings',
+              name: 'userSettings',
+              pageBuilder: (context, state) => _fadePage(
+                key: state.pageKey,
+                child: const UserSettingsPage(),
+              ),
             ),
             GoRoute(
               path: 'try-me',
-              redirect: (_, __) => '/profile/augmented-reality',
+              name: 'userTryMe',
+              pageBuilder: (context, state) => _fadePage(
+                key: state.pageKey,
+                child: const UserTryMePage(),
+              ),
             ),
           ],
         ),

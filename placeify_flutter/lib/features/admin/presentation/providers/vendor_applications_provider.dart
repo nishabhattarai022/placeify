@@ -2,8 +2,6 @@ import 'package:placeify_flutter/features/admin/domain/enums/vendor_application_
 import 'package:placeify_flutter/features/admin/domain/models/vendor_application.dart';
 import 'package:placeify_flutter/features/admin/presentation/providers/admin_stats_provider.dart';
 import 'package:placeify_flutter/features/admin/presentation/providers/vendor_application_repository_provider.dart';
-import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
-import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_profile_provider.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_stats_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -16,14 +14,14 @@ class VendorApplicationsList extends _$VendorApplicationsList {
   Future<List<VendorApplication>> build(
     VendorApplicationListFilter filter,
   ) async {
-    final repo = await ref.watch(vendorApplicationRepositoryProvider.future);
+    final repo = ref.watch(vendorApplicationRepositoryProvider);
     return repo.listApplications(filter: filter);
   }
 
   Future<void> refresh() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      final repo = await ref.read(vendorApplicationRepositoryProvider.future);
+      final repo = ref.read(vendorApplicationRepositoryProvider);
       return repo.listApplications(filter: filter);
     });
   }
@@ -34,7 +32,7 @@ Future<VendorApplication?> vendorApplicationDetail(
   Ref ref,
   String vendorId,
 ) async {
-  final repo = await ref.watch(vendorApplicationRepositoryProvider.future);
+  final repo = ref.watch(vendorApplicationRepositoryProvider);
   return repo.getByVendorId(vendorId);
 }
 
@@ -47,13 +45,8 @@ class VendorApplicationActions extends _$VendorApplicationActions {
     required String userId,
     required String vendorId,
   }) async {
-    final repo = await ref.read(vendorApplicationRepositoryProvider.future);
+    final repo = ref.read(vendorApplicationRepositoryProvider);
     try {
-      await ref.read(currentUserProvider.notifier).updateVendorStatusForUser(
-            userId: userId,
-            status: VendorStatus.approved,
-            vendorId: vendorId,
-          );
       await repo.approve(userId: userId, vendorId: vendorId);
       _invalidateAfterDecision(vendorId);
       return null;
@@ -67,13 +60,8 @@ class VendorApplicationActions extends _$VendorApplicationActions {
     required String vendorId,
     String? note,
   }) async {
-    final repo = await ref.read(vendorApplicationRepositoryProvider.future);
+    final repo = ref.read(vendorApplicationRepositoryProvider);
     try {
-      await ref.read(currentUserProvider.notifier).updateVendorStatusForUser(
-            userId: userId,
-            status: VendorStatus.none,
-            vendorId: null,
-          );
       await repo.decline(userId: userId, note: note);
       _invalidateAfterDecision(vendorId);
       return null;

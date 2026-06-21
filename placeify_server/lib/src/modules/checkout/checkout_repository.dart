@@ -3,16 +3,20 @@ import 'package:serverpod/serverpod.dart' hide Order;
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
+import '../payment/payment_repository.dart';
 
 class CheckoutStore {
+  CheckoutStore({PaymentStore? paymentStore})
+      : _paymentStore = paymentStore ?? PaymentStore();
+
+  final PaymentStore _paymentStore;
   Future<CheckoutResult> checkout(
     Session session,
     CheckoutRequest request,
   ) async {
     final address = request.shippingAddress.trim();
     if (address.isEmpty) {
-      throw PlaceifyException(
-        message: 'Enter a shipping address before checkout.',
+      throw PlaceifyException(message: 'Shipping address is required.',
         code: 'INVALID_ADDRESS',
       );
     }
@@ -27,11 +31,7 @@ class CheckoutStore {
     );
 
     if (cartItems.isEmpty) {
-      throw PlaceifyException(
-        message:
-            'Your cart is empty. Sign in, add products, then checkout again.',
-        code: 'CART_EMPTY',
-      );
+      throw PlaceifyException(message: 'Your cart is empty.', code: 'CART_EMPTY');
     }
 
     final totalAmount = cartItems.fold<double>(
@@ -56,8 +56,7 @@ class CheckoutStore {
       for (final item in cartItems) {
         final product = item.product;
         if (product == null || product.id == null) {
-          throw PlaceifyException(
-            message: 'A cart item references a missing product.',
+          throw PlaceifyException(message: 'A cart item references a missing product.',
             code: 'PRODUCT_NOT_FOUND',
           );
         }
@@ -78,6 +77,14 @@ class CheckoutStore {
       await CartItem.db.deleteWhere(
         session,
         where: (row) => row.cartId.equals(cart.id!),
+        transaction: transaction,
+      );
+
+      await _paymentStore.createForOrder(
+        session,
+        orderId: created.id!,
+        userId: user.id!,
+        amount: totalAmount,
         transaction: transaction,
       );
 

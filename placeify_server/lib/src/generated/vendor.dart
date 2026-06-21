@@ -26,9 +26,13 @@ abstract class Vendor
     required this.shopName,
     this.description,
     this.businessAddress,
+    this.city,
+    this.country,
     this.shopCategory,
     this.logoUrl,
     this.bannerUrl,
+    this.coverUrl,
+    bool? isOpen,
     this.instagramHandle,
     this.facebookHandle,
     this.operatingHours,
@@ -38,7 +42,8 @@ abstract class Vendor
     this.approvedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
-  }) : rating = rating ?? 0.0,
+  }) : isOpen = isOpen ?? true,
+       rating = rating ?? 0.0,
        createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
 
@@ -49,9 +54,13 @@ abstract class Vendor
     required String shopName,
     String? description,
     String? businessAddress,
+    String? city,
+    String? country,
     String? shopCategory,
     String? logoUrl,
     String? bannerUrl,
+    String? coverUrl,
+    bool? isOpen,
     String? instagramHandle,
     String? facebookHandle,
     String? operatingHours,
@@ -75,9 +84,15 @@ abstract class Vendor
       shopName: jsonSerialization['shopName'] as String,
       description: jsonSerialization['description'] as String?,
       businessAddress: jsonSerialization['businessAddress'] as String?,
+      city: jsonSerialization['city'] as String?,
+      country: jsonSerialization['country'] as String?,
       shopCategory: jsonSerialization['shopCategory'] as String?,
       logoUrl: jsonSerialization['logoUrl'] as String?,
       bannerUrl: jsonSerialization['bannerUrl'] as String?,
+      coverUrl: jsonSerialization['coverUrl'] as String?,
+      isOpen: jsonSerialization['isOpen'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['isOpen']),
       instagramHandle: jsonSerialization['instagramHandle'] as String?,
       facebookHandle: jsonSerialization['facebookHandle'] as String?,
       operatingHours: jsonSerialization['operatingHours'] as String?,
@@ -121,12 +136,21 @@ abstract class Vendor
 
   String? businessAddress;
 
+  String? city;
+
+  String? country;
+
   /// Vendor business type (e.g. furniture, decor) — not product Category.
   String? shopCategory;
 
   String? logoUrl;
 
   String? bannerUrl;
+
+  String? coverUrl;
+
+  /// Manual store open/closed toggle (independent of weekly schedule).
+  bool isOpen;
 
   String? instagramHandle;
 
@@ -160,9 +184,13 @@ abstract class Vendor
     String? shopName,
     String? description,
     String? businessAddress,
+    String? city,
+    String? country,
     String? shopCategory,
     String? logoUrl,
     String? bannerUrl,
+    String? coverUrl,
+    bool? isOpen,
     String? instagramHandle,
     String? facebookHandle,
     String? operatingHours,
@@ -183,9 +211,13 @@ abstract class Vendor
       'shopName': shopName,
       if (description != null) 'description': description,
       if (businessAddress != null) 'businessAddress': businessAddress,
+      if (city != null) 'city': city,
+      if (country != null) 'country': country,
       if (shopCategory != null) 'shopCategory': shopCategory,
       if (logoUrl != null) 'logoUrl': logoUrl,
       if (bannerUrl != null) 'bannerUrl': bannerUrl,
+      if (coverUrl != null) 'coverUrl': coverUrl,
+      'isOpen': isOpen,
       if (instagramHandle != null) 'instagramHandle': instagramHandle,
       if (facebookHandle != null) 'facebookHandle': facebookHandle,
       if (operatingHours != null) 'operatingHours': operatingHours,
@@ -208,9 +240,13 @@ abstract class Vendor
       'shopName': shopName,
       if (description != null) 'description': description,
       if (businessAddress != null) 'businessAddress': businessAddress,
+      if (city != null) 'city': city,
+      if (country != null) 'country': country,
       if (shopCategory != null) 'shopCategory': shopCategory,
       if (logoUrl != null) 'logoUrl': logoUrl,
       if (bannerUrl != null) 'bannerUrl': bannerUrl,
+      if (coverUrl != null) 'coverUrl': coverUrl,
+      'isOpen': isOpen,
       if (instagramHandle != null) 'instagramHandle': instagramHandle,
       if (facebookHandle != null) 'facebookHandle': facebookHandle,
       if (operatingHours != null) 'operatingHours': operatingHours,
@@ -269,9 +305,13 @@ class _VendorImpl extends Vendor {
     required String shopName,
     String? description,
     String? businessAddress,
+    String? city,
+    String? country,
     String? shopCategory,
     String? logoUrl,
     String? bannerUrl,
+    String? coverUrl,
+    bool? isOpen,
     String? instagramHandle,
     String? facebookHandle,
     String? operatingHours,
@@ -288,9 +328,13 @@ class _VendorImpl extends Vendor {
          shopName: shopName,
          description: description,
          businessAddress: businessAddress,
+         city: city,
+         country: country,
          shopCategory: shopCategory,
          logoUrl: logoUrl,
          bannerUrl: bannerUrl,
+         coverUrl: coverUrl,
+         isOpen: isOpen,
          instagramHandle: instagramHandle,
          facebookHandle: facebookHandle,
          operatingHours: operatingHours,
@@ -313,9 +357,13 @@ class _VendorImpl extends Vendor {
     String? shopName,
     Object? description = _Undefined,
     Object? businessAddress = _Undefined,
+    Object? city = _Undefined,
+    Object? country = _Undefined,
     Object? shopCategory = _Undefined,
     Object? logoUrl = _Undefined,
     Object? bannerUrl = _Undefined,
+    Object? coverUrl = _Undefined,
+    bool? isOpen,
     Object? instagramHandle = _Undefined,
     Object? facebookHandle = _Undefined,
     Object? operatingHours = _Undefined,
@@ -335,9 +383,13 @@ class _VendorImpl extends Vendor {
       businessAddress: businessAddress is String?
           ? businessAddress
           : this.businessAddress,
+      city: city is String? ? city : this.city,
+      country: country is String? ? country : this.country,
       shopCategory: shopCategory is String? ? shopCategory : this.shopCategory,
       logoUrl: logoUrl is String? ? logoUrl : this.logoUrl,
       bannerUrl: bannerUrl is String? ? bannerUrl : this.bannerUrl,
+      coverUrl: coverUrl is String? ? coverUrl : this.coverUrl,
+      isOpen: isOpen ?? this.isOpen,
       instagramHandle: instagramHandle is String?
           ? instagramHandle
           : this.instagramHandle,
@@ -386,6 +438,16 @@ class VendorUpdateTable extends _i1.UpdateTable<VendorTable> {
         value,
       );
 
+  _i1.ColumnValue<String, String> city(String? value) => _i1.ColumnValue(
+    table.city,
+    value,
+  );
+
+  _i1.ColumnValue<String, String> country(String? value) => _i1.ColumnValue(
+    table.country,
+    value,
+  );
+
   _i1.ColumnValue<String, String> shopCategory(String? value) =>
       _i1.ColumnValue(
         table.shopCategory,
@@ -399,6 +461,16 @@ class VendorUpdateTable extends _i1.UpdateTable<VendorTable> {
 
   _i1.ColumnValue<String, String> bannerUrl(String? value) => _i1.ColumnValue(
     table.bannerUrl,
+    value,
+  );
+
+  _i1.ColumnValue<String, String> coverUrl(String? value) => _i1.ColumnValue(
+    table.coverUrl,
+    value,
+  );
+
+  _i1.ColumnValue<bool, bool> isOpen(bool value) => _i1.ColumnValue(
+    table.isOpen,
     value,
   );
 
@@ -470,6 +542,14 @@ class VendorTable extends _i1.Table<_i1.UuidValue?> {
       'businessAddress',
       this,
     );
+    city = _i1.ColumnString(
+      'city',
+      this,
+    );
+    country = _i1.ColumnString(
+      'country',
+      this,
+    );
     shopCategory = _i1.ColumnString(
       'shopCategory',
       this,
@@ -481,6 +561,15 @@ class VendorTable extends _i1.Table<_i1.UuidValue?> {
     bannerUrl = _i1.ColumnString(
       'bannerUrl',
       this,
+    );
+    coverUrl = _i1.ColumnString(
+      'coverUrl',
+      this,
+    );
+    isOpen = _i1.ColumnBool(
+      'isOpen',
+      this,
+      hasDefault: true,
     );
     instagramHandle = _i1.ColumnString(
       'instagramHandle',
@@ -531,12 +620,21 @@ class VendorTable extends _i1.Table<_i1.UuidValue?> {
 
   late final _i1.ColumnString businessAddress;
 
+  late final _i1.ColumnString city;
+
+  late final _i1.ColumnString country;
+
   /// Vendor business type (e.g. furniture, decor) — not product Category.
   late final _i1.ColumnString shopCategory;
 
   late final _i1.ColumnString logoUrl;
 
   late final _i1.ColumnString bannerUrl;
+
+  late final _i1.ColumnString coverUrl;
+
+  /// Manual store open/closed toggle (independent of weekly schedule).
+  late final _i1.ColumnBool isOpen;
 
   late final _i1.ColumnString instagramHandle;
 
@@ -590,9 +688,13 @@ class VendorTable extends _i1.Table<_i1.UuidValue?> {
     shopName,
     description,
     businessAddress,
+    city,
+    country,
     shopCategory,
     logoUrl,
     bannerUrl,
+    coverUrl,
+    isOpen,
     instagramHandle,
     facebookHandle,
     operatingHours,

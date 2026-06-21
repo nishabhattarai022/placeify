@@ -72,6 +72,16 @@ class _VendorRegistrationScreenState
         final error = ref.read(vendorRegistrationProvider).submitError;
         if (error != null) {
           PlaceifyToast.show(context, error);
+        } else if (ref.read(vendorRegistrationProvider).hasFieldErrors) {
+          HapticService.light();
+          final step = ref.read(vendorRegistrationProvider).currentStep;
+          if (_pageController.hasClients) {
+            await _pageController.animateToPage(
+              step,
+              duration: AppDurations.mid,
+              curve: Curves.easeInOutCubic,
+            );
+          }
         }
         return;
       }
@@ -85,13 +95,10 @@ class _VendorRegistrationScreenState
       return;
     }
 
-    final error = notifier.validateStep(uiState.currentStep);
-    if (error != null) {
-      PlaceifyToast.show(context, error);
+    if (!notifier.nextStep()) {
+      HapticService.light();
       return;
     }
-
-    if (!notifier.nextStep()) return;
 
     await _pageController.nextPage(
       duration: AppDurations.mid,

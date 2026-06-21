@@ -24,4 +24,11 @@ class OrderService {
   Future<Order?> getOrder(Session session, int orderId) {
     return _repository.getOrder(session, orderId);
   }
+
+  Future<List<OrderDeliveryUpdate>> listDeliveryUpdates(
+    Session session,
+    int orderId,
+  ) {
+    return _repository.listDeliveryUpdates(session, orderId);
+  }
 }

@@ -19,6 +19,7 @@ abstract class ProductSearchInput implements _i1.SerializableModel {
   ProductSearchInput._({
     this.query,
     this.categoryName,
+    this.vendorId,
     this.minPrice,
     this.maxPrice,
     this.pagination,
@@ -27,6 +28,7 @@ abstract class ProductSearchInput implements _i1.SerializableModel {
   factory ProductSearchInput({
     String? query,
     String? categoryName,
+    _i1.UuidValue? vendorId,
     double? minPrice,
     double? maxPrice,
     _i2.PaginationInput? pagination,
@@ -36,6 +38,9 @@ abstract class ProductSearchInput implements _i1.SerializableModel {
     return ProductSearchInput(
       query: jsonSerialization['query'] as String?,
       categoryName: jsonSerialization['categoryName'] as String?,
+      vendorId: jsonSerialization['vendorId'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(jsonSerialization['vendorId']),
       minPrice: (jsonSerialization['minPrice'] as num?)?.toDouble(),
       maxPrice: (jsonSerialization['maxPrice'] as num?)?.toDouble(),
       pagination: jsonSerialization['pagination'] == null
@@ -50,6 +55,8 @@ abstract class ProductSearchInput implements _i1.SerializableModel {
 
   String? categoryName;
 
+  _i1.UuidValue? vendorId;
+
   double? minPrice;
 
   double? maxPrice;
@@ -62,6 +69,7 @@ abstract class ProductSearchInput implements _i1.SerializableModel {
   ProductSearchInput copyWith({
     String? query,
     String? categoryName,
+    _i1.UuidValue? vendorId,
     double? minPrice,
     double? maxPrice,
     _i2.PaginationInput? pagination,
@@ -72,6 +80,7 @@ abstract class ProductSearchInput implements _i1.SerializableModel {
       '__className__': 'ProductSearchInput',
       if (query != null) 'query': query,
       if (categoryName != null) 'categoryName': categoryName,
+      if (vendorId != null) 'vendorId': vendorId?.toJson(),
       if (minPrice != null) 'minPrice': minPrice,
       if (maxPrice != null) 'maxPrice': maxPrice,
       if (pagination != null) 'pagination': pagination?.toJson(),
@@ -90,12 +99,14 @@ class _ProductSearchInputImpl extends ProductSearchInput {
   _ProductSearchInputImpl({
     String? query,
     String? categoryName,
+    _i1.UuidValue? vendorId,
     double? minPrice,
     double? maxPrice,
     _i2.PaginationInput? pagination,
   }) : super._(
          query: query,
          categoryName: categoryName,
+         vendorId: vendorId,
          minPrice: minPrice,
          maxPrice: maxPrice,
          pagination: pagination,
@@ -108,6 +119,7 @@ class _ProductSearchInputImpl extends ProductSearchInput {
   ProductSearchInput copyWith({
     Object? query = _Undefined,
     Object? categoryName = _Undefined,
+    Object? vendorId = _Undefined,
     Object? minPrice = _Undefined,
     Object? maxPrice = _Undefined,
     Object? pagination = _Undefined,
@@ -115,6 +127,7 @@ class _ProductSearchInputImpl extends ProductSearchInput {
     return ProductSearchInput(
       query: query is String? ? query : this.query,
       categoryName: categoryName is String? ? categoryName : this.categoryName,
+      vendorId: vendorId is _i1.UuidValue? ? vendorId : this.vendorId,
       minPrice: minPrice is double? ? minPrice : this.minPrice,
       maxPrice: maxPrice is double? ? maxPrice : this.maxPrice,
       pagination: pagination is _i2.PaginationInput?

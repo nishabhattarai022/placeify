@@ -31,6 +31,8 @@ class VendorEndpoint extends Endpoint {
     String? logoUrl,
     String? phone,
     String? address,
+    String? city,
+    String? country,
     String? shopCategory,
   }) {
     return _service.createShop(
@@ -40,6 +42,8 @@ class VendorEndpoint extends Endpoint {
       logoUrl: logoUrl,
       phone: phone,
       address: address,
+      city: city,
+      country: country,
       shopCategory: shopCategory,
     );
   }
@@ -69,6 +73,46 @@ class VendorEndpoint extends Endpoint {
     String fileName,
   ) {
     return _service.uploadShopBanner(session, fileData, fileName);
+  }
+
+  Future<String> uploadShopCover(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) {
+    return _service.uploadShopCover(session, fileData, fileName);
+  }
+
+  Future<String> uploadDocument(
+    Session session,
+    VendorDocumentType documentType,
+    ByteData fileData,
+    String fileName,
+  ) {
+    return _service.uploadDocument(
+      session,
+      documentType,
+      fileData,
+      fileName,
+    );
+  }
+
+  /// Alias for [uploadShopLogo].
+  Future<String> uploadLogo(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) {
+    return _service.uploadLogo(session, fileData, fileName);
+  }
+
+  /// Alias for [uploadShopBanner].
+  Future<String> uploadBanner(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) {
+    return _service.uploadBanner(session, fileData, fileName);
   }
 
   Future<Vendor> updateShop(

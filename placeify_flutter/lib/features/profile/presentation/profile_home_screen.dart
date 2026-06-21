@@ -11,7 +11,6 @@ import '../../vendor/domain/constants/vendor_routes.dart';
 import '../../vendor/domain/enums/vendor_status.dart';
 import '../../vendor/presentation/widgets/vendor_status_gate_sheets.dart';
 import '../data/profile_menu_config.dart';
-import 'providers/profile_dashboard_provider.dart';
 import 'widgets/profile_hero.dart';
 import 'widgets/profile_menu_tile.dart';
 
@@ -27,9 +26,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
       ref.read(currentUserProvider.notifier).refresh();
-      ref.read(profileDashboardProvider.notifier).refresh();
     });
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
@@ -72,7 +69,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
   void _onStatTap(int index) {
     switch (index) {
       case 0:
-        context.pushNamed('profileOrders');
+        context.pushNamed('cart');
       case 1:
         context.go('/bookmarks');
       case 2:
@@ -85,7 +82,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
   void _onMenuTap(ProfileMenuRoute route) {
     switch (route) {
       case ProfileMenuRoute.orders:
-        context.pushNamed('profileOrders');
+        context.pushNamed('cart');
       case ProfileMenuRoute.wishlist:
         context.go('/bookmarks');
       case ProfileMenuRoute.augmentedReality:

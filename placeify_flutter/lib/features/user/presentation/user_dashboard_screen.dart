@@ -7,9 +7,9 @@ import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_typography.dart';
-import '../../../main.dart' show client;
+import '../../../core/config/placeify_server_client.dart';
 import '../../profile/presentation/providers/profile_dashboard_provider.dart';
-import '../data/user_overview_metric.dart';
+import '../data/user_dashboard_mock_data.dart';
 import '../data/user_dashboard_mappers.dart';
 import 'widgets/user_overview_card.dart';
 
@@ -59,7 +59,7 @@ class UserDashboardScreen extends ConsumerWidget {
   Future<void> _refreshDashboard(WidgetRef ref) async {
     await Future.wait([
       ref.read(profileDashboardProvider.notifier).refresh(),
-      ref.refresh(profileOrdersProvider.future),
+      ref.read(profileOrdersProvider.notifier).refresh(),
     ]);
   }
 }
