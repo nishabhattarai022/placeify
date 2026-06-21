@@ -8,3 +8,8 @@ enum PaymentStatus {
   refunded,
   failed,
 }
+
+extension PaymentStatusX on PaymentStatus {
+  /// Vendor cannot change payment after it is marked fully received.
+  bool get isFullyPaid => this == PaymentStatus.paid;
+}

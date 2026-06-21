@@ -6,12 +6,6 @@ import '../../product_detail/data/product_model_3d_urls.dart';
 import '../domain/models/product.dart';
 
 abstract final class CatalogProductMapper {
-  static const _defaultDimensions = ProductDimensions(
-    widthCm: 70,
-    depthCm: 68,
-    heightCm: 85,
-  );
-
   static const _categoryIcons = <String, String>{
     'chairs': 'assets/icons/ic_chair.svg',
     'sofas': 'assets/icons/ic_sofa.svg',
@@ -33,6 +27,7 @@ abstract final class CatalogProductMapper {
 
     final categoryId = product.category?.name ?? 'chairs';
     final shopName = product.vendor?.shopName ?? 'Placeify vendor';
+    final brand = product.assemblyNote?.trim();
     final thumbnail = product.thumbnailUrl;
     final imageUrl = thumbnail == null || thumbnail.isEmpty
         ? 'assets/icons/ic_chair.svg'
@@ -46,32 +41,37 @@ abstract final class CatalogProductMapper {
       ProductModel3dUrls.set(uiId, await resolveMediaUrl(model3dUrl));
     }
 
+    final resolvedImage =
+        imageUrl.isEmpty ? 'assets/images/categories/chair.jpg' : imageUrl;
+
     return Product(
       id: uiId,
       name: product.name,
-      brand: shopName,
+      brand: brand != null && brand.isNotEmpty ? brand : shopName,
       sku: 'PF${id.toString().padLeft(5, '0')}',
       price: product.price,
-      imageUrl: imageUrl.isEmpty
-          ? 'assets/images/categories/chair.jpg'
-          : imageUrl,
+      imageUrl: resolvedImage,
       svgIconPath: _categoryIcons[categoryId] ?? 'assets/icons/ic_chair.svg',
       hasArView: has3dPreview,
       categoryId: categoryId,
       dimensions: dimensions,
+      vendorId: product.vendorId.toString(),
+      description: product.description,
+      materials: product.materials ?? '',
+      careInstructions: product.careInstructions,
+      warranty: product.warranty,
+      offerLabel: product.warranty,
+      weightKg: product.weightKg,
+      galleryImageUrls:
+          resolvedImage.startsWith('assets/') ? const [] : [resolvedImage],
     );
   }
 
   static ProductDimensions _dimensionsFromApi(api.Product product) {
-    if (product.widthCm != null &&
-        product.depthCm != null &&
-        product.heightCm != null) {
-      return ProductDimensions(
-        widthCm: product.widthCm!,
-        depthCm: product.depthCm!,
-        heightCm: product.heightCm!,
-      );
-    }
-    return _defaultDimensions;
+    return ProductDimensions(
+      widthCm: product.widthCm ?? 0,
+      depthCm: product.depthCm ?? 0,
+      heightCm: product.heightCm ?? 0,
+    );
   }
 }

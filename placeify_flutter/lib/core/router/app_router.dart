@@ -112,7 +112,17 @@ GoRouter appRouter(Ref ref) {
         location: state.matchedLocation,
         user: userAsync.value,
       );
-      if (adminRedirect != null) return adminRedirect;
+      if (adminRedirect != null) {
+        if (adminRedirect.toastMessage != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final ctx = rootNavigatorKey.currentContext;
+            if (ctx != null) {
+              PlaceifyToast.show(ctx, adminRedirect.toastMessage!);
+            }
+          });
+        }
+        return adminRedirect.location;
+      }
 
       final redirect = VendorAuthGuard.evaluate(
         location: state.matchedLocation,

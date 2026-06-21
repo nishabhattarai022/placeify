@@ -25,6 +25,8 @@ class VendorService {
     String? city,
     String? country,
     String? shopCategory,
+    String? contactEmail,
+    VendorBankDetailsInput? bankDetails,
   }) {
     return _repository.createShop(
       session,
@@ -36,7 +38,20 @@ class VendorService {
       city: city,
       country: country,
       shopCategory: shopCategory,
+      contactEmail: contactEmail,
+      bankDetails: bankDetails,
     );
+  }
+
+  Future<VendorBankDetails?> getMyBankDetails(Session session) {
+    return _repository.getMyBankDetails(session);
+  }
+
+  Future<VendorBankDetails> saveMyBankDetails(
+    Session session,
+    VendorBankDetailsInput input,
+  ) {
+    return _repository.saveMyBankDetails(session, input);
   }
 
   Future<VendorProfileDetail> getMyProfile(Session session) {

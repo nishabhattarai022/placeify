@@ -105,9 +105,10 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
         imageData,
         _fileNameFromPath(imagePath),
       );
-      return VendorProductMapper.fromApiProduct(
+      return _mapUploadedProduct(
         created,
         vendorId: vendorId,
+        fallback: product,
       );
     } catch (error) {
       throw VendorProductActionException(_mapError(error));
@@ -184,12 +185,35 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
         imageFileName,
       );
 
-      return VendorProductMapper.fromApiProduct(
+      return _mapUploadedProduct(
         updated,
         vendorId: vendorId,
+        fallback: product,
       );
     } catch (error) {
       throw VendorProductActionException(_mapError(error));
+    }
+  }
+
+  Future<VendorProduct> _mapUploadedProduct(
+    Product created, {
+    required String vendorId,
+    required VendorProduct fallback,
+  }) async {
+    try {
+      return await VendorProductMapper.fromApiProduct(
+        created,
+        vendorId: vendorId,
+      );
+    } catch (_) {
+      final dbId = created.id;
+      if (dbId == null) {
+        throw VendorProductActionException(
+          'Product saved, but the server response was incomplete. '
+          'Refresh your product list.',
+        );
+      }
+      return fallback.copyWith(id: ProductIdCodec.fromDatabaseId(dbId));
     }
   }
 
@@ -287,15 +311,24 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
 
   String? _firstUploadableImagePath(List<String> imageUrls) {
     for (final source in imageUrls) {
-      final trimmed = source.trim();
-      if (trimmed.isEmpty) continue;
-      if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-        continue;
-      }
-      if (trimmed.startsWith('assets/')) continue;
-      return trimmed;
+      final normalized = _normalizeLocalImagePath(source);
+      if (normalized == null) continue;
+      return normalized;
     }
     return null;
+  }
+
+  String? _normalizeLocalImagePath(String source) {
+    var trimmed = source.trim();
+    if (trimmed.isEmpty) return null;
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return null;
+    }
+    if (trimmed.startsWith('assets/')) return null;
+    if (trimmed.startsWith('file://')) {
+      trimmed = Uri.parse(trimmed).toFilePath();
+    }
+    return trimmed;
   }
 
   String _map3dError(Object error) => _mapError(

@@ -41,18 +41,20 @@ import 'package:placeify_server/src/generated/payment_transaction_status.dart'
     as _i27;
 import 'package:placeify_server/src/generated/product_search_input.dart'
     as _i28;
-import 'package:placeify_server/src/generated/vendor_profile_update_input.dart'
+import 'package:placeify_server/src/generated/vendor_bank_details_input.dart'
     as _i29;
-import 'dart:typed_data' as _i30;
+import 'package:placeify_server/src/generated/vendor_profile_update_input.dart'
+    as _i30;
+import 'dart:typed_data' as _i31;
 import 'package:placeify_server/src/generated/vendor_document_type.dart'
-    as _i31;
-import 'package:placeify_server/src/generated/vendor_product_upload_input.dart'
     as _i32;
-import 'package:placeify_server/src/generated/delivery_stage.dart' as _i33;
+import 'package:placeify_server/src/generated/vendor_product_upload_input.dart'
+    as _i33;
+import 'package:placeify_server/src/generated/delivery_stage.dart' as _i34;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
-    as _i34;
-import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _i35;
+import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+    as _i36;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -1804,6 +1806,16 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<String?>(),
               nullable: true,
             ),
+            'contactEmail': _i1.ParameterDescription(
+              name: 'contactEmail',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'bankDetails': _i1.ParameterDescription(
+              name: 'bankDetails',
+              type: _i1.getType<_i29.VendorBankDetailsInput?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -1820,6 +1832,37 @@ class Endpoints extends _i1.EndpointDispatch {
                     city: params['city'],
                     country: params['country'],
                     shopCategory: params['shopCategory'],
+                    contactEmail: params['contactEmail'],
+                    bankDetails: params['bankDetails'],
+                  ),
+        ),
+        'getMyBankDetails': _i1.MethodConnector(
+          name: 'getMyBankDetails',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['vendor'] as _i16.VendorEndpoint)
+                  .getMyBankDetails(session),
+        ),
+        'saveMyBankDetails': _i1.MethodConnector(
+          name: 'saveMyBankDetails',
+          params: {
+            'input': _i1.ParameterDescription(
+              name: 'input',
+              type: _i1.getType<_i29.VendorBankDetailsInput>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['vendor'] as _i16.VendorEndpoint)
+                  .saveMyBankDetails(
+                    session,
+                    params['input'],
                   ),
         ),
         'getMyProfile': _i1.MethodConnector(
@@ -1837,7 +1880,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'input': _i1.ParameterDescription(
               name: 'input',
-              type: _i1.getType<_i29.VendorProfileUpdateInput>(),
+              type: _i1.getType<_i30.VendorProfileUpdateInput>(),
               nullable: false,
             ),
           },
@@ -1856,7 +1899,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i30.ByteData>(),
+              type: _i1.getType<_i31.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -1881,7 +1924,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i30.ByteData>(),
+              type: _i1.getType<_i31.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -1906,7 +1949,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i30.ByteData>(),
+              type: _i1.getType<_i31.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -1931,12 +1974,12 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'documentType': _i1.ParameterDescription(
               name: 'documentType',
-              type: _i1.getType<_i31.VendorDocumentType>(),
+              type: _i1.getType<_i32.VendorDocumentType>(),
               nullable: false,
             ),
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i30.ByteData>(),
+              type: _i1.getType<_i31.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -1962,7 +2005,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i30.ByteData>(),
+              type: _i1.getType<_i31.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -1987,7 +2030,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i30.ByteData>(),
+              type: _i1.getType<_i31.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -2150,12 +2193,12 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'input': _i1.ParameterDescription(
               name: 'input',
-              type: _i1.getType<_i32.VendorProductUploadInput>(),
+              type: _i1.getType<_i33.VendorProductUploadInput>(),
               nullable: false,
             ),
             'imageData': _i1.ParameterDescription(
               name: 'imageData',
-              type: _i1.getType<_i30.ByteData>(),
+              type: _i1.getType<_i31.ByteData>(),
               nullable: false,
             ),
             'imageFileName': _i1.ParameterDescription(
@@ -2206,7 +2249,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i30.ByteData>(),
+              type: _i1.getType<_i31.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -2368,7 +2411,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'stage': _i1.ParameterDescription(
               name: 'stage',
-              type: _i1.getType<_i33.DeliveryStage>(),
+              type: _i1.getType<_i34.DeliveryStage>(),
               nullable: false,
             ),
             'note': _i1.ParameterDescription(
@@ -2400,7 +2443,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i30.ByteData>(),
+              type: _i1.getType<_i31.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -2523,9 +2566,9 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
-    modules['serverpod_auth_core'] = _i34.Endpoints()
+    modules['serverpod_auth_core'] = _i35.Endpoints()
       ..initializeEndpoints(server);
-    modules['serverpod_auth_idp'] = _i35.Endpoints()
+    modules['serverpod_auth_idp'] = _i36.Endpoints()
       ..initializeEndpoints(server);
   }
 }

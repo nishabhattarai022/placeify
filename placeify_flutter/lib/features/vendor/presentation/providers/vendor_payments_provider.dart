@@ -103,6 +103,7 @@ class VendorPayments extends _$VendorPayments {
         note: note,
       );
       ref.invalidateSelf();
+      ref.invalidate(orderPaymentAuditTrailProvider(orderId));
       return null;
     } on VendorPaymentException catch (e) {
       return e.message;

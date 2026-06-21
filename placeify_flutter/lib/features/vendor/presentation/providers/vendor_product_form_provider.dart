@@ -10,13 +10,30 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'vendor_product_form_provider.g.dart';
 
+class VendorProductSubmitResult {
+  const VendorProductSubmitResult._({this.productId, this.error});
+
+  const VendorProductSubmitResult.success(String productId)
+      : this._(productId: productId);
+
+  const VendorProductSubmitResult.failure(String error) : this._(error: error);
+
+  final String? productId;
+  final String? error;
+
+  bool get isSuccess => error == null && productId != null;
+}
+
 @Riverpod(keepAlive: true)
 class VendorProductForm extends _$VendorProductForm {
   @override
   VendorProductFormState build() => VendorProductFormState.initial();
 
   void update(VendorProductFormState Function(VendorProductFormState current) updater) {
-    state = updater(state);
+    final next = updater(state);
+    state = state.submitError != null
+        ? next.copyWith(clearSubmitError: true)
+        : next;
   }
 
   void resetDraft() {
@@ -242,6 +259,15 @@ class VendorProductForm extends _$VendorProductForm {
     if (state.name.trim().isEmpty) return 'Enter a product name';
     if (state.sku.trim().isEmpty) return 'Enter a SKU';
     if (state.categoryId.trim().isEmpty) return 'Select a category';
+    if (state.materials.trim().isEmpty) return 'Enter product materials';
+    if (!state.isEditing && state.images.isEmpty) {
+      return 'Add at least one product photo';
+    }
+    if (state.width.trim().isEmpty ||
+        state.height.trim().isEmpty ||
+        state.depth.trim().isEmpty) {
+      return 'Enter width, depth, and height';
+    }
 
     final listPrice = state.parsedListPrice;
     if (listPrice == null || listPrice <= 0) {
@@ -277,11 +303,11 @@ class VendorProductForm extends _$VendorProductForm {
     return null;
   }
 
-  Future<bool> submit({bool resetOnSuccess = true}) async {
+  Future<VendorProductSubmitResult> submit({bool resetOnSuccess = true}) async {
     final validationError = validate();
     if (validationError != null) {
       state = state.copyWith(submitError: validationError);
-      return false;
+      return VendorProductSubmitResult.failure(validationError);
     }
 
     state = state.copyWith(isSubmitting: true, clearSubmitError: true);
@@ -290,11 +316,12 @@ class VendorProductForm extends _$VendorProductForm {
       final user = await ref.read(currentUserProvider.future);
       final vendorId = user?.vendorId;
       if (vendorId == null) {
+        const message = 'Vendor account not found.';
         state = state.copyWith(
           isSubmitting: false,
-          submitError: 'Vendor account not found.',
+          submitError: message,
         );
-        return false;
+        return const VendorProductSubmitResult.failure(message);
       }
 
       VendorProduct? existing;
@@ -306,16 +333,23 @@ class VendorProductForm extends _$VendorProductForm {
       final product = _buildProduct(vendorId, existing: existing);
       final productsNotifier = ref.read(vendorProductsProvider.notifier);
 
-      final String? error;
+      final ({VendorProduct? product, String? error}) result;
       if (state.isEditing) {
-        error = await productsNotifier.updateProduct(product);
+        result = await productsNotifier.updateProduct(product);
       } else {
-        error = await productsNotifier.createProduct(product);
+        result = await productsNotifier.createProduct(product);
       }
 
-      if (error != null) {
-        state = state.copyWith(isSubmitting: false, submitError: error);
-        return false;
+      if (result.error != null) {
+        state = state.copyWith(isSubmitting: false, submitError: result.error);
+        return VendorProductSubmitResult.failure(result.error!);
+      }
+
+      final savedProductId = result.product?.id ?? state.editingProductId;
+      if (savedProductId == null) {
+        const message = 'Product saved, but could not open it. Check your product list.';
+        state = state.copyWith(isSubmitting: false, submitError: message);
+        return const VendorProductSubmitResult.failure(message);
       }
 
       if (resetOnSuccess) {
@@ -323,13 +357,16 @@ class VendorProductForm extends _$VendorProductForm {
       } else {
         state = state.copyWith(isSubmitting: false, clearSubmitError: true);
       }
-      return true;
-    } catch (_) {
+      return VendorProductSubmitResult.success(savedProductId);
+    } catch (error) {
+      final message = error is StateError
+          ? error.message
+          : 'Could not save product. Try again.';
       state = state.copyWith(
         isSubmitting: false,
-        submitError: 'Could not save product. Try again.',
+        submitError: message,
       );
-      return false;
+      return VendorProductSubmitResult.failure(message);
     }
   }
 

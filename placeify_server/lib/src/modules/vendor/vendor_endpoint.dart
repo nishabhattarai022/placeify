@@ -34,6 +34,8 @@ class VendorEndpoint extends Endpoint {
     String? city,
     String? country,
     String? shopCategory,
+    String? contactEmail,
+    VendorBankDetailsInput? bankDetails,
   }) {
     return _service.createShop(
       session,
@@ -45,7 +47,20 @@ class VendorEndpoint extends Endpoint {
       city: city,
       country: country,
       shopCategory: shopCategory,
+      contactEmail: contactEmail,
+      bankDetails: bankDetails,
     );
+  }
+
+  Future<VendorBankDetails?> getMyBankDetails(Session session) {
+    return _service.getMyBankDetails(session);
+  }
+
+  Future<VendorBankDetails> saveMyBankDetails(
+    Session session,
+    VendorBankDetailsInput input,
+  ) {
+    return _service.saveMyBankDetails(session, input);
   }
 
   Future<VendorProfileDetail> getMyProfile(Session session) {

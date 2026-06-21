@@ -1,12 +1,14 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/services/haptic_service.dart';
+import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/toast_overlay.dart';
 import '../../../cart/presentation/providers/cart_provider.dart';
-import '../data/home_categories_config.dart';
+import '../../domain/models/product.dart';
 import '../theme/home_screen_tokens.dart';
 
 const String _kCartSvg = '''
@@ -23,7 +25,7 @@ const String _kCartSvg = '''
 class HomeRecommendProductCard extends ConsumerStatefulWidget {
   const HomeRecommendProductCard({required this.product, super.key});
 
-  final RecommendProduct product;
+  final Product product;
 
   @override
   ConsumerState<HomeRecommendProductCard> createState() =>
@@ -40,21 +42,22 @@ class _HomeRecommendProductCardState
 
   void _onCardTap() {
     HapticService.light();
-    context.push('/product/${widget.product.productId}');
+    context.push('/product/${widget.product.id}');
   }
 
   void _onAddToCart() {
     HapticService.medium();
-    ref.read(cartProvider.notifier).addProduct(widget.product.productId);
+    ref.read(cartProvider.notifier).addProduct(widget.product.id);
     PlaceifyToast.show(
       context,
-      '${widget.product.displayName} added to cart',
+      '${widget.product.name} added to cart',
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final product = widget.product;
+    final isAsset = product.imageUrl.startsWith('assets/');
     final reservedBottomRight =
         HomeScreenTokens.cartCornerOuter - HomeScreenTokens.cardPadding + 2;
 
@@ -105,18 +108,17 @@ class _HomeRecommendProductCardState
                       child: SizedBox(
                         height: HomeScreenTokens.cardImageHeight,
                         width: double.infinity,
-                        child: Image.asset(
-                          product.imageAsset,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => ColoredBox(
-                            color: HomeScreenTokens.cardBg,
-                            child: Icon(
-                              Icons.chair_outlined,
-                              size: 56,
-                              color: Colors.black.withValues(alpha: 0.2),
-                            ),
-                          ),
-                        ),
+                        child: isAsset
+                            ? Image.asset(
+                                product.imageUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => _buildImagePlaceholder(),
+                              )
+                            : CachedNetworkImage(
+                                imageUrl: product.imageUrl,
+                                fit: BoxFit.cover,
+                                errorWidget: (_, __, ___) => _buildImagePlaceholder(),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -126,7 +128,7 @@ class _HomeRecommendProductCardState
                         right: reservedBottomRight,
                       ),
                       child: Text(
-                        product.displayPrice,
+                        Formatters.currencyFull(product.price),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: HomeScreenTokens.productPrice(),
@@ -143,7 +145,7 @@ class _HomeRecommendProductCardState
                         child: Align(
                           alignment: Alignment.topLeft,
                           child: Text(
-                            product.displayName,
+                            product.name,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: HomeScreenTokens.productName(),
@@ -168,6 +170,17 @@ class _HomeRecommendProductCardState
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildImagePlaceholder() {
+    return ColoredBox(
+      color: HomeScreenTokens.cardBg,
+      child: Icon(
+        Icons.chair_outlined,
+        size: 56,
+        color: Colors.black.withValues(alpha: 0.2),
       ),
     );
   }

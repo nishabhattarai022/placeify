@@ -115,12 +115,9 @@ class PaymentStore {
     await _requireVendorOrderAccess(session, vendor.id!, orderId);
 
     final trimmedNote = note.trim();
-    if (trimmedNote.isEmpty) {
-      throw PlaceifyException(
-        message: 'A payment note is required.',
-        code: 'INVALID_NOTE',
-      );
-    }
+    final resolvedNote = trimmedNote.isEmpty
+        ? _defaultNoteForStatus(status)
+        : trimmedNote;
 
     await PaymentSync.ensureAllocationsForOrder(session, orderId);
 
@@ -134,11 +131,19 @@ class PaymentStore {
       throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
     }
 
+    if (allocation.status == PaymentTransactionStatus.succeeded) {
+      throw PlaceifyException(
+        message:
+            'Payment is already marked as received and cannot be changed.',
+        code: 'PAYMENT_LOCKED',
+      );
+    }
+
     allocation = await OrderVendorPayment.db.updateRow(
       session,
       allocation.copyWith(
         status: status,
-        note: trimmedNote,
+        note: resolvedNote,
         updatedAt: DateTime.now(),
       ),
     );
@@ -243,5 +248,14 @@ class PaymentStore {
     if (item == null) {
       throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
     }
+  }
+
+  static String _defaultNoteForStatus(PaymentTransactionStatus status) {
+    return switch (status) {
+      PaymentTransactionStatus.succeeded => 'Payment marked as received.',
+      PaymentTransactionStatus.failed => 'Payment marked as failed.',
+      PaymentTransactionStatus.refunded => 'Payment marked as refunded.',
+      PaymentTransactionStatus.pending => 'Payment marked as pending.',
+    };
   }
 }

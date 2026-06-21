@@ -4,6 +4,7 @@ import 'package:placeify_flutter/features/vendor/data/serverpod_vendor_product_r
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product.dart';
 import 'package:placeify_flutter/features/vendor/domain/repositories/vendor_product_repository.dart';
+import 'package:placeify_flutter/features/shops/presentation/providers/consumer_shop_provider.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_profile_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -38,13 +39,15 @@ class VendorProducts extends _$VendorProducts {
     ref.read(vendorProductsSavingProvider.notifier).state = value;
   }
 
-  Future<String?> createProduct(VendorProduct product) async {
+  Future<({VendorProduct? product, String? error})> createProduct(
+    VendorProduct product,
+  ) async {
     await _setSaving(true);
     try {
       final user = await ref.read(currentUserProvider.future);
       final vendorId = user?.vendorId;
       if (vendorId == null) {
-        return 'Vendor account not found.';
+        return (product: null, error: 'Vendor account not found.');
       }
 
       final repo = ref.read(vendorProductRepositoryProvider);
@@ -52,21 +55,28 @@ class VendorProducts extends _$VendorProducts {
 
       final products = state.value ?? [];
       state = AsyncData([created, ...products]);
-      ref.invalidate(catalogIndexProvider);
-      return null;
+      await publishProductToCustomerCatalog(ref, created);
+      return (product: created, error: null);
     } on VendorProductActionException catch (e) {
-      return e.message;
+      return (product: null, error: e.message);
     } catch (error) {
-      return _unexpectedProductError(error, 'Could not create product. Try again.');
+      return (
+        product: null,
+        error: _unexpectedProductError(error, 'Could not create product. Try again.'),
+      );
     } finally {
       await _setSaving(false);
     }
   }
 
-  Future<String?> updateProduct(VendorProduct product) async {
+  Future<({VendorProduct? product, String? error})> updateProduct(
+    VendorProduct product,
+  ) async {
     final previous = state;
     final products = state.value;
-    if (products == null) return 'Products are still loading.';
+    if (products == null) {
+      return (product: null, error: 'Products are still loading.');
+    }
 
     final index = products.indexWhere((item) => item.id == product.id);
     if (index >= 0) {
@@ -83,7 +93,7 @@ class VendorProducts extends _$VendorProducts {
       final vendorId = user?.vendorId;
       if (vendorId == null) {
         state = previous;
-        return 'Vendor account not found.';
+        return (product: null, error: 'Vendor account not found.');
       }
 
       final repo = ref.read(vendorProductRepositoryProvider);
@@ -96,14 +106,17 @@ class VendorProducts extends _$VendorProducts {
       } else {
         await refresh();
       }
-      ref.invalidate(catalogIndexProvider);
-      return null;
+      await publishProductToCustomerCatalog(ref, updated);
+      return (product: updated, error: null);
     } on VendorProductActionException catch (e) {
       state = previous;
-      return e.message;
+      return (product: null, error: e.message);
     } catch (error) {
       state = previous;
-      return _unexpectedProductError(error, 'Could not update product. Try again.');
+      return (
+        product: null,
+        error: _unexpectedProductError(error, 'Could not update product. Try again.'),
+      );
     } finally {
       await _setSaving(false);
     }
@@ -132,7 +145,7 @@ class VendorProducts extends _$VendorProducts {
           await refresh();
         }
       }
-      ref.invalidate(catalogIndexProvider);
+      await publishProductToCustomerCatalog(ref, updated);
       return null;
     } on VendorProductActionException catch (e) {
       return e.message;
@@ -168,7 +181,7 @@ class VendorProducts extends _$VendorProducts {
         offerLabel: '${discountPercent.round()}% off',
       );
       final error = await updateProduct(updated);
-      if (error != null) return error;
+      if (error.error != null) return error.error;
     }
 
     return null;

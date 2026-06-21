@@ -127,7 +127,7 @@ final class VendorProfileProvider
   VendorProfile create() => VendorProfile();
 }
 
-String _$vendorProfileHash() => r'2fdcc1354ba4fe5c568137a61851a808f25ef9af';
+String _$vendorProfileHash() => r'4e57eefcf01f5c8bef60c68f1c00208bd531c23a';
 
 abstract class _$VendorProfile extends $AsyncNotifier<models.VendorProfile?> {
   FutureOr<models.VendorProfile?> build();

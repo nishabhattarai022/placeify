@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../cart/presentation/providers/cart_provider.dart';
-import '../../home/presentation/providers/category_provider.dart';
+import '../../home/domain/models/product.dart';
+import '../../home/presentation/providers/catalog_provider.dart';
 import '../../../core/services/haptic_service.dart';
 import '../data/product_detail_content.dart';
 import 'product_detail_tokens.dart';
@@ -82,10 +83,14 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
 
   @override
   Widget build(BuildContext context) {
-    final product = ref.watch(productByIdProvider(widget.productId));
+    final productAsync = ref.watch(productDetailProvider(widget.productId));
 
-    if (product == null) {
-      return Scaffold(
+    return productAsync.when(
+      loading: () => Scaffold(
+        backgroundColor: ProductDetailTokens.screenBg,
+        body: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      ),
+      error: (_, __) => Scaffold(
         backgroundColor: ProductDetailTokens.screenBg,
         body: Center(
           child: TextButton(
@@ -93,9 +98,71 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
             child: const Text('Product not found'),
           ),
         ),
-      );
-    }
+      ),
+      data: (product) {
+        if (product == null) {
+          return Scaffold(
+            backgroundColor: ProductDetailTokens.screenBg,
+            body: Center(
+              child: TextButton(
+                onPressed: () => context.pop(),
+                child: const Text('Product not found'),
+              ),
+            ),
+          );
+        }
 
+        return _ProductDetailBody(
+          product: product,
+          entryController: _entryController,
+          galleryOpacity: _galleryOpacity,
+          gallerySlide: _gallerySlide,
+          infoOpacity: _infoOpacity,
+          infoSlide: _infoSlide,
+          cartBarOpacity: _cartBarOpacity,
+          cartBarSlide: _cartBarSlide,
+          selectedImageIndex: _selectedImageIndex,
+          expanded: _expanded,
+          onImageSelected: (index) => setState(() => _selectedImageIndex = index),
+          onExpandToggle: () => setState(() => _expanded = !_expanded),
+        );
+      },
+    );
+  }
+}
+
+class _ProductDetailBody extends ConsumerWidget {
+  const _ProductDetailBody({
+    required this.product,
+    required this.entryController,
+    required this.galleryOpacity,
+    required this.gallerySlide,
+    required this.infoOpacity,
+    required this.infoSlide,
+    required this.cartBarOpacity,
+    required this.cartBarSlide,
+    required this.selectedImageIndex,
+    required this.expanded,
+    required this.onImageSelected,
+    required this.onExpandToggle,
+  });
+
+  final Product product;
+  final AnimationController entryController;
+  final Animation<double> galleryOpacity;
+  final Animation<Offset> gallerySlide;
+  final Animation<double> infoOpacity;
+  final Animation<Offset> infoSlide;
+  final Animation<double> cartBarOpacity;
+  final Animation<Offset> cartBarSlide;
+  final int selectedImageIndex;
+  final bool expanded;
+  final ValueChanged<int> onImageSelected;
+  final VoidCallback onExpandToggle;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final product = this.product;
     final content = ProductDetailContentRepository.forProduct(product);
     final top = MediaQuery.paddingOf(context).top;
     final vendorId = product.vendorId;
@@ -119,14 +186,13 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                       8,
                 ),
                 SlideTransition(
-                  position: _gallerySlide,
+                  position: gallerySlide,
                   child: FadeTransition(
-                    opacity: _galleryOpacity,
+                    opacity: galleryOpacity,
                     child: ProductDetailGallery(
                       images: content.galleryImages,
-                      selectedIndex: _selectedImageIndex,
-                      onSelected: (i) =>
-                          setState(() => _selectedImageIndex = i),
+                      selectedIndex: selectedImageIndex,
+                      onSelected: onImageSelected,
                     ),
                   ),
                 ),
@@ -146,23 +212,19 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                   ) ??
                   const SizedBox.shrink(),
                 SlideTransition(
-                  position: _infoSlide,
+                  position: infoSlide,
                   child: FadeTransition(
-                    opacity: _infoOpacity,
+                    opacity: infoOpacity,
                     child: ProductDetailInfoSection(
                       title: content.displayTitle ?? product.name,
                       shortDescription: content.shortDescription,
-                      fullDescription:
-                          content.extendedDescription ?? content.description,
+                      fullDescription: content.description,
                       materials: content.materials,
                       specs: content.specs,
                       careInstructions: content.careInstructions,
                       warranty: content.warranty,
-                      expanded: _expanded,
-                      onViewMore: () {
-                        HapticService.light();
-                        setState(() => _expanded = !_expanded);
-                      },
+                      expanded: expanded,
+                      onViewMore: onExpandToggle,
                     ),
                   ),
                 ),
@@ -193,9 +255,9 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
             right: 0,
             bottom: 0,
             child: SlideTransition(
-              position: _cartBarSlide,
+              position: cartBarSlide,
               child: FadeTransition(
-                opacity: _cartBarOpacity,
+                opacity: cartBarOpacity,
                 child: ProductDetailCartBar(
                   onTryInMyRoom: () {
                     context.push('/profile/augmented-reality');

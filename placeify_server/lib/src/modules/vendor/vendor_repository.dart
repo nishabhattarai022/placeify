@@ -12,11 +12,13 @@ import '../notification/notification_repository.dart';
 import 'product_3d/product_3d_generation_result.dart';
 import 'product_3d/product_3d_generator.dart';
 import 'product_image_processor.dart';
+import 'vendor_bank_details_validation.dart';
 import 'vendor_document_storage.dart';
 import 'vendor_profile_audit_log.dart';
 import 'vendor_profile_mapper.dart';
 import 'vendor_profile_validation.dart';
 import 'vendor_sales_metrics.dart';
+import 'vendor_shop_category_codec.dart';
 
 class VendorStore {
   Future<VendorDashboard> getDashboard(Session session) async {
@@ -221,6 +223,8 @@ class VendorStore {
     String? city,
     String? country,
     String? shopCategory,
+    String? contactEmail,
+    VendorBankDetailsInput? bankDetails,
   }) async {
     final user = await SessionService.requireUser(session);
     final existing = await Vendor.db.findFirstRow(
@@ -271,6 +275,18 @@ class VendorStore {
         code: 'MISSING_REQUIRED_FIELD',
       );
     }
+    if (VendorShopCategoryCodec.decode(trimmedCategory).isEmpty) {
+      throw PlaceifyException(
+        message: 'A shop category is required.',
+        code: 'MISSING_REQUIRED_FIELD',
+      );
+    }
+    final normalizedCategory = VendorShopCategoryCodec.normalize(trimmedCategory);
+
+    final trimmedContactEmail = contactEmail?.trim();
+    if (trimmedContactEmail != null && trimmedContactEmail.isNotEmpty) {
+      VendorProfileValidation.validateEmail(trimmedContactEmail);
+    }
 
     VendorProfileValidation.validateUpdate(
       businessName: trimmedName,
@@ -303,13 +319,74 @@ class VendorStore {
         businessAddress: trimmedAddress,
         city: _nullableTrim(city),
         country: _nullableTrim(country),
-        shopCategory: trimmedCategory,
+        shopCategory: normalizedCategory,
+        contactEmail: _nullableTrim(contactEmail),
         logoUrl: logoUrl?.trim(),
       ),
     );
 
     await _linkPendingDocuments(session, user.id!, vendor.id!);
+    if (bankDetails != null) {
+      await _upsertBankDetails(session, vendor.id!, bankDetails);
+    }
     return vendor;
+  }
+
+  Future<VendorBankDetails?> getMyBankDetails(Session session) async {
+    final vendor = await requireOwnedVendor(session);
+    return VendorBankDetails.db.findFirstRow(
+      session,
+      where: (row) => row.vendorId.equals(vendor.id!),
+    );
+  }
+
+  Future<VendorBankDetails> saveMyBankDetails(
+    Session session,
+    VendorBankDetailsInput input,
+  ) async {
+    final vendor = await requireOwnedVendor(session);
+    return _upsertBankDetails(session, vendor.id!, input);
+  }
+
+  Future<VendorBankDetails> _upsertBankDetails(
+    Session session,
+    UuidValue vendorId,
+    VendorBankDetailsInput input,
+  ) async {
+    VendorBankDetailsValidation.validateInput(input);
+
+    final now = DateTime.now();
+    final normalized = VendorBankDetails(
+      vendorId: vendorId,
+      accountHolderName: input.accountHolderName.trim(),
+      bankName: input.bankName.trim(),
+      accountNumber: input.accountNumber.trim(),
+      branchCode: input.branchCode.trim(),
+      updatedAt: now,
+    );
+
+    final existing = await VendorBankDetails.db.findFirstRow(
+      session,
+      where: (row) => row.vendorId.equals(vendorId),
+    );
+
+    if (existing != null) {
+      return VendorBankDetails.db.updateRow(
+        session,
+        existing.copyWith(
+          accountHolderName: normalized.accountHolderName,
+          bankName: normalized.bankName,
+          accountNumber: normalized.accountNumber,
+          branchCode: normalized.branchCode,
+          updatedAt: now,
+        ),
+      );
+    }
+
+    return VendorBankDetails.db.insertRow(
+      session,
+      normalized.copyWith(createdAt: now),
+    );
   }
 
   /// Uploads a verification document for the logged-in user (before or after shop creation).
@@ -483,6 +560,7 @@ class VendorStore {
     final city = input.city?.trim();
     final country = input.country?.trim();
     final bio = input.bio?.trim();
+    final email = input.email?.trim();
 
     VendorProfileValidation.validateUpdate(
       businessName: businessName,
@@ -492,6 +570,27 @@ class VendorStore {
       country: country,
       bio: bio,
     );
+    if (email != null) {
+      VendorProfileValidation.validateEmail(email);
+    }
+
+    String? normalizedCategory;
+    if (input.category != null) {
+      final trimmedCategory = input.category!.trim();
+      if (trimmedCategory.isEmpty) {
+        throw PlaceifyException(
+          message: 'A shop category is required.',
+          code: 'MISSING_REQUIRED_FIELD',
+        );
+      }
+      if (VendorShopCategoryCodec.decode(trimmedCategory).isEmpty) {
+        throw PlaceifyException(
+          message: 'A shop category is required.',
+          code: 'MISSING_REQUIRED_FIELD',
+        );
+      }
+      normalizedCategory = VendorShopCategoryCodec.normalize(trimmedCategory);
+    }
 
     final now = DateTime.now();
     final updatedUser = await User.db.updateRow(
@@ -511,7 +610,8 @@ class VendorStore {
         businessAddress: address ?? vendor.businessAddress,
         city: city ?? vendor.city,
         country: country ?? vendor.country,
-        shopCategory: input.category?.trim() ?? vendor.shopCategory,
+        shopCategory: normalizedCategory ?? vendor.shopCategory,
+        contactEmail: email ?? vendor.contactEmail,
         logoUrl: _nullableTrim(input.logoUrl) ?? vendor.logoUrl,
         bannerUrl: _nullableTrim(input.bannerUrl) ?? vendor.bannerUrl,
         coverUrl: _nullableTrim(input.coverUrl) ?? vendor.coverUrl,
@@ -1568,9 +1668,7 @@ class VendorStore {
       final locality = vendor.city?.trim().isNotEmpty == true
           ? vendor.city!.trim()
           : _localityFromAddress(vendor.businessAddress);
-      final tags = vendor.shopCategory?.trim().isNotEmpty == true
-          ? [vendor.shopCategory!.trim()]
-          : <String>[];
+      final tags = VendorShopCategoryCodec.decode(vendor.shopCategory);
 
       final listing = ShopListingSummary(
         vendorId: vendorId,
