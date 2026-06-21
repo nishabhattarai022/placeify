@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:placeify/core/widgets/phone_input_field.dart';
 
@@ -137,6 +138,11 @@ class _BusinessInfoStepState extends ConsumerState<BusinessInfoStep> {
           child: ProfileTextInput(
             controller: _taxId,
             hint: VendorFormStrings.taxIdHint,
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(9),
+            ],
             hasError: fieldErrors.containsKey(VendorRegistrationFieldKeys.taxId),
             onChanged: (v) => _sync(
               ref.read(vendorRegistrationProvider).form.business
