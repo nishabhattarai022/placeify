@@ -209,7 +209,7 @@ final class CatalogProductsByCategoryProvider
 }
 
 String _$catalogProductsByCategoryHash() =>
-    r'0e8871a7ccd243e82a2a812374de87dde85c8e7a';
+    r'3c3bcfd956d0f2595f855d1efa39cb1473d54378';
 
 final class CatalogProductsByCategoryFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<Product>>, String> {

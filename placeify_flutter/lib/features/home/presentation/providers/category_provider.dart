@@ -1,8 +1,11 @@
-import 'package:placeify_flutter/features/shops/data/mock_consumer_shop_repository.dart';
+import 'package:placeify_flutter/data/furniture_categories.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../data/mock_product_repository.dart';
+
+import '../../../cart/data/product_id_codec.dart';
+import '../../data/catalog_category_utils.dart';
 import '../../domain/models/category.dart';
 import '../../domain/models/product.dart';
+import 'catalog_provider.dart';
 
 part 'category_provider.g.dart';
 
@@ -15,28 +18,41 @@ class SelectedCategory extends _$SelectedCategory {
 }
 
 @riverpod
-List<ProductCategory> categories(Ref ref) =>
-    MockProductRepository.categories;
+List<ProductCategory> categories(Ref ref) {
+  ref.watch(catalogIndexProvider);
+  return [
+    for (final category in furnitureCategories)
+      ProductCategory(
+        id: category.id,
+        label: category.name,
+        svgIconAssetPath: category.svgIconAssetPath,
+      ),
+  ];
+}
 
 @riverpod
 List<Product> filteredProducts(Ref ref) {
   final categoryId = ref.watch(selectedCategoryProvider);
-  return MockProductRepository.products
-      .where((p) => p.categoryId == categoryId)
-      .toList();
+  final index = ref.watch(catalogIndexProvider).value;
+  if (index == null) return const [];
+
+  final products = index.values
+      .where((product) => CatalogCategoryUtils.matchesUiCategory(
+            product.categoryId,
+            categoryId,
+          ))
+      .toList()
+    ..sort((a, b) => ProductIdCodec.compareNewestFirst(a.id, b.id));
+
+  return products;
 }
 
 @riverpod
 Product? productById(Ref ref, String id) {
-  try {
-    return MockProductRepository.products.firstWhere((p) => p.id == id);
-  } catch (_) {
-    return MockConsumerShopRepository.productByIdSync(id);
-  }
+  ref.watch(catalogIndexProvider);
+  return ref.watch(catalogIndexProvider).value?[id];
 }
 
 String categoryTitle(String categoryId) {
-  return MockProductRepository.categories
-          .firstWhere((c) => c.id == categoryId)
-          .label;
+  return furnitureCategoryById(categoryId)?.name ?? categoryId;
 }

@@ -2,6 +2,7 @@ import 'package:placeify_client/placeify_client.dart' hide Product;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../cart/data/product_id_codec.dart';
+import '../../data/catalog_category_utils.dart';
 import '../../data/catalog_product_mapper.dart';
 import '../../data/serverpod_product_repository.dart';
 import '../../domain/models/product.dart';
@@ -79,7 +80,7 @@ Future<List<Product>> catalogProductsByCategory(
 ) async {
   final repo = ref.read(catalogRepositoryProvider);
   final page = await repo.search(
-    categoryName: categoryId,
+    categoryName: CatalogCategoryUtils.catalogName(categoryId),
     pagination: PaginationInput(page: 1, pageSize: 200),
   );
 

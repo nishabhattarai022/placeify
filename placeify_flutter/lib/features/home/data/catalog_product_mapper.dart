@@ -52,6 +52,7 @@ abstract final class CatalogProductMapper {
       brand: shopName,
       sku: 'PF${id.toString().padLeft(5, '0')}',
       price: product.price,
+      vendorId: product.vendor?.id?.toString() ?? product.vendorId.toString(),
       imageUrl: imageUrl.isEmpty
           ? 'assets/images/categories/chair.jpg'
           : imageUrl,
