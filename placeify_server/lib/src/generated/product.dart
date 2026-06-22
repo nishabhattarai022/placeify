@@ -39,6 +39,7 @@ abstract class Product
     this.warranty,
     this.model3dUrl,
     this.thumbnailUrl,
+    this.viewImageUrls,
     _i2.ProductStatus? status,
     this.removedReason,
     this.removedById,
@@ -69,6 +70,7 @@ abstract class Product
     String? warranty,
     String? model3dUrl,
     String? thumbnailUrl,
+    List<String>? viewImageUrls,
     _i2.ProductStatus? status,
     String? removedReason,
     _i1.UuidValue? removedById,
@@ -106,6 +108,11 @@ abstract class Product
       warranty: jsonSerialization['warranty'] as String?,
       model3dUrl: jsonSerialization['model3dUrl'] as String?,
       thumbnailUrl: jsonSerialization['thumbnailUrl'] as String?,
+      viewImageUrls: jsonSerialization['viewImageUrls'] == null
+          ? null
+          : _i6.Protocol().deserialize<List<String>>(
+              jsonSerialization['viewImageUrls'],
+            ),
       status: jsonSerialization['status'] == null
           ? null
           : _i2.ProductStatus.fromJson((jsonSerialization['status'] as String)),
@@ -173,6 +180,9 @@ abstract class Product
 
   String? thumbnailUrl;
 
+  /// Extra product photos for multiview 3D generation (left, back, right, etc.).
+  List<String>? viewImageUrls;
+
   _i2.ProductStatus status;
 
   /// Why the product was removed from the catalog.
@@ -214,6 +224,7 @@ abstract class Product
     String? warranty,
     String? model3dUrl,
     String? thumbnailUrl,
+    List<String>? viewImageUrls,
     _i2.ProductStatus? status,
     String? removedReason,
     _i1.UuidValue? removedById,
@@ -244,6 +255,7 @@ abstract class Product
       if (warranty != null) 'warranty': warranty,
       if (model3dUrl != null) 'model3dUrl': model3dUrl,
       if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
+      if (viewImageUrls != null) 'viewImageUrls': viewImageUrls?.toJson(),
       'status': status.toJson(),
       if (removedReason != null) 'removedReason': removedReason,
       if (removedById != null) 'removedById': removedById?.toJson(),
@@ -276,6 +288,7 @@ abstract class Product
       if (warranty != null) 'warranty': warranty,
       if (model3dUrl != null) 'model3dUrl': model3dUrl,
       if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
+      if (viewImageUrls != null) 'viewImageUrls': viewImageUrls?.toJson(),
       'status': status.toJson(),
       if (removedReason != null) 'removedReason': removedReason,
       if (removedById != null) 'removedById': removedById?.toJson(),
@@ -346,6 +359,7 @@ class _ProductImpl extends Product {
     String? warranty,
     String? model3dUrl,
     String? thumbnailUrl,
+    List<String>? viewImageUrls,
     _i2.ProductStatus? status,
     String? removedReason,
     _i1.UuidValue? removedById,
@@ -372,6 +386,7 @@ class _ProductImpl extends Product {
          warranty: warranty,
          model3dUrl: model3dUrl,
          thumbnailUrl: thumbnailUrl,
+         viewImageUrls: viewImageUrls,
          status: status,
          removedReason: removedReason,
          removedById: removedById,
@@ -404,6 +419,7 @@ class _ProductImpl extends Product {
     Object? warranty = _Undefined,
     Object? model3dUrl = _Undefined,
     Object? thumbnailUrl = _Undefined,
+    Object? viewImageUrls = _Undefined,
     _i2.ProductStatus? status,
     Object? removedReason = _Undefined,
     Object? removedById = _Undefined,
@@ -435,6 +451,9 @@ class _ProductImpl extends Product {
       warranty: warranty is String? ? warranty : this.warranty,
       model3dUrl: model3dUrl is String? ? model3dUrl : this.model3dUrl,
       thumbnailUrl: thumbnailUrl is String? ? thumbnailUrl : this.thumbnailUrl,
+      viewImageUrls: viewImageUrls is List<String>?
+          ? viewImageUrls
+          : this.viewImageUrls?.map((e0) => e0).toList(),
       status: status ?? this.status,
       removedReason: removedReason is String?
           ? removedReason
@@ -533,6 +552,13 @@ class ProductUpdateTable extends _i1.UpdateTable<ProductTable> {
         table.thumbnailUrl,
         value,
       );
+
+  _i1.ColumnValue<List<String>, List<String>> viewImageUrls(
+    List<String>? value,
+  ) => _i1.ColumnValue(
+    table.viewImageUrls,
+    value,
+  );
 
   _i1.ColumnValue<_i2.ProductStatus, _i2.ProductStatus> status(
     _i2.ProductStatus value,
@@ -636,6 +662,10 @@ class ProductTable extends _i1.Table<int?> {
       'thumbnailUrl',
       this,
     );
+    viewImageUrls = _i1.ColumnSerializable<List<String>>(
+      'viewImageUrls',
+      this,
+    );
     status = _i1.ColumnEnum(
       'status',
       this,
@@ -701,6 +731,9 @@ class ProductTable extends _i1.Table<int?> {
   late final _i1.ColumnString model3dUrl;
 
   late final _i1.ColumnString thumbnailUrl;
+
+  /// Extra product photos for multiview 3D generation (left, back, right, etc.).
+  late final _i1.ColumnSerializable<List<String>> viewImageUrls;
 
   late final _i1.ColumnEnum<_i2.ProductStatus> status;
 
@@ -775,6 +808,7 @@ class ProductTable extends _i1.Table<int?> {
     warranty,
     model3dUrl,
     thumbnailUrl,
+    viewImageUrls,
     status,
     removedReason,
     removedById,

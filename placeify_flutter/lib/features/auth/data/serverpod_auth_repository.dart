@@ -5,6 +5,7 @@ import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/config/placeify_server_client.dart';
+import '../../admin/domain/enums/user_role.dart' as ui_role;
 import '../../vendor/domain/enums/vendor_status.dart';
 import '../constants/demo_credentials.dart';
 import '../domain/models/app_user.dart';
@@ -292,13 +293,18 @@ class ServerpodAuthRepository implements AuthRepository {
       id: profile.id.toString(),
       fullName: profile.name,
       email: email,
-      role: profile.role,
-      phone: profile.phone,
-      address: profile.address,
-      hasVendorShop: hasVendorShop ?? false,
-      registeredVendorStatus: vendorStatus,
-      registeredVendorId: vendorId,
+      role: _mapRole(profile.role),
+      vendorStatus: vendorStatus ?? VendorStatus.none,
+      vendorId: vendorId,
     );
+  }
+
+  ui_role.UserRole _mapRole(UserRole role) {
+    return switch (role) {
+      UserRole.admin => ui_role.UserRole.admin,
+      UserRole.vendor => ui_role.UserRole.vendor,
+      UserRole.consumer => ui_role.UserRole.customer,
+    };
   }
 
   VendorStatus? _vendorStatusFromServer(

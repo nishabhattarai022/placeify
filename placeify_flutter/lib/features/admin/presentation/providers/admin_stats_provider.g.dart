@@ -33,7 +33,7 @@ final class AdminStatsProvider
   AdminStats create() => AdminStats();
 }
 
-String _$adminStatsHash() => r'97ec39a63ae01799fa1e97dddc7376fc9353dd62';
+String _$adminStatsHash() => r'1ef35cad2859abf4625109080cce454fa5e5c8f9';
 
 abstract class _$AdminStats extends $AsyncNotifier<models.AdminStats> {
   FutureOr<models.AdminStats> build();

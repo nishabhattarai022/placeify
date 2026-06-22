@@ -50,7 +50,7 @@ final class AdminVendorsListProvider
   }
 }
 
-String _$adminVendorsListHash() => r'fc34f94a17902ebcc04e35b585951aec1906eb8e';
+String _$adminVendorsListHash() => r'1ad0815836fa7f180f7da47671d63c6738305107';
 
 final class AdminVendorsListFamily extends $Family
     with
@@ -132,7 +132,7 @@ final class AdminVendorActionsProvider
 }
 
 String _$adminVendorActionsHash() =>
-    r'7b5d3861735d31d2812bcf2a3e39e410c32e608a';
+    r'73963dbaf0469c67632dc271f9f7a048832362b3';
 
 abstract class _$AdminVendorActions extends $AsyncNotifier<void> {
   FutureOr<void> build();

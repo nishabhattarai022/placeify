@@ -1,5 +1,7 @@
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify_flutter/features/home/presentation/providers/catalog_provider.dart';
+import 'package:placeify_flutter/features/vendor/data/mock_vendor_product_repository.dart'
+    show VendorProductActionException;
 import 'package:placeify_flutter/features/vendor/data/serverpod_vendor_product_repository.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product.dart';

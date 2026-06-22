@@ -6,6 +6,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'admin_repository_provider.g.dart';
 
 @Riverpod(keepAlive: true)
-AdminRepository adminRepository(Ref ref) {
+Future<AdminRepository> adminRepository(Ref ref) async {
   return ServerpodAdminRepository(const ServerpodAdminApi());
 }

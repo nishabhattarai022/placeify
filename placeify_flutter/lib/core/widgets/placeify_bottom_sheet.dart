@@ -15,21 +15,29 @@ abstract final class PlaceifyBottomSheet {
       backgroundColor: AppColors.warmWhite,
       barrierColor: AppColors.espresso.withValues(alpha: 0.32),
       isScrollControlled: true,
+      useRootNavigator: true,
       showDragHandle: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (sheetContext) {
-        final bottomInset = MediaQuery.viewPaddingOf(sheetContext).bottom;
-        return SafeArea(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.xl,
-              AppSpacing.lg,
-              AppSpacing.xl,
-              AppSpacing.md + bottomInset,
+        final mediaQuery = MediaQuery.of(sheetContext);
+        final bottomInset = mediaQuery.viewPadding.bottom;
+        final keyboardInset = mediaQuery.viewInsets.bottom;
+        return AnimatedPadding(
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(bottom: keyboardInset),
+          child: SafeArea(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                AppSpacing.lg,
+                AppSpacing.xl,
+                AppSpacing.md + bottomInset,
+              ),
+              child: builder(sheetContext),
             ),
-            child: builder(sheetContext),
           ),
         );
       },

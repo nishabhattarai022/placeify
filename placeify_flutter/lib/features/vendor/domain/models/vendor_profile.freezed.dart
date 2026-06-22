@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$VendorProfile {
 
- String get id; String get businessName; String get email; String get phone; String get address; String get city; String get country; String? get logoUrl; String get bio; String? get bannerUrl; String? get coverUrl; bool get isOpen; List<String> get tags; List<VendorOperatingDay> get schedule; VendorSocialLinks get socialLinks; DateTime get createdAt;
+ String get id; String get businessName; String get email; String get phone; String get address; String? get logoUrl; String get bio; String? get bannerUrl; List<String> get tags; List<VendorOperatingDay> get schedule; VendorSocialLinks get socialLinks; DateTime get createdAt;
 /// Create a copy of VendorProfile
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $VendorProfileCopyWith<VendorProfile> get copyWith => _$VendorProfileCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VendorProfile&&(identical(other.id, id) || other.id == id)&&(identical(other.businessName, businessName) || other.businessName == businessName)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.address, address) || other.address == address)&&(identical(other.city, city) || other.city == city)&&(identical(other.country, country) || other.country == country)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.bio, bio) || other.bio == bio)&&(identical(other.bannerUrl, bannerUrl) || other.bannerUrl == bannerUrl)&&(identical(other.coverUrl, coverUrl) || other.coverUrl == coverUrl)&&(identical(other.isOpen, isOpen) || other.isOpen == isOpen)&&const DeepCollectionEquality().equals(other.tags, tags)&&const DeepCollectionEquality().equals(other.schedule, schedule)&&(identical(other.socialLinks, socialLinks) || other.socialLinks == socialLinks)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VendorProfile&&(identical(other.id, id) || other.id == id)&&(identical(other.businessName, businessName) || other.businessName == businessName)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.address, address) || other.address == address)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.bio, bio) || other.bio == bio)&&(identical(other.bannerUrl, bannerUrl) || other.bannerUrl == bannerUrl)&&const DeepCollectionEquality().equals(other.tags, tags)&&const DeepCollectionEquality().equals(other.schedule, schedule)&&(identical(other.socialLinks, socialLinks) || other.socialLinks == socialLinks)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,businessName,email,phone,address,city,country,logoUrl,bio,bannerUrl,coverUrl,isOpen,const DeepCollectionEquality().hash(tags),const DeepCollectionEquality().hash(schedule),socialLinks,createdAt);
+int get hashCode => Object.hash(runtimeType,id,businessName,email,phone,address,logoUrl,bio,bannerUrl,const DeepCollectionEquality().hash(tags),const DeepCollectionEquality().hash(schedule),socialLinks,createdAt);
 
 @override
 String toString() {
-  return 'VendorProfile(id: $id, businessName: $businessName, email: $email, phone: $phone, address: $address, city: $city, country: $country, logoUrl: $logoUrl, bio: $bio, bannerUrl: $bannerUrl, coverUrl: $coverUrl, isOpen: $isOpen, tags: $tags, schedule: $schedule, socialLinks: $socialLinks, createdAt: $createdAt)';
+  return 'VendorProfile(id: $id, businessName: $businessName, email: $email, phone: $phone, address: $address, logoUrl: $logoUrl, bio: $bio, bannerUrl: $bannerUrl, tags: $tags, schedule: $schedule, socialLinks: $socialLinks, createdAt: $createdAt)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $VendorProfileCopyWith<$Res>  {
   factory $VendorProfileCopyWith(VendorProfile value, $Res Function(VendorProfile) _then) = _$VendorProfileCopyWithImpl;
 @useResult
 $Res call({
- String id, String businessName, String email, String phone, String address, String city, String country, String? logoUrl, String bio, String? bannerUrl, String? coverUrl, bool isOpen, List<String> tags, List<VendorOperatingDay> schedule, VendorSocialLinks socialLinks, DateTime createdAt
+ String id, String businessName, String email, String phone, String address, String? logoUrl, String bio, String? bannerUrl, List<String> tags, List<VendorOperatingDay> schedule, VendorSocialLinks socialLinks, DateTime createdAt
 });
 
 
@@ -65,21 +65,17 @@ class _$VendorProfileCopyWithImpl<$Res>
 
 /// Create a copy of VendorProfile
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? businessName = null,Object? email = null,Object? phone = null,Object? address = null,Object? city = null,Object? country = null,Object? logoUrl = freezed,Object? bio = null,Object? bannerUrl = freezed,Object? coverUrl = freezed,Object? isOpen = null,Object? tags = null,Object? schedule = null,Object? socialLinks = null,Object? createdAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? businessName = null,Object? email = null,Object? phone = null,Object? address = null,Object? logoUrl = freezed,Object? bio = null,Object? bannerUrl = freezed,Object? tags = null,Object? schedule = null,Object? socialLinks = null,Object? createdAt = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,businessName: null == businessName ? _self.businessName : businessName // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String,phone: null == phone ? _self.phone : phone // ignore: cast_nullable_to_non_nullable
 as String,address: null == address ? _self.address : address // ignore: cast_nullable_to_non_nullable
-as String,city: null == city ? _self.city : city // ignore: cast_nullable_to_non_nullable
-as String,country: null == country ? _self.country : country // ignore: cast_nullable_to_non_nullable
 as String,logoUrl: freezed == logoUrl ? _self.logoUrl : logoUrl // ignore: cast_nullable_to_non_nullable
 as String?,bio: null == bio ? _self.bio : bio // ignore: cast_nullable_to_non_nullable
 as String,bannerUrl: freezed == bannerUrl ? _self.bannerUrl : bannerUrl // ignore: cast_nullable_to_non_nullable
-as String?,coverUrl: freezed == coverUrl ? _self.coverUrl : coverUrl // ignore: cast_nullable_to_non_nullable
-as String?,isOpen: null == isOpen ? _self.isOpen : isOpen // ignore: cast_nullable_to_non_nullable
-as bool,tags: null == tags ? _self.tags : tags // ignore: cast_nullable_to_non_nullable
+as String?,tags: null == tags ? _self.tags : tags // ignore: cast_nullable_to_non_nullable
 as List<String>,schedule: null == schedule ? _self.schedule : schedule // ignore: cast_nullable_to_non_nullable
 as List<VendorOperatingDay>,socialLinks: null == socialLinks ? _self.socialLinks : socialLinks // ignore: cast_nullable_to_non_nullable
 as VendorSocialLinks,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
@@ -177,10 +173,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String businessName,  String email,  String phone,  String address,  String city,  String country,  String? logoUrl,  String bio,  String? bannerUrl,  String? coverUrl,  bool isOpen,  List<String> tags,  List<VendorOperatingDay> schedule,  VendorSocialLinks socialLinks,  DateTime createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String businessName,  String email,  String phone,  String address,  String? logoUrl,  String bio,  String? bannerUrl,  List<String> tags,  List<VendorOperatingDay> schedule,  VendorSocialLinks socialLinks,  DateTime createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VendorProfile() when $default != null:
-return $default(_that.id,_that.businessName,_that.email,_that.phone,_that.address,_that.city,_that.country,_that.logoUrl,_that.bio,_that.bannerUrl,_that.coverUrl,_that.isOpen,_that.tags,_that.schedule,_that.socialLinks,_that.createdAt);case _:
+return $default(_that.id,_that.businessName,_that.email,_that.phone,_that.address,_that.logoUrl,_that.bio,_that.bannerUrl,_that.tags,_that.schedule,_that.socialLinks,_that.createdAt);case _:
   return orElse();
 
 }
@@ -198,10 +194,10 @@ return $default(_that.id,_that.businessName,_that.email,_that.phone,_that.addres
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String businessName,  String email,  String phone,  String address,  String city,  String country,  String? logoUrl,  String bio,  String? bannerUrl,  String? coverUrl,  bool isOpen,  List<String> tags,  List<VendorOperatingDay> schedule,  VendorSocialLinks socialLinks,  DateTime createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String businessName,  String email,  String phone,  String address,  String? logoUrl,  String bio,  String? bannerUrl,  List<String> tags,  List<VendorOperatingDay> schedule,  VendorSocialLinks socialLinks,  DateTime createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _VendorProfile():
-return $default(_that.id,_that.businessName,_that.email,_that.phone,_that.address,_that.city,_that.country,_that.logoUrl,_that.bio,_that.bannerUrl,_that.coverUrl,_that.isOpen,_that.tags,_that.schedule,_that.socialLinks,_that.createdAt);case _:
+return $default(_that.id,_that.businessName,_that.email,_that.phone,_that.address,_that.logoUrl,_that.bio,_that.bannerUrl,_that.tags,_that.schedule,_that.socialLinks,_that.createdAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -218,10 +214,10 @@ return $default(_that.id,_that.businessName,_that.email,_that.phone,_that.addres
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String businessName,  String email,  String phone,  String address,  String city,  String country,  String? logoUrl,  String bio,  String? bannerUrl,  String? coverUrl,  bool isOpen,  List<String> tags,  List<VendorOperatingDay> schedule,  VendorSocialLinks socialLinks,  DateTime createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String businessName,  String email,  String phone,  String address,  String? logoUrl,  String bio,  String? bannerUrl,  List<String> tags,  List<VendorOperatingDay> schedule,  VendorSocialLinks socialLinks,  DateTime createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _VendorProfile() when $default != null:
-return $default(_that.id,_that.businessName,_that.email,_that.phone,_that.address,_that.city,_that.country,_that.logoUrl,_that.bio,_that.bannerUrl,_that.coverUrl,_that.isOpen,_that.tags,_that.schedule,_that.socialLinks,_that.createdAt);case _:
+return $default(_that.id,_that.businessName,_that.email,_that.phone,_that.address,_that.logoUrl,_that.bio,_that.bannerUrl,_that.tags,_that.schedule,_that.socialLinks,_that.createdAt);case _:
   return null;
 
 }
@@ -233,7 +229,7 @@ return $default(_that.id,_that.businessName,_that.email,_that.phone,_that.addres
 @JsonSerializable()
 
 class _VendorProfile implements VendorProfile {
-  const _VendorProfile({required this.id, required this.businessName, required this.email, required this.phone, required this.address, this.city = '', this.country = '', this.logoUrl, this.bio = '', this.bannerUrl, this.coverUrl, this.isOpen = true, final  List<String> tags = const [], final  List<VendorOperatingDay> schedule = const [], this.socialLinks = const VendorSocialLinks(), required this.createdAt}): _tags = tags,_schedule = schedule;
+  const _VendorProfile({required this.id, required this.businessName, required this.email, required this.phone, required this.address, this.logoUrl, this.bio = '', this.bannerUrl, final  List<String> tags = const [], final  List<VendorOperatingDay> schedule = const [], this.socialLinks = const VendorSocialLinks(), required this.createdAt}): _tags = tags,_schedule = schedule;
   factory _VendorProfile.fromJson(Map<String, dynamic> json) => _$VendorProfileFromJson(json);
 
 @override final  String id;
@@ -241,13 +237,9 @@ class _VendorProfile implements VendorProfile {
 @override final  String email;
 @override final  String phone;
 @override final  String address;
-@override@JsonKey() final  String city;
-@override@JsonKey() final  String country;
 @override final  String? logoUrl;
 @override@JsonKey() final  String bio;
 @override final  String? bannerUrl;
-@override final  String? coverUrl;
-@override@JsonKey() final  bool isOpen;
  final  List<String> _tags;
 @override@JsonKey() List<String> get tags {
   if (_tags is EqualUnmodifiableListView) return _tags;
@@ -278,16 +270,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VendorProfile&&(identical(other.id, id) || other.id == id)&&(identical(other.businessName, businessName) || other.businessName == businessName)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.address, address) || other.address == address)&&(identical(other.city, city) || other.city == city)&&(identical(other.country, country) || other.country == country)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.bio, bio) || other.bio == bio)&&(identical(other.bannerUrl, bannerUrl) || other.bannerUrl == bannerUrl)&&(identical(other.coverUrl, coverUrl) || other.coverUrl == coverUrl)&&(identical(other.isOpen, isOpen) || other.isOpen == isOpen)&&const DeepCollectionEquality().equals(other._tags, _tags)&&const DeepCollectionEquality().equals(other._schedule, _schedule)&&(identical(other.socialLinks, socialLinks) || other.socialLinks == socialLinks)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VendorProfile&&(identical(other.id, id) || other.id == id)&&(identical(other.businessName, businessName) || other.businessName == businessName)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.address, address) || other.address == address)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.bio, bio) || other.bio == bio)&&(identical(other.bannerUrl, bannerUrl) || other.bannerUrl == bannerUrl)&&const DeepCollectionEquality().equals(other._tags, _tags)&&const DeepCollectionEquality().equals(other._schedule, _schedule)&&(identical(other.socialLinks, socialLinks) || other.socialLinks == socialLinks)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,businessName,email,phone,address,city,country,logoUrl,bio,bannerUrl,coverUrl,isOpen,const DeepCollectionEquality().hash(_tags),const DeepCollectionEquality().hash(_schedule),socialLinks,createdAt);
+int get hashCode => Object.hash(runtimeType,id,businessName,email,phone,address,logoUrl,bio,bannerUrl,const DeepCollectionEquality().hash(_tags),const DeepCollectionEquality().hash(_schedule),socialLinks,createdAt);
 
 @override
 String toString() {
-  return 'VendorProfile(id: $id, businessName: $businessName, email: $email, phone: $phone, address: $address, city: $city, country: $country, logoUrl: $logoUrl, bio: $bio, bannerUrl: $bannerUrl, coverUrl: $coverUrl, isOpen: $isOpen, tags: $tags, schedule: $schedule, socialLinks: $socialLinks, createdAt: $createdAt)';
+  return 'VendorProfile(id: $id, businessName: $businessName, email: $email, phone: $phone, address: $address, logoUrl: $logoUrl, bio: $bio, bannerUrl: $bannerUrl, tags: $tags, schedule: $schedule, socialLinks: $socialLinks, createdAt: $createdAt)';
 }
 
 
@@ -298,7 +290,7 @@ abstract mixin class _$VendorProfileCopyWith<$Res> implements $VendorProfileCopy
   factory _$VendorProfileCopyWith(_VendorProfile value, $Res Function(_VendorProfile) _then) = __$VendorProfileCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String businessName, String email, String phone, String address, String city, String country, String? logoUrl, String bio, String? bannerUrl, String? coverUrl, bool isOpen, List<String> tags, List<VendorOperatingDay> schedule, VendorSocialLinks socialLinks, DateTime createdAt
+ String id, String businessName, String email, String phone, String address, String? logoUrl, String bio, String? bannerUrl, List<String> tags, List<VendorOperatingDay> schedule, VendorSocialLinks socialLinks, DateTime createdAt
 });
 
 
@@ -315,21 +307,17 @@ class __$VendorProfileCopyWithImpl<$Res>
 
 /// Create a copy of VendorProfile
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? businessName = null,Object? email = null,Object? phone = null,Object? address = null,Object? city = null,Object? country = null,Object? logoUrl = freezed,Object? bio = null,Object? bannerUrl = freezed,Object? coverUrl = freezed,Object? isOpen = null,Object? tags = null,Object? schedule = null,Object? socialLinks = null,Object? createdAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? businessName = null,Object? email = null,Object? phone = null,Object? address = null,Object? logoUrl = freezed,Object? bio = null,Object? bannerUrl = freezed,Object? tags = null,Object? schedule = null,Object? socialLinks = null,Object? createdAt = null,}) {
   return _then(_VendorProfile(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,businessName: null == businessName ? _self.businessName : businessName // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String,phone: null == phone ? _self.phone : phone // ignore: cast_nullable_to_non_nullable
 as String,address: null == address ? _self.address : address // ignore: cast_nullable_to_non_nullable
-as String,city: null == city ? _self.city : city // ignore: cast_nullable_to_non_nullable
-as String,country: null == country ? _self.country : country // ignore: cast_nullable_to_non_nullable
 as String,logoUrl: freezed == logoUrl ? _self.logoUrl : logoUrl // ignore: cast_nullable_to_non_nullable
 as String?,bio: null == bio ? _self.bio : bio // ignore: cast_nullable_to_non_nullable
 as String,bannerUrl: freezed == bannerUrl ? _self.bannerUrl : bannerUrl // ignore: cast_nullable_to_non_nullable
-as String?,coverUrl: freezed == coverUrl ? _self.coverUrl : coverUrl // ignore: cast_nullable_to_non_nullable
-as String?,isOpen: null == isOpen ? _self.isOpen : isOpen // ignore: cast_nullable_to_non_nullable
-as bool,tags: null == tags ? _self._tags : tags // ignore: cast_nullable_to_non_nullable
+as String?,tags: null == tags ? _self._tags : tags // ignore: cast_nullable_to_non_nullable
 as List<String>,schedule: null == schedule ? _self._schedule : schedule // ignore: cast_nullable_to_non_nullable
 as List<VendorOperatingDay>,socialLinks: null == socialLinks ? _self.socialLinks : socialLinks // ignore: cast_nullable_to_non_nullable
 as VendorSocialLinks,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable

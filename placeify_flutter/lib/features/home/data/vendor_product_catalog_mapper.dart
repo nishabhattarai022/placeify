@@ -49,11 +49,6 @@ abstract final class VendorProductCatalogMapper {
       categoryId: vendor.categoryId,
       dimensions: dimensions,
       vendorId: vendor.vendorId,
-      description: vendor.description,
-      materials: vendor.materials,
-      offerLabel: vendor.offerLabel,
-      weightKg: vendor.weightKg > 0 ? vendor.weightKg : null,
-      galleryImageUrls: gallery,
     );
   }
 

@@ -17,6 +17,8 @@ fields:
   warranty: String?
   model3dUrl: String?
   thumbnailUrl: String?
+  ### Extra product photos for multiview 3D generation (left, back, right, etc.).
+  viewImageUrls: List<String>?
   status: ProductStatus, default=active
   ### Why the product was removed from the catalog.
   removedReason: String?

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -7,38 +6,41 @@ import '../core/constants/app_spacing.dart';
 import '../core/services/haptic_service.dart';
 import '../core/widgets/placeify_bottom_sheet.dart';
 import '../data/furniture_categories.dart';
+import '../features/home/data/mock_product_repository.dart';
 import '../features/home/domain/models/product.dart';
-import '../features/home/presentation/providers/catalog_provider.dart';
 import 'widgets/category_product_list_tile.dart';
 
 enum _SortOption { featured, priceAsc, priceDesc, nameAsc }
 
-class CategoryScreen extends ConsumerStatefulWidget {
+class CategoryScreen extends StatefulWidget {
   const CategoryScreen({required this.category, super.key});
 
   final FurnitureCategory category;
 
   @override
-  ConsumerState<CategoryScreen> createState() => _CategoryScreenState();
+  State<CategoryScreen> createState() => _CategoryScreenState();
 }
 
-class _CategoryScreenState extends ConsumerState<CategoryScreen> {
+class _CategoryScreenState extends State<CategoryScreen> {
   _SortOption _sort = _SortOption.featured;
 
-  List<Product> _sortedProducts(List<Product> products) {
-    final list = List<Product>.from(products);
+  List<Product> get _products {
+    final list = MockProductRepository.products
+        .where((p) => p.categoryId == widget.category.id)
+        .toList();
+
     switch (_sort) {
       case _SortOption.featured:
         return list;
       case _SortOption.priceAsc:
-        list.sort((a, b) => a.price.compareTo(b.price));
-        return list;
+        return List<Product>.from(list)
+          ..sort((a, b) => a.price.compareTo(b.price));
       case _SortOption.priceDesc:
-        list.sort((a, b) => b.price.compareTo(a.price));
-        return list;
+        return List<Product>.from(list)
+          ..sort((a, b) => b.price.compareTo(a.price));
       case _SortOption.nameAsc:
-        list.sort((a, b) => a.name.compareTo(b.name));
-        return list;
+        return List<Product>.from(list)
+          ..sort((a, b) => a.name.compareTo(b.name));
     }
   }
 
@@ -91,21 +93,10 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(catalogIndexProvider.notifier).refresh(silent: true);
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    ref.watch(catalogIndexProvider);
-    final rawProducts =
-        ref.watch(catalogProductsByCategoryProvider(widget.category.id));
-    final displayName = categoryDisplayName(widget.category);
-    final products = _sortedProducts(rawProducts);
+    final products = _products;
     final count = products.length;
+    final displayName = categoryDisplayName(widget.category);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9F8F4),
@@ -150,9 +141,7 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Expanded(
-                          child: _Breadcrumb(category: widget.category),
-                        ),
+                        Expanded(child: _Breadcrumb(category: widget.category)),
                         GestureDetector(
                           onTap: _openSortSheet,
                           behavior: HitTestBehavior.opaque,

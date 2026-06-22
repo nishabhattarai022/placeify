@@ -53,24 +53,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _signInWithDemoAdmin() async {
-    if (_isSubmitting) return;
-
-    setState(() => _isSubmitting = true);
-    await HapticService.heavy();
-
-    try {
-      await ref.read(currentUserProvider.notifier).signInWithDemoAdminCredentials();
-      if (!mounted) return;
-      context.go('/admin');
-    } on AuthException catch (e) {
-      if (mounted) PlaceifyToast.show(context, e.message);
-    } catch (_) {
-      if (mounted) {
-        PlaceifyToast.show(context, 'Admin login failed. Try again.');
-      }
-    } finally {
-      if (mounted) setState(() => _isSubmitting = false);
-    }
+    _emailController.text = DemoCredentials.adminEmail;
+    _passwordController.text = DemoCredentials.adminPassword;
+    await _submit(destination: '/admin');
   }
 
   Future<void> _submit({required String destination}) async {
@@ -218,7 +203,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            '${DemoCredentials.hint}\n${DemoCredentials.adminHint}',
+                            DemoCredentials.hint,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w400,

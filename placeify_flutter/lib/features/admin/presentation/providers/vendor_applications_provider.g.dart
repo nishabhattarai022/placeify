@@ -56,7 +56,7 @@ final class VendorApplicationsListProvider
 }
 
 String _$vendorApplicationsListHash() =>
-    r'ef1fb524c8ad1e5e08964e1d143f3266718ba68c';
+    r'd1715c19f7a5f5eea84c68721cfcebe4fcb68433';
 
 final class VendorApplicationsListFamily extends $Family
     with
@@ -172,7 +172,7 @@ final class VendorApplicationDetailProvider
 }
 
 String _$vendorApplicationDetailHash() =>
-    r'e76d7310601c3130f4172fe28f40e975b03cf0e3';
+    r'eefe683f45b35f054e543372dc042f5d523a3b4a';
 
 final class VendorApplicationDetailFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<VendorApplication?>, String> {
@@ -192,18 +192,28 @@ final class VendorApplicationDetailFamily extends $Family
   String toString() => r'vendorApplicationDetailProvider';
 }
 
+/// Long-lived action channel for admin approve/decline flows.
+///
+/// Must stay alive across async gaps triggered from bottom sheets.
+
 @ProviderFor(VendorApplicationActions)
 final vendorApplicationActionsProvider = VendorApplicationActionsProvider._();
 
+/// Long-lived action channel for admin approve/decline flows.
+///
+/// Must stay alive across async gaps triggered from bottom sheets.
 final class VendorApplicationActionsProvider
     extends $AsyncNotifierProvider<VendorApplicationActions, void> {
+  /// Long-lived action channel for admin approve/decline flows.
+  ///
+  /// Must stay alive across async gaps triggered from bottom sheets.
   VendorApplicationActionsProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
         name: r'vendorApplicationActionsProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -217,7 +227,11 @@ final class VendorApplicationActionsProvider
 }
 
 String _$vendorApplicationActionsHash() =>
-    r'0c17388c1acb47ec19433a012937d316e31466ef';
+    r'a83346bd6a9d2a6932d75be51a5ffde7b88b7332';
+
+/// Long-lived action channel for admin approve/decline flows.
+///
+/// Must stay alive across async gaps triggered from bottom sheets.
 
 abstract class _$VendorApplicationActions extends $AsyncNotifier<void> {
   FutureOr<void> build();

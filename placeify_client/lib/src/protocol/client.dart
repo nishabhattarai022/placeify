@@ -1228,6 +1228,7 @@ class EndpointVendor extends _i2.EndpointRef {
     String? warranty,
     String? model3dUrl,
     String? thumbnailUrl,
+    List<String>? viewImageUrls,
   }) => caller.callServerEndpoint<_i16.Product>(
     'vendor',
     'createProduct',
@@ -1246,6 +1247,7 @@ class EndpointVendor extends _i2.EndpointRef {
       'warranty': warranty,
       'model3dUrl': model3dUrl,
       'thumbnailUrl': thumbnailUrl,
+      'viewImageUrls': viewImageUrls,
     },
   );
 
@@ -1278,13 +1280,15 @@ class EndpointVendor extends _i2.EndpointRef {
 
   _i3.Future<String> uploadProductImage(
     _i52.ByteData fileData,
-    String fileName,
-  ) => caller.callServerEndpoint<String>(
+    String fileName, {
+    required bool removeBackground,
+  }) => caller.callServerEndpoint<String>(
     'vendor',
     'uploadProductImage',
     {
       'fileData': fileData,
       'fileName': fileName,
+      'removeBackground': removeBackground,
     },
   );
 

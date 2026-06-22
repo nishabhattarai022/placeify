@@ -5,6 +5,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'vendor_registration_repository_provider.g.dart';
 
 @Riverpod(keepAlive: true)
-VendorRegistrationRepository vendorRegistrationRepository(Ref ref) {
+Future<VendorRegistrationRepository> vendorRegistrationRepository(
+  Ref ref,
+) async {
   return ServerpodVendorRegistrationRepository();
 }

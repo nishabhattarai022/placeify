@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/constants/app_colors.dart';
-import '../../../domain/constants/vendor_registration_field_keys.dart';
 import '../../../domain/models/vendor_registration.dart';
 import '../../providers/vendor_registration_provider.dart';
 
@@ -68,21 +67,15 @@ class ReviewSubmitStep extends ConsumerWidget {
           rows: [
             _ReviewRow(
               'Business License',
-              isUploadedVendorDocument(form.documents.businessLicensePath)
-                  ? 'Uploaded'
-                  : 'Missing',
+              form.documents.businessLicensePath != null ? 'Uploaded' : 'Missing',
             ),
             _ReviewRow(
               'Government ID',
-              isUploadedVendorDocument(form.documents.governmentIdPath)
-                  ? 'Uploaded'
-                  : 'Missing',
+              form.documents.governmentIdPath != null ? 'Uploaded' : 'Missing',
             ),
             _ReviewRow(
               'Tax Certificate',
-              isUploadedVendorDocument(form.documents.taxCertificatePath)
-                  ? 'Uploaded'
-                  : 'Not provided',
+              form.documents.taxCertificatePath != null ? 'Uploaded' : 'Not provided',
             ),
           ],
         ),

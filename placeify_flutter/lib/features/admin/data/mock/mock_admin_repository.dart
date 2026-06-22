@@ -10,10 +10,6 @@ import 'package:placeify_flutter/features/admin/domain/models/admin_stats.dart';
 import 'package:placeify_flutter/features/admin/domain/models/platform_user.dart';
 import 'package:placeify_flutter/features/admin/domain/repositories/admin_repository.dart';
 import 'package:placeify_flutter/features/admin/domain/repositories/vendor_application_repository.dart';
-import 'package:placeify_client/placeify_client.dart' as client;
-
-import 'package:placeify_flutter/features/admin/domain/enums/user_role.dart'
-    as admin;
 import 'package:placeify_flutter/features/auth/domain/models/app_user.dart';
 import 'package:placeify_flutter/features/auth/domain/repositories/auth_repository.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
@@ -180,18 +176,12 @@ class MockAdminRepository implements AdminRepository {
       id: user.id,
       name: user.fullName,
       email: user.email,
-      role: _toAdminRole(user.role),
+      role: user.role,
       vendorStatus: user.vendorStatus,
       vendorId: user.vendorId,
       createdAt: AdminSeedData.createdAtFor(user.id),
     );
   }
-
-  admin.UserRole _toAdminRole(client.UserRole role) => switch (role) {
-        client.UserRole.consumer => admin.UserRole.customer,
-        client.UserRole.vendor => admin.UserRole.vendor,
-        client.UserRole.admin => admin.UserRole.admin,
-      };
 
   Future<AppUser?> _findUser(String userId) async {
     final users = await _authRepository.getAllUsers();

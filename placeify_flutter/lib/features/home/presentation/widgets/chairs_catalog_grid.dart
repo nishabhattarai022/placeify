@@ -1,43 +1,37 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/mock_product_repository.dart';
 import '../../domain/models/product.dart';
-import '../providers/catalog_provider.dart';
 import '../chairs_catalog_tokens.dart';
+import '../data/category_showcase_config.dart';
 import 'chairs_catalog_compact_card.dart';
 import 'chairs_catalog_wide_card.dart';
 import 'showcase_showroom_card.dart';
 
-class ChairsCatalogGrid extends ConsumerWidget {
+class ChairsCatalogGrid extends StatelessWidget {
   const ChairsCatalogGrid({this.categoryId = 'chairs', super.key});
 
   final String categoryId;
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(catalogIndexProvider);
-    final products = ref.watch(catalogProductsByCategoryProvider(categoryId));
-
-    if (products.isEmpty) {
-      return const SizedBox.shrink();
+  Product? _product(String id) {
+    try {
+      return MockProductRepository.products.firstWhere((p) => p.id == id);
+    } catch (_) {
+      return null;
     }
-
-    return _CatalogLayout(products: products);
   }
-}
-
-class _CatalogLayout extends StatelessWidget {
-  const _CatalogLayout({required this.products});
-
-  final List<Product> products;
 
   @override
   Widget build(BuildContext context) {
-    final slots = products.take(4).toList();
-    final p1 = slots.isNotEmpty ? slots[0] : null;
-    final p5 = slots.length > 1 ? slots[1] : null;
-    final p6 = slots.length > 2 ? slots[2] : null;
-    final p3 = slots.length > 3 ? slots[3] : null;
+    if (categoryId != 'chairs') {
+      return const SizedBox.shrink();
+    }
+
+    final ids = CategoryShowcaseConfig.chairProductIds();
+    final p1 = ids.isNotEmpty ? _product(ids[0]) : null;
+    final p5 = ids.length > 1 ? _product(ids[1]) : null;
+    final p6 = ids.length > 2 ? _product(ids[2]) : null;
+    final p3 = ids.length > 3 ? _product(ids[3]) : null;
 
     return IntrinsicHeight(
       child: Row(

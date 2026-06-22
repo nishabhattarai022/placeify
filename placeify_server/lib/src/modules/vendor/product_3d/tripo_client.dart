@@ -11,8 +11,35 @@ import 'aws_s3_put.dart';
 /// API key: [TripoApiKeyConfig.configFileName] or [TripoApiKeyConfig.apiKeyEnv].
 abstract final class TripoClient {
   static const _baseUrl = 'https://api.tripo3d.ai/v2/openapi';
-  static const _pollInterval = Duration(seconds: 3);
-  static const _maxPollAttempts = 120;
+  /// v2.5 multiview — fastest stable option for live demos (~1–2 min).
+  static const _modelVersion = 'v2.5-20250123';
+  static const _pollInterval = Duration(seconds: 2);
+  static const _maxPollAttempts = 60;
+
+  /// Fast demo profile: textured but not extreme/PBR (saves several minutes).
+  static const _baseTextureParams = <String, dynamic>{
+    'texture': true,
+    'pbr': false,
+    'texture_alignment': 'original_image',
+    'texture_quality': 'standard',
+    'orientation': 'align_image',
+    'enable_image_autofix': false,
+    'export_uv': false,
+    'smart_low_poly': false,
+    'quad': false,
+    'generate_parts': false,
+  };
+
+  static Map<String, dynamic> taskParamsForLogging({required int viewCount}) {
+    return _taskParams(viewCount: viewCount);
+  }
+
+  static Map<String, dynamic> _taskParams({required int viewCount}) {
+    return {
+      ..._baseTextureParams,
+      'face_limit': 50000,
+    };
+  }
 
   /// Uploads [imageBytes] to Tripo, runs image_to_model, returns a GLB download URL.
   static Future<String> generateModelFromImage(
@@ -20,6 +47,117 @@ abstract final class TripoClient {
     required List<int> imageBytes,
     required String imageFormat,
   }) async {
+    final apiKey = _requireApiKey();
+    final uploaded = await _uploadImage(
+      session,
+      apiKey: apiKey,
+      imageBytes: imageBytes,
+      imageFormat: imageFormat,
+    );
+
+    final taskId = await _createImageToModelTask(
+      apiKey,
+      bucket: uploaded.bucket,
+      key: uploaded.key,
+      fileType: uploaded.fileType,
+      viewCount: 1,
+    );
+
+    session.log('Tripo image_to_model task created: $taskId', level: LogLevel.info);
+
+    return _pollForModelUrl(session, apiKey, taskId);
+  }
+
+  /// Uploads up to four views in Tripo order [front, left, back, right].
+  ///
+  /// [views] must contain at least two non-null entries; index 0 (front) is required.
+  static Future<String> generateModelFromMultiview(
+    Session session, {
+    required List<TripoViewImage?> views,
+    int? sourceViewCount,
+    List<String>? slotLabels,
+  }) async {
+    if (views.length != 4) {
+      throw TripoClientException(
+        'Tripo multiview expects exactly 4 view slots [front, left, back, right].',
+      );
+    }
+    if (views.first == null) {
+      throw TripoClientException('Tripo multiview requires a front image.');
+    }
+
+    final provided = views.whereType<TripoViewImage>().length;
+    if (provided < 2) {
+      throw TripoClientException(
+        'Tripo multiview needs at least two images (front plus one side or back).',
+      );
+    }
+
+    final apiKey = _requireApiKey();
+    final uploadedViews = await Future.wait(
+      views.map((view) async {
+        if (view == null) return null;
+        return _uploadImage(
+          session,
+          apiKey: apiKey,
+          imageBytes: view.bytes,
+          imageFormat: view.format,
+        );
+      }),
+    );
+
+    final taskParams = _taskParams(viewCount: sourceViewCount ?? provided);
+    _logTextureGenerationSettings(
+      session,
+      taskType: 'multiview_to_model',
+      viewCount: sourceViewCount ?? provided,
+      taskParams: taskParams,
+      views: views,
+      slotLabels: slotLabels,
+    );
+
+    final taskId = await _createMultiviewToModelTask(
+      apiKey,
+      uploadedViews,
+      taskParams: taskParams,
+    );
+    session.log(
+      'Tripo multiview_to_model task created: $taskId ($provided/4 slots filled, '
+      '${sourceViewCount ?? provided} vendor photos)',
+      level: LogLevel.info,
+    );
+
+    return _pollForModelUrl(session, apiKey, taskId);
+  }
+
+  static void _logTextureGenerationSettings(
+    Session session, {
+    required String taskType,
+    required int viewCount,
+    required Map<String, dynamic> taskParams,
+    required List<TripoViewImage?> views,
+    List<String>? slotLabels,
+  }) {
+    session.log(
+      'Tripo $taskType texture settings (viewCount=$viewCount): '
+      '${jsonEncode(taskParams)}',
+      level: LogLevel.info,
+    );
+    for (var i = 0; i < views.length; i++) {
+      final view = views[i];
+      if (view == null) continue;
+      final label = slotLabels != null && i < slotLabels.length
+          ? slotLabels[i]
+          : 'slot_$i';
+      session.log(
+        'Tripo input $label: format=${view.format}, '
+        'bytes=${view.bytes.length}',
+        level: LogLevel.info,
+      );
+    }
+  }
+
+  static String _requireApiKey() {
     final apiKey = TripoApiKeyConfig.apiKey();
     if (apiKey == null || apiKey.isEmpty) {
       throw TripoClientException(
@@ -27,7 +165,15 @@ abstract final class TripoClient {
         'to config/tripo_api_key.yaml and add your key.',
       );
     }
+    return apiKey;
+  }
 
+  static Future<_UploadedTripoImage> _uploadImage(
+    Session session, {
+    required String apiKey,
+    required List<int> imageBytes,
+    required String imageFormat,
+  }) async {
     final stsFormat = _stsFormatForImage(imageFormat);
     final taskFileType = _taskFileTypeForImage(imageFormat);
 
@@ -48,20 +194,15 @@ abstract final class TripoClient {
     }
 
     session.log(
-      'Uploaded image to Tripo S3 (${imageBytes.length} bytes)',
+      'Uploaded image to Tripo S3 (${imageBytes.length} bytes, $imageFormat)',
       level: LogLevel.info,
     );
 
-    final taskId = await _createImageToModelTask(
-      apiKey,
+    return _UploadedTripoImage(
       bucket: sts.resourceBucket,
       key: sts.resourceUri,
       fileType: taskFileType,
     );
-
-    session.log('Tripo task created: $taskId', level: LogLevel.info);
-
-    return _pollForModelUrl(session, apiKey, taskId);
   }
 
   static Future<_StsCredentials> _requestStsToken(
@@ -91,13 +232,14 @@ abstract final class TripoClient {
     required String bucket,
     required String key,
     required String fileType,
+    required int viewCount,
   }) async {
     final response = await http.post(
       Uri.parse('$_baseUrl/task'),
       headers: _headers(apiKey),
       body: jsonEncode({
         'type': 'image_to_model',
-        'model_version': 'v2.5-20250123',
+        'model_version': _modelVersion,
         'file': {
           'type': fileType,
           'object': {
@@ -105,7 +247,46 @@ abstract final class TripoClient {
             'key': key,
           },
         },
-        'texture': true,
+        ..._taskParams(viewCount: viewCount),
+      }),
+    );
+    final body = _decodeResponse(response);
+    final data = _dataMap(body);
+    final taskId = data['task_id'] as String?;
+    if (taskId == null || taskId.isEmpty) {
+      throw TripoClientException('Tripo did not return a task id.');
+    }
+    return taskId;
+  }
+
+  static Future<String> _createMultiviewToModelTask(
+    String apiKey,
+    List<_UploadedTripoImage?> uploadedViews, {
+    required Map<String, dynamic> taskParams,
+  }) async {
+    final files = <Map<String, dynamic>>[];
+    for (final uploaded in uploadedViews) {
+      if (uploaded == null) {
+        files.add(<String, dynamic>{});
+        continue;
+      }
+      files.add({
+        'type': uploaded.fileType,
+        'object': {
+          'bucket': uploaded.bucket,
+          'key': uploaded.key,
+        },
+      });
+    }
+
+    final response = await http.post(
+      Uri.parse('$_baseUrl/task'),
+      headers: _headers(apiKey),
+      body: jsonEncode({
+        'type': 'multiview_to_model',
+        'model_version': _modelVersion,
+        'files': files,
+        ...taskParams,
       }),
     );
     final body = _decodeResponse(response);
@@ -145,6 +326,13 @@ abstract final class TripoClient {
 
       switch (status) {
         case 'success':
+          final consumed = data['consumed_credit'] ?? data['consumed_credits'];
+          if (consumed != null) {
+            session.log(
+              'Tripo task $taskId consumed $consumed credits',
+              level: LogLevel.info,
+            );
+          }
           final outputRaw = data['output'];
           final outputMap = outputRaw is Map
               ? Map<String, dynamic>.from(outputRaw)
@@ -171,12 +359,14 @@ abstract final class TripoClient {
     }
 
     throw TripoClientException(
-      'Tripo generation timed out. Try again in a few minutes.',
+      'Tripo generation timed out after ${(_maxPollAttempts * _pollInterval.inSeconds) ~/ 60} '
+      'minutes. Try again — Tripo may be busy.',
     );
   }
 
   static String? _pickModelUrl(Map<String, dynamic> output) {
-    for (final key in ['pbr_model', 'model', 'base_model']) {
+    // Prefer fully textured model (HD diffuse + PBR when enabled).
+    for (final key in ['model', 'pbr_model', 'base_model']) {
       final url = _extractUrl(output[key]);
       if (url != null) return url;
     }
@@ -295,6 +485,29 @@ abstract final class TripoClient {
     }
     return null;
   }
+}
+
+/// One image slot for Tripo multiview generation.
+final class TripoViewImage {
+  const TripoViewImage({
+    required this.bytes,
+    required this.format,
+  });
+
+  final List<int> bytes;
+  final String format;
+}
+
+final class _UploadedTripoImage {
+  const _UploadedTripoImage({
+    required this.bucket,
+    required this.key,
+    required this.fileType,
+  });
+
+  final String bucket;
+  final String key;
+  final String fileType;
 }
 
 final class _StsCredentials {
