@@ -1,0 +1,9 @@
+### Payment snapshot for a customer order.
+class: UserOrderPaymentSummary
+fields:
+  orderId: int
+  status: PaymentTransactionStatus
+  paymentMethod: PaymentMethod
+  amount: double
+  provider: String
+  providerTransactionId: String?
