@@ -40,6 +40,48 @@ abstract final class OrderNotificationService {
     );
   }
 
+  static Future<void> notifyCustomerOrderPlaced(
+    Session session, {
+    required Order order,
+  }) async {
+    final orderLabel = _orderLabel(order);
+    await _notifyCustomer(
+      session,
+      order: order,
+      title: 'Order placed',
+      body: 'Your order #$orderLabel has been placed successfully.',
+      type: InAppNotificationType.orderPlaced,
+      event: 'order_placed',
+    );
+  }
+
+  static Future<void> notifyVendorOrderCancelled(
+    Session session, {
+    required Order order,
+    required UuidValue vendorId,
+    required String reason,
+  }) async {
+    final vendorUserId = await _notifications.vendorUserId(session, vendorId);
+    if (vendorUserId == null) return;
+
+    final orderLabel = _orderLabel(order);
+    await _notifications.create(
+      session,
+      userId: vendorUserId,
+      title: 'Order cancelled',
+      message:
+          'Order #$orderLabel was cancelled by the customer. Reason: $reason',
+      type: InAppNotificationType.orderCancelled,
+      referenceId: order.id,
+    );
+
+    session.log(
+      'VendorNotification event=order_cancelled vendorId=$vendorId '
+      'orderId=${order.id}',
+      level: LogLevel.info,
+    );
+  }
+
   static Future<void> notifyOrderAccepted(
     Session session, {
     required Order order,

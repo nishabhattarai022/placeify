@@ -13,6 +13,7 @@
 import 'package:serverpod/serverpod.dart' as _i1;
 import 'order_status.dart' as _i2;
 import 'delivery_stage.dart' as _i3;
+import 'payment_transaction_status.dart' as _i4;
 
 /// Order row for the customer profile orders list.
 abstract class UserOrderSummary
@@ -27,6 +28,7 @@ abstract class UserOrderSummary
     this.primaryProductName,
     this.latestDeliveryStage,
     this.latestDeliveryNote,
+    this.paymentStatus,
   });
 
   factory UserOrderSummary({
@@ -39,6 +41,7 @@ abstract class UserOrderSummary
     String? primaryProductName,
     _i3.DeliveryStage? latestDeliveryStage,
     String? latestDeliveryNote,
+    _i4.PaymentTransactionStatus? paymentStatus,
   }) = _UserOrderSummaryImpl;
 
   factory UserOrderSummary.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -58,6 +61,11 @@ abstract class UserOrderSummary
               (jsonSerialization['latestDeliveryStage'] as String),
             ),
       latestDeliveryNote: jsonSerialization['latestDeliveryNote'] as String?,
+      paymentStatus: jsonSerialization['paymentStatus'] == null
+          ? null
+          : _i4.PaymentTransactionStatus.fromJson(
+              (jsonSerialization['paymentStatus'] as String),
+            ),
     );
   }
 
@@ -79,6 +87,8 @@ abstract class UserOrderSummary
 
   String? latestDeliveryNote;
 
+  _i4.PaymentTransactionStatus? paymentStatus;
+
   /// Returns a shallow copy of this [UserOrderSummary]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -92,6 +102,7 @@ abstract class UserOrderSummary
     String? primaryProductName,
     _i3.DeliveryStage? latestDeliveryStage,
     String? latestDeliveryNote,
+    _i4.PaymentTransactionStatus? paymentStatus,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -107,6 +118,7 @@ abstract class UserOrderSummary
       if (latestDeliveryStage != null)
         'latestDeliveryStage': latestDeliveryStage?.toJson(),
       if (latestDeliveryNote != null) 'latestDeliveryNote': latestDeliveryNote,
+      if (paymentStatus != null) 'paymentStatus': paymentStatus?.toJson(),
     };
   }
 
@@ -124,6 +136,7 @@ abstract class UserOrderSummary
       if (latestDeliveryStage != null)
         'latestDeliveryStage': latestDeliveryStage?.toJson(),
       if (latestDeliveryNote != null) 'latestDeliveryNote': latestDeliveryNote,
+      if (paymentStatus != null) 'paymentStatus': paymentStatus?.toJson(),
     };
   }
 
@@ -146,6 +159,7 @@ class _UserOrderSummaryImpl extends UserOrderSummary {
     String? primaryProductName,
     _i3.DeliveryStage? latestDeliveryStage,
     String? latestDeliveryNote,
+    _i4.PaymentTransactionStatus? paymentStatus,
   }) : super._(
          id: id,
          orderNumber: orderNumber,
@@ -156,6 +170,7 @@ class _UserOrderSummaryImpl extends UserOrderSummary {
          primaryProductName: primaryProductName,
          latestDeliveryStage: latestDeliveryStage,
          latestDeliveryNote: latestDeliveryNote,
+         paymentStatus: paymentStatus,
        );
 
   /// Returns a shallow copy of this [UserOrderSummary]
@@ -172,6 +187,7 @@ class _UserOrderSummaryImpl extends UserOrderSummary {
     Object? primaryProductName = _Undefined,
     Object? latestDeliveryStage = _Undefined,
     Object? latestDeliveryNote = _Undefined,
+    Object? paymentStatus = _Undefined,
   }) {
     return UserOrderSummary(
       id: id ?? this.id,
@@ -189,6 +205,9 @@ class _UserOrderSummaryImpl extends UserOrderSummary {
       latestDeliveryNote: latestDeliveryNote is String?
           ? latestDeliveryNote
           : this.latestDeliveryNote,
+      paymentStatus: paymentStatus is _i4.PaymentTransactionStatus?
+          ? paymentStatus
+          : this.paymentStatus,
     );
   }
 }

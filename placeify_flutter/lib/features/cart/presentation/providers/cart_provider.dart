@@ -1,5 +1,5 @@
-import 'package:placeify_client/placeify_client.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:placeify_client/placeify_client.dart' hide Order;
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 import '../../../../core/config/placeify_server_client.dart';
@@ -8,7 +8,7 @@ import '../../../home/presentation/providers/catalog_provider.dart';
 import '../../../home/presentation/providers/category_provider.dart';
 import '../../../orders/presentation/providers/orders_provider.dart';
 import '../../../profile/presentation/providers/profile_dashboard_provider.dart';
-import '../../data/cart_display_config.dart';
+import '../../data/cart_api_errors.dart';
 import '../../data/serverpod_cart_repository.dart';
 import '../../domain/cart_line_item.dart';
 
@@ -34,9 +34,14 @@ class Cart extends _$Cart {
   List<CartLineItem> build() {
     ref.watch(catalogIndexProvider);
     ref.listen(currentUserProvider, (previous, next) {
+      final wasLoggedIn = previous?.value != null;
       next.whenData((user) {
         if (user != null) {
-          _refreshFromServer();
+          if (!wasLoggedIn && state.isNotEmpty) {
+            _mergeLocalCartOnSignIn();
+          } else {
+            _refreshFromServer();
+          }
         } else {
           state = const [];
         }
@@ -50,80 +55,114 @@ class Cart extends _$Cart {
     if (!client.auth.isAuthenticated) return;
     try {
       state = await _cartRepository.fetchItems();
-    } catch (_) {}
+      await ref
+          .read(catalogIndexProvider.notifier)
+          .ensureProducts(state.map((item) => item.productId));
+    } catch (_) {
+      // Keep last known server snapshot on transient refresh failures.
+    }
   }
 
   Future<void> refresh() => _refreshFromServer();
 
-  Future<void> addProduct(String productId, {int quantity = 1}) async {
-    final items = [...state];
-    final index = items.indexWhere((e) => e.productId == productId);
-    if (index >= 0) {
-      items[index] = items[index].copyWith(
-        quantity: items[index].quantity + quantity,
-      );
-    } else {
-      items.add(CartLineItem(productId: productId, quantity: quantity));
-    }
-    state = items;
-
+  Future<void> _mergeLocalCartOnSignIn() async {
     if (!client.auth.isAuthenticated) return;
+
+    final localItems = [...state];
+    await _refreshFromServer();
+    if (localItems.isEmpty) return;
+
+    for (final item in localItems) {
+      try {
+        await _cartRepository.addProduct(
+          item.productId,
+          quantity: item.quantity,
+        );
+      } catch (_) {
+        // Skip catalog previews or invalid product ids.
+      }
+    }
+    await _refreshFromServer();
+  }
+
+  /// Returns an error message when the server cart could not be updated.
+  Future<String?> addProduct(String productId, {int quantity = 1}) async {
+    if (!client.auth.isAuthenticated) {
+      _applyLocalAdd(productId, quantity: quantity);
+      return 'Sign in to save items to your cart for checkout.';
+    }
+
     try {
       await _cartRepository.addProduct(productId, quantity: quantity);
       await _refreshFromServer();
-    } catch (_) {
+      return null;
+    } catch (error) {
       await _refreshFromServer();
+      return CartApiErrors.message(error);
     }
   }
 
-  Future<void> increment(String productId) async {
+  Future<String?> increment(String productId) async {
     final index = state.indexWhere((e) => e.productId == productId);
-    if (index < 0) return;
+    if (index < 0) return null;
 
     final nextQuantity = state[index].quantity + 1;
-    state = [
-      for (final item in state)
-        if (item.productId == productId)
-          item.copyWith(quantity: nextQuantity)
-        else
-          item,
-    ];
-
-    if (!client.auth.isAuthenticated) return;
-    try {
-      await _cartRepository.setQuantity(productId, nextQuantity);
-    } catch (_) {}
-  }
-
-  Future<void> decrement(String productId) async {
-    final index = state.indexWhere((e) => e.productId == productId);
-    if (index < 0) return;
-
-    if (state[index].quantity > 1) {
-      final nextQuantity = state[index].quantity - 1;
-      state = [
-        for (final line in state)
-          if (line.productId == productId)
-            line.copyWith(quantity: nextQuantity)
-          else
-            line,
-      ];
-      if (!client.auth.isAuthenticated) return;
-      try {
-        await _cartRepository.setQuantity(productId, nextQuantity);
-      } catch (_) {}
-      return;
+    if (!client.auth.isAuthenticated) {
+      _setLocalQuantity(productId, nextQuantity);
+      return null;
     }
 
-    await remove(productId);
+    try {
+      await _cartRepository.setQuantity(productId, nextQuantity);
+      await _refreshFromServer();
+      return null;
+    } catch (error) {
+      await _refreshFromServer();
+      return CartApiErrors.message(error);
+    }
   }
 
-  Future<void> remove(String productId) async {
-    state = state.where((e) => e.productId != productId).toList();
-    if (!client.auth.isAuthenticated) return;
+  Future<String?> decrement(String productId) async {
+    final index = state.indexWhere((e) => e.productId == productId);
+    if (index < 0) return null;
+
+    if (state[index].quantity > 1) {
+      return _decrementQuantity(productId, state[index].quantity - 1);
+    }
+
+    return remove(productId);
+  }
+
+  Future<String?> _decrementQuantity(String productId, int nextQuantity) async {
+    if (!client.auth.isAuthenticated) {
+      _setLocalQuantity(productId, nextQuantity);
+      return null;
+    }
+
+    try {
+      await _cartRepository.setQuantity(productId, nextQuantity);
+      await _refreshFromServer();
+      return null;
+    } catch (error) {
+      await _refreshFromServer();
+      return CartApiErrors.message(error);
+    }
+  }
+
+  Future<String?> remove(String productId) async {
+    if (!client.auth.isAuthenticated) {
+      state = state.where((e) => e.productId != productId).toList();
+      return null;
+    }
+
     try {
       await _cartRepository.removeProduct(productId);
-    } catch (_) {}
+      await _refreshFromServer();
+      return null;
+    } catch (error) {
+      await _refreshFromServer();
+      return CartApiErrors.message(error);
+    }
   }
 
   Future<String> checkout() async {
@@ -132,6 +171,18 @@ class Cart extends _$Cart {
     }
 
     try {
+      final serverItems = await _cartRepository.fetchItems();
+      if (serverItems.isEmpty) {
+        state = const [];
+        return CartApiErrors.message(
+          StateError('CART_EMPTY'),
+          fallback:
+              'Your cart is empty on the server. Sign in, add products from Browse, then try again.',
+        );
+      }
+
+      state = serverItems;
+
       final profile = await client.user.getCurrentUser();
       final savedAddress = profile?.address?.trim();
       final shippingAddress = savedAddress != null && savedAddress.isNotEmpty
@@ -142,19 +193,47 @@ class Cart extends _$Cart {
         shippingAddress,
         paymentMethod: PaymentMethod.mockOnline,
       );
-      state = const [];
-      ref.invalidate(profileOrdersProvider);
-      ref.invalidate(profileDashboardProvider);
-      ref.invalidate(ordersProvider);
 
+      // Mock online payment: mark payment received without skipping vendor accept.
       if (result.order.id != null) {
         await client.user.completePayment(result.order.id!);
       }
 
+      state = const [];
+      ref.invalidate(profileOrdersProvider);
+      ref.invalidate(profileDashboardProvider);
+      ref.invalidate(ordersProvider);
       return 'Order #${result.order.id} placed successfully';
-    } catch (_) {
-      return 'Checkout failed. Add items and try again.';
+    } catch (error) {
+      await _refreshFromServer();
+      return CartApiErrors.message(
+        error,
+        fallback: 'Checkout failed. Add items while signed in and try again.',
+      );
     }
+  }
+
+  void _applyLocalAdd(String productId, {int quantity = 1}) {
+    final items = [...state];
+    final index = items.indexWhere((e) => e.productId == productId);
+    if (index >= 0) {
+      items[index] = items[index].copyWith(
+        quantity: items[index].quantity + quantity,
+      );
+    } else {
+      items.add(CartLineItem(productId: productId, quantity: quantity));
+    }
+    state = items;
+  }
+
+  void _setLocalQuantity(String productId, int quantity) {
+    state = [
+      for (final item in state)
+        if (item.productId == productId)
+          item.copyWith(quantity: quantity)
+        else
+          item,
+    ];
   }
 }
 
@@ -180,17 +259,13 @@ CartTotals cartTotals(Ref ref) {
   for (final item in items) {
     final product = ref.watch(productByIdProvider(item.productId));
     if (product == null) continue;
-    final unit = CartDisplayConfig.priceFor(product.id, product.price);
-    subtotal += unit * item.quantity;
+    subtotal += product.price * item.quantity;
   }
-
-  final discount = _roundMoney(subtotal * CartDisplayConfig.discountRate);
-  final total = _roundMoney(subtotal - discount);
 
   return CartTotals(
     subtotal: _roundMoney(subtotal),
-    discount: discount,
-    total: total,
+    discount: 0,
+    total: _roundMoney(subtotal),
   );
 }
 

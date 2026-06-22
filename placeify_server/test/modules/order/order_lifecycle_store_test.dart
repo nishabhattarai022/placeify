@@ -80,4 +80,27 @@ void main() {
       );
     });
   });
+
+  group('OrderLifecycleStore order status mapping', () {
+    test('maps delivery status to order status', () {
+      expect(
+        OrderLifecycleStore.orderStatusForDelivery(
+          OrderDeliveryStatus.processing,
+        ),
+        OrderStatus.processing,
+      );
+      expect(
+        OrderLifecycleStore.orderStatusForDelivery(
+          OrderDeliveryStatus.shipped,
+        ),
+        OrderStatus.shipped,
+      );
+      expect(
+        OrderLifecycleStore.orderStatusForDelivery(
+          OrderDeliveryStatus.delivered,
+        ),
+        OrderStatus.delivered,
+      );
+    });
+  });
 }

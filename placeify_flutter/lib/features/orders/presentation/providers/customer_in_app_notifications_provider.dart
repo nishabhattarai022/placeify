@@ -36,7 +36,10 @@ class CustomerInAppNotifications extends _$CustomerInAppNotifications {
 
   Future<CustomerInAppNotificationsState> _load() async {
     try {
-      final notifications = await client.notification.listInAppNotifications();
+      final notifications = await client.notification.listInAppNotifications(
+        limit: 50,
+        offset: 0,
+      );
       final unreadCount =
           await client.notification.unreadInAppNotificationCount();
       return CustomerInAppNotificationsState(

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +19,7 @@ import '../domain/models/delivery_update.dart';
 import '../domain/models/vendor_order.dart';
 import '../domain/enums/payment_status.dart';
 import '../domain/models/payment_update.dart';
+import 'providers/vendor_notifications_provider.dart';
 import 'providers/vendor_order_detail_provider.dart';
 import 'providers/vendor_payments_provider.dart';
 import 'providers/vendor_product_image_provider.dart';
@@ -32,9 +35,25 @@ class VendorOrderDetailScreen extends ConsumerWidget {
 
   final String orderId;
 
+  Future<void> _acknowledgeOrderNotification(
+    WidgetRef ref,
+    String orderId,
+  ) async {
+    final notifier = ref.read(vendorNotificationsProvider.notifier);
+    await notifier.refresh();
+    notifier.markOrderNotificationReadForOrderId(orderId);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final detailAsync = ref.watch(vendorOrderDetailProvider(orderId));
+
+    ref.listen(vendorOrderDetailProvider(orderId), (previous, next) {
+      next.whenData((detail) {
+        if (detail == null) return;
+        unawaited(_acknowledgeOrderNotification(ref, detail.order.id));
+      });
+    });
 
     return Scaffold(
       backgroundColor: AppColors.cream,

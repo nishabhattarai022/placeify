@@ -135,6 +135,11 @@ class CheckoutStore {
       );
     }
 
+    await OrderNotificationService.notifyCustomerOrderPlaced(
+      session,
+      order: order,
+    );
+
     return CheckoutResult(order: order, itemCount: itemCount);
   }
 }

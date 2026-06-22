@@ -21,6 +21,7 @@ import 'widgets/consumer_order_status_chip.dart';
 import 'widgets/consumer_payment_status_chip.dart';
 import 'widgets/order_item_row.dart';
 import 'widgets/order_reason_sheets.dart';
+import 'widgets/order_notifications_section.dart';
 import 'widgets/order_section_card.dart';
 import 'widgets/order_timeline.dart';
 
@@ -133,6 +134,8 @@ class _OrderDetailBody extends ConsumerWidget {
                 title: OrderStrings.timelineSectionTitle,
                 child: OrderTimeline(order: order),
               ),
+              const SizedBox(height: 12),
+              OrderNotificationsSection(orderId: order.id),
               const SizedBox(height: 12),
               OrderSectionCard(
                 title: OrderStrings.itemsSectionTitle,

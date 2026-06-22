@@ -68,6 +68,7 @@ abstract final class OrderStrings {
   static const orderDetailTitle = 'Order details';
   static const vendorSectionTitle = 'Sold by';
   static const timelineSectionTitle = 'Order progress';
+  static const notificationsSectionTitle = 'Updates';
   static const itemsSectionTitle = 'Items';
   static const summarySectionTitle = 'Order summary';
   static const addressSectionTitle = 'Delivery address';

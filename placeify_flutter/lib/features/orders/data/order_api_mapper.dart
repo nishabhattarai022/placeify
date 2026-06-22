@@ -28,7 +28,9 @@ abstract final class OrderApiMapper {
       ],
       statusHistory: _historyFromSummary(summary),
       placedAt: summary.placedAt,
-      paymentStatus: PaymentStatus.paid,
+      paymentStatus: summary.paymentStatus == null
+          ? PaymentStatus.pending
+          : mapPaymentStatus(summary.paymentStatus!),
       paymentMethod: 'Online',
       subtotal: summary.totalAmount,
       deliveryFee: 0,
@@ -117,8 +119,12 @@ abstract final class OrderApiMapper {
     if (status == OrderStatus.processing) {
       return ConsumerOrderStatus.packed;
     }
-    if (status == OrderStatus.confirmed || status == OrderStatus.accepted) {
+    if (status == OrderStatus.accepted) {
       return ConsumerOrderStatus.confirmed;
+    }
+    // Paid legacy rows may still be `confirmed` before vendor accept.
+    if (status == OrderStatus.confirmed) {
+      return ConsumerOrderStatus.placed;
     }
     return ConsumerOrderStatus.placed;
   }
@@ -147,6 +153,7 @@ abstract final class OrderApiMapper {
           primaryProductName: detail.primaryProductName,
           latestDeliveryStage: detail.latestDeliveryStage,
           latestDeliveryNote: detail.latestDeliveryNote,
+          paymentStatus: detail.payment.status,
         ),
       );
     }

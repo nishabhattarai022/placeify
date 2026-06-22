@@ -2,6 +2,8 @@ import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
+import '../notification/order_notification_service.dart';
+import '../order/order_lifecycle_store.dart';
 import 'user_payment_store.dart';
 
 class UserOrderStore {
@@ -43,6 +45,10 @@ class UserOrderStore {
       );
 
       final latestDelivery = await _latestDeliveryUpdate(session, orderId);
+      final payment = await PaymentTransaction.db.findFirstRow(
+        session,
+        where: (row) => row.orderId.equals(orderId),
+      );
 
       summaries.add(
         _buildSummary(
@@ -50,6 +56,7 @@ class UserOrderStore {
           items: items,
           latestDeliveryStage: latestDelivery?.stage,
           latestDeliveryNote: latestDelivery?.note,
+          paymentStatus: payment?.status,
         ),
       );
     }
@@ -158,13 +165,43 @@ class UserOrderStore {
       );
     }
 
-    await Order.db.updateRow(
-      session,
-      order.copyWith(
-        status: OrderStatus.cancelled,
-        updatedAt: DateTime.now(),
-      ),
-    );
+    await session.db.transaction((transaction) async {
+      await OrderLifecycleStore.updateOrderWithVersion(
+        session,
+        order,
+        (current) => current.copyWith(
+          status: OrderStatus.cancelled,
+          rejectionReason: trimmed,
+        ),
+        transaction: transaction,
+      );
+
+      await OrderLifecycleStore.appendHistory(
+        session,
+        orderId,
+        statusType: OrderStatusHistoryType.order,
+        previousStatus: order.status.name,
+        newStatus: OrderStatus.cancelled.name,
+        changedByUserId: userId,
+        note: trimmed,
+        transaction: transaction,
+      );
+
+      final items = await OrderItem.db.find(
+        session,
+        where: (item) => item.orderId.equals(orderId),
+        transaction: transaction,
+      );
+      final vendorIds = items.map((item) => item.vendorId).toSet();
+      for (final vendorId in vendorIds) {
+        await OrderNotificationService.notifyVendorOrderCancelled(
+          session,
+          order: order.copyWith(status: OrderStatus.cancelled),
+          vendorId: vendorId,
+          reason: trimmed,
+        );
+      }
+    });
 
     return getDetail(session, userId, orderId);
   }
@@ -200,6 +237,7 @@ class UserOrderStore {
     required List<OrderItem> items,
     DeliveryStage? latestDeliveryStage,
     String? latestDeliveryNote,
+    PaymentTransactionStatus? paymentStatus,
   }) {
     final orderId = order.id!;
     final primaryName = items.isEmpty
@@ -223,6 +261,7 @@ class UserOrderStore {
       primaryProductName: displayName,
       latestDeliveryStage: latestDeliveryStage,
       latestDeliveryNote: latestDeliveryNote,
+      paymentStatus: paymentStatus,
     );
   }
 }
