@@ -69,6 +69,7 @@ class MockVendorRepository implements VendorRepository {
   @override
   Future<List<VendorOrder>> getOrders(String vendorId, {int limit = 20}) async {
     await Future<void>.delayed(const Duration(milliseconds: 150));
+    VendorMockConfig.ensureDefaultOrders();
     return VendorMockConfig.ordersFor(vendorId, limit: limit);
   }
 

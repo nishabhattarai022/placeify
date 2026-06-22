@@ -1,4 +1,5 @@
 import 'package:placeify/core/constants/app_colors.dart';
+import 'package:placeify/features/admin/data/config/admin_seed_data.dart';
 import 'package:placeify/features/vendor/domain/enums/delivery_stage.dart';
 import 'package:placeify/features/vendor/domain/enums/notification_type.dart';
 import 'package:placeify/features/vendor/domain/enums/order_status.dart';
@@ -17,6 +18,23 @@ import 'package:placeify/features/vendor/domain/models/vendor_stats.dart';
 /// Seed data for mock vendor repositories and legacy dashboard widgets.
 abstract final class VendorMockConfig {
   static const demoVendorId = 'demo-vendor';
+
+  /// Consumer shop listings — no vendor-portal demo orders or inventory.
+  static const _shopOnlyVendorIds = {
+    AdminSeedData.approvedVendorId,
+    ...AdminSeedData.catalogShopVendorIds,
+  };
+
+  /// Whether this vendor ID should see the shared demo portal dataset.
+  static bool usesDemoPortalData(String vendorId) {
+    if (vendorId == demoVendorId) return true;
+    if (_shopOnlyVendorIds.contains(vendorId)) return false;
+    return true;
+  }
+
+  static VendorOrder _withVendorId(VendorOrder order, String vendorId) {
+    return order.vendorId == vendorId ? order : order.copyWith(vendorId: vendorId);
+  }
 
   static const revenue = 8400.0;
 
@@ -101,7 +119,7 @@ abstract final class VendorMockConfig {
     responseRate: 0.67,
   );
 
-  static final products = [
+  static List<VendorProduct> _buildDefaultProducts() => [
     VendorProduct(
       id: 'p1',
       vendorId: demoVendorId,
@@ -212,7 +230,24 @@ abstract final class VendorMockConfig {
     ),
   ];
 
-  static final orders = [
+  static final List<VendorProduct> products = _buildDefaultProducts();
+
+  /// Restores the demo catalog after local data wipes or bulk deletes.
+  static void ensureDefaultCatalog() {
+    if (products.isEmpty) {
+      products.addAll(_buildDefaultProducts());
+    }
+  }
+
+  static final orders = _buildDefaultOrders();
+
+  /// Restores demo orders after local data wipes or status changes.
+  static void ensureDefaultOrders() {
+    if (orders.isNotEmpty) return;
+    orders.addAll(_buildDefaultOrders());
+  }
+
+  static List<VendorOrder> _buildDefaultOrders() => [
     VendorOrder(
       id: 'vo1',
       orderNumber: '4821',
@@ -580,7 +615,7 @@ abstract final class VendorMockConfig {
   }
 
   static VendorStats statsFor(String vendorId) {
-    if (!isKnownVendor(vendorId)) {
+    if (!usesDemoPortalData(vendorId)) {
       return const VendorStats(
         revenue: 0,
         orderCount: 0,
@@ -596,14 +631,21 @@ abstract final class VendorMockConfig {
   }
 
   static List<VendorOrder> ordersFor(String vendorId, {int limit = 20}) {
-    if (!isKnownVendor(vendorId)) return [];
-    return orders.take(limit).toList();
+    if (!usesDemoPortalData(vendorId)) return [];
+    ensureDefaultOrders();
+    return orders
+        .take(limit)
+        .map((order) => _withVendorId(order, vendorId))
+        .toList();
   }
 
   static VendorOrder? orderById(String vendorId, String orderId) {
-    if (!isKnownVendor(vendorId)) return null;
+    if (!usesDemoPortalData(vendorId)) return null;
+    ensureDefaultOrders();
     for (final order in orders) {
-      if (order.id == orderId) return order;
+      if (order.id == orderId) {
+        return _withVendorId(order, vendorId);
+      }
     }
     return null;
   }
@@ -659,7 +701,7 @@ abstract final class VendorMockConfig {
     String? note,
     String? photoProofPath,
   }) {
-    if (!isKnownVendor(vendorId)) return null;
+    if (!usesDemoPortalData(vendorId)) return null;
 
     final order = orderById(vendorId, orderId);
     if (order == null) return null;
@@ -694,29 +736,30 @@ abstract final class VendorMockConfig {
   }
 
   static List<VendorNotification> notificationsFor(String vendorId) {
-    if (!isKnownVendor(vendorId)) return [];
+    if (!usesDemoPortalData(vendorId)) return [];
     return notifications;
   }
 
   static List<VendorPayout> payoutsFor(String vendorId) {
-    if (!isKnownVendor(vendorId)) return [];
+    if (!usesDemoPortalData(vendorId)) return [];
     return payouts;
   }
 
   static List<VendorProduct> productsFor(String vendorId) {
-    if (!isKnownVendor(vendorId)) return [];
+    if (!usesDemoPortalData(vendorId)) return [];
+    ensureDefaultCatalog();
     return products;
   }
 
   static List<double> revenueSeriesFor(String vendorId) {
-    if (!isKnownVendor(vendorId)) {
+    if (!usesDemoPortalData(vendorId)) {
       return List<double>.filled(revenueSeries.length, 0);
     }
     return revenueSeries;
   }
 
   static List<TopProductStat> topProductsFor(String vendorId) {
-    if (!isKnownVendor(vendorId)) return [];
+    if (!usesDemoPortalData(vendorId)) return [];
     return topProducts;
   }
 

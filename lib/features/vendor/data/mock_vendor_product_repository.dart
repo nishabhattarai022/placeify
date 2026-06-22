@@ -17,6 +17,7 @@ class MockVendorProductRepository implements VendorProductRepository {
   @override
   Future<List<VendorProduct>> getProducts(String vendorId) async {
     await Future<void>.delayed(const Duration(milliseconds: 150));
+    VendorMockConfig.ensureDefaultCatalog();
     return VendorMockConfig.productsFor(vendorId);
   }
 
@@ -33,7 +34,7 @@ class MockVendorProductRepository implements VendorProductRepository {
   ) async {
     await Future<void>.delayed(const Duration(milliseconds: 200));
 
-    if (!VendorMockConfig.isKnownVendor(vendorId)) {
+    if (!VendorMockConfig.usesDemoPortalData(vendorId)) {
       throw VendorProductActionException('Vendor account not found.');
     }
 
@@ -54,13 +55,13 @@ class MockVendorProductRepository implements VendorProductRepository {
   ) async {
     await Future<void>.delayed(const Duration(milliseconds: 250));
 
-    if (!VendorMockConfig.isKnownVendor(vendorId)) {
+    if (!VendorMockConfig.usesDemoPortalData(vendorId)) {
       throw VendorProductActionException('Vendor account not found.');
     }
 
     final created = product.copyWith(
       id: product.id.isEmpty ? VendorMockConfig.nextProductId() : product.id,
-      vendorId: vendorId,
+      vendorId: VendorMockConfig.demoVendorId,
     );
 
     return VendorMockConfig.upsertProduct(created);
@@ -73,7 +74,7 @@ class MockVendorProductRepository implements VendorProductRepository {
   ) async {
     await Future<void>.delayed(const Duration(milliseconds: 250));
 
-    if (!VendorMockConfig.isKnownVendor(vendorId)) {
+    if (!VendorMockConfig.usesDemoPortalData(vendorId)) {
       throw VendorProductActionException('Vendor account not found.');
     }
 

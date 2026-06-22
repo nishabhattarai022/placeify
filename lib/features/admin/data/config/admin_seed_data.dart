@@ -27,6 +27,18 @@ abstract final class AdminSeedData {
   static const approvedUserId = 'seed-approved-user-1';
   static const approvedVendorId = 'seed-vendor-approved-1';
 
+  static const shopVendorNestId = 'seed-vendor-shop-nest';
+  static const shopVendorHimalayaId = 'seed-vendor-shop-himalaya';
+  static const shopVendorCraftsId = 'seed-vendor-shop-crafts';
+  static const shopVendorUrbanId = 'seed-vendor-shop-urban';
+
+  static const catalogShopVendorIds = [
+    shopVendorNestId,
+    shopVendorHimalayaId,
+    shopVendorCraftsId,
+    shopVendorUrbanId,
+  ];
+
   static const suspendedUserId = 'seed-suspended-user-1';
   static const suspendedVendorId = 'seed-vendor-suspended-1';
 
@@ -55,7 +67,10 @@ abstract final class AdminSeedData {
   }
 
   static void _seedApprovedVendorProfiles(SharedPreferences prefs) {
-    VendorProfileProvisioner.ensureFromRegistration(approvedVendorId, prefs);
+    final vendorIds = [approvedVendorId, ...catalogShopVendorIds];
+    for (final vendorId in vendorIds) {
+      VendorProfileProvisioner.ensureFromRegistration(vendorId, prefs);
+    }
   }
 
   static Future<void> _seedUsers(SharedPreferences prefs) async {
@@ -116,6 +131,10 @@ abstract final class AdminSeedData {
       pendingVendor2Id: DateTime(2026, 6, 7, 14, 20),
       pendingVendor3Id: DateTime(2026, 6, 6, 9, 5),
       approvedVendorId: DateTime(2026, 3, 15, 11, 30),
+      shopVendorNestId: DateTime(2026, 4, 2, 9, 15),
+      shopVendorHimalayaId: DateTime(2026, 4, 10, 14, 0),
+      shopVendorCraftsId: DateTime(2026, 4, 18, 11, 45),
+      shopVendorUrbanId: DateTime(2026, 5, 5, 16, 30),
       suspendedVendorId: DateTime(2026, 2, 20, 17, 0),
     };
 
@@ -252,6 +271,140 @@ abstract final class AdminSeedData {
             bankName: 'Standard Chartered',
             accountNumber: '1111222233',
             routingNumber: 'SCBLNPKA',
+          ),
+        ),
+      ),
+      shopVendorNestId: _registrationEntry(
+        vendorId: shopVendorNestId,
+        submittedAt: submitted[shopVendorNestId]!,
+        registration: VendorRegistration(
+          business: const VendorBusinessInfo(
+            businessName: 'Nepal Nest Furniture',
+            contactName: 'Sunita Gurung',
+            email: 'sunita.nest@placeify.demo',
+            phone: '+977 9822222222',
+            taxId: 'PAN-987654321',
+          ),
+          address: const VendorAddress(
+            street: 'Lakeside Road 4',
+            city: 'Pokhara',
+            state: 'Gandaki',
+            postalCode: '33700',
+            country: 'Nepal',
+          ),
+          category: const VendorCategoryInfo(
+            categories: ['Furniture', 'Beds'],
+            description: 'Locally sourced wooden furniture from Pokhara.',
+          ),
+          documents: const VendorDocuments(
+            businessLicensePath: '/mock/docs/nest-license.pdf',
+            taxCertificatePath: '/mock/docs/nest-tax.pdf',
+          ),
+          bank: const VendorBankDetails(
+            accountHolderName: 'Sunita Gurung',
+            bankName: 'Global IME Bank',
+            accountNumber: '9876543210',
+            routingNumber: 'GLBBNPKA',
+          ),
+        ),
+      ),
+      shopVendorHimalayaId: _registrationEntry(
+        vendorId: shopVendorHimalayaId,
+        submittedAt: submitted[shopVendorHimalayaId]!,
+        registration: VendorRegistration(
+          business: const VendorBusinessInfo(
+            businessName: 'Himalayan Home Decor',
+            contactName: 'Anil Shrestha',
+            email: 'anil.himalaya@placeify.demo',
+            phone: '+977 9833333333',
+          ),
+          address: const VendorAddress(
+            street: 'Durbar Marg 8',
+            city: 'Kathmandu',
+            state: 'Bagmati',
+            postalCode: '44600',
+            country: 'Nepal',
+          ),
+          category: const VendorCategoryInfo(
+            categories: ['Decor', 'Lighting'],
+            description: 'Modern decor inspired by Himalayan aesthetics.',
+          ),
+          documents: const VendorDocuments(
+            governmentIdPath: '/mock/docs/anil-id.pdf',
+          ),
+          bank: const VendorBankDetails(
+            accountHolderName: 'Anil Shrestha',
+            bankName: 'Nabil Bank',
+            accountNumber: '5555666677',
+            routingNumber: 'NARBNPKA',
+          ),
+        ),
+      ),
+      shopVendorCraftsId: _registrationEntry(
+        vendorId: shopVendorCraftsId,
+        submittedAt: submitted[shopVendorCraftsId]!,
+        registration: VendorRegistration(
+          business: const VendorBusinessInfo(
+            businessName: 'Kathmandu Crafts Co.',
+            contactName: 'Ramesh Thapa',
+            email: 'ramesh.crafts@placeify.demo',
+            phone: '+977 9811111111',
+            taxId: 'PAN-123456789',
+          ),
+          address: const VendorAddress(
+            street: 'Thamel Marg 12',
+            city: 'Kathmandu',
+            state: 'Bagmati',
+            postalCode: '44600',
+            country: 'Nepal',
+          ),
+          category: const VendorCategoryInfo(
+            categories: ['Handicrafts', 'Decor'],
+            description: 'Traditional Nepali crafts and artisan home accents.',
+          ),
+          documents: const VendorDocuments(
+            businessLicensePath: '/mock/docs/kathmandu-license.pdf',
+            governmentIdPath: '/mock/docs/ramesh-id.pdf',
+          ),
+          bank: const VendorBankDetails(
+            accountHolderName: 'Ramesh Thapa',
+            bankName: 'Nepal Investment Bank',
+            accountNumber: '0123456789',
+            routingNumber: 'NIBLNPKA',
+          ),
+        ),
+      ),
+      shopVendorUrbanId: _registrationEntry(
+        vendorId: shopVendorUrbanId,
+        submittedAt: submitted[shopVendorUrbanId]!,
+        registration: VendorRegistration(
+          business: const VendorBusinessInfo(
+            businessName: 'Urban Loft Studio',
+            contactName: 'Priya Maharjan',
+            email: 'priya.urban@placeify.demo',
+            phone: '+977 9866666666',
+            taxId: 'PAN-444555666',
+          ),
+          address: const VendorAddress(
+            street: 'Jawalakhel Chowk 3',
+            city: 'Lalitpur',
+            state: 'Bagmati',
+            postalCode: '44700',
+            country: 'Nepal',
+          ),
+          category: const VendorCategoryInfo(
+            categories: ['Seating', 'Desks'],
+            description: 'Compact modern furniture for city apartments.',
+          ),
+          documents: const VendorDocuments(
+            businessLicensePath: '/mock/docs/urban-license.pdf',
+            governmentIdPath: '/mock/docs/priya-id.pdf',
+          ),
+          bank: const VendorBankDetails(
+            accountHolderName: 'Priya Maharjan',
+            bankName: 'Sanima Bank',
+            accountNumber: '3333444455',
+            routingNumber: 'SNMANPKA',
           ),
         ),
       ),
