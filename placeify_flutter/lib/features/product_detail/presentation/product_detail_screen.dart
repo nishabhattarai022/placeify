@@ -135,6 +135,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
       remoteModelUrl: modelUrl,
       productId: product.id,
       productName: product.name,
+      dimensions: product.dimensions,
     );
 
     if (!context.mounted) return;

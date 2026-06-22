@@ -149,6 +149,7 @@ class _ProductDetailGalleryState extends State<ProductDetailGallery> {
                                 productId: widget.product.id,
                                 modelSrc: src,
                                 productName: widget.product.name,
+                                dimensions: widget.product.dimensions,
                               );
                             },
                           ),
