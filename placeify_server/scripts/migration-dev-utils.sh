@@ -173,7 +173,38 @@ reconcile_schema_ahead_of_registry() {
   fi
 }
 
+_column_exists() {
+  local table="$1"
+  local column="$2"
+  _run_psql -tAc \
+    "SELECT EXISTS (
+       SELECT 1
+       FROM information_schema.columns
+       WHERE table_schema = 'public'
+         AND table_name = '$table'
+         AND column_name = '$column'
+     );" \
+    | tr -d '[:space:]'
+}
+
+# Some dev databases registered 20260622042659795 without applying paymentMethod ALTER.
+reconcile_payment_method_column() {
+  if [[ "$(_table_exists payment_transaction)" != "t" ]]; then
+    return 0
+  fi
+
+  if [[ "$(_column_exists payment_transaction paymentMethod)" == "t" ]]; then
+    return 0
+  fi
+
+  echo "==> Repairing payment_transaction.paymentMethod column (checkout 500 fix)"
+  _run_psql -c \
+    'ALTER TABLE "payment_transaction" ADD COLUMN IF NOT EXISTS "paymentMethod" text NOT NULL DEFAULT '\''mockOnline'\''::text;'
+  echo "✓ paymentMethod column restored"
+}
+
 reconcile_dev_migrations() {
   reconcile_orphan_placeify_migration || return 1
   reconcile_schema_ahead_of_registry || return 1
+  reconcile_payment_method_column || return 1
 }

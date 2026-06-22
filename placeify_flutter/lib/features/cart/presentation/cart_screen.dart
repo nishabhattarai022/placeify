@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
+import '../../../core/config/placeify_server_client.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../core/widgets/toast_overlay.dart';
 import '../../home/presentation/providers/category_provider.dart';
+import '../../profile/presentation/providers/profile_dashboard_provider.dart';
 import 'cart_tokens.dart';
 import 'providers/cart_provider.dart';
 import 'widgets/cart_header.dart';
@@ -20,6 +23,27 @@ class CartScreen extends ConsumerStatefulWidget {
 }
 
 class _CartScreenState extends ConsumerState<CartScreen> {
+  Future<void> _checkout() async {
+    if (!client.auth.isAuthenticated) {
+      if (!mounted) return;
+      PlaceifyToast.show(context, 'Sign in to checkout');
+      context.push('/login');
+      return;
+    }
+
+    final message = await ref.read(cartProvider.notifier).checkout();
+    if (!mounted) return;
+
+    PlaceifyToast.show(context, message);
+
+    if (message.contains('placed successfully')) {
+      ref.invalidate(profileOrdersProvider);
+      await ref.read(profileDashboardProvider.notifier).refresh();
+      if (!mounted) return;
+      context.push('/profile/orders');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -106,9 +130,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
               bottom: 0,
               child: CartOrderSummary(
                 totals: totals,
-                onCheckout: () {
-                  PlaceifyToast.show(context, 'Checkout coming soon');
-                },
+                onCheckout: _checkout,
               ),
             ),
           ],

@@ -87,4 +87,5 @@ See [PRODUCTION_AUTH.md](PRODUCTION_AUTH.md) for environment variables, email (R
 | Database connection refused | `docker compose up -d` and wait ~5s |
 | Password authentication failed | Ensure `config/passwords.yaml` matches `docker-compose.yaml` |
 | Port 8090 in use | `docker compose down` then retry |
+| Checkout returns 500 Internal Server Error | Run `./scripts/fix-migrations.sh` then restart the server — adds missing `paymentMethod` column on `payment_transaction` |
 | Code out of sync after model changes | `serverpod generate` from `placeify_server/` |

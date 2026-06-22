@@ -1,7 +1,7 @@
 BEGIN;
 
 --
--- ACTION ALTER TABLE
+-- REPAIR: ensure paymentMethod exists (some dev DBs registered 20260622042659795 without applying ALTER)
 --
 ALTER TABLE "payment_transaction" ADD COLUMN IF NOT EXISTS "paymentMethod" text NOT NULL DEFAULT 'mockOnline'::text;
 
@@ -9,9 +9,9 @@ ALTER TABLE "payment_transaction" ADD COLUMN IF NOT EXISTS "paymentMethod" text 
 -- MIGRATION VERSION FOR placeify
 --
 INSERT INTO "serverpod_migrations" ("module", "version", "timestamp")
-    VALUES ('placeify', '20260622042659795', now())
+    VALUES ('placeify', '20260622153000000', now())
     ON CONFLICT ("module")
-    DO UPDATE SET "version" = '20260622042659795', "timestamp" = now();
+    DO UPDATE SET "version" = '20260622153000000', "timestamp" = now();
 
 --
 -- MIGRATION VERSION FOR serverpod

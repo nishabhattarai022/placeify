@@ -32,9 +32,14 @@ class Cart extends _$Cart {
   List<CartLineItem> build() {
     ref.watch(catalogIndexProvider);
     ref.listen(currentUserProvider, (previous, next) {
+      final wasLoggedIn = previous?.value != null;
       next.whenData((user) {
         if (user != null) {
-          _refreshFromServer();
+          if (!wasLoggedIn && state.isNotEmpty) {
+            _mergeLocalCartOnSignIn();
+          } else {
+            _refreshFromServer();
+          }
         } else {
           state = const [];
         }
@@ -57,6 +62,26 @@ class Cart extends _$Cart {
   }
 
   Future<void> refresh() => _refreshFromServer();
+
+  Future<void> _mergeLocalCartOnSignIn() async {
+    if (!client.auth.isAuthenticated) return;
+
+    final localItems = [...state];
+    await _refreshFromServer();
+    if (localItems.isEmpty) return;
+
+    for (final item in localItems) {
+      try {
+        await _cartRepository.addProduct(
+          item.productId,
+          quantity: item.quantity,
+        );
+      } catch (_) {
+        // Skip catalog previews or invalid product ids.
+      }
+    }
+    await _refreshFromServer();
+  }
 
   /// Returns an error message when the server cart could not be updated.
   Future<String?> addProduct(String productId, {int quantity = 1}) async {
