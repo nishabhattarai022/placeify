@@ -65,4 +65,16 @@ class ProfileArSessions extends _$ProfileArSessions {
     final repo = ref.watch(profileRepositoryProvider);
     return repo.listArSessions();
   }
+
+  Future<void> refresh() async {
+    if (!client.auth.isAuthenticated) {
+      state = const AsyncData([]);
+      return;
+    }
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final repo = ref.read(profileRepositoryProvider);
+      return repo.listArSessions();
+    });
+  }
 }

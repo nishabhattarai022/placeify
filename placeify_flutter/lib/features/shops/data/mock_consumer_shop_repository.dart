@@ -4,6 +4,7 @@ import 'package:placeify_flutter/features/home/domain/models/product.dart';
 import 'package:placeify_flutter/features/shops/data/consumer_shop_seed.dart';
 import 'package:placeify_flutter/features/shops/data/vendor_product_mapper.dart';
 import 'package:placeify_flutter/features/vendor/data/vendor_profile_provisioner.dart';
+import 'package:placeify_flutter/features/shops/data/shop_listing_images.dart';
 import 'package:placeify_flutter/features/shops/domain/models/shop_listing.dart';
 import 'package:placeify_flutter/features/shops/domain/repositories/consumer_shop_repository.dart';
 import 'package:placeify_flutter/features/vendor/data/config/vendor_mock_config.dart';
@@ -33,7 +34,7 @@ class MockConsumerShopRepository implements ConsumerShopRepository {
       if (profile == null) continue;
 
       final products = await getShopProducts(vendorId);
-      listings.add(_toListing(profile, products.length));
+      listings.add(_toListing(profile, products));
     }
 
     listings.sort((a, b) => a.businessName.compareTo(b.businessName));
@@ -64,7 +65,7 @@ class MockConsumerShopRepository implements ConsumerShopRepository {
     if (profile == null) return null;
 
     final products = await getShopProducts(vendorId);
-    return _toListing(profile, products.length);
+    return _toListing(profile, products);
   }
 
   @override
@@ -129,16 +130,16 @@ class MockConsumerShopRepository implements ConsumerShopRepository {
     }
   }
 
-  ShopListing _toListing(VendorProfile profile, int productCount) {
+  ShopListing _toListing(VendorProfile profile, List<Product> products) {
     return ShopListing(
       vendorId: profile.id,
       businessName: profile.businessName,
       locality: _localityFromAddress(profile.address),
       tags: profile.tags,
-      logoUrl: profile.logoUrl,
-      bannerUrl: profile.bannerUrl,
-      productCount: productCount,
-      averageRating: 4.6,
+      logoUrl: ShopListingImages.resolveLogoUrl(profile, products),
+      bannerUrl: ShopListingImages.resolveBannerUrl(profile, products),
+      productCount: products.length,
+      averageRating: VendorMockConfig.statsFor(profile.id).averageRating,
     );
   }
 

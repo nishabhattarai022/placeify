@@ -150,7 +150,7 @@ class Orders extends _$Orders {
     }
     if (order == null) return false;
 
-    await reorderToCart(ref, order.items);
+    reorderToCart(ref, order.items);
 
     if (context != null && context.mounted) {
       PlaceifyToast.show(context, OrderStrings.reorderSuccess);

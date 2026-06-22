@@ -12,20 +12,20 @@ part of 'orders_provider.dart';
 @ProviderFor(orderRepository)
 final orderRepositoryProvider = OrderRepositoryProvider._();
 
-final class OrderRepositoryProvider extends $FunctionalProvider<
-    OrderRepository,
-    OrderRepository,
-    OrderRepository> with $Provider<OrderRepository> {
+final class OrderRepositoryProvider
+    extends
+        $FunctionalProvider<OrderRepository, OrderRepository, OrderRepository>
+    with $Provider<OrderRepository> {
   OrderRepositoryProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'orderRepositoryProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'orderRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$orderRepositoryHash();
@@ -49,26 +49,24 @@ final class OrderRepositoryProvider extends $FunctionalProvider<
   }
 }
 
-String _$orderRepositoryHash() => r'a1b2c3d4e5f6789012345678abcdef0123456789';
+String _$orderRepositoryHash() => r'f13e0d75e90fdbe1c7c4e720b270977d9693846b';
 
 @ProviderFor(ordersUserId)
 final ordersUserIdProvider = OrdersUserIdProvider._();
 
-final class OrdersUserIdProvider extends $FunctionalProvider<
-        AsyncValue<String>,
-        String,
-        FutureOr<String>>
+final class OrdersUserIdProvider
+    extends $FunctionalProvider<AsyncValue<String>, String, FutureOr<String>>
     with $FutureModifier<String>, $FutureProvider<String> {
   OrdersUserIdProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'ordersUserIdProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'ordersUserIdProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$ordersUserIdHash();
@@ -84,23 +82,22 @@ final class OrdersUserIdProvider extends $FunctionalProvider<
   }
 }
 
-String _$ordersUserIdHash() => r'b2c3d4e5f6789012345678901abcdef01234567890';
+String _$ordersUserIdHash() => r'7f2771d980b8a2ddb9ac6cf1da052eb17bdc3d5d';
 
 @ProviderFor(Orders)
 final ordersProvider = OrdersProvider._();
 
-final class OrdersProvider
-    extends $AsyncNotifierProvider<Orders, List<Order>> {
+final class OrdersProvider extends $AsyncNotifierProvider<Orders, List<Order>> {
   OrdersProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'ordersProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'ordersProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$ordersHash();
@@ -110,20 +107,22 @@ final class OrdersProvider
   Orders create() => Orders();
 }
 
-String _$ordersHash() => r'c3d4e5f67890123456789012abcdef012345678901';
+String _$ordersHash() => r'2da2fa3128db05f885e770e3779e3051bb4c4bd8';
 
 abstract class _$Orders extends $AsyncNotifier<List<Order>> {
   FutureOr<List<Order>> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref =
-        this.ref as $Ref<AsyncValue<List<Order>>, List<Order>>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<List<Order>>, List<Order>>,
-        AsyncValue<List<Order>>,
-        Object?,
-        Object?>;
+    final ref = this.ref as $Ref<AsyncValue<List<Order>>, List<Order>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<Order>>, List<Order>>,
+              AsyncValue<List<Order>>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }
@@ -134,15 +133,15 @@ final ordersCountProvider = OrdersCountProvider._();
 final class OrdersCountProvider extends $FunctionalProvider<int, int, int>
     with $Provider<int> {
   OrdersCountProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'ordersCountProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'ordersCountProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$ordersCountHash();
@@ -166,23 +165,24 @@ final class OrdersCountProvider extends $FunctionalProvider<int, int, int>
   }
 }
 
-String _$ordersCountHash() => r'd4e5f678901234567890123abcdef0123456789012';
+String _$ordersCountHash() => r'9d5f0a6d59db8d93be9c45bb6c215a075f5ebedf';
 
 @ProviderFor(inTransitOrderCount)
 final inTransitOrderCountProvider = InTransitOrderCountProvider._();
 
 final class InTransitOrderCountProvider
-    extends $FunctionalProvider<int, int, int> with $Provider<int> {
+    extends $FunctionalProvider<int, int, int>
+    with $Provider<int> {
   InTransitOrderCountProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'inTransitOrderCountProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'inTransitOrderCountProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$inTransitOrderCountHash();
@@ -207,23 +207,24 @@ final class InTransitOrderCountProvider
 }
 
 String _$inTransitOrderCountHash() =>
-    r'e5f6789012345678901234abcdef01234567890123';
+    r'bb0ed0ef5e570c22625fa571748da175c1d0a678';
 
 @ProviderFor(activeOrders)
 final activeOrdersProvider = ActiveOrdersProvider._();
 
-final class ActiveOrdersProvider extends $FunctionalProvider<List<Order>,
-    List<Order>, List<Order>> with $Provider<List<Order>> {
+final class ActiveOrdersProvider
+    extends $FunctionalProvider<List<Order>, List<Order>, List<Order>>
+    with $Provider<List<Order>> {
   ActiveOrdersProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'activeOrdersProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'activeOrdersProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$activeOrdersHash();
@@ -247,23 +248,24 @@ final class ActiveOrdersProvider extends $FunctionalProvider<List<Order>,
   }
 }
 
-String _$activeOrdersHash() => r'f67890123456789012345abcdef012345678901234';
+String _$activeOrdersHash() => r'48918dd6bc8b6e3e33c7264447639a622c113e8f';
 
 @ProviderFor(deliveredOrders)
 final deliveredOrdersProvider = DeliveredOrdersProvider._();
 
-final class DeliveredOrdersProvider extends $FunctionalProvider<List<Order>,
-    List<Order>, List<Order>> with $Provider<List<Order>> {
+final class DeliveredOrdersProvider
+    extends $FunctionalProvider<List<Order>, List<Order>, List<Order>>
+    with $Provider<List<Order>> {
   DeliveredOrdersProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'deliveredOrdersProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'deliveredOrdersProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$deliveredOrdersHash();
@@ -287,23 +289,24 @@ final class DeliveredOrdersProvider extends $FunctionalProvider<List<Order>,
   }
 }
 
-String _$deliveredOrdersHash() => r'078901234567890123456abcdef0123456789012345';
+String _$deliveredOrdersHash() => r'61ea15f356d4d36c7ec9f1118c875fe635110b5e';
 
 @ProviderFor(cancelledOrders)
 final cancelledOrdersProvider = CancelledOrdersProvider._();
 
-final class CancelledOrdersProvider extends $FunctionalProvider<List<Order>,
-    List<Order>, List<Order>> with $Provider<List<Order>> {
+final class CancelledOrdersProvider
+    extends $FunctionalProvider<List<Order>, List<Order>, List<Order>>
+    with $Provider<List<Order>> {
   CancelledOrdersProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'cancelledOrdersProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'cancelledOrdersProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$cancelledOrdersHash();
@@ -327,23 +330,24 @@ final class CancelledOrdersProvider extends $FunctionalProvider<List<Order>,
   }
 }
 
-String _$cancelledOrdersHash() => r'189012345678901234567abcdef01234567890123456';
+String _$cancelledOrdersHash() => r'1e8c2d17fdaf5b1060bc5032f8ce3e6f0db4cbc9';
 
 @ProviderFor(returnOrders)
 final returnOrdersProvider = ReturnOrdersProvider._();
 
-final class ReturnOrdersProvider extends $FunctionalProvider<List<Order>,
-    List<Order>, List<Order>> with $Provider<List<Order>> {
+final class ReturnOrdersProvider
+    extends $FunctionalProvider<List<Order>, List<Order>, List<Order>>
+    with $Provider<List<Order>> {
   ReturnOrdersProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'returnOrdersProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'returnOrdersProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$returnOrdersHash();
@@ -367,25 +371,24 @@ final class ReturnOrdersProvider extends $FunctionalProvider<List<Order>,
   }
 }
 
-String _$returnOrdersHash() => r'290123456789012345678abcdef012345678901234567';
+String _$returnOrdersHash() => r'a5274d88c8c34e2a998b3450c823ee5424e29c2f';
 
 @ProviderFor(orderById)
 final orderByIdProvider = OrderByIdFamily._();
 
-final class OrderByIdProvider extends $FunctionalProvider<
-        AsyncValue<Order?>,
-        Order?,
-        FutureOr<Order?>>
+final class OrderByIdProvider
+    extends $FunctionalProvider<AsyncValue<Order?>, Order?, FutureOr<Order?>>
     with $FutureModifier<Order?>, $FutureProvider<Order?> {
-  OrderByIdProvider._(
-      {required OrderByIdFamily super.from, required String super.argument})
-      : super(
-          retry: null,
-          name: r'orderByIdProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+  OrderByIdProvider._({
+    required OrderByIdFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'orderByIdProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$orderByIdHash();
@@ -405,10 +408,7 @@ final class OrderByIdProvider extends $FunctionalProvider<
   @override
   FutureOr<Order?> create(Ref ref) {
     final argument = this.argument as String;
-    return orderById(
-      ref,
-      argument,
-    );
+    return orderById(ref, argument);
   }
 
   @override
@@ -422,22 +422,20 @@ final class OrderByIdProvider extends $FunctionalProvider<
   }
 }
 
-String _$orderByIdHash() => r'301234567890123456789abcdef0123456789012345678';
+String _$orderByIdHash() => r'8cc771237ba7a3356ea79fb3349c9618d654f4fc';
 
 final class OrderByIdFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<Order?>, String> {
   OrderByIdFamily._()
-      : super(
-          retry: null,
-          name: r'orderByIdProvider',
-          dependencies: null,
-          $allTransitiveDependencies: null,
-          isAutoDispose: true,
-        );
+    : super(
+        retry: null,
+        name: r'orderByIdProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
 
-  OrderByIdProvider call(
-    String orderId,
-  ) =>
+  OrderByIdProvider call(String orderId) =>
       OrderByIdProvider._(argument: orderId, from: this);
 
   @override
@@ -447,18 +445,19 @@ final class OrderByIdFamily extends $Family
 @ProviderFor(filteredOrders)
 final filteredOrdersProvider = FilteredOrdersFamily._();
 
-final class FilteredOrdersProvider extends $FunctionalProvider<List<Order>,
-    List<Order>, List<Order>> with $Provider<List<Order>> {
-  FilteredOrdersProvider._(
-      {required FilteredOrdersFamily super.from,
-      required OrderListFilter super.argument})
-      : super(
-          retry: null,
-          name: r'filteredOrdersProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+final class FilteredOrdersProvider
+    extends $FunctionalProvider<List<Order>, List<Order>, List<Order>>
+    with $Provider<List<Order>> {
+  FilteredOrdersProvider._({
+    required FilteredOrdersFamily super.from,
+    required OrderListFilter super.argument,
+  }) : super(
+         retry: null,
+         name: r'filteredOrdersProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$filteredOrdersHash();
@@ -478,10 +477,7 @@ final class FilteredOrdersProvider extends $FunctionalProvider<List<Order>,
   @override
   List<Order> create(Ref ref) {
     final argument = this.argument as OrderListFilter;
-    return filteredOrders(
-      ref,
-      argument,
-    );
+    return filteredOrders(ref, argument);
   }
 
   /// {@macro riverpod.override_with_value}
@@ -503,22 +499,20 @@ final class FilteredOrdersProvider extends $FunctionalProvider<List<Order>,
   }
 }
 
-String _$filteredOrdersHash() => r'412345678901234567890abcdef012345678901234567';
+String _$filteredOrdersHash() => r'd1f467c7919b5ff14a58c46dc523913266cd80e3';
 
 final class FilteredOrdersFamily extends $Family
     with $FunctionalFamilyOverride<List<Order>, OrderListFilter> {
   FilteredOrdersFamily._()
-      : super(
-          retry: null,
-          name: r'filteredOrdersProvider',
-          dependencies: null,
-          $allTransitiveDependencies: null,
-          isAutoDispose: true,
-        );
+    : super(
+        retry: null,
+        name: r'filteredOrdersProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
 
-  FilteredOrdersProvider call(
-    OrderListFilter filter,
-  ) =>
+  FilteredOrdersProvider call(OrderListFilter filter) =>
       FilteredOrdersProvider._(argument: filter, from: this);
 
   @override

@@ -50,7 +50,7 @@ final class AdminUsersListProvider
   }
 }
 
-String _$adminUsersListHash() => r'b6ba6327bdc0a315dd5eeb5843e35af00e9aa8d0';
+String _$adminUsersListHash() => r'cf13671507625368845c04086171e47aa3631530';
 
 final class AdminUsersListFamily extends $Family
     with
@@ -155,7 +155,7 @@ final class AdminUserDetailProvider
   }
 }
 
-String _$adminUserDetailHash() => r'9394fa21134df9498b5f90b34dca42dba9a8f23c';
+String _$adminUserDetailHash() => r'50000c693bdfe2d6e9c4659063c38563d805d7b4';
 
 final class AdminUserDetailFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<PlatformUser?>, String> {

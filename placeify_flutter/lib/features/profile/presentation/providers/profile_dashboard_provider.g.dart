@@ -174,7 +174,7 @@ final class ProfileArSessionsProvider
   ProfileArSessions create() => ProfileArSessions();
 }
 
-String _$profileArSessionsHash() => r'1adc07f33b9a063fdf0751fd6722da9328e82927';
+String _$profileArSessionsHash() => r'5cc2e4d2f911cc487dd80cce845a4fa5ba291f04';
 
 abstract class _$ProfileArSessions
     extends $AsyncNotifier<List<UserArSessionSummary>> {

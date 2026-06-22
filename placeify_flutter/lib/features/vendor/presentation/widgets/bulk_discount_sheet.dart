@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:placeify_flutter/features/profile/presentation/widgets/shared/profile_form_field.dart';
 import 'package:placeify_flutter/features/profile/presentation/widgets/shared/profile_submit_button.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/percent_input_formatter.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/widgets/placeify_bottom_sheet.dart';
 import '../../../../core/widgets/toast_overlay.dart';
@@ -117,8 +117,8 @@ class _BulkDiscountSheetBodyState extends State<_BulkDiscountSheetBody> {
             controller: _discountController,
             hint: 'e.g. 15',
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+            inputFormatters: const [
+              PercentInputFormatter(min: 1, max: 100),
             ],
           ),
         ),

@@ -62,6 +62,8 @@ class VendorProductForm extends _$VendorProductForm {
       sku: product.sku,
       categoryId: product.categoryId,
       materials: product.materials,
+      warrantyNote: product.warrantyNote,
+      shippingNote: product.shippingNote,
       listPrice: _formatNumber(listPrice),
       discountPercent: discount,
       offerLabel: product.offerLabel,
@@ -248,13 +250,15 @@ class VendorProductForm extends _$VendorProductForm {
       return 'Enter a valid list price';
     }
 
-    final discount = double.tryParse(state.discountPercent.trim());
-    if (discount != null && (discount < 0 || discount > 100)) {
-      return 'Discount must be between 0 and 100';
-    }
+    if (state.isEditing) {
+      final discount = double.tryParse(state.discountPercent.trim());
+      if (discount != null && (discount < 0 || discount > 100)) {
+        return 'Discount must be between 0 and 100';
+      }
 
-    if (state.computedSalePrice <= 0) {
-      return 'Sale price must be greater than zero';
+      if (state.computedSalePrice <= 0) {
+        return 'Sale price must be greater than zero';
+      }
     }
 
     final stock = int.tryParse(state.stock.trim());
@@ -335,21 +339,48 @@ class VendorProductForm extends _$VendorProductForm {
 
   VendorProduct _buildProduct(String vendorId, {VendorProduct? existing}) {
     final listPrice = state.parsedListPrice!;
-    final salePrice = state.computedSalePrice;
-    final hasDiscount = state.parsedDiscountPercent > 0;
+
+    if (state.isEditing) {
+      final salePrice = state.computedSalePrice;
+      final hasDiscount = state.parsedDiscountPercent > 0;
+
+      return VendorProduct(
+        id: state.editingProductId ?? '',
+        vendorId: vendorId,
+        name: state.name.trim(),
+        sku: state.sku.trim(),
+        price: salePrice,
+        originalPrice: hasDiscount ? listPrice : null,
+        stock: int.parse(state.stock.trim()),
+        categoryId: state.categoryId,
+        description: state.description.trim(),
+        brand: state.brand.trim(),
+        offerLabel: state.offerLabel.trim(),
+        widthCm: _dimensionToCm(state.width),
+        heightCm: _dimensionToCm(state.height),
+        depthCm: _dimensionToCm(state.depth),
+        weightKg: _optionalDimensionToCm(state.weight),
+        hasArView: state.hasArView,
+        isActive: state.isActive,
+        materials: state.materials.trim(),
+        warrantyNote: state.warrantyNote.trim(),
+        shippingNote: state.shippingNote.trim(),
+        imageUrls: state.images.map((image) => image.displaySource).toList(),
+        lowStockThreshold: _parseLowStockThreshold(),
+        createdAt: existing?.createdAt ?? DateTime.now(),
+      );
+    }
 
     return VendorProduct(
       id: state.editingProductId ?? '',
       vendorId: vendorId,
       name: state.name.trim(),
       sku: state.sku.trim(),
-      price: salePrice,
-      originalPrice: hasDiscount ? listPrice : null,
+      price: listPrice,
       stock: int.parse(state.stock.trim()),
       categoryId: state.categoryId,
       description: state.description.trim(),
       brand: state.brand.trim(),
-      offerLabel: state.offerLabel.trim(),
       widthCm: _dimensionToCm(state.width),
       heightCm: _dimensionToCm(state.height),
       depthCm: _dimensionToCm(state.depth),
@@ -357,6 +388,8 @@ class VendorProductForm extends _$VendorProductForm {
       hasArView: state.hasArView,
       isActive: state.isActive,
       materials: state.materials.trim(),
+      warrantyNote: state.warrantyNote.trim(),
+      shippingNote: state.shippingNote.trim(),
       imageUrls: state.images.map((image) => image.displaySource).toList(),
       lowStockThreshold: _parseLowStockThreshold(),
       createdAt: existing?.createdAt ?? DateTime.now(),

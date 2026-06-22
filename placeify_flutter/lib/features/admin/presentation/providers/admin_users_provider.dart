@@ -9,7 +9,7 @@ part 'admin_users_provider.g.dart';
 class AdminUsersList extends _$AdminUsersList {
   @override
   Future<List<PlatformUser>> build(String query, UserRole? role) async {
-    final repo = ref.watch(adminRepositoryProvider);
+    final repo = await ref.watch(adminRepositoryProvider.future);
     final normalized = query.trim();
     return repo.listUsers(
       query: normalized.isEmpty ? null : normalized,
@@ -20,7 +20,7 @@ class AdminUsersList extends _$AdminUsersList {
   Future<void> refresh() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      final repo = ref.read(adminRepositoryProvider);
+      final repo = await ref.read(adminRepositoryProvider.future);
       final normalized = query.trim();
       return repo.listUsers(
         query: normalized.isEmpty ? null : normalized,
@@ -32,7 +32,7 @@ class AdminUsersList extends _$AdminUsersList {
 
 @riverpod
 Future<PlatformUser?> adminUserDetail(Ref ref, String userId) async {
-  final repo = ref.watch(adminRepositoryProvider);
+  final repo = await ref.watch(adminRepositoryProvider.future);
   final users = await repo.listUsers();
   return users.where((u) => u.id == userId).firstOrNull;
 }

@@ -102,7 +102,7 @@ abstract final class ProductDetailContentRepository {
         'Avoid direct sunlight to preserve fabric colour.',
         'Vacuum upholstery weekly with a soft brush.',
       ],
-      warranty: '2-year limited warranty • Ships in 5–7 business days',
+      warranty: null,
     );
   }
 
@@ -151,7 +151,7 @@ abstract final class ProductDetailContentRepository {
         'Follow the care label included with your order.',
         'Contact the vendor for product-specific maintenance advice.',
       ],
-      warranty: 'Warranty terms provided by the vendor at checkout',
+      warranty: vendorProduct?.fulfillmentNote,
     );
   }
 

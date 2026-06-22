@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/services/haptic_service.dart';
 import '../../../core/widgets/toast_overlay.dart';
-import '../../home/presentation/providers/catalog_provider.dart';
 import '../../home/presentation/providers/category_provider.dart';
 import 'cart_tokens.dart';
 import 'providers/cart_provider.dart';
@@ -79,9 +78,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                               productByIdProvider(item.productId),
                             );
                             if (product == null) {
-                              return _CartLineLoading(
-                                productId: item.productId,
-                              );
+                              return const SizedBox.shrink();
                             }
                             final cart = ref.read(cartProvider.notifier);
                             return CartLineCard(
@@ -89,27 +86,13 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                               item: item,
                               product: product,
                               editMode: editMode,
-                              onIncrement: () async {
-                                final message =
-                                    await cart.increment(item.productId);
-                                if (message != null && context.mounted) {
-                                  PlaceifyToast.show(context, message);
-                                }
-                              },
-                              onDecrement: () async {
-                                final message =
-                                    await cart.decrement(item.productId);
-                                if (message != null && context.mounted) {
-                                  PlaceifyToast.show(context, message);
-                                }
-                              },
-                              onRemove: () async {
+                              onIncrement: () =>
+                                  cart.increment(item.productId),
+                              onDecrement: () =>
+                                  cart.decrement(item.productId),
+                              onRemove: () {
                                 HapticService.light();
-                                final message =
-                                    await cart.remove(item.productId);
-                                if (message != null && context.mounted) {
-                                  PlaceifyToast.show(context, message);
-                                }
+                                cart.remove(item.productId);
                               },
                             );
                           },
@@ -123,11 +106,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
               bottom: 0,
               child: CartOrderSummary(
                 totals: totals,
-                onCheckout: () async {
-                  final message =
-                      await ref.read(cartProvider.notifier).checkout();
-                  if (!context.mounted) return;
-                  PlaceifyToast.show(context, message);
+                onCheckout: () {
+                  PlaceifyToast.show(context, 'Checkout coming soon');
                 },
               ),
             ),
@@ -192,43 +172,6 @@ class _CartEmptyState extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CartLineLoading extends ConsumerStatefulWidget {
-  const _CartLineLoading({required this.productId});
-
-  final String productId;
-
-  @override
-  ConsumerState<_CartLineLoading> createState() => _CartLineLoadingState();
-}
-
-class _CartLineLoadingState extends ConsumerState<_CartLineLoading> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(catalogIndexProvider.notifier)
-          .ensureProducts([widget.productId]);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.only(bottom: CartTokens.cardSpacing),
-      child: SizedBox(
-        height: CartTokens.cardImageSize + 32,
-        child: Center(
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: CartTokens.textSecondary,
-          ),
         ),
       ),
     );

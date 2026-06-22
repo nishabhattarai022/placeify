@@ -1,7 +1,9 @@
+import 'package:placeify_client/placeify_client.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 import '../../../../core/config/placeify_server_client.dart';
+import '../../data/profile_constants.dart';
 import '../../data/profile_mock_data.dart';
 import '../../data/profile_refund_mapper.dart';
 import '../../data/serverpod_refund_repository.dart';
@@ -21,16 +23,19 @@ class ProfileRefundsState {
     required this.active,
     required this.completed,
     required this.orderOptions,
+    required this.pendingTotal,
   });
 
   final List<ProfileRefund> active;
   final List<ProfileRefund> completed;
   final List<RefundOrderOption> orderOptions;
+  final double pendingTotal;
 
   static const empty = ProfileRefundsState(
     active: [],
     completed: [],
     orderOptions: [],
+    pendingTotal: 0,
   );
 }
 
@@ -45,19 +50,37 @@ class ProfileRefunds extends _$ProfileRefunds {
     final refunds = await _repository.listRefunds();
     final orders = await ref.watch(profileOrdersProvider.future);
 
+    final pendingOrderIds = refunds
+        .where((refund) => refund.status == RequestStatus.pending)
+        .map((refund) => refund.orderId)
+        .toSet();
+
     final orderOptions = [
       for (final order in orders)
-        RefundOrderOption(
-          orderId: order.id,
-          label:
-              '${order.primaryProductName ?? 'Order'} — #${order.orderNumber}',
-        ),
+        if (order.status != OrderStatus.cancelled &&
+            !pendingOrderIds.contains(order.id))
+          RefundOrderOption(
+            orderId: order.id,
+            label:
+                '${order.primaryProductName ?? 'Order'} — #${order.orderNumber}',
+          ),
     ];
 
+    final active = ProfileRefundMapper.active(refunds);
+    final completed = ProfileRefundMapper.completed(refunds);
+    final pendingTotal = refunds
+        .where(
+          (refund) =>
+              refund.status == RequestStatus.pending ||
+              refund.status == RequestStatus.inProgress,
+        )
+        .fold<double>(0, (sum, refund) => sum + refund.refundAmount);
+
     return ProfileRefundsState(
-      active: ProfileRefundMapper.active(refunds),
-      completed: ProfileRefundMapper.completed(refunds),
+      active: active,
+      completed: completed,
       orderOptions: orderOptions,
+      pendingTotal: pendingTotal,
     );
   }
 
@@ -71,7 +94,8 @@ class ProfileRefunds extends _$ProfileRefunds {
       if (details != null && details.trim().isNotEmpty) details.trim(),
     ].join(' — ');
 
-    if (combinedReason.isEmpty || reason.trim() == 'Select a reason') {
+    if (combinedReason.isEmpty ||
+        reason.trim() == ProfileRefundReasons.selectPlaceholder) {
       return 'Select a reason for your refund request.';
     }
 

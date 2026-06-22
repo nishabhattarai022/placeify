@@ -298,3 +298,50 @@ final class ProductDetailFamily extends $Family
   @override
   String toString() => r'productDetailProvider';
 }
+
+/// First products shown on the home showcase row (live catalog).
+
+@ProviderFor(homeFeaturedProducts)
+final homeFeaturedProductsProvider = HomeFeaturedProductsProvider._();
+
+/// First products shown on the home showcase row (live catalog).
+
+final class HomeFeaturedProductsProvider
+    extends $FunctionalProvider<List<Product>, List<Product>, List<Product>>
+    with $Provider<List<Product>> {
+  /// First products shown on the home showcase row (live catalog).
+  HomeFeaturedProductsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'homeFeaturedProductsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$homeFeaturedProductsHash();
+
+  @$internal
+  @override
+  $ProviderElement<List<Product>> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  List<Product> create(Ref ref) {
+    return homeFeaturedProducts(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<Product> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<Product>>(value),
+    );
+  }
+}
+
+String _$homeFeaturedProductsHash() =>
+    r'be55448a19e04c6d13d9cd0503d0173b69cd4b7d';

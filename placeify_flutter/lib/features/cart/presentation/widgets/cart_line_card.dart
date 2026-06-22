@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../home/domain/models/product.dart';
+import '../../data/cart_display_config.dart';
 import '../../domain/cart_line_item.dart';
 import '../cart_tokens.dart';
 import 'cart_quantity_controls.dart';
@@ -45,8 +46,8 @@ class CartLineCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final name = product.name;
-    final unitPrice = product.price;
+    final name = CartDisplayConfig.nameFor(product.id, product.name);
+    final unitPrice = CartDisplayConfig.priceFor(product.id, product.price);
 
     return Container(
       margin: const EdgeInsets.only(bottom: CartTokens.cardSpacing),

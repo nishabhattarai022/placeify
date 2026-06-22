@@ -164,7 +164,7 @@ class VendorRegistrationNotifier extends _$VendorRegistrationNotifier {
     );
 
     try {
-      final repo = ref.read(vendorRegistrationRepositoryProvider);
+      final repo = await ref.read(vendorRegistrationRepositoryProvider.future);
       final vendorId = await repo.submitRegistration(state.form);
       state = state.copyWith(isSubmitting: false);
       return vendorId;

@@ -14,7 +14,7 @@ class AdminStats extends _$AdminStats {
   }
 
   Future<models.AdminStats> _load() async {
-    final repo = ref.watch(adminRepositoryProvider);
+    final repo = await ref.watch(adminRepositoryProvider.future);
     return repo.getStats();
   }
 }

@@ -14,18 +14,18 @@ class AdminNotifications extends _$AdminNotifications {
   }
 
   Future<List<AdminNotification>> _load() async {
-    final repo = ref.watch(adminRepositoryProvider);
+    final repo = await ref.watch(adminRepositoryProvider.future);
     return repo.getNotifications();
   }
 
   Future<void> markAsRead(String notificationId) async {
-    final repo = ref.read(adminRepositoryProvider);
+    final repo = await ref.read(adminRepositoryProvider.future);
     await repo.markNotificationRead(notificationId);
     ref.invalidateSelf();
   }
 
   Future<void> markAllAsRead() async {
-    final repo = ref.read(adminRepositoryProvider);
+    final repo = await ref.read(adminRepositoryProvider.future);
     await repo.markAllNotificationsRead();
     ref.invalidateSelf();
   }

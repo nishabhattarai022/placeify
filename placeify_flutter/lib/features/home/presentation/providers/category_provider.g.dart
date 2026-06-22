@@ -106,7 +106,7 @@ final class CategoriesProvider
   }
 }
 
-String _$categoriesHash() => r'375c1daa8622af0abdaf2be36e437a15008c5589';
+String _$categoriesHash() => r'a808f72bbe61022d176cc8610ba78e88b4b550ea';
 
 @ProviderFor(filteredProducts)
 final filteredProductsProvider = FilteredProductsProvider._();
@@ -147,7 +147,7 @@ final class FilteredProductsProvider
   }
 }
 
-String _$filteredProductsHash() => r'52fdeb9b906b1e0b3f6539f3a7add9bef0caffb1';
+String _$filteredProductsHash() => r'8ba15e7c9cfee506b0bf88a70aa25d22ccdbc3b4';
 
 @ProviderFor(productById)
 final productByIdProvider = ProductByIdFamily._();
@@ -206,7 +206,7 @@ final class ProductByIdProvider
   }
 }
 
-String _$productByIdHash() => r'1f73e3f98e15860a6eed6342a9a66d353dbc068d';
+String _$productByIdHash() => r'ff16204132afc4fed3135d1e54adde1d1f7cb032';
 
 final class ProductByIdFamily extends $Family
     with $FunctionalFamilyOverride<Product?, String> {
@@ -225,45 +225,3 @@ final class ProductByIdFamily extends $Family
   @override
   String toString() => r'productByIdProvider';
 }
-
-@ProviderFor(homeFeaturedProducts)
-final homeFeaturedProductsProvider = HomeFeaturedProductsProvider._();
-
-final class HomeFeaturedProductsProvider
-    extends $FunctionalProvider<List<Product>, List<Product>, List<Product>>
-    with $Provider<List<Product>> {
-  HomeFeaturedProductsProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'homeFeaturedProductsProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$homeFeaturedProductsHash();
-
-  @$internal
-  @override
-  $ProviderElement<List<Product>> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
-
-  @override
-  List<Product> create(Ref ref) {
-    return homeFeaturedProducts(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(List<Product> value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<List<Product>>(value),
-    );
-  }
-}
-
-String _$homeFeaturedProductsHash() =>
-    r'e309519c6ad1346d260ccd8b3f8d931fc7552e92';

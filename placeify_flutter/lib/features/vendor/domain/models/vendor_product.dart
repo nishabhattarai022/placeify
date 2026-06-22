@@ -26,6 +26,8 @@ abstract class VendorProduct with _$VendorProduct {
     @Default(0) double weightKg,
     @Default(false) bool hasArView,
     @Default('') String materials,
+    @Default('') String warrantyNote,
+    @Default('') String shippingNote,
     @Default(5) int lowStockThreshold,
   }) = _VendorProduct;
 
@@ -36,9 +38,23 @@ abstract class VendorProduct with _$VendorProduct {
   bool get isOnSale =>
       originalPrice != null && originalPrice! > price;
 
+  String? get primaryImageUrl =>
+      imageUrls.isNotEmpty ? imageUrls.first : null;
+
   double get discountPercent => isOnSale
       ? ((originalPrice! - price) / originalPrice! * 100).roundToDouble()
       : 0;
+
+  /// Combined warranty + shipping line for product detail (e.g. "2-year warranty • Ships in 5–7 days").
+  String? get fulfillmentNote {
+    final warranty = warrantyNote.trim();
+    final shipping = shippingNote.trim();
+    if (warranty.isEmpty && shipping.isEmpty) return null;
+    if (warranty.isNotEmpty && shipping.isNotEmpty) {
+      return '$warranty • $shipping';
+    }
+    return warranty.isNotEmpty ? warranty : shipping;
+  }
 
   factory VendorProduct.fromJson(Map<String, dynamic> json) =>
       _$VendorProductFromJson(json);

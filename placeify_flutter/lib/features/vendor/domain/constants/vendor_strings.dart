@@ -42,10 +42,10 @@ abstract final class VendorStrings {
 
   // Product form
   static const uploadProduct = 'Upload Product';
-  static const productUploaded = 'Product uploaded successfully';
   static const saveChanges = 'Save Changes';
   static const noChangesLabel = 'No Changes';
   static const productSaved = 'Product saved successfully';
+  static const productUploaded = 'Product uploaded successfully';
   static const changesSaved = 'Changes saved';
 }
 

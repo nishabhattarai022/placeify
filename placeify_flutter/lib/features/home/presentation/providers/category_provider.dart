@@ -1,11 +1,8 @@
+import 'package:placeify_flutter/features/shops/data/mock_consumer_shop_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-
-import '../../data/catalog_category_labels.dart';
-import '../../data/home_room_catalog.dart';
+import '../../data/mock_product_repository.dart';
 import '../../domain/models/category.dart';
 import '../../domain/models/product.dart';
-import 'home_room_provider.dart';
-import 'catalog_provider.dart';
 
 part 'category_provider.g.dart';
 
@@ -18,61 +15,28 @@ class SelectedCategory extends _$SelectedCategory {
 }
 
 @riverpod
-List<ProductCategory> categories(Ref ref) {
-  final index = ref.watch(catalogIndexProvider).value;
-  if (index == null || index.isEmpty) {
-    return const [
-      ProductCategory(
-        id: 'chairs',
-        label: 'Chairs',
-        svgIconAssetPath: 'assets/icons/ic_chair.svg',
-      ),
-    ];
-  }
-
-  final categoryIds = index.values.map((product) => product.categoryId).toSet()
-    ..removeWhere((id) => id.trim().isEmpty);
-
-  final sorted = categoryIds.toList()..sort();
-  return [
-    for (final id in sorted)
-      ProductCategory(
-        id: id,
-        label: CatalogCategoryLabels.label(id),
-        svgIconAssetPath: CatalogCategoryLabels.iconAsset(id),
-      ),
-  ];
-}
+List<ProductCategory> categories(Ref ref) =>
+    MockProductRepository.categories;
 
 @riverpod
 List<Product> filteredProducts(Ref ref) {
   final categoryId = ref.watch(selectedCategoryProvider);
-  final all = ref.watch(catalogProductsProvider);
-  final filtered =
-      all.where((product) => product.categoryId == categoryId).toList();
-  if (filtered.isNotEmpty) return filtered;
-  return all;
+  return MockProductRepository.products
+      .where((p) => p.categoryId == categoryId)
+      .toList();
 }
 
 @riverpod
 Product? productById(Ref ref, String id) {
-  return ref.watch(catalogIndexProvider).value?[id];
-}
-
-@riverpod
-List<Product> homeFeaturedProducts(Ref ref) {
-  final roomId = ref.watch(selectedRoomProvider);
-  final all = ref.watch(catalogProductsProvider);
-  if (all.isEmpty) return const [];
-
-  final roomCategories = HomeRoomCatalog.categoriesForRoom(roomId);
-  final filtered = all
-      .where((product) => roomCategories.contains(product.categoryId))
-      .toList();
-
-  return (filtered.isNotEmpty ? filtered : all).take(2).toList();
+  try {
+    return MockProductRepository.products.firstWhere((p) => p.id == id);
+  } catch (_) {
+    return MockConsumerShopRepository.productByIdSync(id);
+  }
 }
 
 String categoryTitle(String categoryId) {
-  return CatalogCategoryLabels.label(categoryId);
+  return MockProductRepository.categories
+          .firstWhere((c) => c.id == categoryId)
+          .label;
 }

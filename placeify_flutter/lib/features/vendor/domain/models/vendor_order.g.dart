@@ -7,17 +7,17 @@ part of 'vendor_order.dart';
 // **************************************************************************
 
 _VendorOrder _$VendorOrderFromJson(Map<String, dynamic> json) => _VendorOrder(
-  id: json['id'] as String,
-  orderNumber: json['orderNumber'] as String,
-  vendorId: json['vendorId'] as String,
-  productId: json['productId'] as String,
-  productName: json['productName'] as String,
-  quantity: (json['quantity'] as num).toInt(),
-  totalAmount: (json['totalAmount'] as num).toDouble(),
-  status: $enumDecode(_$OrderStatusEnumMap, json['status']),
-  customerName: json['customerName'] as String,
-  orderedAt: DateTime.parse(json['orderedAt'] as String),
-);
+      id: json['id'] as String,
+      orderNumber: json['orderNumber'] as String,
+      vendorId: json['vendorId'] as String,
+      productId: json['productId'] as String,
+      productName: json['productName'] as String,
+      quantity: (json['quantity'] as num).toInt(),
+      totalAmount: (json['totalAmount'] as num).toDouble(),
+      status: $enumDecode(_$OrderStatusEnumMap, json['status']),
+      customerName: json['customerName'] as String,
+      orderedAt: DateTime.parse(json['orderedAt'] as String),
+    );
 
 Map<String, dynamic> _$VendorOrderToJson(_VendorOrder instance) =>
     <String, dynamic>{

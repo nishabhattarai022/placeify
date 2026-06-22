@@ -1,51 +1,37 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/mock_product_repository.dart';
 import '../../domain/models/product.dart';
 import '../chairs_catalog_tokens.dart';
-import '../providers/catalog_provider.dart';
+import '../data/category_showcase_config.dart';
 import 'chairs_catalog_compact_card.dart';
 import 'chairs_catalog_wide_card.dart';
 import 'showcase_showroom_card.dart';
 
-class ChairsCatalogGrid extends ConsumerWidget {
+class ChairsCatalogGrid extends StatelessWidget {
   const ChairsCatalogGrid({this.categoryId = 'chairs', super.key});
 
   final String categoryId;
 
+  Product? _product(String id) {
+    try {
+      return MockProductRepository.products.firstWhere((p) => p.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     if (categoryId != 'chairs') {
       return const SizedBox.shrink();
     }
 
-    final productsAsync =
-        ref.watch(catalogProductsByCategoryProvider(categoryId));
-
-    return productsAsync.when(
-      loading: () => const SizedBox(
-        height: 320,
-        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      ),
-      error: (_, __) => const SizedBox.shrink(),
-      data: (products) => _ChairsLayout(products: products),
-    );
-  }
-}
-
-class _ChairsLayout extends StatelessWidget {
-  const _ChairsLayout({required this.products});
-
-  final List<Product> products;
-
-  @override
-  Widget build(BuildContext context) {
-    if (products.isEmpty) return const SizedBox.shrink();
-
-    final p1 = _at(products, 0);
-    final p5 = _at(products, 1);
-    final p6 = _at(products, 2);
-    final p3 = _at(products, 3);
+    final ids = CategoryShowcaseConfig.chairProductIds();
+    final p1 = ids.isNotEmpty ? _product(ids[0]) : null;
+    final p5 = ids.length > 1 ? _product(ids[1]) : null;
+    final p6 = ids.length > 2 ? _product(ids[2]) : null;
+    final p3 = ids.length > 3 ? _product(ids[3]) : null;
 
     return IntrinsicHeight(
       child: Row(
@@ -60,8 +46,7 @@ class _ChairsLayout extends StatelessWidget {
                     height: ChairsCatalogTokens.wideCardHeightPrimary,
                     child: ChairsCatalogWideCard(product: p1),
                   ),
-                if (p1 != null && p3 != null)
-                  const SizedBox(height: ChairsCatalogTokens.columnGap),
+                const SizedBox(height: ChairsCatalogTokens.columnGap),
                 if (p3 != null)
                   SizedBox(
                     height: ChairsCatalogTokens.wideCardHeightSecondary,
@@ -80,26 +65,19 @@ class _ChairsLayout extends StatelessWidget {
                     height: ChairsCatalogTokens.compactCardHeight,
                     child: ChairsCatalogCompactCard(product: p5),
                   ),
-                if (p5 != null)
-                  const SizedBox(height: ChairsCatalogTokens.columnGap),
+                const SizedBox(height: ChairsCatalogTokens.columnGap),
                 const ShowcaseShowroomCard(),
-                if (p6 != null) ...[
-                  const SizedBox(height: ChairsCatalogTokens.columnGap),
+                const SizedBox(height: ChairsCatalogTokens.columnGap),
+                if (p6 != null)
                   SizedBox(
                     height: ChairsCatalogTokens.compactCardHeight,
                     child: ChairsCatalogCompactCard(product: p6),
                   ),
-                ],
               ],
             ),
           ),
         ],
       ),
     );
-  }
-
-  static Product? _at(List<Product> products, int index) {
-    if (index < 0 || index >= products.length) return null;
-    return products[index];
   }
 }

@@ -16,18 +16,4 @@ abstract interface class VendorProductRepository {
     String vendorId,
     VendorProduct product,
   );
-
-  Future<VendorProduct> regenerateProductModel3d(
-    String vendorId,
-    String productId,
-  );
-}
-
-class VendorProductActionException implements Exception {
-  VendorProductActionException(this.message);
-
-  final String message;
-
-  @override
-  String toString() => message;
 }

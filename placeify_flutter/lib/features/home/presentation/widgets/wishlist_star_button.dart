@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:go_router/go_router.dart';
-import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/widgets/toast_overlay.dart';
-import '../../../../core/config/placeify_server_client.dart';
 import '../../domain/models/product.dart';
 import '../providers/wishlist_provider.dart';
 
@@ -56,17 +53,11 @@ class _WishlistStarButtonState extends ConsumerState<WishlistStarButton>
       button: true,
       label: isSaved ? 'Remove from wishlist' : 'Save to wishlist',
       child: GestureDetector(
-        onTap: () async {
-          if (!client.auth.isAuthenticated) {
-            PlaceifyToast.show(context, 'Sign in to save items');
-            context.push('/login');
-            return;
-          }
-
+        onTap: () {
           HapticService.medium();
-          await ref.read(wishlistProvider.notifier).toggle(widget.product.id);
-          if (!context.mounted) return;
-          final nowSaved = ref.read(wishlistProvider).containsKey(widget.product.id);
+          ref.read(wishlistProvider.notifier).toggle(widget.product.id);
+          final nowSaved =
+              ref.read(wishlistProvider).containsKey(widget.product.id);
           _popController.forward(from: 0);
           PlaceifyToast.show(
             context,

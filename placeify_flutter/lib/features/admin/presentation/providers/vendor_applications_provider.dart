@@ -16,14 +16,14 @@ class VendorApplicationsList extends _$VendorApplicationsList {
   Future<List<VendorApplication>> build(
     VendorApplicationListFilter filter,
   ) async {
-    final repo = ref.watch(vendorApplicationRepositoryProvider);
+    final repo = await ref.watch(vendorApplicationRepositoryProvider.future);
     return repo.listApplications(filter: filter);
   }
 
   Future<void> refresh() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      final repo = ref.read(vendorApplicationRepositoryProvider);
+      final repo = await ref.read(vendorApplicationRepositoryProvider.future);
       return repo.listApplications(filter: filter);
     });
   }
@@ -34,11 +34,13 @@ Future<VendorApplication?> vendorApplicationDetail(
   Ref ref,
   String vendorId,
 ) async {
-  final repo = ref.watch(vendorApplicationRepositoryProvider);
+  final repo = await ref.watch(vendorApplicationRepositoryProvider.future);
   return repo.getByVendorId(vendorId);
 }
 
 /// Long-lived action channel for admin approve/decline flows.
+///
+/// Must stay alive across async gaps triggered from bottom sheets.
 @Riverpod(keepAlive: true)
 class VendorApplicationActions extends _$VendorApplicationActions {
   @override
@@ -48,7 +50,7 @@ class VendorApplicationActions extends _$VendorApplicationActions {
     required String userId,
     required String vendorId,
   }) async {
-    final repo = ref.read(vendorApplicationRepositoryProvider);
+    final repo = await ref.read(vendorApplicationRepositoryProvider.future);
     if (!ref.mounted) return 'Could not approve application';
 
     try {
@@ -74,7 +76,7 @@ class VendorApplicationActions extends _$VendorApplicationActions {
     required String vendorId,
     String? note,
   }) async {
-    final repo = ref.read(vendorApplicationRepositoryProvider);
+    final repo = await ref.read(vendorApplicationRepositoryProvider.future);
     if (!ref.mounted) return 'Could not decline application';
 
     try {

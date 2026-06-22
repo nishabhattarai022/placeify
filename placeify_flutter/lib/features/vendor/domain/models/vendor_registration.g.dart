@@ -42,29 +42,6 @@ Map<String, dynamic> _$VendorAddressToJson(_VendorAddress instance) =>
       'country': instance.country,
     };
 
-_VendorCategoryInfo _$VendorCategoryInfoFromJson(Map<String, dynamic> json) {
-  final raw = json['categories'];
-  final categories = raw is List
-      ? raw
-          .map((e) => e.toString().trim())
-          .where((name) => name.isNotEmpty)
-          .toList()
-      : <String>[];
-  if (categories.isEmpty) {
-    final legacy = json['category'] as String? ?? '';
-    if (legacy.trim().isNotEmpty) {
-      categories.add(legacy.trim());
-    }
-  }
-  return _VendorCategoryInfo(
-    categories: categories,
-    description: json['description'] as String? ?? '',
-  );
-}
-
-Map<String, dynamic> _$VendorCategoryInfoToJson(_VendorCategoryInfo instance) =>
-    instance.toJson();
-
 _VendorDocuments _$VendorDocumentsFromJson(Map<String, dynamic> json) =>
     _VendorDocuments(
       businessLicensePath: json['businessLicensePath'] as String?,
@@ -95,37 +72,25 @@ Map<String, dynamic> _$VendorBankDetailsToJson(_VendorBankDetails instance) =>
       'routingNumber': instance.routingNumber,
     };
 
-_VendorRegistration _$VendorRegistrationFromJson(Map<String, dynamic> json) =>
-    _VendorRegistration(
-      business: json['business'] == null
-          ? const VendorBusinessInfo()
-          : VendorBusinessInfo.fromJson(
-              json['business'] as Map<String, dynamic>),
-      address: json['address'] == null
-          ? const VendorAddress()
-          : VendorAddress.fromJson(json['address'] as Map<String, dynamic>),
-      category: (() {
-        final raw = json['category'];
-        if (raw == null) return const VendorCategoryInfo();
-        if (raw is Map<String, dynamic>) {
-          return VendorCategoryInfo.fromJson(raw);
-        }
-        // Backward compatibility for legacy payloads that stored category
-        // as a plain string.
-        if (raw is String && raw.trim().isNotEmpty) {
-          return VendorCategoryInfo(
-            categories: [raw.trim()],
-          );
-        }
-        return const VendorCategoryInfo();
-      })(),
-      documents: json['documents'] == null
-          ? const VendorDocuments()
-          : VendorDocuments.fromJson(json['documents'] as Map<String, dynamic>),
-      bank: json['bank'] == null
-          ? const VendorBankDetails()
-          : VendorBankDetails.fromJson(json['bank'] as Map<String, dynamic>),
-    );
+_VendorRegistration _$VendorRegistrationFromJson(
+  Map<String, dynamic> json,
+) => _VendorRegistration(
+  business: json['business'] == null
+      ? const VendorBusinessInfo()
+      : VendorBusinessInfo.fromJson(json['business'] as Map<String, dynamic>),
+  address: json['address'] == null
+      ? const VendorAddress()
+      : VendorAddress.fromJson(json['address'] as Map<String, dynamic>),
+  category: json['category'] == null
+      ? const VendorCategoryInfo()
+      : VendorCategoryInfo.fromJson(json['category'] as Map<String, dynamic>),
+  documents: json['documents'] == null
+      ? const VendorDocuments()
+      : VendorDocuments.fromJson(json['documents'] as Map<String, dynamic>),
+  bank: json['bank'] == null
+      ? const VendorBankDetails()
+      : VendorBankDetails.fromJson(json['bank'] as Map<String, dynamic>),
+);
 
 Map<String, dynamic> _$VendorRegistrationToJson(_VendorRegistration instance) =>
     <String, dynamic>{

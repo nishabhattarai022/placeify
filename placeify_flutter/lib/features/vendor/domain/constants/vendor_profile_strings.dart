@@ -108,6 +108,7 @@ abstract final class VendorProfileStrings {
 
   // Settings link
   static const storeSettings = 'Store settings';
+  static const switchToShopping = 'Switch to shopping';
 
   // Empty / loading
   static const noProfileFound = 'No vendor profile found.';

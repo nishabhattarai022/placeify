@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../home/data/mock_product_repository.dart';
-import '../../../../home/presentation/providers/wishlist_provider.dart';
+import '../../../../user/data/user_wishlist_mappers.dart';
+import '../../../../user/presentation/providers/user_wishlist_provider.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/services/haptic_service.dart';
@@ -27,26 +27,22 @@ class WishlistScreen extends ConsumerStatefulWidget {
 class _WishlistScreenState extends ConsumerState<WishlistScreen> {
   String _searchQuery = '';
 
-  int _visibleProductCount() {
-    final savedAt = ref.read(wishlistProvider);
-    final byId = {
-      for (final p in MockProductRepository.products) p.id: p,
-    };
-    final products = [
-      for (final id in savedAt.keys)
-        if (byId.containsKey(id)) byId[id]!,
-    ];
-
+  int _visibleProductCount(List<UserWishlistEntry> entries) {
     final query = _searchQuery.trim().toLowerCase();
-    if (query.isEmpty) return products.length;
+    if (query.isEmpty) return entries.length;
 
-    return products.where((p) => p.name.toLowerCase().contains(query)).length;
+    return entries
+        .where((entry) => entry.product.name.toLowerCase().contains(query))
+        .length;
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(wishlistProvider);
-    final visibleCount = _visibleProductCount();
+    final wishlistAsync = ref.watch(userWishlistProvider);
+    final visibleCount = wishlistAsync.maybeWhen(
+      data: _visibleProductCount,
+      orElse: () => 0,
+    );
 
     return Scaffold(
       backgroundColor: AppColors.cream,

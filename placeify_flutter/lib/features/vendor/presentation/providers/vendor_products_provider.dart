@@ -1,9 +1,7 @@
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
-import 'package:placeify_flutter/features/home/presentation/providers/catalog_provider.dart';
-import 'package:placeify_flutter/features/vendor/data/serverpod_vendor_product_repository.dart';
+import 'package:placeify_flutter/features/vendor/data/mock_vendor_product_repository.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product.dart';
-import 'package:placeify_flutter/features/vendor/domain/repositories/vendor_product_repository.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_profile_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -52,12 +50,11 @@ class VendorProducts extends _$VendorProducts {
 
       final products = state.value ?? [];
       state = AsyncData([created, ...products]);
-      ref.invalidate(catalogIndexProvider);
       return null;
     } on VendorProductActionException catch (e) {
       return e.message;
-    } catch (error) {
-      return _unexpectedProductError(error, 'Could not create product. Try again.');
+    } catch (_) {
+      return 'Could not create product. Try again.';
     } finally {
       await _setSaving(false);
     }
@@ -96,51 +93,13 @@ class VendorProducts extends _$VendorProducts {
       } else {
         await refresh();
       }
-      ref.invalidate(catalogIndexProvider);
       return null;
     } on VendorProductActionException catch (e) {
       state = previous;
       return e.message;
-    } catch (error) {
+    } catch (_) {
       state = previous;
-      return _unexpectedProductError(error, 'Could not update product. Try again.');
-    } finally {
-      await _setSaving(false);
-    }
-  }
-
-  Future<String?> regenerateProductModel3d(String productId) async {
-    await _setSaving(true);
-    try {
-      final user = await ref.read(currentUserProvider.future);
-      final vendorId = user?.vendorId;
-      if (vendorId == null) {
-        return 'Vendor account not found.';
-      }
-
-      final repo = ref.read(vendorProductRepositoryProvider);
-      final updated = await repo.regenerateProductModel3d(vendorId, productId);
-
-      final products = state.value;
-      if (products != null) {
-        final index = products.indexWhere((item) => item.id == productId);
-        if (index >= 0) {
-          final synced = [...products];
-          synced[index] = updated;
-          state = AsyncData(synced);
-        } else {
-          await refresh();
-        }
-      }
-      ref.invalidate(catalogIndexProvider);
-      return null;
-    } on VendorProductActionException catch (e) {
-      return e.message;
-    } catch (error) {
-      return _unexpectedProductError(
-        error,
-        'Could not build 3D preview. Try again.',
-      );
+      return 'Could not update product. Try again.';
     } finally {
       await _setSaving(false);
     }
@@ -207,12 +166,5 @@ class VendorProducts extends _$VendorProducts {
     } finally {
       await _setSaving(false);
     }
-  }
-
-  String _unexpectedProductError(Object error, String fallback) {
-    if (error is StateError) return error.message;
-    final text = error.toString().replaceFirst('Exception: ', '').trim();
-    if (text.isEmpty || text == error.runtimeType.toString()) return fallback;
-    return text.length <= 160 ? text : fallback;
   }
 }

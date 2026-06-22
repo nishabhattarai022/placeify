@@ -12,6 +12,8 @@ class VendorProductFormState {
     this.sku = '',
     this.categoryId = '',
     this.materials = '',
+    this.warrantyNote = '',
+    this.shippingNote = '',
     this.listPrice = '',
     this.discountPercent = '',
     this.offerLabel = '',
@@ -40,6 +42,8 @@ class VendorProductFormState {
   final String sku;
   final String categoryId;
   final String materials;
+  final String warrantyNote;
+  final String shippingNote;
   final String listPrice;
   final String discountPercent;
   final String offerLabel;
@@ -83,6 +87,8 @@ class VendorProductFormState {
     String? sku,
     String? categoryId,
     String? materials,
+    String? warrantyNote,
+    String? shippingNote,
     String? listPrice,
     String? discountPercent,
     String? offerLabel,
@@ -110,6 +116,8 @@ class VendorProductFormState {
       sku: sku ?? this.sku,
       categoryId: categoryId ?? this.categoryId,
       materials: materials ?? this.materials,
+      warrantyNote: warrantyNote ?? this.warrantyNote,
+      shippingNote: shippingNote ?? this.shippingNote,
       listPrice: listPrice ?? this.listPrice,
       discountPercent: discountPercent ?? this.discountPercent,
       offerLabel: offerLabel ?? this.offerLabel,

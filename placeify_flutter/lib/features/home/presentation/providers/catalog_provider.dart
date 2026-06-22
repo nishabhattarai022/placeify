@@ -100,3 +100,11 @@ Future<Product?> productDetail(Ref ref, String id) async {
 
   return CatalogProductMapper.toUiProduct(apiProduct);
 }
+
+/// First products shown on the home showcase row (live catalog).
+@riverpod
+List<Product> homeFeaturedProducts(Ref ref) {
+  final products = ref.watch(catalogProductsProvider);
+  if (products.length <= 4) return products;
+  return products.sublist(0, 4);
+}

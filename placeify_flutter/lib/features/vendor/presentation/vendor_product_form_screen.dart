@@ -17,6 +17,7 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/percent_input_formatter.dart';
 import '../../../core/widgets/animated_scale_tap.dart';
 import '../../../core/widgets/placeify_bottom_sheet.dart';
 import '../../../core/widgets/toast_overlay.dart';
@@ -50,6 +51,8 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
   late final TextEditingController _brand;
   late final TextEditingController _sku;
   late final TextEditingController _materials;
+  late final TextEditingController _warrantyNote;
+  late final TextEditingController _shippingNote;
   late final TextEditingController _listPrice;
   late final TextEditingController _discountPercent;
   late final TextEditingController _offerLabel;
@@ -69,6 +72,8 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     _brand = TextEditingController(text: form.brand);
     _sku = TextEditingController(text: form.sku);
     _materials = TextEditingController(text: form.materials);
+    _warrantyNote = TextEditingController(text: form.warrantyNote);
+    _shippingNote = TextEditingController(text: form.shippingNote);
     _listPrice = TextEditingController(text: form.listPrice);
     _discountPercent = TextEditingController(text: form.discountPercent);
     _offerLabel = TextEditingController(text: form.offerLabel);
@@ -102,6 +107,8 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     _brand.dispose();
     _sku.dispose();
     _materials.dispose();
+    _warrantyNote.dispose();
+    _shippingNote.dispose();
     _listPrice.dispose();
     _discountPercent.dispose();
     _offerLabel.dispose();
@@ -129,6 +136,8 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     setIfDifferent(_brand, form.brand);
     setIfDifferent(_sku, form.sku);
     setIfDifferent(_materials, form.materials);
+    setIfDifferent(_warrantyNote, form.warrantyNote);
+    setIfDifferent(_shippingNote, form.shippingNote);
     setIfDifferent(_listPrice, form.listPrice);
     setIfDifferent(_discountPercent, form.discountPercent);
     setIfDifferent(_offerLabel, form.offerLabel);
@@ -149,6 +158,8 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
         brand: _brand.text,
         sku: _sku.text,
         materials: _materials.text,
+        warrantyNote: _warrantyNote.text,
+        shippingNote: _shippingNote.text,
         listPrice: _listPrice.text,
         discountPercent: _discountPercent.text,
         offerLabel: _offerLabel.text,
@@ -534,6 +545,50 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                 ),
                 const SizedBox(height: 4),
                 const Text(
+                  'Warranty & shipping',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.espresso,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Shown on the product page when customers expand details.',
+                  style: AppTypography.bodyLight.copyWith(
+                    color: AppColors.textSecondary,
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                ProfileFormField(
+                  label: 'Warranty',
+                  child: ProfileTextInput(
+                    controller: _warrantyNote,
+                    hint: 'e.g. 2-year limited warranty',
+                    onChanged: (value) {
+                      notifier.update(
+                        (state) => state.copyWith(warrantyNote: value),
+                      );
+                      _markDirty();
+                    },
+                  ),
+                ),
+                ProfileFormField(
+                  label: 'Shipping',
+                  child: ProfileTextInput(
+                    controller: _shippingNote,
+                    hint: 'e.g. Ships in 5–7 business days',
+                    onChanged: (value) {
+                      notifier.update(
+                        (state) => state.copyWith(shippingNote: value),
+                      );
+                      _markDirty();
+                    },
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
                   'Pricing',
                   style: TextStyle(
                     fontSize: 15,
@@ -572,82 +627,98 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                     },
                   ),
                 ),
-                ProfileFormField(
-                  label: 'Discount %',
-                  child: ProfileTextInput(
-                    controller: _discountPercent,
-                    hint: '0',
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
+                if (isEditing) ...[
+                  ProfileFormField(
+                    label: 'Discount %',
+                    child: ProfileTextInput(
+                      controller: _discountPercent,
+                      hint: '0',
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: const [
+                        PercentInputFormatter(min: 0, max: 100),
+                      ],
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return null;
+                        }
+                        final parsed = double.tryParse(value.trim());
+                        if (parsed == null || parsed < 0 || parsed > 100) {
+                          return 'Discount must be between 0 and 100';
+                        }
+                        return null;
+                      },
+                      onChanged: (value) {
+                        notifier.update(
+                          (state) => state.copyWith(discountPercent: value),
+                        );
+                        _markDirty();
+                      },
                     ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                    ],
-                    onChanged: (value) {
-                      notifier.update(
-                        (state) => state.copyWith(discountPercent: value),
-                      );
-                      _markDirty();
-                    },
                   ),
-                ),
-                ProfileFormField(
-                  label: 'Offer Label',
-                  child: ProfileTextInput(
-                    controller: _offerLabel,
-                    hint: 'e.g. Summer Sale, Limited Offer',
-                    onChanged: (value) {
-                      notifier.update(
-                        (state) => state.copyWith(offerLabel: value),
-                      );
-                      _markDirty();
-                    },
+                  ProfileFormField(
+                    label: 'Offer Label',
+                    child: ProfileTextInput(
+                      controller: _offerLabel,
+                      hint: 'e.g. Summer Sale, Limited Offer',
+                      onChanged: (value) {
+                        notifier.update(
+                          (state) => state.copyWith(offerLabel: value),
+                        );
+                        _markDirty();
+                      },
+                    ),
                   ),
-                ),
-                ListenableBuilder(
-                  listenable: Listenable.merge([
-                    _listPrice,
-                    _discountPercent,
-                  ]),
-                  builder: (context, _) {
-                    final salePrice = ref.read(vendorProductFormProvider).computedSalePrice;
-                    return Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.warmWhite,
-                        borderRadius: AppRadii.md,
-                        border: Border.all(color: AppColors.creamDark, width: 1.5),
-                      ),
-                      child: Row(
-                        children: [
-                          const Expanded(
-                            child: Text(
-                              'SALE PRICE',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.espresso,
-                                letterSpacing: 0.07 * 12,
+                  ListenableBuilder(
+                    listenable: Listenable.merge([
+                      _listPrice,
+                      _discountPercent,
+                    ]),
+                    builder: (context, _) {
+                      final salePrice =
+                          ref.read(vendorProductFormProvider).computedSalePrice;
+                      return Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.warmWhite,
+                          borderRadius: AppRadii.md,
+                          border: Border.all(
+                            color: AppColors.creamDark,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                'SALE PRICE',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.espresso,
+                                  letterSpacing: 0.07 * 12,
+                                ),
                               ),
                             ),
-                          ),
-                          Text(
-                            Formatters.currencyFull(salePrice),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.accent,
+                            Text(
+                              Formatters.currencyFull(salePrice),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.accent,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
                 const SizedBox(height: 18),
                 Row(
                   children: [
