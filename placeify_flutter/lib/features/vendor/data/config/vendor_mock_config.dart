@@ -41,6 +41,8 @@ abstract final class VendorMockConfig {
     TopProductStat(
       name: 'Harmony Chair',
       iconPath: 'assets/icons/ic_sofa.svg',
+      imageUrl:
+          'assets/images/splash/Tola_Lounge_Chair_Venice_Vegan_Suede_Sage_1_0.jpg',
       revenue: 'NPR 4.2k',
       progressFraction: 0.78,
       barColor: AppColors.accent,
@@ -48,6 +50,7 @@ abstract final class VendorMockConfig {
     TopProductStat(
       name: 'Brixon Chair',
       iconPath: 'assets/icons/ic_sofa.svg',
+      imageUrl: 'assets/images/splash/pexels-suhailat-35160826.jpg',
       revenue: 'NPR 2.8k',
       progressFraction: 0.52,
       barColor: AppColors.sage,
@@ -55,6 +58,7 @@ abstract final class VendorMockConfig {
     TopProductStat(
       name: 'Astra Chair',
       iconPath: 'assets/icons/ic_chair.svg',
+      imageUrl: 'assets/images/splash/462222_1_800.jpg',
       revenue: 'NPR 2.1k',
       progressFraction: 0.38,
       barColor: AppColors.bark,
@@ -105,7 +109,9 @@ abstract final class VendorMockConfig {
       sku: 'HH-CHR-001',
       price: 12500,
       stock: 18,
-      imageUrls: const [],
+      imageUrls: const [
+        'assets/images/splash/Tola_Lounge_Chair_Venice_Vegan_Suede_Sage_1_0.jpg',
+      ],
       categoryId: 'chairs',
       createdAt: DateTime(2025, 12, 10),
       warrantyNote: '2-year limited warranty',
@@ -118,7 +124,9 @@ abstract final class VendorMockConfig {
       sku: 'HH-CHR-002',
       price: 9800,
       stock: 12,
-      imageUrls: const [],
+      imageUrls: const [
+        'assets/images/splash/pexels-suhailat-35160826.jpg',
+      ],
       categoryId: 'chairs',
       createdAt: DateTime(2026, 1, 5),
     ),
@@ -129,7 +137,9 @@ abstract final class VendorMockConfig {
       sku: 'HH-CHR-003',
       price: 11200,
       stock: 9,
-      imageUrls: const [],
+      imageUrls: const [
+        'assets/images/splash/462222_1_800.jpg',
+      ],
       categoryId: 'chairs',
       createdAt: DateTime(2026, 2, 20),
     ),
@@ -140,7 +150,9 @@ abstract final class VendorMockConfig {
       sku: 'HH-TBL-001',
       price: 28500,
       stock: 6,
-      imageUrls: const [],
+      imageUrls: const [
+        'assets/images/splash/pexels-blackcurrant-great-2016663774-35378675.jpg',
+      ],
       categoryId: 'tables',
       createdAt: DateTime(2026, 3, 8),
     ),
@@ -151,7 +163,9 @@ abstract final class VendorMockConfig {
       sku: 'HH-SOF-001',
       price: 42000,
       stock: 4,
-      imageUrls: const [],
+      imageUrls: const [
+        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400',
+      ],
       categoryId: 'sofas',
       isActive: false,
       createdAt: DateTime(2026, 3, 22),
@@ -163,7 +177,9 @@ abstract final class VendorMockConfig {
       sku: 'HH-LGT-001',
       price: 4500,
       stock: 22,
-      imageUrls: const [],
+      imageUrls: const [
+        'assets/images/home/explore_hero.jpg',
+      ],
       categoryId: 'lights',
       createdAt: DateTime(2026, 4, 2),
     ),
@@ -174,7 +190,9 @@ abstract final class VendorMockConfig {
       sku: 'HH-BED-001',
       price: 56000,
       stock: 3,
-      imageUrls: const [],
+      imageUrls: const [
+        'assets/images/splash/3d-room-decor-with-furniture-minimalist-beige-tones.jpg',
+      ],
       categoryId: 'beds',
       createdAt: DateTime(2026, 4, 18),
     ),
@@ -185,7 +203,9 @@ abstract final class VendorMockConfig {
       sku: 'HH-DEC-001',
       price: 3200,
       stock: 15,
-      imageUrls: const [],
+      imageUrls: const [
+        'assets/images/splash/pexels-suhailat-35160826.jpg',
+      ],
       categoryId: 'decor',
       isActive: false,
       createdAt: DateTime(2026, 5, 1),
@@ -705,6 +725,12 @@ abstract final class VendorMockConfig {
       if (product.id == productId) return product;
     }
     return null;
+  }
+
+  static String? productImageFor(String productId) {
+    final product = productById(productId);
+    if (product == null || product.imageUrls.isEmpty) return null;
+    return product.imageUrls.first;
   }
 
   static int deleteProducts(List<String> productIds) {

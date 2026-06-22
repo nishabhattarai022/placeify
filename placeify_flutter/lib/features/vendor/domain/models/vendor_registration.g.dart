@@ -72,25 +72,26 @@ Map<String, dynamic> _$VendorBankDetailsToJson(_VendorBankDetails instance) =>
       'routingNumber': instance.routingNumber,
     };
 
-_VendorRegistration _$VendorRegistrationFromJson(
-  Map<String, dynamic> json,
-) => _VendorRegistration(
-  business: json['business'] == null
-      ? const VendorBusinessInfo()
-      : VendorBusinessInfo.fromJson(json['business'] as Map<String, dynamic>),
-  address: json['address'] == null
-      ? const VendorAddress()
-      : VendorAddress.fromJson(json['address'] as Map<String, dynamic>),
-  category: json['category'] == null
-      ? const VendorCategoryInfo()
-      : VendorCategoryInfo.fromJson(json['category'] as Map<String, dynamic>),
-  documents: json['documents'] == null
-      ? const VendorDocuments()
-      : VendorDocuments.fromJson(json['documents'] as Map<String, dynamic>),
-  bank: json['bank'] == null
-      ? const VendorBankDetails()
-      : VendorBankDetails.fromJson(json['bank'] as Map<String, dynamic>),
-);
+_VendorRegistration _$VendorRegistrationFromJson(Map<String, dynamic> json) =>
+    _VendorRegistration(
+      business: json['business'] == null
+          ? const VendorBusinessInfo()
+          : VendorBusinessInfo.fromJson(
+              json['business'] as Map<String, dynamic>),
+      address: json['address'] == null
+          ? const VendorAddress()
+          : VendorAddress.fromJson(json['address'] as Map<String, dynamic>),
+      category: json['category'] == null
+          ? const VendorCategoryInfo()
+          : VendorCategoryInfo.fromJson(
+              json['category'] as Map<String, dynamic>),
+      documents: json['documents'] == null
+          ? const VendorDocuments()
+          : VendorDocuments.fromJson(json['documents'] as Map<String, dynamic>),
+      bank: json['bank'] == null
+          ? const VendorBankDetails()
+          : VendorBankDetails.fromJson(json['bank'] as Map<String, dynamic>),
+    );
 
 Map<String, dynamic> _$VendorRegistrationToJson(_VendorRegistration instance) =>
     <String, dynamic>{

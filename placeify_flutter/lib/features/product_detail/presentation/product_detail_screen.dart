@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../cart/presentation/providers/cart_provider.dart';
-import '../../home/presentation/providers/category_provider.dart';
+import '../../home/domain/models/product.dart';
 import '../../../core/services/haptic_service.dart';
 import '../data/product_detail_content.dart';
 import 'product_detail_tokens.dart';
@@ -25,7 +25,65 @@ class ProductDetailScreen extends ConsumerStatefulWidget {
       _ProductDetailScreenState();
 }
 
-class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
+class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final productAsync = ref.watch(resolvedProductProvider(widget.productId));
+
+    return productAsync.when(
+      loading: () => Scaffold(
+        backgroundColor: ProductDetailTokens.screenBg,
+        body: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (_, __) => Scaffold(
+        backgroundColor: ProductDetailTokens.screenBg,
+        body: Center(
+          child: TextButton(
+            onPressed: () => context.pop(),
+            child: const Text('Product not found'),
+          ),
+        ),
+      ),
+      data: (product) {
+        if (product == null) {
+          return Scaffold(
+            backgroundColor: ProductDetailTokens.screenBg,
+            body: Center(
+              child: TextButton(
+                onPressed: () => context.pop(),
+                child: const Text('Product not found'),
+              ),
+            ),
+          );
+        }
+
+        return _ProductDetailBody(product: product);
+      },
+    );
+  }
+}
+
+class _ProductDetailBody extends ConsumerStatefulWidget {
+  const _ProductDetailBody({required this.product});
+
+  final Product product;
+
+  @override
+  ConsumerState<_ProductDetailBody> createState() => _ProductDetailBodyState();
+}
+
+class _ProductDetailBodyState extends ConsumerState<_ProductDetailBody>
     with SingleTickerProviderStateMixin {
   int _selectedImageIndex = 0;
   bool _expanded = false;
@@ -41,13 +99,6 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
   @override
   void initState() {
     super.initState();
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-      ),
-    );
-
     _entryController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),
@@ -82,20 +133,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
 
   @override
   Widget build(BuildContext context) {
-    final product = ref.watch(productByIdProvider(widget.productId));
-
-    if (product == null) {
-      return Scaffold(
-        backgroundColor: ProductDetailTokens.screenBg,
-        body: Center(
-          child: TextButton(
-            onPressed: () => context.pop(),
-            child: const Text('Product not found'),
-          ),
-        ),
-      );
-    }
-
+    final product = widget.product;
     final content = ProductDetailContentRepository.forProduct(product);
     final top = MediaQuery.paddingOf(context).top;
     final vendorId = product.vendorId;

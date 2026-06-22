@@ -10,3 +10,4 @@ values:
   - shipped
   - delivered
   - cancelled
+  - autoCancelled

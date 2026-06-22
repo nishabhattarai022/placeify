@@ -477,6 +477,86 @@ class Endpoints extends _i1.EndpointDispatch {
                 status: params['status'],
               ),
         ),
+        'getMyOrder': _i1.MethodConnector(
+          name: 'getMyOrder',
+          params: {
+            'orderId': _i1.ParameterDescription(
+              name: 'orderId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['user'] as _i4.UserEndpoint).getMyOrder(
+                session,
+                params['orderId'],
+              ),
+        ),
+        'cancelMyOrder': _i1.MethodConnector(
+          name: 'cancelMyOrder',
+          params: {
+            'orderId': _i1.ParameterDescription(
+              name: 'orderId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'reason': _i1.ParameterDescription(
+              name: 'reason',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['user'] as _i4.UserEndpoint).cancelMyOrder(
+                session,
+                params['orderId'],
+                params['reason'],
+              ),
+        ),
+        'getMyOrderPayment': _i1.MethodConnector(
+          name: 'getMyOrderPayment',
+          params: {
+            'orderId': _i1.ParameterDescription(
+              name: 'orderId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['user'] as _i4.UserEndpoint).getMyOrderPayment(
+                    session,
+                    params['orderId'],
+                  ),
+        ),
+        'completePayment': _i1.MethodConnector(
+          name: 'completePayment',
+          params: {
+            'orderId': _i1.ParameterDescription(
+              name: 'orderId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['user'] as _i4.UserEndpoint).completePayment(
+                    session,
+                    params['orderId'],
+                  ),
+        ),
         'listMyArSessions': _i1.MethodConnector(
           name: 'listMyArSessions',
           params: {
@@ -1315,6 +1395,74 @@ class Endpoints extends _i1.EndpointDispatch {
                         vendorMessages: params['vendorMessages'],
                         promotions: params['promotions'],
                       ),
+        ),
+        'listInAppNotifications': _i1.MethodConnector(
+          name: 'listInAppNotifications',
+          params: {
+            'limit': _i1.ParameterDescription(
+              name: 'limit',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'offset': _i1.ParameterDescription(
+              name: 'offset',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['notification'] as _i10.NotificationEndpoint)
+                      .listInAppNotifications(
+                        session,
+                        limit: params['limit'],
+                        offset: params['offset'],
+                      ),
+        ),
+        'unreadInAppNotificationCount': _i1.MethodConnector(
+          name: 'unreadInAppNotificationCount',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['notification'] as _i10.NotificationEndpoint)
+                      .unreadInAppNotificationCount(session),
+        ),
+        'markInAppNotificationRead': _i1.MethodConnector(
+          name: 'markInAppNotificationRead',
+          params: {
+            'notificationId': _i1.ParameterDescription(
+              name: 'notificationId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['notification'] as _i10.NotificationEndpoint)
+                      .markInAppNotificationRead(
+                        session,
+                        params['notificationId'],
+                      ),
+        ),
+        'markAllInAppNotificationsRead': _i1.MethodConnector(
+          name: 'markAllInAppNotificationsRead',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['notification'] as _i10.NotificationEndpoint)
+                      .markAllInAppNotificationsRead(session),
         ),
       },
     );
@@ -2474,6 +2622,54 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['fileData'],
                     params['fileName'],
                   ),
+        ),
+        'listNotifications': _i1.MethodConnector(
+          name: 'listNotifications',
+          params: {
+            'limit': _i1.ParameterDescription(
+              name: 'limit',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['vendor'] as _i16.VendorEndpoint)
+                  .listNotifications(
+                    session,
+                    limit: params['limit'],
+                  ),
+        ),
+        'markNotificationRead': _i1.MethodConnector(
+          name: 'markNotificationRead',
+          params: {
+            'notificationId': _i1.ParameterDescription(
+              name: 'notificationId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['vendor'] as _i16.VendorEndpoint)
+                  .markNotificationRead(
+                    session,
+                    params['notificationId'],
+                  ),
+        ),
+        'markAllNotificationsRead': _i1.MethodConnector(
+          name: 'markAllNotificationsRead',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['vendor'] as _i16.VendorEndpoint)
+                  .markAllNotificationsRead(session),
         ),
       },
     );

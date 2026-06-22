@@ -290,4 +290,19 @@ class VendorEndpoint extends Endpoint {
   ) {
     return _service.uploadDeliveryProof(session, fileData, fileName);
   }
+
+  Future<List<VendorNotificationSummary>> listNotifications(
+    Session session, {
+    int limit = 50,
+  }) {
+    return _service.listNotifications(session, limit: limit);
+  }
+
+  Future<void> markNotificationRead(Session session, int notificationId) {
+    return _service.markNotificationRead(session, notificationId);
+  }
+
+  Future<void> markAllNotificationsRead(Session session) {
+    return _service.markAllNotificationsRead(session);
+  }
 }

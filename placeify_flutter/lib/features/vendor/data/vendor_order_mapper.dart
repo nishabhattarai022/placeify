@@ -44,6 +44,7 @@ abstract final class VendorOrderMapper {
       api.OrderStatus.shipped => domain.OrderStatus.shipped,
       api.OrderStatus.delivered => domain.OrderStatus.delivered,
       api.OrderStatus.cancelled => domain.OrderStatus.cancelled,
+      api.OrderStatus.autoCancelled => domain.OrderStatus.cancelled,
     };
   }
 

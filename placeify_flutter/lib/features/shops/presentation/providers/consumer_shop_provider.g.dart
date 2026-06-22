@@ -283,3 +283,145 @@ final class ShopProductsFamily extends $Family
   @override
   String toString() => r'shopProductsProvider';
 }
+
+@ProviderFor(shopProductByConsumerId)
+final shopProductByConsumerIdProvider = ShopProductByConsumerIdFamily._();
+
+final class ShopProductByConsumerIdProvider
+    extends
+        $FunctionalProvider<AsyncValue<Product?>, Product?, FutureOr<Product?>>
+    with $FutureModifier<Product?>, $FutureProvider<Product?> {
+  ShopProductByConsumerIdProvider._({
+    required ShopProductByConsumerIdFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'shopProductByConsumerIdProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$shopProductByConsumerIdHash();
+
+  @override
+  String toString() {
+    return r'shopProductByConsumerIdProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<Product?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Product?> create(Ref ref) {
+    final argument = this.argument as String;
+    return shopProductByConsumerId(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ShopProductByConsumerIdProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$shopProductByConsumerIdHash() =>
+    r'67599acfbf698443369eb031b5e2be0677fd52cc';
+
+final class ShopProductByConsumerIdFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Product?>, String> {
+  ShopProductByConsumerIdFamily._()
+    : super(
+        retry: null,
+        name: r'shopProductByConsumerIdProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  ShopProductByConsumerIdProvider call(String consumerId) =>
+      ShopProductByConsumerIdProvider._(argument: consumerId, from: this);
+
+  @override
+  String toString() => r'shopProductByConsumerIdProvider';
+}
+
+@ProviderFor(resolvedProduct)
+final resolvedProductProvider = ResolvedProductFamily._();
+
+final class ResolvedProductProvider
+    extends
+        $FunctionalProvider<AsyncValue<Product?>, Product?, FutureOr<Product?>>
+    with $FutureModifier<Product?>, $FutureProvider<Product?> {
+  ResolvedProductProvider._({
+    required ResolvedProductFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'resolvedProductProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$resolvedProductHash();
+
+  @override
+  String toString() {
+    return r'resolvedProductProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<Product?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Product?> create(Ref ref) {
+    final argument = this.argument as String;
+    return resolvedProduct(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ResolvedProductProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$resolvedProductHash() => r'876a5a24eacf5438cb78f6ac3717d9302a0a6b30';
+
+final class ResolvedProductFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Product?>, String> {
+  ResolvedProductFamily._()
+    : super(
+        retry: null,
+        name: r'resolvedProductProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  ResolvedProductProvider call(String id) =>
+      ResolvedProductProvider._(argument: id, from: this);
+
+  @override
+  String toString() => r'resolvedProductProvider';
+}

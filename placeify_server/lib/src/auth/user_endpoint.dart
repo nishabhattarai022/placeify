@@ -130,6 +130,32 @@ class UserEndpoint extends PlaceifyAuthenticatedEndpoint {
     return summaries;
   }
 
+  Future<UserOrderDetail> getMyOrder(Session session, int orderId) {
+    return _service.getMyOrder(session, orderId);
+  }
+
+  Future<UserOrderDetail> cancelMyOrder(
+    Session session,
+    int orderId,
+    String reason,
+  ) {
+    return _service.cancelMyOrder(session, orderId, reason);
+  }
+
+  Future<UserOrderPaymentSummary> getMyOrderPayment(
+    Session session,
+    int orderId,
+  ) {
+    return _service.getMyOrderPayment(session, orderId);
+  }
+
+  Future<UserOrderPaymentSummary> completePayment(
+    Session session,
+    int orderId,
+  ) {
+    return _service.completePayment(session, orderId);
+  }
+
   Future<List<UserArSessionSummary>> listMyArSessions(
     Session session, {
     int limit = 20,

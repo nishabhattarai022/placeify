@@ -1,0 +1,17 @@
+### Persisted in-app notification for customers and vendors.
+class: InAppNotification
+table: in_app_notification
+fields:
+  user: User?, relation(onDelete=Cascade)
+  title: String
+  message: String
+  type: InAppNotificationType
+  referenceId: int?
+  isRead: bool, default=false
+  createdAt: DateTime, default=now
+
+indexes:
+  in_app_notification_user_id:
+    fields: userId
+  in_app_notification_user_unread:
+    fields: userId, isRead

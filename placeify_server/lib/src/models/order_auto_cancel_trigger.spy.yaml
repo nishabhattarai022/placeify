@@ -1,0 +1,4 @@
+### Payload for the daily order auto-cancel future call.
+class: OrderAutoCancelTrigger
+fields:
+  scheduledAt: DateTime?

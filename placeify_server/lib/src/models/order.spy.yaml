@@ -4,9 +4,13 @@ table: order
 fields:
   user: User?, relation(onDelete=Cascade)
   status: OrderStatus, default=pending
+  deliveryStatus: OrderDeliveryStatus?
+  paymentStatus: OrderPaymentStatus, default=unpaid
   totalAmount: double
   shippingAddress: String
   rejectionReason: String?
+  autoExpiresAt: DateTime?
+  version: int, default=1
   placedAt: DateTime, default=now
   updatedAt: DateTime, default=now
 
@@ -15,3 +19,5 @@ indexes:
     fields: userId
   order_status:
     fields: status
+  order_auto_expires_at:
+    fields: autoExpiresAt

@@ -33,4 +33,31 @@ class NotificationEndpoint extends Endpoint {
       promotions: promotions,
     );
   }
+
+  Future<List<InAppNotificationSummary>> listInAppNotifications(
+    Session session, {
+    int limit = 50,
+    int offset = 0,
+  }) {
+    return _service.listInAppNotifications(
+      session,
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  Future<int> unreadInAppNotificationCount(Session session) {
+    return _service.unreadInAppNotificationCount(session);
+  }
+
+  Future<void> markInAppNotificationRead(
+    Session session,
+    int notificationId,
+  ) {
+    return _service.markInAppNotificationRead(session, notificationId);
+  }
+
+  Future<void> markAllInAppNotificationsRead(Session session) {
+    return _service.markAllInAppNotificationsRead(session);
+  }
 }

@@ -7,8 +7,10 @@ import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/server_static_paths.dart';
 import '../../shared/session_service.dart';
-import '../notification/order_notification_service.dart';
+import '../notification/in_app_notification_store.dart';
 import '../notification/notification_repository.dart';
+import '../notification/order_notification_service.dart';
+import '../order/order_lifecycle_store.dart';
 import 'product_3d/product_3d_generation_result.dart';
 import 'product_3d/product_3d_generator.dart';
 import 'product_3d/product_3d_views.dart';
@@ -22,6 +24,10 @@ import 'vendor_sales_metrics.dart';
 import 'vendor_shop_category_codec.dart';
 
 class VendorStore {
+  VendorStore({InAppNotificationStore? notifications})
+      : _notifications = notifications ?? InAppNotificationStore();
+
+  final InAppNotificationStore _notifications;
   Future<VendorDashboard> getDashboard(Session session) async {
     final user = await SessionService.requireUser(session);
     final vendor = await Vendor.db.findFirstRow(
@@ -1358,6 +1364,7 @@ class VendorStore {
 
   Future<VendorShopOrder> acceptShopOrder(Session session, int orderId) async {
     final vendor = await requireOwnedVendor(session);
+    final user = await SessionService.requireUser(session);
     final order = await _requireMutableVendorOrder(session, vendor.id!, orderId);
 
     if (order.status != OrderStatus.pending) {
@@ -1367,38 +1374,52 @@ class VendorStore {
       );
     }
 
-    final now = DateTime.now();
-    await Order.db.updateRow(
-      session,
-      order.copyWith(
-        status: OrderStatus.accepted,
-        rejectionReason: null,
-        updatedAt: now,
-      ),
-    );
-
-    final existingUpdates = await _deliveryUpdatesFor(session, vendor.id!, orderId);
-    if (existingUpdates.isEmpty) {
-      await OrderDeliveryUpdate.db.insertRow(
+    await session.db.transaction((transaction) async {
+      final accepted = await OrderLifecycleStore.updateOrderWithVersion(
         session,
-        OrderDeliveryUpdate(
-          orderId: orderId,
-          vendorId: vendor.id!,
-          stage: DeliveryStage.orderPlaced,
-          note: 'Order confirmed by vendor.',
-          createdAt: now,
+        order,
+        (current) => current.copyWith(
+          status: OrderStatus.accepted,
+          rejectionReason: null,
         ),
+        transaction: transaction,
       );
-    }
 
-    final acceptedOrder = await Order.db.findById(session, orderId);
-    if (acceptedOrder != null) {
+      await OrderLifecycleStore.appendHistory(
+        session,
+        orderId,
+        statusType: OrderStatusHistoryType.order,
+        previousStatus: order.status.name,
+        newStatus: OrderStatus.accepted.name,
+        changedByUserId: user.id,
+        transaction: transaction,
+      );
+
+      final existingUpdates = await OrderDeliveryUpdate.db.find(
+        session,
+        where: (row) =>
+            row.orderId.equals(orderId) & row.vendorId.equals(vendor.id!),
+        transaction: transaction,
+      );
+      if (existingUpdates.isEmpty) {
+        await OrderDeliveryUpdate.db.insertRow(
+          session,
+          OrderDeliveryUpdate(
+            orderId: orderId,
+            vendorId: vendor.id!,
+            stage: DeliveryStage.orderPlaced,
+            note: 'Order confirmed by vendor.',
+          ),
+          transaction: transaction,
+        );
+      }
+
       await OrderNotificationService.notifyOrderAccepted(
         session,
-        order: acceptedOrder,
+        order: accepted,
         vendorId: vendor.id!,
       );
-    }
+    });
 
     return getShopOrder(session, orderId);
   }
@@ -1409,6 +1430,7 @@ class VendorStore {
     String reason,
   ) async {
     final vendor = await requireOwnedVendor(session);
+    final user = await SessionService.requireUser(session);
     final trimmedReason = reason.trim();
     if (trimmedReason.isEmpty) {
       throw PlaceifyException(
@@ -1425,14 +1447,34 @@ class VendorStore {
       );
     }
 
-    await Order.db.updateRow(
-      session,
-      order.copyWith(
-        status: OrderStatus.rejected,
-        rejectionReason: trimmedReason,
-        updatedAt: DateTime.now(),
-      ),
-    );
+    await session.db.transaction((transaction) async {
+      final rejected = await OrderLifecycleStore.updateOrderWithVersion(
+        session,
+        order,
+        (current) => current.copyWith(
+          status: OrderStatus.rejected,
+          rejectionReason: trimmedReason,
+        ),
+        transaction: transaction,
+      );
+
+      await OrderLifecycleStore.appendHistory(
+        session,
+        orderId,
+        statusType: OrderStatusHistoryType.order,
+        previousStatus: order.status.name,
+        newStatus: OrderStatus.rejected.name,
+        changedByUserId: user.id,
+        note: trimmedReason,
+        transaction: transaction,
+      );
+
+      await OrderNotificationService.notifyOrderRejected(
+        session,
+        order: rejected,
+        reason: trimmedReason,
+      );
+    });
 
     return getShopOrder(session, orderId);
   }
@@ -1454,6 +1496,7 @@ class VendorStore {
     String? photoUrl,
   }) async {
     final vendor = await requireOwnedVendor(session);
+    final user = await SessionService.requireUser(session);
     final order = await _requireMutableVendorOrder(session, vendor.id!, orderId);
 
     if (order.status == OrderStatus.pending) {
@@ -1464,17 +1507,37 @@ class VendorStore {
     }
 
     if (order.status == OrderStatus.rejected ||
-        order.status == OrderStatus.cancelled) {
+        order.status == OrderStatus.cancelled ||
+        order.status == OrderStatus.autoCancelled) {
       throw PlaceifyException(
         message: 'Delivery updates are not available for this order.',
         code: 'INVALID_ORDER_STATUS',
       );
     }
 
-    if (order.status == OrderStatus.delivered) {
+    if (order.deliveryStatus == OrderDeliveryStatus.delivered) {
       throw PlaceifyException(
         message: 'This order is already delivered.',
         code: 'ORDER_ALREADY_DELIVERED',
+      );
+    }
+
+    final nextDeliveryStatus = OrderLifecycleStore.deliveryStatusForStage(stage);
+    if (nextDeliveryStatus == null) {
+      throw PlaceifyException(
+        message: 'This delivery stage cannot be applied.',
+        code: 'INVALID_DELIVERY_STAGE',
+      );
+    }
+
+    if (!OrderLifecycleStore.canAdvanceDeliveryStatus(
+      order.deliveryStatus,
+      nextDeliveryStatus,
+    )) {
+      throw PlaceifyException(
+        message:
+            'Delivery status can only move forward one step at a time.',
+        code: 'INVALID_DELIVERY_STAGE',
       );
     }
 
@@ -1502,38 +1565,52 @@ class VendorStore {
       );
     }
 
-    final now = DateTime.now();
-    final update = await OrderDeliveryUpdate.db.insertRow(
-      session,
-      OrderDeliveryUpdate(
-        orderId: orderId,
-        vendorId: vendor.id!,
-        stage: stage,
-        note: note?.trim(),
-        photoUrl: photoUrl?.trim(),
-        createdAt: now,
-      ),
-    );
-
-    await Order.db.updateRow(
-      session,
-      order.copyWith(
-        status: _statusForDeliveryStage(stage),
-        updatedAt: now,
-      ),
-    );
-
-    final refreshedOrder = await Order.db.findById(session, orderId);
-    if (refreshedOrder != null) {
-      await OrderNotificationService.notifyDeliveryStage(
+    OrderDeliveryUpdate? update;
+    await session.db.transaction((transaction) async {
+      update = await OrderDeliveryUpdate.db.insertRow(
         session,
-        order: refreshedOrder,
-        stage: stage,
+        OrderDeliveryUpdate(
+          orderId: orderId,
+          vendorId: vendor.id!,
+          stage: stage,
+          note: note?.trim(),
+          photoUrl: photoUrl?.trim(),
+        ),
+        transaction: transaction,
+      );
+
+      final updatedOrder = await OrderLifecycleStore.updateOrderWithVersion(
+        session,
+        order,
+        (current) => current.copyWith(
+          deliveryStatus: nextDeliveryStatus,
+          status: nextDeliveryStatus == OrderDeliveryStatus.delivered
+              ? OrderStatus.delivered
+              : OrderStatus.accepted,
+        ),
+        transaction: transaction,
+      );
+
+      await OrderLifecycleStore.appendHistory(
+        session,
+        orderId,
+        statusType: OrderStatusHistoryType.delivery,
+        previousStatus: order.deliveryStatus?.name,
+        newStatus: nextDeliveryStatus.name,
+        changedByUserId: user.id,
+        note: note?.trim(),
+        transaction: transaction,
+      );
+
+      await OrderNotificationService.notifyDeliveryStatus(
+        session,
+        order: updatedOrder,
+        status: nextDeliveryStatus,
         vendorId: vendor.id!,
       );
-    }
+    });
 
-    return update;
+    return update!;
   }
 
   Future<String> uploadDeliveryProof(
@@ -1603,16 +1680,6 @@ class VendorStore {
     final nextIndex = maxIndex + 1;
     if (nextIndex >= DeliveryStage.values.length) return null;
     return DeliveryStage.values[nextIndex];
-  }
-
-  OrderStatus _statusForDeliveryStage(DeliveryStage stage) {
-    return switch (stage) {
-      DeliveryStage.orderPlaced => OrderStatus.accepted,
-      DeliveryStage.packed => OrderStatus.processing,
-      DeliveryStage.shipped => OrderStatus.shipped,
-      DeliveryStage.outForDelivery => OrderStatus.shipped,
-      DeliveryStage.delivered => OrderStatus.delivered,
-    };
   }
 
   String _stageLabel(DeliveryStage stage) {
@@ -1694,6 +1761,47 @@ class VendorStore {
 
     orders.sort((a, b) => b.placedAt.compareTo(a.placedAt));
     return orders;
+  }
+
+  Future<List<VendorNotificationSummary>> listNotifications(
+    Session session, {
+    int limit = 50,
+  }) async {
+    final user = await SessionService.requireUser(session);
+    final rows = await _notifications.listForUser(session, user.id!, limit: limit);
+
+    return [
+      for (final row in rows)
+        VendorNotificationSummary(
+          id: row.id.toString(),
+          type: _vendorNotificationType(row.type),
+          title: row.title,
+          body: row.message,
+          isRead: row.isRead,
+          createdAt: row.createdAt,
+          relatedId: row.referenceId?.toString(),
+        ),
+    ];
+  }
+
+  Future<void> markNotificationRead(Session session, int notificationId) async {
+    final user = await SessionService.requireUser(session);
+    await _notifications.markRead(session, user.id!, notificationId);
+  }
+
+  Future<void> markAllNotificationsRead(Session session) async {
+    final user = await SessionService.requireUser(session);
+    await _notifications.markAllRead(session, user.id!);
+  }
+
+  VendorNotificationType _vendorNotificationType(InAppNotificationType type) {
+    return switch (type) {
+      InAppNotificationType.orderPlaced => VendorNotificationType.order,
+      InAppNotificationType.orderAccepted => VendorNotificationType.order,
+      InAppNotificationType.orderCancelled => VendorNotificationType.order,
+      InAppNotificationType.deliveryUpdate => VendorNotificationType.order,
+      InAppNotificationType.paymentUpdate => VendorNotificationType.payment,
+    };
   }
 
   Future<List<ShopListingSummary>> listApprovedShops(

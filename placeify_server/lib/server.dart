@@ -5,6 +5,7 @@ import 'package:serverpod/serverpod.dart';
 import 'src/auth/auth_services_setup.dart';
 import 'src/generated/endpoints.dart';
 import 'src/generated/protocol.dart';
+import 'src/modules/order/order_auto_cancel_future_call.dart';
 import 'src/shared/server_static_paths.dart';
 import 'src/web/middleware/uploads_cors_middleware.dart';
 import 'src/web/routes/app_config_route.dart';
@@ -16,6 +17,8 @@ void run(List<String> args) async {
   final pod = Serverpod(args, Protocol(), Endpoints());
 
   setupPlaceifyAuthServices(pod, args: args);
+
+  pod.registerFutureCall(OrderAutoCancelFutureCall(), 'orderAutoCancel');
 
   // Setup a default page at the web root.
   // These are used by the default page.
@@ -62,4 +65,10 @@ void run(List<String> args) async {
 
   // Start the server.
   await pod.start();
+
+  await pod.futureCallAtTime(
+    'orderAutoCancel',
+    OrderAutoCancelTrigger(scheduledAt: DateTime.now().add(const Duration(days: 1))),
+    DateTime.now().add(const Duration(seconds: 5)),
+  );
 }

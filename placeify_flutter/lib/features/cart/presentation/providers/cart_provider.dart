@@ -1,3 +1,4 @@
+import 'package:placeify_client/placeify_client.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
@@ -137,11 +138,19 @@ class Cart extends _$Cart {
           ? savedAddress
           : 'Kathmandu, Nepal';
 
-      final result = await _cartRepository.checkout(shippingAddress);
+      final result = await _cartRepository.checkout(
+        shippingAddress,
+        paymentMethod: PaymentMethod.mockOnline,
+      );
       state = const [];
       ref.invalidate(profileOrdersProvider);
       ref.invalidate(profileDashboardProvider);
       ref.invalidate(ordersProvider);
+
+      if (result.order.id != null) {
+        await client.user.completePayment(result.order.id!);
+      }
+
       return 'Order #${result.order.id} placed successfully';
     } catch (_) {
       return 'Checkout failed. Add items and try again.';

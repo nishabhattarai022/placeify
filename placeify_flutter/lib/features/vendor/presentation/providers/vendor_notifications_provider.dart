@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/notification_type.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
@@ -60,8 +62,16 @@ class VendorNotificationsState {
 
 @riverpod
 class VendorNotifications extends _$VendorNotifications {
+  Timer? _pollTimer;
+
   @override
-  Future<VendorNotificationsState> build() => _load();
+  Future<VendorNotificationsState> build() {
+    ref.onDispose(() => _pollTimer?.cancel());
+    _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      unawaited(refresh());
+    });
+    return _load();
+  }
 
   Future<void> refresh() async {
     state = await AsyncValue.guard(_load);
@@ -114,6 +124,9 @@ class VendorNotifications extends _$VendorNotifications {
     final updated = [...current.notifications];
     updated[index] = notification.copyWith(isRead: true);
     state = AsyncData(current.copyWith(notifications: updated));
+
+    final repo = ref.read(vendorRepositoryProvider);
+    unawaited(repo.markNotificationRead(id));
   }
 
   void markAllRead() {
@@ -124,6 +137,9 @@ class VendorNotifications extends _$VendorNotifications {
         .map((notification) => notification.copyWith(isRead: true))
         .toList();
     state = AsyncData(current.copyWith(notifications: updated));
+
+    final repo = ref.read(vendorRepositoryProvider);
+    unawaited(repo.markAllNotificationsRead());
   }
 
   VendorNotification? dismiss(String id) {

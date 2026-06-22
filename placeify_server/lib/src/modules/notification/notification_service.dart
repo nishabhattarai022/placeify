@@ -1,13 +1,19 @@
 import 'package:serverpod/serverpod.dart';
 
 import '../../generated/protocol.dart';
+import '../../shared/session_service.dart';
+import 'in_app_notification_store.dart';
 import 'notification_repository.dart';
 
 class NotificationService {
-  NotificationService({NotificationStore? repository})
-      : _repository = repository ?? NotificationStore();
+  NotificationService({
+    NotificationStore? repository,
+    InAppNotificationStore? inAppNotifications,
+  })  : _repository = repository ?? NotificationStore(),
+        _inAppNotifications = inAppNotifications ?? InAppNotificationStore();
 
   final NotificationStore _repository;
+  final InAppNotificationStore _inAppNotifications;
 
   Future<NotificationPreference> getPreferences(Session session) {
     return _repository.getPreferences(session);
@@ -31,5 +37,37 @@ class NotificationService {
       vendorMessages: vendorMessages,
       promotions: promotions,
     );
+  }
+
+  Future<List<InAppNotificationSummary>> listInAppNotifications(
+    Session session, {
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    final user = await SessionService.requireUser(session);
+    return _inAppNotifications.listForUser(
+      session,
+      user.id!,
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  Future<int> unreadInAppNotificationCount(Session session) async {
+    final user = await SessionService.requireUser(session);
+    return _inAppNotifications.unreadCount(session, user.id!);
+  }
+
+  Future<void> markInAppNotificationRead(
+    Session session,
+    int notificationId,
+  ) async {
+    final user = await SessionService.requireUser(session);
+    await _inAppNotifications.markRead(session, user.id!, notificationId);
+  }
+
+  Future<void> markAllInAppNotificationsRead(Session session) async {
+    final user = await SessionService.requireUser(session);
+    await _inAppNotifications.markAllRead(session, user.id!);
   }
 }

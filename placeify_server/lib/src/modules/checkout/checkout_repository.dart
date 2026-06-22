@@ -1,8 +1,11 @@
 import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
+import '../notification/order_notification_service.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
+import '../checkout/checkout_order_setup.dart';
+import '../order/order_lifecycle_store.dart';
 import '../payment/payment_repository.dart';
 
 class CheckoutStore {
@@ -20,6 +23,8 @@ class CheckoutStore {
         code: 'INVALID_ADDRESS',
       );
     }
+
+    final paymentMethod = request.paymentMethod;
 
     final user = await SessionService.requireUser(session);
     final cart = await SessionService.requireCart(session);
@@ -40,6 +45,10 @@ class CheckoutStore {
     );
 
     final itemCount = cartItems.fold<int>(0, (sum, item) => sum + item.quantity);
+    final vendorIds = <UuidValue>{};
+
+    final placedAt = DateTime.now();
+    final autoExpiresAt = placedAt.add(const Duration(days: 30));
 
     final order = await session.db.transaction((transaction) async {
       final created = await Order.db.insertRow(
@@ -47,9 +56,22 @@ class CheckoutStore {
         Order(
           userId: user.id!,
           status: OrderStatus.pending,
+          paymentStatus: OrderPaymentStatus.unpaid,
           totalAmount: totalAmount,
           shippingAddress: address,
+          autoExpiresAt: autoExpiresAt,
+          placedAt: placedAt,
         ),
+        transaction: transaction,
+      );
+
+      await OrderLifecycleStore.appendHistory(
+        session,
+        created.id!,
+        statusType: OrderStatusHistoryType.order,
+        newStatus: OrderStatus.pending.name,
+        changedByUserId: user.id,
+        note: 'Order placed',
         transaction: transaction,
       );
 
@@ -72,6 +94,7 @@ class CheckoutStore {
           ),
           transaction: transaction,
         );
+        vendorIds.add(product.vendorId);
       }
 
       await CartItem.db.deleteWhere(
@@ -85,11 +108,32 @@ class CheckoutStore {
         orderId: created.id!,
         userId: user.id!,
         amount: totalAmount,
+        paymentMethod: paymentMethod,
         transaction: transaction,
       );
 
       return created;
     });
+
+    await CheckoutOrderSetup.notifyVendorsOfNewOrder(
+      session,
+      order.id!,
+      vendorIds,
+    );
+
+    final customerName = user.name?.trim().isNotEmpty == true
+        ? user.name!.trim()
+        : 'Customer';
+
+    for (final vendorId in vendorIds) {
+      await OrderNotificationService.notifyVendorNewOrder(
+        session,
+        order: order,
+        vendorId: vendorId,
+        customerName: customerName,
+        itemCount: itemCount,
+      );
+    }
 
     return CheckoutResult(order: order, itemCount: itemCount);
   }
