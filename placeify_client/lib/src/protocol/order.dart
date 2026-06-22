@@ -12,8 +12,10 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'order_status.dart' as _i2;
-import 'user.dart' as _i3;
-import 'package:placeify_client/src/protocol/protocol.dart' as _i4;
+import 'order_payment_status.dart' as _i3;
+import 'user.dart' as _i4;
+import 'order_delivery_status.dart' as _i5;
+import 'package:placeify_client/src/protocol/protocol.dart' as _i6;
 
 /// Order placed by a customer.
 abstract class Order implements _i1.SerializableModel {
@@ -22,23 +24,33 @@ abstract class Order implements _i1.SerializableModel {
     required this.userId,
     this.user,
     _i2.OrderStatus? status,
+    this.deliveryStatus,
+    _i3.OrderPaymentStatus? paymentStatus,
     required this.totalAmount,
     required this.shippingAddress,
     this.rejectionReason,
+    this.autoExpiresAt,
+    int? version,
     DateTime? placedAt,
     DateTime? updatedAt,
   }) : status = status ?? _i2.OrderStatus.pending,
+       paymentStatus = paymentStatus ?? _i3.OrderPaymentStatus.unpaid,
+       version = version ?? 1,
        placedAt = placedAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
 
   factory Order({
     int? id,
     required _i1.UuidValue userId,
-    _i3.User? user,
+    _i4.User? user,
     _i2.OrderStatus? status,
+    _i5.OrderDeliveryStatus? deliveryStatus,
+    _i3.OrderPaymentStatus? paymentStatus,
     required double totalAmount,
     required String shippingAddress,
     String? rejectionReason,
+    DateTime? autoExpiresAt,
+    int? version,
     DateTime? placedAt,
     DateTime? updatedAt,
   }) = _OrderImpl;
@@ -49,13 +61,29 @@ abstract class Order implements _i1.SerializableModel {
       userId: _i1.UuidValueJsonExtension.fromJson(jsonSerialization['userId']),
       user: jsonSerialization['user'] == null
           ? null
-          : _i4.Protocol().deserialize<_i3.User>(jsonSerialization['user']),
+          : _i6.Protocol().deserialize<_i4.User>(jsonSerialization['user']),
       status: jsonSerialization['status'] == null
           ? null
           : _i2.OrderStatus.fromJson((jsonSerialization['status'] as String)),
+      deliveryStatus: jsonSerialization['deliveryStatus'] == null
+          ? null
+          : _i5.OrderDeliveryStatus.fromJson(
+              (jsonSerialization['deliveryStatus'] as String),
+            ),
+      paymentStatus: jsonSerialization['paymentStatus'] == null
+          ? null
+          : _i3.OrderPaymentStatus.fromJson(
+              (jsonSerialization['paymentStatus'] as String),
+            ),
       totalAmount: (jsonSerialization['totalAmount'] as num).toDouble(),
       shippingAddress: jsonSerialization['shippingAddress'] as String,
       rejectionReason: jsonSerialization['rejectionReason'] as String?,
+      autoExpiresAt: jsonSerialization['autoExpiresAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['autoExpiresAt'],
+            ),
+      version: jsonSerialization['version'] as int?,
       placedAt: jsonSerialization['placedAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['placedAt']),
@@ -72,15 +100,23 @@ abstract class Order implements _i1.SerializableModel {
 
   _i1.UuidValue userId;
 
-  _i3.User? user;
+  _i4.User? user;
 
   _i2.OrderStatus status;
+
+  _i5.OrderDeliveryStatus? deliveryStatus;
+
+  _i3.OrderPaymentStatus paymentStatus;
 
   double totalAmount;
 
   String shippingAddress;
 
   String? rejectionReason;
+
+  DateTime? autoExpiresAt;
+
+  int version;
 
   DateTime placedAt;
 
@@ -92,11 +128,15 @@ abstract class Order implements _i1.SerializableModel {
   Order copyWith({
     int? id,
     _i1.UuidValue? userId,
-    _i3.User? user,
+    _i4.User? user,
     _i2.OrderStatus? status,
+    _i5.OrderDeliveryStatus? deliveryStatus,
+    _i3.OrderPaymentStatus? paymentStatus,
     double? totalAmount,
     String? shippingAddress,
     String? rejectionReason,
+    DateTime? autoExpiresAt,
+    int? version,
     DateTime? placedAt,
     DateTime? updatedAt,
   });
@@ -108,9 +148,13 @@ abstract class Order implements _i1.SerializableModel {
       'userId': userId.toJson(),
       if (user != null) 'user': user?.toJson(),
       'status': status.toJson(),
+      if (deliveryStatus != null) 'deliveryStatus': deliveryStatus?.toJson(),
+      'paymentStatus': paymentStatus.toJson(),
       'totalAmount': totalAmount,
       'shippingAddress': shippingAddress,
       if (rejectionReason != null) 'rejectionReason': rejectionReason,
+      if (autoExpiresAt != null) 'autoExpiresAt': autoExpiresAt?.toJson(),
+      'version': version,
       'placedAt': placedAt.toJson(),
       'updatedAt': updatedAt.toJson(),
     };
@@ -128,11 +172,15 @@ class _OrderImpl extends Order {
   _OrderImpl({
     int? id,
     required _i1.UuidValue userId,
-    _i3.User? user,
+    _i4.User? user,
     _i2.OrderStatus? status,
+    _i5.OrderDeliveryStatus? deliveryStatus,
+    _i3.OrderPaymentStatus? paymentStatus,
     required double totalAmount,
     required String shippingAddress,
     String? rejectionReason,
+    DateTime? autoExpiresAt,
+    int? version,
     DateTime? placedAt,
     DateTime? updatedAt,
   }) : super._(
@@ -140,9 +188,13 @@ class _OrderImpl extends Order {
          userId: userId,
          user: user,
          status: status,
+         deliveryStatus: deliveryStatus,
+         paymentStatus: paymentStatus,
          totalAmount: totalAmount,
          shippingAddress: shippingAddress,
          rejectionReason: rejectionReason,
+         autoExpiresAt: autoExpiresAt,
+         version: version,
          placedAt: placedAt,
          updatedAt: updatedAt,
        );
@@ -156,22 +208,34 @@ class _OrderImpl extends Order {
     _i1.UuidValue? userId,
     Object? user = _Undefined,
     _i2.OrderStatus? status,
+    Object? deliveryStatus = _Undefined,
+    _i3.OrderPaymentStatus? paymentStatus,
     double? totalAmount,
     String? shippingAddress,
     Object? rejectionReason = _Undefined,
+    Object? autoExpiresAt = _Undefined,
+    int? version,
     DateTime? placedAt,
     DateTime? updatedAt,
   }) {
     return Order(
       id: id is int? ? id : this.id,
       userId: userId ?? this.userId,
-      user: user is _i3.User? ? user : this.user?.copyWith(),
+      user: user is _i4.User? ? user : this.user?.copyWith(),
       status: status ?? this.status,
+      deliveryStatus: deliveryStatus is _i5.OrderDeliveryStatus?
+          ? deliveryStatus
+          : this.deliveryStatus,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
       totalAmount: totalAmount ?? this.totalAmount,
       shippingAddress: shippingAddress ?? this.shippingAddress,
       rejectionReason: rejectionReason is String?
           ? rejectionReason
           : this.rejectionReason,
+      autoExpiresAt: autoExpiresAt is DateTime?
+          ? autoExpiresAt
+          : this.autoExpiresAt,
+      version: version ?? this.version,
       placedAt: placedAt ?? this.placedAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

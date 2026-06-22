@@ -306,4 +306,19 @@ class VendorService {
   ) {
     return _repository.uploadDeliveryProof(session, fileData, fileName);
   }
+
+  Future<List<VendorNotificationSummary>> listNotifications(
+    Session session, {
+    int limit = 50,
+  }) {
+    return _repository.listNotifications(session, limit: limit);
+  }
+
+  Future<void> markNotificationRead(Session session, int notificationId) {
+    return _repository.markNotificationRead(session, notificationId);
+  }
+
+  Future<void> markAllNotificationsRead(Session session) {
+    return _repository.markAllNotificationsRead(session);
+  }
 }

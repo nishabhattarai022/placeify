@@ -13,8 +13,10 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
 import 'order_status.dart' as _i2;
-import 'user.dart' as _i3;
-import 'package:placeify_server/src/generated/protocol.dart' as _i4;
+import 'order_payment_status.dart' as _i3;
+import 'user.dart' as _i4;
+import 'order_delivery_status.dart' as _i5;
+import 'package:placeify_server/src/generated/protocol.dart' as _i6;
 
 /// Order placed by a customer.
 abstract class Order implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
@@ -23,23 +25,33 @@ abstract class Order implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     required this.userId,
     this.user,
     _i2.OrderStatus? status,
+    this.deliveryStatus,
+    _i3.OrderPaymentStatus? paymentStatus,
     required this.totalAmount,
     required this.shippingAddress,
     this.rejectionReason,
+    this.autoExpiresAt,
+    int? version,
     DateTime? placedAt,
     DateTime? updatedAt,
   }) : status = status ?? _i2.OrderStatus.pending,
+       paymentStatus = paymentStatus ?? _i3.OrderPaymentStatus.unpaid,
+       version = version ?? 1,
        placedAt = placedAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
 
   factory Order({
     int? id,
     required _i1.UuidValue userId,
-    _i3.User? user,
+    _i4.User? user,
     _i2.OrderStatus? status,
+    _i5.OrderDeliveryStatus? deliveryStatus,
+    _i3.OrderPaymentStatus? paymentStatus,
     required double totalAmount,
     required String shippingAddress,
     String? rejectionReason,
+    DateTime? autoExpiresAt,
+    int? version,
     DateTime? placedAt,
     DateTime? updatedAt,
   }) = _OrderImpl;
@@ -50,13 +62,29 @@ abstract class Order implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       userId: _i1.UuidValueJsonExtension.fromJson(jsonSerialization['userId']),
       user: jsonSerialization['user'] == null
           ? null
-          : _i4.Protocol().deserialize<_i3.User>(jsonSerialization['user']),
+          : _i6.Protocol().deserialize<_i4.User>(jsonSerialization['user']),
       status: jsonSerialization['status'] == null
           ? null
           : _i2.OrderStatus.fromJson((jsonSerialization['status'] as String)),
+      deliveryStatus: jsonSerialization['deliveryStatus'] == null
+          ? null
+          : _i5.OrderDeliveryStatus.fromJson(
+              (jsonSerialization['deliveryStatus'] as String),
+            ),
+      paymentStatus: jsonSerialization['paymentStatus'] == null
+          ? null
+          : _i3.OrderPaymentStatus.fromJson(
+              (jsonSerialization['paymentStatus'] as String),
+            ),
       totalAmount: (jsonSerialization['totalAmount'] as num).toDouble(),
       shippingAddress: jsonSerialization['shippingAddress'] as String,
       rejectionReason: jsonSerialization['rejectionReason'] as String?,
+      autoExpiresAt: jsonSerialization['autoExpiresAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['autoExpiresAt'],
+            ),
+      version: jsonSerialization['version'] as int?,
       placedAt: jsonSerialization['placedAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['placedAt']),
@@ -75,15 +103,23 @@ abstract class Order implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
 
   _i1.UuidValue userId;
 
-  _i3.User? user;
+  _i4.User? user;
 
   _i2.OrderStatus status;
+
+  _i5.OrderDeliveryStatus? deliveryStatus;
+
+  _i3.OrderPaymentStatus paymentStatus;
 
   double totalAmount;
 
   String shippingAddress;
 
   String? rejectionReason;
+
+  DateTime? autoExpiresAt;
+
+  int version;
 
   DateTime placedAt;
 
@@ -98,11 +134,15 @@ abstract class Order implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
   Order copyWith({
     int? id,
     _i1.UuidValue? userId,
-    _i3.User? user,
+    _i4.User? user,
     _i2.OrderStatus? status,
+    _i5.OrderDeliveryStatus? deliveryStatus,
+    _i3.OrderPaymentStatus? paymentStatus,
     double? totalAmount,
     String? shippingAddress,
     String? rejectionReason,
+    DateTime? autoExpiresAt,
+    int? version,
     DateTime? placedAt,
     DateTime? updatedAt,
   });
@@ -114,9 +154,13 @@ abstract class Order implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       'userId': userId.toJson(),
       if (user != null) 'user': user?.toJson(),
       'status': status.toJson(),
+      if (deliveryStatus != null) 'deliveryStatus': deliveryStatus?.toJson(),
+      'paymentStatus': paymentStatus.toJson(),
       'totalAmount': totalAmount,
       'shippingAddress': shippingAddress,
       if (rejectionReason != null) 'rejectionReason': rejectionReason,
+      if (autoExpiresAt != null) 'autoExpiresAt': autoExpiresAt?.toJson(),
+      'version': version,
       'placedAt': placedAt.toJson(),
       'updatedAt': updatedAt.toJson(),
     };
@@ -130,15 +174,19 @@ abstract class Order implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       'userId': userId.toJson(),
       if (user != null) 'user': user?.toJsonForProtocol(),
       'status': status.toJson(),
+      if (deliveryStatus != null) 'deliveryStatus': deliveryStatus?.toJson(),
+      'paymentStatus': paymentStatus.toJson(),
       'totalAmount': totalAmount,
       'shippingAddress': shippingAddress,
       if (rejectionReason != null) 'rejectionReason': rejectionReason,
+      if (autoExpiresAt != null) 'autoExpiresAt': autoExpiresAt?.toJson(),
+      'version': version,
       'placedAt': placedAt.toJson(),
       'updatedAt': updatedAt.toJson(),
     };
   }
 
-  static OrderInclude include({_i3.UserInclude? user}) {
+  static OrderInclude include({_i4.UserInclude? user}) {
     return OrderInclude._(user: user);
   }
 
@@ -174,11 +222,15 @@ class _OrderImpl extends Order {
   _OrderImpl({
     int? id,
     required _i1.UuidValue userId,
-    _i3.User? user,
+    _i4.User? user,
     _i2.OrderStatus? status,
+    _i5.OrderDeliveryStatus? deliveryStatus,
+    _i3.OrderPaymentStatus? paymentStatus,
     required double totalAmount,
     required String shippingAddress,
     String? rejectionReason,
+    DateTime? autoExpiresAt,
+    int? version,
     DateTime? placedAt,
     DateTime? updatedAt,
   }) : super._(
@@ -186,9 +238,13 @@ class _OrderImpl extends Order {
          userId: userId,
          user: user,
          status: status,
+         deliveryStatus: deliveryStatus,
+         paymentStatus: paymentStatus,
          totalAmount: totalAmount,
          shippingAddress: shippingAddress,
          rejectionReason: rejectionReason,
+         autoExpiresAt: autoExpiresAt,
+         version: version,
          placedAt: placedAt,
          updatedAt: updatedAt,
        );
@@ -202,22 +258,34 @@ class _OrderImpl extends Order {
     _i1.UuidValue? userId,
     Object? user = _Undefined,
     _i2.OrderStatus? status,
+    Object? deliveryStatus = _Undefined,
+    _i3.OrderPaymentStatus? paymentStatus,
     double? totalAmount,
     String? shippingAddress,
     Object? rejectionReason = _Undefined,
+    Object? autoExpiresAt = _Undefined,
+    int? version,
     DateTime? placedAt,
     DateTime? updatedAt,
   }) {
     return Order(
       id: id is int? ? id : this.id,
       userId: userId ?? this.userId,
-      user: user is _i3.User? ? user : this.user?.copyWith(),
+      user: user is _i4.User? ? user : this.user?.copyWith(),
       status: status ?? this.status,
+      deliveryStatus: deliveryStatus is _i5.OrderDeliveryStatus?
+          ? deliveryStatus
+          : this.deliveryStatus,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
       totalAmount: totalAmount ?? this.totalAmount,
       shippingAddress: shippingAddress ?? this.shippingAddress,
       rejectionReason: rejectionReason is String?
           ? rejectionReason
           : this.rejectionReason,
+      autoExpiresAt: autoExpiresAt is DateTime?
+          ? autoExpiresAt
+          : this.autoExpiresAt,
+      version: version ?? this.version,
       placedAt: placedAt ?? this.placedAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -240,6 +308,19 @@ class OrderUpdateTable extends _i1.UpdateTable<OrderTable> {
     value,
   );
 
+  _i1.ColumnValue<_i5.OrderDeliveryStatus, _i5.OrderDeliveryStatus>
+  deliveryStatus(_i5.OrderDeliveryStatus? value) => _i1.ColumnValue(
+    table.deliveryStatus,
+    value,
+  );
+
+  _i1.ColumnValue<_i3.OrderPaymentStatus, _i3.OrderPaymentStatus> paymentStatus(
+    _i3.OrderPaymentStatus value,
+  ) => _i1.ColumnValue(
+    table.paymentStatus,
+    value,
+  );
+
   _i1.ColumnValue<double, double> totalAmount(double value) => _i1.ColumnValue(
     table.totalAmount,
     value,
@@ -256,6 +337,17 @@ class OrderUpdateTable extends _i1.UpdateTable<OrderTable> {
         table.rejectionReason,
         value,
       );
+
+  _i1.ColumnValue<DateTime, DateTime> autoExpiresAt(DateTime? value) =>
+      _i1.ColumnValue(
+        table.autoExpiresAt,
+        value,
+      );
+
+  _i1.ColumnValue<int, int> version(int value) => _i1.ColumnValue(
+    table.version,
+    value,
+  );
 
   _i1.ColumnValue<DateTime, DateTime> placedAt(DateTime value) =>
       _i1.ColumnValue(
@@ -283,6 +375,17 @@ class OrderTable extends _i1.Table<int?> {
       _i1.EnumSerialization.byName,
       hasDefault: true,
     );
+    deliveryStatus = _i1.ColumnEnum(
+      'deliveryStatus',
+      this,
+      _i1.EnumSerialization.byName,
+    );
+    paymentStatus = _i1.ColumnEnum(
+      'paymentStatus',
+      this,
+      _i1.EnumSerialization.byName,
+      hasDefault: true,
+    );
     totalAmount = _i1.ColumnDouble(
       'totalAmount',
       this,
@@ -294,6 +397,15 @@ class OrderTable extends _i1.Table<int?> {
     rejectionReason = _i1.ColumnString(
       'rejectionReason',
       this,
+    );
+    autoExpiresAt = _i1.ColumnDateTime(
+      'autoExpiresAt',
+      this,
+    );
+    version = _i1.ColumnInt(
+      'version',
+      this,
+      hasDefault: true,
     );
     placedAt = _i1.ColumnDateTime(
       'placedAt',
@@ -311,9 +423,13 @@ class OrderTable extends _i1.Table<int?> {
 
   late final _i1.ColumnUuid userId;
 
-  _i3.UserTable? _user;
+  _i4.UserTable? _user;
 
   late final _i1.ColumnEnum<_i2.OrderStatus> status;
+
+  late final _i1.ColumnEnum<_i5.OrderDeliveryStatus> deliveryStatus;
+
+  late final _i1.ColumnEnum<_i3.OrderPaymentStatus> paymentStatus;
 
   late final _i1.ColumnDouble totalAmount;
 
@@ -321,19 +437,23 @@ class OrderTable extends _i1.Table<int?> {
 
   late final _i1.ColumnString rejectionReason;
 
+  late final _i1.ColumnDateTime autoExpiresAt;
+
+  late final _i1.ColumnInt version;
+
   late final _i1.ColumnDateTime placedAt;
 
   late final _i1.ColumnDateTime updatedAt;
 
-  _i3.UserTable get user {
+  _i4.UserTable get user {
     if (_user != null) return _user!;
     _user = _i1.createRelationTable(
       relationFieldName: 'user',
       field: Order.t.userId,
-      foreignField: _i3.User.t.id,
+      foreignField: _i4.User.t.id,
       tableRelation: tableRelation,
       createTable: (foreignTableRelation) =>
-          _i3.UserTable(tableRelation: foreignTableRelation),
+          _i4.UserTable(tableRelation: foreignTableRelation),
     );
     return _user!;
   }
@@ -343,9 +463,13 @@ class OrderTable extends _i1.Table<int?> {
     id,
     userId,
     status,
+    deliveryStatus,
+    paymentStatus,
     totalAmount,
     shippingAddress,
     rejectionReason,
+    autoExpiresAt,
+    version,
     placedAt,
     updatedAt,
   ];
@@ -360,11 +484,11 @@ class OrderTable extends _i1.Table<int?> {
 }
 
 class OrderInclude extends _i1.IncludeObject {
-  OrderInclude._({_i3.UserInclude? user}) {
+  OrderInclude._({_i4.UserInclude? user}) {
     _user = user;
   }
 
-  _i3.UserInclude? _user;
+  _i4.UserInclude? _user;
 
   @override
   Map<String, _i1.Include?> get includes => {'user': _user};
@@ -696,7 +820,7 @@ class OrderAttachRowRepository {
   Future<void> user(
     _i1.DatabaseSession session,
     Order order,
-    _i3.User user, {
+    _i4.User user, {
     _i1.Transaction? transaction,
   }) async {
     if (order.id == null) {

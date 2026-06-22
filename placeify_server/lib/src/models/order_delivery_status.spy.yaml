@@ -1,0 +1,7 @@
+enum: OrderDeliveryStatus
+serialized: byName
+values:
+  - processing
+  - shipped
+  - outForDelivery
+  - delivered

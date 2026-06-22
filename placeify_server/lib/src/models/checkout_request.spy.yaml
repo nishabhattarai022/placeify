@@ -2,3 +2,4 @@
 class: CheckoutRequest
 fields:
   shippingAddress: String
+  paymentMethod: PaymentMethod, default=mockOnline

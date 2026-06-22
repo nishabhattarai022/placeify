@@ -48,7 +48,7 @@ void main() {
             postalCode: '44600',
             country: 'Nepal',
           ),
-          category: const VendorCategoryInfo(
+          category: VendorCategoryInfo(
             categories: ['Furniture'],
             description: 'Test furniture store',
           ),

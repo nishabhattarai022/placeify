@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -20,11 +19,13 @@ import '../domain/enums/payment_status.dart';
 import '../domain/models/payment_update.dart';
 import 'providers/vendor_order_detail_provider.dart';
 import 'providers/vendor_payments_provider.dart';
+import 'providers/vendor_product_image_provider.dart';
 import 'widgets/order_action_sheet.dart';
 import 'widgets/order_status_chip.dart';
 import 'widgets/order_timeline_widget.dart';
 import 'widgets/payment_status_chip.dart';
 import 'widgets/payment_update_sheet.dart';
+import 'widgets/vendor_list_thumbnail.dart';
 
 class VendorOrderDetailScreen extends ConsumerWidget {
   const VendorOrderDetailScreen({required this.orderId, super.key});
@@ -78,6 +79,7 @@ class _OrderDetailBody extends ConsumerWidget {
         order.status != OrderStatus.rejected &&
         order.status != OrderStatus.cancelled &&
         order.status != OrderStatus.delivered;
+    final imageUrl = ref.watch(vendorProductImageUrlProvider(order.productId));
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(
@@ -123,23 +125,11 @@ class _OrderDetailBody extends ConsumerWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: AppColors.cream,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Center(
-                        child: SvgPicture.asset(
-                          _iconForProduct(order.productName),
-                          width: 26,
-                          colorFilter: const ColorFilter.mode(
-                            AppColors.bark,
-                            BlendMode.srcIn,
-                          ),
-                        ),
-                      ),
+                    VendorListThumbnail(
+                      label: order.productName,
+                      imageUrl: imageUrl,
+                      fallbackIconPath: _iconForProduct(order.productName),
+                      size: 56,
                     ),
                     const SizedBox(width: 12),
                     Expanded(

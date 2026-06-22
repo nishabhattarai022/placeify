@@ -11,32 +11,49 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import 'payment_method.dart' as _i2;
 
 /// Checkout payload from the cart screen.
 abstract class CheckoutRequest
     implements _i1.SerializableModel, _i1.ProtocolSerialization {
-  CheckoutRequest._({required this.shippingAddress});
+  CheckoutRequest._({
+    required this.shippingAddress,
+    _i2.PaymentMethod? paymentMethod,
+  }) : paymentMethod = paymentMethod ?? _i2.PaymentMethod.mockOnline;
 
-  factory CheckoutRequest({required String shippingAddress}) =
-      _CheckoutRequestImpl;
+  factory CheckoutRequest({
+    required String shippingAddress,
+    _i2.PaymentMethod? paymentMethod,
+  }) = _CheckoutRequestImpl;
 
   factory CheckoutRequest.fromJson(Map<String, dynamic> jsonSerialization) {
     return CheckoutRequest(
       shippingAddress: jsonSerialization['shippingAddress'] as String,
+      paymentMethod: jsonSerialization['paymentMethod'] == null
+          ? null
+          : _i2.PaymentMethod.fromJson(
+              (jsonSerialization['paymentMethod'] as String),
+            ),
     );
   }
 
   String shippingAddress;
 
+  _i2.PaymentMethod paymentMethod;
+
   /// Returns a shallow copy of this [CheckoutRequest]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
-  CheckoutRequest copyWith({String? shippingAddress});
+  CheckoutRequest copyWith({
+    String? shippingAddress,
+    _i2.PaymentMethod? paymentMethod,
+  });
   @override
   Map<String, dynamic> toJson() {
     return {
       '__className__': 'CheckoutRequest',
       'shippingAddress': shippingAddress,
+      'paymentMethod': paymentMethod.toJson(),
     };
   }
 
@@ -45,6 +62,7 @@ abstract class CheckoutRequest
     return {
       '__className__': 'CheckoutRequest',
       'shippingAddress': shippingAddress,
+      'paymentMethod': paymentMethod.toJson(),
     };
   }
 
@@ -55,16 +73,25 @@ abstract class CheckoutRequest
 }
 
 class _CheckoutRequestImpl extends CheckoutRequest {
-  _CheckoutRequestImpl({required String shippingAddress})
-    : super._(shippingAddress: shippingAddress);
+  _CheckoutRequestImpl({
+    required String shippingAddress,
+    _i2.PaymentMethod? paymentMethod,
+  }) : super._(
+         shippingAddress: shippingAddress,
+         paymentMethod: paymentMethod,
+       );
 
   /// Returns a shallow copy of this [CheckoutRequest]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
   @override
-  CheckoutRequest copyWith({String? shippingAddress}) {
+  CheckoutRequest copyWith({
+    String? shippingAddress,
+    _i2.PaymentMethod? paymentMethod,
+  }) {
     return CheckoutRequest(
       shippingAddress: shippingAddress ?? this.shippingAddress,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
     );
   }
 }

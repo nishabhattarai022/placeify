@@ -1,5 +1,7 @@
+import '../../../core/config/placeify_server_client.dart';
 import 'serverpod_vendor_order_repository.dart';
 import 'serverpod_vendor_profile_repository.dart';
+import 'vendor_notification_mapper.dart';
 
 import '../domain/enums/delivery_stage.dart';
 import '../domain/models/delivery_update.dart';
@@ -10,8 +12,7 @@ import '../domain/models/vendor_profile.dart';
 import '../domain/models/vendor_stats.dart';
 import '../domain/repositories/vendor_repository.dart';
 
-/// Serverpod-only vendor operations. Notifications and payouts return empty
-/// lists until dedicated backend endpoints exist.
+/// Serverpod-only vendor operations. Payouts return empty until wired.
 class ServerpodVendorRepository implements VendorRepository {
   const ServerpodVendorRepository({
     ServerpodVendorOrderRepository? orderRepository,
@@ -74,8 +75,33 @@ class ServerpodVendorRepository implements VendorRepository {
       );
 
   @override
-  Future<List<VendorNotification>> getNotifications(String vendorId) async =>
-      const [];
+  Future<List<VendorNotification>> getNotifications(String vendorId) async {
+    try {
+      final summaries = await client.vendor.listNotifications(limit: 50);
+      return [
+        for (final summary in summaries)
+          VendorNotificationMapper.fromSummary(summary),
+      ];
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  @override
+  Future<void> markNotificationRead(String notificationId) async {
+    final id = int.tryParse(notificationId);
+    if (id == null) return;
+    try {
+      await client.vendor.markNotificationRead(id);
+    } catch (_) {}
+  }
+
+  @override
+  Future<void> markAllNotificationsRead() async {
+    try {
+      await client.vendor.markAllNotificationsRead();
+    } catch (_) {}
+  }
 
   @override
   Future<List<VendorPayout>> getPayouts(String vendorId) async => const [];

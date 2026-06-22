@@ -1,0 +1,7 @@
+### In-app vendor notification category.
+enum: VendorNotificationType
+values:
+  - order
+  - payment
+  - product
+  - system

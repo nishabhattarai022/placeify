@@ -38,6 +38,9 @@ abstract class VendorProduct with _$VendorProduct {
   bool get isOnSale =>
       originalPrice != null && originalPrice! > price;
 
+  String? get primaryImageUrl =>
+      imageUrls.isNotEmpty ? imageUrls.first : null;
+
   double get discountPercent => isOnSale
       ? ((originalPrice! - price) / originalPrice! * 100).roundToDouble()
       : 0;

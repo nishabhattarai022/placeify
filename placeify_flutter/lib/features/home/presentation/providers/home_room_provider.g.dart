@@ -12,24 +12,20 @@ part of 'home_room_provider.dart';
 @ProviderFor(recommendedProducts)
 final recommendedProductsProvider = RecommendedProductsProvider._();
 
-final class RecommendedProductsProvider
-    extends
-        $FunctionalProvider<
-          List<RecommendProduct>,
-          List<RecommendProduct>,
-          List<RecommendProduct>
-        >
-    with $Provider<List<RecommendProduct>> {
+final class RecommendedProductsProvider extends $FunctionalProvider<
+    List<RecommendProduct>,
+    List<RecommendProduct>,
+    List<RecommendProduct>> with $Provider<List<RecommendProduct>> {
   RecommendedProductsProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'recommendedProductsProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'recommendedProductsProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
 
   @override
   String debugGetCreateSourceHash() => _$recommendedProductsHash();
@@ -37,8 +33,8 @@ final class RecommendedProductsProvider
   @$internal
   @override
   $ProviderElement<List<RecommendProduct>> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
+          $ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
   List<RecommendProduct> create(Ref ref) {

@@ -627,92 +627,98 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                     },
                   ),
                 ),
-                ProfileFormField(
-                  label: 'Discount %',
-                  child: ProfileTextInput(
-                    controller: _discountPercent,
-                    hint: '0',
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    inputFormatters: const [
-                      PercentInputFormatter(min: 0, max: 100),
-                    ],
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
+                if (isEditing) ...[
+                  ProfileFormField(
+                    label: 'Discount %',
+                    child: ProfileTextInput(
+                      controller: _discountPercent,
+                      hint: '0',
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: const [
+                        PercentInputFormatter(min: 0, max: 100),
+                      ],
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return null;
+                        }
+                        final parsed = double.tryParse(value.trim());
+                        if (parsed == null || parsed < 0 || parsed > 100) {
+                          return 'Discount must be between 0 and 100';
+                        }
                         return null;
-                      }
-                      final parsed = double.tryParse(value.trim());
-                      if (parsed == null || parsed < 0 || parsed > 100) {
-                        return 'Discount must be between 0 and 100';
-                      }
-                      return null;
-                    },
-                    onChanged: (value) {
-                      notifier.update(
-                        (state) => state.copyWith(discountPercent: value),
-                      );
-                      _markDirty();
-                    },
+                      },
+                      onChanged: (value) {
+                        notifier.update(
+                          (state) => state.copyWith(discountPercent: value),
+                        );
+                        _markDirty();
+                      },
+                    ),
                   ),
-                ),
-                ProfileFormField(
-                  label: 'Offer Label',
-                  child: ProfileTextInput(
-                    controller: _offerLabel,
-                    hint: 'e.g. Summer Sale, Limited Offer',
-                    onChanged: (value) {
-                      notifier.update(
-                        (state) => state.copyWith(offerLabel: value),
-                      );
-                      _markDirty();
-                    },
+                  ProfileFormField(
+                    label: 'Offer Label',
+                    child: ProfileTextInput(
+                      controller: _offerLabel,
+                      hint: 'e.g. Summer Sale, Limited Offer',
+                      onChanged: (value) {
+                        notifier.update(
+                          (state) => state.copyWith(offerLabel: value),
+                        );
+                        _markDirty();
+                      },
+                    ),
                   ),
-                ),
-                ListenableBuilder(
-                  listenable: Listenable.merge([
-                    _listPrice,
-                    _discountPercent,
-                  ]),
-                  builder: (context, _) {
-                    final salePrice = ref.read(vendorProductFormProvider).computedSalePrice;
-                    return Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.warmWhite,
-                        borderRadius: AppRadii.md,
-                        border: Border.all(color: AppColors.creamDark, width: 1.5),
-                      ),
-                      child: Row(
-                        children: [
-                          const Expanded(
-                            child: Text(
-                              'SALE PRICE',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.espresso,
-                                letterSpacing: 0.07 * 12,
+                  ListenableBuilder(
+                    listenable: Listenable.merge([
+                      _listPrice,
+                      _discountPercent,
+                    ]),
+                    builder: (context, _) {
+                      final salePrice =
+                          ref.read(vendorProductFormProvider).computedSalePrice;
+                      return Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.warmWhite,
+                          borderRadius: AppRadii.md,
+                          border: Border.all(
+                            color: AppColors.creamDark,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                'SALE PRICE',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.espresso,
+                                  letterSpacing: 0.07 * 12,
+                                ),
                               ),
                             ),
-                          ),
-                          Text(
-                            Formatters.currencyFull(salePrice),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.accent,
+                            Text(
+                              Formatters.currencyFull(salePrice),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.accent,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
                 const SizedBox(height: 18),
                 Row(
                   children: [

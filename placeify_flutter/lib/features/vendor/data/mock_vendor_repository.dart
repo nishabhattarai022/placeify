@@ -219,6 +219,12 @@ class MockVendorRepository implements VendorRepository {
   }
 
   @override
+  Future<void> markNotificationRead(String notificationId) async {}
+
+  @override
+  Future<void> markAllNotificationsRead() async {}
+
+  @override
   Future<List<VendorPayout>> getPayouts(String vendorId) async {
     await Future<void>.delayed(const Duration(milliseconds: 150));
     return VendorMockConfig.payoutsFor(vendorId);
