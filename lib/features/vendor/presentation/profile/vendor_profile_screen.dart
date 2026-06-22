@@ -473,6 +473,11 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
     context.go('/splash');
   }
 
+  void _switchToShopping() {
+    HapticService.light();
+    context.go('/home');
+  }
+
   @override
   Widget build(BuildContext context) {
     final profileAsync = ref.watch(vendorProfileProvider);
@@ -671,6 +676,8 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
         _SettingsLink(onTap: _openSettings),
         if (!isEditMode) ...[
           const SizedBox(height: 10),
+          _SwitchToShoppingLink(onTap: _switchToShopping),
+          const SizedBox(height: 10),
           _SignOutLink(onTap: _signOut),
         ],
       ],
@@ -701,6 +708,44 @@ class _SettingsLink extends StatelessWidget {
             Expanded(
               child: Text(
                 VendorProfileStrings.storeSettings,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.espresso,
+                ),
+              ),
+            ),
+            Icon(Icons.chevron_right, color: AppColors.textMuted),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SwitchToShoppingLink extends StatelessWidget {
+  const _SwitchToShoppingLink({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedScaleTap(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.creamDark, width: 1.5),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.storefront_outlined, color: AppColors.espresso, size: 20),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                VendorProfileStrings.switchToShopping,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
