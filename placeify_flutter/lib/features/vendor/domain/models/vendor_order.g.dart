@@ -7,17 +7,23 @@ part of 'vendor_order.dart';
 // **************************************************************************
 
 _VendorOrder _$VendorOrderFromJson(Map<String, dynamic> json) => _VendorOrder(
-      id: json['id'] as String,
-      orderNumber: json['orderNumber'] as String,
-      vendorId: json['vendorId'] as String,
-      productId: json['productId'] as String,
-      productName: json['productName'] as String,
-      quantity: (json['quantity'] as num).toInt(),
-      totalAmount: (json['totalAmount'] as num).toDouble(),
-      status: $enumDecode(_$OrderStatusEnumMap, json['status']),
-      customerName: json['customerName'] as String,
-      orderedAt: DateTime.parse(json['orderedAt'] as String),
-    );
+  id: json['id'] as String,
+  orderNumber: json['orderNumber'] as String,
+  vendorId: json['vendorId'] as String,
+  productId: json['productId'] as String,
+  productName: json['productName'] as String,
+  quantity: (json['quantity'] as num).toInt(),
+  totalAmount: (json['totalAmount'] as num).toDouble(),
+  status: $enumDecode(_$OrderStatusEnumMap, json['status']),
+  customerName: json['customerName'] as String,
+  orderedAt: DateTime.parse(json['orderedAt'] as String),
+  orderPaymentStatus:
+      $enumDecodeNullable(
+        _$OrderPaymentStatusEnumMap,
+        json['orderPaymentStatus'],
+      ) ??
+      OrderPaymentStatus.unpaid,
+);
 
 Map<String, dynamic> _$VendorOrderToJson(_VendorOrder instance) =>
     <String, dynamic>{
@@ -31,6 +37,7 @@ Map<String, dynamic> _$VendorOrderToJson(_VendorOrder instance) =>
       'status': _$OrderStatusEnumMap[instance.status]!,
       'customerName': instance.customerName,
       'orderedAt': instance.orderedAt.toIso8601String(),
+      'orderPaymentStatus': instance.orderPaymentStatus,
     };
 
 const _$OrderStatusEnumMap = {
@@ -41,4 +48,10 @@ const _$OrderStatusEnumMap = {
   OrderStatus.shipped: 'shipped',
   OrderStatus.delivered: 'delivered',
   OrderStatus.cancelled: 'cancelled',
+};
+
+const _$OrderPaymentStatusEnumMap = {
+  OrderPaymentStatus.unpaid: 'unpaid',
+  OrderPaymentStatus.paymentReceived: 'paymentReceived',
+  OrderPaymentStatus.paymentConfirmed: 'paymentConfirmed',
 };

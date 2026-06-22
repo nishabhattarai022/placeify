@@ -63,8 +63,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             password: _passwordController.text,
           );
       if (!mounted) return;
-      PlaceifyToast.show(context, 'Account created — sign in to continue');
-      context.go('/login');
+      PlaceifyToast.show(context, 'Welcome to Placeify!');
+      context.go('/home');
     } on AuthException catch (e) {
       if (mounted) PlaceifyToast.show(context, e.message);
     } catch (_) {
@@ -211,6 +211,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             showVisibilityToggle: true,
                             textInputAction: TextInputAction.done,
                             validator: _confirmPasswordValidator,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Dev verification code: 123456 (auto-used in this build)',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.onboardingTextBody.withValues(
+                                alpha: 0.75,
+                              ),
+                            ),
                           ),
                           const SizedBox(height: 32),
                           PrimaryCtaButton(

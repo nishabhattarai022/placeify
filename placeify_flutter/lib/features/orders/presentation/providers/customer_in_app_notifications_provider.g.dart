@@ -42,7 +42,7 @@ final class CustomerInAppNotificationsProvider
 }
 
 String _$customerInAppNotificationsHash() =>
-    r'ed9be6013ba49dc4cd696438cb9b8ee87d35257b';
+    r'1d1443cac1c6d53b0c5963aef715578216e59df3';
 
 /// Customer order notifications backed by the server (30s polling).
 

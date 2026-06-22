@@ -61,6 +61,12 @@ import '../../features/profile/presentation/profile_settings_screen.dart';
 import '../../features/profile/presentation/profile_wishlist_screen.dart';
 import '../../features/product_detail/presentation/product_detail_screen.dart';
 import '../../features/cart/presentation/cart_screen.dart';
+import '../../features/user/presentation/user_cart_page.dart';
+import '../../features/user/presentation/user_dashboard_pages.dart';
+import '../../features/user/presentation/user_dashboard_screen.dart';
+import '../../features/user/presentation/user_orders_page.dart';
+import '../../features/user/presentation/user_wishlist_page.dart';
+import '../../features/user/presentation/user_dashboard_shell.dart';
 import 'main_shell.dart';
 
 part 'app_router.g.dart';
@@ -159,6 +165,92 @@ List<RouteBase> get _appRoutes => [
         transitionsBuilder: _fadeTransition,
         transitionDuration: AppDurations.slow,
       ),
+    ),
+    ShellRoute(
+      builder: (context, state, child) => UserDashboardShell(child: child),
+      routes: [
+        GoRoute(
+          path: '/user',
+          redirect: (context, state) {
+            if (state.uri.path == '/user') return '/user/dashboard';
+            return null;
+          },
+          routes: [
+            GoRoute(
+              path: 'dashboard',
+              name: 'userDashboard',
+              pageBuilder: (context, state) => _fadePage(
+                key: state.pageKey,
+                child: const UserDashboardScreen(),
+              ),
+            ),
+            GoRoute(
+              path: 'orders',
+              name: 'userOrders',
+              pageBuilder: (context, state) => _fadePage(
+                key: state.pageKey,
+                child: const UserOrdersPage(),
+              ),
+            ),
+            GoRoute(
+              path: 'cart',
+              name: 'userCart',
+              pageBuilder: (context, state) => _fadePage(
+                key: state.pageKey,
+                child: const UserCartPage(),
+              ),
+            ),
+            GoRoute(
+              path: 'wishlist',
+              name: 'userWishlist',
+              pageBuilder: (context, state) => _fadePage(
+                key: state.pageKey,
+                child: const UserWishlistPage(),
+              ),
+            ),
+            GoRoute(
+              path: 'refund',
+              name: 'userRefund',
+              pageBuilder: (context, state) => _fadePage(
+                key: state.pageKey,
+                child: const UserRefundPage(),
+              ),
+            ),
+            GoRoute(
+              path: 'notifications',
+              name: 'userNotifications',
+              pageBuilder: (context, state) => _fadePage(
+                key: state.pageKey,
+                child: const UserNotificationsPage(),
+              ),
+            ),
+            GoRoute(
+              path: 'account',
+              name: 'userAccount',
+              pageBuilder: (context, state) => _fadePage(
+                key: state.pageKey,
+                child: const UserAccountPage(),
+              ),
+            ),
+            GoRoute(
+              path: 'settings',
+              name: 'userSettings',
+              pageBuilder: (context, state) => _fadePage(
+                key: state.pageKey,
+                child: const UserSettingsPage(),
+              ),
+            ),
+            GoRoute(
+              path: 'try-me',
+              name: 'userTryMe',
+              pageBuilder: (context, state) => _fadePage(
+                key: state.pageKey,
+                child: const UserTryMePage(),
+              ),
+            ),
+          ],
+        ),
+      ],
     ),
     GoRoute(
       path: '/vendor/register',
@@ -614,6 +706,16 @@ List<RouteBase> get _appRoutes => [
                       ),
                     ),
                     GoRoute(
+                      path: 'upload-3d',
+                      name: 'vendorAddProduct',
+                      pageBuilder: (context, state) => _slidePage(
+                        key: ValueKey<String>(state.uri.toString()),
+                        child: VendorBuild3dScreen(
+                          productId: state.uri.queryParameters['productId'],
+                        ),
+                      ),
+                    ),
+                    GoRoute(
                       path: ':productId/edit',
                       name: 'vendorProductEdit',
                       pageBuilder: (context, state) => _slidePage(
@@ -697,6 +799,18 @@ CustomTransitionPage<void> _adminTabPage({
   return CustomTransitionPage<void>(
     key: state.pageKey,
     child: AdminTabScaffold(child: child),
+    transitionsBuilder: _fadeTransition,
+    transitionDuration: AppDurations.slow,
+  );
+}
+
+CustomTransitionPage<void> _fadePage({
+  required LocalKey key,
+  required Widget child,
+}) {
+  return CustomTransitionPage<void>(
+    key: key,
+    child: child,
     transitionsBuilder: _fadeTransition,
     transitionDuration: AppDurations.slow,
   );
