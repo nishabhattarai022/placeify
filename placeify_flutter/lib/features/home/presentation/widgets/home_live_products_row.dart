@@ -7,7 +7,6 @@ import '../../../../core/services/haptic_service.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../domain/models/product.dart';
 import '../providers/catalog_provider.dart';
-import '../providers/category_provider.dart';
 import '../theme/home_screen_tokens.dart';
 
 class HomeLiveProductsRow extends ConsumerWidget {
