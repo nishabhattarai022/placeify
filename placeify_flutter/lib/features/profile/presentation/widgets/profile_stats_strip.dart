@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/services/haptic_service.dart';
 import '../../data/profile_mock_data.dart';
+import '../providers/profile_dashboard_provider.dart';
 
-class ProfileStatsStrip extends StatelessWidget {
+class ProfileStatsStrip extends ConsumerWidget {
   const ProfileStatsStrip({
     required this.onStatTap,
     super.key,
@@ -12,7 +14,33 @@ class ProfileStatsStrip extends StatelessWidget {
   final void Function(int index) onStatTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dashboard = ref.watch(profileDashboardProvider);
+    final stats = dashboard.maybeWhen(
+      data: (data) {
+        if (data == null) return ProfileMockData.stats;
+        return [
+          ProfileStat(
+            value: '${data.orderCount}',
+            label: 'Orders',
+          ),
+          ProfileStat(
+            value: '${data.wishlistCount}',
+            label: 'Wishlist',
+          ),
+          ProfileStat(
+            value: '${data.arSessionCount}',
+            label: 'AR Tries',
+          ),
+          ProfileStat(
+            value: '${data.refundCount}',
+            label: 'Refunds',
+          ),
+        ];
+      },
+      orElse: () => ProfileMockData.stats,
+    );
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(22, 20, 22, 0),
       child: Container(
@@ -24,7 +52,7 @@ class ProfileStatsStrip extends StatelessWidget {
         child: IntrinsicHeight(
           child: Row(
             children: [
-              for (var i = 0; i < ProfileMockData.stats.length; i++) ...[
+              for (var i = 0; i < stats.length; i++) ...[
                 if (i > 0)
                   VerticalDivider(
                     width: 1,
@@ -33,7 +61,7 @@ class ProfileStatsStrip extends StatelessWidget {
                   ),
                 Expanded(
                   child: _StatCell(
-                    stat: ProfileMockData.stats[i],
+                    stat: stats[i],
                     onTap: () {
                       HapticService.light();
                       onStatTap(i);

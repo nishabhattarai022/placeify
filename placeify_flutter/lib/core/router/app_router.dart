@@ -51,7 +51,9 @@ import '../../features/ar_hub/presentation/ar_powered_screen.dart';
 import '../../features/profile/presentation/profile_ar_history_screen.dart';
 import '../../features/profile/presentation/profile_home_screen.dart';
 import '../../features/profile/presentation/profile_notifications_screen.dart';
-import '../../features/profile/presentation/profile_orders_screen.dart';
+import '../../features/orders/presentation/my_orders_screen.dart';
+import '../../features/orders/presentation/order_detail_screen.dart';
+import '../../features/orders/presentation/order_tracking_screen.dart';
 import '../../features/profile/presentation/profile_password_screen.dart';
 import '../../features/profile/presentation/profile_refund_screen.dart';
 import '../../features/profile/presentation/profile_settings_screen.dart';
@@ -371,8 +373,34 @@ List<RouteBase> get _appRoutes => [
           name: 'profileOrders',
           pageBuilder: (context, state) => _slidePage(
             key: ValueKey<String>(state.uri.toString()),
-            child: const ProfileOrdersScreen(),
+            child: const MyOrdersScreen(),
           ),
+          routes: [
+            GoRoute(
+              path: ':orderId',
+              name: 'profileOrderDetail',
+              pageBuilder: (context, state) {
+                final orderId = state.pathParameters['orderId']!;
+                return _slidePage(
+                  key: ValueKey<String>('order-detail-$orderId'),
+                  child: OrderDetailScreen(orderId: orderId),
+                );
+              },
+              routes: [
+                GoRoute(
+                  path: 'tracking',
+                  name: 'profileOrderTracking',
+                  pageBuilder: (context, state) {
+                    final orderId = state.pathParameters['orderId']!;
+                    return _slidePage(
+                      key: ValueKey<String>('order-tracking-$orderId'),
+                      child: OrderTrackingScreen(orderId: orderId),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
         ),
         GoRoute(
           path: '/profile/wishlist',

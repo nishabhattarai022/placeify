@@ -13,6 +13,7 @@ import '../../vendor/presentation/widgets/vendor_status_gate_sheets.dart';
 import '../data/profile_menu_config.dart';
 import 'widgets/profile_hero.dart';
 import 'widgets/profile_menu_tile.dart';
+import 'widgets/profile_orders_tile.dart';
 
 class ProfileHomeScreen extends ConsumerStatefulWidget {
   const ProfileHomeScreen({super.key});
@@ -69,7 +70,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
   void _onStatTap(int index) {
     switch (index) {
       case 0:
-        context.pushNamed('cart');
+        context.pushNamed('profileOrders');
       case 1:
         context.go('/bookmarks');
       case 2:
@@ -82,7 +83,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
   void _onMenuTap(ProfileMenuRoute route) {
     switch (route) {
       case ProfileMenuRoute.orders:
-        context.pushNamed('cart');
+        context.pushNamed('profileOrders');
       case ProfileMenuRoute.wishlist:
         context.go('/bookmarks');
       case ProfileMenuRoute.augmentedReality:
@@ -168,10 +169,13 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
                         BottomNavTokens.scrollBottomPadding + bottomInset,
                       ),
                       children: [
+                        ProfileOrdersTile(
+                          onTap: () => _onMenuTap(ProfileMenuRoute.orders),
+                        ),
                         for (var i = 0;
                             i < ProfileMenuItems.accountOverview.length;
                             i++) ...[
-                          if (i == 4)
+                          if (i == 3)
                             const Divider(
                               height: 16,
                               color: AppColors.creamDark,
