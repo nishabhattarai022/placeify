@@ -15,6 +15,9 @@ abstract final class ArFurnitureScale {
   static const nativeIosFactor = 1.0;
   static const nativeAndroidFactor = 1.0;
 
+  /// Brighter scene lighting so Tripo PBR textures read with their real colors.
+  static const arLightIntensityMultiplier = 3.5;
+
   /// Tripo reference bounding size in meters.
   static const _tripoReferenceMaxDimensionM = 1.0;
 
