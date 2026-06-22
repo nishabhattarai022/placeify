@@ -33,6 +33,7 @@ class VendorNotificationsState {
 
   List<VendorNotification> get visible {
     return notifications
+        .where((notification) => !notification.isRead)
         .where((notification) => !dismissedIds.contains(notification.id))
         .where((notification) => notification.id != pendingDismiss?.id)
         .where(
@@ -127,6 +128,43 @@ class VendorNotifications extends _$VendorNotifications {
 
     final repo = ref.read(vendorRepositoryProvider);
     unawaited(repo.markNotificationRead(id));
+  }
+
+  /// Marks unread order notifications as read once the vendor has seen those
+  /// orders on the orders list or detail screen.
+  void markOrderNotificationsReadForOrderIds(Set<String> orderIds) {
+    if (orderIds.isEmpty) return;
+
+    final current = state.value;
+    if (current == null) return;
+
+    final idsToMark = <String>{};
+    for (final notification in current.notifications) {
+      if (notification.isRead) continue;
+      if (notification.type != NotificationType.order) continue;
+      final relatedId = notification.relatedId;
+      if (relatedId != null && orderIds.contains(relatedId)) {
+        idsToMark.add(notification.id);
+      }
+    }
+    if (idsToMark.isEmpty) return;
+
+    final updated = [
+      for (final notification in current.notifications)
+        idsToMark.contains(notification.id)
+            ? notification.copyWith(isRead: true)
+            : notification,
+    ];
+    state = AsyncData(current.copyWith(notifications: updated));
+
+    final repo = ref.read(vendorRepositoryProvider);
+    for (final id in idsToMark) {
+      unawaited(repo.markNotificationRead(id));
+    }
+  }
+
+  void markOrderNotificationReadForOrderId(String orderId) {
+    markOrderNotificationsReadForOrderIds({orderId});
   }
 
   void markAllRead() {

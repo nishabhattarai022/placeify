@@ -1049,6 +1049,9 @@ class VendorStore {
         careInstructions: trimmedCare,
         warranty: input.warranty?.trim(),
         thumbnailUrl: thumbnailUrl?.trim(),
+        viewImageUrls: input.viewImageUrls != null
+            ? _normalizeViewImageUrls(input.viewImageUrls)
+            : product.viewImageUrls,
         status: input.isActive ? ProductStatus.active : ProductStatus.removed,
         removedReason: input.isActive
             ? (product.removedById == null ? null : product.removedReason)
@@ -1367,7 +1370,8 @@ class VendorStore {
     final user = await SessionService.requireUser(session);
     final order = await _requireMutableVendorOrder(session, vendor.id!, orderId);
 
-    if (order.status != OrderStatus.pending) {
+    if (order.status != OrderStatus.pending &&
+        order.status != OrderStatus.confirmed) {
       throw PlaceifyException(
         message: 'Only pending orders can be accepted.',
         code: 'INVALID_ORDER_STATUS',
@@ -1440,7 +1444,8 @@ class VendorStore {
     }
 
     final order = await _requireMutableVendorOrder(session, vendor.id!, orderId);
-    if (order.status != OrderStatus.pending) {
+    if (order.status != OrderStatus.pending &&
+        order.status != OrderStatus.confirmed) {
       throw PlaceifyException(
         message: 'Only pending orders can be rejected.',
         code: 'INVALID_ORDER_STATUS',
@@ -1499,7 +1504,8 @@ class VendorStore {
     final user = await SessionService.requireUser(session);
     final order = await _requireMutableVendorOrder(session, vendor.id!, orderId);
 
-    if (order.status == OrderStatus.pending) {
+    if (order.status == OrderStatus.pending ||
+        order.status == OrderStatus.confirmed) {
       throw PlaceifyException(
         message: 'Accept the order before posting delivery updates.',
         code: 'ORDER_NOT_ACCEPTED',
@@ -1579,14 +1585,14 @@ class VendorStore {
         transaction: transaction,
       );
 
+      final nextOrderStatus =
+          OrderLifecycleStore.orderStatusForDelivery(nextDeliveryStatus);
       final updatedOrder = await OrderLifecycleStore.updateOrderWithVersion(
         session,
         order,
         (current) => current.copyWith(
           deliveryStatus: nextDeliveryStatus,
-          status: nextDeliveryStatus == OrderDeliveryStatus.delivered
-              ? OrderStatus.delivered
-              : OrderStatus.accepted,
+          status: nextOrderStatus,
         ),
         transaction: transaction,
       );
@@ -1601,6 +1607,19 @@ class VendorStore {
         note: note?.trim(),
         transaction: transaction,
       );
+
+      if (order.status != nextOrderStatus) {
+        await OrderLifecycleStore.appendHistory(
+          session,
+          orderId,
+          statusType: OrderStatusHistoryType.order,
+          previousStatus: order.status.name,
+          newStatus: nextOrderStatus.name,
+          changedByUserId: user.id,
+          note: note?.trim(),
+          transaction: transaction,
+        );
+      }
 
       await OrderNotificationService.notifyDeliveryStatus(
         session,

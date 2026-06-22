@@ -74,11 +74,13 @@ class UserPaymentStore {
         );
       }
 
-      if (order.status == OrderStatus.pending) {
+      // Payment success must not advance order lifecycle — vendor accept is required.
+      if (order.paymentStatus != OrderPaymentStatus.paymentReceived &&
+          order.paymentStatus != OrderPaymentStatus.paymentConfirmed) {
         await Order.db.updateRow(
           session,
           order.copyWith(
-            status: OrderStatus.confirmed,
+            paymentStatus: OrderPaymentStatus.paymentReceived,
             updatedAt: DateTime.now(),
           ),
           transaction: transaction,

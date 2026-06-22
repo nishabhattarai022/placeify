@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -12,6 +14,7 @@ import '../../../core/widgets/shimmer_loader.dart';
 import '../domain/enums/order_status.dart';
 import '../domain/models/vendor_order.dart';
 import 'providers/vendor_orders_provider.dart';
+import 'providers/vendor_notifications_provider.dart';
 import 'widgets/vendor_order_date_filter_sheet.dart';
 import 'widgets/vendor_order_filter_tabs.dart';
 import 'widgets/vendor_order_row.dart';
@@ -88,9 +91,24 @@ class _VendorOrdersScreenState extends ConsumerState<VendorOrdersScreen> {
     });
   }
 
+  Future<void> _acknowledgeSeenOrders(Set<String> orderIds) async {
+    final notifier = ref.read(vendorNotificationsProvider.notifier);
+    await notifier.refresh();
+    notifier.markOrderNotificationsReadForOrderIds(orderIds);
+  }
+
   @override
   Widget build(BuildContext context) {
     final ordersAsync = ref.watch(vendorOrdersProvider);
+
+    ref.listen(vendorOrdersProvider, (previous, next) {
+      next.whenData((orders) {
+        if (orders.isEmpty) return;
+        unawaited(
+          _acknowledgeSeenOrders(orders.map((order) => order.id).toSet()),
+        );
+      });
+    });
 
     return Scaffold(
       backgroundColor: AppColors.cream,

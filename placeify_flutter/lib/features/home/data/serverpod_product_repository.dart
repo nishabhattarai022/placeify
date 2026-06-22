@@ -28,8 +28,4 @@ class ServerpodProductRepository {
     if (id == null) return Future.value(null);
     return client.product.getProduct(id);
   }
-
-  Future<List<Category>> listCategories() {
-    return client.product.listCategories();
-  }
 }

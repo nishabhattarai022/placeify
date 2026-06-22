@@ -78,6 +78,28 @@ class CatalogIndex extends _$CatalogIndex {
     }
     state = await AsyncValue.guard(_loadIndex);
   }
+
+  /// Fetches catalog products missing from the in-memory index (e.g. cart lines).
+  Future<void> ensureProducts(Iterable<String> productIds) async {
+    final current = state.value ?? {};
+    final missing = productIds
+        .where((id) => id.trim().isNotEmpty && current[id] == null)
+        .toSet();
+    if (missing.isEmpty) return;
+
+    final repo = ref.read(catalogRepositoryProvider);
+    final additions = <String, Product>{};
+
+    for (final id in missing) {
+      final apiProduct = await repo.getByUiId(id);
+      if (apiProduct == null) continue;
+      final ui = await CatalogProductMapper.toUiProduct(apiProduct);
+      additions[ui.id] = ui;
+    }
+
+    if (additions.isEmpty) return;
+    state = AsyncData({...current, ...additions});
+  }
 }
 
 @riverpod
@@ -115,6 +137,13 @@ List<Product> catalogDiscountedProducts(Ref ref) {
 @riverpod
 List<Product> catalogNewestProducts(Ref ref, int count) {
   return ref.watch(catalogProductsProvider).take(count).toList();
+}
+
+@riverpod
+List<Product> homeFeaturedProducts(Ref ref) {
+  final products = ref.watch(catalogProductsProvider);
+  if (products.length <= 4) return products;
+  return products.sublist(0, 4);
 }
 
 @riverpod

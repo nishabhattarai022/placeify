@@ -128,4 +128,13 @@ abstract final class OrderLifecycleStore {
       OrderDeliveryStatus.delivered => 'delivered',
     };
   }
+
+  static OrderStatus orderStatusForDelivery(OrderDeliveryStatus deliveryStatus) {
+    return switch (deliveryStatus) {
+      OrderDeliveryStatus.processing => OrderStatus.processing,
+      OrderDeliveryStatus.shipped => OrderStatus.shipped,
+      OrderDeliveryStatus.outForDelivery => OrderStatus.shipped,
+      OrderDeliveryStatus.delivered => OrderStatus.delivered,
+    };
+  }
 }
