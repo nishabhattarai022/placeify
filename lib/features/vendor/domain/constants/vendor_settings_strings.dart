@@ -14,6 +14,10 @@ abstract final class VendorSettingsStrings {
   static const changePasswordTitle = 'Change password';
   static const changePasswordSubtitle = 'Update your login credentials';
 
+  static const signOutTitle = 'Sign out';
+  static const signOutSubtitle = 'Return to the welcome screen';
+  static const signedOut = 'Signed out';
+
   static const deactivateStoreTitle = 'Deactivate store';
   static const deactivateStoreSubtitle =
       'Temporarily hide your store from Placeify';

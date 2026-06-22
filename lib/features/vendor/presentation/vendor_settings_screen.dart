@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:placeify/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify/core/constants/app_colors.dart';
 import 'package:placeify/core/services/haptic_service.dart';
 import 'package:placeify/core/widgets/bottom_nav/bottom_nav_tokens.dart';
@@ -87,6 +88,14 @@ class VendorSettingsScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 10),
                 _SettingsActionTile(
+                  icon: Icons.logout_outlined,
+                  title: VendorSettingsStrings.signOutTitle,
+                  subtitle: VendorSettingsStrings.signOutSubtitle,
+                  isDestructive: true,
+                  onTap: () => _signOut(context, ref),
+                ),
+                const SizedBox(height: 10),
+                _SettingsActionTile(
                   icon: Icons.storefront_outlined,
                   title: VendorSettingsStrings.deactivateStoreTitle,
                   subtitle: settings.isDeactivateCooldownActive
@@ -103,6 +112,14 @@ class VendorSettingsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  static Future<void> _signOut(BuildContext context, WidgetRef ref) async {
+    HapticService.light();
+    await ref.read(currentUserProvider.notifier).signOut();
+    if (!context.mounted) return;
+    PlaceifyToast.show(context, VendorSettingsStrings.signedOut);
+    context.go('/splash');
   }
 
   static Future<void> _showDeactivateSheet(
