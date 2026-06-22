@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:placeify_client/placeify_client.dart';
 
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/utils/formatters.dart';
@@ -10,11 +11,15 @@ import '../providers/cart_provider.dart';
 class CartOrderSummary extends StatefulWidget {
   const CartOrderSummary({
     required this.totals,
+    required this.selectedPaymentMethod,
+    required this.onPaymentMethodChanged,
     required this.onCheckout,
     super.key,
   });
 
   final CartTotals totals;
+  final PaymentMethod selectedPaymentMethod;
+  final ValueChanged<PaymentMethod> onPaymentMethodChanged;
   final VoidCallback onCheckout;
 
   @override
@@ -28,6 +33,7 @@ class _CartOrderSummaryState extends State<CartOrderSummary> {
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
     final showDiscount = widget.totals.discount > 0;
+    final selectedMethod = widget.selectedPaymentMethod;
 
     return Padding(
       padding: EdgeInsets.only(bottom: bottom),
@@ -99,6 +105,26 @@ class _CartOrderSummaryState extends State<CartOrderSummary> {
                     value: Formatters.currencyDecimal(widget.totals.total),
                   ),
                   const SizedBox(height: 20),
+                  const Text('Payment method', style: CartTokens.sectionTitle),
+                  const SizedBox(height: 10),
+                  _PaymentMethodOption(
+                    label: 'Cash on delivery',
+                    selected: selectedMethod == PaymentMethod.cod,
+                    onTap: () {
+                      HapticService.light();
+                      widget.onPaymentMethodChanged(PaymentMethod.cod);
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  _PaymentMethodOption(
+                    label: 'Card (mock online)',
+                    selected: selectedMethod == PaymentMethod.mockOnline,
+                    onTap: () {
+                      HapticService.light();
+                      widget.onPaymentMethodChanged(PaymentMethod.mockOnline);
+                    },
+                  ),
+                  const SizedBox(height: 20),
                   GestureDetector(
                     onTapDown: (_) => setState(() => _checkoutPressed = true),
                     onTapUp: (_) => setState(() => _checkoutPressed = false),
@@ -130,6 +156,56 @@ class _CartOrderSummaryState extends State<CartOrderSummary> {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PaymentMethodOption extends StatelessWidget {
+  const _PaymentMethodOption({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: selected ? CartTokens.black.withValues(alpha: 0.06) : null,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected ? CartTokens.black : CartTokens.divider,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              selected ? Icons.radio_button_checked : Icons.radio_button_off,
+              size: 20,
+              color: selected ? CartTokens.black : CartTokens.textSecondary,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                  color: CartTokens.textPrimary,
+                ),
               ),
             ),
           ],

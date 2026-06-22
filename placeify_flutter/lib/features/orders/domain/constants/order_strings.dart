@@ -77,6 +77,11 @@ abstract final class OrderStrings {
   static const discountLabel = 'Discount';
   static const totalLabel = 'Total';
   static const paymentMethodLabel = 'Payment method';
+  static const noVendorUpdatesYet =
+      'No vendor updates yet. You will see progress here when the vendor updates your order.';
+  static const noPaymentUpdatesYet =
+      'No payment updates yet. Payment status changes when the vendor records them.';
+  static const paymentUpdatesSectionTitle = 'Payment updates';
   static const viewProductAction = 'View product';
   static const placedOnPrefix = 'Placed on';
 

@@ -1774,6 +1774,7 @@ class VendorStore {
           itemCount: itemCount,
           items: lineItems,
           rejectionReason: order.rejectionReason,
+          orderPaymentStatus: order.paymentStatus,
         ),
       );
     }

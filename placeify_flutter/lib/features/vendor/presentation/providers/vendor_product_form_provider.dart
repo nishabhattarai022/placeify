@@ -23,9 +23,12 @@ class VendorProductForm extends _$VendorProductForm {
     state = VendorProductFormState.initial();
   }
 
-  Future<void> prepareForRoute({String? productId}) async {
+  Future<void> prepareForRoute({
+    String? productId,
+    bool forceReload = false,
+  }) async {
     if (productId != null) {
-      if (state.editingProductId == productId) return;
+      if (!forceReload && state.editingProductId == productId) return;
       await _loadProduct(productId);
       return;
     }
@@ -33,11 +36,6 @@ class VendorProductForm extends _$VendorProductForm {
     if (state.editingProductId != null) {
       state = VendorProductFormState.initial();
     }
-  }
-
-  /// Reloads the edit form from the server (e.g. after Build 3D updates model3dUrl).
-  Future<void> reloadProduct(String productId) async {
-    await _loadProduct(productId);
   }
 
   Future<void> _loadProduct(String productId) async {
@@ -315,15 +313,15 @@ class VendorProductForm extends _$VendorProductForm {
       final product = _buildProduct(vendorId, existing: existing);
       final productsNotifier = ref.read(vendorProductsProvider.notifier);
 
-      final ({VendorProduct? product, String? error}) result;
+      final String? error;
       if (state.isEditing) {
-        result = await productsNotifier.updateProduct(product);
+        error = (await productsNotifier.updateProduct(product)).error;
       } else {
-        result = await productsNotifier.createProduct(product);
+        error = (await productsNotifier.createProduct(product)).error;
       }
 
-      if (result.error != null) {
-        state = state.copyWith(isSubmitting: false, submitError: result.error);
+      if (error != null) {
+        state = state.copyWith(isSubmitting: false, submitError: error);
         return false;
       }
 

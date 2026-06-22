@@ -104,19 +104,35 @@ class PaymentStore {
     final vendor = await _vendorStore.requireOwnedVendor(session);
     await _requireVendorOrderAccess(session, vendor.id!, orderId);
 
+    final order = await Order.db.findById(session, orderId);
     await PaymentSync.ensureAllocationsForOrder(session, orderId);
 
-    final rows = await OrderVendorPayment.db.find(
+    final allocation = await OrderVendorPayment.db.findFirstRow(
       session,
       where: (row) =>
           row.orderId.equals(orderId) & row.vendorId.equals(vendor.id!),
-      orderBy: (row) => row.updatedAt,
-      orderDescending: true,
+    );
+    final amount = allocation?.amount ?? order?.totalAmount ?? 0;
+
+    final history = await OrderStatusHistory.db.find(
+      session,
+      where: (row) =>
+          row.orderId.equals(orderId) &
+          row.statusType.equals(OrderStatusHistoryType.payment),
+      orderBy: (row) => row.changedAt,
     );
 
     return [
-      for (final row in rows)
-        if (row.id != null) _allocationSummary(row),
+      for (final row in history)
+        if (row.id != null)
+          PaymentUpdateSummary(
+            id: row.id!,
+            orderId: orderId,
+            amount: amount,
+            status: PaymentTransactionStatus.succeeded,
+            note: _paymentHistoryNote(row.newStatus, row.note),
+            updatedAt: row.changedAt,
+          ),
     ];
   }
 
@@ -364,6 +380,17 @@ class PaymentStore {
       PaymentTransactionStatus.failed => 'Payment marked as failed.',
       PaymentTransactionStatus.refunded => 'Payment marked as refunded.',
       PaymentTransactionStatus.pending => 'Payment marked as pending.',
+    };
+  }
+
+  static String _paymentHistoryNote(String newStatus, String? note) {
+    final trimmed = note?.trim();
+    if (trimmed != null && trimmed.isNotEmpty) return trimmed;
+
+    return switch (newStatus) {
+      'paymentReceived' => 'Payment received by vendor',
+      'paymentConfirmed' => 'Payment confirmed',
+      _ => newStatus,
     };
   }
 }

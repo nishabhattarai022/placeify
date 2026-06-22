@@ -4,6 +4,7 @@ import '../domain/enums/consumer_order_status.dart';
 import '../domain/enums/payment_status.dart';
 import '../domain/models/order.dart';
 import '../domain/models/order_item.dart';
+import '../domain/models/order_payment_event.dart';
 import '../domain/models/order_status_update.dart';
 
 abstract final class OrderApiMapper {
@@ -13,25 +14,24 @@ abstract final class OrderApiMapper {
       orderNumber: summary.orderNumber,
       userId: userId,
       vendorId: '0',
-      vendorName: 'Placeify shop',
+      vendorName: summary.primaryProductName ?? 'Vendor',
       status: mapStatus(summary.status, latestStage: summary.latestDeliveryStage),
       items: [
         OrderItem(
           productId: summary.id.toString(),
           productName: summary.primaryProductName ?? 'Order item',
           productImageUrl: '',
-          brandName: 'Placeify',
+          brandName: '',
           sku: summary.orderNumber,
           unitPrice: summary.totalAmount,
           quantity: summary.itemCount.clamp(1, 999),
         ),
       ],
-      statusHistory: _historyFromSummary(summary),
+      statusHistory: const [],
+      paymentUpdates: const [],
       placedAt: summary.placedAt,
-      paymentStatus: summary.paymentStatus == null
-          ? PaymentStatus.pending
-          : mapPaymentStatus(summary.paymentStatus!),
-      paymentMethod: 'Online',
+      paymentStatus: mapOrderPaymentStatus(summary.orderPaymentStatus),
+      paymentMethod: '',
       subtotal: summary.totalAmount,
       deliveryFee: 0,
       total: summary.totalAmount,
@@ -46,7 +46,7 @@ abstract final class OrderApiMapper {
             productId: line.productId.toString(),
             productName: line.productName,
             productImageUrl: line.thumbnailUrl ?? '',
-            brandName: 'Placeify',
+            brandName: '',
             sku: '${detail.orderNumber}-${line.productId}',
             unitPrice: line.unitPrice,
             quantity: line.quantity,
@@ -63,13 +63,16 @@ abstract final class OrderApiMapper {
       orderNumber: detail.orderNumber,
       userId: userId,
       vendorId: '0',
-      vendorName: 'Placeify shop',
+      vendorName: detail.primaryProductName ?? 'Vendor',
       status: mapStatus(detail.status, latestStage: detail.latestDeliveryStage),
       items: items,
       statusHistory: _historyFromDetail(detail),
+      paymentUpdates: _paymentHistoryFromDetail(detail),
       placedAt: detail.placedAt,
-      deliveredAt: detail.status == OrderStatus.delivered ? detail.placedAt : null,
-      paymentStatus: mapPaymentStatus(payment.status),
+      deliveredAt: detail.status == OrderStatus.delivered
+          ? _deliveredAt(detail)
+          : null,
+      paymentStatus: mapOrderPaymentStatus(detail.orderPaymentStatus),
       paymentMethod: paymentMethodLabel(payment.paymentMethod),
       subtotal: subtotal,
       deliveryFee: (detail.totalAmount - subtotal).clamp(0, double.infinity),
@@ -78,12 +81,20 @@ abstract final class OrderApiMapper {
     );
   }
 
-  static PaymentStatus mapPaymentStatus(PaymentTransactionStatus status) {
+  static DateTime? _deliveredAt(UserOrderDetail detail) {
+    for (final event in detail.deliveryUpdates) {
+      if (event.stage == DeliveryStage.delivered) {
+        return event.createdAt;
+      }
+    }
+    return null;
+  }
+
+  static PaymentStatus mapOrderPaymentStatus(OrderPaymentStatus status) {
     return switch (status) {
-      PaymentTransactionStatus.pending => PaymentStatus.pending,
-      PaymentTransactionStatus.succeeded => PaymentStatus.paid,
-      PaymentTransactionStatus.failed => PaymentStatus.failed,
-      PaymentTransactionStatus.refunded => PaymentStatus.refunded,
+      OrderPaymentStatus.unpaid => PaymentStatus.pending,
+      OrderPaymentStatus.paymentReceived => PaymentStatus.received,
+      OrderPaymentStatus.paymentConfirmed => PaymentStatus.confirmed,
     };
   }
 
@@ -122,46 +133,57 @@ abstract final class OrderApiMapper {
     if (status == OrderStatus.accepted) {
       return ConsumerOrderStatus.confirmed;
     }
-    // Paid legacy rows may still be `confirmed` before vendor accept.
     if (status == OrderStatus.confirmed) {
       return ConsumerOrderStatus.placed;
     }
     return ConsumerOrderStatus.placed;
   }
 
-  static List<OrderStatusUpdate> _historyFromSummary(UserOrderSummary summary) {
-    final status = mapStatus(summary.status, latestStage: summary.latestDeliveryStage);
+  static ConsumerOrderStatus statusForDeliveryStage(DeliveryStage stage) {
+    return switch (stage) {
+      DeliveryStage.orderPlaced => ConsumerOrderStatus.confirmed,
+      DeliveryStage.packed => ConsumerOrderStatus.packed,
+      DeliveryStage.shipped => ConsumerOrderStatus.inTransit,
+      DeliveryStage.outForDelivery => ConsumerOrderStatus.outForDelivery,
+      DeliveryStage.delivered => ConsumerOrderStatus.delivered,
+    };
+  }
+
+  static String deliveryStageLabel(DeliveryStage stage) {
+    return switch (stage) {
+      DeliveryStage.orderPlaced => 'Order accepted',
+      DeliveryStage.packed => 'Packed',
+      DeliveryStage.shipped => 'Shipped',
+      DeliveryStage.outForDelivery => 'Out for delivery',
+      DeliveryStage.delivered => 'Delivered',
+    };
+  }
+
+  static List<OrderPaymentEvent> _paymentHistoryFromDetail(
+    UserOrderDetail detail,
+  ) {
+    if (detail.paymentUpdates.isEmpty) return const [];
+
     return [
-      OrderStatusUpdate(
-        status: status,
-        timestamp: summary.placedAt,
-        note: summary.latestDeliveryNote,
-      ),
+      for (final event in detail.paymentUpdates)
+        OrderPaymentEvent(
+          status: mapOrderPaymentStatus(event.status),
+          timestamp: event.createdAt,
+          note: event.note,
+        ),
     ];
   }
 
   static List<OrderStatusUpdate> _historyFromDetail(UserOrderDetail detail) {
-    if (detail.deliveryUpdates.isEmpty) {
-      return _historyFromSummary(
-        UserOrderSummary(
-          id: detail.id,
-          orderNumber: detail.orderNumber,
-          status: detail.status,
-          totalAmount: detail.totalAmount,
-          placedAt: detail.placedAt,
-          itemCount: detail.itemCount,
-          primaryProductName: detail.primaryProductName,
-          latestDeliveryStage: detail.latestDeliveryStage,
-          latestDeliveryNote: detail.latestDeliveryNote,
-          paymentStatus: detail.payment.status,
-        ),
-      );
-    }
+    if (detail.deliveryUpdates.isEmpty) return const [];
+
+    final sorted = [...detail.deliveryUpdates]
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
     return [
-      for (final event in detail.deliveryUpdates)
+      for (final event in sorted)
         OrderStatusUpdate(
-          status: mapStatus(detail.status, latestStage: event.stage),
+          status: statusForDeliveryStage(event.stage),
           timestamp: event.createdAt,
           note: event.note,
         ),

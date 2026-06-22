@@ -12,6 +12,14 @@ abstract final class VendorRoutes {
   static const reviews = '/vendor/reviews';
   static const products = '/vendor/products';
   static const productsUpload = '/vendor/products/upload';
+  static const productsBuild3d = '/vendor/products/build-3d';
+
+  static String productsBuild3dFor(String? productId) {
+    if (productId == null || productId.isEmpty) {
+      return productsBuild3d;
+    }
+    return '$productsBuild3d?productId=$productId';
+  }
 
   static String productEdit(String productId) => '$products/$productId/edit';
   static const payments = '/vendor/payments';

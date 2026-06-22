@@ -62,7 +62,7 @@ class MockOrderRepository implements OrderRepository {
     final updated = order.copyWith(
       status: ConsumerOrderStatus.cancelled,
       cancellationReason: reason,
-      paymentStatus: order.paymentStatus == PaymentStatus.paid
+      paymentStatus: order.paymentStatus == PaymentStatus.confirmed
           ? PaymentStatus.refunded
           : order.paymentStatus,
       statusHistory: [
@@ -298,7 +298,7 @@ class MockOrderRepository implements OrderRepository {
     required DateTime placedAt,
     DateTime? estimatedDelivery,
     DateTime? deliveredAt,
-    PaymentStatus paymentStatus = PaymentStatus.paid,
+    PaymentStatus paymentStatus = PaymentStatus.confirmed,
     String paymentMethod = 'Card ending in 4242',
     String? cancellationReason,
     String? returnReason,

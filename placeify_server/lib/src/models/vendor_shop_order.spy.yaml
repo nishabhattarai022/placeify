@@ -11,3 +11,4 @@ fields:
   itemCount: int
   items: List<VendorOrderLineItem>
   rejectionReason: String?
+  orderPaymentStatus: OrderPaymentStatus

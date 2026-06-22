@@ -10,4 +10,4 @@ fields:
   primaryProductName: String?
   latestDeliveryStage: DeliveryStage?
   latestDeliveryNote: String?
-  paymentStatus: PaymentTransactionStatus?
+  orderPaymentStatus: OrderPaymentStatus

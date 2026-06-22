@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:placeify_client/placeify_client.dart' show OrderPaymentStatus;
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_radii.dart';
@@ -17,7 +18,6 @@ import '../domain/constants/vendor_routes.dart';
 import '../domain/enums/order_status.dart';
 import '../domain/models/delivery_update.dart';
 import '../domain/models/vendor_order.dart';
-import '../domain/enums/payment_status.dart';
 import '../domain/models/payment_update.dart';
 import 'providers/vendor_notifications_provider.dart';
 import 'providers/vendor_order_detail_provider.dart';
@@ -26,7 +26,6 @@ import 'providers/vendor_product_image_provider.dart';
 import 'widgets/order_action_sheet.dart';
 import 'widgets/order_status_chip.dart';
 import 'widgets/order_timeline_widget.dart';
-import 'widgets/payment_status_chip.dart';
 import 'widgets/payment_update_sheet.dart';
 import 'widgets/vendor_list_thumbnail.dart';
 
@@ -297,17 +296,21 @@ class _PaymentSection extends ConsumerWidget {
             },
           ),
           const SizedBox(height: 16),
-          OutlinedButton(
-            onPressed: () async {
-              HapticService.light();
-              await PaymentUpdateSheet.show(
-                context,
-                ref,
-                orderId: order.id,
-                orderLabel: 'Order #${order.orderNumber}',
-              );
-              ref.invalidate(orderPaymentAuditTrailProvider(order.id));
-            },
+          if (order.orderPaymentStatus !=
+              OrderPaymentStatus.paymentConfirmed)
+            OutlinedButton(
+              onPressed: () async {
+                HapticService.light();
+                await PaymentUpdateSheet.show(
+                  context,
+                  ref,
+                  orderId: order.id,
+                  orderLabel: 'Order #${order.orderNumber}',
+                  orderPaymentStatus: order.orderPaymentStatus,
+                );
+                ref.invalidate(orderPaymentAuditTrailProvider(order.id));
+                ref.invalidate(vendorOrderDetailProvider(order.id));
+              },
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.vendorForest,
               side: const BorderSide(color: AppColors.vendorForest),
@@ -326,16 +329,6 @@ class _PaymentAuditRow extends StatelessWidget {
 
   final PaymentUpdate update;
 
-  static String _statusLabel(PaymentStatus status) {
-    return switch (status) {
-      PaymentStatus.pending => 'Pending',
-      PaymentStatus.paid => 'Received',
-      PaymentStatus.partial => 'Partial',
-      PaymentStatus.refunded => 'Refunded',
-      PaymentStatus.failed => 'Failed',
-    };
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -351,8 +344,16 @@ class _PaymentAuditRow extends StatelessWidget {
         children: [
           Row(
             children: [
-              PaymentStatusChip(status: update.status),
-              const Spacer(),
+              Expanded(
+                child: Text(
+                  update.note,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
               Text(
                 Formatters.shortDate(update.updatedAt),
                 style: const TextStyle(
@@ -362,26 +363,14 @@ class _PaymentAuditRow extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
-            '${_statusLabel(update.status)} · ${Formatters.currencyFull(update.amount)}',
+            Formatters.currencyFull(update.amount),
             style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.espresso,
+              fontSize: 12,
+              color: AppColors.textSecondary,
             ),
           ),
-          if (update.note.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              update.note,
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-                height: 1.35,
-              ),
-            ),
-          ],
         ],
       ),
     );

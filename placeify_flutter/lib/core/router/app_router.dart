@@ -32,6 +32,7 @@ import '../../features/vendor/presentation/vendor_notifications_screen.dart';
 import '../../features/vendor/presentation/vendor_order_detail_screen.dart';
 import '../../features/vendor/presentation/vendor_reviews_screen.dart';
 import '../../features/vendor/presentation/vendor_orders_screen.dart';
+import '../../features/vendor/presentation/vendor_build_3d_screen.dart';
 import '../../features/vendor/presentation/vendor_product_form_screen.dart';
 import '../../features/vendor/presentation/vendor_products_screen.dart';
 import '../../features/vendor/presentation/vendor_payments_screen.dart';
@@ -108,17 +109,7 @@ GoRouter appRouter(Ref ref) {
         location: state.matchedLocation,
         user: userAsync.value,
       );
-      if (adminRedirect != null) {
-        if (adminRedirect.toastMessage != null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            final ctx = rootNavigatorKey.currentContext;
-            if (ctx != null) {
-              PlaceifyToast.show(ctx, adminRedirect.toastMessage!);
-            }
-          });
-        }
-        return adminRedirect.location;
-      }
+      if (adminRedirect != null) return adminRedirect.location;
 
       final redirect = VendorAuthGuard.evaluate(
         location: state.matchedLocation,
@@ -610,6 +601,16 @@ List<RouteBase> get _appRoutes => [
                       pageBuilder: (context, state) => _slidePage(
                         key: ValueKey<String>(state.uri.toString()),
                         child: const VendorProductFormScreen(),
+                      ),
+                    ),
+                    GoRoute(
+                      path: 'build-3d',
+                      name: 'vendorProductBuild3d',
+                      pageBuilder: (context, state) => _slidePage(
+                        key: ValueKey<String>(state.uri.toString()),
+                        child: VendorBuild3dScreen(
+                          productId: state.uri.queryParameters['productId'],
+                        ),
                       ),
                     ),
                     GoRoute(

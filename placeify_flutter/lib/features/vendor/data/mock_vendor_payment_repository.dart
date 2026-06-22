@@ -46,7 +46,7 @@ class MockVendorPaymentRepository implements VendorPaymentRepository {
   @override
   Future<double> getTotalEarned(String vendorId) async {
     await Future<void>.delayed(const Duration(milliseconds: 100));
-    if (!VendorMockConfig.isKnownVendor(vendorId)) return 0;
+    if (!VendorMockConfig.usesDemoPortalData(vendorId)) return 0;
     return VendorMockConfig.stats.revenue;
   }
 

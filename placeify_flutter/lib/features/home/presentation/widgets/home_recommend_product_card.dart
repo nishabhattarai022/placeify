@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -106,31 +105,18 @@ class _HomeRecommendProductCardState
                       child: SizedBox(
                         height: HomeScreenTokens.cardImageHeight,
                         width: double.infinity,
-                        child: product.imageAsset.startsWith('http')
-                            ? CachedNetworkImage(
-                                imageUrl: product.imageAsset,
-                                fit: BoxFit.cover,
-                                errorWidget: (_, __, ___) => ColoredBox(
-                                  color: HomeScreenTokens.cardBg,
-                                  child: Icon(
-                                    Icons.chair_outlined,
-                                    size: 56,
-                                    color: Colors.black.withValues(alpha: 0.2),
-                                  ),
-                                ),
-                              )
-                            : Image.asset(
-                                product.imageAsset,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => ColoredBox(
-                                  color: HomeScreenTokens.cardBg,
-                                  child: Icon(
-                                    Icons.chair_outlined,
-                                    size: 56,
-                                    color: Colors.black.withValues(alpha: 0.2),
-                                  ),
-                                ),
-                              ),
+                        child: Image.asset(
+                          product.imageAsset,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => ColoredBox(
+                            color: HomeScreenTokens.cardBg,
+                            child: Icon(
+                              Icons.chair_outlined,
+                              size: 56,
+                              color: Colors.black.withValues(alpha: 0.2),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 14),

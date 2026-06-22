@@ -7,7 +7,6 @@ import '../../../../core/services/haptic_service.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../domain/models/vendor_product.dart';
 import 'vendor_list_thumbnail.dart';
-import 'vendor_product_status_chip.dart';
 
 class VendorProductGridTile extends StatelessWidget {
   const VendorProductGridTile({
@@ -104,6 +103,16 @@ class VendorProductGridTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
+                    product.sku,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
                     Formatters.currencyFull(product.price),
                     style: const TextStyle(
                       fontSize: 12,
@@ -111,29 +120,15 @@ class VendorProductGridTile extends StatelessWidget {
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          product.isLowStock
-                              ? 'Low stock · ${product.stock} left'
-                              : '${product.stock} in stock',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: product.isLowStock
-                                ? FontWeight.w600
-                                : FontWeight.normal,
-                            color: product.isLowStock
-                                ? AppColors.coral
-                                : AppColors.textMuted,
-                          ),
-                        ),
-                      ),
-                      VendorProductStatusChip(isActive: product.isActive),
-                    ],
+                  const SizedBox(height: 4),
+                  Text(
+                    '${product.stock} in stock',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textMuted,
+                    ),
                   ),
                 ],
               ),
