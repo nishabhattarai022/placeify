@@ -20,6 +20,7 @@ import 'package:vector_math/vector_math_64.dart' hide Colors;
 
 import '../../home/domain/models/product.dart';
 import '../../../../core/widgets/ar_corner_bracket.dart';
+import '../data/ar_furniture_placement.dart';
 import '../data/ar_furniture_scale.dart';
 import '../data/product_3d_model_loader.dart';
 import 'webcam_ar_room_screen.dart';
@@ -230,7 +231,10 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       handleTaps: true,
       handlePans: true,
       handleRotation: true,
-      lightIntensityMultiplier: 1.25,
+      lightIntensityMultiplier: ArFurnitureScale.arLightIntensityMultiplier,
+    );
+    await _sessionManager?.setLightIntensityMultiplier(
+      ArFurnitureScale.arLightIntensityMultiplier,
     );
   }
 
@@ -270,6 +274,9 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     });
 
     await _spawnPreviewNode();
+    await _sessionManager?.setLightIntensityMultiplier(
+      ArFurnitureScale.arLightIntensityMultiplier,
+    );
     _previewTicker?.start();
   }
 
@@ -354,10 +361,11 @@ class _ArRoomScreenState extends State<ArRoomScreen>
 
     final planeHits = hitTestResults
         .where((r) => r.type == ARHitTestResultType.plane)
-        .toList()
-      ..sort((a, b) => a.distance.compareTo(b.distance));
-
-    if (planeHits.isEmpty) {
+        .toList();
+    final hit = ArFurniturePlacement.bestSurfaceHit(
+      planeHits.isNotEmpty ? planeHits : hitTestResults,
+    );
+    if (hit == null) {
       _showStatus(
         'No surface here yet. Move your phone slowly until white grids appear.',
       );
@@ -372,7 +380,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     await _placeOnSurface(
       objectManager: objectManager,
       anchorManager: anchorManager,
-      hit: planeHits.first,
+      hit: hit,
     );
   }
 
@@ -390,7 +398,12 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     try {
       await _removeFurniture(objectManager: objectManager, anchorManager: anchorManager);
 
-      final anchor = ARPlaneAnchor(transformation: hit.worldTransform);
+      final anchorTransform = ArFurniturePlacement.anchorTransformForHit(
+        hit: hit,
+        dimensions: widget.dimensions,
+        nodeScale: _nodeScale,
+      );
+      final anchor = ARPlaneAnchor(transformation: anchorTransform);
       final didAddAnchor = await anchorManager.addAnchor(anchor);
       if (didAddAnchor != true) {
         _showStatus('Could not anchor to this surface. Try another spot.');
@@ -415,6 +428,9 @@ class _ArRoomScreenState extends State<ArRoomScreen>
         _isPlaced = true;
         _statusMessage = null;
       });
+      await _sessionManager?.setLightIntensityMultiplier(
+        ArFurnitureScale.arLightIntensityMultiplier,
+      );
     } finally {
       if (mounted) setState(() => _isPlacing = false);
     }
@@ -456,20 +472,8 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     if (!_isPlaced || nodeName != _nodeName) return;
 
     setState(() => _isDragging = false);
-
-    final objectManager = _objectManager;
-    final anchorManager = _anchorManager;
-    final modelUri = _modelUri;
-    if (objectManager == null || anchorManager == null || modelUri == null) {
-      return;
-    }
-
-    await _reanchorAtTransform(
-      objectManager: objectManager,
-      anchorManager: anchorManager,
-      modelUri: modelUri,
-      worldTransform: transform,
-    );
+    _furnitureNode?.transform = transform;
+    _currentRotationY = transform.matrixEulerAngles.y;
   }
 
   void _onRotationStart(String nodeName) {
@@ -522,53 +526,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       _statusMessage = null;
     });
     _applyNodeTransform();
-  }
-
-  Future<void> _reanchorAtTransform({
-    required ARObjectManager objectManager,
-    required ARAnchorManager anchorManager,
-    required String modelUri,
-    required Matrix4 worldTransform,
-  }) async {
-    final node = _furnitureNode;
-    if (node == null) return;
-
-    final savedScale = node.scale;
-    final savedEuler = node.eulerAngles;
-
-    await _removeFurniture(
-      objectManager: objectManager,
-      anchorManager: anchorManager,
-    );
-
-    final anchor = ARPlaneAnchor(transformation: worldTransform);
-    final didAddAnchor = await anchorManager.addAnchor(anchor);
-    if (didAddAnchor != true) {
-      _showStatus('Could not move the model. Try dragging again.');
-      return;
-    }
-
-    final newNode = ARNode(
-      type: NodeType.fileSystemAppFolderGLB,
-      name: _nodeName,
-      uri: modelUri,
-      scale: savedScale,
-      position: Vector3.zero(),
-      eulerAngles: savedEuler,
-    );
-
-    final didAddNode = await objectManager.addNode(newNode, planeAnchor: anchor);
-    if (didAddNode != true) {
-      await anchorManager.removeAnchor(anchor);
-      _showStatus('Could not move the model. Try dragging again.');
-      return;
-    }
-
-    if (!mounted) return;
-    setState(() {
-      _furnitureNode = newNode;
-      _currentAnchor = anchor;
-    });
   }
 
   Future<void> _removeFurniture({
