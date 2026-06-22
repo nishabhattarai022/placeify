@@ -24,6 +24,7 @@ class _ProfileRefundScreenState extends State<ProfileRefundScreen> {
 
   @override
   void dispose() {
+    FocusManager.instance.primaryFocus?.unfocus();
     _detailsController.dispose();
     super.dispose();
   }

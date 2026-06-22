@@ -11,6 +11,7 @@ import '../notification/order_notification_service.dart';
 import '../notification/notification_repository.dart';
 import 'product_3d/product_3d_generation_result.dart';
 import 'product_3d/product_3d_generator.dart';
+import 'product_3d/product_3d_views.dart';
 import 'product_image_processor.dart';
 import 'vendor_bank_details_validation.dart';
 import 'vendor_document_storage.dart';
@@ -644,7 +645,12 @@ class VendorStore {
     String fileName,
   ) async {
     final vendor = await requireOwnedVendor(session);
-    final logoUrl = await _persistProductImage(session, fileData, fileName);
+    final logoUrl = await _persistProductImage(
+      session,
+      fileData,
+      fileName,
+      removeBackground: false,
+    );
     await Vendor.db.updateRow(
       session,
       vendor.copyWith(logoUrl: logoUrl, updatedAt: DateTime.now()),
@@ -659,7 +665,12 @@ class VendorStore {
     String fileName,
   ) async {
     final vendor = await requireOwnedVendor(session);
-    final bannerUrl = await _persistProductImage(session, fileData, fileName);
+    final bannerUrl = await _persistProductImage(
+      session,
+      fileData,
+      fileName,
+      removeBackground: false,
+    );
     await Vendor.db.updateRow(
       session,
       vendor.copyWith(bannerUrl: bannerUrl, updatedAt: DateTime.now()),
@@ -675,7 +686,12 @@ class VendorStore {
     String fileName,
   ) async {
     final vendor = await requireOwnedVendor(session);
-    final coverUrl = await _persistProductImage(session, fileData, fileName);
+    final coverUrl = await _persistProductImage(
+      session,
+      fileData,
+      fileName,
+      removeBackground: false,
+    );
     await Vendor.db.updateRow(
       session,
       vendor.copyWith(coverUrl: coverUrl, updatedAt: DateTime.now()),
@@ -808,6 +824,7 @@ class VendorStore {
     String? warranty,
     String? model3dUrl,
     String? thumbnailUrl,
+    List<String>? viewImageUrls,
   }) async {
     final vendor = await requireOwnedVendor(session);
     if (name.trim().isEmpty || description.trim().isEmpty) {
@@ -871,6 +888,7 @@ class VendorStore {
         warranty: warranty?.trim(),
         model3dUrl: model3dUrl?.trim(),
         thumbnailUrl: thumbnailUrl?.trim(),
+        viewImageUrls: _normalizeViewImageUrls(viewImageUrls),
         status: ProductStatus.active,
       ),
     );
@@ -909,6 +927,7 @@ class VendorStore {
       session,
       imageData,
       imageFileName,
+      removeBackground: true,
     );
 
     var product = await createProduct(
@@ -1004,6 +1023,7 @@ class VendorStore {
         session,
         imageData,
         imageFileName,
+        removeBackground: true,
       );
     }
 
@@ -1073,7 +1093,7 @@ class VendorStore {
       return product;
     }
 
-    const generator = Product3dGenerator();
+    final generator = Product3dGenerator();
     final result = await generator.generateForProduct(
       session,
       product: product,
@@ -1149,17 +1169,24 @@ class VendorStore {
   Future<String> uploadProductImage(
     Session session,
     ByteData fileData,
-    String fileName,
-  ) async {
+    String fileName, {
+    bool removeBackground = false,
+  }) async {
     await requireOwnedVendor(session);
-    return _persistProductImage(session, fileData, fileName);
+    return _persistProductImage(
+      session,
+      fileData,
+      fileName,
+      removeBackground: removeBackground,
+    );
   }
 
   Future<String> _persistProductImage(
     Session session,
     ByteData fileData,
-    String fileName,
-  ) async {
+    String fileName, {
+    required bool removeBackground,
+  }) async {
     final bytes = fileData.buffer.asUint8List(
       fileData.offsetInBytes,
       fileData.lengthInBytes,
@@ -1184,30 +1211,66 @@ class VendorStore {
     }
 
     final processor = ProductImageProcessor();
-    final processed = await processor.processForCatalog(
-      session,
-      bytes,
-      sanitized,
-    );
-
     final uploadsDir = Directory(ServerStaticPaths.uploadsDir());
     if (!uploadsDir.existsSync()) {
       uploadsDir.createSync(recursive: true);
     }
 
     final baseName = sanitized.replaceAll(RegExp(r'\.[^.]+$'), '');
-    final storedName =
-        '${DateTime.now().millisecondsSinceEpoch}_$baseName${processed.extension}';
-    final file = File(
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+
+    if (removeBackground) {
+      final processed = await processor.processForVendorUpload(
+        session,
+        bytes,
+        sanitized,
+        fileExtension: extension,
+      );
+
+      final storedName = '${timestamp}_$baseName${processed.catalog.extension}';
+      final tripoStoredName =
+          '${timestamp}_${baseName}_tripo${processed.tripoSource.extension}';
+
+      await File(
+        '${uploadsDir.path}${Platform.pathSeparator}$storedName',
+      ).writeAsBytes(processed.catalog.bytes);
+      await File(
+        '${uploadsDir.path}${Platform.pathSeparator}$tripoStoredName',
+      ).writeAsBytes(processed.tripoSource.bytes);
+
+      session.log(
+        'Stored catalog thumbnail $storedName and Tripo raw $tripoStoredName',
+        level: LogLevel.info,
+      );
+      return '/uploads/$storedName';
+    }
+
+    final storedName = '${timestamp}_$baseName$extension';
+    await File(
       '${uploadsDir.path}${Platform.pathSeparator}$storedName',
-    );
-    await file.writeAsBytes(processed.bytes);
+    ).writeAsBytes(bytes);
     session.log(
-      'Stored catalog image $storedName (white background, '
-      'bgRemoved=${processed.backgroundRemoved})',
+      'Stored raw product photo $storedName (${bytes.length} bytes, no bg removal)',
       level: LogLevel.info,
     );
     return '/uploads/$storedName';
+  }
+
+  /// Keeps Tripo view order [left, back, right].
+  List<String>? _normalizeViewImageUrls(List<String>? urls) {
+    if (urls == null || urls.isEmpty) return null;
+
+    final normalized = urls
+        .take(Product3dViews.extraSlotCount)
+        .map((url) => url.trim())
+        .toList(growable: false);
+    if (normalized.every((url) => url.isEmpty)) return null;
+
+    final trimmed = List<String>.from(normalized);
+    while (trimmed.isNotEmpty && trimmed.last.isEmpty) {
+      trimmed.removeLast();
+    }
+    return trimmed.isEmpty ? null : trimmed;
   }
 
   String? _imageExtension(String fileName) {
@@ -1479,7 +1542,12 @@ class VendorStore {
     String fileName,
   ) async {
     await requireOwnedVendor(session);
-    return _persistProductImage(session, fileData, fileName);
+    return _persistProductImage(
+      session,
+      fileData,
+      fileName,
+      removeBackground: false,
+    );
   }
 
   Future<Order> _requireMutableVendorOrder(

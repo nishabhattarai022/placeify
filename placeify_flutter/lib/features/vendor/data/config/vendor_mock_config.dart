@@ -93,8 +93,8 @@ abstract final class VendorMockConfig {
     viewCount: 1280,
     conversionRate: 0.036,
     periodLabel: 'Last 30 days',
-    averageRating: 4.6,
-    responseRate: 0.92,
+    averageRating: 4.67,
+    responseRate: 0.67,
   );
 
   static final products = [
@@ -108,6 +108,8 @@ abstract final class VendorMockConfig {
       imageUrls: const [],
       categoryId: 'chairs',
       createdAt: DateTime(2025, 12, 10),
+      warrantyNote: '2-year limited warranty',
+      shippingNote: 'Ships in 5–7 business days',
     ),
     VendorProduct(
       id: 'p2',
@@ -539,8 +541,7 @@ abstract final class VendorMockConfig {
     _approvedProfiles[profile.id] = profile;
   }
 
-  static bool isKnownVendor(String vendorId) =>
-      vendorId == demoVendorId || _approvedProfiles.containsKey(vendorId);
+  static bool isKnownVendor(String vendorId) => vendorId == demoVendorId;
 
   static VendorProfile? profileFor(String vendorId) {
     final approved = _approvedProfiles[vendorId];

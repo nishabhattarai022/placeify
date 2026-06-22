@@ -267,79 +267,44 @@ class _PaymentSection extends ConsumerWidget {
               ),
             ),
             data: (updates) {
-              final canEdit = updates.canVendorEditPayment;
-              final currentStatus = updates.vendorPaymentStatus;
+              if (updates.isEmpty) {
+                return const Text(
+                  'No payment updates recorded',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textMuted,
+                  ),
+                );
+              }
 
               return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (updates.isNotEmpty) ...[
-                    Row(
-                      children: [
-                        const Text(
-                          'Current status',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textMuted,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        PaymentStatusChip(status: currentStatus),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    for (var i = 0; i < updates.length; i++) ...[
-                      if (i > 0) const SizedBox(height: 10),
-                      _PaymentAuditRow(update: updates[i]),
-                    ],
-                  ] else
-                    const Text(
-                      'No payment updates recorded yet.',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                  if (canEdit) ...[
-                    const SizedBox(height: 16),
-                    OutlinedButton(
-                      onPressed: () async {
-                        HapticService.light();
-                        await PaymentUpdateSheet.show(
-                          context,
-                          ref,
-                          orderId: order.id,
-                          orderLabel: 'Order #${order.orderNumber}',
-                          initialStatus: currentStatus == PaymentStatus.pending
-                              ? PaymentStatus.paid
-                              : currentStatus,
-                        );
-                        ref.invalidate(orderPaymentAuditTrailProvider(order.id));
-                      },
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.vendorForest,
-                        side: const BorderSide(color: AppColors.vendorForest),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: Text(
-                        updates.isEmpty ? 'Update payment' : 'Edit payment',
-                      ),
-                    ),
-                  ] else if (currentStatus.isFullyPaid) ...[
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Payment received. This order can no longer be edited.',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textSecondary,
-                        height: 1.35,
-                      ),
-                    ),
+                  for (var i = 0; i < updates.length; i++) ...[
+                    if (i > 0) const SizedBox(height: 10),
+                    _PaymentAuditRow(update: updates[i]),
                   ],
                 ],
               );
             },
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton(
+            onPressed: () async {
+              HapticService.light();
+              await PaymentUpdateSheet.show(
+                context,
+                ref,
+                orderId: order.id,
+                orderLabel: 'Order #${order.orderNumber}',
+              );
+              ref.invalidate(orderPaymentAuditTrailProvider(order.id));
+            },
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.vendorForest,
+              side: const BorderSide(color: AppColors.vendorForest),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+            child: const Text('Update payment'),
           ),
         ],
       ),

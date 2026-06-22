@@ -3440,6 +3440,7 @@ class _VendorEndpoint {
     String? warranty,
     String? model3dUrl,
     String? thumbnailUrl,
+    List<String>? viewImageUrls,
   }) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -3467,6 +3468,7 @@ class _VendorEndpoint {
             'warranty': warranty,
             'model3dUrl': model3dUrl,
             'thumbnailUrl': thumbnailUrl,
+            'viewImageUrls': viewImageUrls,
           }),
           serializationManager: _serializationManager,
         );
@@ -3558,8 +3560,9 @@ class _VendorEndpoint {
   _i3.Future<String> uploadProductImage(
     _i1.TestSessionBuilder sessionBuilder,
     _i52.ByteData fileData,
-    String fileName,
-  ) async {
+    String fileName, {
+    required bool removeBackground,
+  }) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
           (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
@@ -3574,6 +3577,7 @@ class _VendorEndpoint {
           parameters: _i1.testObjectToJson({
             'fileData': fileData,
             'fileName': fileName,
+            'removeBackground': removeBackground,
           }),
           serializationManager: _serializationManager,
         );

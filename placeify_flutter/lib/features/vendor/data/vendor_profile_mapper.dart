@@ -16,14 +16,10 @@ abstract final class VendorProfileMapper {
       businessName: detail.businessName,
       email: detail.email,
       phone: detail.phone,
-      address: detail.address,
-      city: detail.city,
-      country: detail.country,
+      address: _formatAddress(detail.address, detail.city, detail.country),
       logoUrl: _resolveMediaUrl(detail.logoUrl),
       bio: detail.bio,
-      bannerUrl: _resolveMediaUrl(detail.bannerUrl),
-      coverUrl: _resolveMediaUrl(detail.coverUrl),
-      isOpen: detail.isOpen,
+      bannerUrl: _resolveMediaUrl(detail.coverUrl ?? detail.bannerUrl),
       tags: VendorShopCategoryCodec.decode(detail.category),
       schedule: _decodeSchedule(detail.operatingHours),
       socialLinks: VendorSocialLinks(
@@ -33,6 +29,14 @@ abstract final class VendorProfileMapper {
       ),
       createdAt: detail.createdAt,
     );
+  }
+
+  static String _formatAddress(String address, String? city, String? country) {
+    return [
+      address.trim(),
+      if (city != null && city.trim().isNotEmpty) city.trim(),
+      if (country != null && country.trim().isNotEmpty) country.trim(),
+    ].join(', ');
   }
 
   static api.VendorProfileUpdateInput toUpdateInput(VendorProfile profile) {
@@ -45,14 +49,10 @@ abstract final class VendorProfileMapper {
       email: profile.email.trim().isEmpty ? null : profile.email.trim(),
       phone: profile.phone,
       address: profile.address,
-      city: profile.city,
-      country: profile.country,
       category: category,
       bio: profile.bio,
       logoUrl: _isRemoteUrl(profile.logoUrl) ? profile.logoUrl : null,
       bannerUrl: _isRemoteUrl(profile.bannerUrl) ? profile.bannerUrl : null,
-      coverUrl: _isRemoteUrl(profile.coverUrl) ? profile.coverUrl : null,
-      isOpen: profile.isOpen,
       instagramHandle: profile.socialLinks.instagram,
       facebookHandle: profile.socialLinks.facebook,
       operatingHours: _encodeSchedule(profile.schedule, profile.socialLinks.website),

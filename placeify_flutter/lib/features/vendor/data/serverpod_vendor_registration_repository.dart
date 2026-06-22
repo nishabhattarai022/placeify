@@ -1,7 +1,8 @@
 import 'package:placeify_client/placeify_client.dart' hide Product, VendorBankDetails;
 import 'package:placeify_flutter/core/config/placeify_server_client.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
-import 'package:placeify_flutter/features/vendor/domain/constants/vendor_registration_field_keys.dart';
+import 'package:placeify_flutter/features/vendor/domain/constants/vendor_registration_field_keys.dart'
+    show isUploadedVendorDocument;
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_registration.dart';
 import 'package:placeify_flutter/features/vendor/domain/repositories/vendor_registration_repository.dart';
 import 'package:placeify_flutter/features/vendor/data/vendor_shop_category_codec.dart';

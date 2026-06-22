@@ -89,11 +89,10 @@ class MockVendorProductRepository implements VendorProductRepository {
     String vendorId,
     String productId,
   ) async {
-    await Future<void>.delayed(const Duration(milliseconds: 400));
-    final product = VendorMockConfig.productById(productId);
+    final product = await getProductById(productId);
     if (product == null) {
       throw VendorProductActionException('Product not found.');
     }
-    return product.copyWith(hasArView: true);
+    return product;
   }
 }

@@ -18,11 +18,3 @@ abstract class PaymentUpdate with _$PaymentUpdate {
   factory PaymentUpdate.fromJson(Map<String, dynamic> json) =>
       _$PaymentUpdateFromJson(json);
 }
-
-extension PaymentUpdatesX on List<PaymentUpdate> {
-  /// Latest vendor payment status for an order (server returns newest first).
-  PaymentStatus get vendorPaymentStatus =>
-      isEmpty ? PaymentStatus.pending : first.status;
-
-  bool get canVendorEditPayment => !vendorPaymentStatus.isFullyPaid;
-}

@@ -1,78 +1,40 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/services/haptic_service.dart';
 import '../../data/discounted_products.dart';
-import '../../domain/models/product.dart';
-import '../providers/catalog_provider.dart';
 
 /// Auto-cycling premium promo card. One card on screen at all times — content
 /// (background gradient, watermark, copy, image, price tag) swaps inside it.
-class DiscountedProductsSection extends ConsumerStatefulWidget {
+class DiscountedProductsSection extends StatefulWidget {
   const DiscountedProductsSection({super.key});
 
   @override
-  ConsumerState<DiscountedProductsSection> createState() =>
+  State<DiscountedProductsSection> createState() =>
       _DiscountedProductsSectionState();
 }
 
-class _DiscountedProductsSectionState
-    extends ConsumerState<DiscountedProductsSection> {
+class _DiscountedProductsSectionState extends State<DiscountedProductsSection> {
   static const _cardHeight = 224.0;
   static const _cardRadius = 26.0;
   static const _headerSpacing = 14.0;
   static const _autoplayInterval = Duration(seconds: 4);
   static const _swapDuration = Duration(milliseconds: 520);
-  static const _liveCardColors = [
-    Color(0xFFB5A99A),
-    Color(0xFFA8B5A0),
-    Color(0xFFB0AABF),
-    Color(0xFFBFAE98),
-    Color(0xFFC4B49E),
-    Color(0xFFA8B8A0),
-  ];
 
   int _currentIndex = 0;
   Timer? _timer;
   bool _ctaPressed = false;
-
-  List<DiscountedProduct> get _promoItems {
-    final live = ref.watch(catalogDiscountedProductsProvider);
-    if (live.isEmpty) return discountedProducts;
-    return [
-      for (var i = 0; i < live.length; i++) _fromLiveProduct(live[i], i),
-    ];
-  }
-
-  DiscountedProduct _fromLiveProduct(Product product, int index) {
-    final original = product.originalPrice ?? product.price;
-    final discount = product.discountPercent.round();
-    return DiscountedProduct(
-      id: product.id,
-      name: product.name,
-      imagePath: product.imageUrl,
-      originalPrice: original,
-      discountedPrice: product.price,
-      discountPercent: discount > 0 ? discount : 10,
-      tagline: product.brand,
-      cardColor: _liveCardColors[index % _liveCardColors.length],
-    );
-  }
 
   @override
   void initState() {
     super.initState();
     _timer = Timer.periodic(_autoplayInterval, (_) {
       if (!mounted) return;
-      final count = _promoItems.length;
-      if (count == 0) return;
       setState(() {
-        _currentIndex = (_currentIndex + 1) % count;
+        _currentIndex = (_currentIndex + 1) % discountedProducts.length;
       });
     });
   }
@@ -92,26 +54,19 @@ class _DiscountedProductsSectionState
     if (i == _currentIndex) return;
     HapticService.selection();
     setState(() => _currentIndex = i);
+    // Reset autoplay so the user's manual selection has its full 4s window.
     _timer?.cancel();
-    final count = _promoItems.length;
-    if (count == 0) return;
     _timer = Timer.periodic(_autoplayInterval, (_) {
       if (!mounted) return;
       setState(() {
-        _currentIndex = (_currentIndex + 1) % count;
+        _currentIndex = (_currentIndex + 1) % discountedProducts.length;
       });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final promoItems = _promoItems;
-    if (promoItems.isEmpty) return const SizedBox.shrink();
-    if (_currentIndex >= promoItems.length) {
-      _currentIndex = 0;
-    }
-
-    final product = promoItems[_currentIndex];
+    final product = discountedProducts[_currentIndex];
     final darkAccent = Color.lerp(product.cardColor, Colors.black, 0.22)!;
     final cleanTagline = product.tagline.replaceFirst('— ', '');
 
@@ -132,7 +87,7 @@ class _DiscountedProductsSectionState
               ),
             ),
             Text(
-              '${_currentIndex + 1} / ${promoItems.length}',
+              '${_currentIndex + 1} / ${discountedProducts.length}',
               style: GoogleFonts.dmSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
@@ -199,7 +154,7 @@ class _DiscountedProductsSectionState
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              for (var i = 0; i < promoItems.length; i++) ...[
+              for (var i = 0; i < discountedProducts.length; i++) ...[
                 if (i > 0) const SizedBox(width: 6),
                 GestureDetector(
                   behavior: HitTestBehavior.opaque,
@@ -600,26 +555,16 @@ class _ProductFrame extends StatelessWidget {
           },
           child: SizedBox.expand(
             key: ValueKey<String>('frame_${product.imagePath}'),
-            child: product.imagePath.startsWith('http')
-                ? CachedNetworkImage(
-                    imageUrl: product.imagePath,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                    errorWidget: (_, __, ___) => const ColoredBox(
-                      color: Color(0xFFEFE9DC),
-                    ),
-                  )
-                : Image.asset(
-                    product.imagePath,
-                    fit: BoxFit.cover,
-                    alignment: Alignment.center,
-                    width: double.infinity,
-                    height: double.infinity,
-                    errorBuilder: (_, __, ___) => const ColoredBox(
-                      color: Color(0xFFEFE9DC),
-                    ),
-                  ),
+            child: Image.asset(
+              product.imagePath,
+              fit: BoxFit.cover,
+              alignment: Alignment.center,
+              width: double.infinity,
+              height: double.infinity,
+              errorBuilder: (_, __, ___) => const ColoredBox(
+                color: Color(0xFFEFE9DC),
+              ),
+            ),
           ),
         ),
       ),

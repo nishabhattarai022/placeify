@@ -14,7 +14,7 @@ class AdminAuditLog extends _$AdminAuditLog {
   }
 
   Future<List<AdminAuditLogEntry>> _load() async {
-    final repo = ref.watch(adminRepositoryProvider);
+    final repo = await ref.watch(adminRepositoryProvider.future);
     return repo.getAuditLog();
   }
 }

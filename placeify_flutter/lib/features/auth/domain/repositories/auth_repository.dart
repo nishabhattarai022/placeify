@@ -22,17 +22,15 @@ abstract interface class AuthRepository {
 
   Future<void> signOut();
 
+  Future<AppUser> becomeVendor();
+
+  Future<AppUser> becomeConsumer();
+
   /// Updates vendor onboarding status for the active session user.
   Future<void> updateVendorStatus({
     required VendorStatus status,
     String? vendorId,
   });
-
-  /// Switches the active session to vendor mode (Serverpod role).
-  Future<AppUser> becomeVendor();
-
-  /// Switches the active session to consumer mode (Serverpod role).
-  Future<AppUser> becomeConsumer();
 
   /// Updates vendor onboarding status for any user (admin cross-user writes).
   Future<void> updateVendorStatusForUser({

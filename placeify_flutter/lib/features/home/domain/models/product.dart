@@ -18,13 +18,6 @@ abstract class Product with _$Product {
     required String categoryId,
     required ProductDimensions dimensions,
     String? vendorId,
-    @Default('') String description,
-    @Default('') String materials,
-    String? careInstructions,
-    String? warranty,
-    String? offerLabel,
-    double? weightKg,
-    @Default([]) List<String> galleryImageUrls,
   }) = _Product;
 
   const Product._();

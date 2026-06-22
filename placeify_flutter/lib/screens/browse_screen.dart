@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,7 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/services/haptic_service.dart';
 import '../core/theme/app_fonts.dart';
 import '../data/furniture_categories.dart';
-import '../features/home/presentation/providers/catalog_provider.dart';
 
 FurnitureCategory _cat(String id) {
   return furnitureCategories.firstWhere((c) => c.id == id);
@@ -19,23 +17,15 @@ const double _kBentoMediumCard = 150;
 const double _kBentoSlimCard = 110;
 const double _kBentoTallCard = _kBentoShortCard * 2 + 12;
 
-class BrowseScreen extends ConsumerStatefulWidget {
+class BrowseScreen extends StatefulWidget {
   const BrowseScreen({super.key});
 
   @override
-  ConsumerState<BrowseScreen> createState() => _BrowseScreenState();
+  State<BrowseScreen> createState() => _BrowseScreenState();
 }
 
-class _BrowseScreenState extends ConsumerState<BrowseScreen> {
+class _BrowseScreenState extends State<BrowseScreen> {
   String _query = '';
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(catalogIndexProvider.notifier).refresh(silent: true);
-    });
-  }
 
   List<FurnitureCategory> get _filtered {
     final q = _query.trim().toLowerCase();
@@ -55,9 +45,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
     final isSearching = _query.trim().isNotEmpty;
 
     final categoryCount = furnitureCategories.length;
-    final liveItemCount = ref.watch(catalogProductCountProvider);
-    final itemCount =
-        liveItemCount > 0 ? liveItemCount : furnitureCatalogItemCount;
+    final itemCount = furnitureCatalogItemCount;
 
     final topInset = MediaQuery.paddingOf(context).top;
 

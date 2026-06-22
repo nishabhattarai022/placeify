@@ -7,6 +7,7 @@ import '../../../core/config/placeify_server_client.dart';
 import '../../cart/data/product_id_codec.dart';
 import '../domain/models/vendor_product.dart';
 import '../domain/repositories/vendor_product_repository.dart';
+import 'mock_vendor_product_repository.dart' show VendorProductActionException;
 import 'vendor_product_mapper.dart';
 
 /// Serverpod-backed vendor product catalog (create/list via [client.vendor]).
@@ -51,14 +52,9 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
   ) async {
     await _ensureShopReady();
 
-    final imagePath = _firstUploadableImagePath(product.imageUrls);
-    if (imagePath == null) {
+    final imagePaths = _uploadableImagePaths(product.imageUrls);
+    if (imagePaths.isEmpty) {
       throw VendorProductActionException('Add at least one product photo.');
-    }
-
-    final file = File(imagePath);
-    if (!await file.exists()) {
-      throw VendorProductActionException('Photo file not found. Pick it again.');
     }
 
     if (product.widthCm <= 0 ||
@@ -78,33 +74,48 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
         ? product.description.trim()
         : product.name.trim();
 
-    final bytes = await file.readAsBytes();
-    final imageData = ByteData.sublistView(bytes);
-    final input = VendorProductUploadInput(
-      name: product.name.trim(),
-      description: description,
-      price: product.price,
-      materials: materials,
-      widthCm: product.widthCm,
-      depthCm: product.depthCm,
-      heightCm: product.heightCm,
-      careInstructions: 'See product description for care details.',
-      categoryId: await _resolveCategoryId(product.categoryId),
-      weightKg: product.weightKg > 0 ? product.weightKg : null,
-      assemblyNote: product.brand.trim().isNotEmpty ? product.brand.trim() : null,
-      warranty: product.offerLabel.trim().isNotEmpty
-          ? product.offerLabel.trim()
-          : null,
-      // 3D models are built via regenerateProductModel3d (Build 3D), not on create.
-      generateModel3d: false,
-    );
-
     try {
-      final created = await client.vendor.uploadProduct(
-        input,
-        imageData,
-        _fileNameFromPath(imagePath),
-      );
+      final Product created;
+      if (imagePaths.length >= 4) {
+        created = await _createProductWithMultiviewPhotos(
+          product: product,
+          imagePaths: imagePaths.take(4).toList(),
+          description: description,
+          materials: materials,
+        );
+      } else {
+        final file = File(imagePaths.first);
+        if (!await file.exists()) {
+          throw VendorProductActionException(
+            'Photo file not found. Pick it again.',
+          );
+        }
+        final imageData = ByteData.sublistView(await file.readAsBytes());
+        final input = VendorProductUploadInput(
+          name: product.name.trim(),
+          description: description,
+          price: product.price,
+          materials: materials,
+          widthCm: product.widthCm,
+          depthCm: product.depthCm,
+          heightCm: product.heightCm,
+          careInstructions: 'See product description for care details.',
+          categoryId: await _resolveCategoryId(product.categoryId),
+          weightKg: product.weightKg > 0 ? product.weightKg : null,
+          assemblyNote:
+              product.brand.trim().isNotEmpty ? product.brand.trim() : null,
+          warranty: product.offerLabel.trim().isNotEmpty
+              ? product.offerLabel.trim()
+              : null,
+          generateModel3d: false,
+        );
+        created = await client.vendor.uploadProduct(
+          input,
+          imageData,
+          _fileNameFromPath(imagePaths.first),
+        );
+      }
+
       return _mapUploadedProduct(
         created,
         vendorId: vendorId,
@@ -113,6 +124,55 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     } catch (error) {
       throw VendorProductActionException(_mapError(error));
     }
+  }
+
+  Future<Product> _createProductWithMultiviewPhotos({
+    required VendorProduct product,
+    required List<String> imagePaths,
+    required String description,
+    required String materials,
+  }) async {
+    final frontFile = File(imagePaths[0]);
+    if (!await frontFile.exists()) {
+      throw VendorProductActionException('Front photo file not found.');
+    }
+
+    final thumbnailUrl = await client.vendor.uploadProductImage(
+      ByteData.sublistView(await frontFile.readAsBytes()),
+      _fileNameFromPath(imagePaths[0]),
+      removeBackground: true,
+    );
+
+    final viewImageUrls = <String>[];
+    for (final path in imagePaths.skip(1)) {
+      final file = File(path);
+      if (!await file.exists()) continue;
+      viewImageUrls.add(
+        await client.vendor.uploadProductImage(
+          ByteData.sublistView(await file.readAsBytes()),
+          _fileNameFromPath(path),
+          removeBackground: false,
+        ),
+      );
+    }
+
+    return client.vendor.createProduct(
+      product.name.trim(),
+      description,
+      product.price,
+      categoryId: await _resolveCategoryId(product.categoryId),
+      materials: materials,
+      widthCm: product.widthCm,
+      depthCm: product.depthCm,
+      heightCm: product.heightCm,
+      weightKg: product.weightKg > 0 ? product.weightKg : null,
+      assemblyNote: product.brand.trim().isNotEmpty ? product.brand.trim() : null,
+      careInstructions: 'See product description for care details.',
+      warranty:
+          product.offerLabel.trim().isNotEmpty ? product.offerLabel.trim() : null,
+      thumbnailUrl: thumbnailUrl,
+      viewImageUrls: viewImageUrls.isEmpty ? null : viewImageUrls,
+    );
   }
 
   @override
@@ -307,6 +367,16 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
       return null;
     }
     return null;
+  }
+
+  List<String> _uploadableImagePaths(List<String> imageUrls) {
+    final paths = <String>[];
+    for (final source in imageUrls) {
+      final normalized = _normalizeLocalImagePath(source);
+      if (normalized == null) continue;
+      paths.add(normalized);
+    }
+    return paths;
   }
 
   String? _firstUploadableImagePath(List<String> imageUrls) {

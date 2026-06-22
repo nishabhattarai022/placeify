@@ -13,7 +13,6 @@ abstract final class ProfileMenuConfig {
   static const double avatarSize = 100;
   static const double headerOverlap = 0;
 
-  static const int ordersCount = 12;
   static const int wishlistCount = 8;
   static const int arTriesCount = 24;
   static const int refundsCount = 2;
@@ -58,15 +57,6 @@ class ProfileMenuItemData {
 
 abstract final class ProfileMenuItems {
   static const List<ProfileMenuItemData> accountOverview = [
-    ProfileMenuItemData(
-      title: 'My Orders',
-      subtitle: '12 orders · 1 in transit',
-      icon: Icons.inventory_2_outlined,
-      iconColor: AppColors.sage,
-      backgroundColor: AppColors.sageBg,
-      route: ProfileMenuRoute.orders,
-      badge: '1',
-    ),
     ProfileMenuItemData(
       title: 'Wishlist',
       subtitle: '8 saved items',

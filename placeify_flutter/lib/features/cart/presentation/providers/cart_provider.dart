@@ -5,6 +5,7 @@ import '../../../../core/config/placeify_server_client.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../home/presentation/providers/catalog_provider.dart';
 import '../../../home/presentation/providers/category_provider.dart';
+import '../../../orders/presentation/providers/orders_provider.dart';
 import '../../../profile/presentation/providers/profile_dashboard_provider.dart';
 import '../../data/cart_display_config.dart';
 import '../../data/serverpod_cart_repository.dart';
@@ -140,6 +141,7 @@ class Cart extends _$Cart {
       state = const [];
       ref.invalidate(profileOrdersProvider);
       ref.invalidate(profileDashboardProvider);
+      ref.invalidate(ordersProvider);
       return 'Order #${result.order.id} placed successfully';
     } catch (_) {
       return 'Checkout failed. Add items and try again.';

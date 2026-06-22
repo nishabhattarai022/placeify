@@ -164,6 +164,7 @@ class VendorEndpoint extends Endpoint {
     String? warranty,
     String? model3dUrl,
     String? thumbnailUrl,
+    List<String>? viewImageUrls,
   }) {
     return _service.createProduct(
       session,
@@ -181,6 +182,7 @@ class VendorEndpoint extends Endpoint {
       warranty: warranty,
       model3dUrl: model3dUrl,
       thumbnailUrl: thumbnailUrl,
+      viewImageUrls: viewImageUrls,
     );
   }
 
@@ -210,9 +212,15 @@ class VendorEndpoint extends Endpoint {
   Future<String> uploadProductImage(
     Session session,
     ByteData fileData,
-    String fileName,
-  ) {
-    return _service.uploadProductImage(session, fileData, fileName);
+    String fileName, {
+    bool removeBackground = false,
+  }) {
+    return _service.uploadProductImage(
+      session,
+      fileData,
+      fileName,
+      removeBackground: removeBackground,
+    );
   }
 
   Future<Product> regenerateProductModel3d(

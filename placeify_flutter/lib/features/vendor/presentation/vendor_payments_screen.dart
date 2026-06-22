@@ -8,11 +8,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import '../../../core/widgets/shimmer_loader.dart';
 import '../../../core/widgets/toast_overlay.dart';
-import 'package:placeify_flutter/features/vendor/domain/enums/payment_status.dart';
-import 'package:placeify_flutter/features/vendor/domain/models/payment_update.dart';
-import 'package:placeify_flutter/features/vendor/domain/models/vendor_order.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_payout.dart';
-import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_orders_provider.dart';
 import 'providers/vendor_payments_provider.dart';
 import 'widgets/payment_status_chip.dart';
 import 'widgets/payment_update_sheet.dart';
@@ -91,9 +87,14 @@ class VendorPaymentsScreen extends ConsumerWidget {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: OutlinedButton.icon(
-                        onPressed: () => _openOrderPaymentPicker(context, ref),
+                        onPressed: () => PaymentUpdateSheet.show(
+                          context,
+                          ref,
+                          orderId: 'vo2',
+                          orderLabel: 'Order #4820',
+                        ),
                         icon: const Icon(Icons.edit_outlined, size: 18),
-                        label: const Text('Update order payment'),
+                        label: const Text('Manual payment update'),
                       ),
                     );
                   }
@@ -107,113 +108,6 @@ class VendorPaymentsScreen extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  Future<void> _openOrderPaymentPicker(BuildContext context, WidgetRef ref) async {
-    final orders = ref.read(vendorOrdersProvider).value;
-    if (orders == null) {
-      PlaceifyToast.show(context, 'Orders are still loading.');
-      return;
-    }
-    if (orders.isEmpty) {
-      PlaceifyToast.show(context, 'No orders yet. Payment updates appear after checkout.');
-      return;
-    }
-
-    final payableOrders = <VendorOrder>[];
-    for (final order in orders) {
-      final updates =
-          await ref.read(orderPaymentAuditTrailProvider(order.id).future);
-      if (updates.canVendorEditPayment) {
-        payableOrders.add(order);
-      }
-    }
-
-    if (!context.mounted) return;
-
-    if (payableOrders.isEmpty) {
-      PlaceifyToast.show(
-        context,
-        'All orders are fully paid and can no longer be edited.',
-      );
-      return;
-    }
-
-    final selected = await showModalBottomSheet<VendorOrder>(
-      context: context,
-      backgroundColor: AppColors.cream,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(24, 20, 24, 8),
-                child: Text(
-                  'Choose an order',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.espresso,
-                  ),
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(24, 0, 24, 12),
-                child: Text(
-                  'Select the order whose payment you want to update.',
-                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                ),
-              ),
-              Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: payableOrders.length,
-                  itemBuilder: (context, index) {
-                    final order = payableOrders[index];
-                    return ListTile(
-                      title: Text('Order #${order.orderNumber}'),
-                      subtitle: Text(order.productName),
-                      trailing: Text(Formatters.currencyFull(order.totalAmount)),
-                      onTap: () => Navigator.pop(sheetContext, order),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-
-    if (!context.mounted || selected == null) return;
-
-    final updates =
-        await ref.read(orderPaymentAuditTrailProvider(selected.id).future);
-    if (!context.mounted) return;
-
-    if (!updates.canVendorEditPayment) {
-      PlaceifyToast.show(
-        context,
-        'Payment is already marked as received and cannot be changed.',
-      );
-      return;
-    }
-
-    await PaymentUpdateSheet.show(
-      context,
-      ref,
-      orderId: selected.id,
-      orderLabel: 'Order #${selected.orderNumber}',
-      initialStatus: updates.vendorPaymentStatus == PaymentStatus.pending
-          ? PaymentStatus.paid
-          : updates.vendorPaymentStatus,
-    );
-    ref.invalidate(orderPaymentAuditTrailProvider(selected.id));
   }
 
   Future<void> _requestPayout(BuildContext context, WidgetRef ref) async {

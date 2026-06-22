@@ -14,10 +14,10 @@ import 'mock_vendor_repository.dart';
 /// Combines live Serverpod APIs with mock fallbacks for features not yet wired.
 class HybridVendorRepository implements VendorRepository {
   HybridVendorRepository({
-    MockVendorRepository? mockRepository,
+    required MockVendorRepository mockRepository,
     ServerpodVendorOrderRepository? orderRepository,
     ServerpodVendorProfileRepository? profileRepository,
-  })  : _mock = mockRepository ?? MockVendorRepository(),
+  })  : _mock = mockRepository,
         _orders = orderRepository ?? const ServerpodVendorOrderRepository(),
         _profile = profileRepository ?? const ServerpodVendorProfileRepository();
 

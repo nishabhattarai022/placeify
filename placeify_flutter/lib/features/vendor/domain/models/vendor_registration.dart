@@ -63,7 +63,6 @@ abstract class VendorCategoryInfo with _$VendorCategoryInfo {
     );
   }
 
-  @override
   Map<String, dynamic> toJson() => {
         'categories': categories,
         'description': description,

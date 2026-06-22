@@ -14,7 +14,7 @@ part 'admin_vendors_provider.g.dart';
 class AdminVendorsList extends _$AdminVendorsList {
   @override
   Future<List<VendorApplication>> build(AdminVendorListFilter filter) async {
-    final repo = ref.watch(vendorApplicationRepositoryProvider);
+    final repo = await ref.watch(vendorApplicationRepositoryProvider.future);
     final applications = await repo.listApplications();
 
     return applications.where((application) {
@@ -36,7 +36,7 @@ class AdminVendorsList extends _$AdminVendorsList {
   Future<void> refresh() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      final repo = ref.read(vendorApplicationRepositoryProvider);
+      final repo = await ref.read(vendorApplicationRepositoryProvider.future);
       final applications = await repo.listApplications();
 
       return applications.where((application) {
@@ -67,7 +67,7 @@ class AdminVendorActions extends _$AdminVendorActions {
     required String vendorId,
     String? reason,
   }) async {
-    final repo = ref.read(adminRepositoryProvider);
+    final repo = await ref.read(adminRepositoryProvider.future);
     try {
       await repo.suspendVendor(userId, reason: reason);
       _invalidateAfterAction(vendorId);
@@ -81,7 +81,7 @@ class AdminVendorActions extends _$AdminVendorActions {
     required String userId,
     required String vendorId,
   }) async {
-    final repo = ref.read(adminRepositoryProvider);
+    final repo = await ref.read(adminRepositoryProvider.future);
     try {
       await repo.reinstateVendor(userId);
       _invalidateAfterAction(vendorId);
