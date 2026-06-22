@@ -122,19 +122,12 @@ class VendorProductGridTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    product.isLowStock
-                        ? 'Low stock · ${product.stock} left'
-                        : '${product.stock} in stock',
+                    '${product.stock} in stock',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 11,
-                      fontWeight: product.isLowStock
-                          ? FontWeight.w600
-                          : FontWeight.normal,
-                      color: product.isLowStock
-                          ? AppColors.coral
-                          : AppColors.textMuted,
+                      color: AppColors.textMuted,
                     ),
                   ),
                 ],

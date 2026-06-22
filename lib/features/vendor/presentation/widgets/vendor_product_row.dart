@@ -32,9 +32,7 @@ class VendorProductRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iconPath = _iconForCategory(product.categoryId);
-    final stockLabel = product.isLowStock
-        ? 'Low stock · ${product.stock} left'
-        : '${product.stock} in stock';
+    final stockLabel = '${product.stock} in stock';
     final modelStatus = Vendor3dModelStore.statusFor(product);
     final showBuild3d =
         !selectionMode && onBuild3d != null && !modelStatus.isReady;
@@ -115,11 +113,7 @@ class VendorProductRow extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (modelStatus.isReady) ...[
-                      const _ArReadyBadge(),
-                      const SizedBox(width: 6),
-                    ],
-                    if (product.isLowStock) const _LowStockBadge(),
+                    if (modelStatus.isReady) const _ArReadyBadge(),
                   ],
                 ),
                 if (showBuild3d) ...[
@@ -212,29 +206,6 @@ class _Build3dChip extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LowStockBadge extends StatelessWidget {
-  const _LowStockBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-      decoration: BoxDecoration(
-        color: AppColors.coralBg,
-        borderRadius: AppRadii.pill,
-      ),
-      child: const Text(
-        'Low stock',
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: AppColors.coral,
         ),
       ),
     );
