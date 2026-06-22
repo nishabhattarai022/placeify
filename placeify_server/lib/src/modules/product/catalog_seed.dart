@@ -5,28 +5,53 @@ import '../../shared/placeify_exception.dart';
 
 /// Inserts demo categories, vendor, and products when the catalog is empty.
 abstract final class CatalogSeed {
-  static Future<void> ensureDemoCatalog(Session session) async {
-    final count = await Product.db.count(session);
+  static const defaultCategoryNames = [
+    'chairs',
+    'sofas',
+    'tables',
+    'lights',
+    'beds',
+    'decor',
+  ];
+
+  /// Ensures furniture categories exist (needed for vendor product upload).
+  static Future<void> ensureCategories(Session session) async {
+    final count = await Category.db.count(session);
     if (count > 0) return;
 
-    final vendor = await _ensureDemoVendor(session);
-
-    final categories = <String, Category>{};
-    for (final name in [
-      'chairs',
-      'sofas',
-      'tables',
-      'lights',
-      'beds',
-      'decor',
-    ]) {
-      categories[name] = await Category.db.insertRow(
+    for (final name in defaultCategoryNames) {
+      await Category.db.insertRow(
         session,
         Category(
           name: name,
           description: name[0].toUpperCase() + name.substring(1),
         ),
       );
+    }
+  }
+
+  static Future<void> ensureDemoCatalog(Session session) async {
+    await ensureCategories(session);
+
+    final count = await Product.db.count(session);
+    if (count > 0) return;
+
+    final vendor = await _ensureDemoVendor(session);
+
+    final categories = <String, Category>{};
+    for (final name in defaultCategoryNames) {
+      final existing = await Category.db.findFirstRow(
+        session,
+        where: (row) => row.name.equals(name),
+      );
+      categories[name] = existing ??
+          await Category.db.insertRow(
+            session,
+            Category(
+              name: name,
+              description: name[0].toUpperCase() + name.substring(1),
+            ),
+          );
     }
 
     final seeds = <
