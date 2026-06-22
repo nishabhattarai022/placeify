@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:placeify_flutter/features/shops/domain/models/shop_listing.dart';
+import 'package:placeify_flutter/features/shops/presentation/providers/consumer_shop_provider.dart';
 
-import '../../cart/presentation/providers/cart_provider.dart';
-import '../../home/presentation/providers/category_provider.dart';
 import '../../../core/services/haptic_service.dart';
+import '../../cart/presentation/providers/cart_provider.dart';
+import '../../home/domain/models/product.dart';
+import '../../home/presentation/providers/catalog_provider.dart';
 import '../data/product_detail_content.dart';
 import 'product_detail_tokens.dart';
-import 'package:placeify_flutter/features/shops/presentation/providers/consumer_shop_provider.dart';
 import 'widgets/product_detail_cart_bar.dart';
 import 'widgets/product_detail_gallery.dart';
 import 'widgets/product_detail_header.dart';
@@ -82,26 +84,113 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
 
   @override
   Widget build(BuildContext context) {
-    final product = ref.watch(productByIdProvider(widget.productId));
+    final productAsync = ref.watch(productDetailProvider(widget.productId));
 
-    if (product == null) {
-      return Scaffold(
+    return productAsync.when(
+      loading: () => Scaffold(
         backgroundColor: ProductDetailTokens.screenBg,
-        body: Center(
-          child: TextButton(
-            onPressed: () => context.pop(),
-            child: const Text('Product not found'),
-          ),
-        ),
-      );
-    }
+        body: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (_, __) => _ProductNotFound(onBack: () => context.pop()),
+      data: (product) {
+        if (product == null) {
+          return _ProductNotFound(onBack: () => context.pop());
+        }
 
+        return _ProductDetailBody(
+          product: product,
+          selectedImageIndex: _selectedImageIndex,
+          expanded: _expanded,
+          galleryOpacity: _galleryOpacity,
+          gallerySlide: _gallerySlide,
+          infoOpacity: _infoOpacity,
+          infoSlide: _infoSlide,
+          cartBarOpacity: _cartBarOpacity,
+          cartBarSlide: _cartBarSlide,
+          onImageSelected: (index) => setState(() => _selectedImageIndex = index),
+          onToggleExpanded: () {
+            HapticService.light();
+            setState(() => _expanded = !_expanded);
+          },
+          onBack: () {
+            HapticService.light();
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/home');
+            }
+          },
+          onAddToCart: () {
+            ref.read(cartProvider.notifier).addProduct(product.id);
+            HapticService.medium();
+            context.push('/cart');
+          },
+          shopListing: product.vendorId != null
+              ? ref.watch(shopListingProvider(product.vendorId!))
+              : null,
+        );
+      },
+    );
+  }
+}
+
+class _ProductNotFound extends StatelessWidget {
+  const _ProductNotFound({required this.onBack});
+
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: ProductDetailTokens.screenBg,
+      body: Center(
+        child: TextButton(
+          onPressed: onBack,
+          child: const Text('Product not found'),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProductDetailBody extends StatelessWidget {
+  const _ProductDetailBody({
+    required this.product,
+    required this.selectedImageIndex,
+    required this.expanded,
+    required this.galleryOpacity,
+    required this.gallerySlide,
+    required this.infoOpacity,
+    required this.infoSlide,
+    required this.cartBarOpacity,
+    required this.cartBarSlide,
+    required this.onImageSelected,
+    required this.onToggleExpanded,
+    required this.onBack,
+    required this.onAddToCart,
+    required this.shopListing,
+  });
+
+  final Product product;
+  final int selectedImageIndex;
+  final bool expanded;
+  final Animation<double> galleryOpacity;
+  final Animation<Offset> gallerySlide;
+  final Animation<double> infoOpacity;
+  final Animation<Offset> infoSlide;
+  final Animation<double> cartBarOpacity;
+  final Animation<Offset> cartBarSlide;
+  final ValueChanged<int> onImageSelected;
+  final VoidCallback onToggleExpanded;
+  final VoidCallback onBack;
+  final VoidCallback onAddToCart;
+  final AsyncValue<ShopListing?>? shopListing;
+
+  @override
+  Widget build(BuildContext context) {
     final content = ProductDetailContentRepository.forProduct(product);
     final top = MediaQuery.paddingOf(context).top;
     final vendorId = product.vendorId;
-    final shopAsync = vendorId != null
-        ? ref.watch(shopListingProvider(vendorId))
-        : null;
 
     return Scaffold(
       backgroundColor: ProductDetailTokens.screenBg,
@@ -119,36 +208,36 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                       8,
                 ),
                 SlideTransition(
-                  position: _gallerySlide,
+                  position: gallerySlide,
                   child: FadeTransition(
-                    opacity: _galleryOpacity,
+                    opacity: galleryOpacity,
                     child: ProductDetailGallery(
                       images: content.galleryImages,
-                      selectedIndex: _selectedImageIndex,
-                      onSelected: (i) =>
-                          setState(() => _selectedImageIndex = i),
+                      selectedIndex: selectedImageIndex,
+                      onSelected: onImageSelected,
                     ),
                   ),
                 ),
-                const SizedBox(
-                  height: ProductDetailTokens.infoCardTopGap,
-                ),
+                const SizedBox(height: ProductDetailTokens.infoCardTopGap),
                 if (vendorId != null)
-                  shopAsync?.maybeWhen(
-                    data: (shop) {
-                      if (shop == null) return const SizedBox.shrink();
-                      return ProductDetailSoldByRow(
-                        vendorId: vendorId,
-                        businessName: shop.businessName,
-                      );
-                    },
-                    orElse: () => const SizedBox.shrink(),
+                  shopListing?.maybeWhen(
+                    data: (shop) => ProductDetailSoldByRow(
+                      vendorId: vendorId,
+                      businessName: shop?.businessName ?? product.brand,
+                    ),
+                    orElse: () => ProductDetailSoldByRow(
+                      vendorId: vendorId,
+                      businessName: product.brand,
+                    ),
                   ) ??
-                  const SizedBox.shrink(),
+                  ProductDetailSoldByRow(
+                    vendorId: vendorId,
+                    businessName: product.brand,
+                  ),
                 SlideTransition(
-                  position: _infoSlide,
+                  position: infoSlide,
                   child: FadeTransition(
-                    opacity: _infoOpacity,
+                    opacity: infoOpacity,
                     child: ProductDetailInfoSection(
                       title: content.displayTitle ?? product.name,
                       shortDescription: content.shortDescription,
@@ -158,17 +247,12 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                       specs: content.specs,
                       careInstructions: content.careInstructions,
                       warranty: content.warranty,
-                      expanded: _expanded,
-                      onViewMore: () {
-                        HapticService.light();
-                        setState(() => _expanded = !_expanded);
-                      },
+                      expanded: expanded,
+                      onViewMore: onToggleExpanded,
                     ),
                   ),
                 ),
-                const SizedBox(
-                  height: ProductDetailTokens.cartBarBottomSpacer,
-                ),
+                const SizedBox(height: ProductDetailTokens.cartBarBottomSpacer),
               ],
             ),
           ),
@@ -178,14 +262,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
             top: top + ProductDetailTokens.headerTopPadding,
             child: ProductDetailHeader(
               product: product,
-              onBack: () {
-                HapticService.light();
-                if (context.canPop()) {
-                  context.pop();
-                } else {
-                  context.go('/home');
-                }
-              },
+              onBack: onBack,
             ),
           ),
           Positioned(
@@ -193,20 +270,14 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
             right: 0,
             bottom: 0,
             child: SlideTransition(
-              position: _cartBarSlide,
+              position: cartBarSlide,
               child: FadeTransition(
-                opacity: _cartBarOpacity,
+                opacity: cartBarOpacity,
                 child: ProductDetailCartBar(
                   onTryInMyRoom: () {
                     context.push('/profile/augmented-reality');
                   },
-                  onAddToCart: () {
-                    ref
-                        .read(cartProvider.notifier)
-                        .addProduct(product.id);
-                    HapticService.medium();
-                    context.push('/cart');
-                  },
+                  onAddToCart: onAddToCart,
                 ),
               ),
             ),

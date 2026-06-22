@@ -7,6 +7,7 @@ import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import '../../../core/config/placeify_server_client.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../core/widgets/toast_overlay.dart';
+import '../../home/presentation/providers/catalog_provider.dart';
 import '../../home/presentation/providers/category_provider.dart';
 import '../../profile/presentation/providers/profile_dashboard_provider.dart';
 import 'cart_tokens.dart';
@@ -102,6 +103,9 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                               productByIdProvider(item.productId),
                             );
                             if (product == null) {
+                              ref
+                                  .read(catalogIndexProvider.notifier)
+                                  .ensureProducts([item.productId]);
                               return const SizedBox.shrink();
                             }
                             final cart = ref.read(cartProvider.notifier);
