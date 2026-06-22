@@ -55,7 +55,7 @@ class _HomeRecommendProductCardState
     }
     PlaceifyToast.show(
       context,
-      '${widget.product.displayName} added to cart',
+      '${widget.product.displayName} added to cart — checkout to place the order',
     );
   }
 

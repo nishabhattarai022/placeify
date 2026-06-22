@@ -37,10 +37,16 @@ class ServerpodCartRepository {
     await client.cart.removeFromCart(id);
   }
 
-  Future<CheckoutResult> checkout(String shippingAddress) async {
+  Future<CheckoutResult> checkout(
+    String shippingAddress, {
+    PaymentMethod paymentMethod = PaymentMethod.mockOnline,
+  }) async {
     _requireAuthenticated();
     return client.checkout.checkout(
-      CheckoutRequest(shippingAddress: shippingAddress),
+      CheckoutRequest(
+        shippingAddress: shippingAddress,
+        paymentMethod: paymentMethod,
+      ),
     );
   }
 

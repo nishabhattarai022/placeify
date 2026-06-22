@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:placeify_client/placeify_client.dart' hide Order;
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 import '../../../../core/config/placeify_server_client.dart';
@@ -161,7 +162,17 @@ class Cart extends _$Cart {
           ? savedAddress
           : 'Kathmandu, Nepal';
 
-      final result = await _cartRepository.checkout(shippingAddress);
+      final result = await _cartRepository.checkout(
+        shippingAddress,
+        paymentMethod: PaymentMethod.mockOnline,
+      );
+
+      // Dev/mock flow: complete online payment immediately so vendor dashboard
+      // shows a confirmed order and the consumer UI can display paid status.
+      if (result.order.id != null) {
+        await client.user.completePayment(result.order.id!);
+      }
+
       state = const [];
       return 'Order #${result.order.id} placed successfully';
     } catch (error) {
