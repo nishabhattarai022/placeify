@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:placeify_client/placeify_client.dart' show OrderPaymentStatus;
 import 'package:placeify_flutter/features/profile/presentation/widgets/shared/profile_submit_button.dart';
 
 import '../../../../core/constants/app_colors.dart';
@@ -16,6 +17,7 @@ abstract final class PaymentUpdateSheet {
     WidgetRef ref, {
     required String orderId,
     required String orderLabel,
+    required OrderPaymentStatus orderPaymentStatus,
   }) {
     HapticService.light();
     return PlaceifyBottomSheet.show<void>(
@@ -27,6 +29,7 @@ abstract final class PaymentUpdateSheet {
         ref: ref,
         orderId: orderId,
         orderLabel: orderLabel,
+        orderPaymentStatus: orderPaymentStatus,
       ),
     );
   }
@@ -39,6 +42,7 @@ class _PaymentUpdateSheetBody extends StatefulWidget {
     required this.ref,
     required this.orderId,
     required this.orderLabel,
+    required this.orderPaymentStatus,
     super.key,
   });
 
@@ -47,6 +51,7 @@ class _PaymentUpdateSheetBody extends StatefulWidget {
   final WidgetRef ref;
   final String orderId;
   final String orderLabel;
+  final OrderPaymentStatus orderPaymentStatus;
 
   @override
   State<_PaymentUpdateSheetBody> createState() =>
@@ -54,7 +59,6 @@ class _PaymentUpdateSheetBody extends StatefulWidget {
 }
 
 class _PaymentUpdateSheetBodyState extends State<_PaymentUpdateSheetBody> {
-  PaymentStatus _selected = PaymentStatus.paid;
   late final TextEditingController _noteController;
   late final FocusNode _noteFocusNode;
   bool _isSubmitting = false;
@@ -73,34 +77,20 @@ class _PaymentUpdateSheetBodyState extends State<_PaymentUpdateSheetBody> {
     super.dispose();
   }
 
+  String get _actionLabel => switch (widget.orderPaymentStatus) {
+        OrderPaymentStatus.unpaid => 'Mark payment received',
+        OrderPaymentStatus.paymentReceived => 'Confirm payment',
+        OrderPaymentStatus.paymentConfirmed => 'Payment confirmed',
+      };
+
   Future<void> _submit() async {
-    if (_isSubmitting) return;
+    if (_isSubmitting ||
+        widget.orderPaymentStatus == OrderPaymentStatus.paymentConfirmed) {
+      return;
+    }
 
     final note = _noteController.text.trim();
     FocusScope.of(context).unfocus();
-
-    if (_selected == PaymentStatus.refunded) {
-      final confirmed = await showDialog<bool>(
-        context: widget.sheetContext,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Confirm refund?'),
-          content: const Text(
-            'Refunding marks this payment as reversed. This action is recorded in the audit trail.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Confirm refund'),
-            ),
-          ],
-        ),
-      );
-      if (confirmed != true || !mounted) return;
-    }
 
     setState(() => _isSubmitting = true);
     HapticService.light();
@@ -113,7 +103,7 @@ class _PaymentUpdateSheetBodyState extends State<_PaymentUpdateSheetBody> {
         .read(vendorPaymentsProvider.notifier)
         .updateOrderPayment(
           orderId: widget.orderId,
-          status: _selected,
+          status: PaymentStatus.paid,
           note: note,
         );
 
@@ -133,6 +123,8 @@ class _PaymentUpdateSheetBodyState extends State<_PaymentUpdateSheetBody> {
     final availableHeight =
         mediaQuery.size.height - mediaQuery.viewInsets.bottom;
     final maxSheetHeight = availableHeight * 0.75;
+    final canSubmit =
+        widget.orderPaymentStatus != OrderPaymentStatus.paymentConfirmed;
 
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: maxSheetHeight),
@@ -147,85 +139,43 @@ class _PaymentUpdateSheetBodyState extends State<_PaymentUpdateSheetBody> {
               subtitle: widget.orderLabel,
             ),
             const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _StatusOption(
-                  label: 'Received',
-                  selected: _selected == PaymentStatus.paid,
-                  onTap: _isSubmitting
-                      ? null
-                      : () => setState(() => _selected = PaymentStatus.paid),
-                ),
-                _StatusOption(
-                  label: 'Failed',
-                  selected: _selected == PaymentStatus.failed,
-                  onTap: _isSubmitting
-                      ? null
-                      : () => setState(() => _selected = PaymentStatus.failed),
-                ),
-                _StatusOption(
-                  label: 'Refunded',
-                  selected: _selected == PaymentStatus.refunded,
-                  onTap: _isSubmitting
-                      ? null
-                      : () =>
-                          setState(() => _selected = PaymentStatus.refunded),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _noteController,
-              focusNode: _noteFocusNode,
-              enabled: !_isSubmitting,
-              maxLines: 3,
-              textInputAction: TextInputAction.done,
-              onEditingComplete: () => _noteFocusNode.unfocus(),
-              decoration: InputDecoration(
-                hintText: 'Add a note (optional)',
-                filled: true,
-                fillColor: AppColors.cream,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide.none,
-                ),
+            Text(
+              canSubmit
+                  ? 'Record the next payment step for this order.'
+                  : 'Payment is fully confirmed for this order.',
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+                height: 1.4,
               ),
             ),
-            const SizedBox(height: AppSpacing.xl),
-            ProfileSubmitButton(
-              label: _isSubmitting ? 'Saving…' : 'Save update',
-              onPressed: _isSubmitting ? () {} : _submit,
-            ),
+            if (canSubmit) ...[
+              const SizedBox(height: 16),
+              TextField(
+                controller: _noteController,
+                focusNode: _noteFocusNode,
+                enabled: !_isSubmitting,
+                maxLines: 3,
+                textInputAction: TextInputAction.done,
+                onEditingComplete: () => _noteFocusNode.unfocus(),
+                decoration: InputDecoration(
+                  hintText: 'Add a note (optional)',
+                  filled: true,
+                  fillColor: AppColors.cream,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              ProfileSubmitButton(
+                label: _isSubmitting ? 'Saving…' : _actionLabel,
+                onPressed: _isSubmitting ? () {} : _submit,
+              ),
+            ],
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _StatusOption extends StatelessWidget {
-  const _StatusOption({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      onSelected: onTap == null ? null : (_) => onTap!(),
-      selectedColor: AppColors.vendorForestBg,
-      labelStyle: TextStyle(
-        color: selected ? AppColors.vendorForest : AppColors.textSecondary,
-        fontWeight: FontWeight.w600,
       ),
     );
   }

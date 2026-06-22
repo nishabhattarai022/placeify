@@ -60,7 +60,7 @@ class ProductImagePickerGrid extends ConsumerWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          'First photo is the front view. Add 4 photos (front, left, back, right) for Build 3D. Drag to reorder.',
+          'First photo is the primary listing image. Drag to reorder.',
           style: TextStyle(
             fontSize: 12,
             color: AppColors.textSecondary.withValues(alpha: 0.9),

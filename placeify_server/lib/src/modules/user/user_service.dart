@@ -102,6 +102,22 @@ class UserService {
     );
   }
 
+  Future<List<UserOrderSummary>> listMyOrders(
+    Session session, {
+    int limit = 20,
+    int offset = 0,
+    OrderStatus? status,
+  }) async {
+    final user = await SessionService.requireUser(session);
+    return _orderStore.listSummaries(
+      session,
+      user.id!,
+      limit: limit,
+      offset: offset,
+      status: status,
+    );
+  }
+
   Future<UserOrderDetail> getMyOrder(Session session, int orderId) async {
     final user = await SessionService.requireUser(session);
     return _orderStore.getDetail(session, user.id!, orderId);

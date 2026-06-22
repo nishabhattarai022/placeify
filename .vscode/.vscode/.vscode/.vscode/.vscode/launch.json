@@ -6,35 +6,16 @@
             "cwd": "${workspaceFolder}/placeify_flutter",
             "request": "launch",
             "type": "dart",
-            "program": "lib/main.dart",
-            "preLaunchTask": "sync_network_config"
+            "program": "lib/main.dart"
         },
         {
-            "name": "placeify_flutter (Android emulator)",
+            "name": "placeify_flutter (iPhone release)",
             "cwd": "${workspaceFolder}/placeify_flutter",
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
-            "deviceId": "android",
-            "preLaunchTask": "sync_network_config"
-        },
-        {
-            "name": "placeify_flutter (Android phone)",
-            "cwd": "${workspaceFolder}/placeify_flutter",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "deviceId": "android",
-            "preLaunchTask": "sync_network_config"
-        },
-        {
-            "name": "placeify_flutter (iPhone)",
-            "cwd": "${workspaceFolder}/placeify_flutter",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "deviceId": "ios",
-            "preLaunchTask": "sync_network_config"
+            "flutterMode": "release",
+            "deviceId": "Anisha"
         },
         {
             "name": "placeify_server",
@@ -57,26 +38,6 @@
             "configurations": [
                 "placeify_server",
                 "placeify_flutter"
-            ],
-            "presentation": {
-                "order": 1
-            }
-        },
-        {
-            "name": "placeify (server + Android emulator)",
-            "configurations": [
-                "placeify_server",
-                "placeify_flutter (Android emulator)"
-            ],
-            "presentation": {
-                "order": 1
-            }
-        },
-        {
-            "name": "placeify (server + iPhone)",
-            "configurations": [
-                "placeify_server",
-                "placeify_flutter (iPhone)"
             ],
             "presentation": {
                 "order": 1

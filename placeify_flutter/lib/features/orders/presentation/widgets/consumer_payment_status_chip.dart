@@ -19,7 +19,8 @@ class ConsumerPaymentStatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final (bg, fg) = switch (status) {
       PaymentStatus.pending => (AppColors.accentBg, AppColors.accent),
-      PaymentStatus.paid => (AppColors.sageBg, AppColors.sage),
+      PaymentStatus.received => (AppColors.sageBg, AppColors.sage),
+      PaymentStatus.confirmed => (AppColors.sageBg, AppColors.bark),
       PaymentStatus.failed => (AppColors.coralBg, AppColors.rust),
       PaymentStatus.refunded => (AppColors.coralBg, AppColors.coral),
     };

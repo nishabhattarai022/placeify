@@ -4,20 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../cart/presentation/providers/cart_provider.dart';
-import '../../home/domain/models/product.dart';
-import '../../home/presentation/providers/catalog_provider.dart';
+import '../../home/presentation/providers/category_provider.dart';
 import '../../../core/services/haptic_service.dart';
-import '../../../core/widgets/toast_overlay.dart';
-import '../data/product_3d_model_resolver.dart';
 import '../data/product_detail_content.dart';
-import '../presentation/ar_room_screen.dart';
 import 'product_detail_tokens.dart';
-import '../../shops/presentation/providers/consumer_shop_provider.dart';
-import 'widgets/product_detail_sold_by_row.dart';
+import 'package:placeify_flutter/features/shops/presentation/providers/consumer_shop_provider.dart';
 import 'widgets/product_detail_cart_bar.dart';
 import 'widgets/product_detail_gallery.dart';
 import 'widgets/product_detail_header.dart';
 import 'widgets/product_detail_info_section.dart';
+import 'widgets/product_detail_sold_by_row.dart';
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
   const ProductDetailScreen({required this.productId, super.key});
@@ -86,14 +82,10 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
 
   @override
   Widget build(BuildContext context) {
-    final productAsync = ref.watch(productDetailProvider(widget.productId));
+    final product = ref.watch(productByIdProvider(widget.productId));
 
-    return productAsync.when(
-      loading: () => const Scaffold(
-        backgroundColor: ProductDetailTokens.screenBg,
-        body: Center(child: CircularProgressIndicator()),
-      ),
-      error: (_, __) => Scaffold(
+    if (product == null) {
+      return Scaffold(
         backgroundColor: ProductDetailTokens.screenBg,
         body: Center(
           child: TextButton(
@@ -101,60 +93,15 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
             child: const Text('Product not found'),
           ),
         ),
-      ),
-      data: (product) {
-        if (product == null) {
-          return Scaffold(
-            backgroundColor: ProductDetailTokens.screenBg,
-            body: Center(
-              child: TextButton(
-                onPressed: () => context.pop(),
-                child: const Text('Product not found'),
-              ),
-            ),
-          );
-        }
-        return _buildProductDetail(context, product);
-      },
-    );
-  }
-
-  Future<void> _openArRoom(BuildContext context, Product product) async {
-    final modelUrl = await Product3dModelResolver.srcForProduct(product);
-    if (!context.mounted) return;
-    if (modelUrl == null || modelUrl.isEmpty) {
-      PlaceifyToast.show(
-        context,
-        '3D model is not available for this product yet.',
       );
-      return;
     }
 
-    final result = await ArRoomLauncher.open(
-      context: context,
-      remoteModelUrl: modelUrl,
-      productId: product.id,
-      productName: product.name,
-      dimensions: product.dimensions,
-    );
-
-    if (!context.mounted) return;
-    switch (result) {
-      case ArRoomOpenResult.permissionDenied:
-        PlaceifyToast.show(context, 'Camera permission is required for AR.');
-      case ArRoomOpenResult.modelDownloadFailed:
-        PlaceifyToast.show(context, 'Could not load the 3D model.');
-      case ArRoomOpenResult.opened:
-        break;
-    }
-  }
-
-  Widget _buildProductDetail(BuildContext context, Product product) {
     final content = ProductDetailContentRepository.forProduct(product);
     final top = MediaQuery.paddingOf(context).top;
     final vendorId = product.vendorId;
-    final shopAsync =
-        vendorId != null ? ref.watch(shopListingProvider(vendorId)) : null;
+    final shopAsync = vendorId != null
+        ? ref.watch(shopListingProvider(vendorId))
+        : null;
 
     return Scaffold(
       backgroundColor: ProductDetailTokens.screenBg,
@@ -176,7 +123,6 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                   child: FadeTransition(
                     opacity: _galleryOpacity,
                     child: ProductDetailGallery(
-                      product: product,
                       images: content.galleryImages,
                       selectedIndex: _selectedImageIndex,
                       onSelected: (i) =>
@@ -251,7 +197,9 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
               child: FadeTransition(
                 opacity: _cartBarOpacity,
                 child: ProductDetailCartBar(
-                  onTryInMyRoom: () => _openArRoom(context, product),
+                  onTryInMyRoom: () {
+                    context.push('/profile/augmented-reality');
+                  },
                   onAddToCart: () {
                     ref
                         .read(cartProvider.notifier)

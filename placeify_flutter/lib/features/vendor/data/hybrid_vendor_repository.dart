@@ -81,6 +81,14 @@ class HybridVendorRepository implements VendorRepository {
       _mock.getNotifications(vendorId);
 
   @override
+  Future<void> markNotificationRead(String notificationId) =>
+      _mock.markNotificationRead(notificationId);
+
+  @override
+  Future<void> markAllNotificationsRead() =>
+      _mock.markAllNotificationsRead();
+
+  @override
   Future<List<VendorPayout>> getPayouts(String vendorId) =>
       _mock.getPayouts(vendorId);
 }

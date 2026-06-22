@@ -24,6 +24,7 @@ class MockConsumerShopRepository implements ConsumerShopRepository {
   @override
   Future<List<ShopListing>> listShops({String? query}) async {
     await AdminSeedData.ensureSeeded(_prefs);
+    ConsumerShopSeed.ensureCatalogProfiles();
     await _ensureApprovedProfiles();
 
     final vendorIds = await _approvedVendorIds();
@@ -59,6 +60,7 @@ class MockConsumerShopRepository implements ConsumerShopRepository {
   @override
   Future<ShopListing?> getShop(String vendorId) async {
     await AdminSeedData.ensureSeeded(_prefs);
+    ConsumerShopSeed.ensureCatalogProfiles();
     await _ensureApprovedProfiles();
 
     final profile = VendorMockConfig.profileFor(vendorId);
@@ -85,9 +87,11 @@ class MockConsumerShopRepository implements ConsumerShopRepository {
   static void _ensureProductIndex() {
     if (_productIndex.isNotEmpty) return;
 
+    ConsumerShopSeed.ensureCatalogProfiles();
+
     for (final vendorId in [
       VendorMockConfig.demoVendorId,
-      AdminSeedData.approvedVendorId,
+      ...ConsumerShopSeed.catalogVendorIds,
     ]) {
       for (final vendorProduct in _vendorProductsFor(vendorId)) {
         final product = VendorProductMapper.toConsumerProduct(vendorProduct);
@@ -109,7 +113,10 @@ class MockConsumerShopRepository implements ConsumerShopRepository {
   }
 
   Future<Set<String>> _approvedVendorIds() async {
-    final ids = <String>{VendorMockConfig.demoVendorId};
+    final ids = <String>{
+      VendorMockConfig.demoVendorId,
+      ...AdminSeedData.catalogShopVendorIds,
+    };
     final users = await _authRepository.getAllUsers();
     for (final user in users) {
       if (user.vendorStatus == VendorStatus.approved && user.vendorId != null) {
@@ -139,8 +146,17 @@ class MockConsumerShopRepository implements ConsumerShopRepository {
       logoUrl: ShopListingImages.resolveLogoUrl(profile, products),
       bannerUrl: ShopListingImages.resolveBannerUrl(profile, products),
       productCount: products.length,
-      averageRating: VendorMockConfig.statsFor(profile.id).averageRating,
+      averageRating: _averageRatingFor(profile.id),
     );
+  }
+
+  double _averageRatingFor(String vendorId) {
+    final fromStats = VendorMockConfig.statsFor(vendorId).averageRating;
+    if (fromStats > 0) return fromStats;
+    if (ConsumerShopSeed.hasSeedProducts(vendorId)) {
+      return ConsumerShopSeed.averageRatingFor(vendorId);
+    }
+    return 0;
   }
 
   String _localityFromAddress(String address) {

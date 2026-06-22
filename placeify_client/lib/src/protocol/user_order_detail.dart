@@ -15,8 +15,10 @@ import 'order_status.dart' as _i2;
 import 'delivery_stage.dart' as _i3;
 import 'user_order_line_item.dart' as _i4;
 import 'user_order_delivery_event.dart' as _i5;
-import 'user_order_payment_summary.dart' as _i6;
-import 'package:placeify_client/src/protocol/protocol.dart' as _i7;
+import 'order_payment_status.dart' as _i6;
+import 'user_order_payment_summary.dart' as _i7;
+import 'user_order_payment_event.dart' as _i8;
+import 'package:placeify_client/src/protocol/protocol.dart' as _i9;
 
 /// Full customer order with line items and delivery timeline.
 abstract class UserOrderDetail implements _i1.SerializableModel {
@@ -33,7 +35,9 @@ abstract class UserOrderDetail implements _i1.SerializableModel {
     this.latestDeliveryNote,
     required this.items,
     required this.deliveryUpdates,
+    required this.orderPaymentStatus,
     required this.payment,
+    required this.paymentUpdates,
   });
 
   factory UserOrderDetail({
@@ -49,7 +53,9 @@ abstract class UserOrderDetail implements _i1.SerializableModel {
     String? latestDeliveryNote,
     required List<_i4.UserOrderLineItem> items,
     required List<_i5.UserOrderDeliveryEvent> deliveryUpdates,
-    required _i6.UserOrderPaymentSummary payment,
+    required _i6.OrderPaymentStatus orderPaymentStatus,
+    required _i7.UserOrderPaymentSummary payment,
+    required List<_i8.UserOrderPaymentEvent> paymentUpdates,
   }) = _UserOrderDetailImpl;
 
   factory UserOrderDetail.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -70,16 +76,23 @@ abstract class UserOrderDetail implements _i1.SerializableModel {
               (jsonSerialization['latestDeliveryStage'] as String),
             ),
       latestDeliveryNote: jsonSerialization['latestDeliveryNote'] as String?,
-      items: _i7.Protocol().deserialize<List<_i4.UserOrderLineItem>>(
+      items: _i9.Protocol().deserialize<List<_i4.UserOrderLineItem>>(
         jsonSerialization['items'],
       ),
-      deliveryUpdates: _i7.Protocol()
+      deliveryUpdates: _i9.Protocol()
           .deserialize<List<_i5.UserOrderDeliveryEvent>>(
             jsonSerialization['deliveryUpdates'],
           ),
-      payment: _i7.Protocol().deserialize<_i6.UserOrderPaymentSummary>(
+      orderPaymentStatus: _i6.OrderPaymentStatus.fromJson(
+        (jsonSerialization['orderPaymentStatus'] as String),
+      ),
+      payment: _i9.Protocol().deserialize<_i7.UserOrderPaymentSummary>(
         jsonSerialization['payment'],
       ),
+      paymentUpdates: _i9.Protocol()
+          .deserialize<List<_i8.UserOrderPaymentEvent>>(
+            jsonSerialization['paymentUpdates'],
+          ),
     );
   }
 
@@ -107,7 +120,11 @@ abstract class UserOrderDetail implements _i1.SerializableModel {
 
   List<_i5.UserOrderDeliveryEvent> deliveryUpdates;
 
-  _i6.UserOrderPaymentSummary payment;
+  _i6.OrderPaymentStatus orderPaymentStatus;
+
+  _i7.UserOrderPaymentSummary payment;
+
+  List<_i8.UserOrderPaymentEvent> paymentUpdates;
 
   /// Returns a shallow copy of this [UserOrderDetail]
   /// with some or all fields replaced by the given arguments.
@@ -125,7 +142,9 @@ abstract class UserOrderDetail implements _i1.SerializableModel {
     String? latestDeliveryNote,
     List<_i4.UserOrderLineItem>? items,
     List<_i5.UserOrderDeliveryEvent>? deliveryUpdates,
-    _i6.UserOrderPaymentSummary? payment,
+    _i6.OrderPaymentStatus? orderPaymentStatus,
+    _i7.UserOrderPaymentSummary? payment,
+    List<_i8.UserOrderPaymentEvent>? paymentUpdates,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -144,7 +163,9 @@ abstract class UserOrderDetail implements _i1.SerializableModel {
       if (latestDeliveryNote != null) 'latestDeliveryNote': latestDeliveryNote,
       'items': items.toJson(valueToJson: (v) => v.toJson()),
       'deliveryUpdates': deliveryUpdates.toJson(valueToJson: (v) => v.toJson()),
+      'orderPaymentStatus': orderPaymentStatus.toJson(),
       'payment': payment.toJson(),
+      'paymentUpdates': paymentUpdates.toJson(valueToJson: (v) => v.toJson()),
     };
   }
 
@@ -170,7 +191,9 @@ class _UserOrderDetailImpl extends UserOrderDetail {
     String? latestDeliveryNote,
     required List<_i4.UserOrderLineItem> items,
     required List<_i5.UserOrderDeliveryEvent> deliveryUpdates,
-    required _i6.UserOrderPaymentSummary payment,
+    required _i6.OrderPaymentStatus orderPaymentStatus,
+    required _i7.UserOrderPaymentSummary payment,
+    required List<_i8.UserOrderPaymentEvent> paymentUpdates,
   }) : super._(
          id: id,
          orderNumber: orderNumber,
@@ -184,7 +207,9 @@ class _UserOrderDetailImpl extends UserOrderDetail {
          latestDeliveryNote: latestDeliveryNote,
          items: items,
          deliveryUpdates: deliveryUpdates,
+         orderPaymentStatus: orderPaymentStatus,
          payment: payment,
+         paymentUpdates: paymentUpdates,
        );
 
   /// Returns a shallow copy of this [UserOrderDetail]
@@ -204,7 +229,9 @@ class _UserOrderDetailImpl extends UserOrderDetail {
     Object? latestDeliveryNote = _Undefined,
     List<_i4.UserOrderLineItem>? items,
     List<_i5.UserOrderDeliveryEvent>? deliveryUpdates,
-    _i6.UserOrderPaymentSummary? payment,
+    _i6.OrderPaymentStatus? orderPaymentStatus,
+    _i7.UserOrderPaymentSummary? payment,
+    List<_i8.UserOrderPaymentEvent>? paymentUpdates,
   }) {
     return UserOrderDetail(
       id: id ?? this.id,
@@ -227,7 +254,11 @@ class _UserOrderDetailImpl extends UserOrderDetail {
       deliveryUpdates:
           deliveryUpdates ??
           this.deliveryUpdates.map((e0) => e0.copyWith()).toList(),
+      orderPaymentStatus: orderPaymentStatus ?? this.orderPaymentStatus,
       payment: payment ?? this.payment.copyWith(),
+      paymentUpdates:
+          paymentUpdates ??
+          this.paymentUpdates.map((e0) => e0.copyWith()).toList(),
     );
   }
 }

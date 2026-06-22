@@ -95,29 +95,42 @@ class MockAuthRepository implements AuthRepository {
   @override
   Future<AppUser> becomeVendor() async {
     final email = _prefs.getString(_sessionEmailKey);
-    if (email == null) throw AuthException('Not signed in');
+    if (email == null) {
+      throw AuthException('Sign in to continue');
+    }
 
     final users = await _loadUsers();
     final index = users.indexWhere((u) => u.email == email);
-    if (index == -1) throw AuthException('User profile not found');
+    if (index == -1) throw AuthException('Session expired');
 
-    users[index] = users[index].copyWith(role: UserRole.vendor);
+    final updated = users[index].copyWith(
+      role: UserRole.vendor,
+      vendorStatus: VendorStatus.pending,
+    );
+    users[index] = updated;
     await _saveUsers(users);
-    return users[index].toAppUser();
+    return updated.toAppUser();
   }
 
   @override
   Future<AppUser> becomeConsumer() async {
     final email = _prefs.getString(_sessionEmailKey);
-    if (email == null) throw AuthException('Not signed in');
+    if (email == null) {
+      throw AuthException('Sign in to continue');
+    }
 
     final users = await _loadUsers();
     final index = users.indexWhere((u) => u.email == email);
-    if (index == -1) throw AuthException('User profile not found');
+    if (index == -1) throw AuthException('Session expired');
 
-    users[index] = users[index].copyWith(role: UserRole.customer);
+    final updated = users[index].copyWith(
+      role: UserRole.customer,
+      vendorStatus: VendorStatus.none,
+      clearVendorId: true,
+    );
+    users[index] = updated;
     await _saveUsers(users);
-    return users[index].toAppUser();
+    return updated.toAppUser();
   }
 
   @override

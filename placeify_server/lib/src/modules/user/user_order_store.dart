@@ -45,10 +45,6 @@ class UserOrderStore {
       );
 
       final latestDelivery = await _latestDeliveryUpdate(session, orderId);
-      final payment = await PaymentTransaction.db.findFirstRow(
-        session,
-        where: (row) => row.orderId.equals(orderId),
-      );
 
       summaries.add(
         _buildSummary(
@@ -56,7 +52,6 @@ class UserOrderStore {
           items: items,
           latestDeliveryStage: latestDelivery?.stage,
           latestDeliveryNote: latestDelivery?.note,
-          paymentStatus: payment?.status,
         ),
       );
     }
@@ -110,6 +105,7 @@ class UserOrderStore {
       primaryProductName: summary.primaryProductName,
       latestDeliveryStage: summary.latestDeliveryStage,
       latestDeliveryNote: summary.latestDeliveryNote,
+      orderPaymentStatus: order.paymentStatus,
       items: [
         for (final item in items)
           UserOrderLineItem(
@@ -130,7 +126,30 @@ class UserOrderStore {
           ),
       ],
       payment: payment,
+      paymentUpdates: await _paymentUpdatesForOrder(session, orderId),
     );
+  }
+
+  Future<List<UserOrderPaymentEvent>> _paymentUpdatesForOrder(
+    Session session,
+    int orderId,
+  ) async {
+    final history = await OrderStatusHistory.db.find(
+      session,
+      where: (row) =>
+          row.orderId.equals(orderId) &
+          row.statusType.equals(OrderStatusHistoryType.payment),
+      orderBy: (row) => row.changedAt,
+    );
+
+    return [
+      for (final row in history)
+        UserOrderPaymentEvent(
+          status: OrderPaymentStatus.fromJson(row.newStatus),
+          note: row.note,
+          createdAt: row.changedAt,
+        ),
+    ];
   }
 
   Future<UserOrderDetail> cancelOrder(
@@ -155,9 +174,7 @@ class UserOrderStore {
       );
     }
 
-    final cancellable = order.status == OrderStatus.pending ||
-        order.status == OrderStatus.confirmed ||
-        order.status == OrderStatus.accepted;
+    final cancellable = order.status == OrderStatus.pending;
     if (!cancellable) {
       throw PlaceifyException(
         message: 'This order can no longer be cancelled.',
@@ -237,7 +254,6 @@ class UserOrderStore {
     required List<OrderItem> items,
     DeliveryStage? latestDeliveryStage,
     String? latestDeliveryNote,
-    PaymentTransactionStatus? paymentStatus,
   }) {
     final orderId = order.id!;
     final primaryName = items.isEmpty
@@ -261,7 +277,7 @@ class UserOrderStore {
       primaryProductName: displayName,
       latestDeliveryStage: latestDeliveryStage,
       latestDeliveryNote: latestDeliveryNote,
-      paymentStatus: paymentStatus,
+      orderPaymentStatus: order.paymentStatus,
     );
   }
 }
