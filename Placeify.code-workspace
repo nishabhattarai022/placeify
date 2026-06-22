@@ -1,0 +1,20 @@
+{
+  "folders": [
+    {
+      "name": "Placeify",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "dart.projectSearchDepth": 4,
+    "files.exclude": {
+      "**/.backup-user-backend": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "dart-code.dart-code",
+      "dart-code.flutter"
+    ]
+  }
+}
