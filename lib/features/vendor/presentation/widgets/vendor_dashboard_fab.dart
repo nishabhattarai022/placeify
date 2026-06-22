@@ -72,7 +72,7 @@ class _VendorDashboardFabState extends State<VendorDashboardFab>
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(
-        bottom: BottomNavTokens.scrollBottomPadding - 56,
+        bottom: BottomNavTokens.fabBottomPadding,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

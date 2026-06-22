@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../theme/app_fonts.dart';
 import 'bottom_nav_tokens.dart';
@@ -115,15 +116,20 @@ class BottomNavPrimaryChip extends StatelessWidget {
 /// Circular icon tab with press scale — matches consumer secondary tabs.
 class BottomNavIconButton extends StatefulWidget {
   const BottomNavIconButton({
-    required this.icon,
     required this.isSelected,
     required this.semanticLabel,
     required this.onTap,
+    this.icon,
+    this.assetPath,
     this.badgeCount = 0,
     super.key,
-  });
+  }) : assert(
+          icon != null || assetPath != null,
+          'Provide either icon or assetPath',
+        );
 
-  final IconData icon;
+  final IconData? icon;
+  final String? assetPath;
   final bool isSelected;
   final String semanticLabel;
   final VoidCallback onTap;
@@ -169,12 +175,10 @@ class _BottomNavIconButtonState extends State<BottomNavIconButton> {
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
-                child: Icon(
-                  widget.icon,
-                  size: BottomNavTokens.iconSize,
-                  color: isSelected
-                      ? BottomNavTokens.homeChipForeground
-                      : BottomNavTokens.pillIconInactive,
+                child: _NavIconContent(
+                  icon: widget.icon,
+                  assetPath: widget.assetPath,
+                  isSelected: isSelected,
                 ),
               ),
               if (widget.badgeCount > 0)
@@ -187,6 +191,40 @@ class _BottomNavIconButtonState extends State<BottomNavIconButton> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _NavIconContent extends StatelessWidget {
+  const _NavIconContent({
+    required this.isSelected,
+    this.icon,
+    this.assetPath,
+  });
+
+  final IconData? icon;
+  final String? assetPath;
+  final bool isSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isSelected
+        ? BottomNavTokens.homeChipForeground
+        : BottomNavTokens.pillIconInactive;
+
+    if (assetPath != null) {
+      return SvgPicture.asset(
+        assetPath!,
+        width: BottomNavTokens.iconSize,
+        height: BottomNavTokens.iconSize,
+        colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+      );
+    }
+
+    return Icon(
+      icon,
+      size: BottomNavTokens.iconSize,
+      color: color,
     );
   }
 }

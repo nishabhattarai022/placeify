@@ -162,14 +162,19 @@ class _VendorProductsScreenState extends ConsumerState<VendorProductsScreen> {
       backgroundColor: AppColors.cream,
       floatingActionButton: _selectionMode
           ? null
-          : FloatingActionButton(
-              onPressed: () {
-                HapticService.light();
-                context.push(VendorRoutes.productsUpload);
-              },
-              backgroundColor: AppColors.espresso,
-              foregroundColor: AppColors.warmWhite,
-              child: const Icon(Icons.add_rounded),
+          : Padding(
+              padding: const EdgeInsets.only(
+                bottom: BottomNavTokens.fabBottomPadding,
+              ),
+              child: FloatingActionButton(
+                onPressed: () {
+                  HapticService.light();
+                  context.push(VendorRoutes.productsUpload);
+                },
+                backgroundColor: AppColors.espresso,
+                foregroundColor: AppColors.warmWhite,
+                child: const Icon(Icons.add_rounded),
+              ),
             ),
       body: SafeArea(
         child: Column(

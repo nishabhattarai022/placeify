@@ -56,7 +56,7 @@ class VendorBottomNav extends ConsumerWidget {
         ),
         const BottomNavItemGap(),
         BottomNavIconButton(
-          icon: Icons.category_outlined,
+          assetPath: 'assets/icons/ic_package.svg',
           isSelected: index == 2,
           semanticLabel: 'Products',
           onTap: () {
@@ -66,7 +66,7 @@ class VendorBottomNav extends ConsumerWidget {
         ),
         const BottomNavItemGap(),
         BottomNavIconButton(
-          icon: Icons.payments_outlined,
+          assetPath: 'assets/icons/ic_trending_up.svg',
           isSelected: index == 3,
           semanticLabel: 'Payments',
           onTap: () {
