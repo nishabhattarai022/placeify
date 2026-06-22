@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:placeify_flutter/features/home/data/mock_product_repository.dart';
 import 'package:placeify_flutter/features/profile/presentation/widgets/profile_sub_hero.dart';
 import 'package:placeify_flutter/features/vendor/data/vendor_3d_model_store.dart';
@@ -31,8 +34,8 @@ class VendorBuild3dScreen extends ConsumerStatefulWidget {
 class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
   String? _selectedProductId;
   bool _isGenerating = false;
-  double _generateProgress = 0;
   bool _modelReady = false;
+  bool _didPreloadInitialProduct = false;
 
   @override
   void initState() {
@@ -56,12 +59,128 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
   }
 
   bool get _hasEnoughPhotos =>
-      (_record?.capturedAngles.length ?? 0) >= 2;
+      Vendor3dCaptureAngles.all.every(
+        (angle) => _record?.angleSources[angle]?.trim().isNotEmpty ?? false,
+      );
 
-  bool get _hasDimensions {
-    final product = _selectedProduct(ref.read(vendorProductsProvider).value ?? []);
+  bool _hasDimensions(List<VendorProduct> products) {
+    final product = _selectedProduct(products);
     if (product == null) return false;
     return product.widthCm > 0 && product.depthCm > 0 && product.heightCm > 0;
+  }
+
+  void _selectProduct(VendorProduct product) {
+    HapticService.selection();
+    Vendor3dModelStore.preloadFromProduct(product);
+    setState(() {
+      _selectedProductId = product.id;
+      _modelReady = product.hasArView;
+    });
+  }
+
+  void _maybePreloadInitialProduct(List<VendorProduct> products) {
+    if (_didPreloadInitialProduct || _selectedProductId == null) return;
+    final product = _selectedProduct(products);
+    if (product == null) return;
+
+    _didPreloadInitialProduct = true;
+    Vendor3dModelStore.preloadFromProduct(product);
+    if (mounted) {
+      setState(() => _modelReady = product.hasArView);
+    }
+  }
+
+  Future<void> _pickAnglePhoto(String productId, String angle) async {
+    HapticService.light();
+
+    final action = await showModalBottomSheet<_CapturePhotoAction>(
+      context: context,
+      backgroundColor: AppColors.warmWhite,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        final hasPhoto = _record?.angleSources[angle]?.trim().isNotEmpty ?? false;
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    Vendor3dCaptureAngles.labelFor(angle),
+                    style: GoogleFonts.dmSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.espresso,
+                    ),
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined),
+                title: const Text('Choose from gallery'),
+                onTap: () => Navigator.pop(
+                  sheetContext,
+                  _CapturePhotoAction.gallery,
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_camera_outlined),
+                title: const Text('Take a photo'),
+                onTap: () => Navigator.pop(
+                  sheetContext,
+                  _CapturePhotoAction.camera,
+                ),
+              ),
+              if (hasPhoto)
+                ListTile(
+                  leading: const Icon(Icons.delete_outline_rounded),
+                  title: const Text('Remove photo'),
+                  onTap: () => Navigator.pop(
+                    sheetContext,
+                    _CapturePhotoAction.remove,
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (action == null || !mounted) return;
+
+    if (action == _CapturePhotoAction.remove) {
+      setState(() => Vendor3dModelStore.clearAngleSource(productId, angle));
+      return;
+    }
+
+    final picker = ImagePicker();
+    try {
+      final picked = await picker.pickImage(
+        source: action == _CapturePhotoAction.camera
+            ? ImageSource.camera
+            : ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 1920,
+        maxHeight: 1920,
+        preferredCameraDevice: CameraDevice.rear,
+      );
+      if (picked == null || !mounted) return;
+
+      setState(() {
+        Vendor3dModelStore.setAngleSource(productId, angle, picked.path);
+      });
+    } catch (_) {
+      if (mounted) {
+        PlaceifyToast.show(
+          context,
+          'Could not access photos. Check permissions.',
+        );
+      }
+    }
   }
 
   Future<void> _generateModel() async {
@@ -70,11 +189,13 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
       PlaceifyToast.show(context, Vendor3dBuilderStrings.selectProductFirst);
       return;
     }
+
+    final products = ref.read(vendorProductsProvider).value ?? [];
     if (!_hasEnoughPhotos) {
       PlaceifyToast.show(context, Vendor3dBuilderStrings.addPhotosFirst);
       return;
     }
-    if (!_hasDimensions) {
+    if (!_hasDimensions(products)) {
       PlaceifyToast.show(context, Vendor3dBuilderStrings.dimensionsRequired);
       return;
     }
@@ -82,49 +203,37 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
     HapticService.medium();
     setState(() {
       _isGenerating = true;
-      _generateProgress = 0;
       _modelReady = false;
     });
     Vendor3dModelStore.markProcessing(productId);
 
-    const steps = 24;
-    for (var i = 1; i <= steps; i++) {
-      await Future<void>.delayed(const Duration(milliseconds: 90));
-      if (!mounted) return;
-      setState(() => _generateProgress = i / steps);
-    }
-
-    final fileName = 'model_${productId}_${DateTime.now().millisecondsSinceEpoch}.glb';
-    Vendor3dModelStore.markReady(productId, modelFileName: fileName);
+    final imageSources = Vendor3dModelStore.orderedSourcesFor(productId);
+    final error = await ref
+        .read(vendorProductsProvider.notifier)
+        .regenerateProductModel3d(productId, imageSources: imageSources);
 
     if (!mounted) return;
-    setState(() {
-      _isGenerating = false;
-      _modelReady = true;
-    });
-    HapticService.heavy();
-    PlaceifyToast.show(context, Vendor3dBuilderStrings.modelReady);
-  }
 
-  Future<void> _attachToProduct() async {
-    final products = ref.read(vendorProductsProvider).value ?? [];
-    final product = _selectedProduct(products);
-    if (product == null) return;
-
-    HapticService.medium();
-    final result = await ref.read(vendorProductsProvider.notifier).updateProduct(
-          product.copyWith(hasArView: true),
-        );
-
-    if (!mounted) return;
-    if (result.error != null) {
-      PlaceifyToast.show(context, result.error!);
+    if (error != null) {
+      Vendor3dModelStore.markFailed(productId, error);
+      setState(() => _isGenerating = false);
+      PlaceifyToast.show(context, error);
       return;
     }
 
+    final updatedProducts = ref.read(vendorProductsProvider).value ?? [];
+    final updated = _selectedProduct(updatedProducts);
+    if (updated != null) {
+      Vendor3dModelStore.preloadFromProduct(updated);
+    }
+    Vendor3dModelStore.markReady(productId);
+
+    setState(() {
+      _isGenerating = false;
+      _modelReady = updated?.hasArView ?? true;
+    });
     HapticService.heavy();
-    PlaceifyToast.show(context, Vendor3dBuilderStrings.modelAttached);
-    context.pop();
+    PlaceifyToast.show(context, Vendor3dBuilderStrings.modelReady);
   }
 
   @override
@@ -136,6 +245,7 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
     final status = selected == null
         ? VendorProduct3dStatus.none
         : Vendor3dModelStore.statusFor(selected);
+    final modelReady = _modelReady || status.isReady;
 
     return Scaffold(
       backgroundColor: AppColors.cream,
@@ -162,6 +272,8 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
                 message: Vendor3dBuilderStrings.noProducts,
               ),
               data: (items) {
+                _maybePreloadInitialProduct(items);
+
                 if (items.isEmpty) {
                   return const _EmptyState(
                     message: Vendor3dBuilderStrings.noProducts,
@@ -187,15 +299,7 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
                         child: _ProductSelector(
                           products: items,
                           selectedId: _selectedProductId,
-                          onSelected: (id) {
-                            HapticService.selection();
-                            setState(() {
-                              _selectedProductId = id;
-                              _modelReady = Vendor3dModelStore.statusFor(
-                                items.firstWhere((p) => p.id == id),
-                              ).isReady;
-                            });
-                          },
+                          onSelected: _selectProduct,
                         ),
                       ),
                       if (selected != null) ...[
@@ -206,16 +310,9 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
                           title: Vendor3dBuilderStrings.captureSectionTitle,
                           subtitle: Vendor3dBuilderStrings.captureSectionHint,
                           child: _CaptureAngleGrid(
-                            captured: record?.capturedAngles ?? const {},
-                            onToggle: (angle) {
-                              HapticService.light();
-                              setState(() {
-                                Vendor3dModelStore.toggleCapture(
-                                  selected.id,
-                                  angle,
-                                );
-                              });
-                            },
+                            angleSources: record?.angleSources ?? const {},
+                            onTap: (angle) =>
+                                _pickAnglePhoto(selected.id, angle),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -231,9 +328,7 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
                           child: _GeneratePanel(
                             status: status,
                             isGenerating: _isGenerating,
-                            progress: _generateProgress,
-                            modelReady: _modelReady || status.isReady,
-                            modelFileName: record?.modelFileName,
+                            modelReady: modelReady,
                             onGenerate: _generateModel,
                           ),
                         ),
@@ -244,15 +339,15 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
               },
             ),
           ),
-          if (selected != null &&
-              (_modelReady || status.isReady) &&
-              !selected.hasArView)
-            _BottomAttachBar(onAttach: _attachToProduct),
+          if (selected != null && modelReady && !_isGenerating)
+            _BottomDoneBar(onDone: () => context.pop()),
         ],
       ),
     );
   }
 }
+
+enum _CapturePhotoAction { gallery, camera, remove }
 
 class _SectionCard extends StatelessWidget {
   const _SectionCard({
@@ -313,7 +408,7 @@ class _ProductSelector extends StatelessWidget {
 
   final List<VendorProduct> products;
   final String? selectedId;
-  final ValueChanged<String> onSelected;
+  final ValueChanged<VendorProduct> onSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -324,7 +419,7 @@ class _ProductSelector extends StatelessWidget {
           _ProductOptionTile(
             product: products[i],
             selected: products[i].id == selectedId,
-            onTap: () => onSelected(products[i].id),
+            onTap: () => onSelected(products[i]),
           ),
         ],
       ],
@@ -507,12 +602,12 @@ class _SelectedProductPreview extends StatelessWidget {
 
 class _CaptureAngleGrid extends StatelessWidget {
   const _CaptureAngleGrid({
-    required this.captured,
-    required this.onToggle,
+    required this.angleSources,
+    required this.onTap,
   });
 
-  final Set<String> captured;
-  final ValueChanged<String> onToggle;
+  final Map<String, String> angleSources;
+  final ValueChanged<String> onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -530,8 +625,8 @@ class _CaptureAngleGrid extends StatelessWidget {
                 width: tileWidth,
                 child: _CaptureTile(
                   angle: angle,
-                  captured: captured.contains(angle),
-                  onTap: () => onToggle(angle),
+                  source: angleSources[angle],
+                  onTap: () => onTap(angle),
                 ),
               ),
           ],
@@ -544,13 +639,15 @@ class _CaptureAngleGrid extends StatelessWidget {
 class _CaptureTile extends StatelessWidget {
   const _CaptureTile({
     required this.angle,
-    required this.captured,
+    required this.source,
     required this.onTap,
   });
 
   final String angle;
-  final bool captured;
+  final String? source;
   final VoidCallback onTap;
+
+  bool get _hasPhoto => source?.trim().isNotEmpty ?? false;
 
   @override
   Widget build(BuildContext context) {
@@ -560,27 +657,38 @@ class _CaptureTile extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
         decoration: BoxDecoration(
-          color: captured ? AppColors.accentBg : AppColors.cream,
+          color: _hasPhoto ? AppColors.accentBg : AppColors.cream,
           borderRadius: AppRadii.md,
           border: Border.all(
-            color: captured ? AppColors.accent : AppColors.creamDark,
+            color: _hasPhoto ? AppColors.accent : AppColors.creamDark,
             width: 1.5,
           ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (_hasPhoto) ...[
+              ClipRRect(
+                borderRadius: AppRadii.sm,
+                child: AspectRatio(
+                  aspectRatio: 4 / 3,
+                  child: _AnglePhotoPreview(source: source!.trim()),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
             Row(
               children: [
                 Icon(
-                  captured
+                  _hasPhoto
                       ? Icons.check_circle_rounded
                       : Icons.add_a_photo_outlined,
                   size: 18,
-                  color: captured ? AppColors.accent : AppColors.textSecondary,
+                  color:
+                      _hasPhoto ? AppColors.accent : AppColors.textSecondary,
                 ),
                 const Spacer(),
-                if (captured)
+                if (_hasPhoto)
                   Text(
                     'Added',
                     style: GoogleFonts.dmSans(
@@ -611,6 +719,46 @@ class _CaptureTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _AnglePhotoPreview extends StatelessWidget {
+  const _AnglePhotoPreview({required this.source});
+
+  final String source;
+
+  @override
+  Widget build(BuildContext context) {
+    if (source.startsWith('http')) {
+      return Image.network(
+        source,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => const _PhotoPreviewFallback(),
+      );
+    }
+
+    final file = File(source);
+    if (file.existsSync()) {
+      return Image.file(file, fit: BoxFit.cover);
+    }
+
+    return const _PhotoPreviewFallback();
+  }
+}
+
+class _PhotoPreviewFallback extends StatelessWidget {
+  const _PhotoPreviewFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppColors.creamDark,
+      alignment: Alignment.center,
+      child: const Icon(
+        Icons.image_not_supported_outlined,
+        color: AppColors.textMuted,
       ),
     );
   }
@@ -723,17 +871,13 @@ class _GeneratePanel extends StatelessWidget {
   const _GeneratePanel({
     required this.status,
     required this.isGenerating,
-    required this.progress,
     required this.modelReady,
     required this.onGenerate,
-    this.modelFileName,
   });
 
   final VendorProduct3dStatus status;
   final bool isGenerating;
-  final double progress;
   final bool modelReady;
-  final String? modelFileName;
   final VoidCallback onGenerate;
 
   @override
@@ -744,8 +888,7 @@ class _GeneratePanel extends StatelessWidget {
         if (isGenerating) ...[
           ClipRRect(
             borderRadius: AppRadii.pill,
-            child: LinearProgressIndicator(
-              value: progress,
+            child: const LinearProgressIndicator(
               minHeight: 8,
               backgroundColor: AppColors.creamDark,
               color: AppColors.vendorForest,
@@ -771,39 +914,24 @@ class _GeneratePanel extends StatelessWidget {
                 color: AppColors.sage.withValues(alpha: 0.28),
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.check_circle_rounded,
-                      color: AppColors.sage,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        Vendor3dBuilderStrings.modelReady,
-                        style: GoogleFonts.dmSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.sage,
-                        ),
-                      ),
-                    ),
-                  ],
+                const Icon(
+                  Icons.check_circle_rounded,
+                  color: AppColors.sage,
+                  size: 20,
                 ),
-                if (modelFileName != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    modelFileName!,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    Vendor3dBuilderStrings.modelReady,
                     style: GoogleFonts.dmSans(
-                      fontSize: 12,
-                      color: AppColors.textMuted,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.sage,
                     ),
                   ),
-                ],
+                ),
               ],
             ),
           ),
@@ -876,10 +1004,10 @@ class _PrimaryActionButton extends StatelessWidget {
   }
 }
 
-class _BottomAttachBar extends StatelessWidget {
-  const _BottomAttachBar({required this.onAttach});
+class _BottomDoneBar extends StatelessWidget {
+  const _BottomDoneBar({required this.onDone});
 
-  final VoidCallback onAttach;
+  final VoidCallback onDone;
 
   @override
   Widget build(BuildContext context) {
@@ -899,7 +1027,7 @@ class _BottomAttachBar extends StatelessWidget {
         ],
       ),
       child: GestureDetector(
-        onTap: onAttach,
+        onTap: onDone,
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -909,7 +1037,7 @@ class _BottomAttachBar extends StatelessWidget {
           ),
           alignment: Alignment.center,
           child: Text(
-            Vendor3dBuilderStrings.attachCta,
+            Vendor3dBuilderStrings.doneCta,
             style: GoogleFonts.dmSans(
               fontSize: 15,
               fontWeight: FontWeight.w600,

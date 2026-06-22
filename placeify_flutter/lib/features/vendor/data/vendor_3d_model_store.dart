@@ -6,7 +6,7 @@ class Vendor3dModelRecord {
   const Vendor3dModelRecord({
     required this.productId,
     required this.status,
-    required this.capturedAngles,
+    required this.angleSources,
     this.updatedAt,
     this.modelFileName,
     this.errorMessage,
@@ -14,14 +14,19 @@ class Vendor3dModelRecord {
 
   final String productId;
   final VendorProduct3dStatus status;
-  final Set<String> capturedAngles;
+  final Map<String, String> angleSources;
   final DateTime? updatedAt;
   final String? modelFileName;
   final String? errorMessage;
 
+  Set<String> get capturedAngles => angleSources.entries
+      .where((entry) => entry.value.trim().isNotEmpty)
+      .map((entry) => entry.key)
+      .toSet();
+
   Vendor3dModelRecord copyWith({
     VendorProduct3dStatus? status,
-    Set<String>? capturedAngles,
+    Map<String, String>? angleSources,
     DateTime? updatedAt,
     String? modelFileName,
     String? errorMessage,
@@ -30,7 +35,7 @@ class Vendor3dModelRecord {
     return Vendor3dModelRecord(
       productId: productId,
       status: status ?? this.status,
-      capturedAngles: capturedAngles ?? this.capturedAngles,
+      angleSources: angleSources ?? this.angleSources,
       updatedAt: updatedAt ?? this.updatedAt,
       modelFileName: modelFileName ?? this.modelFileName,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
@@ -38,27 +43,28 @@ class Vendor3dModelRecord {
   }
 }
 
+/// Tripo expects front, left, back, and right multiview photos.
 abstract final class Vendor3dCaptureAngles {
   static const front = 'front';
-  static const side = 'side';
-  static const top = 'top';
-  static const detail = 'detail';
+  static const left = 'left';
+  static const back = 'back';
+  static const right = 'right';
 
-  static const all = [front, side, top, detail];
+  static const all = [front, left, back, right];
 
   static String labelFor(String angle) => switch (angle) {
         front => 'Front',
-        side => 'Side',
-        top => 'Top',
-        detail => 'Detail',
+        left => 'Left',
+        back => 'Back',
+        right => 'Right',
         _ => 'Angle',
       };
 
   static String hintFor(String angle) => switch (angle) {
         front => 'Full front view',
-        side => '45° or profile view',
-        top => 'Overhead angle',
-        detail => 'Texture / joinery',
+        left => 'Left side profile',
+        back => 'Full back view',
+        right => 'Right side profile',
         _ => 'Reference photo',
       };
 }
@@ -79,8 +85,8 @@ abstract final class Vendor3dModelStore {
 
     final created = Vendor3dModelRecord(
       productId: productId,
-      status: VendorProduct3dStatus.draft,
-      capturedAngles: const {},
+      status: VendorProduct3dStatus.none,
+      angleSources: const {},
       updatedAt: DateTime.now(),
     );
     _records[productId] = created;
@@ -90,6 +96,69 @@ abstract final class Vendor3dModelStore {
   static Vendor3dModelRecord updateRecord(Vendor3dModelRecord record) {
     _records[record.productId] = record.copyWith(updatedAt: DateTime.now());
     return _records[record.productId]!;
+  }
+
+  static void preloadFromProduct(VendorProduct product) {
+    final sources = <String, String>{};
+    for (var i = 0; i < Vendor3dCaptureAngles.all.length; i++) {
+      if (i >= product.imageUrls.length) break;
+      final url = product.imageUrls[i].trim();
+      if (url.isEmpty) continue;
+      sources[Vendor3dCaptureAngles.all[i]] = url;
+    }
+
+    final record = ensureDraft(product.id);
+    updateRecord(
+      record.copyWith(
+        angleSources: sources,
+        status: product.hasArView
+            ? VendorProduct3dStatus.ready
+            : sources.isEmpty
+                ? VendorProduct3dStatus.none
+                : VendorProduct3dStatus.draft,
+        clearError: true,
+      ),
+    );
+  }
+
+  static void setAngleSource(String productId, String angle, String source) {
+    final record = ensureDraft(productId);
+    final sources = Map<String, String>.from(record.angleSources);
+    sources[angle] = source.trim();
+    updateRecord(
+      record.copyWith(
+        angleSources: sources,
+        status: sources.values.any((value) => value.isNotEmpty)
+            ? VendorProduct3dStatus.draft
+            : VendorProduct3dStatus.none,
+        clearError: true,
+      ),
+    );
+  }
+
+  static void clearAngleSource(String productId, String angle) {
+    final record = ensureDraft(productId);
+    final sources = Map<String, String>.from(record.angleSources)..remove(angle);
+    updateRecord(
+      record.copyWith(
+        angleSources: sources,
+        status: sources.isEmpty
+            ? VendorProduct3dStatus.none
+            : VendorProduct3dStatus.draft,
+        clearError: true,
+      ),
+    );
+  }
+
+  static List<String> orderedSourcesFor(String productId) {
+    final record = recordFor(productId);
+    if (record == null) return const [];
+
+    return [
+      for (final angle in Vendor3dCaptureAngles.all)
+        if (record.angleSources[angle]?.trim().isNotEmpty ?? false)
+          record.angleSources[angle]!.trim(),
+    ];
   }
 
   static void markProcessing(String productId) {
@@ -102,12 +171,11 @@ abstract final class Vendor3dModelStore {
     );
   }
 
-  static void markReady(String productId, {required String modelFileName}) {
+  static void markReady(String productId) {
     final record = ensureDraft(productId);
     updateRecord(
       record.copyWith(
         status: VendorProduct3dStatus.ready,
-        modelFileName: modelFileName,
         clearError: true,
       ),
     );
@@ -119,25 +187,6 @@ abstract final class Vendor3dModelStore {
       record.copyWith(
         status: VendorProduct3dStatus.failed,
         errorMessage: message,
-      ),
-    );
-  }
-
-  static void toggleCapture(String productId, String angle) {
-    final record = ensureDraft(productId);
-    final angles = Set<String>.from(record.capturedAngles);
-    if (angles.contains(angle)) {
-      angles.remove(angle);
-    } else {
-      angles.add(angle);
-    }
-    updateRecord(
-      record.copyWith(
-        capturedAngles: angles,
-        status: angles.isEmpty
-            ? VendorProduct3dStatus.none
-            : VendorProduct3dStatus.draft,
-        clearError: true,
       ),
     );
   }

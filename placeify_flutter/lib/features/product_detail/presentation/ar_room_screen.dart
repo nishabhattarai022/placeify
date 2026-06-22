@@ -50,9 +50,10 @@ class ArRoomScreen extends StatefulWidget {
 }
 
 class _ArRoomScreenState extends State<ArRoomScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   static const _previewDistanceM = 1.0;
   static const _furnitureNodeName = 'placeify_furniture';
+  static const _rotationStepRadians = math.pi / 12; // 15°
 
   ARSessionManager? _sessionManager;
   ARObjectManager? _objectManager;
@@ -104,6 +105,9 @@ class _ArRoomScreenState extends State<ArRoomScreen>
         userMultiplier: _userScaleMultiplier,
       );
 
+  bool get _canAdjustModel =>
+      !_modelLoading && !_isPlacing && _furnitureNode != null;
+
   @override
   Widget build(BuildContext context) {
     final showScanOverlay =
@@ -118,6 +122,14 @@ class _ArRoomScreenState extends State<ArRoomScreen>
             onARViewCreated: _onArViewCreated,
             planeDetectionConfig: PlaneDetectionConfig.horizontal,
           ),
+          if (_canAdjustModel)
+            ArPinchScaleOverlay(
+              enabled: true,
+              initialMultiplier: _userScaleMultiplier,
+              minMultiplier: ArFurnitureScale.minUserMultiplier,
+              maxMultiplier: ArFurnitureScale.maxUserMultiplier,
+              onMultiplierChanged: _onPinchMultiplierChanged,
+            ),
           if (showScanOverlay)
             IgnorePointer(
               child: _PlaneScanOverlay(pulse: _scanPulseController),
@@ -141,14 +153,24 @@ class _ArRoomScreenState extends State<ArRoomScreen>
                     padding: EdgeInsets.only(top: 8),
                     child: _SurfaceDetectedChip(),
                   ),
-                if (_isPlaced)
+                if (_canAdjustModel)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
-                    child: ArScaleControls(
-                      multiplier: _userScaleMultiplier,
-                      minMultiplier: ArFurnitureScale.minUserMultiplier,
-                      maxMultiplier: ArFurnitureScale.maxUserMultiplier,
-                      onChanged: _onPinchMultiplierChanged,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ArScaleControls(
+                          multiplier: _userScaleMultiplier,
+                          minMultiplier: ArFurnitureScale.minUserMultiplier,
+                          maxMultiplier: ArFurnitureScale.maxUserMultiplier,
+                          onChanged: _onPinchMultiplierChanged,
+                        ),
+                        const SizedBox(width: 10),
+                        ArRotationControls(
+                          onRotateLeft: () => _rotateModel(-_rotationStepRadians),
+                          onRotateRight: () => _rotateModel(_rotationStepRadians),
+                        ),
+                      ],
                     ),
                   ),
                 const Spacer(),
@@ -186,9 +208,10 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     objectManager.onPanChange = _onPanChange;
     objectManager.onPanEnd = _onPanEnd;
     objectManager.onRotationStart = _onRotationStart;
+    objectManager.onRotationChange = _onRotationChange;
     objectManager.onRotationEnd = _onRotationEnd;
 
-    _initSession(handleTaps: true, handlePans: false, handleRotation: false);
+    _initSession();
     objectManager.onInitialize(
       iosScaleFactor: ArFurnitureScale.nativeIosFactor,
       androidScaleFactor: ArFurnitureScale.nativeAndroidFactor,
@@ -197,20 +220,16 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     _loadModel();
   }
 
-  Future<void> _initSession({
-    required bool handleTaps,
-    required bool handlePans,
-    required bool handleRotation,
-  }) async {
+  Future<void> _initSession() async {
     await _sessionManager?.onInitialize(
       showAnimatedGuide: true,
       autoHideCoachingOverlay: true,
       showFeaturePoints: false,
       showPlanes: true,
       showWorldOrigin: false,
-      handleTaps: handleTaps,
-      handlePans: handlePans,
-      handleRotation: handleRotation,
+      handleTaps: true,
+      handlePans: true,
+      handleRotation: true,
       lightIntensityMultiplier: 1.25,
     );
   }
@@ -312,11 +331,11 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     final previewPos = Vector3(target.x, target.y - 0.15, target.z);
 
     node.position = previewPos;
-    node.scale = _nodeScale;
 
-    final yaw = math.atan2(forward.x, forward.z);
+    final yaw = math.atan2(forward.x, forward.z) + _currentRotationY;
     final rotation = Matrix4.identity()..rotateY(yaw);
     node.rotation = rotation.getRotation();
+    node.scale = _nodeScale;
   }
 
   Vector3 _cameraForward(Matrix4 cameraPose) {
@@ -388,12 +407,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
         return;
       }
 
-      await _initSession(
-        handleTaps: false,
-        handlePans: true,
-        handleRotation: true,
-      );
-
       if (!mounted) return;
       setState(() {
         _furnitureNode = node;
@@ -461,12 +474,54 @@ class _ArRoomScreenState extends State<ArRoomScreen>
 
   void _onRotationStart(String nodeName) {
     if (!_isPlaced || nodeName != _nodeName) return;
+    setState(() => _statusMessage = null);
+  }
+
+  void _onRotationChange(String nodeName) {
+    if (!_isPlaced || nodeName != _nodeName) return;
   }
 
   void _onRotationEnd(String nodeName, Matrix4 transform) {
     if (!_isPlaced || nodeName != _nodeName) return;
     _currentRotationY = transform.matrixEulerAngles.y;
-    _furnitureNode?.eulerAngles = Vector3(0, _currentRotationY, 0);
+    _furnitureNode?.transform = transform;
+  }
+
+  void _rotateModel(double deltaRadians) {
+    if (_furnitureNode == null) return;
+    setState(() {
+      _currentRotationY += deltaRadians;
+      _statusMessage = null;
+    });
+    _applyNodeTransform();
+  }
+
+  void _applyNodeTransform() {
+    final node = _furnitureNode;
+    if (node == null) return;
+
+    final scale = _nodeScale;
+    if (_isPlaced) {
+      node.eulerAngles = Vector3(0, _currentRotationY, 0);
+      node.scale = scale;
+      return;
+    }
+
+    final yaw = _currentRotationY;
+    node.eulerAngles = Vector3(0, yaw, 0);
+    node.scale = scale;
+  }
+
+  void _onPinchMultiplierChanged(double multiplier) {
+    if (_furnitureNode == null) return;
+    setState(() {
+      _userScaleMultiplier = multiplier.clamp(
+        ArFurnitureScale.minUserMultiplier,
+        ArFurnitureScale.maxUserMultiplier,
+      );
+      _statusMessage = null;
+    });
+    _applyNodeTransform();
   }
 
   Future<void> _reanchorAtTransform({
@@ -513,17 +568,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     setState(() {
       _furnitureNode = newNode;
       _currentAnchor = anchor;
-    });
-  }
-
-  void _onPinchMultiplierChanged(double multiplier) {
-    if (!_isPlaced) return;
-    setState(() {
-      _userScaleMultiplier = multiplier.clamp(
-        ArFurnitureScale.minUserMultiplier,
-        ArFurnitureScale.maxUserMultiplier,
-      );
-      _furnitureNode?.scale = _nodeScale;
     });
   }
 
@@ -703,13 +747,15 @@ class _InstructionBanner extends StatelessWidget {
     if (modelLoading) return 'Loading $productName…';
     if (isPlaced) {
       if (isDragging) return 'Release to set the new position.';
-      return 'Drag to move. Pinch the size bar or use +/- to resize. Twist with two fingers to rotate.';
+      return 'Drag to move. Pinch with two fingers or use +/- to resize. '
+          'Twist with two fingers or tap Rotate to turn the model.';
     }
     if (!isPlaneDetected) {
       return 'Move your phone to detect a surface.';
     }
     if (isPreviewMode) {
-      return 'Tap a highlighted surface to place $productName.';
+      return 'Use +/- or pinch to resize. Tap Rotate to turn the model, '
+          'then tap a surface to place $productName.';
     }
     return 'Move your phone to detect a surface.';
   }
