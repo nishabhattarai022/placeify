@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:placeify/features/home/data/mock_product_repository.dart';
 
 import '../../../../core/constants/app_colors.dart';
@@ -7,6 +6,7 @@ import '../../../../core/constants/app_radii.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../domain/models/vendor_product.dart';
+import 'vendor_list_thumbnail.dart';
 import 'vendor_product_status_chip.dart';
 
 class VendorProductRow extends StatelessWidget {
@@ -64,23 +64,10 @@ class VendorProductRow extends StatelessWidget {
               ),
               const SizedBox(width: 10),
             ],
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: AppColors.cream,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: SvgPicture.asset(
-                  iconPath,
-                  width: 24,
-                  colorFilter: const ColorFilter.mode(
-                    AppColors.bark,
-                    BlendMode.srcIn,
-                  ),
-                ),
-              ),
+            VendorListThumbnail(
+              label: product.name,
+              imageUrl: product.primaryImageUrl,
+              fallbackIconPath: iconPath,
             ),
             const SizedBox(width: 12),
             Expanded(

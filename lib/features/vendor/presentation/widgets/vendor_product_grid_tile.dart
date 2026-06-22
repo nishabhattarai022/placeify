@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:placeify/features/home/data/mock_product_repository.dart';
 
 import '../../../../core/constants/app_colors.dart';
@@ -7,6 +6,7 @@ import '../../../../core/constants/app_radii.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../domain/models/vendor_product.dart';
+import 'vendor_list_thumbnail.dart';
 import 'vendor_product_status_chip.dart';
 
 class VendorProductGridTile extends StatelessWidget {
@@ -59,22 +59,19 @@ class VendorProductGridTile extends StatelessWidget {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        color: AppColors.cream,
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(12),
-                        ),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(12),
                       ),
-                      child: Center(
-                        child: SvgPicture.asset(
-                          iconPath,
-                          width: 36,
-                          colorFilter: const ColorFilter.mode(
-                            AppColors.bark,
-                            BlendMode.srcIn,
-                          ),
-                        ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return VendorListThumbnail(
+                            label: product.name,
+                            imageUrl: product.primaryImageUrl,
+                            fallbackIconPath: iconPath,
+                            size: constraints.maxWidth,
+                          );
+                        },
                       ),
                     ),
                   ),
