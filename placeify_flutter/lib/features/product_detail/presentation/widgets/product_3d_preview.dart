@@ -3,6 +3,7 @@ import 'package:model_viewer_plus/model_viewer_plus.dart';
 
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/widgets/toast_overlay.dart';
+import '../../../home/domain/models/product.dart';
 import '../ar_room_screen.dart';
 import '../product_detail_tokens.dart';
 
@@ -12,12 +13,14 @@ class Product3dPreview extends StatefulWidget {
     required this.productId,
     required this.modelSrc,
     required this.productName,
+    required this.dimensions,
     super.key,
   });
 
   final String productId;
   final String modelSrc;
   final String productName;
+  final ProductDimensions dimensions;
 
   @override
   State<Product3dPreview> createState() => _Product3dPreviewState();
@@ -37,6 +40,7 @@ class _Product3dPreviewState extends State<Product3dPreview> {
         remoteModelUrl: widget.modelSrc,
         productId: widget.productId,
         productName: widget.productName,
+        dimensions: widget.dimensions,
       );
 
       if (!mounted) return;
