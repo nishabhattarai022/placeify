@@ -14,6 +14,7 @@ import '../../../core/widgets/shimmer_loader.dart';
 import '../domain/models/vendor_product.dart';
 import 'providers/vendor_products_provider.dart';
 import 'widgets/bulk_discount_sheet.dart';
+import 'widgets/vendor_build_3d_module_card.dart';
 import 'widgets/vendor_product_category_filter_sheet.dart';
 import 'widgets/vendor_product_delete_sheet.dart';
 import 'widgets/vendor_product_grid_tile.dart';
@@ -314,9 +315,17 @@ class _VendorProductsScreenState extends ConsumerState<VendorProductsScreen> {
         24,
         _selectionMode ? 88 : BottomNavTokens.scrollBottomPadding,
       ),
-      itemCount: products.length,
+      itemCount: products.length + (_selectionMode ? 0 : 1),
       itemBuilder: (context, index) {
-        final product = products[index];
+        if (!_selectionMode && index == 0) {
+          return const Padding(
+            padding: EdgeInsets.only(bottom: 16),
+            child: VendorBuild3dModuleCard(),
+          );
+        }
+
+        final productIndex = _selectionMode ? index : index - 1;
+        final product = products[productIndex];
         return VendorProductRow(
           product: product,
           selectionMode: _selectionMode,
@@ -324,40 +333,59 @@ class _VendorProductsScreenState extends ConsumerState<VendorProductsScreen> {
           onTap: () => _handleProductTap(product),
           onLongPress: () => _enterSelectionMode(product.id),
           onToggleSelected: () => _toggleSelected(product.id),
+          onBuild3d: () {
+            HapticService.light();
+            context.push(VendorRoutes.productsBuild3dFor(product.id));
+          },
         );
       },
     );
   }
 
   Widget _buildGrid(List<VendorProduct> products) {
-    return GridView.builder(
+    return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(
         parent: BouncingScrollPhysics(),
       ),
-      padding: EdgeInsets.fromLTRB(
-        24,
-        0,
-        24,
-        _selectionMode ? 88 : BottomNavTokens.scrollBottomPadding,
-      ),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        childAspectRatio: 0.78,
-      ),
-      itemCount: products.length,
-      itemBuilder: (context, index) {
-        final product = products[index];
-        return VendorProductGridTile(
-          product: product,
-          selectionMode: _selectionMode,
-          isSelected: _selectedIds.contains(product.id),
-          onTap: () => _handleProductTap(product),
-          onLongPress: () => _enterSelectionMode(product.id),
-          onToggleSelected: () => _toggleSelected(product.id),
-        );
-      },
+      slivers: [
+        if (!_selectionMode)
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(24, 0, 24, 16),
+              child: VendorBuild3dModuleCard(),
+            ),
+          ),
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(
+            24,
+            0,
+            24,
+            _selectionMode ? 88 : BottomNavTokens.scrollBottomPadding,
+          ),
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 0.78,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final product = products[index];
+                return VendorProductGridTile(
+                  product: product,
+                  selectionMode: _selectionMode,
+                  isSelected: _selectedIds.contains(product.id),
+                  onTap: () => _handleProductTap(product),
+                  onLongPress: () => _enterSelectionMode(product.id),
+                  onToggleSelected: () => _toggleSelected(product.id),
+                );
+              },
+              childCount: products.length,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
