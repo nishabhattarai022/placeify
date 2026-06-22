@@ -32,7 +32,9 @@ class VendorProductRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iconPath = _iconForCategory(product.categoryId);
-    final meta = '${product.sku} · ${product.stock} in stock';
+    final stockLabel = product.isLowStock
+        ? 'Low stock · ${product.stock} left'
+        : '${product.stock} in stock';
     final modelStatus = Vendor3dModelStore.statusFor(product);
     final showBuild3d =
         !selectionMode && onBuild3d != null && !modelStatus.isReady;
@@ -89,10 +91,19 @@ class VendorProductRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    meta,
+                    '${product.sku} · $stockLabel',
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    Formatters.currencyFull(product.price),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ],
@@ -101,15 +112,6 @@ class VendorProductRow extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  Formatters.currencyFull(product.price),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 4),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
