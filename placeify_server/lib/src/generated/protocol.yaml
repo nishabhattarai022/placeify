@@ -18,6 +18,9 @@ user:
   - ensureDemoAdmin:
   - listMyOrders:
   - getMyOrder:
+  - cancelMyOrder:
+  - getMyOrderPayment:
+  - completePayment:
   - listMyArSessions:
   - requirePlaceifyUser:
   - requireRole:

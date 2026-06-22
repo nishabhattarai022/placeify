@@ -493,6 +493,68 @@ class Endpoints extends _i1.EndpointDispatch {
                 params['orderId'],
               ),
         ),
+        'cancelMyOrder': _i1.MethodConnector(
+          name: 'cancelMyOrder',
+          params: {
+            'orderId': _i1.ParameterDescription(
+              name: 'orderId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'reason': _i1.ParameterDescription(
+              name: 'reason',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['user'] as _i4.UserEndpoint).cancelMyOrder(
+                session,
+                params['orderId'],
+                params['reason'],
+              ),
+        ),
+        'getMyOrderPayment': _i1.MethodConnector(
+          name: 'getMyOrderPayment',
+          params: {
+            'orderId': _i1.ParameterDescription(
+              name: 'orderId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['user'] as _i4.UserEndpoint).getMyOrderPayment(
+                    session,
+                    params['orderId'],
+                  ),
+        ),
+        'completePayment': _i1.MethodConnector(
+          name: 'completePayment',
+          params: {
+            'orderId': _i1.ParameterDescription(
+              name: 'orderId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['user'] as _i4.UserEndpoint).completePayment(
+                    session,
+                    params['orderId'],
+                  ),
+        ),
         'listMyArSessions': _i1.MethodConnector(
           name: 'listMyArSessions',
           params: {

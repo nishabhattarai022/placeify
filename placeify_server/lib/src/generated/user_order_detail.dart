@@ -15,7 +15,8 @@ import 'order_status.dart' as _i2;
 import 'delivery_stage.dart' as _i3;
 import 'user_order_line_item.dart' as _i4;
 import 'user_order_delivery_event.dart' as _i5;
-import 'package:placeify_server/src/generated/protocol.dart' as _i6;
+import 'user_order_payment_summary.dart' as _i6;
+import 'package:placeify_server/src/generated/protocol.dart' as _i7;
 
 /// Full customer order with line items and delivery timeline.
 abstract class UserOrderDetail
@@ -33,6 +34,7 @@ abstract class UserOrderDetail
     this.latestDeliveryNote,
     required this.items,
     required this.deliveryUpdates,
+    required this.payment,
   });
 
   factory UserOrderDetail({
@@ -48,6 +50,7 @@ abstract class UserOrderDetail
     String? latestDeliveryNote,
     required List<_i4.UserOrderLineItem> items,
     required List<_i5.UserOrderDeliveryEvent> deliveryUpdates,
+    required _i6.UserOrderPaymentSummary payment,
   }) = _UserOrderDetailImpl;
 
   factory UserOrderDetail.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -68,13 +71,16 @@ abstract class UserOrderDetail
               (jsonSerialization['latestDeliveryStage'] as String),
             ),
       latestDeliveryNote: jsonSerialization['latestDeliveryNote'] as String?,
-      items: _i6.Protocol().deserialize<List<_i4.UserOrderLineItem>>(
+      items: _i7.Protocol().deserialize<List<_i4.UserOrderLineItem>>(
         jsonSerialization['items'],
       ),
-      deliveryUpdates: _i6.Protocol()
+      deliveryUpdates: _i7.Protocol()
           .deserialize<List<_i5.UserOrderDeliveryEvent>>(
             jsonSerialization['deliveryUpdates'],
           ),
+      payment: _i7.Protocol().deserialize<_i6.UserOrderPaymentSummary>(
+        jsonSerialization['payment'],
+      ),
     );
   }
 
@@ -102,6 +108,8 @@ abstract class UserOrderDetail
 
   List<_i5.UserOrderDeliveryEvent> deliveryUpdates;
 
+  _i6.UserOrderPaymentSummary payment;
+
   /// Returns a shallow copy of this [UserOrderDetail]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -118,6 +126,7 @@ abstract class UserOrderDetail
     String? latestDeliveryNote,
     List<_i4.UserOrderLineItem>? items,
     List<_i5.UserOrderDeliveryEvent>? deliveryUpdates,
+    _i6.UserOrderPaymentSummary? payment,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -136,6 +145,7 @@ abstract class UserOrderDetail
       if (latestDeliveryNote != null) 'latestDeliveryNote': latestDeliveryNote,
       'items': items.toJson(valueToJson: (v) => v.toJson()),
       'deliveryUpdates': deliveryUpdates.toJson(valueToJson: (v) => v.toJson()),
+      'payment': payment.toJson(),
     };
   }
 
@@ -158,6 +168,7 @@ abstract class UserOrderDetail
       'deliveryUpdates': deliveryUpdates.toJson(
         valueToJson: (v) => v.toJsonForProtocol(),
       ),
+      'payment': payment.toJsonForProtocol(),
     };
   }
 
@@ -183,6 +194,7 @@ class _UserOrderDetailImpl extends UserOrderDetail {
     String? latestDeliveryNote,
     required List<_i4.UserOrderLineItem> items,
     required List<_i5.UserOrderDeliveryEvent> deliveryUpdates,
+    required _i6.UserOrderPaymentSummary payment,
   }) : super._(
          id: id,
          orderNumber: orderNumber,
@@ -196,6 +208,7 @@ class _UserOrderDetailImpl extends UserOrderDetail {
          latestDeliveryNote: latestDeliveryNote,
          items: items,
          deliveryUpdates: deliveryUpdates,
+         payment: payment,
        );
 
   /// Returns a shallow copy of this [UserOrderDetail]
@@ -215,6 +228,7 @@ class _UserOrderDetailImpl extends UserOrderDetail {
     Object? latestDeliveryNote = _Undefined,
     List<_i4.UserOrderLineItem>? items,
     List<_i5.UserOrderDeliveryEvent>? deliveryUpdates,
+    _i6.UserOrderPaymentSummary? payment,
   }) {
     return UserOrderDetail(
       id: id ?? this.id,
@@ -237,6 +251,7 @@ class _UserOrderDetailImpl extends UserOrderDetail {
       deliveryUpdates:
           deliveryUpdates ??
           this.deliveryUpdates.map((e0) => e0.copyWith()).toList(),
+      payment: payment ?? this.payment.copyWith(),
     );
   }
 }

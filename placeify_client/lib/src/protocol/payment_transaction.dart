@@ -11,10 +11,11 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
-import 'payment_transaction_status.dart' as _i2;
-import 'order.dart' as _i3;
-import 'user.dart' as _i4;
-import 'package:placeify_client/src/protocol/protocol.dart' as _i5;
+import 'payment_method.dart' as _i2;
+import 'payment_transaction_status.dart' as _i3;
+import 'order.dart' as _i4;
+import 'user.dart' as _i5;
+import 'package:placeify_client/src/protocol/protocol.dart' as _i6;
 
 /// Customer payment record for a placed order.
 abstract class PaymentTransaction implements _i1.SerializableModel {
@@ -26,28 +27,31 @@ abstract class PaymentTransaction implements _i1.SerializableModel {
     this.user,
     required this.provider,
     required this.providerTransactionId,
+    _i2.PaymentMethod? paymentMethod,
     required this.amount,
     String? currency,
-    _i2.PaymentTransactionStatus? status,
+    _i3.PaymentTransactionStatus? status,
     this.note,
     DateTime? createdAt,
     DateTime? updatedAt,
-  }) : currency = currency ?? 'NPR',
-       status = status ?? _i2.PaymentTransactionStatus.pending,
+  }) : paymentMethod = paymentMethod ?? _i2.PaymentMethod.mockOnline,
+       currency = currency ?? 'NPR',
+       status = status ?? _i3.PaymentTransactionStatus.pending,
        createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
 
   factory PaymentTransaction({
     int? id,
     required int orderId,
-    _i3.Order? order,
+    _i4.Order? order,
     required _i1.UuidValue userId,
-    _i4.User? user,
+    _i5.User? user,
     required String provider,
     required String providerTransactionId,
+    _i2.PaymentMethod? paymentMethod,
     required double amount,
     String? currency,
-    _i2.PaymentTransactionStatus? status,
+    _i3.PaymentTransactionStatus? status,
     String? note,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -59,19 +63,24 @@ abstract class PaymentTransaction implements _i1.SerializableModel {
       orderId: jsonSerialization['orderId'] as int,
       order: jsonSerialization['order'] == null
           ? null
-          : _i5.Protocol().deserialize<_i3.Order>(jsonSerialization['order']),
+          : _i6.Protocol().deserialize<_i4.Order>(jsonSerialization['order']),
       userId: _i1.UuidValueJsonExtension.fromJson(jsonSerialization['userId']),
       user: jsonSerialization['user'] == null
           ? null
-          : _i5.Protocol().deserialize<_i4.User>(jsonSerialization['user']),
+          : _i6.Protocol().deserialize<_i5.User>(jsonSerialization['user']),
       provider: jsonSerialization['provider'] as String,
       providerTransactionId:
           jsonSerialization['providerTransactionId'] as String,
+      paymentMethod: jsonSerialization['paymentMethod'] == null
+          ? null
+          : _i2.PaymentMethod.fromJson(
+              (jsonSerialization['paymentMethod'] as String),
+            ),
       amount: (jsonSerialization['amount'] as num).toDouble(),
       currency: jsonSerialization['currency'] as String?,
       status: jsonSerialization['status'] == null
           ? null
-          : _i2.PaymentTransactionStatus.fromJson(
+          : _i3.PaymentTransactionStatus.fromJson(
               (jsonSerialization['status'] as String),
             ),
       note: jsonSerialization['note'] as String?,
@@ -91,21 +100,23 @@ abstract class PaymentTransaction implements _i1.SerializableModel {
 
   int orderId;
 
-  _i3.Order? order;
+  _i4.Order? order;
 
   _i1.UuidValue userId;
 
-  _i4.User? user;
+  _i5.User? user;
 
   String provider;
 
   String providerTransactionId;
 
+  _i2.PaymentMethod paymentMethod;
+
   double amount;
 
   String currency;
 
-  _i2.PaymentTransactionStatus status;
+  _i3.PaymentTransactionStatus status;
 
   String? note;
 
@@ -119,14 +130,15 @@ abstract class PaymentTransaction implements _i1.SerializableModel {
   PaymentTransaction copyWith({
     int? id,
     int? orderId,
-    _i3.Order? order,
+    _i4.Order? order,
     _i1.UuidValue? userId,
-    _i4.User? user,
+    _i5.User? user,
     String? provider,
     String? providerTransactionId,
+    _i2.PaymentMethod? paymentMethod,
     double? amount,
     String? currency,
-    _i2.PaymentTransactionStatus? status,
+    _i3.PaymentTransactionStatus? status,
     String? note,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -142,6 +154,7 @@ abstract class PaymentTransaction implements _i1.SerializableModel {
       if (user != null) 'user': user?.toJson(),
       'provider': provider,
       'providerTransactionId': providerTransactionId,
+      'paymentMethod': paymentMethod.toJson(),
       'amount': amount,
       'currency': currency,
       'status': status.toJson(),
@@ -163,14 +176,15 @@ class _PaymentTransactionImpl extends PaymentTransaction {
   _PaymentTransactionImpl({
     int? id,
     required int orderId,
-    _i3.Order? order,
+    _i4.Order? order,
     required _i1.UuidValue userId,
-    _i4.User? user,
+    _i5.User? user,
     required String provider,
     required String providerTransactionId,
+    _i2.PaymentMethod? paymentMethod,
     required double amount,
     String? currency,
-    _i2.PaymentTransactionStatus? status,
+    _i3.PaymentTransactionStatus? status,
     String? note,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -182,6 +196,7 @@ class _PaymentTransactionImpl extends PaymentTransaction {
          user: user,
          provider: provider,
          providerTransactionId: providerTransactionId,
+         paymentMethod: paymentMethod,
          amount: amount,
          currency: currency,
          status: status,
@@ -202,9 +217,10 @@ class _PaymentTransactionImpl extends PaymentTransaction {
     Object? user = _Undefined,
     String? provider,
     String? providerTransactionId,
+    _i2.PaymentMethod? paymentMethod,
     double? amount,
     String? currency,
-    _i2.PaymentTransactionStatus? status,
+    _i3.PaymentTransactionStatus? status,
     Object? note = _Undefined,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -212,12 +228,13 @@ class _PaymentTransactionImpl extends PaymentTransaction {
     return PaymentTransaction(
       id: id is int? ? id : this.id,
       orderId: orderId ?? this.orderId,
-      order: order is _i3.Order? ? order : this.order?.copyWith(),
+      order: order is _i4.Order? ? order : this.order?.copyWith(),
       userId: userId ?? this.userId,
-      user: user is _i4.User? ? user : this.user?.copyWith(),
+      user: user is _i5.User? ? user : this.user?.copyWith(),
       provider: provider ?? this.provider,
       providerTransactionId:
           providerTransactionId ?? this.providerTransactionId,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
       amount: amount ?? this.amount,
       currency: currency ?? this.currency,
       status: status ?? this.status,

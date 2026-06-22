@@ -2,8 +2,13 @@ import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
+import 'user_payment_store.dart';
 
 class UserOrderStore {
+  UserOrderStore({UserPaymentStore? paymentStore})
+      : _paymentStore = paymentStore ?? UserPaymentStore();
+
+  final UserPaymentStore _paymentStore;
   Future<List<UserOrderSummary>> listSummaries(
     Session session,
     UuidValue userId, {
@@ -84,6 +89,8 @@ class UserOrderStore {
       latestDeliveryStage: latestDelivery?.stage,
       latestDeliveryNote: latestDelivery?.note,
     );
+    final payment =
+        await _paymentStore.getPaymentSummary(session, userId, orderId);
 
     return UserOrderDetail(
       id: summary.id,
@@ -115,7 +122,51 @@ class UserOrderStore {
             createdAt: update.createdAt,
           ),
       ],
+      payment: payment,
     );
+  }
+
+  Future<UserOrderDetail> cancelOrder(
+    Session session,
+    UuidValue userId,
+    int orderId,
+    String reason,
+  ) async {
+    final trimmed = reason.trim();
+    if (trimmed.isEmpty) {
+      throw PlaceifyException(
+        message: 'Select a cancellation reason.',
+        code: 'INVALID_REASON',
+      );
+    }
+
+    final order = await Order.db.findById(session, orderId);
+    if (order == null || order.userId != userId) {
+      throw PlaceifyException(
+        message: 'Order not found.',
+        code: 'NOT_FOUND',
+      );
+    }
+
+    final cancellable = order.status == OrderStatus.pending ||
+        order.status == OrderStatus.confirmed ||
+        order.status == OrderStatus.accepted;
+    if (!cancellable) {
+      throw PlaceifyException(
+        message: 'This order can no longer be cancelled.',
+        code: 'ORDER_NOT_CANCELLABLE',
+      );
+    }
+
+    await Order.db.updateRow(
+      session,
+      order.copyWith(
+        status: OrderStatus.cancelled,
+        updatedAt: DateTime.now(),
+      ),
+    );
+
+    return getDetail(session, userId, orderId);
   }
 
   Future<OrderDeliveryUpdate?> _latestDeliveryUpdate(

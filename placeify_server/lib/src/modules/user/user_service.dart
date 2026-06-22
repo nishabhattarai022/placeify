@@ -4,17 +4,21 @@ import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
 import 'user_order_store.dart';
+import 'user_payment_store.dart';
 import 'user_repository.dart';
 
 class UserService {
   UserService({
     UserProfileStore? repository,
     UserOrderStore? orderStore,
+    UserPaymentStore? paymentStore,
   })  : _repository = repository ?? UserProfileStore(),
-        _orderStore = orderStore ?? UserOrderStore();
+        _orderStore = orderStore ?? UserOrderStore(),
+        _paymentStore = paymentStore ?? UserPaymentStore();
 
   final UserProfileStore _repository;
   final UserOrderStore _orderStore;
+  final UserPaymentStore _paymentStore;
 
   Future<User?> getCurrentUser(Session session) {
     return SessionService.resolveUserIfAuthenticated(session);
@@ -101,5 +105,30 @@ class UserService {
   Future<UserOrderDetail> getMyOrder(Session session, int orderId) async {
     final user = await SessionService.requireUser(session);
     return _orderStore.getDetail(session, user.id!, orderId);
+  }
+
+  Future<UserOrderDetail> cancelMyOrder(
+    Session session,
+    int orderId,
+    String reason,
+  ) async {
+    final user = await SessionService.requireUser(session);
+    return _orderStore.cancelOrder(session, user.id!, orderId, reason);
+  }
+
+  Future<UserOrderPaymentSummary> getMyOrderPayment(
+    Session session,
+    int orderId,
+  ) async {
+    final user = await SessionService.requireUser(session);
+    return _paymentStore.getPaymentSummary(session, user.id!, orderId);
+  }
+
+  Future<UserOrderPaymentSummary> completePayment(
+    Session session,
+    int orderId,
+  ) async {
+    final user = await SessionService.requireUser(session);
+    return _paymentStore.completePayment(session, user.id!, orderId);
   }
 }

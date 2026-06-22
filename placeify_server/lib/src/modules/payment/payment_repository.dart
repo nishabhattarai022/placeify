@@ -17,16 +17,19 @@ class PaymentStore {
     required int orderId,
     required UuidValue userId,
     required double amount,
+    required PaymentMethod paymentMethod,
     Transaction? transaction,
   }) async {
+    final provider = _providerForMethod(paymentMethod);
     final payment = await PaymentTransaction.db.insertRow(
       session,
       PaymentTransaction(
         orderId: orderId,
         userId: userId,
-        provider: 'manual',
+        provider: provider,
+        paymentMethod: paymentMethod,
         providerTransactionId:
-            'manual-$orderId-${DateTime.now().microsecondsSinceEpoch}',
+            '$provider-$orderId-${DateTime.now().microsecondsSinceEpoch}',
         amount: amount,
         status: PaymentTransactionStatus.pending,
       ),
@@ -40,6 +43,15 @@ class PaymentStore {
     );
 
     return payment;
+  }
+
+  String _providerForMethod(PaymentMethod method) {
+    return switch (method) {
+      PaymentMethod.cod => 'cod',
+      PaymentMethod.mockOnline => 'mock',
+      PaymentMethod.esewa => 'esewa',
+      PaymentMethod.khalti => 'khalti',
+    };
   }
 
   Future<VendorPaymentsOverview> getOverview(Session session) async {

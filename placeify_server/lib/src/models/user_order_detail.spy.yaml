@@ -13,3 +13,4 @@ fields:
   latestDeliveryNote: String?
   items: List<UserOrderLineItem>
   deliveryUpdates: List<UserOrderDeliveryEvent>
+  payment: UserOrderPaymentSummary

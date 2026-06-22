@@ -12,10 +12,11 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
-import 'payment_transaction_status.dart' as _i2;
-import 'order.dart' as _i3;
-import 'user.dart' as _i4;
-import 'package:placeify_server/src/generated/protocol.dart' as _i5;
+import 'payment_method.dart' as _i2;
+import 'payment_transaction_status.dart' as _i3;
+import 'order.dart' as _i4;
+import 'user.dart' as _i5;
+import 'package:placeify_server/src/generated/protocol.dart' as _i6;
 
 /// Customer payment record for a placed order.
 abstract class PaymentTransaction
@@ -28,28 +29,31 @@ abstract class PaymentTransaction
     this.user,
     required this.provider,
     required this.providerTransactionId,
+    _i2.PaymentMethod? paymentMethod,
     required this.amount,
     String? currency,
-    _i2.PaymentTransactionStatus? status,
+    _i3.PaymentTransactionStatus? status,
     this.note,
     DateTime? createdAt,
     DateTime? updatedAt,
-  }) : currency = currency ?? 'NPR',
-       status = status ?? _i2.PaymentTransactionStatus.pending,
+  }) : paymentMethod = paymentMethod ?? _i2.PaymentMethod.mockOnline,
+       currency = currency ?? 'NPR',
+       status = status ?? _i3.PaymentTransactionStatus.pending,
        createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
 
   factory PaymentTransaction({
     int? id,
     required int orderId,
-    _i3.Order? order,
+    _i4.Order? order,
     required _i1.UuidValue userId,
-    _i4.User? user,
+    _i5.User? user,
     required String provider,
     required String providerTransactionId,
+    _i2.PaymentMethod? paymentMethod,
     required double amount,
     String? currency,
-    _i2.PaymentTransactionStatus? status,
+    _i3.PaymentTransactionStatus? status,
     String? note,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -61,19 +65,24 @@ abstract class PaymentTransaction
       orderId: jsonSerialization['orderId'] as int,
       order: jsonSerialization['order'] == null
           ? null
-          : _i5.Protocol().deserialize<_i3.Order>(jsonSerialization['order']),
+          : _i6.Protocol().deserialize<_i4.Order>(jsonSerialization['order']),
       userId: _i1.UuidValueJsonExtension.fromJson(jsonSerialization['userId']),
       user: jsonSerialization['user'] == null
           ? null
-          : _i5.Protocol().deserialize<_i4.User>(jsonSerialization['user']),
+          : _i6.Protocol().deserialize<_i5.User>(jsonSerialization['user']),
       provider: jsonSerialization['provider'] as String,
       providerTransactionId:
           jsonSerialization['providerTransactionId'] as String,
+      paymentMethod: jsonSerialization['paymentMethod'] == null
+          ? null
+          : _i2.PaymentMethod.fromJson(
+              (jsonSerialization['paymentMethod'] as String),
+            ),
       amount: (jsonSerialization['amount'] as num).toDouble(),
       currency: jsonSerialization['currency'] as String?,
       status: jsonSerialization['status'] == null
           ? null
-          : _i2.PaymentTransactionStatus.fromJson(
+          : _i3.PaymentTransactionStatus.fromJson(
               (jsonSerialization['status'] as String),
             ),
       note: jsonSerialization['note'] as String?,
@@ -95,21 +104,23 @@ abstract class PaymentTransaction
 
   int orderId;
 
-  _i3.Order? order;
+  _i4.Order? order;
 
   _i1.UuidValue userId;
 
-  _i4.User? user;
+  _i5.User? user;
 
   String provider;
 
   String providerTransactionId;
 
+  _i2.PaymentMethod paymentMethod;
+
   double amount;
 
   String currency;
 
-  _i2.PaymentTransactionStatus status;
+  _i3.PaymentTransactionStatus status;
 
   String? note;
 
@@ -126,14 +137,15 @@ abstract class PaymentTransaction
   PaymentTransaction copyWith({
     int? id,
     int? orderId,
-    _i3.Order? order,
+    _i4.Order? order,
     _i1.UuidValue? userId,
-    _i4.User? user,
+    _i5.User? user,
     String? provider,
     String? providerTransactionId,
+    _i2.PaymentMethod? paymentMethod,
     double? amount,
     String? currency,
-    _i2.PaymentTransactionStatus? status,
+    _i3.PaymentTransactionStatus? status,
     String? note,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -149,6 +161,7 @@ abstract class PaymentTransaction
       if (user != null) 'user': user?.toJson(),
       'provider': provider,
       'providerTransactionId': providerTransactionId,
+      'paymentMethod': paymentMethod.toJson(),
       'amount': amount,
       'currency': currency,
       'status': status.toJson(),
@@ -169,6 +182,7 @@ abstract class PaymentTransaction
       if (user != null) 'user': user?.toJsonForProtocol(),
       'provider': provider,
       'providerTransactionId': providerTransactionId,
+      'paymentMethod': paymentMethod.toJson(),
       'amount': amount,
       'currency': currency,
       'status': status.toJson(),
@@ -179,8 +193,8 @@ abstract class PaymentTransaction
   }
 
   static PaymentTransactionInclude include({
-    _i3.OrderInclude? order,
-    _i4.UserInclude? user,
+    _i4.OrderInclude? order,
+    _i5.UserInclude? user,
   }) {
     return PaymentTransactionInclude._(
       order: order,
@@ -220,14 +234,15 @@ class _PaymentTransactionImpl extends PaymentTransaction {
   _PaymentTransactionImpl({
     int? id,
     required int orderId,
-    _i3.Order? order,
+    _i4.Order? order,
     required _i1.UuidValue userId,
-    _i4.User? user,
+    _i5.User? user,
     required String provider,
     required String providerTransactionId,
+    _i2.PaymentMethod? paymentMethod,
     required double amount,
     String? currency,
-    _i2.PaymentTransactionStatus? status,
+    _i3.PaymentTransactionStatus? status,
     String? note,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -239,6 +254,7 @@ class _PaymentTransactionImpl extends PaymentTransaction {
          user: user,
          provider: provider,
          providerTransactionId: providerTransactionId,
+         paymentMethod: paymentMethod,
          amount: amount,
          currency: currency,
          status: status,
@@ -259,9 +275,10 @@ class _PaymentTransactionImpl extends PaymentTransaction {
     Object? user = _Undefined,
     String? provider,
     String? providerTransactionId,
+    _i2.PaymentMethod? paymentMethod,
     double? amount,
     String? currency,
-    _i2.PaymentTransactionStatus? status,
+    _i3.PaymentTransactionStatus? status,
     Object? note = _Undefined,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -269,12 +286,13 @@ class _PaymentTransactionImpl extends PaymentTransaction {
     return PaymentTransaction(
       id: id is int? ? id : this.id,
       orderId: orderId ?? this.orderId,
-      order: order is _i3.Order? ? order : this.order?.copyWith(),
+      order: order is _i4.Order? ? order : this.order?.copyWith(),
       userId: userId ?? this.userId,
-      user: user is _i4.User? ? user : this.user?.copyWith(),
+      user: user is _i5.User? ? user : this.user?.copyWith(),
       provider: provider ?? this.provider,
       providerTransactionId:
           providerTransactionId ?? this.providerTransactionId,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
       amount: amount ?? this.amount,
       currency: currency ?? this.currency,
       status: status ?? this.status,
@@ -311,6 +329,13 @@ class PaymentTransactionUpdateTable
         value,
       );
 
+  _i1.ColumnValue<_i2.PaymentMethod, _i2.PaymentMethod> paymentMethod(
+    _i2.PaymentMethod value,
+  ) => _i1.ColumnValue(
+    table.paymentMethod,
+    value,
+  );
+
   _i1.ColumnValue<double, double> amount(double value) => _i1.ColumnValue(
     table.amount,
     value,
@@ -321,8 +346,8 @@ class PaymentTransactionUpdateTable
     value,
   );
 
-  _i1.ColumnValue<_i2.PaymentTransactionStatus, _i2.PaymentTransactionStatus>
-  status(_i2.PaymentTransactionStatus value) => _i1.ColumnValue(
+  _i1.ColumnValue<_i3.PaymentTransactionStatus, _i3.PaymentTransactionStatus>
+  status(_i3.PaymentTransactionStatus value) => _i1.ColumnValue(
     table.status,
     value,
   );
@@ -365,6 +390,12 @@ class PaymentTransactionTable extends _i1.Table<int?> {
       'providerTransactionId',
       this,
     );
+    paymentMethod = _i1.ColumnEnum(
+      'paymentMethod',
+      this,
+      _i1.EnumSerialization.byName,
+      hasDefault: true,
+    );
     amount = _i1.ColumnDouble(
       'amount',
       this,
@@ -400,21 +431,23 @@ class PaymentTransactionTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt orderId;
 
-  _i3.OrderTable? _order;
+  _i4.OrderTable? _order;
 
   late final _i1.ColumnUuid userId;
 
-  _i4.UserTable? _user;
+  _i5.UserTable? _user;
 
   late final _i1.ColumnString provider;
 
   late final _i1.ColumnString providerTransactionId;
 
+  late final _i1.ColumnEnum<_i2.PaymentMethod> paymentMethod;
+
   late final _i1.ColumnDouble amount;
 
   late final _i1.ColumnString currency;
 
-  late final _i1.ColumnEnum<_i2.PaymentTransactionStatus> status;
+  late final _i1.ColumnEnum<_i3.PaymentTransactionStatus> status;
 
   late final _i1.ColumnString note;
 
@@ -422,28 +455,28 @@ class PaymentTransactionTable extends _i1.Table<int?> {
 
   late final _i1.ColumnDateTime updatedAt;
 
-  _i3.OrderTable get order {
+  _i4.OrderTable get order {
     if (_order != null) return _order!;
     _order = _i1.createRelationTable(
       relationFieldName: 'order',
       field: PaymentTransaction.t.orderId,
-      foreignField: _i3.Order.t.id,
+      foreignField: _i4.Order.t.id,
       tableRelation: tableRelation,
       createTable: (foreignTableRelation) =>
-          _i3.OrderTable(tableRelation: foreignTableRelation),
+          _i4.OrderTable(tableRelation: foreignTableRelation),
     );
     return _order!;
   }
 
-  _i4.UserTable get user {
+  _i5.UserTable get user {
     if (_user != null) return _user!;
     _user = _i1.createRelationTable(
       relationFieldName: 'user',
       field: PaymentTransaction.t.userId,
-      foreignField: _i4.User.t.id,
+      foreignField: _i5.User.t.id,
       tableRelation: tableRelation,
       createTable: (foreignTableRelation) =>
-          _i4.UserTable(tableRelation: foreignTableRelation),
+          _i5.UserTable(tableRelation: foreignTableRelation),
     );
     return _user!;
   }
@@ -455,6 +488,7 @@ class PaymentTransactionTable extends _i1.Table<int?> {
     userId,
     provider,
     providerTransactionId,
+    paymentMethod,
     amount,
     currency,
     status,
@@ -477,16 +511,16 @@ class PaymentTransactionTable extends _i1.Table<int?> {
 
 class PaymentTransactionInclude extends _i1.IncludeObject {
   PaymentTransactionInclude._({
-    _i3.OrderInclude? order,
-    _i4.UserInclude? user,
+    _i4.OrderInclude? order,
+    _i5.UserInclude? user,
   }) {
     _order = order;
     _user = user;
   }
 
-  _i3.OrderInclude? _order;
+  _i4.OrderInclude? _order;
 
-  _i4.UserInclude? _user;
+  _i5.UserInclude? _user;
 
   @override
   Map<String, _i1.Include?> get includes => {
@@ -823,7 +857,7 @@ class PaymentTransactionAttachRowRepository {
   Future<void> order(
     _i1.DatabaseSession session,
     PaymentTransaction paymentTransaction,
-    _i3.Order order, {
+    _i4.Order order, {
     _i1.Transaction? transaction,
   }) async {
     if (paymentTransaction.id == null) {
@@ -846,7 +880,7 @@ class PaymentTransactionAttachRowRepository {
   Future<void> user(
     _i1.DatabaseSession session,
     PaymentTransaction paymentTransaction,
-    _i4.User user, {
+    _i5.User user, {
     _i1.Transaction? transaction,
   }) async {
     if (paymentTransaction.id == null) {
