@@ -165,3 +165,53 @@ class _ArScaleControlsState extends State<ArScaleControls> {
     );
   }
 }
+
+/// Rotate controls with left/right buttons (15° steps).
+class ArRotationControls extends StatelessWidget {
+  const ArRotationControls({
+    required this.onRotateLeft,
+    required this.onRotateRight,
+    super.key,
+  });
+
+  final VoidCallback onRotateLeft;
+  final VoidCallback onRotateRight;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            tooltip: 'Rotate left',
+            onPressed: onRotateLeft,
+            icon: const Icon(Icons.rotate_left, color: Colors.white, size: 20),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              'Rotate',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            tooltip: 'Rotate right',
+            onPressed: onRotateRight,
+            icon: const Icon(Icons.rotate_right, color: Colors.white, size: 20),
+          ),
+        ],
+      ),
+    );
+  }
+}
