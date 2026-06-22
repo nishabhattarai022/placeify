@@ -9,6 +9,7 @@ import '../../shared/server_static_paths.dart';
 import '../../shared/session_service.dart';
 import '../notification/order_notification_service.dart';
 import '../notification/notification_repository.dart';
+import '../product/catalog_seed.dart';
 import 'product_3d/product_3d_generation_result.dart';
 import 'product_3d/product_3d_generator.dart';
 import 'product_image_processor.dart';
@@ -32,10 +33,19 @@ class VendorStore {
     }
 
     final vendorId = vendor.id!;
-    final products = await Product.db.find(
+    var products = await Product.db.find(
       session,
       where: (row) => row.vendorId.equals(vendorId),
     );
+    if (products.isEmpty &&
+        user.status == UserAccountStatus.approved &&
+        user.isActive) {
+      await CatalogSeed.ensureStarterProductsForVendor(session, vendorId);
+      products = await Product.db.find(
+        session,
+        where: (row) => row.vendorId.equals(vendorId),
+      );
+    }
     final activeProducts =
         products.where((p) => p.status == ProductStatus.active).length;
 
@@ -1197,9 +1207,9 @@ class VendorStore {
     final vendor = await requireOwnedVendor(session);
     final order = await _requireMutableVendorOrder(session, vendor.id!, orderId);
 
-    if (order.status != OrderStatus.pending) {
+    if (!_awaitingVendorDecision(order.status)) {
       throw PlaceifyException(
-        message: 'Only pending orders can be accepted.',
+        message: 'Only new orders can be accepted.',
         code: 'INVALID_ORDER_STATUS',
       );
     }
@@ -1215,7 +1225,10 @@ class VendorStore {
     );
 
     final existingUpdates = await _deliveryUpdatesFor(session, vendor.id!, orderId);
-    if (existingUpdates.isEmpty) {
+    final hasVendorConfirmation = existingUpdates.any(
+      (update) => update.note?.contains('confirmed') ?? false,
+    );
+    if (!hasVendorConfirmation) {
       await OrderDeliveryUpdate.db.insertRow(
         session,
         OrderDeliveryUpdate(
@@ -1255,9 +1268,9 @@ class VendorStore {
     }
 
     final order = await _requireMutableVendorOrder(session, vendor.id!, orderId);
-    if (order.status != OrderStatus.pending) {
+    if (!_awaitingVendorDecision(order.status)) {
       throw PlaceifyException(
-        message: 'Only pending orders can be rejected.',
+        message: 'Only new orders can be rejected.',
         code: 'INVALID_ORDER_STATUS',
       );
     }
@@ -1455,6 +1468,10 @@ class VendorStore {
       DeliveryStage.outForDelivery => 'Out for delivery',
       DeliveryStage.delivered => 'Delivered',
     };
+  }
+
+  bool _awaitingVendorDecision(OrderStatus status) {
+    return status == OrderStatus.pending || status == OrderStatus.confirmed;
   }
 
   Future<List<OrderItem>> _loadVendorOrderItems(

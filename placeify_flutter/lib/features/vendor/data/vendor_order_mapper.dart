@@ -37,7 +37,8 @@ abstract final class VendorOrderMapper {
   static domain.OrderStatus mapOrderStatus(api.OrderStatus status) {
     return switch (status) {
       api.OrderStatus.pending => domain.OrderStatus.pending,
-      api.OrderStatus.confirmed => domain.OrderStatus.accepted,
+      // Paid, awaiting vendor accept — show in the Pending tab.
+      api.OrderStatus.confirmed => domain.OrderStatus.pending,
       api.OrderStatus.accepted => domain.OrderStatus.accepted,
       api.OrderStatus.rejected => domain.OrderStatus.rejected,
       api.OrderStatus.processing => domain.OrderStatus.processing,
