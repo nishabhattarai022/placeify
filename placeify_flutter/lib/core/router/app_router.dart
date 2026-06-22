@@ -96,7 +96,7 @@ GoRouter appRouter(Ref ref) {
   // the router resets navigation to initialLocation and breaks login.
   final refreshListenable = ValueNotifier<int>(0);
   ref.onDispose(refreshListenable.dispose);
-  ref.listen(currentUserProvider, (_, __) {
+  ref.listen(currentUserProvider, (previous, next) {
     refreshListenable.value++;
   });
 

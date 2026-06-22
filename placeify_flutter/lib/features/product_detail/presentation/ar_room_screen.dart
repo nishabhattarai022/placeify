@@ -50,7 +50,7 @@ class ArRoomScreen extends StatefulWidget {
 }
 
 class _ArRoomScreenState extends State<ArRoomScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   static const _previewDistanceM = 1.0;
   static const _furnitureNodeName = 'placeify_furniture';
 
