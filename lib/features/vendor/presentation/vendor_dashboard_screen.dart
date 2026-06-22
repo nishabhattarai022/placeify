@@ -19,7 +19,6 @@ import 'package:placeify/features/vendor/presentation/widgets/metric_card.dart';
 import 'package:placeify/features/vendor/presentation/widgets/revenue_card.dart';
 import 'package:placeify/features/vendor/presentation/widgets/top_products_chart.dart';
 import 'package:placeify/features/vendor/presentation/widgets/upload_product_button.dart';
-import 'package:placeify/features/vendor/presentation/widgets/vendor_dashboard_fab.dart';
 import 'package:placeify/features/vendor/presentation/widgets/vendor_onboarding_checklist.dart';
 import 'package:placeify/features/vendor/presentation/widgets/vendor_order_row.dart';
 import 'package:placeify/features/vendor/presentation/widgets/vendor_reviews_section.dart';
@@ -111,8 +110,6 @@ class _VendorDashboardScreenState extends ConsumerState<VendorDashboardScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.cream,
-      floatingActionButton: const VendorDashboardFab(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

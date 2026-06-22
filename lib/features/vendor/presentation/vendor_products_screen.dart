@@ -160,22 +160,6 @@ class _VendorProductsScreenState extends ConsumerState<VendorProductsScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.cream,
-      floatingActionButton: _selectionMode
-          ? null
-          : Padding(
-              padding: const EdgeInsets.only(
-                bottom: BottomNavTokens.fabBottomPadding,
-              ),
-              child: FloatingActionButton(
-                onPressed: () {
-                  HapticService.light();
-                  context.push(VendorRoutes.productsUpload);
-                },
-                backgroundColor: AppColors.espresso,
-                foregroundColor: AppColors.warmWhite,
-                child: const Icon(Icons.add_rounded),
-              ),
-            ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
