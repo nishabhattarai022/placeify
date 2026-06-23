@@ -144,6 +144,7 @@ internal class ModelRenderer {
             }
             resourceLoader.loadResources(asset)
             asset.releaseSourceData()
+            disableFaceCulling(asset)
             scene.addEntities(asset.entities)
             modelAssets[name] = asset
             pendingTransforms[name]?.let { transform ->
@@ -179,6 +180,7 @@ internal class ModelRenderer {
             resourceLoader.loadResources(asset)
             resourceLoader.evictResourceData()
             asset.releaseSourceData()
+            disableFaceCulling(asset)
             scene.addEntities(asset.entities)
             modelAssets[name] = asset
             pendingTransforms[name]?.let { transform ->
@@ -423,6 +425,18 @@ internal class ModelRenderer {
         val instance = transformManager.getInstance(asset.root)
         if (instance != 0) {
             transformManager.setTransform(instance, modelMatrix)
+        }
+    }
+
+    /// Furniture meshes must render back faces when walking around the model.
+    private fun disableFaceCulling(asset: FilamentAsset) {
+        val engine = engine ?: return
+        val renderableManager = engine.renderableManager
+        for (entity in asset.entities) {
+            val instance = renderableManager.getInstance(entity)
+            if (instance != 0) {
+                renderableManager.setCulling(instance, false)
+            }
         }
     }
 }

@@ -67,6 +67,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   late final String _nodeName;
 
   bool _isPreviewMode = true;
+  bool _isWorldAnchored = false;
   bool _isPlaneDetected = false;
   bool _isPlaced = false;
   bool _isDragging = false;
@@ -384,11 +385,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     try {
       await _removeFurniture(objectManager: objectManager, anchorManager: anchorManager);
 
-      final anchorTransform = ArFurniturePlacement.anchorTransformForHit(
-        hit: hit,
-        dimensions: widget.dimensions,
-        nodeScale: _nodeScale,
-      );
+      final anchorTransform = ArFurniturePlacement.anchorTransformForHit(hit);
       final anchor = ARPlaneAnchor(transformation: anchorTransform);
       final didAddAnchor = await anchorManager.addAnchor(anchor);
       if (didAddAnchor != true) {
@@ -411,9 +408,11 @@ class _ArRoomScreenState extends State<ArRoomScreen>
         _furnitureNode = node;
         _currentAnchor = anchor;
         _isPreviewMode = false;
+        _isWorldAnchored = true;
         _isPlaced = true;
         _statusMessage = null;
       });
+      _applyAnchoredNodeTransform();
       await _sessionManager?.setLightIntensityMultiplier(
         ArFurnitureScale.arLightIntensityMultiplier,
       );
@@ -426,18 +425,23 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     _previewTicker?.start();
     setState(() {
       _isPreviewMode = true;
+      _isWorldAnchored = false;
       _isPlaced = false;
     });
     await _spawnPreviewNode();
   }
 
   ARNode _buildFurnitureNode(String modelUri) {
+    final localOffset = ArFurniturePlacement.nodeLocalOffset(
+      dimensions: widget.dimensions,
+      nodeScale: _nodeScale,
+    );
     return ARNode(
       type: NodeType.fileSystemAppFolderGLB,
       name: _nodeName,
       uri: modelUri,
       scale: _nodeScale,
-      position: Vector3.zero(),
+      position: localOffset,
       eulerAngles: Vector3(0, _smoothedRotationY, 0),
     );
   }
@@ -458,6 +462,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     if (!_isPlaced || nodeName != _nodeName) return;
 
     setState(() => _isDragging = false);
+    // Native sends anchor-local transform after drag — preserve world anchoring.
     _furnitureNode?.transform = transform;
     _syncRotationFromNode(transform);
   }
@@ -470,7 +475,11 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     if (_statusMessage != null) {
       setState(() => _statusMessage = null);
     }
-    _applyNodeTransform();
+    if (_isWorldAnchored) {
+      _applyAnchoredNodeTransform();
+    } else {
+      _applyPreviewNodeTransform();
+    }
   }
 
   void _onTwistGestureEnded() {
@@ -479,7 +488,9 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   }
 
   void _onRotationSmoothTick(Duration elapsed) {
-    if (_isTwistGestureActive || _furnitureNode == null) return;
+    if (_isTwistGestureActive || _furnitureNode == null || _isWorldAnchored) {
+      return;
+    }
 
     final delta = _targetRotationY - _smoothedRotationY;
     if (delta.abs() < 0.0005) return;
@@ -495,20 +506,34 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   }
 
   void _applyNodeTransform() {
+    if (_isWorldAnchored) {
+      _applyAnchoredNodeTransform();
+      return;
+    }
+    _applyPreviewNodeTransform();
+  }
+
+  /// Anchor-local transform only — never uses camera pose.
+  void _applyAnchoredNodeTransform() {
     final node = _furnitureNode;
     if (node == null) return;
 
-    final scale = _nodeScale;
-    final yaw = _smoothedRotationY;
+    final localOffset = ArFurniturePlacement.nodeLocalOffset(
+      dimensions: widget.dimensions,
+      nodeScale: _nodeScale,
+    );
+    final currentPos = node.position;
+    node.position = Vector3(currentPos.x, localOffset.y, currentPos.z);
+    node.eulerAngles = Vector3(0, _smoothedRotationY, 0);
+    node.scale = _nodeScale;
+  }
 
-    if (_isPlaced) {
-      node.eulerAngles = Vector3(0, yaw, 0);
-      node.scale = scale;
-      return;
-    }
-
-    node.eulerAngles = Vector3(0, yaw, 0);
-    node.scale = scale;
+  /// Preview floats in front of the camera; position is driven by [_updatePreviewFollowCamera].
+  void _applyPreviewNodeTransform() {
+    final node = _furnitureNode;
+    if (node == null) return;
+    node.eulerAngles = Vector3(0, _smoothedRotationY, 0);
+    node.scale = _nodeScale;
   }
 
   void _onPinchMultiplierChanged(double multiplier) {
@@ -520,7 +545,11 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       );
       _statusMessage = null;
     });
-    _applyNodeTransform();
+    if (_isWorldAnchored) {
+      _applyAnchoredNodeTransform();
+    } else {
+      _applyPreviewNodeTransform();
+    }
   }
 
   Future<void> _removeFurniture({

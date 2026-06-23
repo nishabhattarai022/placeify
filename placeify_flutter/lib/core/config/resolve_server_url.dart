@@ -1,10 +1,13 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'resolve_server_url_io.dart'
+    if (dart.library.html) 'resolve_server_url_web.dart';
 
 const _cachedServerUrlKey = 'placeify_server_url';
 const _defaultPort = 8080;
@@ -74,7 +77,7 @@ bool _cacheMatchesPlatform(String url) {
 
   // A desktop/simulator session may cache localhost; phones must re-probe LAN hosts.
   if (uri.host == 'localhost' || uri.host == '127.0.0.1') {
-    return !(Platform.isAndroid || Platform.isIOS);
+    return !isMobilePlatform;
   }
 
   return true;
@@ -105,11 +108,11 @@ Future<List<String>> _buildCandidates() async {
     }
   } catch (_) {}
 
-  if (Platform.isAndroid) {
+  if (isAndroid) {
     add(emulatorApiUrl, 'http://10.0.2.2:$_defaultPort');
   }
 
-  add(loopbackApiUrl, 'http://$_desktopLoopbackHost:$_defaultPort');
+  add(loopbackApiUrl, 'http://$loopbackHost:$_defaultPort');
 
   final isPhysical = await _isPhysicalMobileDevice();
   if (isPhysical) {
@@ -124,10 +127,10 @@ Future<bool> _isPhysicalMobileDevice() async {
   if (kIsWeb) return false;
   final deviceInfo = DeviceInfoPlugin();
   try {
-    if (Platform.isAndroid) {
+    if (isAndroid) {
       return (await deviceInfo.androidInfo).isPhysicalDevice;
     }
-    if (Platform.isIOS) {
+    if (isIOS) {
       return (await deviceInfo.iosInfo).isPhysicalDevice;
     }
   } catch (_) {}
@@ -135,17 +138,13 @@ Future<bool> _isPhysicalMobileDevice() async {
 }
 
 Future<bool> _canReachServer(String url) async {
-  final client = HttpClient();
-  client.connectionTimeout = const Duration(seconds: 3);
   try {
-    final request = await client.getUrl(Uri.parse(_ensureTrailingSlash(url)));
-    final response = await request.close();
-    await response.drain<void>();
+    final response = await http
+        .get(Uri.parse(_ensureTrailingSlash(url)))
+        .timeout(const Duration(seconds: 3));
     return response.statusCode == 200;
   } catch (_) {
     return false;
-  } finally {
-    client.close(force: true);
   }
 }
 
@@ -156,16 +155,10 @@ String _ensureTrailingSlash(String url) {
 String _normalizeLoopback(String url) {
   if (!_isLoopbackUrl(url)) return url;
   return url
-      .replaceAll('localhost', _desktopLoopbackHost)
-      .replaceAll('127.0.0.1', _desktopLoopbackHost);
+      .replaceAll('localhost', loopbackHost)
+      .replaceAll('127.0.0.1', loopbackHost);
 }
 
 bool _isLoopbackUrl(String url) {
   return url.contains('localhost') || url.contains('127.0.0.1');
-}
-
-String get _desktopLoopbackHost {
-  if (kIsWeb) return 'localhost';
-  if (Platform.isAndroid) return '10.0.2.2';
-  return 'localhost';
 }

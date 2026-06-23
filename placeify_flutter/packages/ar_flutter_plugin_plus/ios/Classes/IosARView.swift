@@ -710,7 +710,13 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                     let posX = result.worldTransform.columns.3.x
                     let posY = result.worldTransform.columns.3.y
                     let posZ = result.worldTransform.columns.3.z
-                    panNode.worldPosition = SCNVector3(posX, posY, posZ)
+                    let worldHit = SCNVector3(posX, posY, posZ)
+                    if let anchorNode = panNode.parent, anchorNode !== sceneView.scene.rootNode {
+                        let localHit = anchorNode.convertPosition(worldHit, from: nil)
+                        panNode.position = SCNVector3(localHit.x, panNode.position.y, localHit.z)
+                    } else {
+                        panNode.worldPosition = worldHit
+                    }
                 }
                 self.objectManagerChannel.invokeMethod("onPanChange", arguments: panNode.name)
             }
