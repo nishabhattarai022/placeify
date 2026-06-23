@@ -8,19 +8,17 @@ Future<String> resolveMediaUrl(String? path) async {
   if (path == null || path.isEmpty) return '';
   if (path.startsWith('http://') || path.startsWith('https://')) return path;
 
+  final parsed = Uri.parse(path.startsWith('/') ? path : '/$path');
   final apiBase = await resolveServerUrl();
   final apiUri = Uri.parse(apiBase);
   final webHost = apiUri.host;
   final scheme = apiUri.scheme;
 
-  final segments = path
-      .split('/')
-      .where((segment) => segment.isNotEmpty)
-      .toList();
   return Uri(
     scheme: scheme,
     host: webHost,
     port: _webServerPort,
-    pathSegments: segments,
+    pathSegments: parsed.pathSegments,
+    query: parsed.query.isEmpty ? null : parsed.query,
   ).toString();
 }
