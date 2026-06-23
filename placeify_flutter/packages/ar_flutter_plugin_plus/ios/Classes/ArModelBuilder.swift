@@ -7,7 +7,7 @@ import Combine
 // Responsible for creating Renderables and Nodes
 class ArModelBuilder: NSObject {
 
-    var iosModelScaleFactor: Float = 0.4
+    var iosModelScaleFactor: Float = 1.0
 
     /// Ensures Tripo GLB PBR textures and base colors render with real-world lighting.
     private func configureRenderableMaterials(on node: SCNNode) {
@@ -16,6 +16,8 @@ class ArModelBuilder: NSObject {
                 material.lightingModel = .physicallyBased
                 material.isDoubleSided = true
                 material.locksAmbientWithDiffuse = true
+                material.writesToDepthBuffer = true
+                material.readsFromDepthBuffer = true
             }
         }
         for child in node.childNodes {

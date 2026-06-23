@@ -39,6 +39,7 @@ internal class ModelRenderer {
 
     private var lightEntity: Int = 0
     private var fillLightEntity: Int = 0
+    private var indirectLight: IndirectLight? = null
     private var lightIntensityMultiplier: Float = 1.0f
 
     private val cameraLock = Any()
@@ -93,6 +94,7 @@ internal class ModelRenderer {
                     lightManager.setColor(fillInstance, 1.0f, 1.0f, 1.0f)
                     lightManager.setIntensity(fillInstance, fillBaseIntensity * pixelIntensity)
                 }
+                updateEnvironmentalHdrAmbient(engine, lightEstimate, pixelIntensity)
             } else {
                 lightManager.setColor(instance, 1.0f, 1.0f, 1.0f)
                 lightManager.setIntensity(instance, primaryBaseIntensity)
@@ -234,6 +236,8 @@ internal class ModelRenderer {
                 engine.destroyEntity(fillLightEntity)
                 fillLightEntity = 0
             }
+            indirectLight?.let { engine.destroyIndirectLight(it) }
+            indirectLight = null
             destroySwapChain()
 
             engine.destroy()
@@ -292,6 +296,12 @@ internal class ModelRenderer {
             .direction(0.0f, -1.0f, -0.5f)
             .color(1.0f, 1.0f, 1.0f)
             .intensity(100000.0f)
+            .castShadows(true)
+            .shadowOptions(ShadowOptions().apply {
+                mapSize = 1024
+                constantBias = 0.001f
+                normalBias = 0.5f
+            })
             .build(engine!!, lightEntity)
         scene!!.addEntity(lightEntity)
 
@@ -302,7 +312,31 @@ internal class ModelRenderer {
             .intensity(20000.0f)
             .build(engine!!, fillLightEntity)
         scene!!.addEntity(fillLightEntity)
+
+        view!!.setShadowingEnabled(true)
     }
+
+    private fun updateEnvironmentalHdrAmbient(
+        engine: Engine,
+        lightEstimate: com.google.ar.core.LightEstimate,
+        pixelIntensity: Float,
+    ) {
+        val scene = scene ?: return
+        val sh = FloatArray(27)
+        lightEstimate.getEnvironmentalHdrAmbientSphericalHarmonics(sh, 0)
+
+        // Scale SH coefficients by real-world light intensity for PBR materials.
+        val scale = pixelIntensity * lightIntensityMultiplier
+        for (i in sh.indices) {
+            sh[i] *= scale
+        }
+
+        indirectLight?.let { engine.destroyIndirectLight(it) }
+        indirectLight = IndirectLight.Builder()
+            .irradiance(3, sh)
+            .intensity(30_000.0f * lightIntensityMultiplier)
+            .build(engine)
+        scene.indirectLight = indirectLight
 
     private fun ensureUiHelper() {
         if (uiHelper != null) return

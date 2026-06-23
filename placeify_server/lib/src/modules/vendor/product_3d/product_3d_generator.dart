@@ -9,6 +9,7 @@ import '../../../shared/server_static_paths.dart';
 import 'product_3d_generation_result.dart';
 import 'product_3d_image_paths.dart';
 import 'product_3d_views.dart';
+import 'glb_pipeline/tripo_glb_processor.dart';
 import 'tripo_client.dart';
 import 'tripo_view_mapper.dart';
 
@@ -105,13 +106,21 @@ class Product3dGenerator {
         slotLabels: slotSources,
       );
 
-      final glbBytes = await _downloadGlb(remoteModelUrl);
-      final localUrl = await _storeGlb(productId, glbBytes);
+      final rawGlbBytes = await _downloadGlb(remoteModelUrl);
+      final processed = TripoGlbProcessor().process(
+        rawGlbBytes,
+        catalogMaterials: product.materials,
+      );
+      final localUrl = await _storeGlb(productId, processed.bytes);
 
       final totalSeconds = DateTime.now().difference(started).inSeconds;
       session.log(
         'Tripo 3D model saved for product $productId at $localUrl '
-        '(demo/fast, ${totalSeconds}s total)',
+        '(PBR ${processed.profile.surfaceType.name}, '
+        '${processed.materialCount} materials, '
+        '${processed.generatedNormalMaps} normal maps, '
+        '${processed.generatedRoughnessMaps} roughness maps, '
+        '${totalSeconds}s total)',
         level: LogLevel.info,
       );
       return Product3dGenerationResult.success(localUrl);
@@ -226,7 +235,8 @@ class Product3dGenerator {
     final outputPath =
         '${outputDir.path}${Platform.pathSeparator}product_$productId.glb';
     await File(outputPath).writeAsBytes(bytes);
-    return '/uploads/models/product_$productId.glb';
+    final version = DateTime.now().millisecondsSinceEpoch;
+    return '/uploads/models/product_$productId.glb?v=$version';
   }
 }
 
