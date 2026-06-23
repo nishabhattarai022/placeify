@@ -1127,9 +1127,15 @@ internal class AndroidARView(
 
         val transform = node.transformation
         if (transform.size < 16) return
-        transform[12] = targetPose.tx().toDouble()
-        transform[13] = targetPose.ty().toDouble()
-        transform[14] = targetPose.tz().toDouble()
+        if (node.anchorName != null) {
+            // Preserve local Y (seat height); slide on the plane in X/Z only.
+            transform[12] = targetPose.tx().toDouble()
+            transform[14] = targetPose.tz().toDouble()
+        } else {
+            transform[12] = targetPose.tx().toDouble()
+            transform[13] = targetPose.ty().toDouble()
+            transform[14] = targetPose.tz().toDouble()
+        }
         node.transformation = transform
     }
 

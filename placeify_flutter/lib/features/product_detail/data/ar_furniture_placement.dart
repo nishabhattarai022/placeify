@@ -27,22 +27,20 @@ abstract final class ArFurniturePlacement {
     return hits.first;
   }
 
-  /// Raises the anchor so the model's bottom sits on the plane, not its center.
-  static Matrix4 anchorTransformForHit({
-    required ARHitTestResult hit,
+  /// World anchor on the detected plane (floor contact point).
+  ///
+  /// Vertical offset for model height belongs on the node in [nodeLocalOffset],
+  /// not on the anchor — keeps the anchor locked to the physical surface.
+  static Matrix4 anchorTransformForHit(ARHitTestResult hit) {
+    return Matrix4.copy(hit.worldTransform);
+  }
+
+  /// Local Y offset so the model's bottom rests on the anchor plane.
+  static Vector3 nodeLocalOffset({
     required ProductDimensions dimensions,
     required Vector3 nodeScale,
   }) {
-    final transform = Matrix4.copy(hit.worldTransform);
     final halfHeightM = (dimensions.heightCm / 100.0) * nodeScale.y * 0.5;
-    final translation = transform.getTranslation();
-    transform.setTranslation(
-      Vector3(
-        translation.x,
-        translation.y + halfHeightM + floorClearanceM,
-        translation.z,
-      ),
-    );
-    return transform;
+    return Vector3(0, halfHeightM + floorClearanceM, 0);
   }
 }
