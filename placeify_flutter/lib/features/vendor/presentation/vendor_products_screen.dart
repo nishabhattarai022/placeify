@@ -13,7 +13,6 @@ import '../../../core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import '../../../core/widgets/shimmer_loader.dart';
 import '../domain/models/vendor_product.dart';
 import 'providers/vendor_products_provider.dart';
-import 'vendor_3d_model_access.dart';
 import 'widgets/bulk_discount_sheet.dart';
 import 'widgets/vendor_build_3d_module_card.dart';
 import 'widgets/vendor_product_category_filter_sheet.dart';
@@ -324,17 +323,8 @@ class _VendorProductsScreenState extends ConsumerState<VendorProductsScreen> {
           onLongPress: () => _enterSelectionMode(product.id),
           onToggleSelected: () => _toggleSelected(product.id),
           onBuild3d: () {
-            Vendor3dModelAccess.requestAccess(
-              context: context,
-              ref: ref,
-              productId: product.id,
-              hasModel: product.hasArView,
-              onAllowed: () => Vendor3dModelAccess.openBuilder(
-                context,
-                ref,
-                product.id,
-              ),
-            );
+            HapticService.light();
+            context.push(VendorRoutes.productsBuild3dFor(product.id));
           },
         );
       },
