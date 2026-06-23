@@ -7,10 +7,17 @@ import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/server_static_paths.dart';
 import '../../shared/session_service.dart';
+import '../marketplace/marketplace_events.dart';
 import '../notification/in_app_notification_store.dart';
 import '../notification/notification_repository.dart';
-import '../notification/order_notification_service.dart';
 import '../order/order_lifecycle_store.dart';
+import 'stores/vendor_access_guard.dart';
+import 'stores/vendor_delivery_store.dart';
+import 'stores/vendor_notification_store.dart';
+import 'stores/vendor_order_store.dart';
+import 'stores/vendor_order_support.dart';
+import 'stores/vendor_product_store.dart';
+import 'stores/vendor_profile_store.dart';
 import 'product_3d/product_3d_generation_result.dart';
 import 'product_3d/product_3d_generator.dart';
 import 'product_3d/product_3d_views.dart';
@@ -24,10 +31,43 @@ import 'vendor_sales_metrics.dart';
 import 'vendor_shop_category_codec.dart';
 
 class VendorStore {
-  VendorStore({InAppNotificationStore? notifications})
-      : _notifications = notifications ?? InAppNotificationStore();
+  VendorStore({
+    InAppNotificationStore? notifications,
+    VendorAccessGuard? access,
+    MarketplaceEventDispatcher? events,
+    VendorNotificationStore? vendorNotifications,
+    VendorOrderStore? orders,
+    VendorDeliveryStore? delivery,
+    VendorProductStore? products,
+    VendorProfileStore? profile,
+  })  : _notifications = notifications ?? InAppNotificationStore(),
+        _access = access ?? VendorAccessGuard(),
+        _events = events ?? marketplaceEventDispatcher,
+        _vendorNotifications = vendorNotifications ??
+            VendorNotificationStore(notifications: notifications),
+        _orders = orders ??
+            VendorOrderStore(
+              access: access ?? VendorAccessGuard(),
+              events: events ?? marketplaceEventDispatcher,
+            ),
+        _delivery = delivery ??
+            VendorDeliveryStore(
+              access: access ?? VendorAccessGuard(),
+              events: events ?? marketplaceEventDispatcher,
+              persistImage: null,
+            ),
+        _products = products ??
+            VendorProductStore(events: events ?? marketplaceEventDispatcher),
+        _profile = profile ?? VendorProfileStore();
 
   final InAppNotificationStore _notifications;
+  final VendorAccessGuard _access;
+  final MarketplaceEventDispatcher _events;
+  final VendorNotificationStore _vendorNotifications;
+  final VendorOrderStore _orders;
+  final VendorDeliveryStore _delivery;
+  final VendorProductStore _products;
+  final VendorProfileStore _profile;
   Future<VendorDashboard> getDashboard(Session session) async {
     final user = await SessionService.requireUser(session);
     final vendor = await Vendor.db.findFirstRow(
@@ -154,71 +194,13 @@ class VendorStore {
     );
   }
 
-  Future<Vendor> requireVendorProfile(Session session) async {
-    final user = await SessionService.requireRole(
-      session,
-      {UserRole.vendor, UserRole.admin},
-    );
+  Future<Vendor> requireVendorProfile(Session session) =>
+      _access.requireVendorProfile(session);
 
-    final vendor = await Vendor.db.findFirstRow(
-      session,
-      where: (row) => row.userId.equals(user.id!),
-    );
-    if (vendor == null) {
-      throw PlaceifyException(message: 'Vendor profile not found.',
-        code: 'VENDOR_NOT_FOUND',
-      );
-    }
-    return vendor;
-  }
+  Future<Vendor> requireOwnedVendor(Session session) =>
+      _access.requireOwnedVendor(session);
 
-  /// Resolves the vendor shop for the logged-in user without requiring a
-  /// pre-set vendor role (upgrades role when a shop already exists).
-  Future<Vendor> requireOwnedVendor(Session session) async {
-    var user = await SessionService.requireUser(session);
-    final vendor = await Vendor.db.findFirstRow(
-      session,
-      where: (row) => row.userId.equals(user.id!),
-    );
-    if (vendor == null) {
-      throw PlaceifyException(message: 'Shop not found.',
-        code: 'SHOP_NOT_FOUND',
-      );
-    }
-
-    if (user.role != UserRole.vendor && user.role != UserRole.admin) {
-      user = await User.db.updateRow(
-        session,
-        user.copyWith(role: UserRole.vendor),
-      );
-    }
-
-    if (user.role != UserRole.admin &&
-        user.status != UserAccountStatus.approved) {
-      throw PlaceifyException(
-        message: 'Vendor account is pending admin approval.',
-        code: 'VENDOR_NOT_APPROVED',
-      );
-    }
-
-    if (!user.isActive) {
-      throw PlaceifyException(
-        message: 'Vendor account is deactivated.',
-        code: 'ACCOUNT_INACTIVE',
-      );
-    }
-
-    return vendor;
-  }
-
-  Future<bool> hasShop(Session session) async {
-    final user = await SessionService.requireUser(session);
-    final existing = await Vendor.db.findFirstRow(
-      session,
-      where: (row) => row.userId.equals(user.id!),
-    );
-    return existing != null;
-  }
+  Future<bool> hasShop(Session session) => _access.hasShop(session);
 
   Future<Vendor> createShop(
     Session session,
@@ -309,7 +291,6 @@ class VendorStore {
     await User.db.updateRow(
       session,
       user.copyWith(
-        role: UserRole.vendor,
         phone: trimmedPhone,
         address: trimmedAddress,
         status: UserAccountStatus.pending,
@@ -953,6 +934,17 @@ class VendorStore {
       thumbnailUrl: thumbnailUrl,
     );
 
+    product = await Product.db.updateRow(
+      session,
+      _withPricing(
+        product: product,
+        listPrice: input.price,
+        discountPrice: input.discountPrice,
+        discountPercentage: input.discountPercentage,
+        featured: input.featured,
+      ),
+    );
+
     if (input.generateModel3d) {
       product = await _generateAndStoreModel3d(
         session,
@@ -962,7 +954,14 @@ class VendorStore {
       );
     }
 
-    return _loadProductWithCategory(session, product);
+    final loaded = await _loadProductWithCategory(session, product);
+    await _dispatchProductEvents(
+      session,
+      loaded,
+      (await requireOwnedVendor(session)).id!,
+      created: true,
+    );
+    return loaded;
   }
 
   Future<Product> _updateExistingProduct(
@@ -1035,31 +1034,36 @@ class VendorStore {
 
     var updated = await Product.db.updateRow(
       session,
-      product.copyWith(
-        categoryId: resolvedCategoryId,
-        name: input.name.trim(),
-        description: input.description.trim(),
-        price: input.price,
-        materials: trimmedMaterials,
-        widthCm: input.widthCm,
-        depthCm: input.depthCm,
-        heightCm: input.heightCm,
-        weightKg: input.weightKg,
-        assemblyNote: input.assemblyNote?.trim(),
-        careInstructions: trimmedCare,
-        warranty: input.warranty?.trim(),
-        thumbnailUrl: thumbnailUrl?.trim(),
-        viewImageUrls: input.viewImageUrls != null
-            ? _normalizeViewImageUrls(input.viewImageUrls)
-            : product.viewImageUrls,
-        status: input.isActive ? ProductStatus.active : ProductStatus.removed,
-        removedReason: input.isActive
-            ? (product.removedById == null ? null : product.removedReason)
-            : 'Hidden by vendor',
-        removedById: input.isActive ? product.removedById : null,
-        removedAt: input.isActive
-            ? (product.removedById == null ? null : product.removedAt)
-            : DateTime.now(),
+      _withPricing(
+        product: product.copyWith(
+          categoryId: resolvedCategoryId,
+          name: input.name.trim(),
+          description: input.description.trim(),
+          materials: trimmedMaterials,
+          widthCm: input.widthCm,
+          depthCm: input.depthCm,
+          heightCm: input.heightCm,
+          weightKg: input.weightKg,
+          assemblyNote: input.assemblyNote?.trim(),
+          careInstructions: trimmedCare,
+          warranty: input.warranty?.trim(),
+          thumbnailUrl: thumbnailUrl?.trim(),
+          viewImageUrls: input.viewImageUrls != null
+              ? _normalizeViewImageUrls(input.viewImageUrls)
+              : product.viewImageUrls,
+          status: input.isActive ? ProductStatus.active : ProductStatus.removed,
+          removedReason: input.isActive
+              ? (product.removedById == null ? null : product.removedReason)
+              : 'Hidden by vendor',
+          removedById: input.isActive ? product.removedById : null,
+          removedAt: input.isActive
+              ? (product.removedById == null ? null : product.removedAt)
+              : DateTime.now(),
+        ),
+        listPrice: input.price,
+        discountPrice: input.discountPrice,
+        discountPercentage: input.discountPercentage,
+        featured: input.featured,
       ),
     );
 
@@ -1072,7 +1076,14 @@ class VendorStore {
       );
     }
 
-    return _loadProductWithCategory(session, updated);
+    final loaded = await _loadProductWithCategory(session, updated);
+    await _dispatchProductEvents(
+      session,
+      loaded,
+      vendor.id!,
+      created: false,
+    );
+    return loaded;
   }
 
   Future<Product> _loadProductWithCategory(
@@ -1324,174 +1335,32 @@ class VendorStore {
     int limit = 50,
     int offset = 0,
     OrderStatus? status,
-  }) async {
-    final vendor = await requireOwnedVendor(session);
-    final orderItems = await _loadVendorOrderItems(session, vendor.id!);
-    final orders = _groupVendorShopOrders(orderItems);
-
-    final filtered = status == null
-        ? orders
-        : orders.where((order) => order.status == status).toList();
-
-    if (offset >= filtered.length) return [];
-    final end = offset + limit;
-    return filtered.sublist(
-      offset,
-      end > filtered.length ? filtered.length : end,
-    );
-  }
-
-  Future<VendorShopOrder> getShopOrder(Session session, int orderId) async {
-    final vendor = await requireOwnedVendor(session);
-    final orderItems = await OrderItem.db.find(
-      session,
-      where: (row) =>
-          row.vendorId.equals(vendor.id!) & row.orderId.equals(orderId),
-      include: OrderItem.include(
-        order: Order.include(user: User.include()),
-        product: Product.include(),
-      ),
-      orderBy: (row) => row.id,
-    );
-
-    if (orderItems.isEmpty) {
-      throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
-    }
-
-    final orders = _groupVendorShopOrders(orderItems);
-    if (orders.isEmpty) {
-      throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
-    }
-    return orders.first;
-  }
-
-  Future<VendorShopOrder> acceptShopOrder(Session session, int orderId) async {
-    final vendor = await requireOwnedVendor(session);
-    final user = await SessionService.requireUser(session);
-    final order = await _requireMutableVendorOrder(session, vendor.id!, orderId);
-
-    if (order.status != OrderStatus.pending &&
-        order.status != OrderStatus.confirmed) {
-      throw PlaceifyException(
-        message: 'Only pending orders can be accepted.',
-        code: 'INVALID_ORDER_STATUS',
-      );
-    }
-
-    await session.db.transaction((transaction) async {
-      final accepted = await OrderLifecycleStore.updateOrderWithVersion(
+  }) =>
+      _orders.listShopOrders(
         session,
-        order,
-        (current) => current.copyWith(
-          status: OrderStatus.accepted,
-          rejectionReason: null,
-        ),
-        transaction: transaction,
+        limit: limit,
+        offset: offset,
+        status: status,
       );
 
-      await OrderLifecycleStore.appendHistory(
-        session,
-        orderId,
-        statusType: OrderStatusHistoryType.order,
-        previousStatus: order.status.name,
-        newStatus: OrderStatus.accepted.name,
-        changedByUserId: user.id,
-        transaction: transaction,
-      );
+  Future<VendorShopOrder> getShopOrder(Session session, int orderId) =>
+      _orders.getShopOrder(session, orderId);
 
-      final existingUpdates = await OrderDeliveryUpdate.db.find(
-        session,
-        where: (row) =>
-            row.orderId.equals(orderId) & row.vendorId.equals(vendor.id!),
-        transaction: transaction,
-      );
-      if (existingUpdates.isEmpty) {
-        await OrderDeliveryUpdate.db.insertRow(
-          session,
-          OrderDeliveryUpdate(
-            orderId: orderId,
-            vendorId: vendor.id!,
-            stage: DeliveryStage.orderPlaced,
-            note: 'Order confirmed by vendor.',
-          ),
-          transaction: transaction,
-        );
-      }
-
-      await OrderNotificationService.notifyOrderAccepted(
-        session,
-        order: accepted,
-        vendorId: vendor.id!,
-      );
-    });
-
-    return getShopOrder(session, orderId);
-  }
+  Future<VendorShopOrder> acceptShopOrder(Session session, int orderId) =>
+      _orders.acceptShopOrder(session, orderId);
 
   Future<VendorShopOrder> rejectShopOrder(
     Session session,
     int orderId,
     String reason,
-  ) async {
-    final vendor = await requireOwnedVendor(session);
-    final user = await SessionService.requireUser(session);
-    final trimmedReason = reason.trim();
-    if (trimmedReason.isEmpty) {
-      throw PlaceifyException(
-        message: 'A rejection reason is required.',
-        code: 'INVALID_REJECTION_REASON',
-      );
-    }
-
-    final order = await _requireMutableVendorOrder(session, vendor.id!, orderId);
-    if (order.status != OrderStatus.pending &&
-        order.status != OrderStatus.confirmed) {
-      throw PlaceifyException(
-        message: 'Only pending orders can be rejected.',
-        code: 'INVALID_ORDER_STATUS',
-      );
-    }
-
-    await session.db.transaction((transaction) async {
-      final rejected = await OrderLifecycleStore.updateOrderWithVersion(
-        session,
-        order,
-        (current) => current.copyWith(
-          status: OrderStatus.rejected,
-          rejectionReason: trimmedReason,
-        ),
-        transaction: transaction,
-      );
-
-      await OrderLifecycleStore.appendHistory(
-        session,
-        orderId,
-        statusType: OrderStatusHistoryType.order,
-        previousStatus: order.status.name,
-        newStatus: OrderStatus.rejected.name,
-        changedByUserId: user.id,
-        note: trimmedReason,
-        transaction: transaction,
-      );
-
-      await OrderNotificationService.notifyOrderRejected(
-        session,
-        order: rejected,
-        reason: trimmedReason,
-      );
-    });
-
-    return getShopOrder(session, orderId);
-  }
+  ) =>
+      _orders.rejectShopOrder(session, orderId, reason);
 
   Future<List<OrderDeliveryUpdate>> listDeliveryUpdates(
     Session session,
     int orderId,
-  ) async {
-    final vendor = await requireOwnedVendor(session);
-    await _assertVendorOwnsOrder(session, vendor.id!, orderId);
-    return _deliveryUpdatesFor(session, vendor.id!, orderId);
-  }
+  ) =>
+      _delivery.listDeliveryUpdates(session, orderId);
 
   Future<OrderDeliveryUpdate> submitDeliveryUpdate(
     Session session,
@@ -1499,138 +1368,14 @@ class VendorStore {
     DeliveryStage stage, {
     String? note,
     String? photoUrl,
-  }) async {
-    final vendor = await requireOwnedVendor(session);
-    final user = await SessionService.requireUser(session);
-    final order = await _requireMutableVendorOrder(session, vendor.id!, orderId);
-
-    if (order.status == OrderStatus.pending ||
-        order.status == OrderStatus.confirmed) {
-      throw PlaceifyException(
-        message: 'Accept the order before posting delivery updates.',
-        code: 'ORDER_NOT_ACCEPTED',
-      );
-    }
-
-    if (order.status == OrderStatus.rejected ||
-        order.status == OrderStatus.cancelled ||
-        order.status == OrderStatus.autoCancelled) {
-      throw PlaceifyException(
-        message: 'Delivery updates are not available for this order.',
-        code: 'INVALID_ORDER_STATUS',
-      );
-    }
-
-    if (order.deliveryStatus == OrderDeliveryStatus.delivered) {
-      throw PlaceifyException(
-        message: 'This order is already delivered.',
-        code: 'ORDER_ALREADY_DELIVERED',
-      );
-    }
-
-    final nextDeliveryStatus = OrderLifecycleStore.deliveryStatusForStage(stage);
-    if (nextDeliveryStatus == null) {
-      throw PlaceifyException(
-        message: 'This delivery stage cannot be applied.',
-        code: 'INVALID_DELIVERY_STAGE',
-      );
-    }
-
-    if (!OrderLifecycleStore.canAdvanceDeliveryStatus(
-      order.deliveryStatus,
-      nextDeliveryStatus,
-    )) {
-      throw PlaceifyException(
-        message:
-            'Delivery status can only move forward one step at a time.',
-        code: 'INVALID_DELIVERY_STAGE',
-      );
-    }
-
-    final existing = await _deliveryUpdatesFor(session, vendor.id!, orderId);
-    final expected = _nextDeliveryStage(existing);
-    if (expected == null) {
-      throw PlaceifyException(
-        message: 'All delivery stages are complete.',
-        code: 'DELIVERY_COMPLETE',
-      );
-    }
-
-    if (stage != expected) {
-      throw PlaceifyException(
-        message:
-            'Updates must advance one stage at a time. Next stage: ${_stageLabel(expected)}.',
-        code: 'INVALID_DELIVERY_STAGE',
-      );
-    }
-
-    if (existing.any((update) => update.stage == stage)) {
-      throw PlaceifyException(
-        message: 'This delivery stage was already recorded.',
-        code: 'DUPLICATE_DELIVERY_STAGE',
-      );
-    }
-
-    OrderDeliveryUpdate? update;
-    await session.db.transaction((transaction) async {
-      update = await OrderDeliveryUpdate.db.insertRow(
-        session,
-        OrderDeliveryUpdate(
-          orderId: orderId,
-          vendorId: vendor.id!,
-          stage: stage,
-          note: note?.trim(),
-          photoUrl: photoUrl?.trim(),
-        ),
-        transaction: transaction,
-      );
-
-      final nextOrderStatus =
-          OrderLifecycleStore.orderStatusForDelivery(nextDeliveryStatus);
-      final updatedOrder = await OrderLifecycleStore.updateOrderWithVersion(
-        session,
-        order,
-        (current) => current.copyWith(
-          deliveryStatus: nextDeliveryStatus,
-          status: nextOrderStatus,
-        ),
-        transaction: transaction,
-      );
-
-      await OrderLifecycleStore.appendHistory(
+  }) =>
+      _delivery.submitDeliveryUpdate(
         session,
         orderId,
-        statusType: OrderStatusHistoryType.delivery,
-        previousStatus: order.deliveryStatus?.name,
-        newStatus: nextDeliveryStatus.name,
-        changedByUserId: user.id,
-        note: note?.trim(),
-        transaction: transaction,
+        stage,
+        note: note,
+        photoUrl: photoUrl,
       );
-
-      if (order.status != nextOrderStatus) {
-        await OrderLifecycleStore.appendHistory(
-          session,
-          orderId,
-          statusType: OrderStatusHistoryType.order,
-          previousStatus: order.status.name,
-          newStatus: nextOrderStatus.name,
-          changedByUserId: user.id,
-          note: note?.trim(),
-          transaction: transaction,
-        );
-      }
-
-      await OrderNotificationService.notifyDeliveryStatus(
-        session,
-        order: updatedOrder,
-        status: nextDeliveryStatus,
-        vendorId: vendor.id!,
-      );
-    });
-
-    return update!;
-  }
 
   Future<String> uploadDeliveryProof(
     Session session,
@@ -1646,256 +1391,55 @@ class VendorStore {
     );
   }
 
-  Future<Order> _requireMutableVendorOrder(
-    Session session,
-    UuidValue vendorId,
-    int orderId,
-  ) async {
-    await _assertVendorOwnsOrder(session, vendorId, orderId);
-    final order = await Order.db.findById(session, orderId);
-    if (order == null) {
-      throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
-    }
-    return order;
-  }
-
-  Future<void> _assertVendorOwnsOrder(
-    Session session,
-    UuidValue vendorId,
-    int orderId,
-  ) async {
-    final ownsOrder = await OrderItem.db.findFirstRow(
-      session,
-      where: (row) =>
-          row.vendorId.equals(vendorId) & row.orderId.equals(orderId),
-    );
-    if (ownsOrder == null) {
-      throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
-    }
-  }
-
-  Future<List<OrderDeliveryUpdate>> _deliveryUpdatesFor(
-    Session session,
-    UuidValue vendorId,
-    int orderId,
-  ) {
-    return OrderDeliveryUpdate.db.find(
-      session,
-      where: (row) =>
-          row.vendorId.equals(vendorId) & row.orderId.equals(orderId),
-      orderBy: (row) => row.createdAt,
-    );
-  }
-
-  DeliveryStage? _nextDeliveryStage(List<OrderDeliveryUpdate> existing) {
-    if (existing.isEmpty) return DeliveryStage.orderPlaced;
-
-    var maxIndex = -1;
-    for (final update in existing) {
-      final index = DeliveryStage.values.indexOf(update.stage);
-      if (index > maxIndex) maxIndex = index;
-    }
-
-    final nextIndex = maxIndex + 1;
-    if (nextIndex >= DeliveryStage.values.length) return null;
-    return DeliveryStage.values[nextIndex];
-  }
-
-  String _stageLabel(DeliveryStage stage) {
-    return switch (stage) {
-      DeliveryStage.orderPlaced => 'Order placed',
-      DeliveryStage.packed => 'Packed',
-      DeliveryStage.shipped => 'Shipped',
-      DeliveryStage.outForDelivery => 'Out for delivery',
-      DeliveryStage.delivered => 'Delivered',
-    };
-  }
-
   Future<List<OrderItem>> _loadVendorOrderItems(
     Session session,
     UuidValue vendorId,
-  ) {
-    return OrderItem.db.find(
-      session,
-      where: (row) => row.vendorId.equals(vendorId),
-      include: OrderItem.include(
-        order: Order.include(user: User.include()),
-        product: Product.include(),
-      ),
-      orderDescending: true,
-      orderBy: (row) => row.id,
-    );
-  }
-
-  List<VendorShopOrder> _groupVendorShopOrders(List<OrderItem> orderItems) {
-    final grouped = <int, List<OrderItem>>{};
-    for (final item in orderItems) {
-      grouped.putIfAbsent(item.orderId, () => []).add(item);
-    }
-
-    final orders = <VendorShopOrder>[];
-    for (final entry in grouped.entries) {
-      final items = entry.value;
-      final order = items.first.order;
-      if (order == null) continue;
-
-      final lineItems = <VendorOrderLineItem>[
-        for (final item in items)
-          if (item.id != null)
-            VendorOrderLineItem(
-              orderItemId: item.id!,
-              productId: item.productId,
-              productName: item.product?.name ?? 'Product',
-              quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              lineTotal: item.unitPrice * item.quantity,
-              thumbnailUrl: item.product?.thumbnailUrl,
-            ),
-      ];
-
-      final vendorTotal = lineItems.fold<double>(
-        0,
-        (sum, item) => sum + item.lineTotal,
-      );
-      final itemCount = lineItems.fold<int>(
-        0,
-        (sum, item) => sum + item.quantity,
-      );
-
-      orders.add(
-        VendorShopOrder(
-          orderId: entry.key,
-          orderNumber: entry.key.toString().padLeft(5, '0'),
-          status: order.status,
-          placedAt: order.placedAt,
-          customerName: order.user?.name ?? 'Customer',
-          shippingAddress: order.shippingAddress,
-          vendorTotal: vendorTotal,
-          itemCount: itemCount,
-          items: lineItems,
-          rejectionReason: order.rejectionReason,
-          orderPaymentStatus: order.paymentStatus,
-        ),
-      );
-    }
-
-    orders.sort((a, b) => b.placedAt.compareTo(a.placedAt));
-    return orders;
-  }
+  ) =>
+      VendorOrderSupport.loadVendorOrderItems(session, vendorId);
 
   Future<List<VendorNotificationSummary>> listNotifications(
     Session session, {
     int limit = 50,
-  }) async {
-    final user = await SessionService.requireUser(session);
-    final rows = await _notifications.listForUser(session, user.id!, limit: limit);
+  }) =>
+      _vendorNotifications.listNotifications(session, limit: limit);
 
-    return [
-      for (final row in rows)
-        VendorNotificationSummary(
-          id: row.id.toString(),
-          type: _vendorNotificationType(row.type),
-          title: row.title,
-          body: row.message,
-          isRead: row.isRead,
-          createdAt: row.createdAt,
-          relatedId: row.referenceId?.toString(),
-        ),
-    ];
-  }
+  Future<void> markNotificationRead(Session session, int notificationId) =>
+      _vendorNotifications.markNotificationRead(session, notificationId);
 
-  Future<void> markNotificationRead(Session session, int notificationId) async {
-    final user = await SessionService.requireUser(session);
-    await _notifications.markRead(session, user.id!, notificationId);
-  }
+  Future<void> markAllNotificationsRead(Session session) =>
+      _vendorNotifications.markAllNotificationsRead(session);
 
-  Future<void> markAllNotificationsRead(Session session) async {
-    final user = await SessionService.requireUser(session);
-    await _notifications.markAllRead(session, user.id!);
-  }
+  Product _withPricing({
+    required Product product,
+    required double listPrice,
+    double? discountPrice,
+    double? discountPercentage,
+    bool? featured,
+  }) =>
+      _products.withPricing(
+        product: product,
+        listPrice: listPrice,
+        discountPrice: discountPrice,
+        discountPercentage: discountPercentage,
+        featured: featured,
+      );
 
-  VendorNotificationType _vendorNotificationType(InAppNotificationType type) {
-    return switch (type) {
-      InAppNotificationType.orderPlaced => VendorNotificationType.order,
-      InAppNotificationType.orderAccepted => VendorNotificationType.order,
-      InAppNotificationType.orderCancelled => VendorNotificationType.order,
-      InAppNotificationType.deliveryUpdate => VendorNotificationType.order,
-      InAppNotificationType.paymentUpdate => VendorNotificationType.payment,
-    };
-  }
+  Future<void> _dispatchProductEvents(
+    Session session,
+    Product product,
+    UuidValue vendorId, {
+    required bool created,
+  }) =>
+      _products.dispatchProductEvents(
+        session,
+        product,
+        vendorId,
+        created: created,
+      );
 
   Future<List<ShopListingSummary>> listApprovedShops(
     Session session, {
     String? query,
-  }) async {
-    final normalizedQuery = query?.trim().toLowerCase();
-    final vendors = await Vendor.db.find(
-      session,
-      include: Vendor.include(user: User.include()),
-      orderBy: (row) => row.shopName,
-    );
-
-    final activeProducts = await Product.db.find(
-      session,
-      where: (row) => row.status.equals(ProductStatus.active),
-    );
-    final productCountByVendor = <UuidValue, int>{};
-    for (final product in activeProducts) {
-      productCountByVendor.update(
-        product.vendorId,
-        (count) => count + 1,
-        ifAbsent: () => 1,
-      );
-    }
-
-    final listings = <ShopListingSummary>[];
-    for (final vendor in vendors) {
-      final user = vendor.user;
-      final vendorId = vendor.id;
-      if (user == null || vendorId == null) continue;
-      if (user.role != UserRole.vendor ||
-          user.status != UserAccountStatus.approved ||
-          !user.isActive) {
-        continue;
-      }
-
-      final productCount = productCountByVendor[vendorId] ?? 0;
-
-      final locality = vendor.city?.trim().isNotEmpty == true
-          ? vendor.city!.trim()
-          : _localityFromAddress(vendor.businessAddress);
-      final tags = VendorShopCategoryCodec.decode(vendor.shopCategory);
-
-      final listing = ShopListingSummary(
-        vendorId: vendorId,
-        businessName: vendor.shopName,
-        locality: locality,
-        tags: tags,
-        logoUrl: vendor.logoUrl,
-        bannerUrl: vendor.bannerUrl,
-        productCount: productCount,
-        averageRating: vendor.rating,
-      );
-
-      if (normalizedQuery != null && normalizedQuery.isNotEmpty) {
-        final haystack =
-            '${listing.businessName} ${listing.locality} ${tags.join(' ')}'
-                .toLowerCase();
-        if (!haystack.contains(normalizedQuery)) continue;
-      }
-
-      listings.add(listing);
-    }
-
-    return listings;
-  }
-
-  String _localityFromAddress(String? address) {
-    if (address == null || address.trim().isEmpty) return '';
-    final parts = address.split(',');
-    if (parts.length >= 2) {
-      return parts[parts.length - 2].trim();
-    }
-    return parts.first.trim();
-  }
+  }) =>
+      _profile.listApprovedShops(session, query: query);
 }

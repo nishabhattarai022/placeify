@@ -3,6 +3,7 @@ import 'package:serverpod/serverpod.dart';
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
+import '../../shared/user_role_audit_log.dart';
 import 'user_order_store.dart';
 import 'user_payment_store.dart';
 import 'user_repository.dart';
@@ -50,15 +51,27 @@ class UserService {
       where: (row) => row.userId.equals(user.id!),
     );
     if (shop == null) {
-      throw PlaceifyException(message: 'Complete vendor registration before switching to vendor mode.',
+      throw PlaceifyException(
+        message: 'Complete vendor registration before switching to vendor mode.',
         code: 'SHOP_NOT_FOUND',
       );
     }
 
-    return User.db.updateRow(
-      session,
-      user.copyWith(role: UserRole.vendor),
-    );
+    if (user.role != UserRole.vendor) {
+      throw PlaceifyException(
+        message: 'Vendor account is pending admin approval.',
+        code: 'VENDOR_NOT_APPROVED',
+      );
+    }
+
+    if (user.status != UserAccountStatus.approved || !user.isActive) {
+      throw PlaceifyException(
+        message: 'Vendor account is not approved yet.',
+        code: 'VENDOR_NOT_APPROVED',
+      );
+    }
+
+    return user;
   }
 
   Future<User> becomeConsumer(Session session) async {
@@ -66,10 +79,20 @@ class UserService {
     if (user.role == UserRole.admin) return user;
     if (user.role == UserRole.consumer) return user;
 
-    return User.db.updateRow(
+    final previousRole = user.role;
+    final updated = await User.db.updateRow(
       session,
       user.copyWith(role: UserRole.consumer),
     );
+    UserRoleAuditLog.roleChanged(
+      session,
+      userId: user.id!,
+      previousRole: previousRole,
+      newRole: UserRole.consumer,
+      source: 'user.becomeConsumer',
+      changedByUserId: user.id,
+    );
+    return updated;
   }
 
   Future<UserDashboard> getDashboard(Session session) async {

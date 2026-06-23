@@ -11,6 +11,7 @@ import '../../../core/widgets/toast_overlay.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_payout.dart';
 import 'providers/vendor_payments_provider.dart';
 import 'widgets/payment_status_chip.dart';
+import 'widgets/payment_update_sheet.dart';
 
 class VendorPaymentsScreen extends ConsumerWidget {
   const VendorPaymentsScreen({super.key});
@@ -43,7 +44,7 @@ class VendorPaymentsScreen extends ConsumerWidget {
                   parent: BouncingScrollPhysics(),
                 ),
                 padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
-                itemCount: data.payouts.length + 1,
+                itemCount: data.payouts.length + 2,
                 itemBuilder: (context, index) {
                   if (index == 0) {
                     return Column(
@@ -82,7 +83,23 @@ class VendorPaymentsScreen extends ConsumerWidget {
                     );
                   }
 
-                  final payout = data.payouts[index - 1];
+                  if (index == 1) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: OutlinedButton.icon(
+                        onPressed: () => PaymentUpdateSheet.show(
+                          context,
+                          ref,
+                          orderId: 'vo2',
+                          orderLabel: 'Order #4820',
+                        ),
+                        icon: const Icon(Icons.edit_outlined, size: 18),
+                        label: const Text('Manual payment update'),
+                      ),
+                    );
+                  }
+
+                  final payout = data.payouts[index - 2];
                   return _PayoutRow(payout: payout);
                 },
               ),

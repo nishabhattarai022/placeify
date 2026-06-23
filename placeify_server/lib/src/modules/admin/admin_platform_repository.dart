@@ -26,8 +26,12 @@ class AdminPlatformStore {
     final vendorUsers = users.where((user) => user.role == UserRole.vendor);
     final approvedCount =
         vendorUsers.where((user) => user.status == UserAccountStatus.approved).length;
-    final pendingCount =
-        vendorUsers.where((user) => user.status == UserAccountStatus.pending).length;
+
+    final pendingApplications = await listVendorApplications(
+      session,
+      status: UserAccountStatus.pending,
+    );
+    final pendingCount = pendingApplications.length;
     final declinedCount =
         vendorUsers.where((user) => user.status == UserAccountStatus.rejected).length;
     final suspendedCount =
@@ -132,7 +136,6 @@ class AdminPlatformStore {
       final user = vendor.user;
       final vendorId = vendor.id;
       if (user == null || vendorId == null) continue;
-      if (user.role != UserRole.vendor) continue;
       if (status != null && user.status != status) continue;
 
       applications.add(
@@ -167,7 +170,7 @@ class AdminPlatformStore {
     if (vendor == null) return null;
 
     final user = vendor.user;
-    if (user == null || user.role != UserRole.vendor) return null;
+    if (user == null) return null;
 
     final documents = await VendorDocument.db.find(
       session,

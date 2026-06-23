@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../profile/presentation/widgets/shared/profile_form_field.dart';
@@ -126,6 +127,11 @@ class _AddressStepState extends ConsumerState<AddressStep> {
           child: ProfileTextInput(
             controller: _postalCode,
             hint: VendorFormStrings.postalCodeHint,
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(5),
+            ],
             hasError:
                 fieldErrors.containsKey(VendorRegistrationFieldKeys.postalCode),
             onChanged: (v) => _sync(

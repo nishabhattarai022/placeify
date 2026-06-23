@@ -55,15 +55,27 @@ Future<({AuthenticatedTestSession session, User profile})>
   return (session: authenticated, profile: profile);
 }
 
-/// Inserts a vendor + product owned by [user].
+/// Inserts an approved vendor shop and active product for integration tests.
 Future<({Vendor vendor, Product product})> seedProductForUser(
   Session session,
   User user,
 ) async {
+  final vendorAuth = await AuthUsers().create(session);
+  final vendorUser = await User.db.insertRow(
+    session,
+    User(
+      authUserId: vendorAuth.id,
+      email: 'vendor-seed-${DateTime.now().microsecondsSinceEpoch}@test.com',
+      name: 'Seed Vendor',
+      role: UserRole.vendor,
+      status: UserAccountStatus.approved,
+    ),
+  );
+
   final vendor = await Vendor.db.insertRow(
     session,
     Vendor(
-      userId: user.id!,
+      userId: vendorUser.id!,
       shopName: 'Test Shop ${DateTime.now().microsecondsSinceEpoch}',
       description: 'Integration test vendor',
     ),

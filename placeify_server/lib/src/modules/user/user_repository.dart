@@ -2,6 +2,7 @@ import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
 import '../ar/ar_repository.dart';
+import '../product/product_repository.dart';
 import '../refund/refund_repository.dart';
 import '../wishlist/wishlist_repository.dart';
 
@@ -10,13 +11,16 @@ class UserProfileStore {
     WishlistStore? wishlistStore,
     ArSessionStore? arSessionStore,
     RefundStore? refundStore,
+    CatalogRepository? catalogStore,
   })  : _wishlistStore = wishlistStore ?? WishlistStore(),
         _arSessionStore = arSessionStore ?? ArSessionStore(),
-        _refundStore = refundStore ?? RefundStore();
+        _refundStore = refundStore ?? RefundStore(),
+        _catalogStore = catalogStore ?? CatalogRepository();
 
   final WishlistStore _wishlistStore;
   final ArSessionStore _arSessionStore;
   final RefundStore _refundStore;
+  final CatalogRepository _catalogStore;
 
   Future<User?> findByAuthUserId(Session session, UuidValue authUserId) {
     return User.db.findFirstRow(
@@ -87,6 +91,7 @@ class UserProfileStore {
     final arSessionCount = await _arSessionStore.countForUser(session, userId);
     final refundCount = await _refundStore.countForUser(session, userId);
     final cartItemCount = await _countCartItems(session, userId);
+    final marketplace = await _catalogStore.marketplaceHighlights(session);
 
     return UserDashboard(
       profile: user,
@@ -95,6 +100,7 @@ class UserProfileStore {
       cartItemCount: cartItemCount,
       arSessionCount: arSessionCount,
       refundCount: refundCount,
+      marketplace: marketplace,
     );
   }
 }

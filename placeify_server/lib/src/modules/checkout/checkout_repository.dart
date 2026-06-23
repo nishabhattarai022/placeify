@@ -1,7 +1,7 @@
 import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
-import '../notification/order_notification_service.dart';
+import '../marketplace/marketplace_events.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
 import '../checkout/checkout_order_setup.dart';
@@ -126,18 +126,20 @@ class CheckoutStore {
         : 'Customer';
 
     for (final vendorId in vendorIds) {
-      await OrderNotificationService.notifyVendorNewOrder(
+      await marketplaceEventDispatcher.dispatch(
         session,
-        order: order,
-        vendorId: vendorId,
-        customerName: customerName,
-        itemCount: itemCount,
+        OrderPlacedEvent(
+          order: order,
+          vendorId: vendorId,
+          customerName: customerName,
+          itemCount: itemCount,
+        ),
       );
     }
 
-    await OrderNotificationService.notifyCustomerOrderPlaced(
+    await marketplaceEventDispatcher.dispatch(
       session,
-      order: order,
+      CustomerOrderPlacedEvent(order: order),
     );
 
     return CheckoutResult(order: order, itemCount: itemCount);

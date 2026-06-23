@@ -23,8 +23,11 @@ abstract class ProductSearchInput
     this.vendorId,
     this.minPrice,
     this.maxPrice,
+    bool? featuredOnly,
+    bool? offersOnly,
     this.pagination,
-  });
+  }) : featuredOnly = featuredOnly ?? false,
+       offersOnly = offersOnly ?? false;
 
   factory ProductSearchInput({
     String? query,
@@ -32,6 +35,8 @@ abstract class ProductSearchInput
     _i1.UuidValue? vendorId,
     double? minPrice,
     double? maxPrice,
+    bool? featuredOnly,
+    bool? offersOnly,
     _i2.PaginationInput? pagination,
   }) = _ProductSearchInputImpl;
 
@@ -44,6 +49,12 @@ abstract class ProductSearchInput
           : _i1.UuidValueJsonExtension.fromJson(jsonSerialization['vendorId']),
       minPrice: (jsonSerialization['minPrice'] as num?)?.toDouble(),
       maxPrice: (jsonSerialization['maxPrice'] as num?)?.toDouble(),
+      featuredOnly: jsonSerialization['featuredOnly'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['featuredOnly']),
+      offersOnly: jsonSerialization['offersOnly'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['offersOnly']),
       pagination: jsonSerialization['pagination'] == null
           ? null
           : _i3.Protocol().deserialize<_i2.PaginationInput>(
@@ -62,6 +73,12 @@ abstract class ProductSearchInput
 
   double? maxPrice;
 
+  /// When true, only products flagged [Product.featured] by the vendor.
+  bool featuredOnly;
+
+  /// When true, only products with an active offer ([Product.isOffer]).
+  bool offersOnly;
+
   _i2.PaginationInput? pagination;
 
   /// Returns a shallow copy of this [ProductSearchInput]
@@ -73,6 +90,8 @@ abstract class ProductSearchInput
     _i1.UuidValue? vendorId,
     double? minPrice,
     double? maxPrice,
+    bool? featuredOnly,
+    bool? offersOnly,
     _i2.PaginationInput? pagination,
   });
   @override
@@ -84,6 +103,8 @@ abstract class ProductSearchInput
       if (vendorId != null) 'vendorId': vendorId?.toJson(),
       if (minPrice != null) 'minPrice': minPrice,
       if (maxPrice != null) 'maxPrice': maxPrice,
+      'featuredOnly': featuredOnly,
+      'offersOnly': offersOnly,
       if (pagination != null) 'pagination': pagination?.toJson(),
     };
   }
@@ -97,6 +118,8 @@ abstract class ProductSearchInput
       if (vendorId != null) 'vendorId': vendorId?.toJson(),
       if (minPrice != null) 'minPrice': minPrice,
       if (maxPrice != null) 'maxPrice': maxPrice,
+      'featuredOnly': featuredOnly,
+      'offersOnly': offersOnly,
       if (pagination != null) 'pagination': pagination?.toJsonForProtocol(),
     };
   }
@@ -116,6 +139,8 @@ class _ProductSearchInputImpl extends ProductSearchInput {
     _i1.UuidValue? vendorId,
     double? minPrice,
     double? maxPrice,
+    bool? featuredOnly,
+    bool? offersOnly,
     _i2.PaginationInput? pagination,
   }) : super._(
          query: query,
@@ -123,6 +148,8 @@ class _ProductSearchInputImpl extends ProductSearchInput {
          vendorId: vendorId,
          minPrice: minPrice,
          maxPrice: maxPrice,
+         featuredOnly: featuredOnly,
+         offersOnly: offersOnly,
          pagination: pagination,
        );
 
@@ -136,6 +163,8 @@ class _ProductSearchInputImpl extends ProductSearchInput {
     Object? vendorId = _Undefined,
     Object? minPrice = _Undefined,
     Object? maxPrice = _Undefined,
+    bool? featuredOnly,
+    bool? offersOnly,
     Object? pagination = _Undefined,
   }) {
     return ProductSearchInput(
@@ -144,6 +173,8 @@ class _ProductSearchInputImpl extends ProductSearchInput {
       vendorId: vendorId is _i1.UuidValue? ? vendorId : this.vendorId,
       minPrice: minPrice is double? ? minPrice : this.minPrice,
       maxPrice: maxPrice is double? ? maxPrice : this.maxPrice,
+      featuredOnly: featuredOnly ?? this.featuredOnly,
+      offersOnly: offersOnly ?? this.offersOnly,
       pagination: pagination is _i2.PaginationInput?
           ? pagination
           : this.pagination?.copyWith(),

@@ -7,6 +7,14 @@ fields:
   name: String
   description: String
   price: double
+  ### Optional sale price when running a fixed-price promotion.
+  discountPrice: double?
+  ### Optional percentage discount (0–100). Ignored when [discountPrice] is set.
+  discountPercentage: double?
+  ### Highlights the product in featured / promotion surfaces.
+  featured: bool, default=false
+  ### True when the product has an active offer (derived from discount fields).
+  isOffer: bool, default=false
   materials: String?
   widthCm: double?
   depthCm: double?
