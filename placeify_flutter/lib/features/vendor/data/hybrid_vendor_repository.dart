@@ -14,10 +14,10 @@ import 'mock_vendor_repository.dart';
 /// Combines live Serverpod APIs with mock fallbacks for features not yet wired.
 class HybridVendorRepository implements VendorRepository {
   HybridVendorRepository({
-    MockVendorRepository? mockRepository,
+    required MockVendorRepository mockRepository,
     ServerpodVendorOrderRepository? orderRepository,
     ServerpodVendorProfileRepository? profileRepository,
-  })  : _mock = mockRepository ?? MockVendorRepository(),
+  })  : _mock = mockRepository,
         _orders = orderRepository ?? const ServerpodVendorOrderRepository(),
         _profile = profileRepository ?? const ServerpodVendorProfileRepository();
 
@@ -79,6 +79,14 @@ class HybridVendorRepository implements VendorRepository {
   @override
   Future<List<VendorNotification>> getNotifications(String vendorId) =>
       _mock.getNotifications(vendorId);
+
+  @override
+  Future<void> markNotificationRead(String notificationId) =>
+      _mock.markNotificationRead(notificationId);
+
+  @override
+  Future<void> markAllNotificationsRead() =>
+      _mock.markAllNotificationsRead();
 
   @override
   Future<List<VendorPayout>> getPayouts(String vendorId) =>

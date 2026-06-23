@@ -7,18 +7,18 @@ part of 'admin_audit_log_entry.dart';
 // **************************************************************************
 
 ApplicationAuditAction _$ApplicationAuditActionFromJson(
-  Map<String, dynamic> json,
-) => ApplicationAuditAction(
-  decision: $enumDecode(_$ApplicationDecisionEnumMap, json['decision']),
-  $type: json['kind'] as String?,
-);
+        Map<String, dynamic> json) =>
+    ApplicationAuditAction(
+      decision: $enumDecode(_$ApplicationDecisionEnumMap, json['decision']),
+      $type: json['kind'] as String?,
+    );
 
 Map<String, dynamic> _$ApplicationAuditActionToJson(
-  ApplicationAuditAction instance,
-) => <String, dynamic>{
-  'decision': _$ApplicationDecisionEnumMap[instance.decision]!,
-  'kind': instance.$type,
-};
+        ApplicationAuditAction instance) =>
+    <String, dynamic>{
+      'decision': _$ApplicationDecisionEnumMap[instance.decision]!,
+      'kind': instance.$type,
+    };
 
 const _$ApplicationDecisionEnumMap = {
   ApplicationDecision.approved: 'approved',

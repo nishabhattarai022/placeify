@@ -2,7 +2,7 @@ import 'package:placeify_client/placeify_client.dart' as api;
 
 import '../../../core/config/resolve_media_url.dart';
 import '../../cart/data/product_id_codec.dart';
-import '../../product_detail/data/product_model_3d_urls.dart';
+import '../../product_detail/data/product_3d_model_resolver.dart';
 import '../domain/models/product.dart';
 
 abstract final class CatalogProductMapper {
@@ -43,7 +43,8 @@ abstract final class CatalogProductMapper {
     final model3dUrl = product.model3dUrl?.trim();
     final has3dPreview = model3dUrl != null && model3dUrl.isNotEmpty;
     if (has3dPreview) {
-      ProductModel3dUrls.set(uiId, await resolveMediaUrl(model3dUrl));
+      final resolved = await resolveMediaUrl(model3dUrl);
+      Product3dModelResolver.setModelUrl(uiId, resolved);
     }
 
     return Product(
@@ -52,7 +53,6 @@ abstract final class CatalogProductMapper {
       brand: shopName,
       sku: 'PF${id.toString().padLeft(5, '0')}',
       price: product.price,
-      vendorId: product.vendor?.id?.toString() ?? product.vendorId.toString(),
       imageUrl: imageUrl.isEmpty
           ? 'assets/images/categories/chair.jpg'
           : imageUrl,
@@ -60,6 +60,7 @@ abstract final class CatalogProductMapper {
       hasArView: has3dPreview,
       categoryId: categoryId,
       dimensions: dimensions,
+      vendorId: product.vendorId.toString(),
     );
   }
 

@@ -35,7 +35,7 @@ final class VendorNotificationsProvider
 }
 
 String _$vendorNotificationsHash() =>
-    r'dfee329b9303fc0a2deb00cb6b882b7f6e42f3ee';
+    r'0b5e50e627f6f0ffc5f69ec2bd9912e749fcbcd5';
 
 abstract class _$VendorNotifications
     extends $AsyncNotifier<VendorNotificationsState> {

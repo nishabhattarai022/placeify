@@ -50,4 +50,4 @@ final class VendorApplicationRepositoryProvider
 }
 
 String _$vendorApplicationRepositoryHash() =>
-    r'0ac09bb108875b06106334e81b299bbc1387c81b';
+    r'0f5e438d242f5e82a2ceb62702f56d5a5fef7287';

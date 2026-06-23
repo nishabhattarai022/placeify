@@ -23,7 +23,8 @@ class HomeLiveProductsRow extends ConsumerWidget {
       ),
       error: (_, __) => const SizedBox.shrink(),
       data: (_) {
-        final featured = ref.watch(homeFeaturedProductsProvider);
+        final products = ref.watch(catalogProductsProvider);
+        final featured = products.take(2).toList();
         if (featured.isEmpty) return const SizedBox.shrink();
 
         return Row(

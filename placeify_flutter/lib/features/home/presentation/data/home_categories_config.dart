@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:placeify_flutter/features/home/data/mock_product_repository.dart';
 import 'package:placeify_flutter/features/home/domain/models/product.dart';
 
-/// Room filters and recommendation card mapping for the home screen.
+/// Room filters and recommended products for the home screen.
 abstract final class HomeCategoriesConfig {
-  /// Room filter labels for the home category chip row.
-  static const List<RoomCategory> rooms = [
-    RoomCategory(id: 'living', name: 'Living Room'),
-    RoomCategory(id: 'dining', name: 'Dining Room'),
-    RoomCategory(id: 'office', name: 'Office Room'),
-  ];
-
   /// SVG quick-browse row (black pill + icon circles).
   static const List<RoomCategory> quickBrowseRooms = [
     RoomCategory(
@@ -48,14 +42,71 @@ abstract final class HomeCategoriesConfig {
     Color(0xFFE8C547),
   ];
 
-  static Set<String> catalogCategoriesForRoom(String roomId) {
-    return switch (roomId) {
-      'living' => {'sofas', 'chairs', 'decor'},
-      'dining' => {'tables'},
-      'office' => {'chairs', 'tables'},
-      _ => const {},
-    };
-  }
+  static Product _product(String id) =>
+      MockProductRepository.products.firstWhere((p) => p.id == id);
+
+  static final List<RecommendProduct> recommended = [
+    fromProduct(
+      _product('p4'),
+      id: 'rec-living-sofa',
+      roomIds: ['living'],
+      swatches: [
+        Color(0xFFD4A017),
+        Color(0xFF2C2C2C),
+        Color(0xFFE07B5F),
+      ],
+    ),
+    fromProduct(
+      _product('p15'),
+      id: 'rec-living-lamp',
+      roomIds: ['living'],
+      swatches: [
+        Color(0xFF8B5A3C),
+        Color(0xFFB8D43A),
+        Color(0xFFE8C547),
+      ],
+    ),
+    fromProduct(
+      _product('p11'),
+      id: 'rec-dining-table',
+      roomIds: ['dining'],
+      swatches: [
+        Color(0xFF6B4F3A),
+        Color(0xFFC9A96E),
+        Color(0xFF2C2C2C),
+      ],
+    ),
+    fromProduct(
+      _product('p12'),
+      id: 'rec-dining-console',
+      roomIds: ['dining'],
+      swatches: [
+        Color(0xFF8B7355),
+        Color(0xFFD4C4A8),
+        Color(0xFF3D3D3D),
+      ],
+    ),
+    fromProduct(
+      _product('p7'),
+      id: 'rec-office-desk',
+      roomIds: ['office'],
+      swatches: [
+        Color(0xFF5C4033),
+        Color(0xFF8B6914),
+        Color(0xFF1A1A1A),
+      ],
+    ),
+    fromProduct(
+      _product('p8'),
+      id: 'rec-office-chair',
+      roomIds: ['office'],
+      swatches: [
+        Color(0xFF4A5568),
+        Color(0xFF718096),
+        Color(0xFF2D3748),
+      ],
+    ),
+  ];
 
   static RecommendProduct fromProduct(
     Product product, {
@@ -69,13 +120,15 @@ abstract final class HomeCategoriesConfig {
         displayName: product.name,
         displayPrice: 'NPR ${product.price.toInt()}',
         imageAsset: product.imageUrl.startsWith('http')
-            ? product.imageUrl
-            : (product.imageUrl.startsWith('assets/')
-                ? product.imageUrl
-                : _fallbackAsset),
+            ? _fallbackAsset
+            : product.imageUrl,
         roomIds: roomIds,
         swatches: swatches ?? _defaultSwatches,
       );
+
+  static List<RecommendProduct> forRoom(String roomId) => recommended
+      .where((p) => p.roomIds.contains(roomId))
+      .toList();
 }
 
 class RoomCategory {

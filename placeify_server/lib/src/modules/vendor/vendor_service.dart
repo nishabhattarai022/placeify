@@ -25,6 +25,8 @@ class VendorService {
     String? city,
     String? country,
     String? shopCategory,
+    String? contactEmail,
+    VendorBankDetailsInput? bankDetails,
   }) {
     return _repository.createShop(
       session,
@@ -36,7 +38,20 @@ class VendorService {
       city: city,
       country: country,
       shopCategory: shopCategory,
+      contactEmail: contactEmail,
+      bankDetails: bankDetails,
     );
+  }
+
+  Future<VendorBankDetails?> getMyBankDetails(Session session) {
+    return _repository.getMyBankDetails(session);
+  }
+
+  Future<VendorBankDetails> saveMyBankDetails(
+    Session session,
+    VendorBankDetailsInput input,
+  ) {
+    return _repository.saveMyBankDetails(session, input);
   }
 
   Future<VendorProfileDetail> getMyProfile(Session session) {
@@ -162,6 +177,7 @@ class VendorService {
     String? warranty,
     String? model3dUrl,
     String? thumbnailUrl,
+    List<String>? viewImageUrls,
   }) {
     return _repository.createProduct(
       session,
@@ -179,6 +195,7 @@ class VendorService {
       warranty: warranty,
       model3dUrl: model3dUrl,
       thumbnailUrl: thumbnailUrl,
+      viewImageUrls: viewImageUrls,
     );
   }
 
@@ -211,9 +228,15 @@ class VendorService {
   Future<String> uploadProductImage(
     Session session,
     ByteData fileData,
-    String fileName,
-  ) {
-    return _repository.uploadProductImage(session, fileData, fileName);
+    String fileName, {
+    bool removeBackground = false,
+  }) {
+    return _repository.uploadProductImage(
+      session,
+      fileData,
+      fileName,
+      removeBackground: removeBackground,
+    );
   }
 
   Future<Product> regenerateProductModel3d(
@@ -282,5 +305,20 @@ class VendorService {
     String fileName,
   ) {
     return _repository.uploadDeliveryProof(session, fileData, fileName);
+  }
+
+  Future<List<VendorNotificationSummary>> listNotifications(
+    Session session, {
+    int limit = 50,
+  }) {
+    return _repository.listNotifications(session, limit: limit);
+  }
+
+  Future<void> markNotificationRead(Session session, int notificationId) {
+    return _repository.markNotificationRead(session, notificationId);
+  }
+
+  Future<void> markAllNotificationsRead(Session session) {
+    return _repository.markAllNotificationsRead(session);
   }
 }

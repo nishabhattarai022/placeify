@@ -13,7 +13,8 @@
 import 'package:serverpod/serverpod.dart' as _i1;
 import 'order_status.dart' as _i2;
 import 'vendor_order_line_item.dart' as _i3;
-import 'package:placeify_server/src/generated/protocol.dart' as _i4;
+import 'order_payment_status.dart' as _i4;
+import 'package:placeify_server/src/generated/protocol.dart' as _i5;
 
 /// Customer order containing only items from the logged-in vendor's shop.
 abstract class VendorShopOrder
@@ -29,6 +30,7 @@ abstract class VendorShopOrder
     required this.itemCount,
     required this.items,
     this.rejectionReason,
+    required this.orderPaymentStatus,
   });
 
   factory VendorShopOrder({
@@ -42,6 +44,7 @@ abstract class VendorShopOrder
     required int itemCount,
     required List<_i3.VendorOrderLineItem> items,
     String? rejectionReason,
+    required _i4.OrderPaymentStatus orderPaymentStatus,
   }) = _VendorShopOrderImpl;
 
   factory VendorShopOrder.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -56,10 +59,13 @@ abstract class VendorShopOrder
       shippingAddress: jsonSerialization['shippingAddress'] as String,
       vendorTotal: (jsonSerialization['vendorTotal'] as num).toDouble(),
       itemCount: jsonSerialization['itemCount'] as int,
-      items: _i4.Protocol().deserialize<List<_i3.VendorOrderLineItem>>(
+      items: _i5.Protocol().deserialize<List<_i3.VendorOrderLineItem>>(
         jsonSerialization['items'],
       ),
       rejectionReason: jsonSerialization['rejectionReason'] as String?,
+      orderPaymentStatus: _i4.OrderPaymentStatus.fromJson(
+        (jsonSerialization['orderPaymentStatus'] as String),
+      ),
     );
   }
 
@@ -83,6 +89,8 @@ abstract class VendorShopOrder
 
   String? rejectionReason;
 
+  _i4.OrderPaymentStatus orderPaymentStatus;
+
   /// Returns a shallow copy of this [VendorShopOrder]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -97,6 +105,7 @@ abstract class VendorShopOrder
     int? itemCount,
     List<_i3.VendorOrderLineItem>? items,
     String? rejectionReason,
+    _i4.OrderPaymentStatus? orderPaymentStatus,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -112,6 +121,7 @@ abstract class VendorShopOrder
       'itemCount': itemCount,
       'items': items.toJson(valueToJson: (v) => v.toJson()),
       if (rejectionReason != null) 'rejectionReason': rejectionReason,
+      'orderPaymentStatus': orderPaymentStatus.toJson(),
     };
   }
 
@@ -129,6 +139,7 @@ abstract class VendorShopOrder
       'itemCount': itemCount,
       'items': items.toJson(valueToJson: (v) => v.toJsonForProtocol()),
       if (rejectionReason != null) 'rejectionReason': rejectionReason,
+      'orderPaymentStatus': orderPaymentStatus.toJson(),
     };
   }
 
@@ -152,6 +163,7 @@ class _VendorShopOrderImpl extends VendorShopOrder {
     required int itemCount,
     required List<_i3.VendorOrderLineItem> items,
     String? rejectionReason,
+    required _i4.OrderPaymentStatus orderPaymentStatus,
   }) : super._(
          orderId: orderId,
          orderNumber: orderNumber,
@@ -163,6 +175,7 @@ class _VendorShopOrderImpl extends VendorShopOrder {
          itemCount: itemCount,
          items: items,
          rejectionReason: rejectionReason,
+         orderPaymentStatus: orderPaymentStatus,
        );
 
   /// Returns a shallow copy of this [VendorShopOrder]
@@ -180,6 +193,7 @@ class _VendorShopOrderImpl extends VendorShopOrder {
     int? itemCount,
     List<_i3.VendorOrderLineItem>? items,
     Object? rejectionReason = _Undefined,
+    _i4.OrderPaymentStatus? orderPaymentStatus,
   }) {
     return VendorShopOrder(
       orderId: orderId ?? this.orderId,
@@ -194,6 +208,7 @@ class _VendorShopOrderImpl extends VendorShopOrder {
       rejectionReason: rejectionReason is String?
           ? rejectionReason
           : this.rejectionReason,
+      orderPaymentStatus: orderPaymentStatus ?? this.orderPaymentStatus,
     );
   }
 }

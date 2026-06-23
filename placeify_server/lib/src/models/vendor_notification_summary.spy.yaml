@@ -1,0 +1,10 @@
+### Vendor-facing notification shown in the shop inbox.
+class: VendorNotificationSummary
+fields:
+  id: String
+  type: VendorNotificationType
+  title: String
+  body: String
+  isRead: bool, default=false
+  createdAt: DateTime
+  relatedId: String?

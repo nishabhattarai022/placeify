@@ -11,6 +11,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
+import 'package:placeify_client/src/protocol/protocol.dart' as _i2;
 
 /// Metadata for creating a vendor product with an uploaded photo.
 abstract class VendorProductUploadInput implements _i1.SerializableModel {
@@ -30,6 +31,7 @@ abstract class VendorProductUploadInput implements _i1.SerializableModel {
     this.warranty,
     bool? generateModel3d,
     bool? isActive,
+    this.viewImageUrls,
   }) : generateModel3d = generateModel3d ?? false,
        isActive = isActive ?? true;
 
@@ -49,6 +51,7 @@ abstract class VendorProductUploadInput implements _i1.SerializableModel {
     String? warranty,
     bool? generateModel3d,
     bool? isActive,
+    List<String>? viewImageUrls,
   }) = _VendorProductUploadInputImpl;
 
   factory VendorProductUploadInput.fromJson(
@@ -76,6 +79,11 @@ abstract class VendorProductUploadInput implements _i1.SerializableModel {
       isActive: jsonSerialization['isActive'] == null
           ? null
           : _i1.BoolJsonExtension.fromJson(jsonSerialization['isActive']),
+      viewImageUrls: jsonSerialization['viewImageUrls'] == null
+          ? null
+          : _i2.Protocol().deserialize<List<String>>(
+              jsonSerialization['viewImageUrls'],
+            ),
     );
   }
 
@@ -109,6 +117,8 @@ abstract class VendorProductUploadInput implements _i1.SerializableModel {
 
   bool isActive;
 
+  List<String>? viewImageUrls;
+
   /// Returns a shallow copy of this [VendorProductUploadInput]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -128,6 +138,7 @@ abstract class VendorProductUploadInput implements _i1.SerializableModel {
     String? warranty,
     bool? generateModel3d,
     bool? isActive,
+    List<String>? viewImageUrls,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -148,6 +159,7 @@ abstract class VendorProductUploadInput implements _i1.SerializableModel {
       if (warranty != null) 'warranty': warranty,
       'generateModel3d': generateModel3d,
       'isActive': isActive,
+      if (viewImageUrls != null) 'viewImageUrls': viewImageUrls?.toJson(),
     };
   }
 
@@ -176,6 +188,7 @@ class _VendorProductUploadInputImpl extends VendorProductUploadInput {
     String? warranty,
     bool? generateModel3d,
     bool? isActive,
+    List<String>? viewImageUrls,
   }) : super._(
          productId: productId,
          name: name,
@@ -192,6 +205,7 @@ class _VendorProductUploadInputImpl extends VendorProductUploadInput {
          warranty: warranty,
          generateModel3d: generateModel3d,
          isActive: isActive,
+         viewImageUrls: viewImageUrls,
        );
 
   /// Returns a shallow copy of this [VendorProductUploadInput]
@@ -214,6 +228,7 @@ class _VendorProductUploadInputImpl extends VendorProductUploadInput {
     Object? warranty = _Undefined,
     bool? generateModel3d,
     bool? isActive,
+    Object? viewImageUrls = _Undefined,
   }) {
     return VendorProductUploadInput(
       productId: productId is int? ? productId : this.productId,
@@ -231,6 +246,9 @@ class _VendorProductUploadInputImpl extends VendorProductUploadInput {
       warranty: warranty is String? ? warranty : this.warranty,
       generateModel3d: generateModel3d ?? this.generateModel3d,
       isActive: isActive ?? this.isActive,
+      viewImageUrls: viewImageUrls is List<String>?
+          ? viewImageUrls
+          : this.viewImageUrls?.map((e0) => e0).toList(),
     );
   }
 }

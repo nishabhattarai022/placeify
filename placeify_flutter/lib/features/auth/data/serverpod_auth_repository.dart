@@ -5,6 +5,7 @@ import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/config/placeify_server_client.dart';
+import '../../admin/domain/enums/user_role.dart' as ui_role;
 import '../../vendor/domain/enums/vendor_status.dart';
 import '../constants/demo_credentials.dart';
 import '../domain/models/app_user.dart';
@@ -97,9 +98,8 @@ class ServerpodAuthRepository implements AuthRepository {
 
   /// Signs in with the demo admin account for local admin dashboard access.
   Future<AppUser> signInWithDemoAdminCredentials() async {
-    AppUser user;
     try {
-      user = await signIn(
+      await signIn(
         email: DemoCredentials.adminEmail,
         password: DemoCredentials.adminPassword,
       );
@@ -111,13 +111,12 @@ class ServerpodAuthRepository implements AuthRepository {
         email: DemoCredentials.adminEmail,
         password: DemoCredentials.adminPassword,
       );
-      user = await signIn(
+      await signIn(
         email: DemoCredentials.adminEmail,
         password: DemoCredentials.adminPassword,
       );
     }
 
-    await client.user.ensureDemoAdmin();
     return _loadAppUser(DemoCredentials.adminEmail);
   }
 
@@ -144,6 +143,9 @@ class ServerpodAuthRepository implements AuthRepository {
       );
       await client.auth.updateSignedInUser(authSuccess);
       await _prefs.setString(_sessionEmailKey, normalizedEmail);
+      if (normalizedEmail == DemoCredentials.adminEmail.trim().toLowerCase()) {
+        await client.user.ensureDemoAdmin();
+      }
       return _loadAppUser(normalizedEmail);
     } catch (error) {
       throw _mapError(error);
@@ -291,13 +293,18 @@ class ServerpodAuthRepository implements AuthRepository {
       id: profile.id.toString(),
       fullName: profile.name,
       email: email,
-      role: profile.role,
-      phone: profile.phone,
-      address: profile.address,
-      hasVendorShop: hasVendorShop ?? false,
-      registeredVendorStatus: vendorStatus,
-      registeredVendorId: vendorId,
+      role: _mapRole(profile.role),
+      vendorStatus: vendorStatus ?? VendorStatus.none,
+      vendorId: vendorId,
     );
+  }
+
+  ui_role.UserRole _mapRole(UserRole role) {
+    return switch (role) {
+      UserRole.admin => ui_role.UserRole.admin,
+      UserRole.vendor => ui_role.UserRole.vendor,
+      UserRole.consumer => ui_role.UserRole.customer,
+    };
   }
 
   VendorStatus? _vendorStatusFromServer(

@@ -1,0 +1,17 @@
+### Payout bank account linked 1:1 to a vendor shop.
+class: VendorBankDetails
+table: vendor_bank_details
+fields:
+  vendor: Vendor?, relation(onDelete=Cascade)
+  accountHolderName: String
+  bankName: String
+  accountNumber: String
+  ### Branch code, IFSC, routing number, or SWIFT — region-specific payout identifier.
+  branchCode: String
+  createdAt: DateTime, default=now
+  updatedAt: DateTime, default=now
+
+indexes:
+  vendor_bank_details_vendor_id:
+    fields: vendorId
+    unique: true

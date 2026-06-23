@@ -143,17 +143,23 @@ class _CinematicSplashViewState extends State<CinematicSplashView>
                         child: Column(
                           children: [
                             SizedBox(height: tight ? 24 : (compact ? 32 : 44)),
-                            FadeTransition(
-                              opacity: _heroOpacity,
+                            AnimatedBuilder(
+                              animation:
+                                  Listenable.merge([_heroOpacity, _heroDim]),
+                              builder: (context, child) {
+                                return Opacity(
+                                  opacity: (_heroOpacity.value *
+                                          (1 - _heroDim.value * 0.35))
+                                      .clamp(0.0, 1.0),
+                                  child: child,
+                                );
+                              },
                               child: SlideTransition(
                                 position: _heroSlide,
-                                child: Opacity(
-                                  opacity: 1 - _heroDim.value * 0.35,
-                                  child: _HeroHeadline(
-                                    line1Size: heroSize,
-                                    line2Size: heroLarge,
-                                    line2Reveal: _line2Reveal.value,
-                                  ),
+                                child: _HeroHeadline(
+                                  line1Size: heroSize,
+                                  line2Size: heroLarge,
+                                  line2Reveal: _line2Reveal.value,
                                 ),
                               ),
                             ),
@@ -165,17 +171,14 @@ class _CinematicSplashViewState extends State<CinematicSplashView>
                                     0,
                                     _deviceLift.value * (tight ? 0.35 : 1),
                                   ),
-                                  child: FadeTransition(
-                                    opacity: _deviceOpacity,
-                                    child: ScaleTransition(
-                                      scale: _deviceScale,
-                                      child: FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: CinematicPhoneMockup(
-                                          tiltProgress: _deviceTilt.value,
-                                          contentOpacity: _deviceOpacity,
-                                          badgeOpacity: _badgeOpacity,
-                                        ),
+                                  child: ScaleTransition(
+                                    scale: _deviceScale,
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: CinematicPhoneMockup(
+                                        tiltProgress: _deviceTilt.value,
+                                        contentOpacity: _deviceOpacity,
+                                        badgeOpacity: _badgeOpacity,
                                       ),
                                     ),
                                   ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:placeify_client/placeify_client.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 import '../../../core/config/placeify_server_client.dart';
@@ -24,6 +25,8 @@ class CartScreen extends ConsumerStatefulWidget {
 }
 
 class _CartScreenState extends ConsumerState<CartScreen> {
+  PaymentMethod _paymentMethod = PaymentMethod.cod;
+
   Future<void> _checkout() async {
     if (!client.auth.isAuthenticated) {
       if (!mounted) return;
@@ -32,7 +35,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
       return;
     }
 
-    final message = await ref.read(cartProvider.notifier).checkout();
+    final message =
+        await ref.read(cartProvider.notifier).checkout(paymentMethod: _paymentMethod);
     if (!mounted) return;
 
     PlaceifyToast.show(context, message);
@@ -134,6 +138,10 @@ class _CartScreenState extends ConsumerState<CartScreen> {
               bottom: 0,
               child: CartOrderSummary(
                 totals: totals,
+                selectedPaymentMethod: _paymentMethod,
+                onPaymentMethodChanged: (method) {
+                  setState(() => _paymentMethod = method);
+                },
                 onCheckout: _checkout,
               ),
             ),

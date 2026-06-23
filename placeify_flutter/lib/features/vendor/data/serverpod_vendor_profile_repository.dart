@@ -44,12 +44,6 @@ class ServerpodVendorProfileRepository {
         working = working.copyWith(bannerUrl: uploaded);
       }
 
-      final coverPath = profile.coverUrl;
-      if (coverPath != null && LocalImagePath.isLocal(coverPath)) {
-        final uploaded = await _uploadCover(coverPath);
-        working = working.copyWith(coverUrl: uploaded);
-      }
-
       final detail = await client.vendor.updateMyProfile(
         VendorProfileMapper.toUpdateInput(working),
       );

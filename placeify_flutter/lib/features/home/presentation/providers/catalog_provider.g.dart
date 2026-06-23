@@ -84,7 +84,7 @@ final class CatalogIndexProvider
   CatalogIndex create() => CatalogIndex();
 }
 
-String _$catalogIndexHash() => r'16cee1fd781725627a50bca666e5c9717c1b2cc5';
+String _$catalogIndexHash() => r'798cf6443bb6f5a365c55872663ebf051c06bbde';
 
 /// All active marketplace products (seed + vendor listings).
 
@@ -156,13 +156,8 @@ String _$catalogProductsHash() => r'556e262b0a75cc7700d80152588aef53744c6401';
 final catalogProductsByCategoryProvider = CatalogProductsByCategoryFamily._();
 
 final class CatalogProductsByCategoryProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<Product>>,
-          List<Product>,
-          FutureOr<List<Product>>
-        >
-    with $FutureModifier<List<Product>>, $FutureProvider<List<Product>> {
+    extends $FunctionalProvider<List<Product>, List<Product>, List<Product>>
+    with $Provider<List<Product>> {
   CatalogProductsByCategoryProvider._({
     required CatalogProductsByCategoryFamily super.from,
     required String super.argument,
@@ -186,14 +181,21 @@ final class CatalogProductsByCategoryProvider
 
   @$internal
   @override
-  $FutureProviderElement<List<Product>> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
+  $ProviderElement<List<Product>> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
-  FutureOr<List<Product>> create(Ref ref) {
+  List<Product> create(Ref ref) {
     final argument = this.argument as String;
     return catalogProductsByCategory(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<Product> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<Product>>(value),
+    );
   }
 
   @override
@@ -209,10 +211,10 @@ final class CatalogProductsByCategoryProvider
 }
 
 String _$catalogProductsByCategoryHash() =>
-    r'3c3bcfd956d0f2595f855d1efa39cb1473d54378';
+    r'a7f6ca6f23f83bc7e14cb6a97bd3df6eefd397ad';
 
 final class CatalogProductsByCategoryFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<List<Product>>, String> {
+    with $FunctionalFamilyOverride<List<Product>, String> {
   CatalogProductsByCategoryFamily._()
     : super(
         retry: null,
@@ -228,6 +230,246 @@ final class CatalogProductsByCategoryFamily extends $Family
   @override
   String toString() => r'catalogProductsByCategoryProvider';
 }
+
+@ProviderFor(categoryProductCount)
+final categoryProductCountProvider = CategoryProductCountFamily._();
+
+final class CategoryProductCountProvider
+    extends $FunctionalProvider<int, int, int>
+    with $Provider<int> {
+  CategoryProductCountProvider._({
+    required CategoryProductCountFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'categoryProductCountProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$categoryProductCountHash();
+
+  @override
+  String toString() {
+    return r'categoryProductCountProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  int create(Ref ref) {
+    final argument = this.argument as String;
+    return categoryProductCount(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CategoryProductCountProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$categoryProductCountHash() =>
+    r'5e741ceea04acc31cdc30ada74a133897139b0dd';
+
+final class CategoryProductCountFamily extends $Family
+    with $FunctionalFamilyOverride<int, String> {
+  CategoryProductCountFamily._()
+    : super(
+        retry: null,
+        name: r'categoryProductCountProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  CategoryProductCountProvider call(String categoryId) =>
+      CategoryProductCountProvider._(argument: categoryId, from: this);
+
+  @override
+  String toString() => r'categoryProductCountProvider';
+}
+
+@ProviderFor(catalogDiscountedProducts)
+final catalogDiscountedProductsProvider = CatalogDiscountedProductsProvider._();
+
+final class CatalogDiscountedProductsProvider
+    extends $FunctionalProvider<List<Product>, List<Product>, List<Product>>
+    with $Provider<List<Product>> {
+  CatalogDiscountedProductsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'catalogDiscountedProductsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$catalogDiscountedProductsHash();
+
+  @$internal
+  @override
+  $ProviderElement<List<Product>> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  List<Product> create(Ref ref) {
+    return catalogDiscountedProducts(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<Product> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<Product>>(value),
+    );
+  }
+}
+
+String _$catalogDiscountedProductsHash() =>
+    r'b4e796b105423be4f249dd26249c818361619d32';
+
+@ProviderFor(catalogNewestProducts)
+final catalogNewestProductsProvider = CatalogNewestProductsFamily._();
+
+final class CatalogNewestProductsProvider
+    extends $FunctionalProvider<List<Product>, List<Product>, List<Product>>
+    with $Provider<List<Product>> {
+  CatalogNewestProductsProvider._({
+    required CatalogNewestProductsFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'catalogNewestProductsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$catalogNewestProductsHash();
+
+  @override
+  String toString() {
+    return r'catalogNewestProductsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<List<Product>> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  List<Product> create(Ref ref) {
+    final argument = this.argument as int;
+    return catalogNewestProducts(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<Product> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<Product>>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CatalogNewestProductsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$catalogNewestProductsHash() =>
+    r'e52e37fbf14442bdba278f305afaf12865dd4e86';
+
+final class CatalogNewestProductsFamily extends $Family
+    with $FunctionalFamilyOverride<List<Product>, int> {
+  CatalogNewestProductsFamily._()
+    : super(
+        retry: null,
+        name: r'catalogNewestProductsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  CatalogNewestProductsProvider call(int count) =>
+      CatalogNewestProductsProvider._(argument: count, from: this);
+
+  @override
+  String toString() => r'catalogNewestProductsProvider';
+}
+
+@ProviderFor(homeFeaturedProducts)
+final homeFeaturedProductsProvider = HomeFeaturedProductsProvider._();
+
+final class HomeFeaturedProductsProvider
+    extends $FunctionalProvider<List<Product>, List<Product>, List<Product>>
+    with $Provider<List<Product>> {
+  HomeFeaturedProductsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'homeFeaturedProductsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$homeFeaturedProductsHash();
+
+  @$internal
+  @override
+  $ProviderElement<List<Product>> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  List<Product> create(Ref ref) {
+    return homeFeaturedProducts(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<Product> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<Product>>(value),
+    );
+  }
+}
+
+String _$homeFeaturedProductsHash() =>
+    r'be55448a19e04c6d13d9cd0503d0173b69cd4b7d';
 
 @ProviderFor(productDetail)
 final productDetailProvider = ProductDetailFamily._();
@@ -299,30 +541,32 @@ final class ProductDetailFamily extends $Family
   String toString() => r'productDetailProvider';
 }
 
-/// First products shown on the home showcase row (live catalog).
+@ProviderFor(homeRecommendedProducts)
+final homeRecommendedProductsProvider = HomeRecommendedProductsFamily._();
 
-@ProviderFor(homeFeaturedProducts)
-final homeFeaturedProductsProvider = HomeFeaturedProductsProvider._();
-
-/// First products shown on the home showcase row (live catalog).
-
-final class HomeFeaturedProductsProvider
+final class HomeRecommendedProductsProvider
     extends $FunctionalProvider<List<Product>, List<Product>, List<Product>>
     with $Provider<List<Product>> {
-  /// First products shown on the home showcase row (live catalog).
-  HomeFeaturedProductsProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'homeFeaturedProductsProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
+  HomeRecommendedProductsProvider._({
+    required HomeRecommendedProductsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'homeRecommendedProductsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
-  String debugGetCreateSourceHash() => _$homeFeaturedProductsHash();
+  String debugGetCreateSourceHash() => _$homeRecommendedProductsHash();
+
+  @override
+  String toString() {
+    return r'homeRecommendedProductsProvider'
+        ''
+        '($argument)';
+  }
 
   @$internal
   @override
@@ -331,7 +575,8 @@ final class HomeFeaturedProductsProvider
 
   @override
   List<Product> create(Ref ref) {
-    return homeFeaturedProducts(ref);
+    final argument = this.argument as String;
+    return homeRecommendedProducts(ref, argument);
   }
 
   /// {@macro riverpod.override_with_value}
@@ -341,7 +586,78 @@ final class HomeFeaturedProductsProvider
       providerOverride: $SyncValueProvider<List<Product>>(value),
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is HomeRecommendedProductsProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
 }
 
-String _$homeFeaturedProductsHash() =>
-    r'be55448a19e04c6d13d9cd0503d0173b69cd4b7d';
+String _$homeRecommendedProductsHash() =>
+    r'92de83e2b8256f6b2314ddfeecb7eb3170b687e2';
+
+final class HomeRecommendedProductsFamily extends $Family
+    with $FunctionalFamilyOverride<List<Product>, String> {
+  HomeRecommendedProductsFamily._()
+    : super(
+        retry: null,
+        name: r'homeRecommendedProductsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  HomeRecommendedProductsProvider call(String roomId) =>
+      HomeRecommendedProductsProvider._(argument: roomId, from: this);
+
+  @override
+  String toString() => r'homeRecommendedProductsProvider';
+}
+
+@ProviderFor(catalogProductCount)
+final catalogProductCountProvider = CatalogProductCountProvider._();
+
+final class CatalogProductCountProvider
+    extends $FunctionalProvider<int, int, int>
+    with $Provider<int> {
+  CatalogProductCountProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'catalogProductCountProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$catalogProductCountHash();
+
+  @$internal
+  @override
+  $ProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  int create(Ref ref) {
+    return catalogProductCount(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
+  }
+}
+
+String _$catalogProductCountHash() =>
+    r'a9da1dcc7cd061684cfd07e89297fc3167917696';

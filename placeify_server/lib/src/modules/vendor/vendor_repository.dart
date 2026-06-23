@@ -7,19 +7,27 @@ import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/server_static_paths.dart';
 import '../../shared/session_service.dart';
-import '../notification/order_notification_service.dart';
+import '../notification/in_app_notification_store.dart';
 import '../notification/notification_repository.dart';
-import '../product/catalog_seed.dart';
+import '../notification/order_notification_service.dart';
+import '../order/order_lifecycle_store.dart';
 import 'product_3d/product_3d_generation_result.dart';
 import 'product_3d/product_3d_generator.dart';
+import 'product_3d/product_3d_views.dart';
 import 'product_image_processor.dart';
+import 'vendor_bank_details_validation.dart';
 import 'vendor_document_storage.dart';
 import 'vendor_profile_audit_log.dart';
 import 'vendor_profile_mapper.dart';
 import 'vendor_profile_validation.dart';
 import 'vendor_sales_metrics.dart';
+import 'vendor_shop_category_codec.dart';
 
 class VendorStore {
+  VendorStore({InAppNotificationStore? notifications})
+      : _notifications = notifications ?? InAppNotificationStore();
+
+  final InAppNotificationStore _notifications;
   Future<VendorDashboard> getDashboard(Session session) async {
     final user = await SessionService.requireUser(session);
     final vendor = await Vendor.db.findFirstRow(
@@ -33,19 +41,10 @@ class VendorStore {
     }
 
     final vendorId = vendor.id!;
-    var products = await Product.db.find(
+    final products = await Product.db.find(
       session,
       where: (row) => row.vendorId.equals(vendorId),
     );
-    if (products.isEmpty &&
-        user.status == UserAccountStatus.approved &&
-        user.isActive) {
-      await CatalogSeed.ensureStarterProductsForVendor(session, vendorId);
-      products = await Product.db.find(
-        session,
-        where: (row) => row.vendorId.equals(vendorId),
-      );
-    }
     final activeProducts =
         products.where((p) => p.status == ProductStatus.active).length;
 
@@ -231,6 +230,8 @@ class VendorStore {
     String? city,
     String? country,
     String? shopCategory,
+    String? contactEmail,
+    VendorBankDetailsInput? bankDetails,
   }) async {
     final user = await SessionService.requireUser(session);
     final existing = await Vendor.db.findFirstRow(
@@ -281,6 +282,18 @@ class VendorStore {
         code: 'MISSING_REQUIRED_FIELD',
       );
     }
+    if (VendorShopCategoryCodec.decode(trimmedCategory).isEmpty) {
+      throw PlaceifyException(
+        message: 'A shop category is required.',
+        code: 'MISSING_REQUIRED_FIELD',
+      );
+    }
+    final normalizedCategory = VendorShopCategoryCodec.normalize(trimmedCategory);
+
+    final trimmedContactEmail = contactEmail?.trim();
+    if (trimmedContactEmail != null && trimmedContactEmail.isNotEmpty) {
+      VendorProfileValidation.validateEmail(trimmedContactEmail);
+    }
 
     VendorProfileValidation.validateUpdate(
       businessName: trimmedName,
@@ -313,13 +326,74 @@ class VendorStore {
         businessAddress: trimmedAddress,
         city: _nullableTrim(city),
         country: _nullableTrim(country),
-        shopCategory: trimmedCategory,
+        shopCategory: normalizedCategory,
+        contactEmail: _nullableTrim(contactEmail),
         logoUrl: logoUrl?.trim(),
       ),
     );
 
     await _linkPendingDocuments(session, user.id!, vendor.id!);
+    if (bankDetails != null) {
+      await _upsertBankDetails(session, vendor.id!, bankDetails);
+    }
     return vendor;
+  }
+
+  Future<VendorBankDetails?> getMyBankDetails(Session session) async {
+    final vendor = await requireOwnedVendor(session);
+    return VendorBankDetails.db.findFirstRow(
+      session,
+      where: (row) => row.vendorId.equals(vendor.id!),
+    );
+  }
+
+  Future<VendorBankDetails> saveMyBankDetails(
+    Session session,
+    VendorBankDetailsInput input,
+  ) async {
+    final vendor = await requireOwnedVendor(session);
+    return _upsertBankDetails(session, vendor.id!, input);
+  }
+
+  Future<VendorBankDetails> _upsertBankDetails(
+    Session session,
+    UuidValue vendorId,
+    VendorBankDetailsInput input,
+  ) async {
+    VendorBankDetailsValidation.validateInput(input);
+
+    final now = DateTime.now();
+    final normalized = VendorBankDetails(
+      vendorId: vendorId,
+      accountHolderName: input.accountHolderName.trim(),
+      bankName: input.bankName.trim(),
+      accountNumber: input.accountNumber.trim(),
+      branchCode: input.branchCode.trim(),
+      updatedAt: now,
+    );
+
+    final existing = await VendorBankDetails.db.findFirstRow(
+      session,
+      where: (row) => row.vendorId.equals(vendorId),
+    );
+
+    if (existing != null) {
+      return VendorBankDetails.db.updateRow(
+        session,
+        existing.copyWith(
+          accountHolderName: normalized.accountHolderName,
+          bankName: normalized.bankName,
+          accountNumber: normalized.accountNumber,
+          branchCode: normalized.branchCode,
+          updatedAt: now,
+        ),
+      );
+    }
+
+    return VendorBankDetails.db.insertRow(
+      session,
+      normalized.copyWith(createdAt: now),
+    );
   }
 
   /// Uploads a verification document for the logged-in user (before or after shop creation).
@@ -493,6 +567,7 @@ class VendorStore {
     final city = input.city?.trim();
     final country = input.country?.trim();
     final bio = input.bio?.trim();
+    final email = input.email?.trim();
 
     VendorProfileValidation.validateUpdate(
       businessName: businessName,
@@ -502,6 +577,27 @@ class VendorStore {
       country: country,
       bio: bio,
     );
+    if (email != null) {
+      VendorProfileValidation.validateEmail(email);
+    }
+
+    String? normalizedCategory;
+    if (input.category != null) {
+      final trimmedCategory = input.category!.trim();
+      if (trimmedCategory.isEmpty) {
+        throw PlaceifyException(
+          message: 'A shop category is required.',
+          code: 'MISSING_REQUIRED_FIELD',
+        );
+      }
+      if (VendorShopCategoryCodec.decode(trimmedCategory).isEmpty) {
+        throw PlaceifyException(
+          message: 'A shop category is required.',
+          code: 'MISSING_REQUIRED_FIELD',
+        );
+      }
+      normalizedCategory = VendorShopCategoryCodec.normalize(trimmedCategory);
+    }
 
     final now = DateTime.now();
     final updatedUser = await User.db.updateRow(
@@ -521,7 +617,8 @@ class VendorStore {
         businessAddress: address ?? vendor.businessAddress,
         city: city ?? vendor.city,
         country: country ?? vendor.country,
-        shopCategory: input.category?.trim() ?? vendor.shopCategory,
+        shopCategory: normalizedCategory ?? vendor.shopCategory,
+        contactEmail: email ?? vendor.contactEmail,
         logoUrl: _nullableTrim(input.logoUrl) ?? vendor.logoUrl,
         bannerUrl: _nullableTrim(input.bannerUrl) ?? vendor.bannerUrl,
         coverUrl: _nullableTrim(input.coverUrl) ?? vendor.coverUrl,
@@ -554,7 +651,12 @@ class VendorStore {
     String fileName,
   ) async {
     final vendor = await requireOwnedVendor(session);
-    final logoUrl = await _persistProductImage(session, fileData, fileName);
+    final logoUrl = await _persistProductImage(
+      session,
+      fileData,
+      fileName,
+      removeBackground: false,
+    );
     await Vendor.db.updateRow(
       session,
       vendor.copyWith(logoUrl: logoUrl, updatedAt: DateTime.now()),
@@ -569,7 +671,12 @@ class VendorStore {
     String fileName,
   ) async {
     final vendor = await requireOwnedVendor(session);
-    final bannerUrl = await _persistProductImage(session, fileData, fileName);
+    final bannerUrl = await _persistProductImage(
+      session,
+      fileData,
+      fileName,
+      removeBackground: false,
+    );
     await Vendor.db.updateRow(
       session,
       vendor.copyWith(bannerUrl: bannerUrl, updatedAt: DateTime.now()),
@@ -585,7 +692,12 @@ class VendorStore {
     String fileName,
   ) async {
     final vendor = await requireOwnedVendor(session);
-    final coverUrl = await _persistProductImage(session, fileData, fileName);
+    final coverUrl = await _persistProductImage(
+      session,
+      fileData,
+      fileName,
+      removeBackground: false,
+    );
     await Vendor.db.updateRow(
       session,
       vendor.copyWith(coverUrl: coverUrl, updatedAt: DateTime.now()),
@@ -718,6 +830,7 @@ class VendorStore {
     String? warranty,
     String? model3dUrl,
     String? thumbnailUrl,
+    List<String>? viewImageUrls,
   }) async {
     final vendor = await requireOwnedVendor(session);
     if (name.trim().isEmpty || description.trim().isEmpty) {
@@ -781,6 +894,7 @@ class VendorStore {
         warranty: warranty?.trim(),
         model3dUrl: model3dUrl?.trim(),
         thumbnailUrl: thumbnailUrl?.trim(),
+        viewImageUrls: _normalizeViewImageUrls(viewImageUrls),
         status: ProductStatus.active,
       ),
     );
@@ -819,6 +933,7 @@ class VendorStore {
       session,
       imageData,
       imageFileName,
+      removeBackground: true,
     );
 
     var product = await createProduct(
@@ -914,6 +1029,7 @@ class VendorStore {
         session,
         imageData,
         imageFileName,
+        removeBackground: true,
       );
     }
 
@@ -933,6 +1049,9 @@ class VendorStore {
         careInstructions: trimmedCare,
         warranty: input.warranty?.trim(),
         thumbnailUrl: thumbnailUrl?.trim(),
+        viewImageUrls: input.viewImageUrls != null
+            ? _normalizeViewImageUrls(input.viewImageUrls)
+            : product.viewImageUrls,
         status: input.isActive ? ProductStatus.active : ProductStatus.removed,
         removedReason: input.isActive
             ? (product.removedById == null ? null : product.removedReason)
@@ -983,7 +1102,7 @@ class VendorStore {
       return product;
     }
 
-    const generator = Product3dGenerator();
+    final generator = Product3dGenerator();
     final result = await generator.generateForProduct(
       session,
       product: product,
@@ -1059,17 +1178,24 @@ class VendorStore {
   Future<String> uploadProductImage(
     Session session,
     ByteData fileData,
-    String fileName,
-  ) async {
+    String fileName, {
+    bool removeBackground = false,
+  }) async {
     await requireOwnedVendor(session);
-    return _persistProductImage(session, fileData, fileName);
+    return _persistProductImage(
+      session,
+      fileData,
+      fileName,
+      removeBackground: removeBackground,
+    );
   }
 
   Future<String> _persistProductImage(
     Session session,
     ByteData fileData,
-    String fileName,
-  ) async {
+    String fileName, {
+    required bool removeBackground,
+  }) async {
     final bytes = fileData.buffer.asUint8List(
       fileData.offsetInBytes,
       fileData.lengthInBytes,
@@ -1094,30 +1220,66 @@ class VendorStore {
     }
 
     final processor = ProductImageProcessor();
-    final processed = await processor.processForCatalog(
-      session,
-      bytes,
-      sanitized,
-    );
-
     final uploadsDir = Directory(ServerStaticPaths.uploadsDir());
     if (!uploadsDir.existsSync()) {
       uploadsDir.createSync(recursive: true);
     }
 
     final baseName = sanitized.replaceAll(RegExp(r'\.[^.]+$'), '');
-    final storedName =
-        '${DateTime.now().millisecondsSinceEpoch}_$baseName${processed.extension}';
-    final file = File(
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+
+    if (removeBackground) {
+      final processed = await processor.processForVendorUpload(
+        session,
+        bytes,
+        sanitized,
+        fileExtension: extension,
+      );
+
+      final storedName = '${timestamp}_$baseName${processed.catalog.extension}';
+      final tripoStoredName =
+          '${timestamp}_${baseName}_tripo${processed.tripoSource.extension}';
+
+      await File(
+        '${uploadsDir.path}${Platform.pathSeparator}$storedName',
+      ).writeAsBytes(processed.catalog.bytes);
+      await File(
+        '${uploadsDir.path}${Platform.pathSeparator}$tripoStoredName',
+      ).writeAsBytes(processed.tripoSource.bytes);
+
+      session.log(
+        'Stored catalog thumbnail $storedName and Tripo raw $tripoStoredName',
+        level: LogLevel.info,
+      );
+      return '/uploads/$storedName';
+    }
+
+    final storedName = '${timestamp}_$baseName$extension';
+    await File(
       '${uploadsDir.path}${Platform.pathSeparator}$storedName',
-    );
-    await file.writeAsBytes(processed.bytes);
+    ).writeAsBytes(bytes);
     session.log(
-      'Stored catalog image $storedName (white background, '
-      'bgRemoved=${processed.backgroundRemoved})',
+      'Stored raw product photo $storedName (${bytes.length} bytes, no bg removal)',
       level: LogLevel.info,
     );
     return '/uploads/$storedName';
+  }
+
+  /// Keeps Tripo view order [left, back, right].
+  List<String>? _normalizeViewImageUrls(List<String>? urls) {
+    if (urls == null || urls.isEmpty) return null;
+
+    final normalized = urls
+        .take(Product3dViews.extraSlotCount)
+        .map((url) => url.trim())
+        .toList(growable: false);
+    if (normalized.every((url) => url.isEmpty)) return null;
+
+    final trimmed = List<String>.from(normalized);
+    while (trimmed.isNotEmpty && trimmed.last.isEmpty) {
+      trimmed.removeLast();
+    }
+    return trimmed.isEmpty ? null : trimmed;
   }
 
   String? _imageExtension(String fileName) {
@@ -1205,50 +1367,63 @@ class VendorStore {
 
   Future<VendorShopOrder> acceptShopOrder(Session session, int orderId) async {
     final vendor = await requireOwnedVendor(session);
+    final user = await SessionService.requireUser(session);
     final order = await _requireMutableVendorOrder(session, vendor.id!, orderId);
 
-    if (!_awaitingVendorDecision(order.status)) {
+    if (order.status != OrderStatus.pending &&
+        order.status != OrderStatus.confirmed) {
       throw PlaceifyException(
-        message: 'Only new orders can be accepted.',
+        message: 'Only pending orders can be accepted.',
         code: 'INVALID_ORDER_STATUS',
       );
     }
 
-    final now = DateTime.now();
-    await Order.db.updateRow(
-      session,
-      order.copyWith(
-        status: OrderStatus.accepted,
-        rejectionReason: null,
-        updatedAt: now,
-      ),
-    );
-
-    final existingUpdates = await _deliveryUpdatesFor(session, vendor.id!, orderId);
-    final hasVendorConfirmation = existingUpdates.any(
-      (update) => update.note?.contains('confirmed') ?? false,
-    );
-    if (!hasVendorConfirmation) {
-      await OrderDeliveryUpdate.db.insertRow(
+    await session.db.transaction((transaction) async {
+      final accepted = await OrderLifecycleStore.updateOrderWithVersion(
         session,
-        OrderDeliveryUpdate(
-          orderId: orderId,
-          vendorId: vendor.id!,
-          stage: DeliveryStage.orderPlaced,
-          note: 'Order confirmed by vendor.',
-          createdAt: now,
+        order,
+        (current) => current.copyWith(
+          status: OrderStatus.accepted,
+          rejectionReason: null,
         ),
+        transaction: transaction,
       );
-    }
 
-    final acceptedOrder = await Order.db.findById(session, orderId);
-    if (acceptedOrder != null) {
+      await OrderLifecycleStore.appendHistory(
+        session,
+        orderId,
+        statusType: OrderStatusHistoryType.order,
+        previousStatus: order.status.name,
+        newStatus: OrderStatus.accepted.name,
+        changedByUserId: user.id,
+        transaction: transaction,
+      );
+
+      final existingUpdates = await OrderDeliveryUpdate.db.find(
+        session,
+        where: (row) =>
+            row.orderId.equals(orderId) & row.vendorId.equals(vendor.id!),
+        transaction: transaction,
+      );
+      if (existingUpdates.isEmpty) {
+        await OrderDeliveryUpdate.db.insertRow(
+          session,
+          OrderDeliveryUpdate(
+            orderId: orderId,
+            vendorId: vendor.id!,
+            stage: DeliveryStage.orderPlaced,
+            note: 'Order confirmed by vendor.',
+          ),
+          transaction: transaction,
+        );
+      }
+
       await OrderNotificationService.notifyOrderAccepted(
         session,
-        order: acceptedOrder,
+        order: accepted,
         vendorId: vendor.id!,
       );
-    }
+    });
 
     return getShopOrder(session, orderId);
   }
@@ -1259,6 +1434,7 @@ class VendorStore {
     String reason,
   ) async {
     final vendor = await requireOwnedVendor(session);
+    final user = await SessionService.requireUser(session);
     final trimmedReason = reason.trim();
     if (trimmedReason.isEmpty) {
       throw PlaceifyException(
@@ -1268,21 +1444,42 @@ class VendorStore {
     }
 
     final order = await _requireMutableVendorOrder(session, vendor.id!, orderId);
-    if (!_awaitingVendorDecision(order.status)) {
+    if (order.status != OrderStatus.pending &&
+        order.status != OrderStatus.confirmed) {
       throw PlaceifyException(
-        message: 'Only new orders can be rejected.',
+        message: 'Only pending orders can be rejected.',
         code: 'INVALID_ORDER_STATUS',
       );
     }
 
-    await Order.db.updateRow(
-      session,
-      order.copyWith(
-        status: OrderStatus.rejected,
-        rejectionReason: trimmedReason,
-        updatedAt: DateTime.now(),
-      ),
-    );
+    await session.db.transaction((transaction) async {
+      final rejected = await OrderLifecycleStore.updateOrderWithVersion(
+        session,
+        order,
+        (current) => current.copyWith(
+          status: OrderStatus.rejected,
+          rejectionReason: trimmedReason,
+        ),
+        transaction: transaction,
+      );
+
+      await OrderLifecycleStore.appendHistory(
+        session,
+        orderId,
+        statusType: OrderStatusHistoryType.order,
+        previousStatus: order.status.name,
+        newStatus: OrderStatus.rejected.name,
+        changedByUserId: user.id,
+        note: trimmedReason,
+        transaction: transaction,
+      );
+
+      await OrderNotificationService.notifyOrderRejected(
+        session,
+        order: rejected,
+        reason: trimmedReason,
+      );
+    });
 
     return getShopOrder(session, orderId);
   }
@@ -1304,9 +1501,11 @@ class VendorStore {
     String? photoUrl,
   }) async {
     final vendor = await requireOwnedVendor(session);
+    final user = await SessionService.requireUser(session);
     final order = await _requireMutableVendorOrder(session, vendor.id!, orderId);
 
-    if (order.status == OrderStatus.pending) {
+    if (order.status == OrderStatus.pending ||
+        order.status == OrderStatus.confirmed) {
       throw PlaceifyException(
         message: 'Accept the order before posting delivery updates.',
         code: 'ORDER_NOT_ACCEPTED',
@@ -1314,17 +1513,37 @@ class VendorStore {
     }
 
     if (order.status == OrderStatus.rejected ||
-        order.status == OrderStatus.cancelled) {
+        order.status == OrderStatus.cancelled ||
+        order.status == OrderStatus.autoCancelled) {
       throw PlaceifyException(
         message: 'Delivery updates are not available for this order.',
         code: 'INVALID_ORDER_STATUS',
       );
     }
 
-    if (order.status == OrderStatus.delivered) {
+    if (order.deliveryStatus == OrderDeliveryStatus.delivered) {
       throw PlaceifyException(
         message: 'This order is already delivered.',
         code: 'ORDER_ALREADY_DELIVERED',
+      );
+    }
+
+    final nextDeliveryStatus = OrderLifecycleStore.deliveryStatusForStage(stage);
+    if (nextDeliveryStatus == null) {
+      throw PlaceifyException(
+        message: 'This delivery stage cannot be applied.',
+        code: 'INVALID_DELIVERY_STAGE',
+      );
+    }
+
+    if (!OrderLifecycleStore.canAdvanceDeliveryStatus(
+      order.deliveryStatus,
+      nextDeliveryStatus,
+    )) {
+      throw PlaceifyException(
+        message:
+            'Delivery status can only move forward one step at a time.',
+        code: 'INVALID_DELIVERY_STAGE',
       );
     }
 
@@ -1352,38 +1571,65 @@ class VendorStore {
       );
     }
 
-    final now = DateTime.now();
-    final update = await OrderDeliveryUpdate.db.insertRow(
-      session,
-      OrderDeliveryUpdate(
-        orderId: orderId,
-        vendorId: vendor.id!,
-        stage: stage,
-        note: note?.trim(),
-        photoUrl: photoUrl?.trim(),
-        createdAt: now,
-      ),
-    );
-
-    await Order.db.updateRow(
-      session,
-      order.copyWith(
-        status: _statusForDeliveryStage(stage),
-        updatedAt: now,
-      ),
-    );
-
-    final refreshedOrder = await Order.db.findById(session, orderId);
-    if (refreshedOrder != null) {
-      await OrderNotificationService.notifyDeliveryStage(
+    OrderDeliveryUpdate? update;
+    await session.db.transaction((transaction) async {
+      update = await OrderDeliveryUpdate.db.insertRow(
         session,
-        order: refreshedOrder,
-        stage: stage,
+        OrderDeliveryUpdate(
+          orderId: orderId,
+          vendorId: vendor.id!,
+          stage: stage,
+          note: note?.trim(),
+          photoUrl: photoUrl?.trim(),
+        ),
+        transaction: transaction,
+      );
+
+      final nextOrderStatus =
+          OrderLifecycleStore.orderStatusForDelivery(nextDeliveryStatus);
+      final updatedOrder = await OrderLifecycleStore.updateOrderWithVersion(
+        session,
+        order,
+        (current) => current.copyWith(
+          deliveryStatus: nextDeliveryStatus,
+          status: nextOrderStatus,
+        ),
+        transaction: transaction,
+      );
+
+      await OrderLifecycleStore.appendHistory(
+        session,
+        orderId,
+        statusType: OrderStatusHistoryType.delivery,
+        previousStatus: order.deliveryStatus?.name,
+        newStatus: nextDeliveryStatus.name,
+        changedByUserId: user.id,
+        note: note?.trim(),
+        transaction: transaction,
+      );
+
+      if (order.status != nextOrderStatus) {
+        await OrderLifecycleStore.appendHistory(
+          session,
+          orderId,
+          statusType: OrderStatusHistoryType.order,
+          previousStatus: order.status.name,
+          newStatus: nextOrderStatus.name,
+          changedByUserId: user.id,
+          note: note?.trim(),
+          transaction: transaction,
+        );
+      }
+
+      await OrderNotificationService.notifyDeliveryStatus(
+        session,
+        order: updatedOrder,
+        status: nextDeliveryStatus,
         vendorId: vendor.id!,
       );
-    }
+    });
 
-    return update;
+    return update!;
   }
 
   Future<String> uploadDeliveryProof(
@@ -1392,7 +1638,12 @@ class VendorStore {
     String fileName,
   ) async {
     await requireOwnedVendor(session);
-    return _persistProductImage(session, fileData, fileName);
+    return _persistProductImage(
+      session,
+      fileData,
+      fileName,
+      removeBackground: false,
+    );
   }
 
   Future<Order> _requireMutableVendorOrder(
@@ -1450,16 +1701,6 @@ class VendorStore {
     return DeliveryStage.values[nextIndex];
   }
 
-  OrderStatus _statusForDeliveryStage(DeliveryStage stage) {
-    return switch (stage) {
-      DeliveryStage.orderPlaced => OrderStatus.accepted,
-      DeliveryStage.packed => OrderStatus.processing,
-      DeliveryStage.shipped => OrderStatus.shipped,
-      DeliveryStage.outForDelivery => OrderStatus.shipped,
-      DeliveryStage.delivered => OrderStatus.delivered,
-    };
-  }
-
   String _stageLabel(DeliveryStage stage) {
     return switch (stage) {
       DeliveryStage.orderPlaced => 'Order placed',
@@ -1468,10 +1709,6 @@ class VendorStore {
       DeliveryStage.outForDelivery => 'Out for delivery',
       DeliveryStage.delivered => 'Delivered',
     };
-  }
-
-  bool _awaitingVendorDecision(OrderStatus status) {
-    return status == OrderStatus.pending || status == OrderStatus.confirmed;
   }
 
   Future<List<OrderItem>> _loadVendorOrderItems(
@@ -1537,12 +1774,54 @@ class VendorStore {
           itemCount: itemCount,
           items: lineItems,
           rejectionReason: order.rejectionReason,
+          orderPaymentStatus: order.paymentStatus,
         ),
       );
     }
 
     orders.sort((a, b) => b.placedAt.compareTo(a.placedAt));
     return orders;
+  }
+
+  Future<List<VendorNotificationSummary>> listNotifications(
+    Session session, {
+    int limit = 50,
+  }) async {
+    final user = await SessionService.requireUser(session);
+    final rows = await _notifications.listForUser(session, user.id!, limit: limit);
+
+    return [
+      for (final row in rows)
+        VendorNotificationSummary(
+          id: row.id.toString(),
+          type: _vendorNotificationType(row.type),
+          title: row.title,
+          body: row.message,
+          isRead: row.isRead,
+          createdAt: row.createdAt,
+          relatedId: row.referenceId?.toString(),
+        ),
+    ];
+  }
+
+  Future<void> markNotificationRead(Session session, int notificationId) async {
+    final user = await SessionService.requireUser(session);
+    await _notifications.markRead(session, user.id!, notificationId);
+  }
+
+  Future<void> markAllNotificationsRead(Session session) async {
+    final user = await SessionService.requireUser(session);
+    await _notifications.markAllRead(session, user.id!);
+  }
+
+  VendorNotificationType _vendorNotificationType(InAppNotificationType type) {
+    return switch (type) {
+      InAppNotificationType.orderPlaced => VendorNotificationType.order,
+      InAppNotificationType.orderAccepted => VendorNotificationType.order,
+      InAppNotificationType.orderCancelled => VendorNotificationType.order,
+      InAppNotificationType.deliveryUpdate => VendorNotificationType.order,
+      InAppNotificationType.paymentUpdate => VendorNotificationType.payment,
+    };
   }
 
   Future<List<ShopListingSummary>> listApprovedShops(
@@ -1585,9 +1864,7 @@ class VendorStore {
       final locality = vendor.city?.trim().isNotEmpty == true
           ? vendor.city!.trim()
           : _localityFromAddress(vendor.businessAddress);
-      final tags = vendor.shopCategory?.trim().isNotEmpty == true
-          ? [vendor.shopCategory!.trim()]
-          : <String>[];
+      final tags = VendorShopCategoryCodec.decode(vendor.shopCategory);
 
       final listing = ShopListingSummary(
         vendorId: vendorId,

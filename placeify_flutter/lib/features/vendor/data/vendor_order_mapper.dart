@@ -31,13 +31,14 @@ abstract final class VendorOrderMapper {
       status: mapOrderStatus(shopOrder.status),
       customerName: shopOrder.customerName,
       orderedAt: shopOrder.placedAt,
+      orderPaymentStatus: shopOrder.orderPaymentStatus,
     );
   }
 
   static domain.OrderStatus mapOrderStatus(api.OrderStatus status) {
     return switch (status) {
       api.OrderStatus.pending => domain.OrderStatus.pending,
-      // Paid, awaiting vendor accept — show in the Pending tab.
+      // Legacy paid-but-unaccepted orders stay pending until vendor accepts.
       api.OrderStatus.confirmed => domain.OrderStatus.pending,
       api.OrderStatus.accepted => domain.OrderStatus.accepted,
       api.OrderStatus.rejected => domain.OrderStatus.rejected,
@@ -45,6 +46,7 @@ abstract final class VendorOrderMapper {
       api.OrderStatus.shipped => domain.OrderStatus.shipped,
       api.OrderStatus.delivered => domain.OrderStatus.delivered,
       api.OrderStatus.cancelled => domain.OrderStatus.cancelled,
+      api.OrderStatus.autoCancelled => domain.OrderStatus.cancelled,
     };
   }
 

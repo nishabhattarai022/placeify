@@ -9,8 +9,7 @@ import '../../domain/enums/delivery_stage.dart';
 import '../../domain/enums/order_status.dart';
 import '../../domain/models/delivery_update.dart';
 
-enum _TimelineStepState { completed, active, pending }
-
+/// Vendor delivery timeline — only shows updates the vendor has posted.
 class OrderTimelineWidget extends StatelessWidget {
   const OrderTimelineWidget({
     required this.status,
@@ -23,32 +22,36 @@ class OrderTimelineWidget extends StatelessWidget {
   final List<DeliveryUpdate> deliveryUpdates;
   final bool vendorEditable;
 
-  static const _stages = DeliveryStage.values;
-
   @override
   Widget build(BuildContext context) {
     final isTerminalFailure =
         status == OrderStatus.rejected || status == OrderStatus.cancelled;
-    final activeIndex = _activeStageIndex(status);
+    final updates = [...deliveryUpdates]
+      ..sort((a, b) => a.updatedAt.compareTo(b.updatedAt));
+
+    if (updates.isEmpty && !isTerminalFailure) {
+      return const Text(
+        'No delivery updates posted yet.',
+        style: TextStyle(
+          fontSize: 13,
+          color: AppColors.textSecondary,
+          height: 1.45,
+        ),
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (var i = 0; i < _stages.length; i++)
+        for (var i = 0; i < updates.length; i++)
           _TimelineStep(
-            label: _stageLabel(_stages[i]),
-            state: _stepState(
-              index: i,
-              activeIndex: activeIndex,
-              stage: _stages[i],
-              isTerminalFailure: isTerminalFailure,
-            ),
-            update: _updateForStage(_stages[i]),
-            isLast: i == _stages.length - 1,
+            label: _stageLabel(updates[i].stage),
+            update: updates[i],
+            isLast: i == updates.length - 1 && !isTerminalFailure,
             showPhotoProof: vendorEditable,
           ),
         if (isTerminalFailure) ...[
-          const SizedBox(height: 4),
+          if (updates.isNotEmpty) const SizedBox(height: 4),
           _TerminalStep(
             label: status == OrderStatus.rejected ? 'Rejected' : 'Cancelled',
             isRejected: status == OrderStatus.rejected,
@@ -58,94 +61,32 @@ class OrderTimelineWidget extends StatelessWidget {
     );
   }
 
-  static int _activeStageIndex(OrderStatus status) {
-    return switch (status) {
-      OrderStatus.pending => 0,
-      OrderStatus.accepted => 1,
-      OrderStatus.processing => 1,
-      OrderStatus.shipped => 3,
-      OrderStatus.delivered => _stages.length,
-      OrderStatus.rejected || OrderStatus.cancelled => 0,
-    };
-  }
-
   static String _stageLabel(DeliveryStage stage) {
     return switch (stage) {
-      DeliveryStage.orderPlaced => 'Order Placed',
+      DeliveryStage.orderPlaced => 'Order accepted',
       DeliveryStage.packed => 'Packed',
       DeliveryStage.shipped => 'Shipped',
-      DeliveryStage.outForDelivery => 'Out for Delivery',
+      DeliveryStage.outForDelivery => 'Out for delivery',
       DeliveryStage.delivered => 'Delivered',
     };
-  }
-
-  DeliveryUpdate? _updateForStage(DeliveryStage stage) {
-    for (final update in deliveryUpdates) {
-      if (update.stage == stage) return update;
-    }
-    return null;
-  }
-
-  _TimelineStepState _stepState({
-    required int index,
-    required int activeIndex,
-    required DeliveryStage stage,
-    required bool isTerminalFailure,
-  }) {
-    if (isTerminalFailure) {
-      return index == 0
-          ? _TimelineStepState.completed
-          : _TimelineStepState.pending;
-    }
-
-    if (status == OrderStatus.delivered) {
-      return _TimelineStepState.completed;
-    }
-
-    if (_updateForStage(stage) != null) {
-      return _TimelineStepState.completed;
-    }
-    if (index < activeIndex) return _TimelineStepState.completed;
-    if (index == activeIndex) return _TimelineStepState.active;
-    return _TimelineStepState.pending;
   }
 }
 
 class _TimelineStep extends StatelessWidget {
   const _TimelineStep({
     required this.label,
-    required this.state,
     required this.update,
     required this.isLast,
     this.showPhotoProof = false,
   });
 
   final String label;
-  final _TimelineStepState state;
-  final DeliveryUpdate? update;
+  final DeliveryUpdate update;
   final bool isLast;
   final bool showPhotoProof;
 
   @override
   Widget build(BuildContext context) {
-    final (dotColor, lineColor, titleColor) = switch (state) {
-      _TimelineStepState.completed => (
-          AppColors.teal,
-          AppColors.teal,
-          AppColors.textPrimary,
-        ),
-      _TimelineStepState.active => (
-          AppColors.accent,
-          AppColors.creamDark,
-          AppColors.textPrimary,
-        ),
-      _TimelineStepState.pending => (
-          AppColors.creamDark,
-          AppColors.creamDark,
-          AppColors.textMuted,
-        ),
-    };
-
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -154,16 +95,22 @@ class _TimelineStep extends StatelessWidget {
             width: 28,
             child: Column(
               children: [
-                _TimelineDot(
-                  state: state,
-                  color: dotColor,
+                Container(
+                  width: 16,
+                  height: 16,
+                  decoration: const BoxDecoration(
+                    color: AppColors.teal,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.check, size: 9, color: Colors.white),
                 ),
                 if (!isLast)
                   Expanded(
                     child: Container(
                       width: 2,
                       margin: const EdgeInsets.symmetric(vertical: 4),
-                      color: lineColor,
+                      color: AppColors.teal,
                     ),
                   ),
               ],
@@ -177,56 +124,42 @@ class _TimelineStep extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
-                      fontWeight: state == _TimelineStepState.active
-                          ? FontWeight.w600
-                          : FontWeight.w500,
-                      color: titleColor,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
                     ),
                   ),
-                  if (update != null) ...[
-                    const SizedBox(height: 4),
+                  const SizedBox(height: 4),
+                  Text(
+                    Formatters.shortDate(update.updatedAt),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                  if (update.note.isNotEmpty) ...[
+                    const SizedBox(height: 2),
                     Text(
-                      Formatters.shortDate(update!.updatedAt),
+                      update.note,
                       style: const TextStyle(
                         fontSize: 12,
-                        color: AppColors.textMuted,
+                        color: AppColors.textSecondary,
+                        height: 1.35,
                       ),
                     ),
-                    if (update!.note.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        update!.note,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                          height: 1.35,
-                        ),
-                      ),
-                    ],
-                    if (showPhotoProof &&
-                        update!.photoProofPath != null &&
-                        update!.photoProofPath!.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      ClipRRect(
-                        borderRadius: AppRadii.sm,
-                        child: Image.file(
-                          File(update!.photoProofPath!),
-                          width: 72,
-                          height: 72,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ],
-                  ] else if (state == _TimelineStepState.active) ...[
-                    const SizedBox(height: 4),
-                    const Text(
-                      'In progress',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.accent,
-                        fontWeight: FontWeight.w500,
+                  ],
+                  if (showPhotoProof &&
+                      update.photoProofPath != null &&
+                      update.photoProofPath!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: AppRadii.sm,
+                      child: Image.file(
+                        File(update.photoProofPath!),
+                        width: 72,
+                        height: 72,
+                        fit: BoxFit.cover,
                       ),
                     ),
                   ],
@@ -236,49 +169,6 @@ class _TimelineStep extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _TimelineDot extends StatelessWidget {
-  const _TimelineDot({
-    required this.state,
-    required this.color,
-  });
-
-  final _TimelineStepState state;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final isCompleted = state == _TimelineStepState.completed;
-
-    return Container(
-      width: 16,
-      height: 16,
-      decoration: BoxDecoration(
-        color: isCompleted || state == _TimelineStepState.active
-            ? color
-            : Colors.transparent,
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: color,
-          width: 2,
-        ),
-        boxShadow: state == _TimelineStepState.active
-            ? [
-                BoxShadow(
-                  color: AppColors.accent.withValues(alpha: 0.2),
-                  blurRadius: 0,
-                  spreadRadius: 4,
-                ),
-              ]
-            : null,
-      ),
-      alignment: Alignment.center,
-      child: isCompleted
-          ? const Icon(Icons.check, size: 9, color: Colors.white)
-          : null,
     );
   }
 }

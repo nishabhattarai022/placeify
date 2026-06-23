@@ -3,19 +3,24 @@ import 'package:model_viewer_plus/model_viewer_plus.dart';
 
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/widgets/toast_overlay.dart';
+import '../../../home/domain/models/product.dart';
 import '../ar_room_screen.dart';
 import '../product_detail_tokens.dart';
 
 /// Interactive glTF / GLB viewer with in-app AR room preview.
 class Product3dPreview extends StatefulWidget {
   const Product3dPreview({
+    required this.productId,
     required this.modelSrc,
     required this.productName,
+    required this.dimensions,
     super.key,
   });
 
+  final String productId;
   final String modelSrc;
   final String productName;
+  final ProductDimensions dimensions;
 
   @override
   State<Product3dPreview> createState() => _Product3dPreviewState();
@@ -29,31 +34,33 @@ class _Product3dPreviewState extends State<Product3dPreview> {
     setState(() => _openingAr = true);
     HapticService.medium();
 
-    if (!ArRoomScreen.isSupported) {
-      if (mounted) {
-        setState(() => _openingAr = false);
-        PlaceifyToast.show(
-          context,
-          'Try in my room works on Android and iPhone with AR support.',
-        );
-      }
-      return;
-    }
+    try {
+      final result = await ArRoomLauncher.open(
+        context: context,
+        remoteModelUrl: widget.modelSrc,
+        productId: widget.productId,
+        productName: widget.productName,
+        dimensions: widget.dimensions,
+      );
 
-    final opened = await ArRoomLauncher.open(
-      context: context,
-      modelSrc: widget.modelSrc,
-      productName: widget.productName,
-    );
+      if (!mounted) return;
 
-    if (mounted) {
-      setState(() => _openingAr = false);
-      if (!opened) {
-        PlaceifyToast.show(
-          context,
-          'Camera access is required to preview furniture in your room.',
-        );
+      switch (result) {
+        case ArRoomOpenResult.opened:
+          break;
+        case ArRoomOpenResult.permissionDenied:
+          PlaceifyToast.show(
+            context,
+            'Camera access is required to preview furniture in your room.',
+          );
+        case ArRoomOpenResult.modelDownloadFailed:
+          PlaceifyToast.show(
+            context,
+            'Could not open the AR experience. Please try again.',
+          );
       }
+    } finally {
+      if (mounted) setState(() => _openingAr = false);
     }
   }
 

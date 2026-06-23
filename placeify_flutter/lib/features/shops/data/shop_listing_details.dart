@@ -53,6 +53,59 @@ class ShopListingDetails {
           'with vegan suede and clean silhouettes — warm craftsmanship without heavy '
           'ornament. Most pieces ship within 7–10 days across Kathmandu Valley.',
     ),
+    AdminSeedData.shopVendorNestId: const ShopListingDetails(
+      establishedYear: 2017,
+      highlights: [
+        'Pokhara workshop',
+        'Solid oak beds',
+        'Custom woodwork',
+        'Valley delivery',
+      ],
+      description:
+          'Nepal Nest Furniture builds bedroom and dining pieces from timber sourced '
+          'along the Gandaki corridor. Our Lakeside workshop specializes in platform '
+          'beds, benches, and storage designed for humid mountain climates. '
+          'Most orders are ready within two weeks.',
+    ),
+    AdminSeedData.shopVendorHimalayaId: const ShopListingDetails(
+      establishedYear: 2020,
+      highlights: [
+        'Himalayan motifs',
+        'Artisan decor',
+        'Hand-finished',
+        'Durbar Marg studio',
+      ],
+      description:
+          'Himalayan Home Decor curates accent pieces that blend contemporary interiors '
+          'with motifs from the high Himalayas. From table lamps to wall hangings, each '
+          'item is selected or crafted by Nepali artisans and finished for everyday use.',
+    ),
+    AdminSeedData.shopVendorCraftsId: const ShopListingDetails(
+      establishedYear: 2015,
+      highlights: [
+        'Thamel atelier',
+        'Handicrafts',
+        'Brass & lokta',
+        'Heritage designs',
+      ],
+      description:
+          'Kathmandu Crafts Co. preserves traditional Newari and Tibetan craft techniques '
+          'for modern homes. Browse hand-painted panels, hammered metalwork, and lokta '
+          'paper goods — each piece supports local artisan families in the Valley.',
+    ),
+    AdminSeedData.shopVendorUrbanId: const ShopListingDetails(
+      establishedYear: 2021,
+      highlights: [
+        'Compact layouts',
+        'Modern seating',
+        'Lalitpur studio',
+        'Apartment-friendly',
+      ],
+      description:
+          'Urban Loft Studio designs furniture for Kathmandu and Lalitpur apartments where '
+          'space is tight but style matters. Slim desks, modular sofas, and vertical '
+          'storage help city dwellers furnish efficiently without sacrificing comfort.',
+    ),
   };
 
   static ShopListingDetails _fallbackFromListing(ShopListing shop) {

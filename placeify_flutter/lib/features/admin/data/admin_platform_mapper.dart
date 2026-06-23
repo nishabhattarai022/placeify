@@ -8,6 +8,7 @@ import 'package:placeify_flutter/features/admin/domain/models/admin_audit_log_en
 import 'package:placeify_flutter/features/admin/domain/models/admin_stats.dart';
 import 'package:placeify_flutter/features/admin/domain/models/platform_user.dart';
 import 'package:placeify_flutter/features/admin/domain/models/vendor_application.dart';
+import 'package:placeify_flutter/features/vendor/data/vendor_shop_category_codec.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_registration.dart';
 
@@ -84,9 +85,7 @@ abstract final class AdminPlatformMapper {
           country: detail.country,
         ),
         category: VendorCategoryInfo(
-          categories: detail.category.trim().isEmpty
-              ? const []
-              : [detail.category.trim()],
+          categories: VendorShopCategoryCodec.decode(detail.category),
           description: detail.description,
         ),
         documents: VendorDocuments(

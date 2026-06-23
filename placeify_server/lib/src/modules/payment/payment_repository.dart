@@ -2,6 +2,9 @@ import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
+import '../../shared/session_service.dart';
+import '../notification/order_notification_service.dart';
+import '../order/order_lifecycle_store.dart';
 import '../vendor/vendor_repository.dart';
 import 'payment_sync.dart';
 
@@ -17,7 +20,7 @@ class PaymentStore {
     required int orderId,
     required UuidValue userId,
     required double amount,
-    required PaymentMethod paymentMethod,
+    PaymentMethod paymentMethod = PaymentMethod.mockOnline,
     Transaction? transaction,
   }) async {
     final provider = _providerForMethod(paymentMethod);
@@ -101,19 +104,35 @@ class PaymentStore {
     final vendor = await _vendorStore.requireOwnedVendor(session);
     await _requireVendorOrderAccess(session, vendor.id!, orderId);
 
+    final order = await Order.db.findById(session, orderId);
     await PaymentSync.ensureAllocationsForOrder(session, orderId);
 
-    final rows = await OrderVendorPayment.db.find(
+    final allocation = await OrderVendorPayment.db.findFirstRow(
       session,
       where: (row) =>
           row.orderId.equals(orderId) & row.vendorId.equals(vendor.id!),
-      orderBy: (row) => row.updatedAt,
-      orderDescending: true,
+    );
+    final amount = allocation?.amount ?? order?.totalAmount ?? 0;
+
+    final history = await OrderStatusHistory.db.find(
+      session,
+      where: (row) =>
+          row.orderId.equals(orderId) &
+          row.statusType.equals(OrderStatusHistoryType.payment),
+      orderBy: (row) => row.changedAt,
     );
 
     return [
-      for (final row in rows)
-        if (row.id != null) _allocationSummary(row),
+      for (final row in history)
+        if (row.id != null)
+          PaymentUpdateSummary(
+            id: row.id!,
+            orderId: orderId,
+            amount: amount,
+            status: PaymentTransactionStatus.succeeded,
+            note: _paymentHistoryNote(row.newStatus, row.note),
+            updatedAt: row.changedAt,
+          ),
     ];
   }
 
@@ -124,40 +143,138 @@ class PaymentStore {
     required String note,
   }) async {
     final vendor = await _vendorStore.requireOwnedVendor(session);
+    final user = await SessionService.requireUser(session);
     await _requireVendorOrderAccess(session, vendor.id!, orderId);
 
-    final trimmedNote = note.trim();
-    if (trimmedNote.isEmpty) {
-      throw PlaceifyException(
-        message: 'A payment note is required.',
-        code: 'INVALID_NOTE',
-      );
-    }
-
-    await PaymentSync.ensureAllocationsForOrder(session, orderId);
-
-    var allocation = await OrderVendorPayment.db.findFirstRow(
-      session,
-      where: (row) =>
-          row.orderId.equals(orderId) & row.vendorId.equals(vendor.id!),
-    );
-
-    if (allocation == null) {
+    final order = await Order.db.findById(session, orderId);
+    if (order == null) {
       throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
     }
 
-    allocation = await OrderVendorPayment.db.updateRow(
-      session,
-      allocation.copyWith(
-        status: status,
-        note: trimmedNote,
-        updatedAt: DateTime.now(),
-      ),
-    );
+    final trimmedNote = note.trim();
+    final resolvedNote = trimmedNote.isEmpty
+        ? _defaultNoteForStatus(status)
+        : trimmedNote;
 
-    await PaymentSync.syncOrderPaymentStatus(session, orderId);
+    PaymentUpdateSummary? summary;
 
-    return _allocationSummary(allocation);
+    await session.db.transaction((transaction) async {
+      await PaymentSync.ensureAllocationsForOrder(
+        session,
+        orderId,
+        transaction: transaction,
+      );
+
+      var allocation = await OrderVendorPayment.db.findFirstRow(
+        session,
+        where: (row) =>
+            row.orderId.equals(orderId) & row.vendorId.equals(vendor.id!),
+        transaction: transaction,
+      );
+
+      if (allocation == null) {
+        throw PlaceifyException(
+          message: 'Order not found.',
+          code: 'ORDER_NOT_FOUND',
+        );
+      }
+
+      final currentPaymentStatus = order.paymentStatus;
+      OrderPaymentStatus? nextPaymentStatus;
+
+      if (status == PaymentTransactionStatus.succeeded) {
+        if (currentPaymentStatus == OrderPaymentStatus.paymentConfirmed) {
+          throw PlaceifyException(
+            message: 'Payment is already confirmed.',
+            code: 'PAYMENT_LOCKED',
+          );
+        }
+
+        if (currentPaymentStatus == OrderPaymentStatus.paymentReceived &&
+            allocation.status == PaymentTransactionStatus.succeeded) {
+          nextPaymentStatus = OrderPaymentStatus.paymentConfirmed;
+        } else if (currentPaymentStatus == OrderPaymentStatus.unpaid) {
+          nextPaymentStatus = OrderPaymentStatus.paymentReceived;
+        } else if (!OrderLifecycleStore.canAdvancePaymentStatus(
+          currentPaymentStatus,
+          OrderPaymentStatus.paymentConfirmed,
+        )) {
+          throw PlaceifyException(
+            message: 'Payment status cannot move backward.',
+            code: 'INVALID_PAYMENT_STATUS',
+          );
+        }
+      }
+
+      if (allocation.status != PaymentTransactionStatus.succeeded &&
+          status == PaymentTransactionStatus.succeeded) {
+        allocation = await OrderVendorPayment.db.updateRow(
+          session,
+          allocation.copyWith(
+            status: status,
+            note: resolvedNote,
+            updatedAt: DateTime.now(),
+          ),
+          transaction: transaction,
+        );
+      } else if (status != PaymentTransactionStatus.succeeded) {
+        if (allocation.status == PaymentTransactionStatus.succeeded) {
+          throw PlaceifyException(
+            message:
+                'Payment is already marked as received and cannot be changed.',
+            code: 'PAYMENT_LOCKED',
+          );
+        }
+
+        allocation = await OrderVendorPayment.db.updateRow(
+          session,
+          allocation.copyWith(
+            status: status,
+            note: resolvedNote,
+            updatedAt: DateTime.now(),
+          ),
+          transaction: transaction,
+        );
+      }
+
+      await PaymentSync.syncOrderPaymentStatus(
+        session,
+        orderId,
+        transaction: transaction,
+      );
+
+      if (nextPaymentStatus != null &&
+          nextPaymentStatus != currentPaymentStatus) {
+        final updatedOrder = await OrderLifecycleStore.updateOrderWithVersion(
+          session,
+          order,
+          (current) => current.copyWith(paymentStatus: nextPaymentStatus),
+          transaction: transaction,
+        );
+
+        await OrderLifecycleStore.appendHistory(
+          session,
+          orderId,
+          statusType: OrderStatusHistoryType.payment,
+          previousStatus: currentPaymentStatus.name,
+          newStatus: nextPaymentStatus.name,
+          changedByUserId: user.id,
+          note: resolvedNote,
+          transaction: transaction,
+        );
+
+        await OrderNotificationService.notifyPaymentStatus(
+          session,
+          order: updatedOrder,
+          status: nextPaymentStatus,
+          vendorId: vendor.id!,
+        );
+      }
+
+      summary = _allocationSummary(allocation);
+    });
+
+    return summary!;
   }
 
   Future<VendorPayoutSummary> requestPayout(Session session) async {
@@ -255,5 +372,25 @@ class PaymentStore {
     if (item == null) {
       throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
     }
+  }
+
+  static String _defaultNoteForStatus(PaymentTransactionStatus status) {
+    return switch (status) {
+      PaymentTransactionStatus.succeeded => 'Payment marked as received.',
+      PaymentTransactionStatus.failed => 'Payment marked as failed.',
+      PaymentTransactionStatus.refunded => 'Payment marked as refunded.',
+      PaymentTransactionStatus.pending => 'Payment marked as pending.',
+    };
+  }
+
+  static String _paymentHistoryNote(String newStatus, String? note) {
+    final trimmed = note?.trim();
+    if (trimmed != null && trimmed.isNotEmpty) return trimmed;
+
+    return switch (newStatus) {
+      'paymentReceived' => 'Payment received by vendor',
+      'paymentConfirmed' => 'Payment confirmed',
+      _ => newStatus,
+    };
   }
 }

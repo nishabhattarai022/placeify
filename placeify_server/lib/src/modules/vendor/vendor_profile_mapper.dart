@@ -18,7 +18,7 @@ abstract final class VendorProfileMapper {
     return VendorProfileDetail(
       id: vendor.id!,
       businessName: vendor.shopName,
-      email: user.email ?? '',
+      email: vendor.contactEmail ?? user.email ?? '',
       phone: user.phone ?? '',
       address: vendor.businessAddress ?? user.address ?? '',
       city: vendor.city ?? '',

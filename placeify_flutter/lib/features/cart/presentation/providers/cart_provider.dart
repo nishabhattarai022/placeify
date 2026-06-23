@@ -3,9 +3,12 @@ import 'package:placeify_client/placeify_client.dart' hide Order;
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 import '../../../../core/config/placeify_server_client.dart';
+import '../../../../core/utils/vendor_purchase_policy.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../home/presentation/providers/catalog_provider.dart';
 import '../../../home/presentation/providers/category_provider.dart';
+import '../../../orders/presentation/providers/orders_provider.dart';
+import '../../../profile/presentation/providers/profile_dashboard_provider.dart';
 import '../../data/cart_api_errors.dart';
 import '../../data/serverpod_cart_repository.dart';
 import '../../domain/cart_line_item.dart';
@@ -85,6 +88,15 @@ class Cart extends _$Cart {
 
   /// Returns an error message when the server cart could not be updated.
   Future<String?> addProduct(String productId, {int quantity = 1}) async {
+    final user = ref.read(currentUserProvider).value;
+    final product = ref.read(catalogIndexProvider).value?[productId];
+    if (!VendorPurchasePolicy.canPurchase(
+      user: user,
+      productVendorId: product?.vendorId,
+    )) {
+      return VendorPurchasePolicy.addToCartBlockedMessage;
+    }
+
     if (!client.auth.isAuthenticated) {
       _applyLocalAdd(productId, quantity: quantity);
       return 'Sign in to save items to your cart for checkout.';
@@ -163,7 +175,7 @@ class Cart extends _$Cart {
     }
   }
 
-  Future<String> checkout() async {
+  Future<String> checkout({PaymentMethod paymentMethod = PaymentMethod.cod}) async {
     if (!client.auth.isAuthenticated) {
       return 'Sign in to checkout';
     }
@@ -181,6 +193,18 @@ class Cart extends _$Cart {
 
       state = serverItems;
 
+      final user = ref.read(currentUserProvider).value;
+      final catalog = ref.read(catalogIndexProvider).value ?? {};
+      for (final item in serverItems) {
+        final product = catalog[item.productId];
+        if (!VendorPurchasePolicy.canPurchase(
+          user: user,
+          productVendorId: product?.vendorId,
+        )) {
+          return VendorPurchasePolicy.checkoutBlockedMessage;
+        }
+      }
+
       final profile = await client.user.getCurrentUser();
       final savedAddress = profile?.address?.trim();
       final shippingAddress = savedAddress != null && savedAddress.isNotEmpty
@@ -189,16 +213,13 @@ class Cart extends _$Cart {
 
       final result = await _cartRepository.checkout(
         shippingAddress,
-        paymentMethod: PaymentMethod.mockOnline,
+        paymentMethod: paymentMethod,
       );
 
-      // Dev/mock flow: complete online payment immediately so vendor dashboard
-      // shows a confirmed order and the consumer UI can display paid status.
-      if (result.order.id != null) {
-        await client.user.completePayment(result.order.id!);
-      }
-
       state = const [];
+      ref.invalidate(profileOrdersProvider);
+      ref.invalidate(profileDashboardProvider);
+      ref.invalidate(ordersProvider);
       return 'Order #${result.order.id} placed successfully';
     } catch (error) {
       await _refreshFromServer();

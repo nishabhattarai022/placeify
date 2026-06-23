@@ -2,7 +2,7 @@ import 'package:placeify_client/placeify_client.dart' as api;
 
 import '../../../core/config/resolve_media_url.dart';
 import '../../cart/data/product_id_codec.dart';
-import '../../product_detail/data/product_model_3d_urls.dart';
+import '../../product_detail/data/product_3d_model_resolver.dart';
 import '../domain/models/vendor_product.dart';
 
 abstract final class VendorProductMapper {
@@ -20,12 +20,21 @@ abstract final class VendorProductMapper {
     if (thumbnail != null && thumbnail.isNotEmpty) {
       imageUrls.add(await resolveMediaUrl(thumbnail));
     }
+    final extraViews = product.viewImageUrls ?? const <String>[];
+    for (final viewUrl in extraViews) {
+      final trimmed = viewUrl.trim();
+      if (trimmed.isEmpty) continue;
+      imageUrls.add(await resolveMediaUrl(trimmed));
+    }
 
     final uiId = ProductIdCodec.fromDatabaseId(id);
     final model3dUrl = product.model3dUrl?.trim();
     final has3dPreview = model3dUrl != null && model3dUrl.isNotEmpty;
     if (has3dPreview) {
-      ProductModel3dUrls.set(uiId, await resolveMediaUrl(model3dUrl));
+      Product3dModelResolver.setModelUrl(
+        uiId,
+        await resolveMediaUrl(model3dUrl),
+      );
     }
 
     return VendorProduct(
@@ -40,7 +49,8 @@ abstract final class VendorProductMapper {
       isActive: product.status == api.ProductStatus.active,
       createdAt: product.createdAt,
       description: product.description,
-      brand: product.vendor?.shopName ?? '',
+      brand: product.assemblyNote ?? product.vendor?.shopName ?? '',
+      offerLabel: product.warranty ?? '',
       widthCm: product.widthCm ?? 0,
       depthCm: product.depthCm ?? 0,
       heightCm: product.heightCm ?? 0,

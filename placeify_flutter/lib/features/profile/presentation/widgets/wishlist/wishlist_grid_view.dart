@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../user/presentation/providers/user_wishlist_provider.dart';
+import '../../../../home/data/mock_product_repository.dart';
 import '../../../../home/presentation/providers/wishlist_provider.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_spacing.dart';
@@ -28,92 +28,88 @@ class WishlistGridView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final wishlistAsync = ref.watch(userWishlistProvider);
+    final savedAt = ref.watch(wishlistProvider);
     final sort = ref.watch(wishlistSortProvider);
+    final byId = {
+      for (final p in MockProductRepository.products) p.id: p,
+    };
+    final sortedProducts = sortWishlistProducts(
+      products: [
+        for (final id in savedAt.keys)
+          if (byId.containsKey(id)) byId[id]!,
+      ],
+      savedAt: savedAt,
+      sort: sort,
+    );
 
-    return wishlistAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => const _WishlistEmptyState(),
-      data: (entries) {
-        if (entries.isEmpty) {
-          return const _WishlistEmptyState();
-        }
+    final query = searchQuery.trim().toLowerCase();
+    final products = query.isEmpty
+        ? sortedProducts
+        : sortedProducts
+            .where((p) => p.name.toLowerCase().contains(query))
+            .toList();
 
-        final savedAt = {
-          for (final entry in entries) entry.product.id: entry.savedAt,
-        };
-        final sortedProducts = sortWishlistProducts(
-          products: [for (final entry in entries) entry.product],
-          savedAt: savedAt,
+    if (savedAt.isEmpty) {
+      return const _WishlistEmptyState();
+    }
+
+    if (products.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _WishlistSortBarSection(
+            sort: sort,
+            onTap: () => WishlistSortSheet.show(context, ref, sort),
+          ),
+          Expanded(
+            child: _WishlistNoSearchResultsState(
+              query: searchQuery.trim(),
+            ),
+          ),
+        ],
+      );
+    }
+
+    final bottom = showBottomPadding
+        ? BottomNavTokens.scrollBottomPadding +
+            MediaQuery.paddingOf(context).bottom
+        : 32.0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _WishlistSortBarSection(
           sort: sort,
-        );
-
-        final query = searchQuery.trim().toLowerCase();
-        final products = query.isEmpty
-            ? sortedProducts
-            : sortedProducts
-                .where((p) => p.name.toLowerCase().contains(query))
-                .toList();
-
-        if (products.isEmpty) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _WishlistSortBarSection(
-                sort: sort,
-                onTap: () => WishlistSortSheet.show(context, ref, sort),
+          onTap: () => WishlistSortSheet.show(context, ref, sort),
+        ),
+        Expanded(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            child: ListView.separated(
+              key: ValueKey(sort.name),
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.screenPadding,
+                0,
+                AppSpacing.screenPadding,
+                bottom,
               ),
-              Expanded(
-                child: _WishlistNoSearchResultsState(
-                  query: searchQuery.trim(),
-                ),
-              ),
-            ],
-          );
-        }
-
-        final bottom = showBottomPadding
-            ? BottomNavTokens.scrollBottomPadding +
-                MediaQuery.paddingOf(context).bottom
-            : 32.0;
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _WishlistSortBarSection(
-              sort: sort,
-              onTap: () => WishlistSortSheet.show(context, ref, sort),
-            ),
-            Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                switchInCurve: Curves.easeOut,
-                switchOutCurve: Curves.easeIn,
-                child: ListView.separated(
-                  key: ValueKey(sort.name),
-                  padding: EdgeInsets.fromLTRB(
-                    AppSpacing.screenPadding,
-                    0,
-                    AppSpacing.screenPadding,
-                    bottom,
-                  ),
-                  itemCount: products.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 32),
-                  itemBuilder: (context, index) {
-                    final product = products[index];
-                    return CategoryProductListTile(
-                      product: product,
-                      onRemoveFromWishlist: () {
-                        ref.read(wishlistProvider.notifier).toggle(product.id);
-                      },
-                    );
+              itemCount: products.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 32),
+              itemBuilder: (context, index) {
+                final product = products[index];
+                return CategoryProductListTile(
+                  product: product,
+                  onRemoveFromWishlist: () {
+                    ref.read(wishlistProvider.notifier).toggle(product.id);
                   },
-                ),
-              ),
+                );
+              },
             ),
-          ],
-        );
-      },
+          ),
+        ),
+      ],
     );
   }
 }

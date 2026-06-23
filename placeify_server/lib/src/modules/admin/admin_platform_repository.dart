@@ -1,6 +1,7 @@
 import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
+import '../vendor/vendor_shop_category_codec.dart';
 import 'admin_repository.dart';
 
 /// Read-side admin platform queries backed by PostgreSQL.
@@ -139,7 +140,7 @@ class AdminPlatformStore {
           vendorId: vendorId,
           userId: user.id!,
           businessName: vendor.shopName,
-          contactEmail: user.email ?? '',
+          contactEmail: vendor.contactEmail ?? user.email ?? '',
           submittedAt: vendor.createdAt,
           status: user.status,
         ),
@@ -189,7 +190,7 @@ class AdminPlatformStore {
       submittedAt: vendor.createdAt,
       businessName: vendor.shopName,
       contactName: user.name,
-      contactEmail: user.email ?? '',
+      contactEmail: vendor.contactEmail ?? user.email ?? '',
       phone: user.phone ?? '',
       taxId: null,
       street: addressParts.street,
@@ -197,7 +198,7 @@ class AdminPlatformStore {
       state: addressParts.state,
       postalCode: addressParts.postalCode,
       country: vendor.country ?? addressParts.country,
-      category: vendor.shopCategory ?? '',
+      category: VendorShopCategoryCodec.decode(vendor.shopCategory ?? '').join(', '),
       description: vendor.description ?? '',
       businessLicenseUrl: documentUrl(VendorDocumentType.businessLicense),
       governmentIdUrl: documentUrl(VendorDocumentType.governmentId),

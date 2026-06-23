@@ -8,6 +8,7 @@ import 'package:placeify_flutter/core/constants/app_shadows.dart';
 import 'package:placeify_flutter/core/services/haptic_service.dart';
 import 'package:placeify_flutter/core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_routes.dart';
+import 'package:placeify_flutter/features/vendor/presentation/vendor_product_upload_navigation.dart';
 
 class VendorDashboardFab extends StatefulWidget {
   const VendorDashboardFab({super.key});
@@ -60,7 +61,7 @@ class _VendorDashboardFabState extends State<VendorDashboardFab>
 
   void _onAddProduct() {
     _collapse();
-    context.push(VendorRoutes.productsUpload);
+    openVendorProductUpload(context);
   }
 
   void _onViewOrders() {

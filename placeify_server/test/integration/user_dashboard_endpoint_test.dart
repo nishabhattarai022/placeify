@@ -1,5 +1,4 @@
 import 'package:placeify_server/src/generated/order_status.dart';
-import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 import 'package:test/test.dart';
 
 import 'test_tools/serverpod_test_tools.dart';

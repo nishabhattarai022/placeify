@@ -34,6 +34,8 @@ class VendorEndpoint extends Endpoint {
     String? city,
     String? country,
     String? shopCategory,
+    String? contactEmail,
+    VendorBankDetailsInput? bankDetails,
   }) {
     return _service.createShop(
       session,
@@ -45,7 +47,20 @@ class VendorEndpoint extends Endpoint {
       city: city,
       country: country,
       shopCategory: shopCategory,
+      contactEmail: contactEmail,
+      bankDetails: bankDetails,
     );
+  }
+
+  Future<VendorBankDetails?> getMyBankDetails(Session session) {
+    return _service.getMyBankDetails(session);
+  }
+
+  Future<VendorBankDetails> saveMyBankDetails(
+    Session session,
+    VendorBankDetailsInput input,
+  ) {
+    return _service.saveMyBankDetails(session, input);
   }
 
   Future<VendorProfileDetail> getMyProfile(Session session) {
@@ -149,6 +164,7 @@ class VendorEndpoint extends Endpoint {
     String? warranty,
     String? model3dUrl,
     String? thumbnailUrl,
+    List<String>? viewImageUrls,
   }) {
     return _service.createProduct(
       session,
@@ -166,6 +182,7 @@ class VendorEndpoint extends Endpoint {
       warranty: warranty,
       model3dUrl: model3dUrl,
       thumbnailUrl: thumbnailUrl,
+      viewImageUrls: viewImageUrls,
     );
   }
 
@@ -195,9 +212,15 @@ class VendorEndpoint extends Endpoint {
   Future<String> uploadProductImage(
     Session session,
     ByteData fileData,
-    String fileName,
-  ) {
-    return _service.uploadProductImage(session, fileData, fileName);
+    String fileName, {
+    bool removeBackground = false,
+  }) {
+    return _service.uploadProductImage(
+      session,
+      fileData,
+      fileName,
+      removeBackground: removeBackground,
+    );
   }
 
   Future<Product> regenerateProductModel3d(
@@ -266,5 +289,20 @@ class VendorEndpoint extends Endpoint {
     String fileName,
   ) {
     return _service.uploadDeliveryProof(session, fileData, fileName);
+  }
+
+  Future<List<VendorNotificationSummary>> listNotifications(
+    Session session, {
+    int limit = 50,
+  }) {
+    return _service.listNotifications(session, limit: limit);
+  }
+
+  Future<void> markNotificationRead(Session session, int notificationId) {
+    return _service.markNotificationRead(session, notificationId);
+  }
+
+  Future<void> markAllNotificationsRead(Session session) {
+    return _service.markAllNotificationsRead(session);
   }
 }

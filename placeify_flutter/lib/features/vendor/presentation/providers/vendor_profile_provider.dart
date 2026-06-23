@@ -1,6 +1,7 @@
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify_flutter/features/vendor/data/serverpod_vendor_repository.dart';
 import 'package:placeify_flutter/features/vendor/data/serverpod_vendor_product_repository.dart';
+import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_profile.dart'
     as models;
 import 'package:placeify_flutter/features/vendor/domain/repositories/vendor_product_repository.dart';
@@ -24,7 +25,9 @@ class VendorProfile extends _$VendorProfile {
   @override
   Future<models.VendorProfile?> build() async {
     final user = await ref.watch(currentUserProvider.future);
-    if (user == null || user.vendorId == null || !user.hasVendorShop) {
+    if (user == null ||
+        user.vendorId == null ||
+        user.vendorStatus != VendorStatus.approved) {
       return null;
     }
     final repo = ref.watch(vendorRepositoryProvider);

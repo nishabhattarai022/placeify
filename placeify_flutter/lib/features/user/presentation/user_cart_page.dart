@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:placeify_client/placeify_client.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -24,12 +25,15 @@ class UserCartPage extends ConsumerStatefulWidget {
 }
 
 class _UserCartPageState extends ConsumerState<UserCartPage> {
+  PaymentMethod _paymentMethod = PaymentMethod.cod;
+
   Future<void> _refresh() async {
     await ref.read(cartProvider.notifier).refresh();
   }
 
   Future<void> _checkout() async {
-    final message = await ref.read(cartProvider.notifier).checkout();
+    final message =
+        await ref.read(cartProvider.notifier).checkout(paymentMethod: _paymentMethod);
     if (!mounted) return;
 
     PlaceifyToast.show(context, message);
@@ -156,6 +160,10 @@ class _UserCartPageState extends ConsumerState<UserCartPage> {
                 ),
                 child: CartOrderSummary(
                   totals: totals,
+                  selectedPaymentMethod: _paymentMethod,
+                  onPaymentMethodChanged: (method) {
+                    setState(() => _paymentMethod = method);
+                  },
                   onCheckout: _checkout,
                 ),
               ),

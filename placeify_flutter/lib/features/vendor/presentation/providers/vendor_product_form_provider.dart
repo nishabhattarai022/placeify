@@ -23,9 +23,12 @@ class VendorProductForm extends _$VendorProductForm {
     state = VendorProductFormState.initial();
   }
 
-  Future<void> prepareForRoute({String? productId}) async {
+  Future<void> prepareForRoute({
+    String? productId,
+    bool forceReload = false,
+  }) async {
     if (productId != null) {
-      if (state.editingProductId == productId) return;
+      if (!forceReload && state.editingProductId == productId) return;
       await _loadProduct(productId);
       return;
     }
@@ -312,9 +315,9 @@ class VendorProductForm extends _$VendorProductForm {
 
       final String? error;
       if (state.isEditing) {
-        error = await productsNotifier.updateProduct(product);
+        error = (await productsNotifier.updateProduct(product)).error;
       } else {
-        error = await productsNotifier.createProduct(product);
+        error = (await productsNotifier.createProduct(product)).error;
       }
 
       if (error != null) {

@@ -7,7 +7,7 @@ import '../../../core/config/placeify_server_client.dart';
 import '../../cart/data/product_id_codec.dart';
 import '../domain/models/vendor_product.dart';
 import '../domain/repositories/vendor_product_repository.dart';
-import 'mock_vendor_product_repository.dart';
+import 'mock_vendor_product_repository.dart' show VendorProductActionException;
 import 'vendor_product_mapper.dart';
 
 /// Serverpod-backed vendor product catalog (create/list via [client.vendor]).
@@ -52,14 +52,9 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
   ) async {
     await _ensureShopReady();
 
-    final imagePath = _firstUploadableImagePath(product.imageUrls);
-    if (imagePath == null) {
+    final imagePaths = _uploadableImagePaths(product.imageUrls);
+    if (imagePaths.isEmpty) {
       throw VendorProductActionException('Add at least one product photo.');
-    }
-
-    final file = File(imagePath);
-    if (!await file.exists()) {
-      throw VendorProductActionException('Photo file not found. Pick it again.');
     }
 
     if (product.widthCm <= 0 ||
@@ -79,40 +74,84 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
         ? product.description.trim()
         : product.name.trim();
 
-    final bytes = await file.readAsBytes();
-    final imageData = ByteData.sublistView(bytes);
-    final input = VendorProductUploadInput(
-      name: product.name.trim(),
-      description: description,
-      price: product.price,
-      materials: materials,
-      widthCm: product.widthCm,
-      depthCm: product.depthCm,
-      heightCm: product.heightCm,
-      careInstructions: 'See product description for care details.',
-      categoryId: await _resolveCategoryId(product.categoryId),
-      weightKg: product.weightKg > 0 ? product.weightKg : null,
-      assemblyNote: product.brand.trim().isNotEmpty ? product.brand.trim() : null,
-      warranty: product.offerLabel.trim().isNotEmpty
-          ? product.offerLabel.trim()
-          : null,
-      // 3D models are built via regenerateProductModel3d (Build 3D), not on create.
-      generateModel3d: false,
-    );
-
     try {
-      final created = await client.vendor.uploadProduct(
-        input,
-        imageData,
-        _fileNameFromPath(imagePath),
-      );
-      return VendorProductMapper.fromApiProduct(
+      final sources = _orderedImageSources(product.imageUrls);
+      final Product created;
+      if (sources.length >= 4) {
+        created = await _createProductWithMultiviewPhotos(
+          product: product,
+          imageSources: sources.take(4).toList(),
+          description: description,
+          materials: materials,
+        );
+      } else {
+        final file = File(imagePaths.first);
+        if (!await file.exists()) {
+          throw VendorProductActionException(
+            'Photo file not found. Pick it again.',
+          );
+        }
+        final imageData = ByteData.sublistView(await file.readAsBytes());
+        final input = VendorProductUploadInput(
+          name: product.name.trim(),
+          description: description,
+          price: product.price,
+          materials: materials,
+          widthCm: product.widthCm,
+          depthCm: product.depthCm,
+          heightCm: product.heightCm,
+          careInstructions: 'See product description for care details.',
+          categoryId: await _resolveCategoryId(product.categoryId),
+          weightKg: product.weightKg > 0 ? product.weightKg : null,
+          assemblyNote:
+              product.brand.trim().isNotEmpty ? product.brand.trim() : null,
+          warranty: product.offerLabel.trim().isNotEmpty
+              ? product.offerLabel.trim()
+              : null,
+          generateModel3d: false,
+        );
+        created = await client.vendor.uploadProduct(
+          input,
+          imageData,
+          _fileNameFromPath(imagePaths.first),
+        );
+      }
+
+      return _mapUploadedProduct(
         created,
         vendorId: vendorId,
+        fallback: product,
       );
     } catch (error) {
       throw VendorProductActionException(_mapError(error));
     }
+  }
+
+  Future<Product> _createProductWithMultiviewPhotos({
+    required VendorProduct product,
+    required List<String> imageSources,
+    required String description,
+    required String materials,
+  }) async {
+    final multiview = await _uploadMultiviewUrlsFromSources(imageSources);
+
+    return client.vendor.createProduct(
+      product.name.trim(),
+      description,
+      product.price,
+      categoryId: await _resolveCategoryId(product.categoryId),
+      materials: materials,
+      widthCm: product.widthCm,
+      depthCm: product.depthCm,
+      heightCm: product.heightCm,
+      weightKg: product.weightKg > 0 ? product.weightKg : null,
+      assemblyNote: product.brand.trim().isNotEmpty ? product.brand.trim() : null,
+      careInstructions: 'See product description for care details.',
+      warranty:
+          product.offerLabel.trim().isNotEmpty ? product.offerLabel.trim() : null,
+      thumbnailUrl: multiview.thumbnailUrl,
+      viewImageUrls: multiview.viewImageUrls,
+    );
   }
 
   @override
@@ -144,7 +183,63 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
         ? product.description.trim()
         : product.name.trim();
 
-    final input = VendorProductUploadInput(
+    try {
+      final sources = _orderedImageSources(product.imageUrls);
+      final Product updated;
+      if (sources.length >= 4) {
+        updated = await _updateProductWithMultiviewPhotos(
+          product: product,
+          dbId: dbId,
+          description: description,
+          materials: materials,
+          imageSources: sources.take(4).toList(),
+        );
+      } else {
+        final input = await _buildUploadInput(
+          product: product,
+          dbId: dbId,
+          description: description,
+          materials: materials,
+        );
+
+        final imagePath = _firstUploadableImagePath(product.imageUrls);
+        ByteData imageData = ByteData(0);
+        var imageFileName = '';
+
+        if (imagePath != null) {
+          final file = File(imagePath);
+          if (await file.exists()) {
+            final bytes = await file.readAsBytes();
+            imageData = ByteData.sublistView(bytes);
+            imageFileName = _fileNameFromPath(imagePath);
+          }
+        }
+
+        updated = await client.vendor.uploadProduct(
+          input,
+          imageData,
+          imageFileName,
+        );
+      }
+
+      return _mapUploadedProduct(
+        updated,
+        vendorId: vendorId,
+        fallback: product,
+      );
+    } catch (error) {
+      throw VendorProductActionException(_mapError(error));
+    }
+  }
+
+  Future<VendorProductUploadInput> _buildUploadInput({
+    required VendorProduct product,
+    required int dbId,
+    required String description,
+    required String materials,
+    List<String>? viewImageUrls,
+  }) async {
+    return VendorProductUploadInput(
       productId: dbId,
       name: product.name.trim(),
       description: description,
@@ -160,37 +255,83 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
       warranty: product.offerLabel.trim().isNotEmpty
           ? product.offerLabel.trim()
           : null,
-      // Avoid blocking saves on Tripo (1–3+ min); use Build 3D on the edit screen.
       generateModel3d: false,
       isActive: product.isActive,
+      viewImageUrls: viewImageUrls,
+    );
+  }
+
+  Future<Product> _updateProductWithMultiviewPhotos({
+    required VendorProduct product,
+    required int dbId,
+    required String description,
+    required String materials,
+    required List<String> imageSources,
+  }) async {
+    final multiview = await _uploadMultiviewUrlsFromSources(imageSources);
+    final input = await _buildUploadInput(
+      product: product,
+      dbId: dbId,
+      description: description,
+      materials: materials,
+      viewImageUrls: multiview.viewImageUrls,
     );
 
-    try {
-      final imagePath = _firstUploadableImagePath(product.imageUrls);
-      ByteData imageData = ByteData(0);
-      var imageFileName = '';
-
-      if (imagePath != null) {
-        final file = File(imagePath);
-        if (await file.exists()) {
-          final bytes = await file.readAsBytes();
-          imageData = ByteData.sublistView(bytes);
-          imageFileName = _fileNameFromPath(imagePath);
-        }
+    final frontLocal = _normalizeLocalImagePath(imageSources.first);
+    ByteData imageData = ByteData(0);
+    var imageFileName = '';
+    if (frontLocal != null) {
+      final file = File(frontLocal);
+      if (await file.exists()) {
+        imageData = ByteData.sublistView(await file.readAsBytes());
+        imageFileName = _fileNameFromPath(frontLocal);
       }
+    }
 
-      final updated = await client.vendor.uploadProduct(
-        input,
-        imageData,
-        imageFileName,
-      );
+    return client.vendor.uploadProduct(
+      input,
+      imageData,
+      imageFileName,
+    );
+  }
 
-      return VendorProductMapper.fromApiProduct(
-        updated,
+  Future<void> _syncMultiviewPhotosOnServer({
+    required VendorProduct product,
+    required int dbId,
+    required List<String> imageSources,
+  }) async {
+    final description = product.description.trim().isNotEmpty
+        ? product.description.trim()
+        : product.name.trim();
+    final materials = product.materials.trim();
+    await _updateProductWithMultiviewPhotos(
+      product: product,
+      dbId: dbId,
+      description: description,
+      materials: materials,
+      imageSources: imageSources.take(4).toList(),
+    );
+  }
+
+  Future<VendorProduct> _mapUploadedProduct(
+    Product created, {
+    required String vendorId,
+    required VendorProduct fallback,
+  }) async {
+    try {
+      return await VendorProductMapper.fromApiProduct(
+        created,
         vendorId: vendorId,
       );
-    } catch (error) {
-      throw VendorProductActionException(_mapError(error));
+    } catch (_) {
+      final dbId = created.id;
+      if (dbId == null) {
+        throw VendorProductActionException(
+          'Product saved, but the server response was incomplete. '
+          'Refresh your product list.',
+        );
+      }
+      return fallback.copyWith(id: ProductIdCodec.fromDatabaseId(dbId));
     }
   }
 
@@ -207,8 +348,9 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
   @override
   Future<VendorProduct> regenerateProductModel3d(
     String vendorId,
-    String productId,
-  ) async {
+    String productId, {
+    List<String>? imageSources,
+  }) async {
     await _ensureShopReady();
 
     final dbId = ProductIdCodec.toDatabaseId(productId);
@@ -217,6 +359,20 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     }
 
     try {
+      final existing = await getProductById(productId);
+      if (existing == null) {
+        throw VendorProductActionException('Product not found.');
+      }
+
+      final sources = _orderedImageSources(imageSources ?? existing.imageUrls);
+      if (sources.length >= 4) {
+        await _syncMultiviewPhotosOnServer(
+          product: existing,
+          dbId: dbId,
+          imageSources: sources.take(4).toList(),
+        );
+      }
+
       final updated = await client.vendor.regenerateProductModel3d(dbId);
       return VendorProductMapper.fromApiProduct(
         updated,
@@ -286,17 +442,116 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     return null;
   }
 
+  List<String> _uploadableImagePaths(List<String> imageUrls) {
+    final paths = <String>[];
+    for (final source in imageUrls) {
+      final normalized = _normalizeLocalImagePath(source);
+      if (normalized == null) continue;
+      paths.add(normalized);
+    }
+    return paths;
+  }
+
+  List<String> _orderedImageSources(List<String> imageUrls) {
+    return imageUrls
+        .map((source) => source.trim())
+        .where((source) => source.isNotEmpty)
+        .toList();
+  }
+
+  Future<({String thumbnailUrl, List<String> viewImageUrls})>
+      _uploadMultiviewUrlsFromSources(List<String> sources) async {
+    if (sources.length < 4) {
+      throw VendorProductActionException(
+        'Please upload 4 photos (front, left, back, right) for 3D generation.',
+      );
+    }
+
+    final slots = sources.take(4).toList();
+    final thumbnailUrl = await _ensureServerImageUrl(
+      slots[0],
+      removeBackground: true,
+    );
+
+    final viewImageUrls = <String>[];
+    for (final source in slots.skip(1)) {
+      viewImageUrls.add(
+        await _ensureServerImageUrl(source, removeBackground: false),
+      );
+    }
+
+    if (viewImageUrls.length < 3) {
+      throw VendorProductActionException(
+        'Please upload 4 photos (front, left, back, right) for 3D generation.',
+      );
+    }
+
+    return (thumbnailUrl: thumbnailUrl, viewImageUrls: viewImageUrls);
+  }
+
+  Future<String> _ensureServerImageUrl(
+    String source, {
+    required bool removeBackground,
+  }) async {
+    final localPath = _normalizeLocalImagePath(source);
+    if (localPath != null) {
+      final file = File(localPath);
+      if (!await file.exists()) {
+        throw VendorProductActionException(
+          'Photo file not found. Pick it again.',
+        );
+      }
+      return client.vendor.uploadProductImage(
+        ByteData.sublistView(await file.readAsBytes()),
+        _fileNameFromPath(localPath),
+        removeBackground: removeBackground,
+      );
+    }
+
+    final existing = _serverPathFromSource(source);
+    if (existing != null) {
+      return existing;
+    }
+
+    throw VendorProductActionException('Photo file not found. Pick it again.');
+  }
+
+  String? _serverPathFromSource(String source) {
+    final trimmed = source.trim();
+    if (trimmed.startsWith('/uploads/')) return trimmed;
+
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      final uri = Uri.tryParse(trimmed);
+      if (uri == null) return null;
+      final uploadsIndex = uri.path.indexOf('/uploads/');
+      if (uploadsIndex >= 0) {
+        return uri.path.substring(uploadsIndex);
+      }
+    }
+
+    return null;
+  }
+
   String? _firstUploadableImagePath(List<String> imageUrls) {
     for (final source in imageUrls) {
-      final trimmed = source.trim();
-      if (trimmed.isEmpty) continue;
-      if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-        continue;
-      }
-      if (trimmed.startsWith('assets/')) continue;
-      return trimmed;
+      final normalized = _normalizeLocalImagePath(source);
+      if (normalized == null) continue;
+      return normalized;
     }
     return null;
+  }
+
+  String? _normalizeLocalImagePath(String source) {
+    var trimmed = source.trim();
+    if (trimmed.isEmpty) return null;
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return null;
+    }
+    if (trimmed.startsWith('assets/')) return null;
+    if (trimmed.startsWith('file://')) {
+      trimmed = Uri.parse(trimmed).toFilePath();
+    }
+    return trimmed;
   }
 
   String _map3dError(Object error) => _mapError(
@@ -313,7 +568,11 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     if (error is VendorProductActionException) return error.message;
 
     if (error is PlaceifyException) {
-      return _messageForServerCode(error.code, error.message);
+      return _messageForServerCode(
+        error.code,
+        error.message,
+        fallback: fallback,
+      );
     }
 
     final raw = error is ServerpodClientException
@@ -384,6 +643,10 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     }
     if (haystack.contains('MODEL3D_NO_THUMBNAIL')) {
       return 'Add a product photo before building a 3D preview.';
+    }
+    if (haystack.contains('MODEL3D_INSUFFICIENT_VIEWS')) {
+      return 'Please upload 4 photos (front, left, back, right) for 3D generation. '
+          'Add four images in the photo grid, save the product, then tap Build 3D.';
     }
     if (haystack.contains('MODEL3D_THUMBNAIL_MISSING')) {
       return 'Product photo file is missing on the server. Re-upload the photo, then try Build 3D again.';

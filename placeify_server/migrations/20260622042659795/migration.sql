@@ -3,7 +3,7 @@ BEGIN;
 --
 -- ACTION ALTER TABLE
 --
-ALTER TABLE "payment_transaction" ADD COLUMN IF NOT EXISTS "paymentMethod" text NOT NULL DEFAULT 'mockOnline'::text;
+ALTER TABLE "payment_transaction" ADD COLUMN "paymentMethod" text NOT NULL DEFAULT 'mockOnline'::text;
 
 --
 -- MIGRATION VERSION FOR placeify

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -80,33 +81,57 @@ bool _cacheMatchesPlatform(String url) {
 }
 
 Future<List<String>> _buildCandidates() async {
-  final candidates = <String>[];
+  final physicalApiUrl = <String>[];
+  final localApiUrl = <String>[];
+  final emulatorApiUrl = <String>[];
+  final loopbackApiUrl = <String>[];
 
-  void add(String? url) {
+  void add(List<String> bucket, String? url) {
     if (url == null || url.trim().isEmpty) return;
     final normalized = _ensureTrailingSlash(url.trim());
-    if (!candidates.contains(normalized)) {
-      candidates.add(normalized);
+    if (!bucket.contains(normalized)) {
+      bucket.add(normalized);
     }
   }
 
   try {
     final data = await rootBundle.loadString('assets/config.json');
     final config = jsonDecode(data) as Map<String, dynamic>;
-    add(config['physicalApiUrl'] as String?);
+    add(physicalApiUrl, config['physicalApiUrl'] as String?);
 
     final apiUrl = config['apiUrl'] as String?;
     if (apiUrl != null && apiUrl.trim().isNotEmpty) {
-      add(_normalizeLoopback(apiUrl.trim()));
+      add(localApiUrl, _normalizeLoopback(apiUrl.trim()));
     }
   } catch (_) {}
 
   if (Platform.isAndroid) {
-    add('http://10.0.2.2:$_defaultPort');
+    add(emulatorApiUrl, 'http://10.0.2.2:$_defaultPort');
   }
 
-  add('http://$_desktopLoopbackHost:$_defaultPort');
-  return candidates;
+  add(loopbackApiUrl, 'http://$_desktopLoopbackHost:$_defaultPort');
+
+  final isPhysical = await _isPhysicalMobileDevice();
+  if (isPhysical) {
+    return [...physicalApiUrl, ...localApiUrl, ...emulatorApiUrl, ...loopbackApiUrl];
+  }
+
+  // Emulators/simulators: never probe a stale LAN IP first.
+  return [...emulatorApiUrl, ...localApiUrl, ...loopbackApiUrl, ...physicalApiUrl];
+}
+
+Future<bool> _isPhysicalMobileDevice() async {
+  if (kIsWeb) return false;
+  final deviceInfo = DeviceInfoPlugin();
+  try {
+    if (Platform.isAndroid) {
+      return (await deviceInfo.androidInfo).isPhysicalDevice;
+    }
+    if (Platform.isIOS) {
+      return (await deviceInfo.iosInfo).isPhysicalDevice;
+    }
+  } catch (_) {}
+  return false;
 }
 
 Future<bool> _canReachServer(String url) async {

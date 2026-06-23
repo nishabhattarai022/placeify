@@ -1,0 +1,15 @@
+### Audit log for order, delivery, and payment status changes.
+class: OrderStatusHistory
+table: order_status_history
+fields:
+  order: Order?, relation(onDelete=Cascade)
+  previousStatus: String?
+  newStatus: String
+  statusType: OrderStatusHistoryType
+  changedBy: User?, relation(optional, onDelete=SetNull)
+  changedAt: DateTime, default=now
+  note: String?
+
+indexes:
+  order_status_history_order_id:
+    fields: orderId

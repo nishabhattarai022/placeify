@@ -1,0 +1,6 @@
+### Vendor-recorded payment status change for a customer order.
+class: UserOrderPaymentEvent
+fields:
+  status: OrderPaymentStatus
+  note: String?
+  createdAt: DateTime

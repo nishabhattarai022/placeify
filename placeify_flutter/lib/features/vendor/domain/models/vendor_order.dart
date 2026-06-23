@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:placeify_client/placeify_client.dart' show OrderPaymentStatus;
 import 'package:placeify_flutter/features/vendor/domain/enums/order_status.dart';
 
 part 'vendor_order.freezed.dart';
@@ -17,6 +18,7 @@ abstract class VendorOrder with _$VendorOrder {
     required OrderStatus status,
     required String customerName,
     required DateTime orderedAt,
+    @Default(OrderPaymentStatus.unpaid) OrderPaymentStatus orderPaymentStatus,
   }) = _VendorOrder;
 
   const VendorOrder._();

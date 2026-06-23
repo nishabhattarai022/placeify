@@ -37,5 +37,9 @@ abstract interface class VendorRepository {
 
   Future<List<VendorNotification>> getNotifications(String vendorId);
 
+  Future<void> markNotificationRead(String notificationId);
+
+  Future<void> markAllNotificationsRead();
+
   Future<List<VendorPayout>> getPayouts(String vendorId);
 }

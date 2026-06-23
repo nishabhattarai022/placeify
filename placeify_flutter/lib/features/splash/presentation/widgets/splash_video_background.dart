@@ -13,43 +13,75 @@ class SplashVideoBackground extends StatefulWidget {
 }
 
 class _SplashVideoBackgroundState extends State<SplashVideoBackground> {
-  late final VideoPlayerController _controller;
+  VideoPlayerController? _controller;
+  bool _failed = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.asset(SplashAssets.getStartedVideo)
-      ..setLooping(true)
-      ..setVolume(0);
-    _controller.initialize().then((_) {
-      if (mounted) {
-        setState(() {});
-        _controller.play();
-      }
-    });
+    _initVideo();
+  }
+
+  Future<void> _initVideo() async {
+    final controller = VideoPlayerController.asset(SplashAssets.getStartedVideo);
+    _controller = controller;
+    try {
+      await controller.setLooping(true);
+      await controller.setVolume(0);
+      await controller.initialize();
+      if (!mounted) return;
+      setState(() {});
+      await controller.play();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _failed = true);
+      await controller.dispose();
+      _controller = null;
+    }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_controller.value.isInitialized) {
-      return const ColoredBox(color: AppColors.onboardingBg);
+    if (_failed || _controller == null || !_controller!.value.isInitialized) {
+      return const _SplashGradientFallback();
     }
 
-    final aspectRatio = _controller.value.aspectRatio;
+    final aspectRatio = _controller!.value.aspectRatio;
     if (aspectRatio <= 0) {
-      return const ColoredBox(color: AppColors.onboardingBg);
+      return const _SplashGradientFallback();
     }
 
     return SizedBox.expand(
       child: CoverFitBox(
         aspectRatio: aspectRatio,
-        child: VideoPlayer(_controller),
+        child: VideoPlayer(_controller!),
+      ),
+    );
+  }
+}
+
+class _SplashGradientFallback extends StatelessWidget {
+  const _SplashGradientFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF1A1410),
+            AppColors.onboardingBg,
+            Color(0xFF2A2218),
+          ],
+        ),
       ),
     );
   }

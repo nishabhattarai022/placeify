@@ -51,15 +51,8 @@ class UserWishlist extends _$UserWishlist {
   }
 
   Future<void> remove(String productId) async {
-    await toggle(productId);
-  }
-
-  Future<bool> toggle(String productId) async {
-    if (!client.auth.isAuthenticated) return false;
-
     final repo = ref.read(userWishlistRepositoryProvider);
-    final saved = await repo.toggle(productId);
+    await repo.toggle(productId);
     ref.invalidateSelf();
-    return saved;
   }
 }

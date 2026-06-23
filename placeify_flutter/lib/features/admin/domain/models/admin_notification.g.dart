@@ -13,8 +13,7 @@ _AdminNotification _$AdminNotificationFromJson(Map<String, dynamic> json) =>
       body: json['body'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
       read: json['read'] as bool? ?? false,
-      type:
-          $enumDecodeNullable(_$AdminNotificationTypeEnumMap, json['type']) ??
+      type: $enumDecodeNullable(_$AdminNotificationTypeEnumMap, json['type']) ??
           AdminNotificationType.systemAlert,
       linkedVendorId: json['linkedVendorId'] as String?,
     );

@@ -1,9 +1,9 @@
 import 'dart:convert';
 
-import 'package:placeify_client/placeify_client.dart';
+import 'package:placeify_flutter/features/admin/domain/enums/user_role.dart';
+import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../vendor/domain/enums/vendor_status.dart';
 import '../constants/demo_credentials.dart';
 import '../domain/models/app_user.dart';
 import '../domain/repositories/auth_repository.dart';
@@ -16,8 +16,6 @@ class MockAuthRepository implements AuthRepository {
 
   static const _usersKey = 'placeify_auth_users';
   static const _sessionEmailKey = 'placeify_auth_session_email';
-  static const _vendorStatusKey = 'placeify_vendor_status';
-  static const _vendorIdKey = 'placeify_vendor_id';
 
   static Future<MockAuthRepository> create() async {
     final prefs = await SharedPreferences.getInstance();
@@ -48,7 +46,6 @@ class MockAuthRepository implements AuthRepository {
     users.add(user);
     await _saveUsers(users);
 
-    await _prefs.setString(_sessionEmailKey, normalizedEmail);
     return user.toAppUser();
   }
 
@@ -91,10 +88,12 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AppUser> updateVendorStatus({
-    required VendorStatus status,
-    String? vendorId,
-  }) async {
+  Future<void> signOut() async {
+    await _prefs.remove(_sessionEmailKey);
+  }
+
+  @override
+  Future<AppUser> becomeVendor() async {
     final email = _prefs.getString(_sessionEmailKey);
     if (email == null) {
       throw AuthException('Sign in to continue');
@@ -102,22 +101,55 @@ class MockAuthRepository implements AuthRepository {
 
     final users = await _loadUsers();
     final index = users.indexWhere((u) => u.email == email);
-    if (index == -1) {
-      throw AuthException('User profile not found');
+    if (index == -1) throw AuthException('Session expired');
+
+    final updated = users[index].copyWith(
+      role: UserRole.vendor,
+      vendorStatus: VendorStatus.pending,
+    );
+    users[index] = updated;
+    await _saveUsers(users);
+    return updated.toAppUser();
+  }
+
+  @override
+  Future<AppUser> becomeConsumer() async {
+    final email = _prefs.getString(_sessionEmailKey);
+    if (email == null) {
+      throw AuthException('Sign in to continue');
     }
+
+    final users = await _loadUsers();
+    final index = users.indexWhere((u) => u.email == email);
+    if (index == -1) throw AuthException('Session expired');
+
+    final updated = users[index].copyWith(
+      role: UserRole.customer,
+      vendorStatus: VendorStatus.none,
+      clearVendorId: true,
+    );
+    users[index] = updated;
+    await _saveUsers(users);
+    return updated.toAppUser();
+  }
+
+  @override
+  Future<void> updateVendorStatus({
+    required VendorStatus status,
+    String? vendorId,
+  }) async {
+    final email = _prefs.getString(_sessionEmailKey);
+    if (email == null) return;
+
+    final users = await _loadUsers();
+    final index = users.indexWhere((u) => u.email == email);
+    if (index == -1) return;
 
     final current = users[index];
     users[index] = vendorId != null
         ? current.copyWith(vendorStatus: status, vendorId: vendorId)
         : current.copyWith(vendorStatus: status);
     await _saveUsers(users);
-
-    await _prefs.setString(_vendorStatusKey, status.name);
-    if (vendorId != null) {
-      await _prefs.setString(_vendorIdKey, vendorId);
-    }
-
-    return users[index].toAppUser();
   }
 
   @override
@@ -139,50 +171,6 @@ class MockAuthRepository implements AuthRepository {
     };
     users[index] = updated;
     await _saveUsers(users);
-  }
-
-  @override
-  Future<AppUser> becomeVendor() async {
-    final user = await getCurrentUser();
-    if (user == null) {
-      throw AuthException('Sign in to continue');
-    }
-    if (!user.hasVendorShop && user.vendorStatus != VendorStatus.approved) {
-      throw AuthException('Register your shop first to switch to vendor mode.');
-    }
-
-    final users = await _loadUsers();
-    final index = users.indexWhere((u) => u.id == user.id);
-    if (index != -1) {
-      users[index] = users[index].copyWith(role: UserRole.vendor);
-      await _saveUsers(users);
-    }
-
-    return user.copyWith(role: UserRole.vendor);
-  }
-
-  @override
-  Future<AppUser> becomeConsumer() async {
-    final user = await getCurrentUser();
-    if (user == null) {
-      throw AuthException('Sign in to continue');
-    }
-
-    final users = await _loadUsers();
-    final index = users.indexWhere((u) => u.id == user.id);
-    if (index != -1) {
-      users[index] = users[index].copyWith(role: UserRole.consumer);
-      await _saveUsers(users);
-    }
-
-    return user.copyWith(role: UserRole.consumer);
-  }
-
-  @override
-  Future<void> signOut() async {
-    await _prefs.remove(_sessionEmailKey);
-    await _prefs.remove(_vendorStatusKey);
-    await _prefs.remove(_vendorIdKey);
   }
 
   Future<List<_StoredUser>> _loadUsers() async {
@@ -250,7 +238,7 @@ class _StoredUser {
     required this.fullName,
     required this.email,
     required this.password,
-    this.role = UserRole.consumer,
+    this.role = UserRole.customer,
     this.vendorStatus = VendorStatus.none,
     this.vendorId,
   });
@@ -262,11 +250,6 @@ class _StoredUser {
   final UserRole role;
   final VendorStatus vendorStatus;
   final String? vendorId;
-
-  bool get hasVendorShop =>
-      vendorStatus == VendorStatus.approved ||
-      vendorStatus == VendorStatus.pending ||
-      vendorStatus == VendorStatus.suspended;
 
   _StoredUser copyWith({
     UserRole? role,
@@ -290,9 +273,8 @@ class _StoredUser {
         fullName: fullName,
         email: email,
         role: role,
-        hasVendorShop: hasVendorShop,
-        registeredVendorStatus: vendorStatus,
-        registeredVendorId: vendorId,
+        vendorStatus: vendorStatus,
+        vendorId: vendorId,
       );
 
   Map<String, dynamic> toJson() => {
@@ -312,8 +294,8 @@ class _StoredUser {
       email: json['email'] as String,
       password: json['password'] as String,
       role: json['role'] != null
-          ? UserRole.fromJson(json['role'] as String)
-          : UserRole.consumer,
+          ? UserRole.values.byName(json['role'] as String)
+          : UserRole.customer,
       vendorStatus: json['vendorStatus'] != null
           ? VendorStatus.values.byName(json['vendorStatus'] as String)
           : VendorStatus.none,

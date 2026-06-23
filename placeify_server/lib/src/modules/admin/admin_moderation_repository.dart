@@ -3,7 +3,6 @@ import 'package:serverpod/serverpod.dart';
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
-import '../product/catalog_seed.dart';
 import 'admin_repository.dart';
 
 /// Admin moderation: vendor approval, user status, product removal, complaints.
@@ -50,7 +49,7 @@ class AdminModerationStore {
       ),
     );
 
-    final approvedVendor = await Vendor.db.updateRow(
+    return Vendor.db.updateRow(
       session,
       vendor.copyWith(
         approvedById: admin.id,
@@ -58,15 +57,6 @@ class AdminModerationStore {
         updatedAt: now,
       ),
     );
-
-    if (approvedVendor.id != null) {
-      await CatalogSeed.ensureStarterProductsForVendor(
-        session,
-        approvedVendor.id!,
-      );
-    }
-
-    return approvedVendor;
   }
 
   Future<User> rejectVendor(Session session, UuidValue vendorUserId) async {

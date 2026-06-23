@@ -49,7 +49,7 @@ final class OrderRepositoryProvider
   }
 }
 
-String _$orderRepositoryHash() => r'f13e0d75e90fdbe1c7c4e720b270977d9693846b';
+String _$orderRepositoryHash() => r'a273294b777355c1be146f1b188c6195995a321c';
 
 @ProviderFor(ordersUserId)
 final ordersUserIdProvider = OrdersUserIdProvider._();
@@ -82,7 +82,7 @@ final class OrdersUserIdProvider
   }
 }
 
-String _$ordersUserIdHash() => r'7f2771d980b8a2ddb9ac6cf1da052eb17bdc3d5d';
+String _$ordersUserIdHash() => r'db0eaba9e9c078d0ae8e92f25f24da838f11de52';
 
 @ProviderFor(Orders)
 final ordersProvider = OrdersProvider._();

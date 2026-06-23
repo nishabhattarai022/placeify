@@ -18,15 +18,15 @@ final class WishlistProvider
     extends $NotifierProvider<Wishlist, Map<String, DateTime>> {
   /// Product id → time saved (newest first when listed).
   WishlistProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'wishlistProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'wishlistProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
 
   @override
   String debugGetCreateSourceHash() => _$wishlistHash();
@@ -54,14 +54,11 @@ abstract class _$Wishlist extends $Notifier<Map<String, DateTime>> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<Map<String, DateTime>, Map<String, DateTime>>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<Map<String, DateTime>, Map<String, DateTime>>,
-              Map<String, DateTime>,
-              Object?,
-              Object?
-            >;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<Map<String, DateTime>, Map<String, DateTime>>,
+        Map<String, DateTime>,
+        Object?,
+        Object?>;
     element.handleCreate(ref, build);
   }
 }

@@ -1,8 +1,18 @@
-/// Maps UI product ids (`p1`) to database integer ids (`1`).
+import '../../shops/data/vendor_product_mapper.dart';
+
+/// Maps UI product ids (`p1`, `shop-{vendor}-p1`) to database integer ids (`1`).
 abstract final class ProductIdCodec {
   static int? toDatabaseId(String productId) {
     final raw = productId.trim();
     if (raw.isEmpty) return null;
+
+    if (raw.startsWith('shop-')) {
+      final parsed = VendorProductMapper.parseConsumerProductId(raw);
+      if (parsed != null) {
+        return toDatabaseId(parsed.productId);
+      }
+    }
+
     final normalized = raw.startsWith('p') ? raw.substring(1) : raw;
     return int.tryParse(normalized);
   }

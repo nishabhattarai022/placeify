@@ -1,0 +1,7 @@
+enum: OrderPaymentStatus
+serialized: byName
+default: unpaid
+values:
+  - unpaid
+  - paymentReceived
+  - paymentConfirmed

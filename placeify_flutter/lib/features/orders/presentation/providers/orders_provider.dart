@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:placeify_flutter/core/widgets/toast_overlay.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify_flutter/features/cart/presentation/cart_actions.dart';
-import 'package:placeify_flutter/features/orders/data/serverpod_order_repository.dart';
+import 'package:placeify_flutter/features/orders/data/mock_order_repository.dart';
 import 'package:placeify_flutter/features/orders/domain/constants/order_strings.dart';
 import 'package:placeify_flutter/features/orders/domain/enums/consumer_order_status.dart';
 import 'package:placeify_flutter/features/orders/domain/enums/order_list_filter.dart';
@@ -15,13 +15,13 @@ part 'orders_provider.g.dart';
 
 @Riverpod(keepAlive: true)
 OrderRepository orderRepository(Ref ref) {
-  return const ServerpodOrderRepository();
+  return MockOrderRepository();
 }
 
 @riverpod
 Future<String> ordersUserId(Ref ref) async {
   final user = await ref.watch(currentUserProvider.future);
-  return user?.id ?? '';
+  return user?.id ?? MockOrderRepository.demoUserId;
 }
 
 @riverpod

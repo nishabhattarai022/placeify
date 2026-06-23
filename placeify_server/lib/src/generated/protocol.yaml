@@ -67,6 +67,10 @@ checkout:
 notification:
   - getPreferences:
   - updatePreferences:
+  - listInAppNotifications:
+  - unreadInAppNotificationCount:
+  - markInAppNotificationRead:
+  - markAllInAppNotificationsRead:
 order:
   - listMyOrders:
   - getOrder:
@@ -95,6 +99,8 @@ vendor:
   - getDashboard:
   - hasShop:
   - createShop:
+  - getMyBankDetails:
+  - saveMyBankDetails:
   - getMyProfile:
   - updateMyProfile:
   - uploadShopLogo:
@@ -117,6 +123,9 @@ vendor:
   - listDeliveryUpdates:
   - submitDeliveryUpdate:
   - uploadDeliveryProof:
+  - listNotifications:
+  - markNotificationRead:
+  - markAllNotificationsRead:
 wishlist:
   - listMyWishlist:
   - addToWishlist:

@@ -179,6 +179,11 @@ class _DeviceFrame extends StatelessWidget {
                                 'assets/images/ar/ar_feature_chair.png',
                                 fit: BoxFit.contain,
                                 filterQuality: FilterQuality.high,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                  Icons.chair_outlined,
+                                  size: 120,
+                                  color: Colors.white70,
+                                ),
                               ),
                             ),
                           ),

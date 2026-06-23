@@ -1,0 +1,6 @@
+enum: OrderStatusHistoryType
+serialized: byName
+values:
+  - order
+  - delivery
+  - payment

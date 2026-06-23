@@ -2,6 +2,8 @@ import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
+import '../notification/order_notification_service.dart';
+import '../order/order_lifecycle_store.dart';
 import 'user_payment_store.dart';
 
 class UserOrderStore {
@@ -103,6 +105,7 @@ class UserOrderStore {
       primaryProductName: summary.primaryProductName,
       latestDeliveryStage: summary.latestDeliveryStage,
       latestDeliveryNote: summary.latestDeliveryNote,
+      orderPaymentStatus: order.paymentStatus,
       items: [
         for (final item in items)
           UserOrderLineItem(
@@ -123,7 +126,30 @@ class UserOrderStore {
           ),
       ],
       payment: payment,
+      paymentUpdates: await _paymentUpdatesForOrder(session, orderId),
     );
+  }
+
+  Future<List<UserOrderPaymentEvent>> _paymentUpdatesForOrder(
+    Session session,
+    int orderId,
+  ) async {
+    final history = await OrderStatusHistory.db.find(
+      session,
+      where: (row) =>
+          row.orderId.equals(orderId) &
+          row.statusType.equals(OrderStatusHistoryType.payment),
+      orderBy: (row) => row.changedAt,
+    );
+
+    return [
+      for (final row in history)
+        UserOrderPaymentEvent(
+          status: OrderPaymentStatus.fromJson(row.newStatus),
+          note: row.note,
+          createdAt: row.changedAt,
+        ),
+    ];
   }
 
   Future<UserOrderDetail> cancelOrder(
@@ -148,9 +174,7 @@ class UserOrderStore {
       );
     }
 
-    final cancellable = order.status == OrderStatus.pending ||
-        order.status == OrderStatus.confirmed ||
-        order.status == OrderStatus.accepted;
+    final cancellable = order.status == OrderStatus.pending;
     if (!cancellable) {
       throw PlaceifyException(
         message: 'This order can no longer be cancelled.',
@@ -158,13 +182,43 @@ class UserOrderStore {
       );
     }
 
-    await Order.db.updateRow(
-      session,
-      order.copyWith(
-        status: OrderStatus.cancelled,
-        updatedAt: DateTime.now(),
-      ),
-    );
+    await session.db.transaction((transaction) async {
+      await OrderLifecycleStore.updateOrderWithVersion(
+        session,
+        order,
+        (current) => current.copyWith(
+          status: OrderStatus.cancelled,
+          rejectionReason: trimmed,
+        ),
+        transaction: transaction,
+      );
+
+      await OrderLifecycleStore.appendHistory(
+        session,
+        orderId,
+        statusType: OrderStatusHistoryType.order,
+        previousStatus: order.status.name,
+        newStatus: OrderStatus.cancelled.name,
+        changedByUserId: userId,
+        note: trimmed,
+        transaction: transaction,
+      );
+
+      final items = await OrderItem.db.find(
+        session,
+        where: (item) => item.orderId.equals(orderId),
+        transaction: transaction,
+      );
+      final vendorIds = items.map((item) => item.vendorId).toSet();
+      for (final vendorId in vendorIds) {
+        await OrderNotificationService.notifyVendorOrderCancelled(
+          session,
+          order: order.copyWith(status: OrderStatus.cancelled),
+          vendorId: vendorId,
+          reason: trimmed,
+        );
+      }
+    });
 
     return getDetail(session, userId, orderId);
   }
@@ -223,6 +277,7 @@ class UserOrderStore {
       primaryProductName: displayName,
       latestDeliveryStage: latestDeliveryStage,
       latestDeliveryNote: latestDeliveryNote,
+      orderPaymentStatus: order.paymentStatus,
     );
   }
 }

@@ -16,3 +16,4 @@ fields:
   warranty: String?
   generateModel3d: bool, default=false
   isActive: bool, default=true
+  viewImageUrls: List<String>?

@@ -70,6 +70,7 @@ abstract final class UserOrderMappers {
       OrderStatus.shipped => 'Shipped',
       OrderStatus.delivered => 'Delivered',
       OrderStatus.cancelled => 'Cancelled',
+      OrderStatus.autoCancelled => 'Auto cancelled',
     };
   }
 
@@ -93,7 +94,7 @@ abstract final class UserOrderMappers {
           background: AppColors.tealBg,
           foreground: AppColors.teal,
         ),
-      OrderStatus.cancelled || OrderStatus.rejected => (
+      OrderStatus.cancelled || OrderStatus.rejected || OrderStatus.autoCancelled => (
           background: const Color(0x1A9B4A2A),
           foreground: AppColors.rust,
         ),
@@ -117,7 +118,10 @@ abstract final class UserOrderMappers {
         1,
       OrderStatus.shipped => 2,
       OrderStatus.delivered => 3,
-      OrderStatus.cancelled || OrderStatus.rejected => 0,
+      OrderStatus.cancelled ||
+      OrderStatus.rejected ||
+      OrderStatus.autoCancelled =>
+        0,
     };
   }
 

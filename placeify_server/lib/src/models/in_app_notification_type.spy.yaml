@@ -1,0 +1,8 @@
+enum: InAppNotificationType
+serialized: byName
+values:
+  - orderPlaced
+  - orderAccepted
+  - orderCancelled
+  - deliveryUpdate
+  - paymentUpdate
