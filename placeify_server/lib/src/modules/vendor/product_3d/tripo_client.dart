@@ -16,12 +16,12 @@ abstract final class TripoClient {
   static const _pollInterval = Duration(seconds: 2);
   static const _maxPollAttempts = 60;
 
-  /// PBR profile: metallic-roughness maps for realistic preview + AR lighting.
+  /// Fast demo profile: textured but not extreme/PBR (saves several minutes).
   static const _baseTextureParams = <String, dynamic>{
     'texture': true,
-    'pbr': true,
+    'pbr': false,
     'texture_alignment': 'original_image',
-    'texture_quality': 'detailed',
+    'texture_quality': 'standard',
     'orientation': 'align_image',
     'enable_image_autofix': false,
     'export_uv': false,
@@ -365,8 +365,8 @@ abstract final class TripoClient {
   }
 
   static String? _pickModelUrl(Map<String, dynamic> output) {
-    // Prefer PBR export when available (metallic-roughness workflow).
-    for (final key in ['pbr_model', 'model', 'base_model']) {
+    // Prefer fully textured model (HD diffuse + PBR when enabled).
+    for (final key in ['model', 'pbr_model', 'base_model']) {
       final url = _extractUrl(output[key]);
       if (url != null) return url;
     }

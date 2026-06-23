@@ -3,7 +3,7 @@ BEGIN;
 --
 -- ACTION ALTER TABLE
 --
-ALTER TABLE "product" ADD COLUMN "viewImageUrls" json;
+ALTER TABLE "product" ADD COLUMN IF NOT EXISTS "viewImageUrls" json;
 
 --
 -- MIGRATION VERSION FOR placeify
