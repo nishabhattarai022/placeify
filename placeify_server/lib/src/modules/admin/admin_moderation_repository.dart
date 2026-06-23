@@ -3,6 +3,7 @@ import 'package:serverpod/serverpod.dart';
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
+import '../../shared/user_role_audit_log.dart';
 import 'admin_repository.dart';
 
 /// Admin moderation: vendor approval, user status, product removal, complaints.
@@ -19,7 +20,7 @@ class AdminModerationStore {
   Future<Vendor> approveVendor(Session session, UuidValue vendorUserId) async {
     final admin = await _requireAdminProfile(session);
     final user = await User.db.findById(session, vendorUserId);
-    if (user == null || user.role != UserRole.vendor) {
+    if (user == null) {
       throw PlaceifyException(
         message: 'Vendor account not found.',
         code: 'VENDOR_NOT_FOUND',
@@ -37,16 +38,38 @@ class AdminModerationStore {
       );
     }
 
+    if (user.status == UserAccountStatus.approved && user.role == UserRole.vendor) {
+      return vendor;
+    }
+
+    if (user.status != UserAccountStatus.pending) {
+      throw PlaceifyException(
+        message: 'Only pending vendor applications can be approved.',
+        code: 'INVALID_VENDOR_STATUS',
+      );
+    }
+
     final now = DateTime.now();
+    final previousRole = user.role;
     await User.db.updateRow(
       session,
       user.copyWith(
+        role: UserRole.vendor,
         status: UserAccountStatus.approved,
         isActive: true,
         approvedById: admin.id,
         statusChangedById: admin.id,
         updatedAt: now,
       ),
+    );
+
+    UserRoleAuditLog.roleChanged(
+      session,
+      userId: user.id!,
+      previousRole: previousRole,
+      newRole: UserRole.vendor,
+      source: 'admin.approveVendor',
+      changedByAdminId: admin.id,
     );
 
     return Vendor.db.updateRow(
@@ -62,9 +85,20 @@ class AdminModerationStore {
   Future<User> rejectVendor(Session session, UuidValue vendorUserId) async {
     final admin = await _requireAdminProfile(session);
     final user = await User.db.findById(session, vendorUserId);
-    if (user == null || user.role != UserRole.vendor) {
+    if (user == null) {
       throw PlaceifyException(
         message: 'Vendor account not found.',
+        code: 'VENDOR_NOT_FOUND',
+      );
+    }
+
+    final vendor = await Vendor.db.findFirstRow(
+      session,
+      where: (row) => row.userId.equals(vendorUserId),
+    );
+    if (vendor == null) {
+      throw PlaceifyException(
+        message: 'Vendor profile not found.',
         code: 'VENDOR_NOT_FOUND',
       );
     }

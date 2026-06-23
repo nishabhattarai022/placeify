@@ -5,6 +5,9 @@ fields:
   name: String
   description: String
   price: double
+  discountPrice: double?
+  discountPercentage: double?
+  featured: bool, default=false
   materials: String
   widthCm: double
   depthCm: double

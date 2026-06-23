@@ -86,6 +86,7 @@ product:
   - getProduct:
   - getShopProfile:
   - listApprovedShops:
+  - getMarketplaceHighlights:
   - listProducts:
 refund:
   - listMyRefundRequests:

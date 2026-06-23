@@ -17,7 +17,6 @@ import 'category.dart' as _i4;
 import 'admin.dart' as _i5;
 import 'package:placeify_client/src/protocol/protocol.dart' as _i6;
 
-/// Furniture product listed by a vendor in the marketplace.
 abstract class Product implements _i1.SerializableModel {
   Product._({
     this.id,
@@ -28,6 +27,10 @@ abstract class Product implements _i1.SerializableModel {
     required this.name,
     required this.description,
     required this.price,
+    this.discountPrice,
+    this.discountPercentage,
+    bool? featured,
+    bool? isOffer,
     this.materials,
     this.widthCm,
     this.depthCm,
@@ -46,7 +49,9 @@ abstract class Product implements _i1.SerializableModel {
     this.removedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
-  }) : status = status ?? _i2.ProductStatus.active,
+  }) : featured = featured ?? false,
+       isOffer = isOffer ?? false,
+       status = status ?? _i2.ProductStatus.active,
        createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
 
@@ -59,6 +64,10 @@ abstract class Product implements _i1.SerializableModel {
     required String name,
     required String description,
     required double price,
+    double? discountPrice,
+    double? discountPercentage,
+    bool? featured,
+    bool? isOffer,
     String? materials,
     double? widthCm,
     double? depthCm,
@@ -97,6 +106,15 @@ abstract class Product implements _i1.SerializableModel {
       name: jsonSerialization['name'] as String,
       description: jsonSerialization['description'] as String,
       price: (jsonSerialization['price'] as num).toDouble(),
+      discountPrice: (jsonSerialization['discountPrice'] as num?)?.toDouble(),
+      discountPercentage: (jsonSerialization['discountPercentage'] as num?)
+          ?.toDouble(),
+      featured: jsonSerialization['featured'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['featured']),
+      isOffer: jsonSerialization['isOffer'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['isOffer']),
       materials: jsonSerialization['materials'] as String?,
       widthCm: (jsonSerialization['widthCm'] as num?)?.toDouble(),
       depthCm: (jsonSerialization['depthCm'] as num?)?.toDouble(),
@@ -157,6 +175,18 @@ abstract class Product implements _i1.SerializableModel {
 
   double price;
 
+  /// Optional sale price when running a fixed-price promotion.
+  double? discountPrice;
+
+  /// Optional percentage discount (0–100). Ignored when [discountPrice] is set.
+  double? discountPercentage;
+
+  /// Highlights the product in featured / promotion surfaces.
+  bool featured;
+
+  /// True when the product has an active offer (derived from discount fields).
+  bool isOffer;
+
   String? materials;
 
   double? widthCm;
@@ -208,6 +238,10 @@ abstract class Product implements _i1.SerializableModel {
     String? name,
     String? description,
     double? price,
+    double? discountPrice,
+    double? discountPercentage,
+    bool? featured,
+    bool? isOffer,
     String? materials,
     double? widthCm,
     double? depthCm,
@@ -239,6 +273,10 @@ abstract class Product implements _i1.SerializableModel {
       'name': name,
       'description': description,
       'price': price,
+      if (discountPrice != null) 'discountPrice': discountPrice,
+      if (discountPercentage != null) 'discountPercentage': discountPercentage,
+      'featured': featured,
+      'isOffer': isOffer,
       if (materials != null) 'materials': materials,
       if (widthCm != null) 'widthCm': widthCm,
       if (depthCm != null) 'depthCm': depthCm,
@@ -278,6 +316,10 @@ class _ProductImpl extends Product {
     required String name,
     required String description,
     required double price,
+    double? discountPrice,
+    double? discountPercentage,
+    bool? featured,
+    bool? isOffer,
     String? materials,
     double? widthCm,
     double? depthCm,
@@ -305,6 +347,10 @@ class _ProductImpl extends Product {
          name: name,
          description: description,
          price: price,
+         discountPrice: discountPrice,
+         discountPercentage: discountPercentage,
+         featured: featured,
+         isOffer: isOffer,
          materials: materials,
          widthCm: widthCm,
          depthCm: depthCm,
@@ -338,6 +384,10 @@ class _ProductImpl extends Product {
     String? name,
     String? description,
     double? price,
+    Object? discountPrice = _Undefined,
+    Object? discountPercentage = _Undefined,
+    bool? featured,
+    bool? isOffer,
     Object? materials = _Undefined,
     Object? widthCm = _Undefined,
     Object? depthCm = _Undefined,
@@ -368,6 +418,14 @@ class _ProductImpl extends Product {
       name: name ?? this.name,
       description: description ?? this.description,
       price: price ?? this.price,
+      discountPrice: discountPrice is double?
+          ? discountPrice
+          : this.discountPrice,
+      discountPercentage: discountPercentage is double?
+          ? discountPercentage
+          : this.discountPercentage,
+      featured: featured ?? this.featured,
+      isOffer: isOffer ?? this.isOffer,
       materials: materials is String? ? materials : this.materials,
       widthCm: widthCm is double? ? widthCm : this.widthCm,
       depthCm: depthCm is double? ? depthCm : this.depthCm,

@@ -55,4 +55,9 @@ class ProductService {
   }) {
     return _vendorService.listApprovedShops(session, query: query);
   }
+
+  Future<MarketplaceHighlights> getMarketplaceHighlights(Session session) async {
+    await _ensureCatalog(session);
+    return _repository.marketplaceHighlights(session);
+  }
 }

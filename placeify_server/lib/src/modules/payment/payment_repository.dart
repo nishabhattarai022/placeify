@@ -3,7 +3,7 @@ import 'package:serverpod/serverpod.dart' hide Order;
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
-import '../notification/order_notification_service.dart';
+import '../marketplace/marketplace_events.dart';
 import '../order/order_lifecycle_store.dart';
 import '../vendor/vendor_repository.dart';
 import 'payment_sync.dart';
@@ -263,11 +263,13 @@ class PaymentStore {
           transaction: transaction,
         );
 
-        await OrderNotificationService.notifyPaymentStatus(
+        await marketplaceEventDispatcher.dispatch(
           session,
-          order: updatedOrder,
-          status: nextPaymentStatus,
-          vendorId: vendor.id!,
+          PaymentStatusChangedEvent(
+            order: updatedOrder,
+            status: nextPaymentStatus,
+            vendorId: vendor.id!,
+          ),
         );
       }
 

@@ -27,6 +27,8 @@ void main() {
         expect(dashboard.wishlistCount, 1);
         expect(dashboard.cartItemCount, 0);
         expect(dashboard.refundCount, 0);
+        expect(dashboard.marketplace.recentProducts, isA<List>());
+        expect(dashboard.marketplace.offerProducts, isA<List>());
       },
     );
 
