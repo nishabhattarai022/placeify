@@ -1,3 +1,5 @@
+import 'package:placeify_flutter/core/utils/local_image_store.dart';
+
 import 'resolve_server_url.dart';
 
 /// Web server port for static uploads (see placeify_server development.yaml).
@@ -7,6 +9,7 @@ const int _webServerPort = 8082;
 Future<String> resolveMediaUrl(String? path) async {
   if (path == null || path.isEmpty) return '';
   if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  if (path.startsWith(LocalImageStore.scheme)) return '';
 
   final parsed = Uri.parse(path.startsWith('/') ? path : '/$path');
   final apiBase = await resolveServerUrl();

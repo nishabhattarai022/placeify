@@ -6,10 +6,9 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'resolve_server_url_io.dart'
-    if (dart.library.html) 'resolve_server_url_web.dart';
+import 'resolve_server_platform.dart';
 
-const _cachedServerUrlKey = 'placeify_server_url';
+const _cachedServerUrlKey = 'placeify_server_url_v2';
 const _defaultPort = 8080;
 
 /// Clears a previously cached API base URL (e.g. after a connection failure).
@@ -51,24 +50,59 @@ Future<String> resolveServerUrl({
 
 Future<String> _resolveOnce({required bool forceRefresh}) async {
   final prefs = await SharedPreferences.getInstance();
+  final candidates = await _buildCandidates();
+  final configuredPhysical = await _configuredPhysicalApiUrl();
 
   if (!forceRefresh) {
     final cached = prefs.getString(_cachedServerUrlKey);
-    if (cached != null &&
-        _cacheMatchesPlatform(cached) &&
-        await _canReachServer(cached)) {
-      return _ensureTrailingSlash(cached);
+    if (cached != null) {
+      final normalizedCached = _ensureTrailingSlash(cached);
+      final cacheStillConfigured = candidates.contains(normalizedCached);
+      final cacheMatchesConfiguredPhysical = _hostsMatch(
+        normalizedCached,
+        configuredPhysical,
+      );
+
+      if (!cacheStillConfigured ||
+          (configuredPhysical != null && !cacheMatchesConfiguredPhysical)) {
+        await prefs.remove(_cachedServerUrlKey);
+      } else if (_cacheMatchesPlatform(cached) &&
+          await _canReachServer(cached)) {
+        return normalizedCached;
+      }
     }
   }
 
-  for (final candidate in await _buildCandidates()) {
+  for (final candidate in candidates) {
     if (await _canReachServer(candidate)) {
       await prefs.setString(_cachedServerUrlKey, candidate);
       return _ensureTrailingSlash(candidate);
     }
   }
 
-  return _ensureTrailingSlash((await _buildCandidates()).first);
+  return _ensureTrailingSlash(candidates.first);
+}
+
+Future<String?> _configuredPhysicalApiUrl() async {
+  try {
+    final data = await rootBundle.loadString('assets/config.json');
+    final config = jsonDecode(data) as Map<String, dynamic>;
+    final physicalApiUrl = config['physicalApiUrl'] as String?;
+    if (physicalApiUrl == null || physicalApiUrl.trim().isEmpty) {
+      return null;
+    }
+    return _ensureTrailingSlash(physicalApiUrl.trim());
+  } catch (_) {
+    return null;
+  }
+}
+
+bool _hostsMatch(String a, String? b) {
+  if (b == null) return true;
+  final hostA = Uri.tryParse(a)?.host;
+  final hostB = Uri.tryParse(b)?.host;
+  if (hostA == null || hostB == null) return true;
+  return hostA == hostB;
 }
 
 bool _cacheMatchesPlatform(String url) {
@@ -139,9 +173,13 @@ Future<bool> _isPhysicalMobileDevice() async {
 
 Future<bool> _canReachServer(String url) async {
   try {
+    final isPhysical = await _isPhysicalMobileDevice();
+    final timeout = isPhysical
+        ? const Duration(seconds: 8)
+        : const Duration(seconds: 3);
     final response = await http
         .get(Uri.parse(_ensureTrailingSlash(url)))
-        .timeout(const Duration(seconds: 3));
+        .timeout(timeout);
     return response.statusCode == 200;
   } catch (_) {
     return false;

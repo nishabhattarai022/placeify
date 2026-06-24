@@ -299,7 +299,7 @@ internal class ModelRenderer {
             .color(1.0f, 1.0f, 1.0f)
             .intensity(100000.0f)
             .castShadows(true)
-            .shadowOptions(ShadowOptions().apply {
+            .shadowOptions(LightManager.ShadowOptions().apply {
                 mapSize = 1024
                 constantBias = 0.001f
                 normalBias = 0.5f
@@ -324,8 +324,7 @@ internal class ModelRenderer {
         pixelIntensity: Float,
     ) {
         val scene = scene ?: return
-        val sh = FloatArray(27)
-        lightEstimate.getEnvironmentalHdrAmbientSphericalHarmonics(sh, 0)
+        val sh = lightEstimate.getEnvironmentalHdrAmbientSphericalHarmonics()
 
         // Scale SH coefficients by real-world light intensity for PBR materials.
         val scale = pixelIntensity * lightIntensityMultiplier
@@ -339,6 +338,7 @@ internal class ModelRenderer {
             .intensity(30_000.0f * lightIntensityMultiplier)
             .build(engine)
         scene.indirectLight = indirectLight
+    }
 
     private fun ensureUiHelper() {
         if (uiHelper != null) return
