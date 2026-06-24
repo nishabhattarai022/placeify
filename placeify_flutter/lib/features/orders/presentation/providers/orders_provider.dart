@@ -14,6 +14,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 import '../../../../core/config/placeify_server_client.dart';
+import '../../../profile/presentation/providers/profile_dashboard_provider.dart';
 
 part 'orders_provider.g.dart';
 
@@ -85,6 +86,7 @@ class Orders extends _$Orders {
       synced[index] = updated;
       state = AsyncData(synced);
       ref.invalidate(orderByIdProvider(orderId));
+      ref.invalidate(profileDashboardProvider);
       return null;
     } on StateError catch (e) {
       state = previous;
@@ -131,6 +133,7 @@ class Orders extends _$Orders {
       synced[index] = updated;
       state = AsyncData(synced);
       ref.invalidate(orderByIdProvider(orderId));
+      ref.invalidate(profileDashboardProvider);
       return null;
     } on StateError catch (e) {
       state = previous;
