@@ -15,8 +15,8 @@ abstract final class ArFurnitureScale {
   static const nativeIosFactor = 1.0;
   static const nativeAndroidFactor = 1.0;
 
-  /// Physically-based lighting — matches processed PBR GLB materials (no boost).
-  static const arLightIntensityMultiplier = 1.0;
+  /// Studio neutral lighting — aligned with model-viewer `environmentImage: neutral`.
+  static const arLightIntensityMultiplier = 1.15;
 
   /// Tripo reference bounding size in meters.
   static const _tripoReferenceMaxDimensionM = 1.0;

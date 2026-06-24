@@ -41,6 +41,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
     private var panningNode: SCNNode?
     private var panningNodeCurrentWorldLocation: SCNVector3?
     private var lightIntensityMultiplier: CGFloat = 1.0
+    private var flutterNodeNames = Set<String>()
     private static var cachedReferenceImages: [String: Set<ARReferenceImage>] = [:]
 
     init(
@@ -52,9 +53,9 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         self.sceneView = ARSCNView(frame: frame)
         self.coachingView = ARCoachingOverlayView(frame: frame)
         
-        // Enable automatic lighting for better model visibility
+        // Neutral studio lighting — matches 3D preview; skip room HDR probes.
         self.sceneView.autoenablesDefaultLighting = true
-        self.sceneView.automaticallyUpdatesLighting = true
+        self.sceneView.automaticallyUpdatesLighting = false
         
         self.sessionManagerChannel = FlutterMethodChannel(name: "arsession_\(viewId)", binaryMessenger: messenger)
         self.objectManagerChannel = FlutterMethodChannel(name: "arobjects_\(viewId)", binaryMessenger: messenger)
@@ -76,9 +77,10 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         let value = CGFloat(truncating: multiplier ?? 1.0)
         let clamped = max(0.01, value)
         lightIntensityMultiplier = clamped
-        sceneView.scene.lightingEnvironment.intensity = clamped * 1.5
+        // Brighter neutral rig, similar to model-viewer exposure: 1.0 + neutral IBL.
+        sceneView.scene.lightingEnvironment.intensity = clamped * 2.2
         sceneView.autoenablesDefaultLighting = true
-        sceneView.automaticallyUpdatesLighting = true
+        sceneView.automaticallyUpdatesLighting = false
     }
 
     func view() -> UIView {
@@ -178,6 +180,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             case "removeNode":
                 if let name = arguments!["name"] as? String {
                     sceneView.scene.rootNode.childNode(withName: name, recursively: true)?.removeFromParentNode()
+                    flutterNodeNames.remove(name)
                 }
                 break
             case "transformationChanged":
@@ -451,8 +454,14 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         }
     }
 
+    private func completeNodeAdd(name: String, promise: @escaping (Result<Bool, Never>) -> Void) {
+        flutterNodeNames.insert(name)
+        promise(.success(true))
+    }
+
     func addNode(dict_node: Dictionary<String, Any>, dict_anchor: Dictionary<String, Any>? = nil) -> Future<Bool, Never> {
         return Future {promise in
+            let nodeName = dict_node["name"] as! String
             
             switch (dict_node["type"] as! Int) {
                 case 0: // GLTF2 Model from Flutter asset folder
@@ -468,7 +477,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                                     if let anchor = self.anchorCollection[anchorName]{
                                         // Attach node to the top-level node of the specified anchor
                                         self.sceneView.node(for: anchor)?.addChildNode(node)
-                                        promise(.success(true))
+                                        self.completeNodeAdd(name: nodeName, promise: promise)
                                     } else {
                                         print("iOS: Failed to find anchor: \(anchorName)")
                                         promise(.success(false))
@@ -481,7 +490,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                         } else {
                             // Attach to top-level node of the scene
                             self.sceneView.scene.rootNode.addChildNode(node)
-                            promise(.success(true))
+                            self.completeNodeAdd(name: nodeName, promise: promise)
                         }
                     } else {
                         print("iOS: Failed to create node from GLTF")
@@ -503,7 +512,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                                         // Attach node to the top-level node of the specified anchor
                                         self.sceneView.node(for: anchor)?.addChildNode(node)
                                         print("iOS: Node attached to plane anchor")
-                                        promise(.success(true))
+                                        self.completeNodeAdd(name: nodeName, promise: promise)
                                     } else {
                                         print("iOS: Failed to find anchor: \(anchorName)")
                                         promise(.success(false))
@@ -517,7 +526,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                             // Attach to top-level node of the scene
                             self.sceneView.scene.rootNode.addChildNode(node)
                             print("iOS: Node attached to scene root")
-                            promise(.success(true))
+                            self.completeNodeAdd(name: nodeName, promise: promise)
                         }
                     } else {
                         print("iOS: Failed to create node from GLB")
@@ -538,7 +547,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                                         if let anchor = self.anchorCollection[anchorName]{
                                             // Attach node to the top-level node of the specified anchor
                                             self.sceneView.node(for: anchor)?.addChildNode(node)
-                                            promise(.success(true))
+                                            self.completeNodeAdd(name: nodeName, promise: promise)
                                         } else {
                                             promise(.success(false))
                                         }
@@ -549,7 +558,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                             } else {
                                 // Attach to top-level node of the scene
                                 self.sceneView.scene.rootNode.addChildNode(node)
-                                promise(.success(true))
+                                self.completeNodeAdd(name: nodeName, promise: promise)
                             }
                         } else {
                             self.sessionManagerChannel.invokeMethod("onError", arguments: ["Unable to load renderable \(dict_node["name"] as! String)"])
@@ -571,7 +580,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                                     if let anchor = self.anchorCollection[anchorName]{
                                         // Attach node to the top-level node of the specified anchor
                                         self.sceneView.node(for: anchor)?.addChildNode(node)
-                                        promise(.success(true))
+                                        self.completeNodeAdd(name: nodeName, promise: promise)
                                     } else {
                                         promise(.success(false))
                                     }
@@ -582,7 +591,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                         } else {
                             // Attach to top-level node of the scene
                             self.sceneView.scene.rootNode.addChildNode(node)
-                            promise(.success(true))
+                            self.completeNodeAdd(name: nodeName, promise: promise)
                         }
                     } else {
                         self.sessionManagerChannel.invokeMethod("onError", arguments: ["Unable to load renderable \(dict_node["uri"] as! String)"])
@@ -603,7 +612,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                                     if let anchor = self.anchorCollection[anchorName]{
                                         // Attach node to the top-level node of the specified anchor
                                         self.sceneView.node(for: anchor)?.addChildNode(node)
-                                        promise(.success(true))
+                                        self.completeNodeAdd(name: nodeName, promise: promise)
                                     } else {
                                         promise(.success(false))
                                     }
@@ -614,7 +623,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                         } else {
                             // Attach to top-level node of the scene
                             self.sceneView.scene.rootNode.addChildNode(node)
-                            promise(.success(true))
+                            self.completeNodeAdd(name: nodeName, promise: promise)
                         }
                     } else {
                         self.sessionManagerChannel.invokeMethod("onError", arguments: ["Unable to load renderable \(dict_node["uri"] as! String)"])
@@ -641,7 +650,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
     
         let allHitResults = sceneView.hitTest(touchLocation, options: [SCNHitTestOption.searchMode : SCNHitTestSearchMode.closest.rawValue])
         // Because 3D model loading can lead to composed nodes, we have to traverse through a node's parent until the parent node with the name assigned by the Flutter API is found
-        let nodeHitResults: Array<String> = allHitResults.compactMap { nearestParentWithNameStart(node: $0.node, characters: "[#")?.name }
+        let nodeHitResults: Array<String> = allHitResults.compactMap { nearestFlutterManagedNode(node: $0.node)?.name }
         if (nodeHitResults.count != 0) {
             self.objectManagerChannel.invokeMethod("onNodeTap", arguments: Array(Set(nodeHitResults))) // Chaining of Array and Set is used to remove duplicates
             return
@@ -680,7 +689,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                 let allHitResults = sceneView.hitTest(startLocation, options: [SCNHitTestOption.searchMode : SCNHitTestSearchMode.closest.rawValue])
                 // Because 3D model loading can lead to composed nodes, we have to traverse through a node's parent until the parent node with the name assigned by the Flutter API is found
                 let nodeHitResults: Array<String> = allHitResults.compactMap {
-                    if let nearestNode = nearestParentWithNameStart(node: $0.node, characters: "[#") {
+                    if let nearestNode = nearestFlutterManagedNode(node: $0.node) {
                         panningNode = nearestNode
                         return nearestNode.name
                     }else{
@@ -690,6 +699,12 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                 if (nodeHitResults.count != 0 && panningNode != nil) {
                     panningNodeCurrentWorldLocation = panningNode!.worldPosition
                     self.objectManagerChannel.invokeMethod("onPanStart", arguments: panningNode!.name) // Chaining of Array and Set is used to remove duplicates
+                    return
+                }
+                if let fallbackNode = singleFlutterManagedNode(in: sceneView) {
+                    panningNode = fallbackNode
+                    panningNodeCurrentWorldLocation = fallbackNode.worldPosition
+                    self.objectManagerChannel.invokeMethod("onPanStart", arguments: fallbackNode.name)
                     return
                 }
             }
@@ -745,7 +760,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                 let allHitResults = sceneView.hitTest(startLocation, options: [SCNHitTestOption.searchMode : SCNHitTestSearchMode.closest.rawValue])
                 // Because 3D model loading can lead to composed nodes, we have to traverse through a node's parent until the parent node with the name assigned by the Flutter API is found
                 let nodeHitResults: Array<String> = allHitResults.compactMap {
-                    if let nearestNode = nearestParentWithNameStart(node: $0.node, characters: "[#") {
+                    if let nearestNode = nearestFlutterManagedNode(node: $0.node) {
                         panningNode = nearestNode
                         return nearestNode.name
                     }else{
@@ -754,6 +769,11 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                 }
                 if (nodeHitResults.count != 0 && panningNode != nil) {
                     self.objectManagerChannel.invokeMethod("onRotationStart", arguments: panningNode!.name) // Chaining of Array and Set is used to remove duplicates
+                    return
+                }
+                if let fallbackNode = singleFlutterManagedNode(in: sceneView) {
+                    panningNode = fallbackNode
+                    self.objectManagerChannel.invokeMethod("onRotationStart", arguments: fallbackNode.name)
                     return
                 }
             }
@@ -793,6 +813,25 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             panningNode = nil
         }
     
+    }
+
+    // Recursive helper function to traverse a node's parents until a Flutter-managed node is found
+    func nearestFlutterManagedNode(node: SCNNode?) -> SCNNode? {
+        var current = node
+        while let candidate = current {
+            if let name = candidate.name, flutterNodeNames.contains(name) {
+                return candidate
+            }
+            current = candidate.parent
+        }
+        return nil
+    }
+
+    func singleFlutterManagedNode(in sceneView: ARSCNView) -> SCNNode? {
+        guard flutterNodeNames.count == 1, let name = flutterNodeNames.first else {
+            return nil
+        }
+        return sceneView.scene.rootNode.childNode(withName: name, recursively: true)
     }
 
     // Recursive helper function to traverse a node's parents until a node with a name starting with the specified characters is found

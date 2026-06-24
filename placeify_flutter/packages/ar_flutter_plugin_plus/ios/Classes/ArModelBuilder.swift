@@ -15,7 +15,7 @@ class ArModelBuilder: NSObject {
             for material in geometry.materials {
                 material.lightingModel = .physicallyBased
                 material.isDoubleSided = true
-                material.locksAmbientWithDiffuse = true
+                material.locksAmbientWithDiffuse = false
                 material.writesToDepthBuffer = true
                 material.readsFromDepthBuffer = true
             }

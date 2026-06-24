@@ -24,7 +24,6 @@ import '../data/ar_furniture_placement.dart';
 import '../data/ar_furniture_scale.dart';
 import '../data/product_3d_model_loader.dart';
 import 'webcam_ar_room_screen.dart';
-import 'widgets/ar_furniture_gesture_overlay.dart';
 
 /// Full-screen AR furniture placement (IKEA Place–style workflow).
 class ArRoomScreen extends StatefulWidget {
@@ -70,13 +69,13 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   bool _isPlaneDetected = false;
   bool _isPlaced = false;
   bool _isDragging = false;
+  bool _isRotating = false;
   bool _isPlacing = false;
   bool _modelLoading = true;
 
   double _userScaleMultiplier = ArFurnitureScale.defaultUserMultiplier;
   double _targetRotationY = 0;
   double _smoothedRotationY = 0;
-  bool _isTwistGestureActive = false;
 
   String? _statusMessage;
 
@@ -130,15 +129,11 @@ class _ArRoomScreenState extends State<ArRoomScreen>
             planeDetectionConfig: PlaneDetectionConfig.horizontal,
           ),
           if (_canAdjustModel && _isPlaced)
-            ArFurnitureGestureOverlay(
-              enabled: true,
-              initialMultiplier: _userScaleMultiplier,
-              currentRotationY: _targetRotationY,
+            _ArScaleControls(
+              multiplier: _userScaleMultiplier,
               minMultiplier: ArFurnitureScale.minUserMultiplier,
               maxMultiplier: ArFurnitureScale.maxUserMultiplier,
               onMultiplierChanged: _onPinchMultiplierChanged,
-              onRotationChanged: _onTwistRotationChanged,
-              onGestureEnd: _onTwistGestureEnded,
             ),
           if (showScanOverlay)
             IgnorePointer(
@@ -171,6 +166,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
                   isPlaneDetected: _isPlaneDetected,
                   isPlaced: _isPlaced,
                   isDragging: _isDragging,
+                  isRotating: _isRotating,
                   statusMessage: _statusMessage,
                 ),
               ],
@@ -197,6 +193,9 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     objectManager.onPanStart = _onPanStart;
     objectManager.onPanChange = _onPanChange;
     objectManager.onPanEnd = _onPanEnd;
+    objectManager.onRotationStart = _onRotationStart;
+    objectManager.onRotationChange = _onRotationChange;
+    objectManager.onRotationEnd = _onRotationEnd;
 
     _initSession();
     objectManager.onInitialize(
@@ -216,7 +215,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       showWorldOrigin: false,
       handleTaps: true,
       handlePans: true,
-      handleRotation: false,
+      handleRotation: true,
       lightIntensityMultiplier: ArFurnitureScale.arLightIntensityMultiplier,
     );
     await _sessionManager?.setLightIntensityMultiplier(
@@ -465,28 +464,28 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     _syncRotationFromNode(transform);
   }
 
-  void _onTwistRotationChanged(double targetRadians) {
-    if (_furnitureNode == null) return;
-    _isTwistGestureActive = true;
-    _targetRotationY = targetRadians;
-    _smoothedRotationY = targetRadians;
-    if (_statusMessage != null) {
-      setState(() => _statusMessage = null);
-    }
-    if (_isWorldAnchored) {
-      _applyAnchoredNodeTransform();
-    } else {
-      _applyPreviewNodeTransform();
-    }
+  void _onRotationStart(String nodeName) {
+    if (!_isPlaced || nodeName != _nodeName) return;
+    setState(() {
+      _isRotating = true;
+      _statusMessage = null;
+    });
   }
 
-  void _onTwistGestureEnded() {
-    _isTwistGestureActive = false;
-    _targetRotationY = _smoothedRotationY;
+  void _onRotationChange(String nodeName) {
+    if (!_isPlaced || nodeName != _nodeName) return;
+  }
+
+  Future<void> _onRotationEnd(String nodeName, Matrix4 transform) async {
+    if (!_isPlaced || nodeName != _nodeName) return;
+
+    setState(() => _isRotating = false);
+    _furnitureNode?.transform = transform;
+    _syncRotationFromNode(transform);
   }
 
   void _onRotationSmoothTick(Duration elapsed) {
-    if (_isTwistGestureActive || _furnitureNode == null || _isWorldAnchored) {
+    if (_isRotating || _furnitureNode == null || _isWorldAnchored) {
       return;
     }
 
@@ -677,6 +676,7 @@ class _InstructionBanner extends StatelessWidget {
     required this.isPlaneDetected,
     required this.isPlaced,
     required this.isDragging,
+    required this.isRotating,
     this.statusMessage,
   });
 
@@ -686,6 +686,7 @@ class _InstructionBanner extends StatelessWidget {
   final bool isPlaneDetected;
   final bool isPlaced;
   final bool isDragging;
+  final bool isRotating;
   final String? statusMessage;
 
   @override
@@ -726,15 +727,16 @@ class _InstructionBanner extends StatelessWidget {
     if (modelLoading) return 'Loading $productName…';
     if (isPlaced) {
       if (isDragging) return 'Release to set the new position.';
-      return 'Drag with one finger to move. Pinch to resize. '
-          'Twist two fingers to rotate.';
+      if (isRotating) return 'Release to set the new angle.';
+      return 'Drag with one finger to move. Twist two fingers to rotate. '
+          'Use +/− to resize.';
     }
     if (!isPlaneDetected) {
       return 'Move your phone to detect a surface.';
     }
     if (isPreviewMode) {
       return 'Tap a surface to place $productName. '
-          'After placing, pinch to resize and twist two fingers to rotate.';
+          'After placing, twist two fingers to rotate or use +/− to resize.';
     }
     return 'Move your phone to detect a surface.';
   }
@@ -751,6 +753,79 @@ enum ArRoomOpenResult {
   opened,
   permissionDenied,
   modelDownloadFailed,
+}
+
+class _ArScaleControls extends StatelessWidget {
+  const _ArScaleControls({
+    required this.multiplier,
+    required this.minMultiplier,
+    required this.maxMultiplier,
+    required this.onMultiplierChanged,
+  });
+
+  final double multiplier;
+  final double minMultiplier;
+  final double maxMultiplier;
+  final ValueChanged<double> onMultiplierChanged;
+
+  static const _step = 0.1;
+
+  @override
+  Widget build(BuildContext context) {
+    final canShrink = multiplier > minMultiplier + 0.001;
+    final canGrow = multiplier < maxMultiplier - 0.001;
+
+    return Positioned(
+      right: 16,
+      bottom: 112,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.55),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              tooltip: 'Make larger',
+              onPressed: canGrow
+                  ? () => onMultiplierChanged(
+                        (multiplier + _step).clamp(
+                          minMultiplier,
+                          maxMultiplier,
+                        ),
+                      )
+                  : null,
+              icon: const Icon(Icons.add, color: Colors.white),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                '${(multiplier * 100).round()}%',
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            IconButton(
+              tooltip: 'Make smaller',
+              onPressed: canShrink
+                  ? () => onMultiplierChanged(
+                        (multiplier - _step).clamp(
+                          minMultiplier,
+                          maxMultiplier,
+                        ),
+                      )
+                  : null,
+              icon: const Icon(Icons.remove, color: Colors.white),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 abstract final class ArRoomLauncher {
