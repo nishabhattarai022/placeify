@@ -5,6 +5,7 @@ import '../../../../core/services/haptic_service.dart';
 import '../../data/profile_dashboard_mapper.dart';
 import '../../data/profile_mock_data.dart';
 import '../providers/profile_dashboard_provider.dart';
+import '../../../home/presentation/providers/wishlist_count.dart';
 
 class ProfileStatsStrip extends ConsumerWidget {
   const ProfileStatsStrip({
@@ -23,6 +24,13 @@ class ProfileStatsStrip extends ConsumerWidget {
           : ProfileDashboardMapper.emptyStats,
       orElse: () => ProfileDashboardMapper.emptyStats,
     );
+    final wishlistCount = readWishlistCount(ref);
+    final displayStats = [
+      stats[0],
+      ProfileStat(value: '$wishlistCount', label: 'Wishlist'),
+      stats[2],
+      stats[3],
+    ];
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(22, 20, 22, 0),
@@ -35,7 +43,7 @@ class ProfileStatsStrip extends ConsumerWidget {
         child: IntrinsicHeight(
           child: Row(
             children: [
-              for (var i = 0; i < stats.length; i++) ...[
+              for (var i = 0; i < displayStats.length; i++) ...[
                 if (i > 0)
                   VerticalDivider(
                     width: 1,
@@ -44,7 +52,7 @@ class ProfileStatsStrip extends ConsumerWidget {
                   ),
                 Expanded(
                   child: _StatCell(
-                    stat: stats[i],
+                    stat: displayStats[i],
                     onTap: () {
                       HapticService.light();
                       onStatTap(i);

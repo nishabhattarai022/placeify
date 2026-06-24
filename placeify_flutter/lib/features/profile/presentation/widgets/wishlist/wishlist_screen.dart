@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../home/presentation/providers/catalog_provider.dart';
 import '../../../../home/presentation/providers/wishlist_provider.dart';
+import '../../../../home/presentation/providers/wishlist_count.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/services/haptic_service.dart';
@@ -37,8 +38,7 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
   }
 
   int _visibleProductCount() {
-    final savedAt = ref.read(wishlistProvider);
-    return savedAt.length;
+    return readWishlistCount(ref);
   }
 
   @override

@@ -63,11 +63,15 @@ class Wishlist extends _$Wishlist {
         }
       }
 
-      if (uiIds.isNotEmpty) {
-        await catalog.ensureProducts(uiIds);
-      }
-
       state = nextState;
+
+      if (uiIds.isNotEmpty) {
+        try {
+          await catalog.ensureProducts(uiIds);
+        } catch (_) {
+          // Catalog enrichment must not block wishlist ids/count sync.
+        }
+      }
     } catch (_) {
       // Keep previous state on transient errors.
     }

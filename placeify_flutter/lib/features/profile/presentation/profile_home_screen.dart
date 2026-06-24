@@ -12,6 +12,7 @@ import '../../vendor/domain/enums/vendor_status.dart';
 import '../../vendor/presentation/widgets/vendor_status_gate_sheets.dart';
 import '../data/profile_menu_config.dart';
 import '../../home/presentation/providers/wishlist_provider.dart';
+import '../../home/presentation/providers/wishlist_count.dart';
 import 'widgets/profile_hero.dart';
 import 'widgets/profile_menu_tile.dart';
 import 'widgets/profile_orders_tile.dart';
@@ -128,7 +129,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
   ProfileMenuItemData _overviewMenuItem(ProfileMenuItemData item) {
     if (item.route != ProfileMenuRoute.wishlist) return item;
 
-    final count = ref.watch(wishlistProvider).length;
+    final count = readWishlistCount(ref);
     final subtitle = count == 0
         ? 'No saved items'
         : '$count saved item${count == 1 ? '' : 's'}';
@@ -145,6 +146,11 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(wishlistProvider);
+    ref.listen(profileDashboardProvider, (previous, next) {
+      reconcileWishlistWithDashboard(ref);
+    });
+
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final userAsync = ref.watch(currentUserProvider);
     final vendorStatus = userAsync.value?.vendorStatus ?? VendorStatus.none;
