@@ -3,7 +3,6 @@ import 'package:placeify_flutter/features/orders/domain/enums/consumer_order_sta
 import 'package:placeify_flutter/features/orders/domain/enums/order_list_filter.dart';
 import 'package:placeify_flutter/features/orders/domain/enums/payment_status.dart';
 import 'package:placeify_flutter/features/orders/domain/models/order_item.dart';
-import 'package:placeify_flutter/features/orders/domain/models/order_payment_event.dart';
 import 'package:placeify_flutter/features/orders/domain/models/order_status_update.dart';
 
 part 'order.freezed.dart';
@@ -20,9 +19,6 @@ abstract class Order with _$Order {
     required ConsumerOrderStatus status,
     required List<OrderItem> items,
     required List<OrderStatusUpdate> statusHistory,
-    @JsonKey(includeFromJson: false, includeToJson: false)
-    @Default([])
-    List<OrderPaymentEvent> paymentUpdates,
     required DateTime placedAt,
     DateTime? estimatedDelivery,
     DateTime? deliveredAt,
