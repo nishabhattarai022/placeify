@@ -86,6 +86,14 @@ class AdminService {
     return _moderation.removeProduct(session, productId, reason);
   }
 
+  Future<Product> deleteProduct(Session session, int productId) {
+    return _moderation.deleteProduct(session, productId);
+  }
+
+  Future<Product> restoreProduct(Session session, int productId) {
+    return _moderation.restoreProduct(session, productId);
+  }
+
   Future<Product> flagProduct(Session session, int productId) {
     return _moderation.flagProduct(session, productId);
   }

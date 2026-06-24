@@ -62,6 +62,21 @@ void main() {
 
       expect(
         ProductCatalogPolicy.isConsumerVisibleProduct(
+          product.copyWith(isDeleted: true),
+          vendorUser: User(
+            authUserId: UuidValue.fromString(
+              '00000000-0000-0000-0000-000000000005',
+            ),
+            name: 'Approved Vendor',
+            role: UserRole.vendor,
+            status: UserAccountStatus.approved,
+          ),
+        ),
+        isFalse,
+      );
+
+      expect(
+        ProductCatalogPolicy.isConsumerVisibleProduct(
           product.copyWith(status: ProductStatus.removed),
           vendorUser: User(
             authUserId: UuidValue.fromString(

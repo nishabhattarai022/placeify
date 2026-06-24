@@ -826,6 +826,44 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['reason'],
                   ),
         ),
+        'deleteProduct': _i1.MethodConnector(
+          name: 'deleteProduct',
+          params: {
+            'productId': _i1.ParameterDescription(
+              name: 'productId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['admin'] as _i6.AdminEndpoint).deleteProduct(
+                    session,
+                    params['productId'],
+                  ),
+        ),
+        'restoreProduct': _i1.MethodConnector(
+          name: 'restoreProduct',
+          params: {
+            'productId': _i1.ParameterDescription(
+              name: 'productId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['admin'] as _i6.AdminEndpoint).restoreProduct(
+                    session,
+                    params['productId'],
+                  ),
+        ),
         'flagProduct': _i1.MethodConnector(
           name: 'flagProduct',
           params: {
@@ -2454,6 +2492,63 @@ class Endpoints extends _i1.EndpointDispatch {
                 Map<String, dynamic> params,
               ) async => (endpoints['vendor'] as _i16.VendorEndpoint)
                   .regenerateProductModel3d(
+                    session,
+                    params['productId'],
+                  ),
+        ),
+        'deleteProduct': _i1.MethodConnector(
+          name: 'deleteProduct',
+          params: {
+            'productId': _i1.ParameterDescription(
+              name: 'productId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i16.VendorEndpoint).deleteProduct(
+                    session,
+                    params['productId'],
+                  ),
+        ),
+        'restoreProduct': _i1.MethodConnector(
+          name: 'restoreProduct',
+          params: {
+            'productId': _i1.ParameterDescription(
+              name: 'productId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i16.VendorEndpoint).restoreProduct(
+                    session,
+                    params['productId'],
+                  ),
+        ),
+        'archiveProduct': _i1.MethodConnector(
+          name: 'archiveProduct',
+          params: {
+            'productId': _i1.ParameterDescription(
+              name: 'productId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i16.VendorEndpoint).archiveProduct(
                     session,
                     params['productId'],
                   ),

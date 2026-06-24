@@ -246,6 +246,18 @@ class VendorService {
     return _repository.regenerateProductModel3d(session, productId);
   }
 
+  Future<Product> deleteProduct(Session session, int productId) {
+    return _repository.deleteProduct(session, productId);
+  }
+
+  Future<Product> restoreProduct(Session session, int productId) {
+    return _repository.restoreProduct(session, productId);
+  }
+
+  Future<Product> archiveProduct(Session session, int productId) {
+    return _repository.archiveProduct(session, productId);
+  }
+
   Future<List<VendorShopOrder>> listShopOrders(
     Session session, {
     int limit = 50,

@@ -2168,6 +2168,19 @@ class Protocol extends _i1.SerializationManagerServer {
           columnDefault: '\'active\'::text',
         ),
         _i2.ColumnDefinition(
+          name: 'isDeleted',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _i2.ColumnDefinition(
+          name: 'deletedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _i2.ColumnDefinition(
           name: 'removedReason',
           columnType: _i2.ColumnType.text,
           isNullable: true,

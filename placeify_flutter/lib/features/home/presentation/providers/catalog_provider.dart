@@ -6,10 +6,12 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../cart/data/product_id_codec.dart';
 import '../../../vendor/domain/models/vendor_product.dart';
+import '../../../profile/presentation/providers/profile_dashboard_provider.dart';
 import '../../data/catalog_product_mapper.dart';
 import '../../data/serverpod_product_repository.dart';
 import '../../data/vendor_product_catalog_mapper.dart';
 import '../../domain/models/product.dart';
+import 'home_room_provider.dart';
 
 part 'catalog_provider.g.dart';
 
@@ -125,13 +127,30 @@ int categoryProductCount(Ref ref, String categoryId) {
   return ref.watch(catalogProductsByCategoryProvider(categoryId)).length;
 }
 
+@Riverpod(keepAlive: true)
+Future<MarketplaceHighlights> marketplaceHighlights(Ref ref) {
+  return ref.read(catalogRepositoryProvider).getMarketplaceHighlights();
+}
+
 @riverpod
-List<Product> catalogDiscountedProducts(Ref ref) {
-  return ref
-      .watch(catalogProductsProvider)
-      .where((product) => product.isOnSale)
-      .take(6)
-      .toList();
+Future<List<Product>> catalogDiscountedProducts(Ref ref) async {
+  final page = await ref.read(catalogRepositoryProvider).search(
+        offersOnly: true,
+        pagination: PaginationInput(page: 1, pageSize: 24),
+      );
+
+  final products = <Product>[];
+  for (final item in page.items) {
+    products.add(await CatalogProductMapper.toUiProduct(item));
+  }
+
+  products.sort((a, b) {
+    final discountA = a.isOnSale ? a.discountPercent : 0;
+    final discountB = b.isOnSale ? b.discountPercent : 0;
+    return discountB.compareTo(discountA);
+  });
+
+  return products.take(6).toList();
 }
 
 @riverpod
@@ -140,10 +159,17 @@ List<Product> catalogNewestProducts(Ref ref, int count) {
 }
 
 @riverpod
-List<Product> homeFeaturedProducts(Ref ref) {
-  final products = ref.watch(catalogProductsProvider);
-  if (products.length <= 4) return products;
-  return products.sublist(0, 4);
+Future<List<Product>> homeFeaturedProducts(Ref ref) async {
+  final highlights = await ref.watch(marketplaceHighlightsProvider.future);
+  final products = <Product>[];
+  for (final item in highlights.featuredProducts) {
+    products.add(await CatalogProductMapper.toUiProduct(item));
+  }
+  if (products.isNotEmpty) return products.take(4).toList();
+
+  final fallback = ref.watch(catalogProductsProvider);
+  if (fallback.length <= 4) return fallback;
+  return fallback.sublist(0, 4);
 }
 
 @riverpod
@@ -197,8 +223,11 @@ void invalidateCustomerCatalog(Ref ref) {
   ref.invalidate(catalogDiscountedProductsProvider);
   ref.invalidate(catalogNewestProductsProvider);
   ref.invalidate(productDetailProvider);
-  ref.invalidate(homeRecommendedProductsProvider);
+  ref.invalidate(recommendedProductsProvider);
+  ref.invalidate(homeFeaturedProductsProvider);
+  ref.invalidate(marketplaceHighlightsProvider);
   ref.invalidate(catalogProductCountProvider);
+  ref.invalidate(profileDashboardProvider);
 }
 
 Future<void> publishProductToCustomerCatalog(
