@@ -4,7 +4,6 @@ import '../domain/enums/consumer_order_status.dart';
 import '../domain/enums/payment_status.dart';
 import '../domain/models/order.dart';
 import '../domain/models/order_item.dart';
-import '../domain/models/order_payment_event.dart';
 import '../domain/models/order_status_update.dart';
 
 abstract final class OrderApiMapper {
@@ -28,7 +27,6 @@ abstract final class OrderApiMapper {
         ),
       ],
       statusHistory: const [],
-      paymentUpdates: const [],
       placedAt: summary.placedAt,
       paymentStatus: mapOrderPaymentStatus(summary.orderPaymentStatus),
       paymentMethod: '',
@@ -67,7 +65,6 @@ abstract final class OrderApiMapper {
       status: mapStatus(detail.status, latestStage: detail.latestDeliveryStage),
       items: items,
       statusHistory: _historyFromDetail(detail),
-      paymentUpdates: _paymentHistoryFromDetail(detail),
       placedAt: detail.placedAt,
       deliveredAt: detail.status == OrderStatus.delivered
           ? _deliveredAt(detail)
@@ -93,8 +90,9 @@ abstract final class OrderApiMapper {
   static PaymentStatus mapOrderPaymentStatus(OrderPaymentStatus status) {
     return switch (status) {
       OrderPaymentStatus.unpaid => PaymentStatus.pending,
-      OrderPaymentStatus.paymentReceived => PaymentStatus.received,
-      OrderPaymentStatus.paymentConfirmed => PaymentStatus.confirmed,
+      OrderPaymentStatus.paymentReceived ||
+      OrderPaymentStatus.paymentConfirmed =>
+        PaymentStatus.paid,
     };
   }
 
@@ -157,21 +155,6 @@ abstract final class OrderApiMapper {
       DeliveryStage.outForDelivery => 'Out for delivery',
       DeliveryStage.delivered => 'Delivered',
     };
-  }
-
-  static List<OrderPaymentEvent> _paymentHistoryFromDetail(
-    UserOrderDetail detail,
-  ) {
-    if (detail.paymentUpdates.isEmpty) return const [];
-
-    return [
-      for (final event in detail.paymentUpdates)
-        OrderPaymentEvent(
-          status: mapOrderPaymentStatus(event.status),
-          timestamp: event.createdAt,
-          note: event.note,
-        ),
-    ];
   }
 
   static List<OrderStatusUpdate> _historyFromDetail(UserOrderDetail detail) {

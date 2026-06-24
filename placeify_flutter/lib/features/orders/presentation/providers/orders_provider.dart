@@ -4,17 +4,25 @@ import 'package:placeify_flutter/core/widgets/toast_overlay.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify_flutter/features/cart/presentation/cart_actions.dart';
 import 'package:placeify_flutter/features/orders/data/mock_order_repository.dart';
+import 'package:placeify_flutter/features/orders/data/serverpod_order_repository.dart';
 import 'package:placeify_flutter/features/orders/domain/constants/order_strings.dart';
 import 'package:placeify_flutter/features/orders/domain/enums/consumer_order_status.dart';
 import 'package:placeify_flutter/features/orders/domain/enums/order_list_filter.dart';
 import 'package:placeify_flutter/features/orders/domain/models/order.dart';
 import 'package:placeify_flutter/features/orders/domain/repositories/order_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
+
+import '../../../../core/config/placeify_server_client.dart';
 
 part 'orders_provider.g.dart';
 
 @Riverpod(keepAlive: true)
 OrderRepository orderRepository(Ref ref) {
+  ref.watch(currentUserProvider);
+  if (client.auth.isAuthenticated) {
+    return const ServerpodOrderRepository();
+  }
   return MockOrderRepository();
 }
 
