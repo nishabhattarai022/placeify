@@ -6,7 +6,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../cart/data/product_id_codec.dart';
 import '../../../vendor/domain/models/vendor_product.dart';
+import '../../data/catalog_category_utils.dart';
 import '../../data/catalog_product_mapper.dart';
+import '../../data/mock_product_repository.dart';
 import '../../data/serverpod_product_repository.dart';
 import '../../data/vendor_product_catalog_mapper.dart';
 import '../../domain/models/product.dart';
@@ -120,9 +122,27 @@ List<Product> catalogProductsByCategory(Ref ref, String categoryId) {
       .toList();
 }
 
+/// Nisha browse category list: live catalog first, mock expansion as fallback.
+@riverpod
+List<Product> browseCategoryProducts(Ref ref, String uiCategoryId) {
+  ref.watch(catalogIndexProvider);
+  final fromCatalog = ref
+      .watch(catalogProductsProvider)
+      .where(
+        (product) =>
+            CatalogCategoryUtils.matchesUiCategory(
+              product.categoryId,
+              uiCategoryId,
+            ),
+      )
+      .toList();
+  if (fromCatalog.isNotEmpty) return fromCatalog;
+  return MockProductRepository.productsForBrowseCategory(uiCategoryId);
+}
+
 @riverpod
 int categoryProductCount(Ref ref, String categoryId) {
-  return ref.watch(catalogProductsByCategoryProvider(categoryId)).length;
+  return ref.watch(browseCategoryProductsProvider(categoryId)).length;
 }
 
 @riverpod
@@ -177,7 +197,14 @@ List<Product> homeRecommendedProducts(Ref ref, String roomId) {
   final categoryIds = _roomCategoryIds[roomId];
   if (categoryIds != null) {
     final roomMatches = products
-        .where((product) => categoryIds.contains(product.categoryId))
+        .where(
+          (product) => categoryIds.any(
+            (categoryId) => CatalogCategoryUtils.matchesUiCategory(
+              product.categoryId,
+              categoryId,
+            ),
+          ),
+        )
         .take(2)
         .toList();
     if (roomMatches.isNotEmpty) return roomMatches;
@@ -193,6 +220,7 @@ int catalogProductCount(Ref ref) {
 
 void invalidateCustomerCatalog(Ref ref) {
   ref.invalidate(catalogProductsByCategoryProvider);
+  ref.invalidate(browseCategoryProductsProvider);
   ref.invalidate(categoryProductCountProvider);
   ref.invalidate(catalogDiscountedProductsProvider);
   ref.invalidate(catalogNewestProductsProvider);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -6,29 +7,25 @@ import '../core/constants/app_spacing.dart';
 import '../core/services/haptic_service.dart';
 import '../core/widgets/placeify_bottom_sheet.dart';
 import '../data/furniture_categories.dart';
-import '../features/home/data/mock_product_repository.dart';
 import '../features/home/domain/models/product.dart';
+import '../features/home/presentation/providers/catalog_provider.dart';
 import 'widgets/category_product_list_tile.dart';
 
 enum _SortOption { featured, priceAsc, priceDesc, nameAsc }
 
-class CategoryScreen extends StatefulWidget {
+class CategoryScreen extends ConsumerStatefulWidget {
   const CategoryScreen({required this.category, super.key});
 
   final FurnitureCategory category;
 
   @override
-  State<CategoryScreen> createState() => _CategoryScreenState();
+  ConsumerState<CategoryScreen> createState() => _CategoryScreenState();
 }
 
-class _CategoryScreenState extends State<CategoryScreen> {
+class _CategoryScreenState extends ConsumerState<CategoryScreen> {
   _SortOption _sort = _SortOption.featured;
 
-  List<Product> get _products {
-    final list = MockProductRepository.productsForBrowseCategory(
-      widget.category.id,
-    );
-
+  List<Product> _sortedProducts(List<Product> list) {
     switch (_sort) {
       case _SortOption.featured:
         return list;
@@ -94,9 +91,13 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final products = _products;
-    final count = products.length;
+    final products = _sortedProducts(
+      ref.watch(browseCategoryProductsProvider(widget.category.id)),
+    );
     final displayName = categoryDisplayName(widget.category);
+    final titleCount = products.isNotEmpty
+        ? products.length
+        : widget.category.itemCount;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9F8F4),
@@ -128,7 +129,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                       ],
                     ),
                     Text(
-                      '$displayName ($count)',
+                      '$displayName ($titleCount)',
                       style: GoogleFonts.dmSans(
                         fontSize: 34,
                         fontWeight: FontWeight.w700,

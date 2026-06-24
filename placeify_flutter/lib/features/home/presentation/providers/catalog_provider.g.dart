@@ -231,6 +231,94 @@ final class CatalogProductsByCategoryFamily extends $Family
   String toString() => r'catalogProductsByCategoryProvider';
 }
 
+/// Nisha browse category list: live catalog first, mock expansion as fallback.
+
+@ProviderFor(browseCategoryProducts)
+final browseCategoryProductsProvider = BrowseCategoryProductsFamily._();
+
+/// Nisha browse category list: live catalog first, mock expansion as fallback.
+
+final class BrowseCategoryProductsProvider
+    extends $FunctionalProvider<List<Product>, List<Product>, List<Product>>
+    with $Provider<List<Product>> {
+  /// Nisha browse category list: live catalog first, mock expansion as fallback.
+  BrowseCategoryProductsProvider._({
+    required BrowseCategoryProductsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'browseCategoryProductsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$browseCategoryProductsHash();
+
+  @override
+  String toString() {
+    return r'browseCategoryProductsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<List<Product>> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  List<Product> create(Ref ref) {
+    final argument = this.argument as String;
+    return browseCategoryProducts(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<Product> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<Product>>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is BrowseCategoryProductsProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$browseCategoryProductsHash() =>
+    r'f562f0e42a2745bdf870a2686d4c7456f35d74f4';
+
+/// Nisha browse category list: live catalog first, mock expansion as fallback.
+
+final class BrowseCategoryProductsFamily extends $Family
+    with $FunctionalFamilyOverride<List<Product>, String> {
+  BrowseCategoryProductsFamily._()
+    : super(
+        retry: null,
+        name: r'browseCategoryProductsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Nisha browse category list: live catalog first, mock expansion as fallback.
+
+  BrowseCategoryProductsProvider call(String uiCategoryId) =>
+      BrowseCategoryProductsProvider._(argument: uiCategoryId, from: this);
+
+  @override
+  String toString() => r'browseCategoryProductsProvider';
+}
+
 @ProviderFor(categoryProductCount)
 final categoryProductCountProvider = CategoryProductCountFamily._();
 
@@ -289,7 +377,7 @@ final class CategoryProductCountProvider
 }
 
 String _$categoryProductCountHash() =>
-    r'5e741ceea04acc31cdc30ada74a133897139b0dd';
+    r'59156ea5158677a90eba775a596a10cc33afa617';
 
 final class CategoryProductCountFamily extends $Family
     with $FunctionalFamilyOverride<int, String> {
@@ -600,7 +688,7 @@ final class HomeRecommendedProductsProvider
 }
 
 String _$homeRecommendedProductsHash() =>
-    r'92de83e2b8256f6b2314ddfeecb7eb3170b687e2';
+    r'bf10eab6afdaee89c6c69879a9b24dc87d0cb543';
 
 final class HomeRecommendedProductsFamily extends $Family
     with $FunctionalFamilyOverride<List<Product>, String> {
