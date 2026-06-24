@@ -634,7 +634,7 @@ internal class AndroidARView(
         config.depthMode = Config.DepthMode.DISABLED
         config.updateMode = Config.UpdateMode.BLOCKING
         config.focusMode = Config.FocusMode.AUTO
-        config.lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
+        config.lightEstimationMode = Config.LightEstimationMode.DISABLED
         session!!.configure(config)
 
         // Configure image tracking

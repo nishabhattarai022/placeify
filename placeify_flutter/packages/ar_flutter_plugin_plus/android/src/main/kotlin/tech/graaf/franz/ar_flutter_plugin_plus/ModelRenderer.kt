@@ -41,6 +41,7 @@ internal class ModelRenderer {
     private var fillLightEntity: Int = 0
     private var indirectLight: IndirectLight? = null
     private var lightIntensityMultiplier: Float = 1.0f
+    private var studioLightingApplied: Boolean = false
 
     private val cameraLock = Any()
     private val cameraViewMatrix = FloatArray(16)
@@ -73,56 +74,19 @@ internal class ModelRenderer {
     }
 
     fun updateLightEstimate(lightEstimate: com.google.ar.core.LightEstimate) {
+        // Use fixed studio lighting so AR colors match the 3D preview (neutral IBL),
+        // not the room's HDR probe which often shifts Tripo PBR textures.
         mainHandler.post {
-            val engine = engine ?: return@post
-            if (lightEntity == 0) return@post
-            val lightManager = engine.lightManager
-            val instance = lightManager.getInstance(lightEntity)
-            if (instance == 0) return@post
-            val fillInstance = if (fillLightEntity != 0) lightManager.getInstance(fillLightEntity) else 0
-
-            val primaryBaseIntensity = 100000.0f * lightIntensityMultiplier
-            val fillBaseIntensity = 20000.0f * lightIntensityMultiplier
-
-            if (lightEstimate.state == com.google.ar.core.LightEstimate.State.VALID) {
-                val colorCorrection = FloatArray(4)
-                lightEstimate.getColorCorrection(colorCorrection, 0)
-                val pixelIntensity = lightEstimate.pixelIntensity
-                lightManager.setColor(instance, colorCorrection[0], colorCorrection[1], colorCorrection[2])
-                lightManager.setIntensity(instance, primaryBaseIntensity * pixelIntensity)
-                if (fillInstance != 0) {
-                    lightManager.setColor(fillInstance, 1.0f, 1.0f, 1.0f)
-                    lightManager.setIntensity(fillInstance, fillBaseIntensity * pixelIntensity)
-                }
-                updateEnvironmentalHdrAmbient(engine, lightEstimate, pixelIntensity)
-            } else {
-                lightManager.setColor(instance, 1.0f, 1.0f, 1.0f)
-                lightManager.setIntensity(instance, primaryBaseIntensity)
-                if (fillInstance != 0) {
-                    lightManager.setColor(fillInstance, 1.0f, 1.0f, 1.0f)
-                    lightManager.setIntensity(fillInstance, fillBaseIntensity)
-                }
-            }
+            applyStudioLighting()
         }
     }
 
     fun setLightIntensityMultiplier(multiplier: Float) {
         val clamped = if (multiplier.isFinite()) multiplier else 1.0f
         lightIntensityMultiplier = if (clamped <= 0f) 0.01f else clamped
+        studioLightingApplied = false
         mainHandler.post {
-            val engine = engine ?: return@post
-            if (lightEntity == 0) return@post
-            val lightManager = engine.lightManager
-            val instance = lightManager.getInstance(lightEntity)
-            if (instance != 0) {
-                lightManager.setIntensity(instance, 100000.0f * lightIntensityMultiplier)
-            }
-            if (fillLightEntity != 0) {
-                val fillInstance = lightManager.getInstance(fillLightEntity)
-                if (fillInstance != 0) {
-                    lightManager.setIntensity(fillInstance, 20000.0f * lightIntensityMultiplier)
-                }
-            }
+            applyStudioLighting()
         }
     }
 
@@ -244,6 +208,7 @@ internal class ModelRenderer {
 
             engine.destroy()
 
+            studioLightingApplied = false
             this.engine = null
             renderer = null
             view = null
@@ -292,60 +257,67 @@ internal class ModelRenderer {
         view!!.camera = camera
         view!!.blendMode = View.BlendMode.TRANSLUCENT
         view!!.isPostProcessingEnabled = true
+        view!!.colorGrading = ColorGrading.Builder()
+            .toneMapping(ColorGrading.ToneMapping.LINEAR)
+            .exposure(1.12f)
+            .build(engine!!)
 
         lightEntity = EntityManager.get().create()
         LightManager.Builder(LightManager.Type.DIRECTIONAL)
-            .direction(0.0f, -1.0f, -0.5f)
+            .direction(0.35f, -0.85f, -0.4f)
             .color(1.0f, 1.0f, 1.0f)
-            .intensity(100000.0f)
+            .intensity(90_000.0f)
             .build(engine!!, lightEntity)
         scene!!.addEntity(lightEntity)
 
         fillLightEntity = EntityManager.get().create()
         LightManager.Builder(LightManager.Type.DIRECTIONAL)
-            .direction(0.2f, -0.3f, 0.9f)
-            .color(1.0f, 1.0f, 1.0f)
-            .intensity(20000.0f)
+            .direction(-0.55f, -0.35f, 0.75f)
+            .color(0.98f, 0.98f, 1.0f)
+            .intensity(45_000.0f)
             .build(engine!!, fillLightEntity)
         scene!!.addEntity(fillLightEntity)
 
-        indirectLight = IndirectLight.Builder()
-            .irradiance(3, defaultAmbientSh())
-            .intensity(40_000.0f)
-            .build(engine!!)
-        scene!!.indirectLight = indirectLight
-
-        view!!.setShadowingEnabled(false)
+        applyStudioLighting()
     }
 
-    private fun defaultAmbientSh(): FloatArray {
-        val sh = FloatArray(27)
-        sh[0] = 0.6f
-        sh[1] = 0.6f
-        sh[2] = 0.6f
-        return sh
-    }
+    /// Neutral studio rig aligned with model-viewer `environmentImage: neutral`.
+    private fun applyStudioLighting() {
+        val engine = engine ?: return
+        if (lightEntity == 0) return
+        if (studioLightingApplied) return
 
-    private fun updateEnvironmentalHdrAmbient(
-        engine: Engine,
-        lightEstimate: com.google.ar.core.LightEstimate,
-        pixelIntensity: Float,
-    ) {
-        val scene = scene ?: return
-        val sh = lightEstimate.getEnvironmentalHdrAmbientSphericalHarmonics()
+        val lightManager = engine.lightManager
+        val key = lightManager.getInstance(lightEntity)
+        val fill = if (fillLightEntity != 0) lightManager.getInstance(fillLightEntity) else 0
+        val scale = lightIntensityMultiplier
 
-        // Scale SH coefficients by real-world light intensity for PBR materials.
-        val scale = pixelIntensity * lightIntensityMultiplier
-        for (i in sh.indices) {
-            sh[i] *= scale
+        if (key != 0) {
+            lightManager.setColor(key, 1.0f, 1.0f, 1.0f)
+            lightManager.setIntensity(key, 90_000.0f * scale)
+        }
+        if (fill != 0) {
+            lightManager.setColor(fill, 0.98f, 0.98f, 1.0f)
+            lightManager.setIntensity(fill, 45_000.0f * scale)
         }
 
         indirectLight?.let { engine.destroyIndirectLight(it) }
         indirectLight = IndirectLight.Builder()
-            .irradiance(3, sh)
-            .intensity(30_000.0f * lightIntensityMultiplier)
+            .irradiance(3, neutralStudioSh())
+            .intensity(55_000.0f * scale)
             .build(engine)
-        scene.indirectLight = indirectLight
+        scene?.indirectLight = indirectLight
+
+        view!!.setShadowingEnabled(false)
+        studioLightingApplied = true
+    }
+
+    private fun neutralStudioSh(): FloatArray {
+        val sh = FloatArray(27)
+        sh[0] = 0.92f
+        sh[1] = 0.92f
+        sh[2] = 0.92f
+        return sh
     }
 
     private fun ensureUiHelper() {
