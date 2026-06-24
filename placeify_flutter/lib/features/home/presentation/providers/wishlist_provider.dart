@@ -12,6 +12,7 @@ import '../../../profile/data/wishlist_api_errors.dart';
 import '../providers/catalog_provider.dart';
 import '../../../profile/presentation/providers/profile_dashboard_provider.dart';
 import '../../../user/presentation/providers/user_wishlist_provider.dart';
+import 'wishlist_toggle_result.dart';
 
 part 'wishlist_provider.g.dart';
 
@@ -43,19 +44,22 @@ class Wishlist extends _$Wishlist {
 
       final catalog = ref.read(catalogIndexProvider.notifier);
       final uiIds = <String>[];
+      final nextState = <String, DateTime>{};
 
       for (final item in page.items) {
-        final apiProduct = item.product;
-        if (apiProduct?.id == null) continue;
-
-        final uiId = ProductIdCodec.fromDatabaseId(apiProduct!.id!);
+        final dbProductId = item.product?.id ?? item.productId;
+        final uiId = ProductIdCodec.fromDatabaseId(dbProductId);
         uiIds.add(uiId);
+        nextState[uiId] = item.createdAt;
 
-        try {
-          final uiProduct = await CatalogProductMapper.toUiProduct(apiProduct);
-          catalog.upsertProduct(uiProduct);
-        } catch (_) {
-          // ensureProducts below still attempts a direct fetch.
+        final apiProduct = item.product;
+        if (apiProduct?.id != null) {
+          try {
+            final uiProduct = await CatalogProductMapper.toUiProduct(apiProduct!);
+            catalog.upsertProduct(uiProduct);
+          } catch (_) {
+            // ensureProducts below still attempts a direct fetch.
+          }
         }
       }
 
@@ -63,11 +67,7 @@ class Wishlist extends _$Wishlist {
         await catalog.ensureProducts(uiIds);
       }
 
-      state = {
-        for (final item in page.items)
-          if (item.product?.id != null)
-            ProductIdCodec.fromDatabaseId(item.product!.id!): item.createdAt,
-      };
+      state = nextState;
     } catch (_) {
       // Keep previous state on transient errors.
     }
@@ -78,28 +78,30 @@ class Wishlist extends _$Wishlist {
     return state.containsKey(id);
   }
 
-  Future<String?> toggle(String productId) async {
+  Future<WishlistToggleResult> toggle(String productId) async {
     final id = ProductIdCodec.normalizeUiProductId(productId);
     if (!client.auth.isAuthenticated) {
-      return 'Sign in to save items to your wishlist.';
+      return WishlistToggleResult.error(
+        'Sign in to save items to your wishlist.',
+      );
     }
 
-    final previous = state;
     final wasLiked = state.containsKey(id);
-    if (wasLiked) {
-      state = Map<String, DateTime>.from(state)..remove(id);
-    } else {
-      state = Map<String, DateTime>.from(state)..[id] = DateTime.now();
-    }
 
     try {
-      await ref.read(userWishlistRepositoryProvider).toggle(id);
+      final repo = ref.read(userWishlistRepositoryProvider);
+      if (wasLiked) {
+        await repo.remove(id);
+      } else {
+        await repo.add(id);
+      }
       await _refresh();
       ref.invalidate(profileDashboardProvider);
-      return null;
+      return wasLiked
+          ? const WishlistToggleResult.removed()
+          : const WishlistToggleResult.added();
     } catch (error) {
-      state = previous;
-      return WishlistApiErrors.message(error);
+      return WishlistToggleResult.error(WishlistApiErrors.message(error));
     }
   }
 }

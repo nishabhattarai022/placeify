@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -18,7 +20,7 @@ import 'wishlist_sort_provider.dart';
 import 'wishlist_sort_sheet.dart';
 
 /// Wishlist list — category-style rows with sort control.
-class WishlistGridView extends ConsumerWidget {
+class WishlistGridView extends ConsumerStatefulWidget {
   const WishlistGridView({
     this.searchQuery = '',
     this.showBottomPadding = true,
@@ -29,21 +31,46 @@ class WishlistGridView extends ConsumerWidget {
   final bool showBottomPadding;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WishlistGridView> createState() => _WishlistGridViewState();
+}
+
+class _WishlistGridViewState extends ConsumerState<WishlistGridView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _resolveProducts());
+  }
+
+  Future<void> _resolveProducts() async {
+    final savedAt = ref.read(wishlistProvider);
+    if (savedAt.isEmpty) return;
+    await ref
+        .read(catalogIndexProvider.notifier)
+        .ensureProducts(savedAt.keys);
+    if (mounted) setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(wishlistProvider, (previous, next) {
+      if (next.length != (previous?.length ?? 0)) {
+        unawaited(_resolveProducts());
+      }
+    });
     ref.watch(catalogIndexProvider);
     final savedAt = ref.watch(wishlistProvider);
     final sort = ref.watch(wishlistSortProvider);
     final sortedProducts = sortWishlistProducts(
       products: [
         for (final id in savedAt.keys)
-          if (ref.read(productByIdProvider(id)) != null)
-            ref.read(productByIdProvider(id))!,
+          if (ref.watch(productByIdProvider(id)) != null)
+            ref.watch(productByIdProvider(id))!,
       ],
       savedAt: savedAt,
       sort: sort,
     );
 
-    final query = searchQuery.trim().toLowerCase();
+    final query = widget.searchQuery.trim().toLowerCase();
     final products = query.isEmpty
         ? sortedProducts
         : sortedProducts
@@ -55,6 +82,15 @@ class WishlistGridView extends ConsumerWidget {
     }
 
     if (products.isEmpty) {
+      if (query.isEmpty) {
+        return const Center(
+          child: Padding(
+            padding: EdgeInsets.all(32),
+            child: CircularProgressIndicator(color: AppColors.rust),
+          ),
+        );
+      }
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -64,14 +100,14 @@ class WishlistGridView extends ConsumerWidget {
           ),
           Expanded(
             child: _WishlistNoSearchResultsState(
-              query: searchQuery.trim(),
+              query: widget.searchQuery.trim(),
             ),
           ),
         ],
       );
     }
 
-    final bottom = showBottomPadding
+    final bottom = widget.showBottomPadding
         ? BottomNavTokens.scrollBottomPadding +
             MediaQuery.paddingOf(context).bottom
         : 32.0;
@@ -103,12 +139,16 @@ class WishlistGridView extends ConsumerWidget {
                 return CategoryProductListTile(
                   product: product,
                   onRemoveFromWishlist: () async {
-                    final error = await ref
+                    final result = await ref
                         .read(wishlistProvider.notifier)
                         .toggle(product.id);
-                    if (error != null && context.mounted) {
+                    if (!context.mounted) return;
+                    final error = result.errorMessage;
+                    if (error != null) {
                       PlaceifyToast.show(context, error);
+                      return;
                     }
+                    PlaceifyToast.show(context, result.successMessage!);
                   },
                 );
               },

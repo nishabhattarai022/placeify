@@ -128,8 +128,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
   ProfileMenuItemData _overviewMenuItem(ProfileMenuItemData item) {
     if (item.route != ProfileMenuRoute.wishlist) return item;
 
-    final count = ref.watch(profileDashboardProvider).value?.wishlistCount ??
-        ref.watch(wishlistProvider).length;
+    final count = ref.watch(wishlistProvider).length;
     final subtitle = count == 0
         ? 'No saved items'
         : '$count saved item${count == 1 ? '' : 's'}';

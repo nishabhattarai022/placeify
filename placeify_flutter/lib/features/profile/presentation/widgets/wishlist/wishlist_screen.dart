@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../home/presentation/providers/catalog_provider.dart';
-import '../../../../home/presentation/providers/category_provider.dart';
 import '../../../../home/presentation/providers/wishlist_provider.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_spacing.dart';
@@ -39,16 +38,7 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
 
   int _visibleProductCount() {
     final savedAt = ref.read(wishlistProvider);
-    final products = [
-      for (final id in savedAt.keys)
-        if (ref.read(productByIdProvider(id)) != null)
-          ref.read(productByIdProvider(id))!,
-    ];
-
-    final query = _searchQuery.trim().toLowerCase();
-    if (query.isEmpty) return products.length;
-
-    return products.where((p) => p.name.toLowerCase().contains(query)).length;
+    return savedAt.length;
   }
 
   @override
