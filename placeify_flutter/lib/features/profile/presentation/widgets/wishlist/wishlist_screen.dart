@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../home/presentation/providers/catalog_provider.dart';
 import '../../../../home/presentation/providers/category_provider.dart';
 import '../../../../home/presentation/providers/wishlist_provider.dart';
 import '../../../../../core/constants/app_colors.dart';
@@ -27,6 +28,15 @@ class WishlistScreen extends ConsumerStatefulWidget {
 class _WishlistScreenState extends ConsumerState<WishlistScreen> {
   String _searchQuery = '';
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(wishlistProvider.notifier).refresh();
+    });
+  }
+
   int _visibleProductCount() {
     final savedAt = ref.read(wishlistProvider);
     final products = [
@@ -44,6 +54,7 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
   @override
   Widget build(BuildContext context) {
     ref.watch(wishlistProvider);
+    ref.watch(catalogIndexProvider);
     final visibleCount = _visibleProductCount();
 
     return Scaffold(

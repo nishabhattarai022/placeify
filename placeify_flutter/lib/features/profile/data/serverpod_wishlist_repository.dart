@@ -8,18 +8,44 @@ import '../domain/repositories/profile_repository.dart';
 /// Serverpod-backed wishlist API (data layer only).
 class ServerpodWishlistRepository {
   Future<WishlistPage> listWishlist({PaginationInput? pagination}) async {
-    if (!client.auth.isAuthenticated) {
-      throw ProfileException('Sign in to view wishlist');
-    }
+    _requireAuthenticated();
     return client.wishlist.listMyWishlist(pagination: pagination);
   }
 
   Future<bool> toggle(String productId) async {
-    if (!client.auth.isAuthenticated) return false;
+    _requireAuthenticated();
+    final id = _requireDatabaseId(productId);
+    return client.wishlist.toggleWishlist(id);
+  }
+
+  Future<void> add(String productId) async {
+    _requireAuthenticated();
+    final id = _requireDatabaseId(productId);
+    await client.wishlist.addToWishlist(id);
+  }
+
+  Future<void> remove(String productId) async {
+    _requireAuthenticated();
+    final id = _requireDatabaseId(productId);
+    await client.wishlist.removeFromWishlist(id);
+  }
+
+  int _requireDatabaseId(String productId) {
     final id = ProductIdCodec.toDatabaseId(
       ProductIdCodec.normalizeUiProductId(productId),
     );
-    if (id == null) return false;
-    return client.wishlist.toggleWishlist(id);
+    if (id == null) {
+      throw ArgumentError(
+        'This product cannot be saved yet. '
+        'Use items from the live catalog (Browse), not shop previews.',
+      );
+    }
+    return id;
+  }
+
+  void _requireAuthenticated() {
+    if (!client.auth.isAuthenticated) {
+      throw ProfileException('Sign in to view wishlist');
+    }
   }
 }

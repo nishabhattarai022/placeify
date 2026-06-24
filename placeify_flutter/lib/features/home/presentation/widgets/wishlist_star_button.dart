@@ -65,8 +65,13 @@ class _WishlistStarButtonState extends ConsumerState<WishlistStarButton>
           }
 
           HapticService.medium();
-          await ref.read(wishlistProvider.notifier).toggle(widget.product.id);
+          final error =
+              await ref.read(wishlistProvider.notifier).toggle(widget.product.id);
           if (!context.mounted) return;
+          if (error != null) {
+            PlaceifyToast.show(context, error);
+            return;
+          }
           final nowSaved =
               ref.read(wishlistProvider.notifier).isLiked(widget.product.id);
           _popController.forward(from: 0);

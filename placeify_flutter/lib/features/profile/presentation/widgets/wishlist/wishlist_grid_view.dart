@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../home/presentation/providers/catalog_provider.dart';
 import '../../../../home/presentation/providers/category_provider.dart';
 import '../../../../home/presentation/providers/wishlist_provider.dart';
 import '../../../../../core/constants/app_colors.dart';
@@ -10,6 +11,7 @@ import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/services/haptic_service.dart';
 import '../../../../../core/widgets/animated_scale_tap.dart';
 import '../../../../../core/widgets/placeify_bottom_nav.dart';
+import '../../../../../core/widgets/toast_overlay.dart';
 import '../../../../../screens/widgets/category_product_list_tile.dart';
 import 'wishlist_sort.dart';
 import 'wishlist_sort_provider.dart';
@@ -28,6 +30,7 @@ class WishlistGridView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(catalogIndexProvider);
     final savedAt = ref.watch(wishlistProvider);
     final sort = ref.watch(wishlistSortProvider);
     final sortedProducts = sortWishlistProducts(
@@ -94,13 +97,18 @@ class WishlistGridView extends ConsumerWidget {
                 bottom,
               ),
               itemCount: products.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 32),
+              separatorBuilder: (_, _) => const SizedBox(height: 32),
               itemBuilder: (context, index) {
                 final product = products[index];
                 return CategoryProductListTile(
                   product: product,
-                  onRemoveFromWishlist: () {
-                    ref.read(wishlistProvider.notifier).toggle(product.id);
+                  onRemoveFromWishlist: () async {
+                    final error = await ref
+                        .read(wishlistProvider.notifier)
+                        .toggle(product.id);
+                    if (error != null && context.mounted) {
+                      PlaceifyToast.show(context, error);
+                    }
                   },
                 );
               },

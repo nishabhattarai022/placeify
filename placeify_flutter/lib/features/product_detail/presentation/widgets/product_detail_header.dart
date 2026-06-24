@@ -51,7 +51,20 @@ class ProductDetailHeader extends ConsumerWidget {
               }
 
               HapticService.light();
-              await ref.read(wishlistProvider.notifier).toggle(product.id);
+              final error = await ref
+                  .read(wishlistProvider.notifier)
+                  .toggle(product.id);
+              if (!context.mounted) return;
+              if (error != null) {
+                PlaceifyToast.show(context, error);
+                return;
+              }
+              final nowSaved =
+                  ref.read(wishlistProvider.notifier).isLiked(product.id);
+              PlaceifyToast.show(
+                context,
+                nowSaved ? 'Added to wishlist' : 'Removed from wishlist',
+              );
             },
             child: _StarSwitcher(isSaved: isSaved),
           ),

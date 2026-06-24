@@ -8,6 +8,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../cart/data/product_id_codec.dart';
 import '../../../../core/config/placeify_server_client.dart';
 import '../../data/catalog_product_mapper.dart';
+import '../../../profile/data/wishlist_api_errors.dart';
 import '../providers/catalog_provider.dart';
 import '../../../profile/presentation/providers/profile_dashboard_provider.dart';
 import '../../../user/presentation/providers/user_wishlist_provider.dart';
@@ -77,10 +78,13 @@ class Wishlist extends _$Wishlist {
     return state.containsKey(id);
   }
 
-  Future<void> toggle(String productId) async {
+  Future<String?> toggle(String productId) async {
     final id = ProductIdCodec.normalizeUiProductId(productId);
-    if (!client.auth.isAuthenticated) return;
+    if (!client.auth.isAuthenticated) {
+      return 'Sign in to save items to your wishlist.';
+    }
 
+    final previous = state;
     final wasLiked = state.containsKey(id);
     if (wasLiked) {
       state = Map<String, DateTime>.from(state)..remove(id);
@@ -92,8 +96,10 @@ class Wishlist extends _$Wishlist {
       await ref.read(userWishlistRepositoryProvider).toggle(id);
       await _refresh();
       ref.invalidate(profileDashboardProvider);
-    } catch (_) {
-      await _refresh();
+      return null;
+    } catch (error) {
+      state = previous;
+      return WishlistApiErrors.message(error);
     }
   }
 }

@@ -11,6 +11,7 @@ import '../../vendor/domain/constants/vendor_routes.dart';
 import '../../vendor/domain/enums/vendor_status.dart';
 import '../../vendor/presentation/widgets/vendor_status_gate_sheets.dart';
 import '../data/profile_menu_config.dart';
+import '../../home/presentation/providers/wishlist_provider.dart';
 import 'widgets/profile_hero.dart';
 import 'widgets/profile_menu_tile.dart';
 import 'widgets/profile_orders_tile.dart';
@@ -30,6 +31,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(currentUserProvider.notifier).refresh();
       ref.read(profileDashboardProvider.notifier).refresh();
+      ref.read(wishlistProvider.notifier).refresh();
     });
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
@@ -123,6 +125,25 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
     context.go('/splash');
   }
 
+  ProfileMenuItemData _overviewMenuItem(ProfileMenuItemData item) {
+    if (item.route != ProfileMenuRoute.wishlist) return item;
+
+    final count = ref.watch(profileDashboardProvider).value?.wishlistCount ??
+        ref.watch(wishlistProvider).length;
+    final subtitle = count == 0
+        ? 'No saved items'
+        : '$count saved item${count == 1 ? '' : 's'}';
+
+    return ProfileMenuItemData(
+      title: item.title,
+      subtitle: subtitle,
+      icon: item.icon,
+      iconColor: item.iconColor,
+      backgroundColor: item.backgroundColor,
+      route: item.route,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.paddingOf(context).bottom;
@@ -183,7 +204,9 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
                               color: AppColors.creamDark,
                             ),
                           ProfileMenuTile(
-                            item: ProfileMenuItems.accountOverview[i],
+                            item: _overviewMenuItem(
+                              ProfileMenuItems.accountOverview[i],
+                            ),
                             onTap: () => _onMenuTap(
                               ProfileMenuItems.accountOverview[i].route,
                             ),
