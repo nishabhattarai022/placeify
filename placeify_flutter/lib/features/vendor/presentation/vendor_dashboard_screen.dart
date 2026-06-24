@@ -258,7 +258,12 @@ class _DashboardBody extends StatelessWidget {
               ),
             )
           else
-            ...data.recentOrders.map((order) => VendorOrderRow(order: order)),
+            ...data.recentOrders.map(
+              (order) => VendorOrderRow(
+                order: order,
+                style: VendorOrderRowStyle.recentSummary,
+              ),
+            ),
           const SizedBox(height: 20),
           const VendorReviewsSection(),
           const SizedBox(height: 20),
