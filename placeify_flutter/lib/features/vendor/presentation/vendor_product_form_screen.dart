@@ -241,6 +241,7 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
       HapticService.medium();
       PlaceifyToast.show(context, VendorStrings.changesSaved);
       setState(() => _isDirty = false);
+      context.pop();
       return;
     }
 

@@ -45,6 +45,8 @@ abstract class Product
     this.thumbnailUrl,
     this.viewImageUrls,
     _i2.ProductStatus? status,
+    bool? isDeleted,
+    this.deletedAt,
     this.removedReason,
     this.removedById,
     this.removedBy,
@@ -54,6 +56,7 @@ abstract class Product
   }) : featured = featured ?? false,
        isOffer = isOffer ?? false,
        status = status ?? _i2.ProductStatus.active,
+       isDeleted = isDeleted ?? false,
        createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
 
@@ -82,6 +85,8 @@ abstract class Product
     String? thumbnailUrl,
     List<String>? viewImageUrls,
     _i2.ProductStatus? status,
+    bool? isDeleted,
+    DateTime? deletedAt,
     String? removedReason,
     _i1.UuidValue? removedById,
     _i5.Admin? removedBy,
@@ -135,6 +140,12 @@ abstract class Product
       status: jsonSerialization['status'] == null
           ? null
           : _i2.ProductStatus.fromJson((jsonSerialization['status'] as String)),
+      isDeleted: jsonSerialization['isDeleted'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['isDeleted']),
+      deletedAt: jsonSerialization['deletedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['deletedAt']),
       removedReason: jsonSerialization['removedReason'] as String?,
       removedById: jsonSerialization['removedById'] == null
           ? null
@@ -216,6 +227,11 @@ abstract class Product
 
   _i2.ProductStatus status;
 
+  /// Vendor or admin soft-delete flag; row is never physically removed.
+  bool isDeleted;
+
+  DateTime? deletedAt;
+
   /// Why the product was removed from the catalog.
   String? removedReason;
 
@@ -261,6 +277,8 @@ abstract class Product
     String? thumbnailUrl,
     List<String>? viewImageUrls,
     _i2.ProductStatus? status,
+    bool? isDeleted,
+    DateTime? deletedAt,
     String? removedReason,
     _i1.UuidValue? removedById,
     _i5.Admin? removedBy,
@@ -296,6 +314,8 @@ abstract class Product
       if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
       if (viewImageUrls != null) 'viewImageUrls': viewImageUrls?.toJson(),
       'status': status.toJson(),
+      'isDeleted': isDeleted,
+      if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
       if (removedReason != null) 'removedReason': removedReason,
       if (removedById != null) 'removedById': removedById?.toJson(),
       if (removedBy != null) 'removedBy': removedBy?.toJson(),
@@ -333,6 +353,8 @@ abstract class Product
       if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
       if (viewImageUrls != null) 'viewImageUrls': viewImageUrls?.toJson(),
       'status': status.toJson(),
+      'isDeleted': isDeleted,
+      if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
       if (removedReason != null) 'removedReason': removedReason,
       if (removedById != null) 'removedById': removedById?.toJson(),
       if (removedBy != null) 'removedBy': removedBy?.toJsonForProtocol(),
@@ -408,6 +430,8 @@ class _ProductImpl extends Product {
     String? thumbnailUrl,
     List<String>? viewImageUrls,
     _i2.ProductStatus? status,
+    bool? isDeleted,
+    DateTime? deletedAt,
     String? removedReason,
     _i1.UuidValue? removedById,
     _i5.Admin? removedBy,
@@ -439,6 +463,8 @@ class _ProductImpl extends Product {
          thumbnailUrl: thumbnailUrl,
          viewImageUrls: viewImageUrls,
          status: status,
+         isDeleted: isDeleted,
+         deletedAt: deletedAt,
          removedReason: removedReason,
          removedById: removedById,
          removedBy: removedBy,
@@ -476,6 +502,8 @@ class _ProductImpl extends Product {
     Object? thumbnailUrl = _Undefined,
     Object? viewImageUrls = _Undefined,
     _i2.ProductStatus? status,
+    bool? isDeleted,
+    Object? deletedAt = _Undefined,
     Object? removedReason = _Undefined,
     Object? removedById = _Undefined,
     Object? removedBy = _Undefined,
@@ -518,6 +546,8 @@ class _ProductImpl extends Product {
           ? viewImageUrls
           : this.viewImageUrls?.map((e0) => e0).toList(),
       status: status ?? this.status,
+      isDeleted: isDeleted ?? this.isDeleted,
+      deletedAt: deletedAt is DateTime? ? deletedAt : this.deletedAt,
       removedReason: removedReason is String?
           ? removedReason
           : this.removedReason,
@@ -652,6 +682,17 @@ class ProductUpdateTable extends _i1.UpdateTable<ProductTable> {
     value,
   );
 
+  _i1.ColumnValue<bool, bool> isDeleted(bool value) => _i1.ColumnValue(
+    table.isDeleted,
+    value,
+  );
+
+  _i1.ColumnValue<DateTime, DateTime> deletedAt(DateTime? value) =>
+      _i1.ColumnValue(
+        table.deletedAt,
+        value,
+      );
+
   _i1.ColumnValue<String, String> removedReason(String? value) =>
       _i1.ColumnValue(
         table.removedReason,
@@ -775,6 +816,15 @@ class ProductTable extends _i1.Table<int?> {
       _i1.EnumSerialization.byName,
       hasDefault: true,
     );
+    isDeleted = _i1.ColumnBool(
+      'isDeleted',
+      this,
+      hasDefault: true,
+    );
+    deletedAt = _i1.ColumnDateTime(
+      'deletedAt',
+      this,
+    );
     removedReason = _i1.ColumnString(
       'removedReason',
       this,
@@ -851,6 +901,11 @@ class ProductTable extends _i1.Table<int?> {
   late final _i1.ColumnSerializable<List<String>> viewImageUrls;
 
   late final _i1.ColumnEnum<_i2.ProductStatus> status;
+
+  /// Vendor or admin soft-delete flag; row is never physically removed.
+  late final _i1.ColumnBool isDeleted;
+
+  late final _i1.ColumnDateTime deletedAt;
 
   /// Why the product was removed from the catalog.
   late final _i1.ColumnString removedReason;
@@ -929,6 +984,8 @@ class ProductTable extends _i1.Table<int?> {
     thumbnailUrl,
     viewImageUrls,
     status,
+    isDeleted,
+    deletedAt,
     removedReason,
     removedById,
     removedAt,

@@ -28,6 +28,9 @@ fields:
   ### Extra product photos for multiview 3D generation (left, back, right, etc.).
   viewImageUrls: List<String>?
   status: ProductStatus, default=active
+  ### Vendor or admin soft-delete flag; row is never physically removed.
+  isDeleted: bool, default=false
+  deletedAt: DateTime?
   ### Why the product was removed from the catalog.
   removedReason: String?
   ### Admin who removed or flagged the product.

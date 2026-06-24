@@ -2,6 +2,7 @@ import 'package:placeify_client/placeify_client.dart' as api;
 
 import '../../../core/config/resolve_media_url.dart';
 import '../../cart/data/product_id_codec.dart';
+import '../../home/data/catalog_product_mapper.dart';
 import '../../product_detail/data/product_3d_model_resolver.dart';
 import '../domain/models/vendor_product.dart';
 
@@ -37,12 +38,17 @@ abstract final class VendorProductMapper {
       );
     }
 
+    final listPrice = product.price;
+    final effectivePrice = CatalogProductMapper.effectiveUnitPrice(product);
+    final hasOffer = CatalogProductMapper.hasActiveOffer(product);
+
     return VendorProduct(
       id: uiId,
       vendorId: vendorId,
       name: product.name,
       sku: 'PF${id.toString().padLeft(5, '0')}',
-      price: product.price,
+      price: effectivePrice,
+      originalPrice: hasOffer ? listPrice : null,
       stock: 0,
       imageUrls: imageUrls,
       categoryId: product.category?.name ?? 'chairs',

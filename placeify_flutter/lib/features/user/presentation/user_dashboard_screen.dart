@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:placeify_client/placeify_client.dart';
+import 'package:placeify_client/placeify_client.dart' hide Product;
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -10,7 +10,10 @@ import '../../../core/constants/app_typography.dart';
 import '../../../core/config/placeify_server_client.dart';
 import '../../profile/presentation/providers/profile_dashboard_provider.dart';
 import '../data/user_dashboard_mock_data.dart';
+import '../../home/domain/models/product.dart';
 import '../data/user_dashboard_mappers.dart';
+import '../data/user_dashboard_marketplace_mapper.dart';
+import 'widgets/user_dashboard_marketplace_row.dart';
 import 'widgets/user_overview_card.dart';
 
 /// Dashboard overview backed by [client.user.getDashboard].
@@ -47,9 +50,21 @@ class UserDashboardScreen extends ConsumerWidget {
 
         return RefreshIndicator(
           onRefresh: () => _refreshDashboard(ref),
-          child: _DashboardContent(
-            dashboard: dashboard,
-            metrics: metrics,
+          child: FutureBuilder<({
+            List<Product> offers,
+            List<Product> featured,
+          })>(
+            future: _loadMarketplaceProducts(dashboard),
+            builder: (context, snapshot) {
+              final offers = snapshot.data?.offers ?? const [];
+              final featured = snapshot.data?.featured ?? const [];
+              return _DashboardContent(
+                dashboard: dashboard,
+                metrics: metrics,
+                offerProducts: offers,
+                featuredProducts: featured,
+              );
+            },
           ),
         );
       },
@@ -62,16 +77,31 @@ class UserDashboardScreen extends ConsumerWidget {
       ref.read(profileOrdersProvider.notifier).refresh(),
     ]);
   }
+
+  Future<({List<Product> offers, List<Product> featured})>
+      _loadMarketplaceProducts(UserDashboard dashboard) async {
+    final offers = await UserDashboardMarketplaceMapper.toUiProducts(
+      dashboard.marketplace.offerProducts,
+    );
+    final featured = await UserDashboardMarketplaceMapper.toUiProducts(
+      dashboard.marketplace.featuredProducts,
+    );
+    return (offers: offers, featured: featured);
+  }
 }
 
 class _DashboardContent extends StatelessWidget {
   const _DashboardContent({
     required this.dashboard,
     required this.metrics,
+    required this.offerProducts,
+    required this.featuredProducts,
   });
 
   final UserDashboard dashboard;
   final List<UserOverviewMetric> metrics;
+  final List<Product> offerProducts;
+  final List<Product> featuredProducts;
 
   @override
   Widget build(BuildContext context) {
@@ -151,6 +181,20 @@ class _DashboardContent extends StatelessWidget {
               ],
             ),
           ),
+          if (offerProducts.isNotEmpty) ...[
+            const SizedBox(height: 28),
+            UserDashboardMarketplaceRow(
+              title: 'Special Offers',
+              products: offerProducts,
+            ),
+          ],
+          if (featuredProducts.isNotEmpty) ...[
+            const SizedBox(height: 28),
+            UserDashboardMarketplaceRow(
+              title: 'Featured',
+              products: featuredProducts,
+            ),
+          ],
         ],
       ),
     );

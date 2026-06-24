@@ -43,6 +43,8 @@ abstract class Product implements _i1.SerializableModel {
     this.thumbnailUrl,
     this.viewImageUrls,
     _i2.ProductStatus? status,
+    bool? isDeleted,
+    this.deletedAt,
     this.removedReason,
     this.removedById,
     this.removedBy,
@@ -52,6 +54,7 @@ abstract class Product implements _i1.SerializableModel {
   }) : featured = featured ?? false,
        isOffer = isOffer ?? false,
        status = status ?? _i2.ProductStatus.active,
+       isDeleted = isDeleted ?? false,
        createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
 
@@ -80,6 +83,8 @@ abstract class Product implements _i1.SerializableModel {
     String? thumbnailUrl,
     List<String>? viewImageUrls,
     _i2.ProductStatus? status,
+    bool? isDeleted,
+    DateTime? deletedAt,
     String? removedReason,
     _i1.UuidValue? removedById,
     _i5.Admin? removedBy,
@@ -133,6 +138,12 @@ abstract class Product implements _i1.SerializableModel {
       status: jsonSerialization['status'] == null
           ? null
           : _i2.ProductStatus.fromJson((jsonSerialization['status'] as String)),
+      isDeleted: jsonSerialization['isDeleted'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['isDeleted']),
+      deletedAt: jsonSerialization['deletedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['deletedAt']),
       removedReason: jsonSerialization['removedReason'] as String?,
       removedById: jsonSerialization['removedById'] == null
           ? null
@@ -212,6 +223,11 @@ abstract class Product implements _i1.SerializableModel {
 
   _i2.ProductStatus status;
 
+  /// Vendor or admin soft-delete flag; row is never physically removed.
+  bool isDeleted;
+
+  DateTime? deletedAt;
+
   /// Why the product was removed from the catalog.
   String? removedReason;
 
@@ -254,6 +270,8 @@ abstract class Product implements _i1.SerializableModel {
     String? thumbnailUrl,
     List<String>? viewImageUrls,
     _i2.ProductStatus? status,
+    bool? isDeleted,
+    DateTime? deletedAt,
     String? removedReason,
     _i1.UuidValue? removedById,
     _i5.Admin? removedBy,
@@ -289,6 +307,8 @@ abstract class Product implements _i1.SerializableModel {
       if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
       if (viewImageUrls != null) 'viewImageUrls': viewImageUrls?.toJson(),
       'status': status.toJson(),
+      'isDeleted': isDeleted,
+      if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
       if (removedReason != null) 'removedReason': removedReason,
       if (removedById != null) 'removedById': removedById?.toJson(),
       if (removedBy != null) 'removedBy': removedBy?.toJson(),
@@ -332,6 +352,8 @@ class _ProductImpl extends Product {
     String? thumbnailUrl,
     List<String>? viewImageUrls,
     _i2.ProductStatus? status,
+    bool? isDeleted,
+    DateTime? deletedAt,
     String? removedReason,
     _i1.UuidValue? removedById,
     _i5.Admin? removedBy,
@@ -363,6 +385,8 @@ class _ProductImpl extends Product {
          thumbnailUrl: thumbnailUrl,
          viewImageUrls: viewImageUrls,
          status: status,
+         isDeleted: isDeleted,
+         deletedAt: deletedAt,
          removedReason: removedReason,
          removedById: removedById,
          removedBy: removedBy,
@@ -400,6 +424,8 @@ class _ProductImpl extends Product {
     Object? thumbnailUrl = _Undefined,
     Object? viewImageUrls = _Undefined,
     _i2.ProductStatus? status,
+    bool? isDeleted,
+    Object? deletedAt = _Undefined,
     Object? removedReason = _Undefined,
     Object? removedById = _Undefined,
     Object? removedBy = _Undefined,
@@ -442,6 +468,8 @@ class _ProductImpl extends Product {
           ? viewImageUrls
           : this.viewImageUrls?.map((e0) => e0).toList(),
       status: status ?? this.status,
+      isDeleted: isDeleted ?? this.isDeleted,
+      deletedAt: deletedAt is DateTime? ? deletedAt : this.deletedAt,
       removedReason: removedReason is String?
           ? removedReason
           : this.removedReason,

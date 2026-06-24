@@ -16,6 +16,7 @@ abstract final class ProductCatalogPolicy {
   }
 
   static bool isConsumerVisibleProduct(Product product, {User? vendorUser}) {
+    if (product.isDeleted) return false;
     if (product.status != ProductStatus.active) return false;
     return isApprovedVendorUser(vendorUser);
   }
@@ -43,7 +44,8 @@ abstract final class ProductCatalogPolicy {
     bool? offersOnly,
   }) {
     return (row) {
-      var expression = row.status.equals(ProductStatus.active);
+      var expression =
+          row.isDeleted.equals(false) & row.status.equals(ProductStatus.active);
 
       if (featuredOnly == true) {
         expression = expression & row.featured.equals(true);

@@ -72,6 +72,14 @@ class AdminEndpoint extends PlaceifyAuthenticatedEndpoint {
     return _service.removeProduct(session, productId, reason);
   }
 
+  Future<Product> deleteProduct(Session session, int productId) {
+    return _service.deleteProduct(session, productId);
+  }
+
+  Future<Product> restoreProduct(Session session, int productId) {
+    return _service.restoreProduct(session, productId);
+  }
+
   Future<Product> flagProduct(Session session, int productId) {
     return _service.flagProduct(session, productId);
   }

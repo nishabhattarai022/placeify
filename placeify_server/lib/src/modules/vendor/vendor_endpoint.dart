@@ -230,6 +230,18 @@ class VendorEndpoint extends Endpoint {
     return _service.regenerateProductModel3d(session, productId);
   }
 
+  Future<Product> deleteProduct(Session session, int productId) {
+    return _service.deleteProduct(session, productId);
+  }
+
+  Future<Product> restoreProduct(Session session, int productId) {
+    return _service.restoreProduct(session, productId);
+  }
+
+  Future<Product> archiveProduct(Session session, int productId) {
+    return _service.archiveProduct(session, productId);
+  }
+
   Future<List<VendorShopOrder>> listShopOrders(
     Session session, {
     int limit = 50,

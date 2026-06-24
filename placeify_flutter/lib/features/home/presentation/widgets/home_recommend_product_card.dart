@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -105,18 +106,7 @@ class _HomeRecommendProductCardState
                       child: SizedBox(
                         height: HomeScreenTokens.cardImageHeight,
                         width: double.infinity,
-                        child: Image.asset(
-                          product.imageAsset,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => ColoredBox(
-                            color: HomeScreenTokens.cardBg,
-                            child: Icon(
-                              Icons.chair_outlined,
-                              size: 56,
-                              color: Colors.black.withValues(alpha: 0.2),
-                            ),
-                          ),
-                        ),
+                        child: _RecommendProductImage(imagePath: product.imageAsset),
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -168,6 +158,41 @@ class _HomeRecommendProductCardState
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _RecommendProductImage extends StatelessWidget {
+  const _RecommendProductImage({required this.imagePath});
+
+  final String imagePath;
+
+  @override
+  Widget build(BuildContext context) {
+    final isNetwork =
+        imagePath.startsWith('http://') || imagePath.startsWith('https://');
+    if (isNetwork) {
+      return CachedNetworkImage(
+        imageUrl: imagePath,
+        fit: BoxFit.cover,
+        errorWidget: (_, __, ___) => _fallback(),
+      );
+    }
+    return Image.asset(
+      imagePath,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => _fallback(),
+    );
+  }
+
+  Widget _fallback() {
+    return ColoredBox(
+      color: HomeScreenTokens.cardBg,
+      child: Icon(
+        Icons.chair_outlined,
+        size: 56,
+        color: Colors.black.withValues(alpha: 0.2),
       ),
     );
   }

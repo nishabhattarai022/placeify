@@ -4,6 +4,7 @@ import '../../generated/protocol.dart';
 import '../../shared/pagination_helper.dart';
 import '../../shared/placeify_exception.dart';
 import 'product_catalog_policy.dart';
+import 'product_pricing.dart';
 
 /// Product catalog queries with search, filter, and pagination.
 class CatalogRepository {
@@ -141,14 +142,32 @@ class CatalogRepository {
       include: _productInclude(),
       orderBy: (row) => row.createdAt,
       orderDescending: true,
-      limit: ProductCatalogPolicy.defaultOfferLimit,
+      limit: ProductCatalogPolicy.defaultOfferLimit * 3,
     );
+    offerProducts.sort((a, b) {
+      final discountA = _discountFraction(a);
+      final discountB = _discountFraction(b);
+      final compare = discountB.compareTo(discountA);
+      if (compare != 0) return compare;
+      return b.createdAt.compareTo(a.createdAt);
+    });
+    final trimmedOffers = offerProducts
+        .take(ProductCatalogPolicy.defaultOfferLimit)
+        .toList(growable: false);
 
     return MarketplaceHighlights(
       recentProducts: recentProducts,
       featuredProducts: featuredProducts,
-      offerProducts: offerProducts,
+      offerProducts: trimmedOffers,
     );
+  }
+
+  double _discountFraction(Product product) {
+    final listPrice = product.price;
+    if (listPrice <= 0) return 0;
+    final effective = ProductPricing.effectiveUnitPrice(product);
+    if (effective >= listPrice) return 0;
+    return (listPrice - effective) / listPrice;
   }
 
   Future<Product?> getProduct(Session session, int productId) async {

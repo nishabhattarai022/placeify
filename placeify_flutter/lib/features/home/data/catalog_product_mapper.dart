@@ -40,8 +40,8 @@ abstract final class CatalogProductMapper {
 
     final dimensions = _dimensionsFromApi(product);
     final uiId = ProductIdCodec.fromDatabaseId(id);
-    final effectivePrice = _effectiveUnitPrice(product);
-    final originalPrice = _hasActiveOffer(product) ? product.price : null;
+    final effectivePrice = effectiveUnitPrice(product);
+    final originalPrice = hasActiveOffer(product) ? product.price : null;
     final model3dUrl = product.model3dUrl?.trim();
     final has3dPreview = model3dUrl != null && model3dUrl.isNotEmpty;
     if (has3dPreview) {
@@ -80,7 +80,7 @@ abstract final class CatalogProductMapper {
     return _defaultDimensions;
   }
 
-  static double _effectiveUnitPrice(api.Product product) {
+  static double effectiveUnitPrice(api.Product product) {
     final listPrice = product.price;
     final discountPrice = product.discountPrice;
     if (discountPrice != null &&
@@ -97,7 +97,7 @@ abstract final class CatalogProductMapper {
     return listPrice;
   }
 
-  static bool _hasActiveOffer(api.Product product) {
-    return product.isOffer || _effectiveUnitPrice(product) < product.price;
+  static bool hasActiveOffer(api.Product product) {
+    return product.isOffer || effectiveUnitPrice(product) < product.price;
   }
 }

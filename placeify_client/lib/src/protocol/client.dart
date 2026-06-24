@@ -571,6 +571,20 @@ class EndpointAdmin extends EndpointPlaceifyAuthenticated {
     },
   );
 
+  _i3.Future<_i18.Product> deleteProduct(int productId) =>
+      caller.callServerEndpoint<_i18.Product>(
+        'admin',
+        'deleteProduct',
+        {'productId': productId},
+      );
+
+  _i3.Future<_i18.Product> restoreProduct(int productId) =>
+      caller.callServerEndpoint<_i18.Product>(
+        'admin',
+        'restoreProduct',
+        {'productId': productId},
+      );
+
   _i3.Future<_i18.Product> flagProduct(int productId) =>
       caller.callServerEndpoint<_i18.Product>(
         'admin',
@@ -1378,6 +1392,27 @@ class EndpointVendor extends _i2.EndpointRef {
       caller.callServerEndpoint<_i18.Product>(
         'vendor',
         'regenerateProductModel3d',
+        {'productId': productId},
+      );
+
+  _i3.Future<_i18.Product> deleteProduct(int productId) =>
+      caller.callServerEndpoint<_i18.Product>(
+        'vendor',
+        'deleteProduct',
+        {'productId': productId},
+      );
+
+  _i3.Future<_i18.Product> restoreProduct(int productId) =>
+      caller.callServerEndpoint<_i18.Product>(
+        'vendor',
+        'restoreProduct',
+        {'productId': productId},
+      );
+
+  _i3.Future<_i18.Product> archiveProduct(int productId) =>
+      caller.callServerEndpoint<_i18.Product>(
+        'vendor',
+        'archiveProduct',
         {'productId': productId},
       );
 

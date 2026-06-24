@@ -188,6 +188,44 @@ class AdminModerationStore {
     );
   }
 
+  Future<Product> deleteProduct(Session session, int productId) async {
+    await _requireAdminProfile(session);
+    final product = await Product.db.findById(session, productId);
+    if (product == null) {
+      throw PlaceifyException(message: 'Product not found.', code: 'PRODUCT_NOT_FOUND');
+    }
+    if (product.isDeleted) return product;
+
+    final now = DateTime.now();
+    return Product.db.updateRow(
+      session,
+      product.copyWith(
+        isDeleted: true,
+        deletedAt: now,
+        updatedAt: now,
+      ),
+    );
+  }
+
+  Future<Product> restoreProduct(Session session, int productId) async {
+    await _requireAdminProfile(session);
+    final product = await Product.db.findById(session, productId);
+    if (product == null) {
+      throw PlaceifyException(message: 'Product not found.', code: 'PRODUCT_NOT_FOUND');
+    }
+
+    final now = DateTime.now();
+    return Product.db.updateRow(
+      session,
+      product.copyWith(
+        isDeleted: false,
+        deletedAt: null,
+        status: ProductStatus.active,
+        updatedAt: now,
+      ),
+    );
+  }
+
   Future<Product> flagProduct(Session session, int productId) async {
     await _requireAdminProfile(session);
     final product = await Product.db.findById(session, productId);

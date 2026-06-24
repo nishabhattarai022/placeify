@@ -10,6 +10,8 @@ class ServerpodProductRepository {
     String? categoryName,
     double? minPrice,
     double? maxPrice,
+    bool offersOnly = false,
+    bool featuredOnly = false,
     PaginationInput? pagination,
   }) {
     return client.product.searchProducts(
@@ -18,9 +20,15 @@ class ServerpodProductRepository {
         categoryName: categoryName,
         minPrice: minPrice,
         maxPrice: maxPrice,
+        offersOnly: offersOnly,
+        featuredOnly: featuredOnly,
         pagination: pagination,
       ),
     );
+  }
+
+  Future<MarketplaceHighlights> getMarketplaceHighlights() {
+    return client.product.getMarketplaceHighlights();
   }
 
   Future<Product?> getByUiId(String productId) {
