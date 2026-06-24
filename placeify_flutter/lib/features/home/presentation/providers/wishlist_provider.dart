@@ -7,6 +7,8 @@ import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../cart/data/product_id_codec.dart';
 import '../../../../core/config/placeify_server_client.dart';
+import '../../data/catalog_product_mapper.dart';
+import '../providers/catalog_provider.dart';
 import '../../../profile/presentation/providers/profile_dashboard_provider.dart';
 import '../../../user/presentation/providers/user_wishlist_provider.dart';
 
@@ -17,12 +19,15 @@ part 'wishlist_provider.g.dart';
 class Wishlist extends _$Wishlist {
   @override
   Map<String, DateTime> build() {
+    ref.watch(catalogIndexProvider);
     ref.listen(currentUserProvider, (previous, next) {
       unawaited(_refresh());
     });
     Future.microtask(_refresh);
     return {};
   }
+
+  Future<void> refresh() => _refresh();
 
   Future<void> _refresh() async {
     if (!client.auth.isAuthenticated) {
@@ -34,6 +39,29 @@ class Wishlist extends _$Wishlist {
       final page = await ref.read(userWishlistRepositoryProvider).listWishlist(
             pagination: PaginationInput(page: 1, pageSize: 100),
           );
+
+      final catalog = ref.read(catalogIndexProvider.notifier);
+      final uiIds = <String>[];
+
+      for (final item in page.items) {
+        final apiProduct = item.product;
+        if (apiProduct?.id == null) continue;
+
+        final uiId = ProductIdCodec.fromDatabaseId(apiProduct!.id!);
+        uiIds.add(uiId);
+
+        try {
+          final uiProduct = await CatalogProductMapper.toUiProduct(apiProduct);
+          catalog.upsertProduct(uiProduct);
+        } catch (_) {
+          // ensureProducts below still attempts a direct fetch.
+        }
+      }
+
+      if (uiIds.isNotEmpty) {
+        await catalog.ensureProducts(uiIds);
+      }
+
       state = {
         for (final item in page.items)
           if (item.product?.id != null)
