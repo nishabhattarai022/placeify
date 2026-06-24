@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../home/presentation/providers/catalog_provider.dart';
 import '../../../../home/presentation/providers/category_provider.dart';
 import '../../../../home/presentation/providers/wishlist_provider.dart';
+import '../../../../home/presentation/providers/wishlist_count.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/services/haptic_service.dart';
@@ -78,6 +79,18 @@ class _WishlistGridViewState extends ConsumerState<WishlistGridView> {
             .toList();
 
     if (savedAt.isEmpty) {
+      final expectedCount = readWishlistCount(ref);
+      if (expectedCount > 0) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          unawaited(ref.read(wishlistProvider.notifier).refresh());
+        });
+        return const Center(
+          child: Padding(
+            padding: EdgeInsets.all(32),
+            child: CircularProgressIndicator(color: AppColors.rust),
+          ),
+        );
+      }
       return const _WishlistEmptyState();
     }
 

@@ -34,10 +34,13 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.read(wishlistProvider.notifier).refresh();
+      reconcileWishlistWithDashboard(ref);
     });
   }
 
   int _visibleProductCount() {
+    final saved = ref.watch(wishlistProvider);
+    if (saved.isNotEmpty) return saved.length;
     return readWishlistCount(ref);
   }
 

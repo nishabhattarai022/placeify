@@ -21,8 +21,19 @@ part 'wishlist_provider.g.dart';
 class Wishlist extends _$Wishlist {
   @override
   Map<String, DateTime> build() {
-    ref.watch(catalogIndexProvider);
+    // Do not watch [catalogIndexProvider] here — catalog syncs every 20s and
+    // would rebuild this notifier, resetting wishlist state to {}.
+    ref.listen(catalogIndexProvider, (previous, next) {
+      if (!next.hasValue || state.isEmpty) return;
+      unawaited(
+        ref.read(catalogIndexProvider.notifier).ensureProducts(state.keys),
+      );
+    });
     ref.listen(currentUserProvider, (previous, next) {
+      if (next.value == null) {
+        state = {};
+        return;
+      }
       unawaited(_refresh());
     });
     Future.microtask(_refresh);
