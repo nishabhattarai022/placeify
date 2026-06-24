@@ -202,12 +202,18 @@ void main() {
         expect(arSessions, isA<List<UserArSessionSummary>>());
 
         // ── 9. Cancel live checkout order (cleanup + cancel contract) ─────
+        dashboard = await endpoints.user.getDashboard(auth.session);
+        expect(dashboard.orderCount, 2);
+
         final cancelled = await endpoints.user.cancelMyOrder(
           auth.session,
           orderId,
           'Contract test cleanup',
         );
         expect(cancelled.status, OrderStatus.cancelled);
+
+        dashboard = await endpoints.user.getDashboard(auth.session);
+        expect(dashboard.orderCount, 1);
       },
     );
 
