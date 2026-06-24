@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/services/haptic_service.dart';
+import '../../../../core/widgets/toast_overlay.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../home/domain/models/product.dart';
 import '../../../home/presentation/providers/wishlist_provider.dart';
 import '../product_detail_tokens.dart';
@@ -18,7 +21,8 @@ class ProductDetailHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isSaved = ref.watch(wishlistProvider).containsKey(product.id);
+    ref.watch(wishlistProvider);
+    final isSaved = ref.read(wishlistProvider.notifier).isLiked(product.id);
 
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -36,9 +40,18 @@ class ProductDetailHeader extends ConsumerWidget {
           ),
           const Spacer(),
           _HeaderCircleButton(
-            onTap: () {
+            onTap: () async {
+              if (ref.read(currentUserProvider).value == null) {
+                PlaceifyToast.show(
+                  context,
+                  'Sign in to save items to your wishlist',
+                );
+                context.push('/login');
+                return;
+              }
+
               HapticService.light();
-              ref.read(wishlistProvider.notifier).toggle(product.id);
+              await ref.read(wishlistProvider.notifier).toggle(product.id);
             },
             child: _StarSwitcher(isSaved: isSaved),
           ),

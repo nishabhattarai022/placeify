@@ -16,7 +16,9 @@ class ServerpodWishlistRepository {
 
   Future<bool> toggle(String productId) async {
     if (!client.auth.isAuthenticated) return false;
-    final id = ProductIdCodec.toDatabaseId(productId);
+    final id = ProductIdCodec.toDatabaseId(
+      ProductIdCodec.normalizeUiProductId(productId),
+    );
     if (id == null) return false;
     return client.wishlist.toggleWishlist(id);
   }
