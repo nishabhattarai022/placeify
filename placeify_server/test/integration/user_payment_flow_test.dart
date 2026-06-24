@@ -2,6 +2,7 @@ import 'package:placeify_server/src/generated/checkout_request.dart';
 import 'package:placeify_server/src/generated/order_status.dart';
 import 'package:placeify_server/src/generated/payment_method.dart';
 import 'package:placeify_server/src/generated/payment_transaction_status.dart';
+import 'package:placeify_server/src/generated/placeify_exception.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 import 'package:test/test.dart';
 
@@ -11,7 +12,7 @@ import 'test_tools/user_test_helpers.dart';
 void main() {
   withServerpod('Given user payment flow', (sessionBuilder, endpoints) {
     test(
-      'when checkout then payment is pending, completePayment marks paid, vendor sees order',
+      'when checkout then payment is pending and completePayment is forbidden',
       () async {
         final consumer = await createAuthenticatedUser(
           sessionBuilder,
@@ -72,29 +73,26 @@ void main() {
         );
         expect(vendorOrdersBeforePay.first.status, OrderStatus.pending);
 
-        final paid = await endpoints.user.completePayment(
+        await expectLater(
+          endpoints.user.completePayment(consumer.session, orderId),
+          throwsA(
+            predicate<PlaceifyException>(
+              (error) =>
+                  error.code == 'FORBIDDEN' &&
+                  error.message.contains('vendor'),
+            ),
+          ),
+        );
+
+        final detailAfterAttempt = await endpoints.user.getMyOrder(
           consumer.session,
           orderId,
-        );
-        expect(paid.status, PaymentTransactionStatus.succeeded);
-
-        final detailAfterPay = await endpoints.user.getMyOrder(
-          consumer.session,
-          orderId,
-        );
-        expect(detailAfterPay.payment.status, PaymentTransactionStatus.succeeded);
-        expect(detailAfterPay.status, OrderStatus.confirmed);
-
-        final vendorOrdersAfterPay = await endpoints.vendor.listShopOrders(
-          vendorAuth.session,
-          status: OrderStatus.confirmed,
-          limit: 20,
-          offset: 0,
         );
         expect(
-          vendorOrdersAfterPay.any((order) => order.orderId == orderId),
-          isTrue,
+          detailAfterAttempt.payment.status,
+          PaymentTransactionStatus.pending,
         );
+        expect(detailAfterAttempt.status, OrderStatus.pending);
       },
     );
 

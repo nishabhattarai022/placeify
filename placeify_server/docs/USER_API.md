@@ -2,6 +2,9 @@
 
 Consumer-facing Serverpod endpoints used by the user dashboard and profile flows.
 
+**Canonical contract (source of truth):** [CONSUMER_API_CONTRACT.md](./CONSUMER_API_CONTRACT.md)  
+**Screen mapping:** [USER_FRONTEND_BACKEND_MATRIX.md](./USER_FRONTEND_BACKEND_MATRIX.md)
+
 **Base URL (local):** `http://localhost:8080`  
 **Auth:** All endpoints below require a valid JWT unless marked public. Send the access token via Serverpod client auth (`client.auth`).
 
@@ -37,7 +40,7 @@ Module: `user` endpoint · Tables: `user`, `order`, `wishlist_item`, `ar_session
 | `user.getMyOrder` | Yes | Order detail with items and delivery timeline | `UserOrderDetail` |
 | `user.cancelMyOrder` | Yes | Cancel a pending/confirmed order (`orderId`, `reason`) | `UserOrderDetail` |
 | `user.getMyOrderPayment` | Yes | Payment status for an order | `UserOrderPaymentSummary` |
-| `user.completePayment` | Yes | Mark order payment succeeded (mock/COD dev flow) | `UserOrderPaymentSummary` |
+| `user.completePayment` | Yes | **Disabled in production flow** — throws `FORBIDDEN`; vendor updates payment after checkout. See [USER_FRONTEND_BACKEND_MATRIX.md](./USER_FRONTEND_BACKEND_MATRIX.md). | — |
 | `user.listMyArSessions` | Yes | AR try-on history | `List<UserArSessionSummary>` |
 | `user.becomeVendor` | Yes | Switch role to vendor (requires shop) | `User` |
 | `user.becomeConsumer` | Yes | Switch role back to consumer | `User` |
@@ -110,7 +113,9 @@ Module: `refund` endpoint · Table: `refund_request`
 | `cart` | `getCartItems`, `addToCart`, `updateCartItemQuantity`, `removeFromCart`, `clearCart` |
 | `checkout` | `checkout` — creates `order` + `order_item` rows, clears cart, records `paymentMethod`, notifies vendors |
 | `product` | `searchProducts`, `getProduct` |
-| `notification` | `getPreferences`, `updatePreferences` |
+| `notification` | `getPreferences`, `updatePreferences`, `listInAppNotifications`, `unreadInAppNotificationCount`, `markInAppNotificationRead`, `markAllInAppNotificationsRead` |
+
+> **Frontend ↔ backend mapping:** See [USER_FRONTEND_BACKEND_MATRIX.md](./USER_FRONTEND_BACKEND_MATRIX.md) for per-screen endpoints, payload shapes, enum mappings, and wiring status.
 
 ### Cart & checkout rules
 
@@ -163,7 +168,7 @@ dart test
 | `test/integration/wishlist_endpoint_test.dart` | Wishlist list + toggle |
 | `test/integration/refund_endpoint_test.dart` | Refund create + list + dashboard count |
 | `test/integration/checkout_flow_endpoint_test.dart` | Cart add → checkout → order list + dashboard |
-| `test/integration/user_payment_flow_test.dart` | Checkout payment pending → completePayment → vendor order |
+| `test/integration/user_payment_flow_test.dart` | Checkout payment pending → vendor payment update (consumer `completePayment` is disabled) |
 | `test/integration/vendor_starter_catalog_test.dart` | Approved vendor gets starter catalog → checkout visible on dashboard |
 
 ---
