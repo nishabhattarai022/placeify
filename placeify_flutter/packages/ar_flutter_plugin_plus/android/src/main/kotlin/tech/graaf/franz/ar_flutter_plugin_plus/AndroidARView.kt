@@ -1678,6 +1678,14 @@ internal class AndroidARView(
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
             isOpaque = false
+            isClickable = true
+            setOnTouchListener { _, motionEvent ->
+                val handled = handleGestureTouch(motionEvent)
+                if (!handled) {
+                    onTap(null, motionEvent)
+                }
+                true
+            }
         }
         rootView.addView(filamentTextureView)
         filamentTextureView?.let { modelRenderer.attachTextureView(it) }

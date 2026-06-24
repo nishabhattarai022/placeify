@@ -298,12 +298,6 @@ internal class ModelRenderer {
             .direction(0.0f, -1.0f, -0.5f)
             .color(1.0f, 1.0f, 1.0f)
             .intensity(100000.0f)
-            .castShadows(true)
-            .shadowOptions(LightManager.ShadowOptions().apply {
-                mapSize = 1024
-                constantBias = 0.001f
-                normalBias = 0.5f
-            })
             .build(engine!!, lightEntity)
         scene!!.addEntity(lightEntity)
 
@@ -315,7 +309,21 @@ internal class ModelRenderer {
             .build(engine!!, fillLightEntity)
         scene!!.addEntity(fillLightEntity)
 
-        view!!.setShadowingEnabled(true)
+        indirectLight = IndirectLight.Builder()
+            .irradiance(3, defaultAmbientSh())
+            .intensity(40_000.0f)
+            .build(engine!!)
+        scene!!.indirectLight = indirectLight
+
+        view!!.setShadowingEnabled(false)
+    }
+
+    private fun defaultAmbientSh(): FloatArray {
+        val sh = FloatArray(27)
+        sh[0] = 0.6f
+        sh[1] = 0.6f
+        sh[2] = 0.6f
+        return sh
     }
 
     private fun updateEnvironmentalHdrAmbient(
