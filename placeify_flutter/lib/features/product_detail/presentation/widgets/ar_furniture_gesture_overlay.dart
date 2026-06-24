@@ -4,8 +4,8 @@ import '../../data/ar_furniture_gesture_config.dart';
 
 /// Two-finger pinch (scale) and twist (rotate) over the AR view.
 ///
-/// Uses [GestureDetector.onScale] so single-finger touches are not claimed and
-/// can pass through to the native AR view for drag-to-move.
+/// Single-finger touches are ignored so taps and drags reach the native AR view
+/// for plane placement and anchored moves.
 class ArFurnitureGestureOverlay extends StatefulWidget {
   const ArFurnitureGestureOverlay({
     required this.enabled,
@@ -38,7 +38,7 @@ class ArFurnitureGestureOverlay extends StatefulWidget {
 class _ArFurnitureGestureOverlayState extends State<ArFurnitureGestureOverlay> {
   double? _multiplierAtStart;
   double? _rotationAtStart;
-  bool _gestureActive = false;
+  int _activePointers = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -46,17 +46,29 @@ class _ArFurnitureGestureOverlayState extends State<ArFurnitureGestureOverlay> {
       return const SizedBox.shrink();
     }
 
-    return GestureDetector(
+    return Listener(
       behavior: HitTestBehavior.translucent,
-      onScaleStart: _onScaleStart,
-      onScaleUpdate: _onScaleUpdate,
-      onScaleEnd: _onScaleEnd,
-      child: const SizedBox.expand(),
+      onPointerDown: (_) => setState(() => _activePointers++),
+      onPointerUp: (_) => setState(
+        () => _activePointers = (_activePointers - 1).clamp(0, 10),
+      ),
+      onPointerCancel: (_) => setState(
+        () => _activePointers = (_activePointers - 1).clamp(0, 10),
+      ),
+      child: IgnorePointer(
+        ignoring: _activePointers < 2,
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onScaleStart: _onScaleStart,
+          onScaleUpdate: _onScaleUpdate,
+          onScaleEnd: _onScaleEnd,
+          child: const SizedBox.expand(),
+        ),
+      ),
     );
   }
 
   void _onScaleStart(ScaleStartDetails details) {
-    _gestureActive = false;
     _multiplierAtStart = null;
     _rotationAtStart = null;
   }
@@ -64,7 +76,6 @@ class _ArFurnitureGestureOverlayState extends State<ArFurnitureGestureOverlay> {
   void _onScaleUpdate(ScaleUpdateDetails details) {
     if (details.pointerCount < 2) return;
 
-    _gestureActive = true;
     _multiplierAtStart ??= widget.initialMultiplier;
     _rotationAtStart ??= widget.currentRotationY;
 
@@ -86,7 +97,6 @@ class _ArFurnitureGestureOverlayState extends State<ArFurnitureGestureOverlay> {
   }
 
   void _onScaleEnd(ScaleEndDetails details) {
-    _gestureActive = false;
     _multiplierAtStart = null;
     _rotationAtStart = null;
     widget.onGestureEnd?.call();

@@ -1,5 +1,4 @@
 import 'dart:io' show Platform;
-import 'dart:math' as math;
 
 import 'package:ar_flutter_plugin_plus/ar_flutter_plugin_plus.dart';
 import 'package:ar_flutter_plugin_plus/datatypes/config_planedetection.dart';
@@ -130,7 +129,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
             onARViewCreated: _onArViewCreated,
             planeDetectionConfig: PlaneDetectionConfig.horizontal,
           ),
-          if (_canAdjustModel)
+          if (_canAdjustModel && _isPlaced)
             ArFurnitureGestureOverlay(
               enabled: true,
               initialMultiplier: _userScaleMultiplier,
@@ -280,7 +279,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       uri: modelUri,
       scale: _nodeScale,
       position: Vector3(0, 0, -_previewDistanceM),
-      rotation: Vector4(1, 0, 0, 0),
+      eulerAngles: Vector3.zero(),
     );
 
     final didAdd = await objectManager.addNode(node);
@@ -326,9 +325,8 @@ class _ArRoomScreenState extends State<ArRoomScreen>
 
     node.position = previewPos;
 
-    final yaw = math.atan2(forward.x, forward.z) + _smoothedRotationY;
-    final rotation = Matrix4.identity()..rotateY(yaw);
-    node.rotation = rotation.getRotation();
+    // Keep a stable world-facing orientation; only user twist gestures change yaw.
+    node.eulerAngles = Vector3(0, _smoothedRotationY, 0);
     node.scale = _nodeScale;
   }
 
@@ -735,8 +733,8 @@ class _InstructionBanner extends StatelessWidget {
       return 'Move your phone to detect a surface.';
     }
     if (isPreviewMode) {
-      return 'Pinch to resize and twist two fingers to rotate, '
-          'then tap a surface to place $productName.';
+      return 'Tap a surface to place $productName. '
+          'After placing, pinch to resize and twist two fingers to rotate.';
     }
     return 'Move your phone to detect a surface.';
   }
