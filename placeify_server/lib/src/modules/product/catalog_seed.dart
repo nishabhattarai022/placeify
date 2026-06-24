@@ -5,21 +5,27 @@ import '../../shared/placeify_exception.dart';
 
 /// Inserts demo categories, vendor, and products when the catalog is empty.
 abstract final class CatalogSeed {
+  /// Matches Nisha browse chips in [furniture_categories.dart].
   static const defaultCategoryNames = [
     'chairs',
     'sofas',
-    'tables',
-    'lights',
+    'desks',
     'beds',
-    'decor',
+    'tables',
+    'storage',
+    'lighting',
+    'outdoor',
   ];
 
-  /// Ensures furniture categories exist (needed for vendor product upload).
+  /// Ensures all Nisha browse categories exist (also on existing databases).
   static Future<void> ensureCategories(Session session) async {
-    final count = await Category.db.count(session);
-    if (count > 0) return;
-
     for (final name in defaultCategoryNames) {
+      final existing = await Category.db.findFirstRow(
+        session,
+        where: (row) => row.name.equals(name),
+      );
+      if (existing != null) continue;
+
       await Category.db.insertRow(
         session,
         Category(
@@ -107,13 +113,13 @@ abstract final class CatalogSeed {
     ),
     (
       name: 'Walnut Desk',
-      category: 'tables',
+      category: 'desks',
       price: 320,
       description: 'Walnut writing desk',
     ),
     (
       name: 'Studio Desk',
-      category: 'tables',
+      category: 'desks',
       price: 280,
       description: 'Studio workspace desk',
     ),
@@ -143,37 +149,37 @@ abstract final class CatalogSeed {
     ),
     (
       name: 'Modular Shelf',
-      category: 'decor',
+      category: 'storage',
       price: 240,
       description: 'Configurable shelving for living and storage spaces',
     ),
     (
       name: 'Cabinet Unit',
-      category: 'decor',
+      category: 'storage',
       price: 310,
       description: 'Compact cabinet for storage and display',
     ),
     (
       name: 'Arc Floor Lamp',
-      category: 'lights',
+      category: 'lighting',
       price: 180,
       description: 'Arc floor lamp',
     ),
     (
       name: 'Pendant Light',
-      category: 'lights',
+      category: 'lighting',
       price: 120,
       description: 'Pendant ceiling light',
     ),
     (
       name: 'Patio Lounge',
-      category: 'decor',
+      category: 'outdoor',
       price: 520,
       description: 'Outdoor lounge seating for patios and balconies',
     ),
     (
       name: 'Garden Set',
-      category: 'decor',
+      category: 'outdoor',
       price: 680,
       description: 'Outdoor table and seating set for gardens',
     ),
