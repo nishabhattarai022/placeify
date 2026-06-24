@@ -220,7 +220,6 @@ class Cart extends _$Cart {
       );
 
       state = const [];
-      ref.invalidate(profileOrdersProvider);
       ref.invalidate(profileDashboardProvider);
       ref.invalidate(ordersProvider);
       return 'Order #${result.order.id} placed successfully';
