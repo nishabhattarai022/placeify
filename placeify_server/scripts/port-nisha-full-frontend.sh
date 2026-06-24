@@ -7,13 +7,16 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$ROOT"
 
-REMOTE="${PLACEIFY_GIT_REMOTE:-backend}"
-BRANCH="${PLACEIFY_UI_BRANCH:-Nishabhattarai}"
-REF="$REMOTE/$BRANCH"
+# Prefer local Nishabhattarai — remote backend/Nishabhattarai can lag behind her latest UI.
+REF="${PLACEIFY_UI_REF:-Nishabhattarai}"
 PRESERVE_DIR="${ROOT}/.sync-preserve-$(date +%Y%m%d%H%M%S)"
 
-echo "==> Fetch $REF"
-git fetch "$REMOTE" "$BRANCH"
+if [[ "$REF" == */* ]]; then
+  echo "==> Fetch $REF"
+  git fetch "${REF%%/*}" "${REF#*/}"
+else
+  echo "==> Use local branch/ref $REF"
+fi
 
 echo "==> Backup integration-only files to $PRESERVE_DIR"
 mkdir -p "$PRESERVE_DIR"
@@ -80,7 +83,10 @@ rm -f placeify_flutter/lib/features/auth/domain/models/app_user.freezed.dart \
 
 echo "==> build_runner"
 dart pub get >/dev/null
-(cd placeify_flutter && dart run build_runner build) 2>&1 | tail -3
+(cd placeify_flutter && dart run build_runner build --delete-conflicting-outputs) 2>&1 | tail -3
+
+echo "==> Restore backend wiring + cart checkout"
+bash "$SCRIPT_DIR/restore-backend-wiring.sh"
 
 echo ""
 echo "✓ Full Nisha UI sync complete."

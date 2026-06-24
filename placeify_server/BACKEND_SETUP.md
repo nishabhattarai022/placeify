@@ -80,6 +80,22 @@ docker compose down
 
 See [PRODUCTION_AUTH.md](PRODUCTION_AUTH.md) for environment variables, email (Resend), and deployment.
 
+## Consumer API & frontend alignment
+
+| Doc | Purpose |
+|-----|---------|
+| [docs/CONSUMER_API_CONTRACT.md](docs/CONSUMER_API_CONTRACT.md) | **Canonical consumer API** — modules, payloads, deprecated surface |
+| [docs/USER_API.md](docs/USER_API.md) | Endpoint reference |
+| [docs/USER_FRONTEND_BACKEND_MATRIX.md](docs/USER_FRONTEND_BACKEND_MATRIX.md) | Per-screen UI ↔ API mapping |
+
+Verify contract after backend changes:
+
+```bash
+cd placeify_server && ./scripts/verify-consumer-contract.sh
+```
+
+When your teammate adds UI, check the matrix first: most consumer features already have endpoints — gaps are usually **frontend wiring**, not missing backend.
+
 ## Troubleshooting
 
 | Problem | Fix |
