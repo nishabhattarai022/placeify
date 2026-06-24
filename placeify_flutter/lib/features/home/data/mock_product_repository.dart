@@ -1,8 +1,10 @@
+import '../../../data/furniture_categories.dart';
 import '../domain/models/category.dart';
 import '../domain/models/product.dart';
 import '../domain/repositories/product_repository.dart';
 
 abstract final class MockProductRepository implements ProductRepository {
+  static final Map<String, Product> _browseCatalogById = {};
   static const List<ProductCategory> categories = [
     ProductCategory(
       id: 'chairs',
@@ -36,6 +38,61 @@ abstract final class MockProductRepository implements ProductRepository {
       svgIconAssetPath: 'assets/icons/ic_plant.svg',
     ),
   ];
+
+  /// Full browse category list sized to match [FurnitureCategory.itemCount].
+  static List<Product> productsForBrowseCategory(String categoryId) {
+    final target = furnitureCategoryById(categoryId)?.itemCount ?? 0;
+    final base =
+        products.where((p) => p.categoryId == categoryId).toList(growable: false);
+    if (base.isEmpty || target <= 0) return base;
+    if (base.length >= target) {
+      final slice = base.take(target).toList(growable: false);
+      _cacheBrowseProducts(slice);
+      return slice;
+    }
+
+    final expanded = <Product>[];
+    for (var i = 0; i < target; i++) {
+      final template = base[i % base.length];
+      final cycle = i ~/ base.length;
+      final id = cycle == 0 ? template.id : '${template.id}-v${i + 1}';
+      final name = cycle == 0
+          ? template.name
+          : '${template.name} ${i + 1}';
+      final priceOffset = (i % 7) * 11;
+      expanded.add(
+        template.copyWith(
+          id: id,
+          name: name,
+          price: template.price + priceOffset,
+          sku: '${template.sku}-${(i + 1).toString().padLeft(2, '0')}',
+        ),
+      );
+    }
+    _cacheBrowseProducts(expanded);
+    return expanded;
+  }
+
+  static void _cacheBrowseProducts(List<Product> list) {
+    for (final product in list) {
+      _browseCatalogById[product.id] = product;
+    }
+  }
+
+  static Product? resolveProductById(String id) {
+    final cached = _browseCatalogById[id];
+    if (cached != null) return cached;
+
+    try {
+      return products.firstWhere((p) => p.id == id);
+    } catch (_) {
+      final baseId = RegExp(r'^(p\d+)').firstMatch(id)?.group(1);
+      if (baseId != null && baseId != id) {
+        return resolveProductById(baseId);
+      }
+      return null;
+    }
+  }
 
   static final List<Product> products = [
     Product(
@@ -347,11 +404,5 @@ abstract final class MockProductRepository implements ProductRepository {
   List<Product> getProducts() => products;
 
   @override
-  Product? getProductById(String id) {
-    try {
-      return products.firstWhere((p) => p.id == id);
-    } catch (_) {
-      return null;
-    }
-  }
+  Product? getProductById(String id) => resolveProductById(id);
 }

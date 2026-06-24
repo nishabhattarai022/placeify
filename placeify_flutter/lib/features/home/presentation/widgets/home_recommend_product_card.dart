@@ -1,12 +1,10 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/services/haptic_service.dart';
-import '../../../../core/widgets/toast_overlay.dart';
-import '../../../cart/presentation/providers/cart_provider.dart';
+import '../../../cart/presentation/cart_actions.dart';
 import '../data/home_categories_config.dart';
 import '../theme/home_screen_tokens.dart';
 
@@ -45,12 +43,7 @@ class _HomeRecommendProductCardState
   }
 
   void _onAddToCart() {
-    HapticService.medium();
-    ref.read(cartProvider.notifier).addProduct(widget.product.productId);
-    PlaceifyToast.show(
-      context,
-      '${widget.product.displayName} added to cart',
-    );
+    addToCart(ref, context, widget.product.productId, openCart: false);
   }
 
   @override
@@ -106,31 +99,18 @@ class _HomeRecommendProductCardState
                       child: SizedBox(
                         height: HomeScreenTokens.cardImageHeight,
                         width: double.infinity,
-                        child: product.imageAsset.startsWith('http')
-                            ? CachedNetworkImage(
-                                imageUrl: product.imageAsset,
-                                fit: BoxFit.cover,
-                                errorWidget: (_, __, ___) => ColoredBox(
-                                  color: HomeScreenTokens.cardBg,
-                                  child: Icon(
-                                    Icons.chair_outlined,
-                                    size: 56,
-                                    color: Colors.black.withValues(alpha: 0.2),
-                                  ),
-                                ),
-                              )
-                            : Image.asset(
-                                product.imageAsset,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => ColoredBox(
-                                  color: HomeScreenTokens.cardBg,
-                                  child: Icon(
-                                    Icons.chair_outlined,
-                                    size: 56,
-                                    color: Colors.black.withValues(alpha: 0.2),
-                                  ),
-                                ),
-                              ),
+                        child: Image.asset(
+                          product.imageAsset,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => ColoredBox(
+                            color: HomeScreenTokens.cardBg,
+                            child: Icon(
+                              Icons.chair_outlined,
+                              size: 56,
+                              color: Colors.black.withValues(alpha: 0.2),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 14),

@@ -4,6 +4,13 @@ import 'package:placeify_flutter/features/home/domain/models/product.dart';
 
 /// Room filters and recommended products for the home screen.
 abstract final class HomeCategoriesConfig {
+  /// Room filter labels for the home category chip row.
+  static const List<RoomCategory> rooms = [
+    RoomCategory(id: 'living', name: 'Living Room'),
+    RoomCategory(id: 'dining', name: 'Dining Room'),
+    RoomCategory(id: 'office', name: 'Office Room'),
+  ];
+
   /// SVG quick-browse row (black pill + icon circles).
   static const List<RoomCategory> quickBrowseRooms = [
     RoomCategory(

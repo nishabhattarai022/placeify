@@ -4,10 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/home_categories_config.dart';
 import '../providers/home_room_provider.dart';
 import '../theme/home_screen_tokens.dart';
+import 'home_category_filter_chips.dart';
 import 'home_recommend_header.dart';
 import 'home_recommend_product_card.dart';
 
-/// "Recommend for you" section: header and animated product row.
+/// "Recommend for you" section: header, room chips, and animated product row.
 class HomeRecommendSection extends ConsumerWidget {
   const HomeRecommendSection({super.key});
 
@@ -15,12 +16,15 @@ class HomeRecommendSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final roomId = ref.watch(selectedRoomProvider);
     final products = ref.watch(recommendedProductsProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const HomeRecommendHeader(),
+        const SizedBox(height: HomeScreenTokens.sectionSpacing),
+        const HomeCategoryFilterChips(),
         const SizedBox(height: HomeScreenTokens.sectionSpacing),
         AnimatedSwitcher(
           duration: _switchDuration,
@@ -39,9 +43,9 @@ class HomeRecommendSection extends ConsumerWidget {
             );
           },
           child: products.isEmpty
-              ? const _EmptyRecommendations(key: ValueKey('empty_recommendations'))
+              ? _EmptyRecommendations(key: ValueKey('empty_$roomId'))
               : _RecommendProductRow(
-                  key: const ValueKey('recommendations'),
+                  key: ValueKey(roomId),
                   products: products,
                 ),
         ),

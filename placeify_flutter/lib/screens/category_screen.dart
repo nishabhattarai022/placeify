@@ -25,9 +25,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
   _SortOption _sort = _SortOption.featured;
 
   List<Product> get _products {
-    final list = MockProductRepository.products
-        .where((p) => p.categoryId == widget.category.id)
-        .toList();
+    final list = MockProductRepository.productsForBrowseCategory(
+      widget.category.id,
+    );
 
     switch (_sort) {
       case _SortOption.featured:
