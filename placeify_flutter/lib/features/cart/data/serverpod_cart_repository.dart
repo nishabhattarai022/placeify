@@ -51,7 +51,9 @@ class ServerpodCartRepository {
   }
 
   int _requireDatabaseId(String productId) {
-    final id = ProductIdCodec.toDatabaseId(productId);
+    final id = ProductIdCodec.toDatabaseId(
+      ProductIdCodec.normalizeUiProductId(productId),
+    );
     if (id == null) {
       throw ArgumentError(
         'This product cannot be added to cart yet. '
