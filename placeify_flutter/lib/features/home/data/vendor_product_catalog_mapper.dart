@@ -1,4 +1,5 @@
 import '../../../core/config/resolve_media_url.dart';
+import '../../../core/utils/local_image_store.dart';
 import '../../vendor/domain/models/vendor_product.dart';
 import '../domain/models/product.dart';
 
@@ -65,6 +66,9 @@ abstract final class VendorProductCatalogMapper {
     final source = imageUrls.first.trim();
     if (source.isEmpty) return 'assets/images/categories/chair.jpg';
     if (source.startsWith('assets/')) return source;
+    if (source.startsWith(LocalImageStore.scheme)) {
+      return 'assets/images/categories/chair.jpg';
+    }
     if (source.startsWith('http://') || source.startsWith('https://')) {
       return source;
     }
