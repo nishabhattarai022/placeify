@@ -66,6 +66,7 @@ abstract final class CatalogSeed {
     return categories;
   }
 
+  /// Insert order matches UI ids `p1`…`p18` via [ProductIdCodec] on the client.
   static const _demoProducts =
       <({String name, String category, double price, String description})>[
     (
@@ -73,6 +74,24 @@ abstract final class CatalogSeed {
       category: 'chairs',
       price: 56,
       description: 'Modern accent chair',
+    ),
+    (
+      name: 'Brixon Chair',
+      category: 'sofas',
+      price: 85,
+      description: 'Compact sofa chair',
+    ),
+    (
+      name: 'Odin 75',
+      category: 'chairs',
+      price: 94,
+      description: 'Scandinavian lounge chair',
+    ),
+    (
+      name: 'Harmony Chair',
+      category: 'sofas',
+      price: 110,
+      description: 'Rattan modern chair',
     ),
     (
       name: 'Brixon',
@@ -87,34 +106,16 @@ abstract final class CatalogSeed {
       description: 'Premium lounge chair',
     ),
     (
-      name: 'Harmony',
-      category: 'chairs',
-      price: 110,
-      description: 'Rattan modern chair',
-    ),
-    (
-      name: 'Nordic Side Table',
+      name: 'Walnut Desk',
       category: 'tables',
-      price: 78,
-      description: 'Minimal side table',
-    ),
-    (
-      name: 'Round Dining Table',
-      category: 'tables',
-      price: 450,
-      description: 'Round dining table for four to six guests',
-    ),
-    (
-      name: 'Luna Sofa',
-      category: 'sofas',
       price: 320,
-      description: 'Compact two-seater sofa for modern living rooms',
+      description: 'Walnut writing desk',
     ),
     (
-      name: 'Floor Lamp Oden',
-      category: 'lights',
-      price: 45,
-      description: 'Scandinavian floor lamp',
+      name: 'Studio Desk',
+      category: 'tables',
+      price: 280,
+      description: 'Studio workspace desk',
     ),
     (
       name: 'Cloud Bed',
@@ -129,6 +130,18 @@ abstract final class CatalogSeed {
       description: 'Minimal linen-upholstered bed frame',
     ),
     (
+      name: 'Round Dining Table',
+      category: 'tables',
+      price: 450,
+      description: 'Round dining table for four to six guests',
+    ),
+    (
+      name: 'Oak Console',
+      category: 'tables',
+      price: 380,
+      description: 'Oak console table',
+    ),
+    (
       name: 'Modular Shelf',
       category: 'decor',
       price: 240,
@@ -139,6 +152,18 @@ abstract final class CatalogSeed {
       category: 'decor',
       price: 310,
       description: 'Compact cabinet for storage and display',
+    ),
+    (
+      name: 'Arc Floor Lamp',
+      category: 'lights',
+      price: 180,
+      description: 'Arc floor lamp',
+    ),
+    (
+      name: 'Pendant Light',
+      category: 'lights',
+      price: 120,
+      description: 'Pendant ceiling light',
     ),
     (
       name: 'Patio Lounge',
