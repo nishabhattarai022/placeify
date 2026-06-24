@@ -14,6 +14,7 @@ import '../data/profile_menu_config.dart';
 import 'widgets/profile_hero.dart';
 import 'widgets/profile_menu_tile.dart';
 import 'widgets/profile_orders_tile.dart';
+import 'providers/profile_dashboard_provider.dart';
 
 class ProfileHomeScreen extends ConsumerStatefulWidget {
   const ProfileHomeScreen({super.key});
@@ -28,6 +29,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(currentUserProvider.notifier).refresh();
+      ref.read(profileDashboardProvider.notifier).refresh();
     });
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(

@@ -36,28 +36,6 @@ class ProfileDashboard extends _$ProfileDashboard {
 }
 
 @Riverpod(keepAlive: true)
-class ProfileOrders extends _$ProfileOrders {
-  @override
-  Future<List<UserOrderSummary>> build() async {
-    if (!client.auth.isAuthenticated) return [];
-    final repo = ref.watch(profileRepositoryProvider);
-    return repo.listOrders();
-  }
-
-  Future<void> refresh() async {
-    if (!client.auth.isAuthenticated) {
-      state = const AsyncData([]);
-      return;
-    }
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final repo = ref.read(profileRepositoryProvider);
-      return repo.listOrders();
-    });
-  }
-}
-
-@Riverpod(keepAlive: true)
 class ProfileArSessions extends _$ProfileArSessions {
   @override
   Future<List<UserArSessionSummary>> build() async {

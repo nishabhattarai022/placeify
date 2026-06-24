@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 import '../../../../core/config/placeify_server_client.dart';
+import '../../../orders/presentation/providers/orders_provider.dart';
 import '../../data/profile_constants.dart';
 import '../../data/profile_mock_data.dart';
 import '../../data/profile_refund_mapper.dart';
@@ -24,18 +25,21 @@ class ProfileRefundsState {
     required this.completed,
     required this.orderOptions,
     required this.pendingTotal,
+    required this.completedTotal,
   });
 
   final List<ProfileRefund> active;
   final List<ProfileRefund> completed;
   final List<RefundOrderOption> orderOptions;
   final double pendingTotal;
+  final double completedTotal;
 
   static const empty = ProfileRefundsState(
     active: [],
     completed: [],
     orderOptions: [],
     pendingTotal: 0,
+    completedTotal: 0,
   );
 }
 
@@ -48,7 +52,7 @@ class ProfileRefunds extends _$ProfileRefunds {
     if (!client.auth.isAuthenticated) return ProfileRefundsState.empty;
 
     final refunds = await _repository.listRefunds();
-    final orders = await ref.watch(profileOrdersProvider.future);
+    final orders = await ref.watch(ordersProvider.future);
 
     final pendingOrderIds = refunds
         .where((refund) => refund.status == RequestStatus.pending)
@@ -57,13 +61,14 @@ class ProfileRefunds extends _$ProfileRefunds {
 
     final orderOptions = [
       for (final order in orders)
-        if (order.status != OrderStatus.cancelled &&
-            !pendingOrderIds.contains(order.id))
-          RefundOrderOption(
-            orderId: order.id,
-            label:
-                '${order.primaryProductName ?? 'Order'} — #${order.orderNumber}',
-          ),
+        if (!order.isCancelled)
+          if (int.tryParse(order.id)
+              case final orderId? when !pendingOrderIds.contains(orderId))
+            RefundOrderOption(
+              orderId: orderId,
+              label:
+                  '${order.items.isNotEmpty ? order.items.first.productName : 'Order'} — #${order.orderNumber}',
+            ),
     ];
 
     final active = ProfileRefundMapper.active(refunds);
@@ -75,12 +80,16 @@ class ProfileRefunds extends _$ProfileRefunds {
               refund.status == RequestStatus.inProgress,
         )
         .fold<double>(0, (sum, refund) => sum + refund.refundAmount);
+    final completedTotal = refunds
+        .where((refund) => refund.status == RequestStatus.completed)
+        .fold<double>(0, (sum, refund) => sum + refund.refundAmount);
 
     return ProfileRefundsState(
       active: active,
       completed: completed,
       orderOptions: orderOptions,
       pendingTotal: pendingTotal,
+      completedTotal: completedTotal,
     );
   }
 

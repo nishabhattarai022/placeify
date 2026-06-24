@@ -100,55 +100,6 @@ abstract class _$ProfileDashboard extends $AsyncNotifier<UserDashboard?> {
   }
 }
 
-@ProviderFor(ProfileOrders)
-final profileOrdersProvider = ProfileOrdersProvider._();
-
-final class ProfileOrdersProvider
-    extends $AsyncNotifierProvider<ProfileOrders, List<UserOrderSummary>> {
-  ProfileOrdersProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'profileOrdersProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$profileOrdersHash();
-
-  @$internal
-  @override
-  ProfileOrders create() => ProfileOrders();
-}
-
-String _$profileOrdersHash() => r'bc876c35d538b2c8c6217053aefa195abb43821c';
-
-abstract class _$ProfileOrders extends $AsyncNotifier<List<UserOrderSummary>> {
-  FutureOr<List<UserOrderSummary>> build();
-  @$mustCallSuper
-  @override
-  void runBuild() {
-    final ref =
-        this.ref
-            as $Ref<AsyncValue<List<UserOrderSummary>>, List<UserOrderSummary>>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<
-                AsyncValue<List<UserOrderSummary>>,
-                List<UserOrderSummary>
-              >,
-              AsyncValue<List<UserOrderSummary>>,
-              Object?,
-              Object?
-            >;
-    element.handleCreate(ref, build);
-  }
-}
-
 @ProviderFor(ProfileArSessions)
 final profileArSessionsProvider = ProfileArSessionsProvider._();
 

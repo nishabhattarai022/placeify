@@ -33,7 +33,7 @@ final class ProfileRefundsProvider
   ProfileRefunds create() => ProfileRefunds();
 }
 
-String _$profileRefundsHash() => r'75eda51fe04289be346aae713b3c2970a96f33f8';
+String _$profileRefundsHash() => r'1d55f66920d53466cca3226bce813ed247785ef9';
 
 abstract class _$ProfileRefunds extends $AsyncNotifier<ProfileRefundsState> {
   FutureOr<ProfileRefundsState> build();
