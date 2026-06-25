@@ -359,6 +359,18 @@ class EndpointUser extends EndpointPlaceifyAuthenticated {
     },
   );
 
+  _i3.Future<_i5.User> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) => caller.callServerEndpoint<_i5.User>(
+    'user',
+    'changePassword',
+    {
+      'currentPassword': currentPassword,
+      'newPassword': newPassword,
+    },
+  );
+
   _i3.Future<_i5.User> becomeVendor() => caller.callServerEndpoint<_i5.User>(
     'user',
     'becomeVendor',
@@ -905,7 +917,11 @@ class EndpointNotification extends _i2.EndpointRef {
       );
 }
 
-/// Order history for authenticated customers.
+/// Legacy order history endpoint.
+///
+/// **Deprecated for consumer apps.** Use [UserEndpoint.listMyOrders],
+/// [UserEndpoint.getMyOrder], and delivery data on [UserOrderDetail] instead.
+/// See `docs/CONSUMER_API_CONTRACT.md`.
 /// {@category Endpoint}
 class EndpointOrder extends _i2.EndpointRef {
   EndpointOrder(_i2.EndpointCaller caller) : super(caller);

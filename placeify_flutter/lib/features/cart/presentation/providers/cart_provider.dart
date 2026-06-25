@@ -10,6 +10,7 @@ import '../../../home/presentation/providers/category_provider.dart';
 import '../../../orders/presentation/providers/orders_provider.dart';
 import '../../../profile/presentation/providers/profile_dashboard_provider.dart';
 import '../../data/cart_api_errors.dart';
+import '../../data/product_id_codec.dart';
 import '../../data/serverpod_cart_repository.dart';
 import '../../domain/cart_line_item.dart';
 
@@ -88,8 +89,10 @@ class Cart extends _$Cart {
 
   /// Returns an error message when the server cart could not be updated.
   Future<String?> addProduct(String productId, {int quantity = 1}) async {
+    final normalizedId = ProductIdCodec.normalizeUiProductId(productId);
     final user = ref.read(currentUserProvider).value;
-    final product = ref.read(catalogIndexProvider).value?[productId];
+    final catalog = ref.read(catalogIndexProvider).value;
+    final product = catalog?[normalizedId] ?? catalog?[productId];
     if (!VendorPurchasePolicy.canPurchase(
       user: user,
       productVendorId: product?.vendorId,
@@ -98,12 +101,12 @@ class Cart extends _$Cart {
     }
 
     if (!client.auth.isAuthenticated) {
-      _applyLocalAdd(productId, quantity: quantity);
+      _applyLocalAdd(normalizedId, quantity: quantity);
       return 'Sign in to save items to your cart for checkout.';
     }
 
     try {
-      await _cartRepository.addProduct(productId, quantity: quantity);
+      await _cartRepository.addProduct(normalizedId, quantity: quantity);
       await _refreshFromServer();
       return null;
     } catch (error) {
@@ -217,7 +220,6 @@ class Cart extends _$Cart {
       );
 
       state = const [];
-      ref.invalidate(profileOrdersProvider);
       ref.invalidate(profileDashboardProvider);
       ref.invalidate(ordersProvider);
       return 'Order #${result.order.id} placed successfully';

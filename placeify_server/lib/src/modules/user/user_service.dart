@@ -1,4 +1,6 @@
 import 'package:serverpod/serverpod.dart';
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
+import 'package:serverpod_auth_idp_server/providers/email.dart';
 
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
@@ -23,6 +25,81 @@ class UserService {
 
   Future<User?> getCurrentUser(Session session) {
     return SessionService.resolveUserIfAuthenticated(session);
+  }
+
+  Future<User> changePassword(
+    Session session,
+    String currentPassword,
+    String newPassword,
+  ) async {
+    final user = await SessionService.requireUser(session);
+    final emailIdp = AuthServices.instance.emailIdp;
+    final email = await _resolveAuthEmail(session, user);
+
+    if (newPassword == currentPassword) {
+      throw PlaceifyException(
+        message: 'New password must be different from your current password.',
+        code: 'PASSWORD_UNCHANGED',
+      );
+    }
+
+    if (!emailIdp.config.passwordValidationFunction(newPassword)) {
+      throw PlaceifyException(
+        message:
+            'Password is too weak. Use at least 8 characters with letters and numbers.',
+        code: 'PASSWORD_POLICY_VIOLATION',
+      );
+    }
+
+    try {
+      await emailIdp.utils.authentication.authenticate(
+        session,
+        email: email,
+        password: currentPassword,
+        transaction: null,
+      );
+    } on EmailAuthenticationInvalidCredentialsException {
+      throw PlaceifyException(
+        message: 'Current password is incorrect.',
+        code: 'INVALID_CURRENT_PASSWORD',
+      );
+    } on EmailAuthenticationTooManyAttemptsException {
+      throw PlaceifyException(
+        message: 'Too many failed attempts. Wait a moment and try again.',
+        code: 'TOO_MANY_ATTEMPTS',
+      );
+    }
+
+    await emailIdp.admin.setPassword(
+      session,
+      email: email,
+      password: newPassword,
+    );
+
+    return User.db.updateRow(
+      session,
+      user.copyWith(updatedAt: DateTime.now()),
+    );
+  }
+
+  Future<String> _resolveAuthEmail(Session session, User user) async {
+    final fromProfile = user.email?.trim().toLowerCase();
+    if (fromProfile != null && fromProfile.isNotEmpty) {
+      return fromProfile;
+    }
+
+    final account = await EmailAccount.db.findFirstRow(
+      session,
+      where: (row) => row.authUserId.equals(user.authUserId),
+    );
+    if (account == null) {
+      throw PlaceifyException(
+        message: 'Email account not found.',
+        code: 'EMAIL_NOT_FOUND',
+      );
+    }
+
+    return account.email;
   }
 
   Future<User> updateProfile(

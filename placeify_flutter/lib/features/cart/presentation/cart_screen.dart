@@ -35,8 +35,9 @@ class _CartScreenState extends ConsumerState<CartScreen> {
       return;
     }
 
-    final message =
-        await ref.read(cartProvider.notifier).checkout(paymentMethod: _paymentMethod);
+    final message = await ref
+        .read(cartProvider.notifier)
+        .checkout(paymentMethod: _paymentMethod);
     if (!mounted) return;
 
     PlaceifyToast.show(context, message);
