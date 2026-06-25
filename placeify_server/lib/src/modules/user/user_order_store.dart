@@ -2,7 +2,7 @@ import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
-import '../marketplace/marketplace_events.dart';
+import '../notification/order_notification_service.dart';
 import '../order/order_lifecycle_store.dart';
 import 'user_payment_store.dart';
 
@@ -211,13 +211,11 @@ class UserOrderStore {
       );
       final vendorIds = items.map((item) => item.vendorId).toSet();
       for (final vendorId in vendorIds) {
-        await marketplaceEventDispatcher.dispatch(
+        await OrderNotificationService.notifyVendorOrderCancelled(
           session,
-          OrderCancelledForVendorEvent(
-            order: order.copyWith(status: OrderStatus.cancelled),
-            vendorId: vendorId,
-            reason: trimmed,
-          ),
+          order: order.copyWith(status: OrderStatus.cancelled),
+          vendorId: vendorId,
+          reason: trimmed,
         );
       }
     });

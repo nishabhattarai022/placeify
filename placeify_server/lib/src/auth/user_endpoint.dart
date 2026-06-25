@@ -26,6 +26,14 @@ class UserEndpoint extends PlaceifyAuthenticatedEndpoint {
     );
   }
 
+  Future<User> changePassword(
+    Session session,
+    String currentPassword,
+    String newPassword,
+  ) {
+    return _service.changePassword(session, currentPassword, newPassword);
+  }
+
   Future<User> becomeVendor(Session session) {
     return _service.becomeVendor(session);
   }

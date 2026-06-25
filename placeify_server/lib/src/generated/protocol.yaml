@@ -12,6 +12,7 @@ jwtRefresh:
 user:
   - getCurrentUser:
   - updateProfile:
+  - changePassword:
   - becomeVendor:
   - becomeConsumer:
   - getDashboard:

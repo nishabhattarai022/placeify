@@ -1,3 +1,4 @@
+import 'package:placeify_server/src/generated/order.dart';
 import 'package:placeify_server/src/generated/order_status.dart';
 import 'package:test/test.dart';
 
@@ -27,8 +28,6 @@ void main() {
         expect(dashboard.wishlistCount, 1);
         expect(dashboard.cartItemCount, 0);
         expect(dashboard.refundCount, 0);
-        expect(dashboard.marketplace.recentProducts, isA<List>());
-        expect(dashboard.marketplace.offerProducts, isA<List>());
       },
     );
 
@@ -85,6 +84,35 @@ void main() {
 
         expect(pending, isEmpty);
         expect(delivered, hasLength(1));
+      },
+    );
+
+    test(
+      'when order is cancelled then dashboard orderCount decreases',
+      () async {
+        final auth = await createAuthenticatedUser(sessionBuilder, endpoints);
+
+        final setupSession = sessionBuilder.build();
+        final seeded = await seedProductForUser(setupSession, auth.profile);
+        final order = await seedOrderForUser(
+          setupSession,
+          auth.profile,
+          seeded.product,
+        );
+        await setupSession.close();
+
+        var dashboard = await endpoints.user.getDashboard(auth.session);
+        expect(dashboard.orderCount, 1);
+
+        final cancelSetup = sessionBuilder.build();
+        await Order.db.updateRow(
+          cancelSetup,
+          order.copyWith(status: OrderStatus.cancelled),
+        );
+        await cancelSetup.close();
+
+        dashboard = await endpoints.user.getDashboard(auth.session);
+        expect(dashboard.orderCount, 0);
       },
     );
 

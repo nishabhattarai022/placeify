@@ -79,13 +79,30 @@ class UserProfileStore {
     return items.fold<int>(0, (sum, item) => sum + item.quantity);
   }
 
-  Future<UserDashboard> buildDashboard(Session session, User user) async {
-    final userId = user.id!;
+  /// Profile stat: orders that are not terminal failures (cancelled/rejected).
+  Future<int> _countDashboardOrders(Session session, UuidValue userId) async {
+    final excluded = await Order.db.count(
+      session,
+      where: (order) {
+        return order.userId.equals(userId) &
+            (order.status.equals(OrderStatus.cancelled) |
+                order.status.equals(OrderStatus.autoCancelled) |
+                order.status.equals(OrderStatus.rejected));
+      },
+    );
 
-    final orderCount = await Order.db.count(
+    final total = await Order.db.count(
       session,
       where: (order) => order.userId.equals(userId),
     );
+
+    return total - excluded;
+  }
+
+  Future<UserDashboard> buildDashboard(Session session, User user) async {
+    final userId = user.id!;
+
+    final orderCount = await _countDashboardOrders(session, userId);
 
     final wishlistCount = await _wishlistStore.countForUser(session, userId);
     final arSessionCount = await _arSessionStore.countForUser(session, userId);
