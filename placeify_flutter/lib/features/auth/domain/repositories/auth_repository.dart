@@ -22,6 +22,11 @@ abstract interface class AuthRepository {
 
   Future<void> signOut();
 
+  Future<DateTime> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
+
   Future<AppUser> becomeVendor();
 
   Future<AppUser> becomeConsumer();

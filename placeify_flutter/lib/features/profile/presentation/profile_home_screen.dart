@@ -11,6 +11,7 @@ import '../../vendor/domain/constants/vendor_routes.dart';
 import '../../vendor/domain/enums/vendor_status.dart';
 import '../../vendor/presentation/widgets/vendor_status_gate_sheets.dart';
 import '../data/profile_menu_config.dart';
+import '../data/password_last_changed.dart';
 import '../../home/presentation/providers/wishlist_provider.dart';
 import '../../home/presentation/providers/wishlist_count.dart';
 import 'widgets/profile_hero.dart';
@@ -33,6 +34,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
       ref.read(currentUserProvider.notifier).refresh();
       ref.read(profileDashboardProvider.notifier).refresh();
       ref.read(wishlistProvider.notifier).refresh();
+      _loadPasswordChangedAt();
     });
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
@@ -126,22 +128,45 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
     context.go('/splash');
   }
 
+  Future<void> _loadPasswordChangedAt() async {
+    final email = ref.read(currentUserProvider).value?.email;
+    if (email == null) return;
+
+    final changedAt = await loadPasswordChangedAt(email);
+    if (!mounted || changedAt == null) return;
+    ref.read(passwordChangedAtProvider.notifier).state = changedAt;
+  }
+
   ProfileMenuItemData _overviewMenuItem(ProfileMenuItemData item) {
-    if (item.route != ProfileMenuRoute.wishlist) return item;
+    if (item.route == ProfileMenuRoute.wishlist) {
+      final count = readWishlistCount(ref);
+      final subtitle = count == 0
+          ? 'No saved items'
+          : '$count saved item${count == 1 ? '' : 's'}';
 
-    final count = readWishlistCount(ref);
-    final subtitle = count == 0
-        ? 'No saved items'
-        : '$count saved item${count == 1 ? '' : 's'}';
+      return ProfileMenuItemData(
+        title: item.title,
+        subtitle: subtitle,
+        icon: item.icon,
+        iconColor: item.iconColor,
+        backgroundColor: item.backgroundColor,
+        route: item.route,
+      );
+    }
 
-    return ProfileMenuItemData(
-      title: item.title,
-      subtitle: subtitle,
-      icon: item.icon,
-      iconColor: item.iconColor,
-      backgroundColor: item.backgroundColor,
-      route: item.route,
-    );
+    if (item.route == ProfileMenuRoute.password) {
+      final changedAt = ref.watch(passwordChangedAtProvider);
+      return ProfileMenuItemData(
+        title: item.title,
+        subtitle: passwordLastChangedSubtitle(changedAt),
+        icon: item.icon,
+        iconColor: item.iconColor,
+        backgroundColor: item.backgroundColor,
+        route: item.route,
+      );
+    }
+
+    return item;
   }
 
   @override

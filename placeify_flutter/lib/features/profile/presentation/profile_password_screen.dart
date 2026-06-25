@@ -1,28 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import '../../../core/widgets/toast_overlay.dart';
+import '../../auth/domain/repositories/auth_repository.dart';
+import '../../auth/presentation/providers/auth_provider.dart';
+import '../data/password_last_changed.dart';
 import 'widgets/profile_sub_hero.dart';
 import 'widgets/shared/password_strength_panel.dart';
 import 'widgets/shared/profile_form_field.dart';
 import 'widgets/shared/profile_submit_button.dart';
 
-class ProfilePasswordScreen extends StatefulWidget {
+class ProfilePasswordScreen extends ConsumerStatefulWidget {
   const ProfilePasswordScreen({super.key});
 
   @override
-  State<ProfilePasswordScreen> createState() => _ProfilePasswordScreenState();
+  ConsumerState<ProfilePasswordScreen> createState() =>
+      _ProfilePasswordScreenState();
 }
 
-class _ProfilePasswordScreenState extends State<ProfilePasswordScreen> {
+class _ProfilePasswordScreenState extends ConsumerState<ProfilePasswordScreen> {
   final _currentController = TextEditingController();
   final _newController = TextEditingController();
   final _confirmController = TextEditingController();
   bool _showCurrent = false;
   bool _showNew = false;
   bool _showConfirm = false;
+  bool _submitting = false;
   String _matchLabel = '';
   Color _matchColor = AppColors.textMuted;
 
@@ -55,7 +61,7 @@ class _ProfilePasswordScreenState extends State<ProfilePasswordScreen> {
     }
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     final cur = _currentController.text;
     final nw = _newController.text;
     final con = _confirmController.text;
@@ -71,10 +77,36 @@ class _ProfilePasswordScreenState extends State<ProfilePasswordScreen> {
       PlaceifyToast.show(context, 'Password too short');
       return;
     }
-    PlaceifyToast.show(context, 'Password updated successfully ✓');
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      if (mounted) context.pop();
-    });
+    if (_submitting) return;
+
+    setState(() => _submitting = true);
+    try {
+      final repo = await ref.read(authRepositoryProvider.future);
+      final changedAt = await repo.changePassword(
+        currentPassword: cur,
+        newPassword: nw,
+      );
+
+      final email = ref.read(currentUserProvider).value?.email;
+      if (email != null) {
+        await savePasswordChangedAt(email, changedAt);
+        ref.read(passwordChangedAtProvider.notifier).state = changedAt;
+      }
+
+      if (!mounted) return;
+      PlaceifyToast.show(context, 'Password updated successfully ✓');
+      Future.delayed(const Duration(milliseconds: 1200), () {
+        if (mounted) context.pop();
+      });
+    } on AuthException catch (error) {
+      if (!mounted) return;
+      PlaceifyToast.show(context, error.message);
+    } catch (_) {
+      if (!mounted) return;
+      PlaceifyToast.show(context, 'Could not update password. Please try again.');
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
   @override

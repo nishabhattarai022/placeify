@@ -93,6 +93,38 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<DateTime> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final email = _prefs.getString(_sessionEmailKey);
+    if (email == null) {
+      throw AuthException('Sign in to continue');
+    }
+
+    final users = await _loadUsers();
+    final index = users.indexWhere((u) => u.email == email);
+    if (index == -1) throw AuthException('Session expired');
+
+    final current = users[index];
+    if (current.password != currentPassword) {
+      throw AuthException('Current password is incorrect.');
+    }
+    if (newPassword == currentPassword) {
+      throw AuthException(
+        'New password must be different from your current password.',
+      );
+    }
+    if (newPassword.length < 8) {
+      throw AuthException('Password too short');
+    }
+
+    users[index] = current.copyWithPassword(newPassword);
+    await _saveUsers(users);
+    return DateTime.now();
+  }
+
+  @override
   Future<AppUser> becomeVendor() async {
     final email = _prefs.getString(_sessionEmailKey);
     if (email == null) {
@@ -256,17 +288,20 @@ class _StoredUser {
     VendorStatus? vendorStatus,
     String? vendorId,
     bool clearVendorId = false,
+    String? password,
   }) {
     return _StoredUser(
       id: id,
       fullName: fullName,
       email: email,
-      password: password,
+      password: password ?? this.password,
       role: role ?? this.role,
       vendorStatus: vendorStatus ?? this.vendorStatus,
       vendorId: clearVendorId ? null : (vendorId ?? this.vendorId),
     );
   }
+
+  _StoredUser copyWithPassword(String newPassword) => copyWith(password: newPassword);
 
   AppUser toAppUser() => AppUser(
         id: id,

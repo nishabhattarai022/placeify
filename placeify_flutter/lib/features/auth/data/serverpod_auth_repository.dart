@@ -215,6 +215,23 @@ class ServerpodAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<DateTime> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    _requireAuthenticated();
+    try {
+      final updated = await client.user.changePassword(
+        currentPassword,
+        newPassword,
+      );
+      return updated.updatedAt;
+    } catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
   Future<AppUser> becomeVendor() async {
     _requireAuthenticated();
     try {
@@ -393,6 +410,23 @@ class ServerpodAuthRepository implements AuthRepository {
 
     if (_isConnectionError(message) || _looksLikeConnectionError(error)) {
       return AuthException(_connectionHelpMessage());
+    }
+    if (error is PlaceifyException) {
+      return AuthException(error.message);
+    }
+
+    if (message.contains('invalid_current_password')) {
+      return AuthException('Current password is incorrect.');
+    }
+    if (message.contains('password_policy_violation')) {
+      return AuthException(
+        'Password is too weak. Use at least 8 characters with letters and numbers.',
+      );
+    }
+    if (message.contains('password_unchanged')) {
+      return AuthException(
+        'New password must be different from your current password.',
+      );
     }
     if (message.contains('password') &&
         (message.contains('invalid') || message.contains('incorrect'))) {
