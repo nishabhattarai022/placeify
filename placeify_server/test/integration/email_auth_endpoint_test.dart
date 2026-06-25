@@ -142,6 +142,62 @@ void main() {
           expect(refreshed.refreshToken, isNotEmpty);
         },
       );
+
+      test(
+        'when password is changed then old password fails and new password works',
+        () async {
+          final testEmail =
+              'auth-password-${DateTime.now().microsecondsSinceEpoch}@placeify.test';
+          const oldPassword = testPassword;
+          const newPassword = 'NewSecurePass456!';
+
+          final requestId = await endpoints.emailIdp.startRegistration(
+            sessionBuilder,
+            email: testEmail,
+          );
+          final registrationToken =
+              await endpoints.emailIdp.verifyRegistrationCode(
+            sessionBuilder,
+            accountRequestId: requestId,
+            verificationCode: testCode,
+          );
+          final authSuccess = await endpoints.emailIdp.finishRegistration(
+            sessionBuilder,
+            registrationToken: registrationToken,
+            password: oldPassword,
+          );
+
+          final authenticated = sessionBuilder.copyWith(
+            authentication: AuthenticationOverride.authenticationInfo(
+              authSuccess.authUserId.toString(),
+              {},
+            ),
+          );
+
+          final updated = await endpoints.user.changePassword(
+            authenticated,
+            oldPassword,
+            newPassword,
+          );
+          expect(updated.updatedAt, isNotNull);
+
+          await expectLater(
+            endpoints.emailIdp.login(
+              sessionBuilder,
+              email: testEmail,
+              password: oldPassword,
+            ),
+            throwsA(isA<EmailAccountLoginException>()),
+          );
+
+          final loginResult = await endpoints.emailIdp.login(
+            sessionBuilder,
+            email: testEmail,
+            password: newPassword,
+          );
+          expect(loginResult.token, isNotEmpty);
+        },
+      );
     },
     rollbackDatabase: RollbackDatabase.disabled,
   );
