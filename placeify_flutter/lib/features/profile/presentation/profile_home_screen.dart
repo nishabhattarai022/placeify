@@ -12,12 +12,14 @@ import '../../vendor/domain/enums/vendor_status.dart';
 import '../../vendor/presentation/widgets/vendor_status_gate_sheets.dart';
 import '../data/profile_menu_config.dart';
 import '../data/password_last_changed.dart';
+import '../data/refund_menu_subtitle.dart';
 import '../../home/presentation/providers/wishlist_provider.dart';
 import '../../home/presentation/providers/wishlist_count.dart';
 import 'widgets/profile_hero.dart';
 import 'widgets/profile_menu_tile.dart';
 import 'widgets/profile_orders_tile.dart';
 import 'providers/profile_dashboard_provider.dart';
+import 'providers/profile_refunds_provider.dart';
 
 class ProfileHomeScreen extends ConsumerStatefulWidget {
   const ProfileHomeScreen({super.key});
@@ -34,6 +36,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
       ref.read(currentUserProvider.notifier).refresh();
       ref.read(profileDashboardProvider.notifier).refresh();
       ref.read(wishlistProvider.notifier).refresh();
+      ref.read(profileRefundsProvider.notifier).refresh();
       _loadPasswordChangedAt();
     });
     SystemChrome.setSystemUIOverlayStyle(
@@ -166,12 +169,24 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
       );
     }
 
+    if (item.route == ProfileMenuRoute.refund) {
+      return ProfileMenuItemData(
+        title: item.title,
+        subtitle: readRefundMenuSubtitle(ref, fallback: item.subtitle),
+        icon: item.icon,
+        iconColor: item.iconColor,
+        backgroundColor: item.backgroundColor,
+        route: item.route,
+      );
+    }
+
     return item;
   }
 
   @override
   Widget build(BuildContext context) {
     ref.watch(wishlistProvider);
+    ref.watch(profileRefundsProvider);
     ref.listen(profileDashboardProvider, (previous, next) {
       reconcileWishlistWithDashboard(ref);
     });

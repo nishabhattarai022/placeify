@@ -15,7 +15,6 @@ abstract final class ProfileMenuConfig {
 
   static const int wishlistCount = 8;
   static const int arTriesCount = 24;
-  static const int refundsCount = 2;
 }
 
 enum ProfileMenuRoute {
@@ -75,7 +74,7 @@ abstract final class ProfileMenuItems {
     ),
     ProfileMenuItemData(
       title: 'Refund & Returns',
-      subtitle: 'NPR 45.00 pending · 2 active',
+      subtitle: 'View refund requests',
       icon: Icons.paid_outlined,
       iconColor: AppColors.lavender,
       backgroundColor: AppColors.lavenderBg,
