@@ -9,6 +9,7 @@ import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_fo
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_image_item.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_product_form_provider.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_strings.dart';
+import 'package:placeify_flutter/features/vendor/presentation/vendor_3d_model_access.dart';
 import 'package:placeify_flutter/features/vendor/presentation/widgets/product_image_picker_grid.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -203,12 +204,22 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
       return;
     }
 
-    final success = await ref.read(vendorProductFormProvider.notifier).submit();
+    final saved = await ref.read(vendorProductFormProvider.notifier).submit();
     if (!mounted) return;
 
-    if (success) {
+    if (saved != null) {
       HapticService.medium();
       PlaceifyToast.show(context, VendorStrings.productSaved);
+
+      if (!saved.hasArView) {
+        await Vendor3dModelAccess.promptAfterProductSaved(
+          context: context,
+          ref: ref,
+          product: saved,
+        );
+      }
+
+      if (!mounted) return;
       context.pop();
       return;
     }
@@ -232,12 +243,12 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
       return;
     }
 
-    final success = await ref
+    final saved = await ref
         .read(vendorProductFormProvider.notifier)
         .submit(resetOnSuccess: false);
     if (!mounted) return;
 
-    if (success) {
+    if (saved != null) {
       HapticService.medium();
       PlaceifyToast.show(context, VendorStrings.changesSaved);
       setState(() => _isDirty = false);

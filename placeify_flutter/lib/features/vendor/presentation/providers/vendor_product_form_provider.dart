@@ -284,11 +284,11 @@ class VendorProductForm extends _$VendorProductForm {
     return null;
   }
 
-  Future<bool> submit({bool resetOnSuccess = true}) async {
+  Future<VendorProduct?> submit({bool resetOnSuccess = true}) async {
     final validationError = validate();
     if (validationError != null) {
       state = state.copyWith(submitError: validationError);
-      return false;
+      return null;
     }
 
     state = state.copyWith(isSubmitting: true, clearSubmitError: true);
@@ -301,7 +301,7 @@ class VendorProductForm extends _$VendorProductForm {
           isSubmitting: false,
           submitError: 'Vendor account not found.',
         );
-        return false;
+        return null;
       }
 
       VendorProduct? existing;
@@ -313,16 +313,25 @@ class VendorProductForm extends _$VendorProductForm {
       final product = _buildProduct(vendorId, existing: existing);
       final productsNotifier = ref.read(vendorProductsProvider.notifier);
 
-      final String? error;
+      final ({VendorProduct? product, String? error}) result;
       if (state.isEditing) {
-        error = (await productsNotifier.updateProduct(product)).error;
+        result = await productsNotifier.updateProduct(product);
       } else {
-        error = (await productsNotifier.createProduct(product)).error;
+        result = await productsNotifier.createProduct(product);
       }
 
-      if (error != null) {
-        state = state.copyWith(isSubmitting: false, submitError: error);
-        return false;
+      if (result.error != null) {
+        state = state.copyWith(isSubmitting: false, submitError: result.error);
+        return null;
+      }
+
+      final saved = result.product;
+      if (saved == null) {
+        state = state.copyWith(
+          isSubmitting: false,
+          submitError: 'Could not save product. Try again.',
+        );
+        return null;
       }
 
       if (resetOnSuccess) {
@@ -330,13 +339,13 @@ class VendorProductForm extends _$VendorProductForm {
       } else {
         state = state.copyWith(isSubmitting: false, clearSubmitError: true);
       }
-      return true;
+      return saved;
     } catch (_) {
       state = state.copyWith(
         isSubmitting: false,
         submitError: 'Could not save product. Try again.',
       );
-      return false;
+      return null;
     }
   }
 

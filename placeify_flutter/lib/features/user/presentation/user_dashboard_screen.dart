@@ -51,16 +51,19 @@ class UserDashboardScreen extends ConsumerWidget {
         return RefreshIndicator(
           onRefresh: () => _refreshDashboard(ref),
           child: FutureBuilder<({
+            List<Product> recent,
             List<Product> offers,
             List<Product> featured,
           })>(
             future: _loadMarketplaceProducts(dashboard),
             builder: (context, snapshot) {
+              final recent = snapshot.data?.recent ?? const [];
               final offers = snapshot.data?.offers ?? const [];
               final featured = snapshot.data?.featured ?? const [];
               return _DashboardContent(
                 dashboard: dashboard,
                 metrics: metrics,
+                recentProducts: recent,
                 offerProducts: offers,
                 featuredProducts: featured,
               );
@@ -78,15 +81,21 @@ class UserDashboardScreen extends ConsumerWidget {
     ]);
   }
 
-  Future<({List<Product> offers, List<Product> featured})>
-      _loadMarketplaceProducts(UserDashboard dashboard) async {
+  Future<({
+    List<Product> recent,
+    List<Product> offers,
+    List<Product> featured,
+  })> _loadMarketplaceProducts(UserDashboard dashboard) async {
+    final recent = await UserDashboardMarketplaceMapper.toUiProducts(
+      dashboard.marketplace.recentProducts,
+    );
     final offers = await UserDashboardMarketplaceMapper.toUiProducts(
       dashboard.marketplace.offerProducts,
     );
     final featured = await UserDashboardMarketplaceMapper.toUiProducts(
       dashboard.marketplace.featuredProducts,
     );
-    return (offers: offers, featured: featured);
+    return (recent: recent, offers: offers, featured: featured);
   }
 }
 
@@ -94,12 +103,14 @@ class _DashboardContent extends StatelessWidget {
   const _DashboardContent({
     required this.dashboard,
     required this.metrics,
+    required this.recentProducts,
     required this.offerProducts,
     required this.featuredProducts,
   });
 
   final UserDashboard dashboard;
   final List<UserOverviewMetric> metrics;
+  final List<Product> recentProducts;
   final List<Product> offerProducts;
   final List<Product> featuredProducts;
 
@@ -181,6 +192,13 @@ class _DashboardContent extends StatelessWidget {
               ],
             ),
           ),
+          if (recentProducts.isNotEmpty) ...[
+            const SizedBox(height: 28),
+            UserDashboardMarketplaceRow(
+              title: 'New arrivals',
+              products: recentProducts,
+            ),
+          ],
           if (offerProducts.isNotEmpty) ...[
             const SizedBox(height: 28),
             UserDashboardMarketplaceRow(
