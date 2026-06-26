@@ -33,10 +33,7 @@ abstract final class CatalogProductMapper {
 
     final categoryId = product.category?.name ?? 'chairs';
     final shopName = product.vendor?.shopName ?? 'Placeify vendor';
-    final thumbnail = product.thumbnailUrl;
-    final imageUrl = thumbnail == null || thumbnail.isEmpty
-        ? 'assets/icons/ic_chair.svg'
-        : await resolveMediaUrl(thumbnail);
+    final imageUrl = await _resolvePrimaryImage(product);
 
     final dimensions = _dimensionsFromApi(product);
     final uiId = ProductIdCodec.fromDatabaseId(id);
@@ -99,5 +96,20 @@ abstract final class CatalogProductMapper {
 
   static bool hasActiveOffer(api.Product product) {
     return product.isOffer || effectiveUnitPrice(product) < product.price;
+  }
+
+  static Future<String> _resolvePrimaryImage(api.Product product) async {
+    final thumbnail = product.thumbnailUrl?.trim();
+    if (thumbnail != null && thumbnail.isNotEmpty) {
+      return resolveMediaUrl(thumbnail);
+    }
+
+    for (final viewUrl in product.viewImageUrls ?? const <String>[]) {
+      final trimmed = viewUrl.trim();
+      if (trimmed.isEmpty) continue;
+      return resolveMediaUrl(trimmed);
+    }
+
+    return '';
   }
 }

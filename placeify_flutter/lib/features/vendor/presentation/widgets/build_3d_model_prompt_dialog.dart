@@ -10,10 +10,12 @@ class BuildModelPromptDialog extends StatelessWidget {
     required this.productId,
     required this.onBuildNow,
     required this.onDismiss,
+    this.message,
     super.key,
   });
 
   final String productId;
+  final String? message;
   final VoidCallback onBuildNow;
   final VoidCallback onDismiss;
 
@@ -54,8 +56,9 @@ class BuildModelPromptDialog extends StatelessWidget {
         ],
       ),
       content: Text(
-        "You haven't built a 3D model for this product yet. Build the 3D "
-        'model first to use this feature.',
+        message ??
+            "You haven't built a 3D model for this product yet. Build the 3D "
+                'model first to use this feature.',
         style: GoogleFonts.dmSans(
           fontSize: 14,
           fontWeight: FontWeight.w400,
