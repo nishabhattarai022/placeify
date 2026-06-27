@@ -69,12 +69,20 @@ class ProductImageProcessor {
   }) async {
     final apiKey = RemoveBgApiKeyConfig.apiKey();
     if (apiKey == null || apiKey.isEmpty) {
-      throw PlaceifyException(
-        message:
-            'Background removal is not configured. Copy '
-            'config/removebg_api_key.example.yaml to config/removebg_api_key.yaml '
-            'and add your remove.bg API key.',
-        code: 'BG_REMOVAL_NOT_CONFIGURED',
+      session.log(
+        'remove.bg API key not configured — saving catalog fallback without '
+        'background removal',
+        level: LogLevel.warning,
+      );
+      final catalogBytes = _fallbackCatalogFromOriginal(bytes);
+      final tripoSource = _prepareTripoSource(bytes, fileExtension);
+      return VendorProductImages(
+        catalog: ProcessedProductImage(
+          bytes: catalogBytes,
+          extension: '.jpg',
+          backgroundRemoved: false,
+        ),
+        tripoSource: tripoSource,
       );
     }
 
