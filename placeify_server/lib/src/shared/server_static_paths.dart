@@ -37,7 +37,9 @@ abstract final class ServerStaticPaths {
   static String uploadsModelsDir() => _join(root, 'uploads', 'models');
 
   static File fileFromUrlPath(String urlPath) {
-    final normalized = urlPath.startsWith('/') ? urlPath.substring(1) : urlPath;
+    final withoutQuery = urlPath.split('?').first;
+    final normalized =
+        withoutQuery.startsWith('/') ? withoutQuery.substring(1) : withoutQuery;
     final segments = normalized.split('/').where((s) => s.isNotEmpty);
     return File(_joinAll([root, ...segments]));
   }
