@@ -1,5 +1,6 @@
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_metric.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_order.dart';
+import 'package:placeify_flutter/features/vendor/domain/models/vendor_pending_refund.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_stats.dart';
 
 /// Aggregated dashboard payload loaded by [vendorStatsProvider].
@@ -9,12 +10,14 @@ class VendorDashboardData {
     required this.revenueSeries,
     required this.recentOrders,
     required this.topProducts,
+    this.pendingRefunds = const [],
   });
 
   final VendorStats stats;
   final List<double> revenueSeries;
   final List<VendorOrder> recentOrders;
   final List<TopProductStat> topProducts;
+  final List<VendorPendingRefund> pendingRefunds;
 
   static const empty = VendorDashboardData(
     stats: VendorStats(

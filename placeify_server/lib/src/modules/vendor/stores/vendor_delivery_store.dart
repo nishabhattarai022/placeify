@@ -126,6 +126,7 @@ class VendorDeliveryStore {
       );
     }
 
+    Order? updatedOrder;
     OrderDeliveryUpdate? update;
     await session.db.transaction((transaction) async {
       update = await OrderDeliveryUpdate.db.insertRow(
@@ -140,14 +141,12 @@ class VendorDeliveryStore {
         transaction: transaction,
       );
 
-      final nextOrderStatus =
-          OrderLifecycleStore.orderStatusForDelivery(nextDeliveryStatus);
-      final updatedOrder = await OrderLifecycleStore.updateOrderWithVersion(
+      updatedOrder = await OrderLifecycleStore.updateOrderWithVersion(
         session,
         order,
         (current) => current.copyWith(
           deliveryStatus: nextDeliveryStatus,
-          status: nextOrderStatus,
+          status: OrderLifecycleStore.orderStatusForDelivery(nextDeliveryStatus),
         ),
         transaction: transaction,
       );
@@ -163,6 +162,8 @@ class VendorDeliveryStore {
         transaction: transaction,
       );
 
+      final nextOrderStatus =
+          OrderLifecycleStore.orderStatusForDelivery(nextDeliveryStatus);
       if (order.status != nextOrderStatus) {
         await OrderLifecycleStore.appendHistory(
           session,
@@ -175,23 +176,18 @@ class VendorDeliveryStore {
           transaction: transaction,
         );
       }
+    });
 
+    if (updatedOrder != null) {
       await _events.dispatch(
         session,
         DeliveryUpdatedEvent(
-          order: updatedOrder,
+          order: updatedOrder!,
           stage: stage,
           vendorId: vendor.id!,
         ),
       );
-
-      if (nextDeliveryStatus == OrderDeliveryStatus.delivered) {
-        await _events.dispatch(
-          session,
-          OrderDeliveredEvent(order: updatedOrder, vendorId: vendor.id!),
-        );
-      }
-    });
+    }
 
     return update!;
   }

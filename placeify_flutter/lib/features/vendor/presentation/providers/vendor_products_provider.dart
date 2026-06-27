@@ -219,6 +219,10 @@ class VendorProducts extends _$VendorProducts {
 
       final repo = ref.read(vendorProductRepositoryProvider);
       await repo.deleteProducts(vendorId, productIds.toList());
+      for (final id in productIds) {
+        ref.read(catalogIndexProvider.notifier).removeProduct(id);
+      }
+      invalidateCustomerCatalog(ref);
       return null;
     } on VendorProductActionException catch (e) {
       state = previous;

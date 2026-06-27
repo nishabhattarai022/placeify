@@ -133,6 +133,9 @@ vendor:
   - listNotifications:
   - markNotificationRead:
   - markAllNotificationsRead:
+  - listPendingRefundRequests:
+  - approveRefundRequest:
+  - rejectRefundRequest:
 wishlist:
   - listMyWishlist:
   - addToWishlist:

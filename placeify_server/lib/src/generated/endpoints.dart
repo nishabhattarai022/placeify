@@ -2800,6 +2800,60 @@ class Endpoints extends _i1.EndpointDispatch {
               ) async => (endpoints['vendor'] as _i16.VendorEndpoint)
                   .markAllNotificationsRead(session),
         ),
+        'listPendingRefundRequests': _i1.MethodConnector(
+          name: 'listPendingRefundRequests',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['vendor'] as _i16.VendorEndpoint)
+                  .listPendingRefundRequests(session),
+        ),
+        'approveRefundRequest': _i1.MethodConnector(
+          name: 'approveRefundRequest',
+          params: {
+            'refundId': _i1.ParameterDescription(
+              name: 'refundId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['vendor'] as _i16.VendorEndpoint)
+                  .approveRefundRequest(
+                    session,
+                    params['refundId'],
+                  ),
+        ),
+        'rejectRefundRequest': _i1.MethodConnector(
+          name: 'rejectRefundRequest',
+          params: {
+            'refundId': _i1.ParameterDescription(
+              name: 'refundId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'reason': _i1.ParameterDescription(
+              name: 'reason',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['vendor'] as _i16.VendorEndpoint)
+                  .rejectRefundRequest(
+                    session,
+                    params['refundId'],
+                    reason: params['reason'],
+                  ),
+        ),
       },
     );
     connectors['wishlist'] = _i1.EndpointConnector(

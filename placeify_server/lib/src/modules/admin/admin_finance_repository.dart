@@ -2,7 +2,9 @@ import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
+import '../../shared/session_service.dart';
 import '../admin/admin_repository.dart';
+import '../notification/order_notification_service.dart';
 import '../payment/payment_sync.dart';
 
 /// Admin finance operations: payout approval and refund resolution.
@@ -199,6 +201,7 @@ class AdminFinanceStore {
       );
     }
 
+    final adminUser = await SessionService.requireUser(session);
     final updated = await session.db.transaction((transaction) async {
       final resolved = await RefundRequest.db.updateRow(
         session,
@@ -214,11 +217,18 @@ class AdminFinanceStore {
           session,
           row.orderId,
           transaction: transaction,
+          changedByUserId: adminUser.id,
         );
       }
 
       return resolved;
     });
+
+    await OrderNotificationService.notifyRefundDecision(
+      session,
+      refund: updated,
+      approved: approve,
+    );
 
     return AdminRefundRequestSummary(
       id: updated.id!,

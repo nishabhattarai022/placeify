@@ -11,6 +11,7 @@ import 'stores/vendor_notification_store.dart';
 import 'stores/vendor_order_store.dart';
 import 'stores/vendor_product_store.dart';
 import 'stores/vendor_profile_store.dart';
+import 'stores/vendor_refund_store.dart';
 import 'vendor_product_image_storage.dart';
 
 class VendorStore {
@@ -23,6 +24,7 @@ class VendorStore {
     VendorDeliveryStore? delivery,
     VendorProductStore? products,
     VendorProfileStore? profile,
+    VendorRefundStore? refunds,
     VendorProductImageStorage? imageStorage,
   })  : _notifications = notifications ?? InAppNotificationStore(),
         _access = access ?? VendorAccessGuard(),
@@ -59,7 +61,8 @@ class VendorStore {
             VendorProfileStore(
               access: access ?? VendorAccessGuard(),
               imageStorage: imageStorage ?? VendorProductImageStorage(),
-            );
+            ),
+        _refunds = refunds ?? VendorRefundStore(access: access);
 
   final InAppNotificationStore _notifications;
   final VendorAccessGuard _access;
@@ -70,6 +73,7 @@ class VendorStore {
   final VendorDeliveryStore _delivery;
   final VendorProductStore _products;
   final VendorProfileStore _profile;
+  final VendorRefundStore _refunds;
 
   Future<VendorDashboard> getDashboard(Session session) =>
       _profile.getDashboard(session);
@@ -325,4 +329,22 @@ class VendorStore {
 
   Future<Product> archiveProduct(Session session, int productId) =>
       _products.archiveProduct(session, productId);
+
+  Future<List<RefundRequestSummary>> listPendingRefundRequests(
+    Session session,
+  ) =>
+      _refunds.listPending(session);
+
+  Future<RefundRequestSummary> approveRefundRequest(
+    Session session,
+    int refundId,
+  ) =>
+      _refunds.approve(session, refundId);
+
+  Future<RefundRequestSummary> rejectRefundRequest(
+    Session session,
+    int refundId, {
+    String? reason,
+  }) =>
+      _refunds.reject(session, refundId, reason: reason);
 }

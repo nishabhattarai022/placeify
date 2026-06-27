@@ -42,14 +42,8 @@ Future<void> marketplaceNotificationHandler(
         vendorId: event.vendorId,
       );
     case OrderDeliveredEvent():
-      if (event.order.deliveryStatus == OrderDeliveryStatus.delivered) {
-        await OrderNotificationService.notifyDeliveryStatus(
-          session,
-          order: event.order,
-          status: OrderDeliveryStatus.delivered,
-          vendorId: event.vendorId,
-        );
-      }
+      // DeliveryUpdatedEvent already notifies the customer for delivered orders.
+      break;
     case OrderCancelledForVendorEvent():
       await OrderNotificationService.notifyVendorOrderCancelled(
         session,
@@ -70,7 +64,21 @@ Future<void> marketplaceNotificationHandler(
         order: event.order,
       );
     case ProductCreatedEvent():
+      await OrderNotificationService.notifyConsumersNewProduct(
+        session,
+        product: event.product,
+        vendorName: await _vendorName(session, event.vendorId),
+      );
     case DiscountActivatedEvent():
-      break;
+      await OrderNotificationService.notifyConsumersSpecialOffer(
+        session,
+        product: event.product,
+        vendorName: await _vendorName(session, event.vendorId),
+      );
   }
+}
+
+Future<String> _vendorName(Session session, UuidValue vendorId) async {
+  final vendor = await Vendor.db.findById(session, vendorId);
+  return vendor?.shopName ?? 'A vendor';
 }

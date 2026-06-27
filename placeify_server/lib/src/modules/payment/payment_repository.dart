@@ -4,6 +4,7 @@ import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
 import '../marketplace/marketplace_events.dart';
+import '../notification/order_notification_service.dart';
 import '../order/order_lifecycle_store.dart';
 import '../vendor/vendor_repository.dart';
 import 'payment_sync.dart';
@@ -129,11 +130,19 @@ class PaymentStore {
             id: row.id!,
             orderId: orderId,
             amount: amount,
-            status: PaymentTransactionStatus.succeeded,
+            status: _paymentStatusFromHistory(row.newStatus),
             note: _paymentHistoryNote(row.newStatus, row.note),
             updatedAt: row.changedAt,
           ),
     ];
+  }
+
+  static PaymentTransactionStatus _paymentStatusFromHistory(String newStatus) {
+    return switch (newStatus) {
+      'paymentReceived' || 'paymentConfirmed' =>
+        PaymentTransactionStatus.succeeded,
+      _ => PaymentTransactionStatus.fromJson(newStatus),
+    };
   }
 
   Future<PaymentUpdateSummary> updateOrderPaymentStatus(
@@ -157,6 +166,9 @@ class PaymentStore {
         : trimmedNote;
 
     PaymentUpdateSummary? summary;
+    Order? updatedOrderForEvent;
+    OrderPaymentStatus? eventPaymentStatus;
+    var notifyAllocationOnly = false;
 
     await session.db.transaction((transaction) async {
       await PaymentSync.ensureAllocationsForOrder(
@@ -226,15 +238,33 @@ class PaymentStore {
           );
         }
 
-        allocation = await OrderVendorPayment.db.updateRow(
-          session,
-          allocation.copyWith(
-            status: status,
-            note: resolvedNote,
-            updatedAt: DateTime.now(),
-          ),
-          transaction: transaction,
-        );
+        final allocationStatusChanged = allocation.status != status;
+        if (allocationStatusChanged) {
+          allocation = await OrderVendorPayment.db.updateRow(
+            session,
+            allocation.copyWith(
+              status: status,
+              note: resolvedNote,
+              updatedAt: DateTime.now(),
+            ),
+            transaction: transaction,
+          );
+
+          if (status == PaymentTransactionStatus.failed ||
+              status == PaymentTransactionStatus.refunded) {
+            await OrderLifecycleStore.appendHistory(
+              session,
+              orderId,
+              statusType: OrderStatusHistoryType.payment,
+              previousStatus: currentPaymentStatus.name,
+              newStatus: status.name,
+              changedByUserId: user.id,
+              note: resolvedNote,
+              transaction: transaction,
+            );
+            notifyAllocationOnly = true;
+          }
+        }
       }
 
       await PaymentSync.syncOrderPaymentStatus(
@@ -245,12 +275,13 @@ class PaymentStore {
 
       if (nextPaymentStatus != null &&
           nextPaymentStatus != currentPaymentStatus) {
-        final updatedOrder = await OrderLifecycleStore.updateOrderWithVersion(
+        updatedOrderForEvent = await OrderLifecycleStore.updateOrderWithVersion(
           session,
           order,
           (current) => current.copyWith(paymentStatus: nextPaymentStatus),
           transaction: transaction,
         );
+        eventPaymentStatus = nextPaymentStatus;
 
         await OrderLifecycleStore.appendHistory(
           session,
@@ -262,19 +293,28 @@ class PaymentStore {
           note: resolvedNote,
           transaction: transaction,
         );
-
-        await marketplaceEventDispatcher.dispatch(
-          session,
-          PaymentStatusChangedEvent(
-            order: updatedOrder,
-            status: nextPaymentStatus,
-            vendorId: vendor.id!,
-          ),
-        );
       }
 
       summary = _allocationSummary(allocation);
     });
+
+    if (updatedOrderForEvent != null && eventPaymentStatus != null) {
+      await marketplaceEventDispatcher.dispatch(
+        session,
+        PaymentStatusChangedEvent(
+          order: updatedOrderForEvent!,
+          status: eventPaymentStatus!,
+          vendorId: vendor.id!,
+        ),
+      );
+    } else if (notifyAllocationOnly) {
+      await OrderNotificationService.notifyCustomerPaymentAllocation(
+        session,
+        order: order,
+        allocationStatus: status,
+        note: resolvedNote,
+      );
+    }
 
     return summary!;
   }

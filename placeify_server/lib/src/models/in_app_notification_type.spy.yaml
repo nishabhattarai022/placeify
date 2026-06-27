@@ -6,3 +6,6 @@ values:
   - orderCancelled
   - deliveryUpdate
   - paymentUpdate
+  - productUpdate
+  - promotionUpdate
+  - refundUpdate

@@ -15,6 +15,7 @@ _VendorStats _$VendorStatsFromJson(Map<String, dynamic> json) => _VendorStats(
   periodLabel: json['periodLabel'] as String,
   averageRating: (json['averageRating'] as num).toDouble(),
   responseRate: (json['responseRate'] as num).toDouble(),
+  pendingRefundCount: (json['pendingRefundCount'] as num?)?.toInt() ?? 0,
 );
 
 Map<String, dynamic> _$VendorStatsToJson(_VendorStats instance) =>
@@ -27,4 +28,5 @@ Map<String, dynamic> _$VendorStatsToJson(_VendorStats instance) =>
       'periodLabel': instance.periodLabel,
       'averageRating': instance.averageRating,
       'responseRate': instance.responseRate,
+      'pendingRefundCount': instance.pendingRefundCount,
     };

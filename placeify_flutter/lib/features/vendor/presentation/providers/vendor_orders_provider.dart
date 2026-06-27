@@ -5,6 +5,7 @@ import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_order.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_order_detail_provider.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_profile_provider.dart';
+import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_stats_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'vendor_orders_provider.g.dart';
@@ -63,6 +64,7 @@ class VendorOrders extends _$VendorOrders {
       synced[index] = updated;
       state = AsyncData(synced);
       ref.invalidate(vendorOrderDetailProvider(orderId));
+      ref.invalidate(vendorStatsProvider);
       return null;
     } on VendorOrderActionException catch (e) {
       state = previous;
@@ -116,6 +118,7 @@ class VendorOrders extends _$VendorOrders {
       synced[index] = updated;
       state = AsyncData(synced);
       ref.invalidate(vendorOrderDetailProvider(orderId));
+      ref.invalidate(vendorStatsProvider);
       return null;
     } on VendorOrderActionException catch (e) {
       state = previous;
