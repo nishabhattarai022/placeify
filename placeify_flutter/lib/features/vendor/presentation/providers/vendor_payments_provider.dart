@@ -5,6 +5,9 @@ import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart
 import 'package:placeify_flutter/features/vendor/domain/models/payment_update.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_payout.dart';
 import 'package:placeify_flutter/features/vendor/domain/repositories/vendor_payment_repository.dart';
+import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_order_detail_provider.dart';
+import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_orders_provider.dart';
+import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_stats_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'vendor_payments_provider.g.dart';
@@ -104,6 +107,9 @@ class VendorPayments extends _$VendorPayments {
       );
       ref.invalidateSelf();
       ref.invalidate(orderPaymentAuditTrailProvider(orderId));
+      ref.invalidate(vendorOrderDetailProvider(orderId));
+      ref.invalidate(vendorOrdersProvider);
+      ref.invalidate(vendorStatsProvider);
       return null;
     } on VendorPaymentException catch (e) {
       return e.message;

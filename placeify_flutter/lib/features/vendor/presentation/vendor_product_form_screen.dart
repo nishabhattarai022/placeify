@@ -220,13 +220,21 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
       }
 
       if (!mounted) return;
-      context.pop();
+      _popAfterProductSave();
       return;
     }
 
     final error = ref.read(vendorProductFormProvider).submitError;
     if (error != null) {
       PlaceifyToast.show(context, error);
+    }
+  }
+
+  void _popAfterProductSave() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/vendor/products');
     }
   }
 
@@ -252,7 +260,7 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
       HapticService.medium();
       PlaceifyToast.show(context, VendorStrings.changesSaved);
       setState(() => _isDirty = false);
-      context.pop();
+      _popAfterProductSave();
       return;
     }
 

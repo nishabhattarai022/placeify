@@ -17,7 +17,8 @@ class CustomerInAppNotificationsState {
 }
 
 /// Customer order notifications backed by the server (30s polling).
-@riverpod
+/// TODO(production): replace polling with Serverpod streaming or FCM push.
+@Riverpod(keepAlive: true)
 class CustomerInAppNotifications extends _$CustomerInAppNotifications {
   Timer? _pollTimer;
 

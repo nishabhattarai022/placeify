@@ -1,6 +1,7 @@
 import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
+import '../order/order_lifecycle_store.dart';
 
 /// Keeps order-level payment status aligned with per-vendor allocations.
 abstract final class PaymentSync {
@@ -78,12 +79,20 @@ abstract final class PaymentSync {
     Session session,
     int orderId, {
     Transaction? transaction,
+    UuidValue? changedByUserId,
   }) async {
     await ensureAllocationsForOrder(
       session,
       orderId,
       transaction: transaction,
     );
+
+    final order = await Order.db.findById(
+      session,
+      orderId,
+      transaction: transaction,
+    );
+    if (order == null) return;
 
     final allocations = await OrderVendorPayment.db.find(
       session,
@@ -95,6 +104,7 @@ abstract final class PaymentSync {
         session,
         allocation.copyWith(
           status: PaymentTransactionStatus.refunded,
+          note: allocation.note ?? 'Payment refunded.',
           updatedAt: DateTime.now(),
         ),
         transaction: transaction,
@@ -116,6 +126,17 @@ abstract final class PaymentSync {
         transaction: transaction,
       );
     }
+
+    await OrderLifecycleStore.appendHistory(
+      session,
+      orderId,
+      statusType: OrderStatusHistoryType.payment,
+      previousStatus: order.paymentStatus.name,
+      newStatus: PaymentTransactionStatus.refunded.name,
+      changedByUserId: changedByUserId,
+      note: 'Payment refunded.',
+      transaction: transaction,
+    );
   }
 
   static PaymentTransactionStatus _aggregateStatus(

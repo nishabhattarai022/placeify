@@ -1528,6 +1528,32 @@ class EndpointVendor extends _i2.EndpointRef {
         'markAllNotificationsRead',
         {},
       );
+
+  _i3.Future<List<_i50.RefundRequestSummary>> listPendingRefundRequests() =>
+      caller.callServerEndpoint<List<_i50.RefundRequestSummary>>(
+        'vendor',
+        'listPendingRefundRequests',
+        {},
+      );
+
+  _i3.Future<_i50.RefundRequestSummary> approveRefundRequest(int refundId) =>
+      caller.callServerEndpoint<_i50.RefundRequestSummary>(
+        'vendor',
+        'approveRefundRequest',
+        {'refundId': refundId},
+      );
+
+  _i3.Future<_i50.RefundRequestSummary> rejectRefundRequest(
+    int refundId, {
+    String? reason,
+  }) => caller.callServerEndpoint<_i50.RefundRequestSummary>(
+    'vendor',
+    'rejectRefundRequest',
+    {
+      'refundId': refundId,
+      'reason': reason,
+    },
+  );
 }
 
 /// Wishlist management for authenticated customers.

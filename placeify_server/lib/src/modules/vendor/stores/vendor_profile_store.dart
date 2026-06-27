@@ -144,12 +144,15 @@ class VendorProfileStore {
 
     recentOrders.sort((a, b) => b.placedAt.compareTo(a.placedAt));
 
+    final pendingRefundCount = await _countPendingRefunds(session, vendorId);
+
     return VendorDashboard(
       shop: vendor,
       productCount: products.length,
       activeProductCount: activeProducts,
       orderCount: sales.deliveredOrderCount,
       revenue: sales.netRevenue,
+      pendingRefundCount: pendingRefundCount,
       recentOrders: recentOrders.take(6).toList(),
       topProducts: topProducts,
     );
@@ -713,6 +716,24 @@ class VendorProfileStore {
       orderItems: orderItems,
       completedRefundOrderIds: refundedOrderIds,
     );
+  }
+
+  Future<int> _countPendingRefunds(
+    Session session,
+    UuidValue vendorId,
+  ) async {
+    final items = await OrderItem.db.find(
+      session,
+      where: (row) => row.vendorId.equals(vendorId),
+    );
+    final orderIds = items.map((item) => item.orderId).toSet();
+    if (orderIds.isEmpty) return 0;
+
+    final pending = await RefundRequest.db.find(
+      session,
+      where: (row) => row.status.equals(RequestStatus.pending),
+    );
+    return pending.where((row) => orderIds.contains(row.orderId)).length;
   }
 
   /// Returns order IDs with completed refunds that belong to [orderIds].

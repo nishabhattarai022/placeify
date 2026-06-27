@@ -20,6 +20,7 @@ import 'providers/orders_provider.dart';
 import 'widgets/consumer_order_status_chip.dart';
 import 'widgets/consumer_payment_status_chip.dart';
 import 'widgets/order_item_row.dart';
+import 'widgets/order_payment_timeline.dart';
 import 'widgets/order_reason_sheets.dart';
 import 'widgets/order_section_card.dart';
 import 'widgets/order_timeline.dart';
@@ -133,6 +134,13 @@ class _OrderDetailBody extends ConsumerWidget {
                 title: OrderStrings.timelineSectionTitle,
                 child: OrderTimeline(order: order),
               ),
+              if (order.paymentUpdates.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                OrderSectionCard(
+                  title: 'Payment history',
+                  child: OrderPaymentTimeline(order: order),
+                ),
+              ],
               const SizedBox(height: 12),
               OrderSectionCard(
                 title: OrderStrings.itemsSectionTitle,

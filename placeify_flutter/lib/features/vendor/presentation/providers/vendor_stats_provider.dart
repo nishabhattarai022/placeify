@@ -1,18 +1,34 @@
+import 'dart:async';
+
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify_flutter/features/vendor/data/config/vendor_mock_config.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_dashboard_data.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_profile_provider.dart';
+import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_refunds_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'vendor_stats_provider.g.dart';
 
+const _vendorDashboardPollInterval = Duration(seconds: 30);
+
 @riverpod
 class VendorStats extends _$VendorStats {
-  @override
-  Future<VendorDashboardData> build() => _load();
+  Timer? _pollTimer;
 
-  Future<void> refresh() async {
+  @override
+  Future<VendorDashboardData> build() {
+    ref.onDispose(() => _pollTimer?.cancel());
+    _pollTimer = Timer.periodic(_vendorDashboardPollInterval, (_) {
+      unawaited(refresh(silent: true));
+    });
+    return _load();
+  }
+
+  Future<void> refresh({bool silent = false}) async {
+    if (!silent) {
+      state = const AsyncLoading();
+    }
     state = await AsyncValue.guard(_load);
   }
 
@@ -27,12 +43,15 @@ class VendorStats extends _$VendorStats {
 
     final stats = await repo.getStats(vendorId);
     final recentOrders = await repo.getOrders(vendorId, limit: 5);
+    final pendingRefunds =
+        await ref.read(vendorRefundRepositoryProvider).listPending();
 
     return VendorDashboardData(
       stats: stats,
       revenueSeries: VendorMockConfig.revenueSeriesFor(vendorId),
       recentOrders: recentOrders,
       topProducts: VendorMockConfig.topProductsFor(vendorId),
+      pendingRefunds: pendingRefunds,
     );
   }
 }

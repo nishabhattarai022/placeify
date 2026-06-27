@@ -317,4 +317,25 @@ class VendorEndpoint extends Endpoint {
   Future<void> markAllNotificationsRead(Session session) {
     return _service.markAllNotificationsRead(session);
   }
+
+  Future<List<RefundRequestSummary>> listPendingRefundRequests(
+    Session session,
+  ) {
+    return _service.listPendingRefundRequests(session);
+  }
+
+  Future<RefundRequestSummary> approveRefundRequest(
+    Session session,
+    int refundId,
+  ) {
+    return _service.approveRefundRequest(session, refundId);
+  }
+
+  Future<RefundRequestSummary> rejectRefundRequest(
+    Session session,
+    int refundId, {
+    String? reason,
+  }) {
+    return _service.rejectRefundRequest(session, refundId, reason: reason);
+  }
 }

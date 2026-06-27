@@ -8,32 +8,68 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/config/placeify_server_client.dart';
-import '../../profile/presentation/providers/profile_dashboard_provider.dart';
-import '../data/user_dashboard_mock_data.dart';
 import '../../home/domain/models/product.dart';
+import '../../orders/presentation/providers/customer_in_app_notifications_provider.dart';
+import '../../profile/presentation/providers/profile_dashboard_provider.dart';
 import '../data/user_dashboard_mappers.dart';
 import '../data/user_dashboard_marketplace_mapper.dart';
+import '../data/user_dashboard_mock_data.dart';
 import 'widgets/user_dashboard_marketplace_row.dart';
+import 'widgets/user_dashboard_order_update_banner.dart';
+import 'widgets/user_dashboard_recent_orders.dart';
 import 'widgets/user_overview_card.dart';
 
 /// Dashboard overview backed by [client.user.getDashboard].
-class UserDashboardScreen extends ConsumerWidget {
+class UserDashboardScreen extends ConsumerStatefulWidget {
   const UserDashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<UserDashboardScreen> createState() =>
+      _UserDashboardScreenState();
+}
+
+class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _refreshDashboard();
+    });
+  }
+
+  Future<void> _refreshDashboard() async {
+    await Future.wait([
+      ref.read(profileDashboardProvider.notifier).refresh(),
+      ref.read(profileOrdersProvider.notifier).refresh(),
+      ref.read(customerInAppNotificationsProvider.notifier).refresh(),
+    ]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     if (!client.auth.isAuthenticated) {
       return _AuthRequired(onLogin: () => context.push('/login'));
     }
 
     final dashboardAsync = ref.watch(profileDashboardProvider);
     final ordersAsync = ref.watch(profileOrdersProvider);
+    final notificationsAsync = ref.watch(customerInAppNotificationsProvider);
+
+    ref.listen(customerInAppNotificationsProvider, (previous, next) {
+      final prevCount = previous?.value?.unreadCount ?? 0;
+      final nextCount = next.value?.unreadCount ?? 0;
+      if (nextCount > prevCount) {
+        ref.read(profileOrdersProvider.notifier).refresh(silent: true);
+        ref.read(profileDashboardProvider.notifier).refresh(silent: true);
+      }
+    });
 
     return dashboardAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => _ErrorState(
         message: error.toString(),
-        onRetry: () => _refreshDashboard(ref),
+        onRetry: _refreshDashboard,
       ),
       data: (dashboard) {
         if (dashboard == null) {
@@ -49,7 +85,7 @@ class UserDashboardScreen extends ConsumerWidget {
         );
 
         return RefreshIndicator(
-          onRefresh: () => _refreshDashboard(ref),
+          onRefresh: _refreshDashboard,
           child: FutureBuilder<({
             List<Product> recent,
             List<Product> offers,
@@ -60,25 +96,29 @@ class UserDashboardScreen extends ConsumerWidget {
               final recent = snapshot.data?.recent ?? const [];
               final offers = snapshot.data?.offers ?? const [];
               final featured = snapshot.data?.featured ?? const [];
+              final orders = ordersAsync.value ?? const [];
+              final latestUnread = notificationsAsync.maybeWhen(
+                data: (state) => state.notifications
+                    .where((row) => !row.isRead)
+                    .where(_isOrderNotification)
+                    .firstOrNull,
+                orElse: () => null,
+              );
+
               return _DashboardContent(
                 dashboard: dashboard,
                 metrics: metrics,
                 recentProducts: recent,
                 offerProducts: offers,
                 featuredProducts: featured,
+                recentOrders: orders,
+                latestOrderUpdate: latestUnread,
               );
             },
           ),
         );
       },
     );
-  }
-
-  Future<void> _refreshDashboard(WidgetRef ref) async {
-    await Future.wait([
-      ref.read(profileDashboardProvider.notifier).refresh(),
-      ref.read(profileOrdersProvider.notifier).refresh(),
-    ]);
   }
 
   Future<({
@@ -97,6 +137,19 @@ class UserDashboardScreen extends ConsumerWidget {
     );
     return (recent: recent, offers: offers, featured: featured);
   }
+
+  bool _isOrderNotification(InAppNotificationSummary notification) {
+    return switch (notification.type) {
+      InAppNotificationType.orderPlaced ||
+      InAppNotificationType.orderAccepted ||
+      InAppNotificationType.orderCancelled ||
+      InAppNotificationType.deliveryUpdate ||
+      InAppNotificationType.paymentUpdate ||
+      InAppNotificationType.refundUpdate =>
+        true,
+      _ => false,
+    };
+  }
 }
 
 class _DashboardContent extends StatelessWidget {
@@ -106,6 +159,8 @@ class _DashboardContent extends StatelessWidget {
     required this.recentProducts,
     required this.offerProducts,
     required this.featuredProducts,
+    required this.recentOrders,
+    this.latestOrderUpdate,
   });
 
   final UserDashboard dashboard;
@@ -113,6 +168,8 @@ class _DashboardContent extends StatelessWidget {
   final List<Product> recentProducts;
   final List<Product> offerProducts;
   final List<Product> featuredProducts;
+  final List<UserOrderSummary> recentOrders;
+  final InAppNotificationSummary? latestOrderUpdate;
 
   @override
   Widget build(BuildContext context) {
@@ -141,6 +198,10 @@ class _DashboardContent extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
+          if (latestOrderUpdate != null)
+            UserDashboardOrderUpdateBanner(
+              notification: latestOrderUpdate!,
+            ),
           LayoutBuilder(
             builder: (context, constraints) {
               const spacing = 12.0;
@@ -192,6 +253,10 @@ class _DashboardContent extends StatelessWidget {
               ],
             ),
           ),
+          if (recentOrders.isNotEmpty) ...[
+            const SizedBox(height: 28),
+            UserDashboardRecentOrders(orders: recentOrders),
+          ],
           if (recentProducts.isNotEmpty) ...[
             const SizedBox(height: 28),
             UserDashboardMarketplaceRow(

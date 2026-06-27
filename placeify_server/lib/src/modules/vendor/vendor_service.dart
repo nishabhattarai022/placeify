@@ -333,4 +333,25 @@ class VendorService {
   Future<void> markAllNotificationsRead(Session session) {
     return _repository.markAllNotificationsRead(session);
   }
+
+  Future<List<RefundRequestSummary>> listPendingRefundRequests(
+    Session session,
+  ) {
+    return _repository.listPendingRefundRequests(session);
+  }
+
+  Future<RefundRequestSummary> approveRefundRequest(
+    Session session,
+    int refundId,
+  ) {
+    return _repository.approveRefundRequest(session, refundId);
+  }
+
+  Future<RefundRequestSummary> rejectRefundRequest(
+    Session session,
+    int refundId, {
+    String? reason,
+  }) {
+    return _repository.rejectRefundRequest(session, refundId, reason: reason);
+  }
 }

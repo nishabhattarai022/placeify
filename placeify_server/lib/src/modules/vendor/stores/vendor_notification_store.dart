@@ -49,6 +49,9 @@ class VendorNotificationStore {
       InAppNotificationType.orderCancelled => VendorNotificationType.order,
       InAppNotificationType.deliveryUpdate => VendorNotificationType.order,
       InAppNotificationType.paymentUpdate => VendorNotificationType.payment,
+      InAppNotificationType.productUpdate => VendorNotificationType.product,
+      InAppNotificationType.promotionUpdate => VendorNotificationType.product,
+      InAppNotificationType.refundUpdate => VendorNotificationType.payment,
     };
   }
 }

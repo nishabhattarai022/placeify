@@ -89,8 +89,9 @@ class VendorOrderStore {
       );
     }
 
+    Order? acceptedOrder;
     await session.db.transaction((transaction) async {
-      final accepted = await OrderLifecycleStore.updateOrderWithVersion(
+      acceptedOrder = await OrderLifecycleStore.updateOrderWithVersion(
         session,
         order,
         (current) => current.copyWith(
@@ -128,12 +129,14 @@ class VendorOrderStore {
           transaction: transaction,
         );
       }
+    });
 
+    if (acceptedOrder != null) {
       await _events.dispatch(
         session,
-        OrderAcceptedEvent(order: accepted, vendorId: vendor.id!),
+        OrderAcceptedEvent(order: acceptedOrder!, vendorId: vendor.id!),
       );
-    });
+    }
 
     return getShopOrder(session, orderId);
   }
@@ -166,8 +169,9 @@ class VendorOrderStore {
       );
     }
 
+    Order? rejectedOrder;
     await session.db.transaction((transaction) async {
-      final rejected = await OrderLifecycleStore.updateOrderWithVersion(
+      rejectedOrder = await OrderLifecycleStore.updateOrderWithVersion(
         session,
         order,
         (current) => current.copyWith(
@@ -187,16 +191,18 @@ class VendorOrderStore {
         note: trimmedReason,
         transaction: transaction,
       );
+    });
 
+    if (rejectedOrder != null) {
       await _events.dispatch(
         session,
         OrderRejectedEvent(
-          order: rejected,
+          order: rejectedOrder!,
           reason: trimmedReason,
           vendorId: vendor.id!,
         ),
       );
-    });
+    }
 
     return getShopOrder(session, orderId);
   }

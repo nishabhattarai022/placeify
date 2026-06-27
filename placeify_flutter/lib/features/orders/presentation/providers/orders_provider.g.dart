@@ -49,7 +49,7 @@ final class OrderRepositoryProvider
   }
 }
 
-String _$orderRepositoryHash() => r'a273294b777355c1be146f1b188c6195995a321c';
+String _$orderRepositoryHash() => r'02d34d0396fb43ebe969d7baa013a889aa338f2e';
 
 @ProviderFor(ordersUserId)
 final ordersUserIdProvider = OrdersUserIdProvider._();
