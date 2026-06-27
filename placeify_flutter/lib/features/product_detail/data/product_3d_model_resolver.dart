@@ -21,6 +21,10 @@ abstract final class Product3dModelResolver {
     _modelUrlByProductId[_canonicalId(productId)] = trimmed;
   }
 
+  static void clearModelUrl(String productId) {
+    _modelUrlByProductId.remove(_canonicalId(productId));
+  }
+
   static String? modelUrlFor(String productId) =>
       _modelUrlByProductId[_canonicalId(productId)];
 

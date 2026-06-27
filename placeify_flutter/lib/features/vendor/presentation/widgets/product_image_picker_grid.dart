@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:placeify_flutter/core/widgets/local_image_preview.dart';
+import 'package:placeify_flutter/features/vendor/domain/constants/product_photo_capture.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_form_state.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_image_item.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_product_form_provider.dart';
@@ -194,7 +195,9 @@ class ProductImagePickerGrid extends ConsumerWidget {
     try {
       if (source == ImageSource.gallery) {
         final picked = await picker.pickMultiImage(
-          imageQuality: 85,
+          imageQuality: ProductPhotoCapture.pickerQuality,
+          maxWidth: ProductPhotoCapture.maxEdge.toDouble(),
+          maxHeight: ProductPhotoCapture.maxEdge.toDouble(),
           limit: remaining,
         );
         if (picked.isEmpty) return;
@@ -202,7 +205,9 @@ class ProductImagePickerGrid extends ConsumerWidget {
       } else {
         final picked = await picker.pickImage(
           source: ImageSource.camera,
-          imageQuality: 85,
+          imageQuality: ProductPhotoCapture.pickerQuality,
+          maxWidth: ProductPhotoCapture.maxEdge.toDouble(),
+          maxHeight: ProductPhotoCapture.maxEdge.toDouble(),
         );
         if (picked == null) return;
         ref.read(vendorProductFormProvider.notifier).addPickedImages([picked]);
