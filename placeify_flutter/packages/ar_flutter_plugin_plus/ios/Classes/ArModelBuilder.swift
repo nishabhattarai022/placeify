@@ -9,7 +9,7 @@ class ArModelBuilder: NSObject {
 
     var iosModelScaleFactor: Float = 1.0
 
-    /// Ensures Tripo GLB PBR textures and base colors render with real-world lighting.
+    /// Ensures Tripo GLB textures and base colors render with real-world lighting.
     private func configureRenderableMaterials(on node: SCNNode) {
         if let geometry = node.geometry {
             for material in geometry.materials {

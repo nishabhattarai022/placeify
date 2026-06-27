@@ -1,7 +1,9 @@
 import 'dart:typed_data';
 
+import 'package:http/http.dart' as http;
 import 'package:placeify_client/placeify_client.dart';
 
+import '../../../core/config/resolve_media_url.dart';
 import '../../../core/config/placeify_server_client.dart';
 import '../../../core/utils/local_image_reader.dart';
 import '../../../core/utils/local_image_store.dart';
@@ -272,8 +274,12 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     required String description,
     required String materials,
     required List<String> imageSources,
+    bool forceReupload = false,
   }) async {
-    final multiview = await _uploadMultiviewUrlsFromSources(imageSources);
+    final multiview = await _uploadMultiviewUrlsFromSources(
+      imageSources,
+      forceReupload: forceReupload,
+    );
     final input = await _buildUploadInput(
       product: product,
       dbId: dbId,
@@ -307,6 +313,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     required VendorProduct product,
     required int dbId,
     required List<String> imageSources,
+    bool forceReupload = false,
   }) async {
     final description = product.description.trim().isNotEmpty
         ? product.description.trim()
@@ -318,6 +325,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
       description: description,
       materials: materials,
       imageSources: imageSources.take(4).toList(),
+      forceReupload: forceReupload,
     );
   }
 
@@ -378,6 +386,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
           product: existing,
           dbId: dbId,
           imageSources: sources.take(4).toList(),
+          forceReupload: true,
         );
       }
 
@@ -468,7 +477,10 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
   }
 
   Future<({String thumbnailUrl, List<String> viewImageUrls})>
-      _uploadMultiviewUrlsFromSources(List<String> sources) async {
+      _uploadMultiviewUrlsFromSources(
+    List<String> sources, {
+    bool forceReupload = false,
+  }) async {
     if (sources.length < 4) {
       throw VendorProductActionException(
         'Please upload 4 photos (front, left, back, right) for 3D generation.',
@@ -479,12 +491,17 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     final thumbnailUrl = await _ensureServerImageUrl(
       slots[0],
       removeBackground: true,
+      forceReupload: forceReupload,
     );
 
     final viewImageUrls = <String>[];
     for (final source in slots.skip(1)) {
       viewImageUrls.add(
-        await _ensureServerImageUrl(source, removeBackground: false),
+        await _ensureServerImageUrl(
+          source,
+          removeBackground: false,
+          forceReupload: forceReupload,
+        ),
       );
     }
 
@@ -500,6 +517,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
   Future<String> _ensureServerImageUrl(
     String source, {
     required bool removeBackground,
+    bool forceReupload = false,
   }) async {
     final localPath = _normalizeLocalImagePath(source);
     if (localPath != null) {
@@ -521,14 +539,50 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
 
     final existing = _serverPathFromSource(source);
     if (existing != null) {
-      return existing;
+      if (!forceReupload) return existing;
+      return _reuploadServerImage(existing, removeBackground: removeBackground);
     }
 
     throw VendorProductActionException('Photo file not found. Pick it again.');
   }
 
+  Future<String> _reuploadServerImage(
+    String serverPath, {
+    required bool removeBackground,
+  }) async {
+    final url = await resolveMediaUrl(serverPath);
+    if (url.isEmpty) {
+      throw VendorProductActionException('Photo file not found. Pick it again.');
+    }
+
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode != 200 || response.bodyBytes.isEmpty) {
+      throw VendorProductActionException(
+        'Could not refresh product photo from server. Re-pick the photo and try again.',
+      );
+    }
+
+    final fileName = _fileNameFromPath(serverPath);
+    return client.vendor.uploadProductImage(
+      ByteData.view(
+        response.bodyBytes.buffer,
+        response.bodyBytes.offsetInBytes,
+        response.bodyBytes.lengthInBytes,
+      ),
+      fileName.isNotEmpty ? fileName : 'product_photo.jpg',
+      removeBackground: removeBackground,
+    );
+  }
+
   String? _serverPathFromSource(String source) {
-    final trimmed = source.trim();
+    var trimmed = source.trim();
+    if (trimmed.isEmpty) return null;
+
+    final queryIndex = trimmed.indexOf('?');
+    if (queryIndex >= 0) {
+      trimmed = trimmed.substring(0, queryIndex);
+    }
+
     if (trimmed.startsWith('/uploads/')) return trimmed;
 
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {

@@ -1,5 +1,7 @@
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify_flutter/features/home/presentation/providers/catalog_provider.dart';
+import 'package:placeify_flutter/features/product_detail/data/product_3d_model_loader.dart';
+import 'package:placeify_flutter/features/product_detail/data/product_3d_model_resolver.dart';
 import 'package:placeify_flutter/features/vendor/data/mock_vendor_product_repository.dart'
     show VendorProductActionException;
 import 'package:placeify_flutter/features/vendor/data/serverpod_vendor_product_repository.dart';
@@ -152,6 +154,9 @@ class VendorProducts extends _$VendorProducts {
         productId,
         imageSources: imageSources,
       );
+
+      await Product3dModelLoader.invalidateCache(productId);
+      Product3dModelResolver.clearModelUrl(productId);
 
       final products = state.value;
       if (products != null) {

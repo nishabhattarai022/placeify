@@ -27,6 +27,21 @@ class ArLocalModelFile {
 abstract final class Product3dModelLoader {
   static const _subdir = 'ar_models';
 
+  static Future<void> invalidateCache(String productId) async {
+    if (kIsWeb || productId.isEmpty) return;
+
+    final docsDir = await getApplicationDocumentsDirectory();
+    final fileName = 'product_$productId.glb';
+    final file = File('${docsDir.path}/$_subdir/$fileName');
+    final metaFile = File('${docsDir.path}/$_subdir/$fileName.url');
+    if (await file.exists()) {
+      await file.delete();
+    }
+    if (await metaFile.exists()) {
+      await metaFile.delete();
+    }
+  }
+
   static Future<ArLocalModelFile?> prepareForAr({
     required String remoteUrl,
     required String productId,

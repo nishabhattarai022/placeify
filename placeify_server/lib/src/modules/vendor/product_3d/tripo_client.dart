@@ -11,12 +11,12 @@ import 'aws_s3_put.dart';
 /// API key: [TripoApiKeyConfig.configFileName] or [TripoApiKeyConfig.apiKeyEnv].
 abstract final class TripoClient {
   static const _baseUrl = 'https://api.tripo3d.ai/v2/openapi';
-  /// v2.5 multiview — fastest stable option for live demos (~1–2 min).
+  /// v2.5 multiview — fast generation with photo-aligned standard textures (~1–2 min).
   static const _modelVersion = 'v2.5-20250123';
   static const _pollInterval = Duration(seconds: 2);
   static const _maxPollAttempts = 60;
 
-  /// Fast demo profile: textured but not extreme/PBR (saves several minutes).
+  /// Fast profile: photo-aligned diffuse textures (no PBR — avoids specular wash-out).
   static const _baseTextureParams = <String, dynamic>{
     'texture': true,
     'pbr': false,
