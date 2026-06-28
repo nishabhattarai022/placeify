@@ -88,7 +88,7 @@ final class VendorPendingRefundsProvider
 }
 
 String _$vendorPendingRefundsHash() =>
-    r'bda3453bed5dba2b7cb22dac23ace7415f0c0b80';
+    r'0d50f0d6f3addde213b7c3b6ce648eea14268cd5';
 
 abstract class _$VendorPendingRefunds
     extends $AsyncNotifier<List<VendorPendingRefund>> {

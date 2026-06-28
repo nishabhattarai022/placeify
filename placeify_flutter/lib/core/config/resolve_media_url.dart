@@ -13,7 +13,11 @@ Future<String> resolveMediaUrl(String? path) async {
   final webHost = apiUri.host;
   final scheme = apiUri.scheme;
 
-  final segments = path
+  final queryIndex = path.indexOf('?');
+  final pathOnly = queryIndex >= 0 ? path.substring(0, queryIndex) : path;
+  final query = queryIndex >= 0 ? path.substring(queryIndex + 1) : null;
+
+  final segments = pathOnly
       .split('/')
       .where((segment) => segment.isNotEmpty)
       .toList();
@@ -22,5 +26,6 @@ Future<String> resolveMediaUrl(String? path) async {
     host: webHost,
     port: _webServerPort,
     pathSegments: segments,
+    query: query,
   ).toString();
 }

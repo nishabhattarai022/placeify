@@ -60,7 +60,20 @@ abstract final class UserOrderMappers {
     return 'Placed ${Formatters.shortDate(order.placedAt)}';
   }
 
-  static String statusLabel(OrderStatus status) {
+  static String statusLabel(
+    OrderStatus status, {
+    DeliveryStage? latestStage,
+  }) {
+    if (latestStage != null) {
+      return switch (latestStage) {
+        DeliveryStage.orderPlaced => 'Accepted',
+        DeliveryStage.packed => 'Packed',
+        DeliveryStage.shipped => 'Shipped',
+        DeliveryStage.outForDelivery => 'Out for delivery',
+        DeliveryStage.delivered => 'Delivered',
+      };
+    }
+
     return switch (status) {
       OrderStatus.pending => 'Pending',
       OrderStatus.confirmed => 'Confirmed',
@@ -104,24 +117,32 @@ abstract final class UserOrderMappers {
   static int progressStep(OrderStatus status, {DeliveryStage? latestStage}) {
     if (latestStage != null) {
       return switch (latestStage) {
-        DeliveryStage.orderPlaced => 1,
-        DeliveryStage.packed => 2,
-        DeliveryStage.shipped => 2,
-        DeliveryStage.outForDelivery => 3,
-        DeliveryStage.delivered => 3,
+        DeliveryStage.orderPlaced => 0,
+        DeliveryStage.packed => 1,
+        DeliveryStage.shipped => 1,
+        DeliveryStage.outForDelivery => 1,
+        DeliveryStage.delivered => 2,
       };
     }
 
     return switch (status) {
       OrderStatus.pending => 0,
-      OrderStatus.confirmed || OrderStatus.accepted || OrderStatus.processing =>
-        1,
-      OrderStatus.shipped => 2,
-      OrderStatus.delivered => 3,
+      OrderStatus.confirmed || OrderStatus.accepted => 0,
+      OrderStatus.processing => 1,
+      OrderStatus.shipped => 1,
+      OrderStatus.delivered => 2,
       OrderStatus.cancelled ||
       OrderStatus.rejected ||
       OrderStatus.autoCancelled =>
         0,
+    };
+  }
+
+  static String paymentStatusLabel(OrderPaymentStatus status) {
+    return switch (status) {
+      OrderPaymentStatus.unpaid => 'Payment pending',
+      OrderPaymentStatus.paymentReceived => 'Payment received',
+      OrderPaymentStatus.paymentConfirmed => 'Payment confirmed',
     };
   }
 

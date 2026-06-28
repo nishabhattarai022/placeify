@@ -9,6 +9,7 @@ class DiscountedProduct {
   final int discountPercent;
   final String tagline;
   final Color cardColor;
+  final String offerLabel;
 
   const DiscountedProduct({
     required this.id,
@@ -19,7 +20,15 @@ class DiscountedProduct {
     required this.discountPercent,
     required this.tagline,
     required this.cardColor,
+    this.offerLabel = '',
   });
+
+  String get offerBadgeLabel {
+    final custom = offerLabel.trim();
+    if (custom.isNotEmpty) return custom;
+    if (discountPercent > 0) return '$discountPercent% OFF';
+    return 'Special Offer';
+  }
 }
 
 const List<DiscountedProduct> discountedProducts = [

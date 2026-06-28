@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify_flutter/features/vendor/data/mock_vendor_repository.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/order_status.dart';
@@ -10,12 +12,25 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'vendor_orders_provider.g.dart';
 
+const _vendorOrdersPollInterval = Duration(seconds: 30);
+
 @riverpod
 class VendorOrders extends _$VendorOrders {
-  @override
-  Future<List<VendorOrder>> build() => _load();
+  Timer? _pollTimer;
 
-  Future<void> refresh() async {
+  @override
+  Future<List<VendorOrder>> build() {
+    ref.onDispose(() => _pollTimer?.cancel());
+    _pollTimer = Timer.periodic(_vendorOrdersPollInterval, (_) {
+      unawaited(refresh(silent: true));
+    });
+    return _load();
+  }
+
+  Future<void> refresh({bool silent = false}) async {
+    if (!silent) {
+      state = const AsyncLoading();
+    }
     state = await AsyncValue.guard(_load);
   }
 

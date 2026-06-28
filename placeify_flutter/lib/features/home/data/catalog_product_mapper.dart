@@ -61,6 +61,7 @@ abstract final class CatalogProductMapper {
       categoryId: categoryId,
       dimensions: dimensions,
       vendorId: product.vendorId.toString(),
+      offerLabel: hasActiveOffer(product) ? _offerLabelFromApi(product) : '',
     );
   }
 
@@ -96,6 +97,10 @@ abstract final class CatalogProductMapper {
 
   static bool hasActiveOffer(api.Product product) {
     return product.isOffer || effectiveUnitPrice(product) < product.price;
+  }
+
+  static String _offerLabelFromApi(api.Product product) {
+    return product.warranty?.trim() ?? '';
   }
 
   static Future<String> _resolvePrimaryImage(api.Product product) async {

@@ -81,7 +81,7 @@ final class VendorPaymentsProvider
   VendorPayments create() => VendorPayments();
 }
 
-String _$vendorPaymentsHash() => r'e6771b219da9bc9442a384b8b491525c4ac62a48';
+String _$vendorPaymentsHash() => r'd34fc893bd9ca6b36a498ae466efe4ba0e06c1c6';
 
 abstract class _$VendorPayments extends $AsyncNotifier<VendorPaymentsData> {
   FutureOr<VendorPaymentsData> build();

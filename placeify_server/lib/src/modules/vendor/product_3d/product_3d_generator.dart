@@ -87,7 +87,7 @@ class Product3dGenerator {
       );
 
       session.log(
-        'Tripo demo mode: 4 raw photos [${slotSources.join(', ')}] loaded in '
+        'Tripo: 4 raw photos [${slotSources.join(', ')}] loaded in '
         '${DateTime.now().difference(started).inMilliseconds}ms',
         level: LogLevel.info,
       );
@@ -111,7 +111,7 @@ class Product3dGenerator {
       final totalSeconds = DateTime.now().difference(started).inSeconds;
       session.log(
         'Tripo 3D model saved for product $productId at $localUrl '
-        '(demo/fast, ${totalSeconds}s total)',
+        '(${totalSeconds}s total)',
         level: LogLevel.info,
       );
       return Product3dGenerationResult.success(localUrl);
@@ -223,10 +223,14 @@ class Product3dGenerator {
       outputDir.createSync(recursive: true);
     }
 
+    final fileName = 'product_$productId.glb';
     final outputPath =
-        '${outputDir.path}${Platform.pathSeparator}product_$productId.glb';
+        '${outputDir.path}${Platform.pathSeparator}$fileName';
     await File(outputPath).writeAsBytes(bytes);
-    return '/uploads/models/product_$productId.glb';
+
+    // Version query busts client/WebView caches after regenerate (same file path).
+    final version = DateTime.now().millisecondsSinceEpoch;
+    return '/uploads/models/$fileName?v=$version';
   }
 }
 

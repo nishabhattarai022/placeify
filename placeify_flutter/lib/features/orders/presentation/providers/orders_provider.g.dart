@@ -49,7 +49,7 @@ final class OrderRepositoryProvider
   }
 }
 
-String _$orderRepositoryHash() => r'02d34d0396fb43ebe969d7baa013a889aa338f2e';
+String _$orderRepositoryHash() => r'f13e0d75e90fdbe1c7c4e720b270977d9693846b';
 
 @ProviderFor(ordersUserId)
 final ordersUserIdProvider = OrdersUserIdProvider._();
@@ -82,7 +82,7 @@ final class OrdersUserIdProvider
   }
 }
 
-String _$ordersUserIdHash() => r'db0eaba9e9c078d0ae8e92f25f24da838f11de52';
+String _$ordersUserIdHash() => r'9b782cd42c2e05738c5a1026291f03984c5c21be';
 
 @ProviderFor(Orders)
 final ordersProvider = OrdersProvider._();
@@ -107,7 +107,7 @@ final class OrdersProvider extends $AsyncNotifierProvider<Orders, List<Order>> {
   Orders create() => Orders();
 }
 
-String _$ordersHash() => r'2da2fa3128db05f885e770e3779e3051bb4c4bd8';
+String _$ordersHash() => r'6357fa6f7a92300b52b2a540059942e6429e7b4b';
 
 abstract class _$Orders extends $AsyncNotifier<List<Order>> {
   FutureOr<List<Order>> build();
@@ -422,7 +422,7 @@ final class OrderByIdProvider
   }
 }
 
-String _$orderByIdHash() => r'8cc771237ba7a3356ea79fb3349c9618d654f4fc';
+String _$orderByIdHash() => r'61afc3f116f82ddb09bea1f574325243b61bad8c';
 
 final class OrderByIdFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<Order?>, String> {
