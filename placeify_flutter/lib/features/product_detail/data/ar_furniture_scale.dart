@@ -7,7 +7,7 @@ import '../../home/domain/models/product.dart';
 /// Tripo multiview GLBs are normalized to roughly one meter on the longest axis.
 abstract final class ArFurnitureScale {
   static const minUserMultiplier = 0.5;
-  static const maxUserMultiplier = 3.0;
+  static const maxUserMultiplier = 2.0;
   static const defaultUserMultiplier = 1.0;
 
   /// Native plugin factors default to ~0.33–0.4 and shrink models; use 1.0 for
@@ -18,23 +18,28 @@ abstract final class ArFurnitureScale {
   /// Studio neutral lighting — aligned with model-viewer `environmentImage: neutral`.
   static const arLightIntensityMultiplier = 1.15;
 
+  /// Slightly lower on Android Filament to avoid blown-out PBR textures.
+  static const androidArLightIntensityMultiplier = 0.95;
+
   /// Tripo reference bounding size in meters.
   static const _tripoReferenceMaxDimensionM = 1.0;
 
+  /// Calibrates catalog dimensions to perceived real-world size in AR.
+  static const realWorldCalibrationFactor = 1.28;
+
   /// Base node scale before user pinch multiplier (uniform).
   static double baseScaleFromDimensions(ProductDimensions dimensions) {
-    final maxCm = _maxDimensionCm(dimensions);
-    final targetMeters = maxCm / 100.0;
-    return (targetMeters / _tripoReferenceMaxDimensionM)
-        .clamp(0.35, 2.5);
-  }
-
-  static double _maxDimensionCm(ProductDimensions dimensions) {
-    return [
-      dimensions.widthCm,
-      dimensions.depthCm,
-      dimensions.heightCm,
+    final heightM = dimensions.heightCm / 100.0;
+    final widthM = dimensions.widthCm / 100.0;
+    final depthM = dimensions.depthCm / 100.0;
+    // Height drives perceived furniture size (seat ~45 cm, chair ~85 cm).
+    final targetMeters = [
+      heightM,
+      widthM,
+      depthM,
     ].reduce((a, b) => a > b ? a : b);
+    return (targetMeters / _tripoReferenceMaxDimensionM * realWorldCalibrationFactor)
+        .clamp(0.55, 2.8);
   }
 
   static Vector3 nodeScale({

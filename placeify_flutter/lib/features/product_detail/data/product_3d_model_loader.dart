@@ -27,8 +27,13 @@ class ArLocalModelFile {
 abstract final class Product3dModelLoader {
   static const _subdir = 'ar_models';
 
+  /// In-memory cache so the same product GLB is not re-read from disk per session.
+  static final Map<String, ArLocalModelFile> _memoryCache = {};
+
   static Future<void> invalidateCache(String productId) async {
     if (kIsWeb || productId.isEmpty) return;
+
+    _memoryCache.remove(productId);
 
     final docsDir = await getApplicationDocumentsDirectory();
     final fileName = 'product_$productId.glb';
@@ -50,6 +55,18 @@ abstract final class Product3dModelLoader {
       return null;
     }
 
+    final cachedInMemory = _memoryCache[productId];
+    if (cachedInMemory != null) {
+      final metaFile = await _metaFileFor(productId);
+      if (await metaFile.exists()) {
+        final cachedUrl = (await metaFile.readAsString()).trim();
+        if (cachedUrl == remoteUrl) {
+          return cachedInMemory;
+        }
+      }
+      _memoryCache.remove(productId);
+    }
+
     final docsDir = await getApplicationDocumentsDirectory();
     final modelsDir = Directory('${docsDir.path}/$_subdir');
     if (!await modelsDir.exists()) {
@@ -66,10 +83,12 @@ abstract final class Product3dModelLoader {
         await file.length() > 0) {
       final cachedUrl = (await metaFile.readAsString()).trim();
       if (cachedUrl == remoteUrl) {
-        return ArLocalModelFile(
+        final local = ArLocalModelFile(
           absolutePath: file.path,
           relativePath: relativePath,
         );
+        _memoryCache[productId] = local;
+        return local;
       }
     }
 
@@ -85,15 +104,22 @@ abstract final class Product3dModelLoader {
         if (bytes.isEmpty) return null;
         await file.writeAsBytes(bytes, flush: true);
         await metaFile.writeAsString(remoteUrl, flush: true);
-        return ArLocalModelFile(
+        final local = ArLocalModelFile(
           absolutePath: file.path,
           relativePath: relativePath,
         );
+        _memoryCache[productId] = local;
+        return local;
       } finally {
         client.close(force: true);
       }
     } on Object {
       return null;
     }
+  }
+
+  static Future<File> _metaFileFor(String productId) async {
+    final docsDir = await getApplicationDocumentsDirectory();
+    return File('${docsDir.path}/$_subdir/product_$productId.glb.url');
   }
 }

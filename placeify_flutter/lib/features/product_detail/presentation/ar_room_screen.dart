@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:io' show Platform;
+import 'dart:math' show pi;
 
 import 'package:ar_flutter_plugin_plus/ar_flutter_plugin_plus.dart';
 import 'package:ar_flutter_plugin_plus/datatypes/config_planedetection.dart';
@@ -24,6 +26,8 @@ import '../data/ar_furniture_placement.dart';
 import '../data/ar_furniture_scale.dart';
 import '../data/product_3d_model_loader.dart';
 import 'webcam_ar_room_screen.dart';
+import 'widgets/ar_furniture_gesture_overlay.dart';
+import 'widgets/ar_placement_controls.dart';
 
 /// Full-screen AR furniture placement (IKEA Place–style workflow).
 class ArRoomScreen extends StatefulWidget {
@@ -51,8 +55,9 @@ class ArRoomScreen extends StatefulWidget {
 
 class _ArRoomScreenState extends State<ArRoomScreen>
     with TickerProviderStateMixin {
-  static const _previewDistanceM = 1.0;
   static const _furnitureNodeName = 'placeify_furniture';
+  static const _hintAutoHideDuration = Duration(seconds: 3);
+  static const _controlsAutoHideDuration = Duration(seconds: 4);
 
   ARSessionManager? _sessionManager;
   ARObjectManager? _objectManager;
@@ -64,7 +69,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   String? _modelUri;
   late final String _nodeName;
 
-  bool _isPreviewMode = true;
   bool _isWorldAnchored = false;
   bool _isPlaneDetected = false;
   bool _isPlaced = false;
@@ -73,16 +77,25 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   bool _isPlacing = false;
   bool _modelLoading = true;
 
+  int _autoPlaceAttempts = 0;
+  bool _autoPlaceScheduled = false;
+
   double _userScaleMultiplier = ArFurnitureScale.defaultUserMultiplier;
+  double _placedScaleMultiplier = ArFurnitureScale.defaultUserMultiplier;
+  double _placedRotationY = 0;
   double _targetRotationY = 0;
   double _smoothedRotationY = 0;
 
-  String? _statusMessage;
+  String? _hintMessage;
+  bool _hintVisible = false;
+  Timer? _hintHideTimer;
+
+  bool _editingControlsVisible = false;
+  Timer? _controlsHideTimer;
 
   late final AnimationController _scanPulseController;
-  Ticker? _previewTicker;
+  late final AnimationController _reticlePulseController;
   Ticker? _rotationSmoothTicker;
-  bool _previewTickInFlight = false;
 
   @override
   void initState() {
@@ -92,16 +105,30 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat(reverse: true);
-    _previewTicker = createTicker(_onPreviewTick);
-    _rotationSmoothTicker = createTicker(_onRotationSmoothTick)
-      ..start();
+    _reticlePulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat(reverse: true);
+    _rotationSmoothTicker = createTicker(_onRotationSmoothTick)..start();
   }
 
   @override
   void dispose() {
-    _previewTicker?.dispose();
+    _hintHideTimer?.cancel();
+    _controlsHideTimer?.cancel();
     _rotationSmoothTicker?.dispose();
     _scanPulseController.dispose();
+    _reticlePulseController.dispose();
+
+    final objectManager = _objectManager;
+    final anchorManager = _anchorManager;
+    if (objectManager != null && anchorManager != null) {
+      unawaited(_removeFurniture(
+        objectManager: objectManager,
+        anchorManager: anchorManager,
+      ));
+    }
+
     _sessionManager?.dispose();
     super.dispose();
   }
@@ -111,14 +138,18 @@ class _ArRoomScreenState extends State<ArRoomScreen>
         userMultiplier: _userScaleMultiplier,
       );
 
-  bool get _canAdjustModel =>
-      !_modelLoading && !_isPlacing && _furnitureNode != null;
+  double get _arLightIntensity => Platform.isAndroid
+      ? ArFurnitureScale.androidArLightIntensityMultiplier
+      : ArFurnitureScale.arLightIntensityMultiplier;
+
+  bool get _showScanOverlay =>
+      !_isPlaneDetected && !_modelLoading && !_isPlaced && !_isPlacing;
+
+  bool get _showReticle =>
+      _isPlaneDetected && !_isPlaced && !_modelLoading && !_isPlacing;
 
   @override
   Widget build(BuildContext context) {
-    final showScanOverlay =
-        _isPreviewMode && !_isPlaneDetected && !_modelLoading && !_isPlacing;
-
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -128,19 +159,27 @@ class _ArRoomScreenState extends State<ArRoomScreen>
             onARViewCreated: _onArViewCreated,
             planeDetectionConfig: PlaneDetectionConfig.horizontal,
           ),
-          if (_canAdjustModel && _isPlaced)
-            _ArScaleControls(
-              multiplier: _userScaleMultiplier,
-              minMultiplier: ArFurnitureScale.minUserMultiplier,
-              maxMultiplier: ArFurnitureScale.maxUserMultiplier,
-              onMultiplierChanged: _onPinchMultiplierChanged,
-            ),
-          if (showScanOverlay)
+          if (_showScanOverlay)
             IgnorePointer(
               child: _PlaneScanOverlay(pulse: _scanPulseController),
             ),
+          if (_showReticle)
+            IgnorePointer(
+              child: _PlacementReticle(pulse: _reticlePulseController),
+            ),
+          if (_isPlaced)
+            ArFurnitureGestureOverlay(
+              enabled: _isPlaced && !_modelLoading,
+              initialMultiplier: _userScaleMultiplier,
+              currentRotationY: _targetRotationY,
+              minMultiplier: ArFurnitureScale.minUserMultiplier,
+              maxMultiplier: ArFurnitureScale.maxUserMultiplier,
+              onMultiplierChanged: _onPinchScaleChanged,
+              onRotationChanged: _onPinchRotationChanged,
+              onGestureEnd: _scheduleHideEditingControls,
+            ),
           SafeArea(
-            child: Column(
+            child: Stack(
               children: [
                 Align(
                   alignment: Alignment.topLeft,
@@ -153,22 +192,43 @@ class _ArRoomScreenState extends State<ArRoomScreen>
                     icon: const Icon(Icons.close),
                   ),
                 ),
-                if (_isPlaneDetected && !_isPlaced)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 8),
-                    child: _SurfaceDetectedChip(),
+                if (_isPlaced)
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: ArDoneButton(
+                      onDone: () => Navigator.of(context).pop(),
+                    ),
                   ),
-                const Spacer(),
-                _InstructionBanner(
-                  productName: widget.productName,
-                  modelLoading: _modelLoading,
-                  isPreviewMode: _isPreviewMode,
-                  isPlaneDetected: _isPlaneDetected,
-                  isPlaced: _isPlaced,
-                  isDragging: _isDragging,
-                  isRotating: _isRotating,
-                  statusMessage: _statusMessage,
-                ),
+                if (_hintVisible && _hintMessage != null && !_isDragging && !_isRotating)
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: _ArFloatingHint(message: _hintMessage!),
+                    ),
+                  ),
+                if (_isPlaced)
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: ArEditingToolbar(
+                      visible: _editingControlsVisible,
+                      scaleMultiplier: _userScaleMultiplier,
+                      minMultiplier: ArFurnitureScale.minUserMultiplier,
+                      maxMultiplier: ArFurnitureScale.maxUserMultiplier,
+                      onRotate: () {
+                        _rotateByStep();
+                        _showEditingControls();
+                      },
+                      onScaleChanged: (value) {
+                        _onScaleSliderChanged(value);
+                        _showEditingControls();
+                      },
+                      onReset: () {
+                        _resetPlacement();
+                        _showEditingControls();
+                      },
+                    ),
+                  ),
               ],
             ),
           ),
@@ -187,14 +247,14 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     _objectManager = objectManager;
     _anchorManager = anchorManager;
 
-    sessionManager.onTrackingStateChanged = _onTrackingStateChanged;
+    sessionManager.onPlaneDetected = _onPlaneDetected;
     sessionManager.onPlaneOrPointTap = _onPlaneTapped;
 
+    objectManager.onNodeTap = _onNodeTapped;
     objectManager.onPanStart = _onPanStart;
     objectManager.onPanChange = _onPanChange;
     objectManager.onPanEnd = _onPanEnd;
     objectManager.onRotationStart = _onRotationStart;
-    objectManager.onRotationChange = _onRotationChange;
     objectManager.onRotationEnd = _onRotationEnd;
 
     _initSession();
@@ -204,35 +264,61 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     );
 
     _loadModel();
+    _showTransientHint('Move your phone slowly to find the floor');
   }
 
   Future<void> _initSession() async {
     await _sessionManager?.onInitialize(
-      showAnimatedGuide: true,
+      showAnimatedGuide: false,
       autoHideCoachingOverlay: true,
       showFeaturePoints: false,
-      showPlanes: true,
+      showPlanes: false,
       showWorldOrigin: false,
       handleTaps: true,
       handlePans: true,
-      handleRotation: true,
-      lightIntensityMultiplier: ArFurnitureScale.arLightIntensityMultiplier,
+      handleRotation: false,
+      lightIntensityMultiplier: _arLightIntensity,
     );
-    await _sessionManager?.setLightIntensityMultiplier(
-      ArFurnitureScale.arLightIntensityMultiplier,
-    );
+    await _sessionManager?.setLightIntensityMultiplier(_arLightIntensity);
   }
 
-  void _onTrackingStateChanged(String state, String reason) {
-    if (!mounted || _modelLoading) return;
-    if (state == 'TRACKING' && !_isPlaneDetected) {
-      setState(() => _isPlaneDetected = true);
+  void _showEditingControls() {
+    if (!_isPlaced || !mounted) return;
+    _controlsHideTimer?.cancel();
+    if (!_editingControlsVisible) {
+      setState(() => _editingControlsVisible = true);
     }
+    _scheduleHideEditingControls();
   }
 
-  void _showStatus(String message) {
+  void _scheduleHideEditingControls() {
+    _controlsHideTimer?.cancel();
+    _controlsHideTimer = Timer(_controlsAutoHideDuration, () {
+      if (!mounted || _isDragging || _isRotating) return;
+      setState(() => _editingControlsVisible = false);
+    });
+  }
+
+  void _showTransientHint(String message) {
     if (!mounted) return;
-    setState(() => _statusMessage = message);
+    _hintHideTimer?.cancel();
+    setState(() {
+      _hintMessage = message;
+      _hintVisible = true;
+    });
+    _hintHideTimer = Timer(_hintAutoHideDuration, () {
+      if (mounted) setState(() => _hintVisible = false);
+    });
+  }
+
+  void _onPlaneDetected() {
+    if (!mounted || _modelLoading || _isPlaneDetected) return;
+    setState(() => _isPlaneDetected = true);
+    unawaited(_sessionManager?.setShowPlanes(false));
+    _showTransientHint('Floor found — placing ${widget.productName}…');
+    if (!_modelLoading) {
+      unawaited(_tryAutoPlace());
+    }
   }
 
   Future<void> _loadModel() async {
@@ -244,100 +330,69 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     if (!mounted) return;
 
     if (localModel == null) {
-      setState(() {
-        _modelLoading = false;
-        _statusMessage =
-            'Could not load the 3D model. Check your connection and try again.';
-      });
+      setState(() => _modelLoading = false);
+      _showTransientHint(
+        'Could not load the 3D model. Check your connection and try again.',
+      );
       return;
     }
 
     setState(() {
       _modelUri = localModel.arNodeUri;
       _modelLoading = false;
-      _statusMessage = null;
     });
 
-    await _spawnPreviewNode();
-    await _sessionManager?.setLightIntensityMultiplier(
-      ArFurnitureScale.arLightIntensityMultiplier,
-    );
-    _previewTicker?.start();
+    await _sessionManager?.setLightIntensityMultiplier(_arLightIntensity);
+    if (_isPlaneDetected) {
+      unawaited(_tryAutoPlace());
+    }
   }
 
-  Future<void> _spawnPreviewNode() async {
-    final objectManager = _objectManager;
-    final modelUri = _modelUri;
-    if (objectManager == null || modelUri == null || _furnitureNode != null) {
+  Future<void> _tryAutoPlace() async {
+    if (_isPlaced || _isPlacing || _modelUri == null || _autoPlaceScheduled) {
+      return;
+    }
+    if (_autoPlaceAttempts >= ArFurnitureGestureConfig.maxAutoPlaceAttempts) {
+      _showTransientHint('Tap the floor to place ${widget.productName}');
       return;
     }
 
-    final node = ARNode(
-      type: NodeType.fileSystemAppFolderGLB,
-      name: _nodeName,
-      uri: modelUri,
-      scale: _nodeScale,
-      position: Vector3(0, 0, -_previewDistanceM),
-      eulerAngles: Vector3.zero(),
-    );
+    _autoPlaceScheduled = true;
+    _autoPlaceAttempts++;
 
-    final didAdd = await objectManager.addNode(node);
-    if (!mounted) return;
-
-    if (didAdd != true) {
-      setState(() {
-        _statusMessage =
-            'Could not show the 3D model. Check your connection and try again.';
-      });
-      return;
-    }
-
-    setState(() {
-      _furnitureNode = node;
-      _isPreviewMode = true;
-      _isPlaced = false;
-    });
-  }
-
-  void _onPreviewTick(Duration elapsed) {
-    if (!_isPreviewMode || _furnitureNode == null || _previewTickInFlight) {
-      return;
-    }
-    _previewTickInFlight = true;
-    _updatePreviewFollowCamera().whenComplete(() {
-      _previewTickInFlight = false;
-    });
-  }
-
-  Future<void> _updatePreviewFollowCamera() async {
     final session = _sessionManager;
-    final node = _furnitureNode;
-    if (session == null || node == null || !_isPreviewMode) return;
+    final objectManager = _objectManager;
+    final anchorManager = _anchorManager;
+    if (session == null || objectManager == null || anchorManager == null) {
+      _autoPlaceScheduled = false;
+      return;
+    }
 
-    final pose = await session.getCameraPose();
-    if (pose == null || !_isPreviewMode) return;
+    final hits = await session.hitTestScreenCenter();
+    final hit = ArFurniturePlacement.bestSurfaceHit(hits);
 
-    final cameraPos = pose.getTranslation();
-    final forward = _cameraForward(pose);
-    final target = cameraPos + forward * _previewDistanceM;
-    final previewPos = Vector3(target.x, target.y - 0.15, target.z);
+    if (!mounted) {
+      _autoPlaceScheduled = false;
+      return;
+    }
 
-    node.position = previewPos;
+    if (hit == null) {
+      _autoPlaceScheduled = false;
+      await Future<void>.delayed(ArFurnitureGestureConfig.autoPlaceRetryDelay);
+      if (mounted) unawaited(_tryAutoPlace());
+      return;
+    }
 
-    // Keep a stable world-facing orientation; only user twist gestures change yaw.
-    node.eulerAngles = Vector3(0, _smoothedRotationY, 0);
-    node.scale = _nodeScale;
-  }
-
-  Vector3 _cameraForward(Matrix4 cameraPose) {
-    final z = cameraPose.getColumn(2);
-    return Vector3(-z.x, -z.y, -z.z).normalized();
+    _autoPlaceScheduled = false;
+    await _placeOnSurface(
+      objectManager: objectManager,
+      anchorManager: anchorManager,
+      hit: hit,
+    );
   }
 
   Future<void> _onPlaneTapped(List<ARHitTestResult> hitTestResults) async {
-    if (_isPlaced || _isPlacing || _modelLoading || _modelUri == null) {
-      return;
-    }
+    if (_isPlaced || _isPlacing || _modelLoading || _modelUri == null) return;
 
     final objectManager = _objectManager;
     final anchorManager = _anchorManager;
@@ -350,17 +405,11 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       planeHits.isNotEmpty ? planeHits : hitTestResults,
     );
     if (hit == null) {
-      _showStatus(
-        'No surface here yet. Move your phone slowly until white grids appear.',
-      );
+      _showTransientHint('No surface here yet. Keep scanning the floor.');
       return;
     }
 
-    setState(() {
-      _isPlaneDetected = true;
-      _statusMessage = null;
-    });
-
+    setState(() => _isPlaneDetected = true);
     await _placeOnSurface(
       objectManager: objectManager,
       anchorManager: anchorManager,
@@ -374,20 +423,21 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     required ARHitTestResult hit,
   }) async {
     final modelUri = _modelUri;
-    if (modelUri == null) return;
+    if (modelUri == null || _isPlacing) return;
 
     setState(() => _isPlacing = true);
-    _previewTicker?.stop();
 
     try {
-      await _removeFurniture(objectManager: objectManager, anchorManager: anchorManager);
+      await _removeFurniture(
+        objectManager: objectManager,
+        anchorManager: anchorManager,
+      );
 
       final anchorTransform = ArFurniturePlacement.anchorTransformForHit(hit);
       final anchor = ARPlaneAnchor(transformation: anchorTransform);
       final didAddAnchor = await anchorManager.addAnchor(anchor);
       if (didAddAnchor != true) {
-        _showStatus('Could not anchor to this surface. Try another spot.');
-        await _restorePreviewAfterFailedPlace();
+        _showTransientHint('Could not anchor to this surface. Try again.');
         return;
       }
 
@@ -395,8 +445,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       final didAddNode = await objectManager.addNode(node, planeAnchor: anchor);
       if (didAddNode != true) {
         await anchorManager.removeAnchor(anchor);
-        _showStatus('Could not place the model. Try another spot.');
-        await _restorePreviewAfterFailedPlace();
+        _showTransientHint('Could not place the model. Try again.');
         return;
       }
 
@@ -404,28 +453,19 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       setState(() {
         _furnitureNode = node;
         _currentAnchor = anchor;
-        _isPreviewMode = false;
         _isWorldAnchored = true;
         _isPlaced = true;
-        _statusMessage = null;
+        _placedScaleMultiplier = _userScaleMultiplier;
+        _placedRotationY = _smoothedRotationY;
       });
       _applyAnchoredNodeTransform();
-      await _sessionManager?.setLightIntensityMultiplier(
-        ArFurnitureScale.arLightIntensityMultiplier,
-      );
+      await _sessionManager?.setShowPlanes(false);
+      await _sessionManager?.setLightIntensityMultiplier(_arLightIntensity);
+      _showTransientHint('Drag to move · twist to rotate');
+      _showEditingControls();
     } finally {
       if (mounted) setState(() => _isPlacing = false);
     }
-  }
-
-  Future<void> _restorePreviewAfterFailedPlace() async {
-    _previewTicker?.start();
-    setState(() {
-      _isPreviewMode = true;
-      _isWorldAnchored = false;
-      _isPlaced = false;
-    });
-    await _spawnPreviewNode();
   }
 
   ARNode _buildFurnitureNode(String modelUri) {
@@ -443,74 +483,65 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     );
   }
 
+  void _onNodeTapped(List<String> nodeNames) {
+    if (!_isPlaced || !nodeNames.contains(_nodeName)) return;
+    _showEditingControls();
+  }
+
   void _onPanStart(String nodeName) {
     if (!_isPlaced || nodeName != _nodeName) return;
-    setState(() {
-      _isDragging = true;
-      _statusMessage = null;
-    });
+    setState(() => _isDragging = true);
+    _hintHideTimer?.cancel();
+    if (mounted) setState(() => _hintVisible = false);
+    _showEditingControls();
   }
 
   void _onPanChange(String nodeName) {
     if (!_isPlaced || nodeName != _nodeName) return;
+    _showEditingControls();
   }
 
   Future<void> _onPanEnd(String nodeName, Matrix4 transform) async {
     if (!_isPlaced || nodeName != _nodeName) return;
-
     setState(() => _isDragging = false);
-    // Native sends anchor-local transform after drag — preserve world anchoring.
     _furnitureNode?.transform = transform;
     _syncRotationFromNode(transform);
+    _scheduleHideEditingControls();
   }
 
   void _onRotationStart(String nodeName) {
     if (!_isPlaced || nodeName != _nodeName) return;
-    setState(() {
-      _isRotating = true;
-      _statusMessage = null;
-    });
-  }
-
-  void _onRotationChange(String nodeName) {
-    if (!_isPlaced || nodeName != _nodeName) return;
+    setState(() => _isRotating = true);
+    _hintHideTimer?.cancel();
+    if (mounted) setState(() => _hintVisible = false);
+    _showEditingControls();
   }
 
   Future<void> _onRotationEnd(String nodeName, Matrix4 transform) async {
     if (!_isPlaced || nodeName != _nodeName) return;
-
     setState(() => _isRotating = false);
     _furnitureNode?.transform = transform;
     _syncRotationFromNode(transform);
+    _scheduleHideEditingControls();
   }
 
   void _onRotationSmoothTick(Duration elapsed) {
-    if (_isRotating || _furnitureNode == null || _isWorldAnchored) {
-      return;
-    }
+    if (_isRotating || _furnitureNode == null || !_isWorldAnchored) return;
 
     final delta = _targetRotationY - _smoothedRotationY;
     if (delta.abs() < 0.0005) return;
 
     _smoothedRotationY += delta * ArFurnitureGestureConfig.rotationSmoothFactor;
-    _applyNodeTransform();
+    _applyAnchoredNodeTransform();
   }
 
   void _syncRotationFromNode(Matrix4 transform) {
     final yaw = transform.matrixEulerAngles.y;
     _targetRotationY = yaw;
     _smoothedRotationY = yaw;
+    _placedRotationY = yaw;
   }
 
-  void _applyNodeTransform() {
-    if (_isWorldAnchored) {
-      _applyAnchoredNodeTransform();
-      return;
-    }
-    _applyPreviewNodeTransform();
-  }
-
-  /// Anchor-local transform only — never uses camera pose.
   void _applyAnchoredNodeTransform() {
     final node = _furnitureNode;
     if (node == null) return;
@@ -525,28 +556,55 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     node.scale = _nodeScale;
   }
 
-  /// Preview floats in front of the camera; position is driven by [_updatePreviewFollowCamera].
-  void _applyPreviewNodeTransform() {
-    final node = _furnitureNode;
-    if (node == null) return;
-    node.eulerAngles = Vector3(0, _smoothedRotationY, 0);
-    node.scale = _nodeScale;
+  void _rotateByStep() {
+    if (!_isPlaced) return;
+    _targetRotationY += pi / 4;
+    _smoothedRotationY = _targetRotationY;
+    _placedRotationY = _targetRotationY;
+    _applyAnchoredNodeTransform();
   }
 
-  void _onPinchMultiplierChanged(double multiplier) {
+  void _onScaleSliderChanged(double multiplier) {
     if (_furnitureNode == null) return;
+    final clamped = multiplier.clamp(
+      ArFurnitureScale.minUserMultiplier,
+      ArFurnitureScale.maxUserMultiplier,
+    );
+    if (clamped == _userScaleMultiplier) return;
+    setState(() => _userScaleMultiplier = clamped);
+    _applyAnchoredNodeTransform();
+  }
+
+  void _onPinchScaleChanged(double multiplier) {
+    if (_furnitureNode == null) return;
+    final clamped = multiplier.clamp(
+      ArFurnitureScale.minUserMultiplier,
+      ArFurnitureScale.maxUserMultiplier,
+    );
+    if (clamped == _userScaleMultiplier) return;
+    setState(() => _userScaleMultiplier = clamped);
+    _applyAnchoredNodeTransform();
+    _showEditingControls();
+  }
+
+  void _onPinchRotationChanged(double rotationY) {
+    if (_furnitureNode == null) return;
+    _targetRotationY = rotationY;
+    _smoothedRotationY = rotationY;
+    _placedRotationY = rotationY;
+    _applyAnchoredNodeTransform();
+    _showEditingControls();
+  }
+
+  void _resetPlacement() {
+    if (!_isPlaced) return;
     setState(() {
-      _userScaleMultiplier = multiplier.clamp(
-        ArFurnitureScale.minUserMultiplier,
-        ArFurnitureScale.maxUserMultiplier,
-      );
-      _statusMessage = null;
+      _userScaleMultiplier = _placedScaleMultiplier;
+      _targetRotationY = _placedRotationY;
+      _smoothedRotationY = _placedRotationY;
     });
-    if (_isWorldAnchored) {
-      _applyAnchoredNodeTransform();
-    } else {
-      _applyPreviewNodeTransform();
-    }
+    _applyAnchoredNodeTransform();
+    _showTransientHint('Placement reset');
   }
 
   Future<void> _removeFurniture({
@@ -564,6 +622,55 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       await anchorManager.removeAnchor(anchor);
       _currentAnchor = null;
     }
+  }
+}
+
+class _PlacementReticle extends StatelessWidget {
+  const _PlacementReticle({required this.pulse});
+
+  final Animation<double> pulse;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: AnimatedBuilder(
+        animation: pulse,
+        builder: (context, child) {
+          final scale = 0.94 + pulse.value * 0.06;
+          return Transform.scale(scale: scale, child: child);
+        },
+        child: SizedBox(
+          width: 72,
+          height: 72,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.85),
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.25),
+                  blurRadius: 12,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Center(
+              child: Container(
+                width: 6,
+                height: 6,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -636,116 +743,31 @@ class _PlaneScanOverlay extends StatelessWidget {
   }
 }
 
-class _SurfaceDetectedChip extends StatelessWidget {
-  const _SurfaceDetectedChip();
+class _ArFloatingHint extends StatelessWidget {
+  const _ArFloatingHint({required this.message});
+
+  final String message;
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.green.withValues(alpha: 0.85),
+        color: Colors.black.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(999),
       ),
-      child: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
-            SizedBox(width: 6),
-            Text(
-              'Surface detected',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _InstructionBanner extends StatelessWidget {
-  const _InstructionBanner({
-    required this.productName,
-    required this.modelLoading,
-    required this.isPreviewMode,
-    required this.isPlaneDetected,
-    required this.isPlaced,
-    required this.isDragging,
-    required this.isRotating,
-    this.statusMessage,
-  });
-
-  final String productName;
-  final bool modelLoading;
-  final bool isPreviewMode;
-  final bool isPlaneDetected;
-  final bool isPlaced;
-  final bool isDragging;
-  final bool isRotating;
-  final String? statusMessage;
-
-  @override
-  Widget build(BuildContext context) {
-    final message = statusMessage ?? _defaultMessage();
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.62),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              Icon(_icon(), color: Colors.white, size: 22),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  message,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    height: 1.35,
-                  ),
-                ),
-              ),
-            ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),
     );
-  }
-
-  String _defaultMessage() {
-    if (modelLoading) return 'Loading $productName…';
-    if (isPlaced) {
-      if (isDragging) return 'Release to set the new position.';
-      if (isRotating) return 'Release to set the new angle.';
-      return 'Drag with one finger to move. Twist two fingers to rotate. '
-          'Use +/− to resize.';
-    }
-    if (!isPlaneDetected) {
-      return 'Move your phone to detect a surface.';
-    }
-    if (isPreviewMode) {
-      return 'Tap a surface to place $productName. '
-          'After placing, twist two fingers to rotate or use +/− to resize.';
-    }
-    return 'Move your phone to detect a surface.';
-  }
-
-  IconData _icon() {
-    if (statusMessage != null) return Icons.info_outline;
-    if (isPlaced) return Icons.check_circle_outline;
-    if (isPlaneDetected) return Icons.touch_app_outlined;
-    return Icons.view_in_ar_outlined;
   }
 }
 
@@ -753,79 +775,6 @@ enum ArRoomOpenResult {
   opened,
   permissionDenied,
   modelDownloadFailed,
-}
-
-class _ArScaleControls extends StatelessWidget {
-  const _ArScaleControls({
-    required this.multiplier,
-    required this.minMultiplier,
-    required this.maxMultiplier,
-    required this.onMultiplierChanged,
-  });
-
-  final double multiplier;
-  final double minMultiplier;
-  final double maxMultiplier;
-  final ValueChanged<double> onMultiplierChanged;
-
-  static const _step = 0.1;
-
-  @override
-  Widget build(BuildContext context) {
-    final canShrink = multiplier > minMultiplier + 0.001;
-    final canGrow = multiplier < maxMultiplier - 0.001;
-
-    return Positioned(
-      right: 16,
-      bottom: 112,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.55),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              tooltip: 'Make larger',
-              onPressed: canGrow
-                  ? () => onMultiplierChanged(
-                        (multiplier + _step).clamp(
-                          minMultiplier,
-                          maxMultiplier,
-                        ),
-                      )
-                  : null,
-              icon: const Icon(Icons.add, color: Colors.white),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(
-                '${(multiplier * 100).round()}%',
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            IconButton(
-              tooltip: 'Make smaller',
-              onPressed: canShrink
-                  ? () => onMultiplierChanged(
-                        (multiplier - _step).clamp(
-                          minMultiplier,
-                          maxMultiplier,
-                        ),
-                      )
-                  : null,
-              icon: const Icon(Icons.remove, color: Colors.white),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 abstract final class ArRoomLauncher {

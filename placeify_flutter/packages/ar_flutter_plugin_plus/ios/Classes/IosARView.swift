@@ -30,6 +30,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
     private var imageTrackingUpdateInterval: TimeInterval = 0.1
     private var autoHideCoachingOverlay: Bool = true
     private var coachingOverlayDismissed: Bool = false
+    private var hasReportedPlaneDetection: Bool = false
     
     private var panStartLocation: CGPoint?
     private var panCurrentLocation: CGPoint?
@@ -130,6 +131,26 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             case "setLightIntensityMultiplier":
                 applyLightIntensityMultiplier(arguments?["multiplier"] as? NSNumber)
                 result(nil)
+                break
+            case "setShowPlanes":
+                if let show = arguments?["show"] as? Bool {
+                    showPlanes = show
+                    for plane in trackedPlanes.values {
+                        plane.1.isHidden = !show
+                    }
+                }
+                result(nil)
+                break
+            case "hitTestScreenCenter":
+                let center = CGPoint(x: sceneView.bounds.midX, y: sceneView.bounds.midY)
+                let planeTypes: ARHitTestResult.ResultType
+                if #available(iOS 11.3, *) {
+                    planeTypes = [.existingPlaneUsingGeometry, .estimatedHorizontalPlane, .featurePoint]
+                } else {
+                    planeTypes = [.existingPlaneUsingExtent, .featurePoint]
+                }
+                let hits = sceneView.hitTest(center, types: planeTypes)
+                result(hits.map { serializeHitResult($0) })
                 break
             case "dispose":
                 onDispose(result)
@@ -400,6 +421,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             if (showPlanes) {
                 node.addChildNode(plane)
             }
+            reportPlaneDetectedIfNeeded(planeAnchor: planeAnchor)
             dismissCoachingOverlayIfNeeded()
         }
         
@@ -418,6 +440,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         
         if let planeAnchor = anchor as? ARPlaneAnchor, let plane = trackedPlanes[anchor.identifier] {
             modelBuilder.updatePlaneNode(planeNode: plane.1, anchor: planeAnchor)
+            reportPlaneDetectedIfNeeded(planeAnchor: planeAnchor)
             dismissCoachingOverlayIfNeeded()
         }
 
@@ -1083,6 +1106,16 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         
         DispatchQueue.main.async {
             self.sessionManagerChannel.invokeMethod("onImageDetected", arguments: arguments)
+        }
+    }
+
+    private func reportPlaneDetectedIfNeeded(planeAnchor: ARPlaneAnchor) {
+        guard !hasReportedPlaneDetection else { return }
+        guard planeAnchor.alignment == .horizontal else { return }
+        guard planeAnchor.extent.x >= 0.2 && planeAnchor.extent.z >= 0.2 else { return }
+        hasReportedPlaneDetection = true
+        DispatchQueue.main.async {
+            self.sessionManagerChannel.invokeMethod("onPlaneDetected", arguments: nil)
         }
     }
 

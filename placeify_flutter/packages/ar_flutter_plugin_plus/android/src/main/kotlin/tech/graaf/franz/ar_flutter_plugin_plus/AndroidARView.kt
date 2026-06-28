@@ -18,6 +18,7 @@ import android.view.MotionEvent
 import android.view.TextureView
 import android.view.PixelCopy
 import android.view.View
+import android.view.ViewConfiguration
 import android.widget.Toast
 import android.widget.FrameLayout
 import com.google.ar.core.*
@@ -110,7 +111,13 @@ internal class AndroidARView(
     private var activeGestureNodeName: String? = null
     private var isPanning = false
     private var isRotating = false
+    private var panPending = false
+    private var panStartX = 0f
+    private var panStartY = 0f
     private var lastRotationAngle = 0f
+    private var hasReportedPlaneDetection = false
+    private var planeDetectionFrameSkip = 0
+    private val touchSlop by lazy { ViewConfiguration.get(viewContext).scaledTouchSlop }
 
     private var lastTrackingState: TrackingState? = null
     private var lastTrackingFailureReason: TrackingFailureReason? = null
@@ -158,6 +165,24 @@ internal class AndroidARView(
                             val multiplier = call.argument<Number>("multiplier")?.toFloat() ?: 1.0f
                             modelRenderer.setLightIntensityMultiplier(multiplier)
                             result.success(null)
+                        }
+                        "setShowPlanes" -> {
+                            showPlanes = call.argument<Boolean>("show") == true
+                            result.success(null)
+                        }
+                        "hitTestScreenCenter" -> {
+                            val frame = currentFrame
+                            val width = glSurfaceView.width
+                            val height = glSurfaceView.height
+                            if (frame == null || width <= 0 || height <= 0) {
+                                result.success(ArrayList<HashMap<String, Any>>())
+                                return
+                            }
+                            result.success(
+                                serializePlaneAndPointHits(
+                                    frame.hitTest(width / 2f, height / 2f)
+                                )
+                            )
                         }
                         "updateImageTrackingSettings" -> {
                             val argTrackingImagePaths: List<String>? = call.argument<List<String>>("trackingImagePaths")
@@ -447,10 +472,10 @@ internal class AndroidARView(
         }
 
         glSurfaceView.setOnTouchListener { _, motionEvent ->
-            val handled = handleGestureTouch(motionEvent)
-            if (!handled) {
-                onTap(null, motionEvent)
+            if (motionEvent.actionMasked == MotionEvent.ACTION_DOWN) {
+                queueTap(motionEvent)
             }
+            handleGestureTouch(motionEvent)
             true
         }
 
@@ -632,9 +657,9 @@ internal class AndroidARView(
             else -> config.planeFindingMode = Config.PlaneFindingMode.DISABLED
         }
         config.depthMode = Config.DepthMode.DISABLED
-        config.updateMode = Config.UpdateMode.BLOCKING
+        config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
         config.focusMode = Config.FocusMode.AUTO
-        config.lightEstimationMode = Config.LightEstimationMode.DISABLED
+        config.lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
         session!!.configure(config)
 
         // Configure image tracking
@@ -697,7 +722,7 @@ internal class AndroidARView(
         // Check for image tracking
         checkForTrackedImages()
 
-
+        reportPlaneDetectedIfNeeded(frame)
     }
 
     private fun addNode(dict_node: HashMap<String, Any>, dict_anchor: HashMap<String, Any>? = null): CompletableFuture<Boolean>{
@@ -929,15 +954,18 @@ internal class AndroidARView(
         }
     }
 
-    private fun onTap(hitNode: Any?, motionEvent: MotionEvent?): Boolean {
-        if (motionEvent != null && motionEvent.action == MotionEvent.ACTION_DOWN) {
-            synchronized(tapLock) {
-                queuedTap?.recycle()
-                queuedTap = MotionEvent.obtain(motionEvent)
-            }
-            return true
+    private fun queueTap(motionEvent: MotionEvent) {
+        synchronized(tapLock) {
+            queuedTap?.recycle()
+            queuedTap = MotionEvent.obtain(motionEvent)
         }
-        return false
+    }
+
+    private fun cancelQueuedTap() {
+        synchronized(tapLock) {
+            queuedTap?.recycle()
+            queuedTap = null
+        }
     }
 
     private fun handleGestureTouch(motionEvent: MotionEvent?): Boolean {
@@ -947,41 +975,58 @@ internal class AndroidARView(
         val frame = currentFrame ?: return false
         when (motionEvent.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                val hitPose = hitTestPlaneOrPoint(frame, motionEvent)
-                val nearest = hitPose?.let { findNearestNode(it) } ?: findNearestNodeToCamera(frame)
-                if (nearest == null) return false
-
-                activeGestureNodeName = nearest.name
-                isPanning = enablePans
+                activeGestureNodeName = null
+                isPanning = false
                 isRotating = false
+                panPending = false
                 lastRotationAngle = 0f
 
-                if (isPanning) {
-                    objectManagerChannel.invokeMethod("onPanStart", nearest.name)
+                // Only prepare drag gestures for world-anchored nodes; preview nodes
+                // must receive taps for plane placement.
+                if (enablePans) {
+                    val anchored = findNearestAnchoredNodeToCamera(frame)
+                    if (anchored != null) {
+                        activeGestureNodeName = anchored.name
+                        panStartX = motionEvent.x
+                        panStartY = motionEvent.y
+                        panPending = true
+                        return true
+                    }
                 }
-                return true
+                return false
             }
             MotionEvent.ACTION_POINTER_DOWN -> {
-                if (!enableRotation || motionEvent.pointerCount < 2) return isPanning
-                if (activeGestureNodeName == null) {
-                    val midEvent = motionEventMidpoint(motionEvent) ?: return false
-                    val hitPose = hitTestPlaneOrPoint(frame, midEvent)
-                    midEvent.recycle()
-                    val nearest = hitPose?.let { findNearestNode(it) } ?: findNearestNodeToCamera(frame)
-                    if (nearest == null) return false
-                    activeGestureNodeName = nearest.name
+                if (!enableRotation || motionEvent.pointerCount < 2) {
+                    return panPending || isPanning
                 }
+                val anchored = findNearestAnchoredNodeToCamera(frame) ?: return false
+                activeGestureNodeName = anchored.name
                 isRotating = true
                 isPanning = false
+                panPending = false
+                cancelQueuedTap()
                 lastRotationAngle = rotationAngle(motionEvent)
-                activeGestureNodeName?.let { name ->
-                    objectManagerChannel.invokeMethod("onRotationStart", name)
-                }
+                objectManagerChannel.invokeMethod("onRotationStart", anchored.name)
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
-                val nodeName = activeGestureNodeName ?: return false
-                val node = nodesByName[nodeName] ?: return false
+                val nodeName = activeGestureNodeName
+
+                if (panPending && enablePans && nodeName != null) {
+                    val dx = motionEvent.x - panStartX
+                    val dy = motionEvent.y - panStartY
+                    if (dx * dx + dy * dy > touchSlop * touchSlop) {
+                        panPending = false
+                        isPanning = true
+                        cancelQueuedTap()
+                        objectManagerChannel.invokeMethod("onPanStart", nodeName)
+                    } else {
+                        return true
+                    }
+                }
+
+                val activeName = activeGestureNodeName ?: return false
+                val node = nodesByName[activeName] ?: return false
 
                 if (isRotating && enableRotation && motionEvent.pointerCount >= 2) {
                     val currentAngle = rotationAngle(motionEvent)
@@ -995,11 +1040,10 @@ internal class AndroidARView(
 
                 if (isPanning && enablePans) {
                     val hitPose = hitTestPlaneOrPoint(frame, motionEvent) ?: return false
-                    moveNodeToPose(node, hitPose)
-                    objectManagerChannel.invokeMethod("onPanChange", node.name)
+                    moveNodeToPose(node, hitPose, smooth = true)
                     return true
                 }
-                return false
+                return panPending
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 val nodeName = activeGestureNodeName
@@ -1022,6 +1066,7 @@ internal class AndroidARView(
                 activeGestureNodeName = null
                 isPanning = false
                 isRotating = false
+                panPending = false
                 lastRotationAngle = 0f
                 return false
             }
@@ -1064,7 +1109,7 @@ internal class AndroidARView(
         return nearest
     }
 
-    private fun findNearestNodeToCamera(frame: Frame): SimpleNode? {
+    private fun findNearestAnchoredNodeToCamera(frame: Frame): SimpleNode? {
         if (nodesByName.isEmpty()) return null
         val cameraPose = frame.camera.pose
         val camX = cameraPose.tx()
@@ -1074,6 +1119,7 @@ internal class AndroidARView(
         var nearest: SimpleNode? = null
         var minDist = Float.MAX_VALUE
         nodesByName.values.forEach { node ->
+            if (node.anchorName == null) return@forEach
             val pos = getNodeWorldPosition(node)
             val dx = pos[0] - camX
             val dy = pos[1] - camY
@@ -1085,6 +1131,26 @@ internal class AndroidARView(
             }
         }
         return nearest
+    }
+
+    private fun reportPlaneDetectedIfNeeded(frame: Frame) {
+        if (hasReportedPlaneDetection) return
+        planeDetectionFrameSkip++
+        if (planeDetectionFrameSkip < 6) return
+        planeDetectionFrameSkip = 0
+        val session = session ?: return
+        val planes = session.getAllTrackables(Plane::class.java)
+        val hasUsablePlane = planes.any { plane ->
+            plane.trackingState == TrackingState.TRACKING &&
+                    plane.type == Plane.Type.HORIZONTAL_UPWARD_FACING &&
+                    plane.extentX >= 0.2f &&
+                    plane.extentZ >= 0.2f
+        }
+        if (!hasUsablePlane) return
+        hasReportedPlaneDetection = true
+        activity.runOnUiThread {
+            sessionManagerChannel.invokeMethod("onPlaneDetected", null)
+        }
     }
 
     private fun getNodeWorldPosition(node: SimpleNode): FloatArray {
@@ -1113,7 +1179,7 @@ internal class AndroidARView(
         return floatArrayOf(modelMatrix[12], modelMatrix[13], modelMatrix[14])
     }
 
-    private fun moveNodeToPose(node: SimpleNode, hitPose: Pose) {
+    private fun moveNodeToPose(node: SimpleNode, hitPose: Pose, smooth: Boolean = false) {
         val targetPose = if (node.anchorName != null) {
             val anchor = anchorsByName[node.anchorName]
             if (anchor != null && anchor.trackingState != TrackingState.STOPPED) {
@@ -1127,14 +1193,29 @@ internal class AndroidARView(
 
         val transform = node.transformation
         if (transform.size < 16) return
+
+        val targetX = targetPose.tx().toDouble()
+        val targetY = targetPose.ty().toDouble()
+        val targetZ = targetPose.tz().toDouble()
+        val smoothFactor = 0.32
+
         if (node.anchorName != null) {
-            // Preserve local Y (seat height); slide on the plane in X/Z only.
-            transform[12] = targetPose.tx().toDouble()
-            transform[14] = targetPose.tz().toDouble()
+            transform[12] = if (smooth) {
+                transform[12] + (targetX - transform[12]) * smoothFactor
+            } else targetX
+            transform[14] = if (smooth) {
+                transform[14] + (targetZ - transform[14]) * smoothFactor
+            } else targetZ
         } else {
-            transform[12] = targetPose.tx().toDouble()
-            transform[13] = targetPose.ty().toDouble()
-            transform[14] = targetPose.tz().toDouble()
+            transform[12] = if (smooth) {
+                transform[12] + (targetX - transform[12]) * smoothFactor
+            } else targetX
+            transform[13] = if (smooth) {
+                transform[13] + (targetY - transform[13]) * smoothFactor
+            } else targetY
+            transform[14] = if (smooth) {
+                transform[14] + (targetZ - transform[14]) * smoothFactor
+            } else targetZ
         }
         node.transformation = transform
     }
@@ -1208,6 +1289,20 @@ internal class AndroidARView(
         anchorTransformsByName.remove(name)
     }
 
+    private fun serializePlaneAndPointHits(
+        allHitResults: List<HitResult>
+    ): ArrayList<HashMap<String, Any>> {
+        val planeAndPointHitResults = allHitResults.filter { hit ->
+            when (val trackable = hit.trackable) {
+                is Plane -> trackable.trackingState == TrackingState.TRACKING &&
+                        trackable.isPoseInPolygon(hit.hitPose)
+                is Point -> trackable.trackingState == TrackingState.TRACKING
+                else -> false
+            }
+        }
+        return ArrayList(planeAndPointHitResults.map { serializeHitResult(it) })
+    }
+
     private fun handleQueuedTap(frame: Frame) {
         val tap = synchronized(tapLock) {
             val value = queuedTap
@@ -1216,24 +1311,9 @@ internal class AndroidARView(
         } ?: return
 
         try {
-            val allHitResults = frame.hitTest(tap)
-            val planeAndPointHitResults = allHitResults.filter { hit ->
-                when (val trackable = hit.trackable) {
-                    is Plane -> trackable.trackingState == TrackingState.TRACKING &&
-                            trackable.isPoseInPolygon(hit.hitPose)
-                    is Point -> trackable.trackingState == TrackingState.TRACKING
-                    else -> false
-                }
-            }
-
-            val serializedPlaneAndPointHitResults: ArrayList<HashMap<String, Any>> =
-                ArrayList(planeAndPointHitResults.map { serializeHitResult(it) })
-
+            val serialized = serializePlaneAndPointHits(frame.hitTest(tap))
             activity.runOnUiThread {
-                sessionManagerChannel.invokeMethod(
-                    "onPlaneOrPointTap",
-                    serializedPlaneAndPointHitResults
-                )
+                sessionManagerChannel.invokeMethod("onPlaneOrPointTap", serialized)
             }
         } finally {
             tap.recycle()
@@ -1680,10 +1760,10 @@ internal class AndroidARView(
             isOpaque = false
             isClickable = true
             setOnTouchListener { _, motionEvent ->
-                val handled = handleGestureTouch(motionEvent)
-                if (!handled) {
-                    onTap(null, motionEvent)
+                if (motionEvent.actionMasked == MotionEvent.ACTION_DOWN) {
+                    queueTap(motionEvent)
                 }
+                handleGestureTouch(motionEvent)
                 true
             }
         }
