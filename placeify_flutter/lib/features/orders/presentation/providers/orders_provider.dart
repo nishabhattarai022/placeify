@@ -1,10 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:placeify_flutter/core/config/placeify_server_client.dart';
 import 'package:placeify_flutter/core/widgets/toast_overlay.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify_flutter/features/cart/presentation/cart_actions.dart';
-import 'package:placeify_flutter/features/orders/data/mock_order_repository.dart';
 import 'package:placeify_flutter/features/orders/data/serverpod_order_repository.dart';
 import 'package:placeify_flutter/features/orders/domain/constants/order_strings.dart';
 import 'package:placeify_flutter/features/orders/domain/enums/consumer_order_status.dart';
@@ -16,32 +17,52 @@ import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 part 'orders_provider.g.dart';
 
+const _ordersPollInterval = Duration(seconds: 30);
+
 @Riverpod(keepAlive: true)
 OrderRepository orderRepository(Ref ref) {
-  if (client.auth.isAuthenticated) {
-    return const ServerpodOrderRepository();
-  }
-  return MockOrderRepository();
+  return const ServerpodOrderRepository();
 }
 
 @riverpod
 Future<String> ordersUserId(Ref ref) async {
   final user = await ref.watch(currentUserProvider.future);
-  return user?.id ?? MockOrderRepository.demoUserId;
+  if (user?.id == null) {
+    throw StateError('Sign in to view your orders.');
+  }
+  return user!.id;
 }
 
 @riverpod
 class Orders extends _$Orders {
+  Timer? _pollTimer;
+
   @override
-  Future<List<Order>> build() => _load();
+  Future<List<Order>> build() {
+    ref.onDispose(() => _pollTimer?.cancel());
+    if (client.auth.isAuthenticated) {
+      _pollTimer = Timer.periodic(_ordersPollInterval, (_) {
+        unawaited(refresh(silent: true));
+      });
+    }
+    return _load();
+  }
 
   Future<void> loadOrders() => refresh();
 
-  Future<void> refresh() async {
+  Future<void> refresh({bool silent = false}) async {
+    if (!client.auth.isAuthenticated) {
+      state = const AsyncData([]);
+      return;
+    }
+    if (!silent) {
+      state = const AsyncLoading();
+    }
     state = await AsyncValue.guard(_load);
   }
 
   Future<List<Order>> _load() async {
+    if (!client.auth.isAuthenticated) return [];
     final userId = await ref.watch(ordersUserIdProvider.future);
     final repo = ref.watch(orderRepositoryProvider);
     return repo.getOrders(userId);
@@ -225,10 +246,7 @@ List<Order> returnOrders(Ref ref) {
 
 @riverpod
 Future<Order?> orderById(Ref ref, String orderId) async {
-  final orders = await ref.watch(ordersProvider.future);
-  for (final order in orders) {
-    if (order.id == orderId) return order;
-  }
+  if (!client.auth.isAuthenticated) return null;
 
   final userId = await ref.watch(ordersUserIdProvider.future);
   final repo = ref.watch(orderRepositoryProvider);

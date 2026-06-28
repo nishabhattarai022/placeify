@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify_flutter/features/vendor/data/serverpod_vendor_payment_repository.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/payment_status.dart';
@@ -11,6 +13,8 @@ import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_s
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'vendor_payments_provider.g.dart';
+
+const _vendorPaymentsPollInterval = Duration(seconds: 30);
 
 @Riverpod(keepAlive: true)
 VendorPaymentRepository vendorPaymentRepository(Ref ref) {
@@ -35,8 +39,25 @@ class VendorPaymentsData {
 
 @riverpod
 class VendorPayments extends _$VendorPayments {
+  Timer? _pollTimer;
+
   @override
   Future<VendorPaymentsData> build() async {
+    ref.onDispose(() => _pollTimer?.cancel());
+    _pollTimer = Timer.periodic(_vendorPaymentsPollInterval, (_) {
+      unawaited(refresh(silent: true));
+    });
+    return _load();
+  }
+
+  Future<void> refresh({bool silent = false}) async {
+    if (!silent) {
+      state = const AsyncLoading();
+    }
+    state = await AsyncValue.guard(_load);
+  }
+
+  Future<VendorPaymentsData> _load() async {
     final user = await ref.watch(currentUserProvider.future);
     if (user?.vendorStatus != VendorStatus.approved || user?.vendorId == null) {
       return const VendorPaymentsData(

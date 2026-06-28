@@ -10,6 +10,7 @@ import '../../../core/constants/app_typography.dart';
 import '../../../core/config/placeify_server_client.dart';
 import '../../home/domain/models/product.dart';
 import '../../orders/presentation/providers/customer_in_app_notifications_provider.dart';
+import '../../orders/presentation/providers/orders_provider.dart';
 import '../../profile/presentation/providers/profile_dashboard_provider.dart';
 import '../data/user_dashboard_mappers.dart';
 import '../data/user_dashboard_marketplace_mapper.dart';
@@ -62,6 +63,7 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen> {
       if (nextCount > prevCount) {
         ref.read(profileOrdersProvider.notifier).refresh(silent: true);
         ref.read(profileDashboardProvider.notifier).refresh(silent: true);
+        ref.read(ordersProvider.notifier).refresh(silent: true);
       }
     });
 

@@ -29,10 +29,12 @@ class ServerpodOrderRepository implements OrderRepository {
     _requireAuthenticated();
     try {
       final summaries = await client.user.listMyOrders(limit: 100, offset: 0);
-      return [
-        for (final summary in summaries)
-          OrderApiMapper.fromSummary(summary, userId: userId),
-      ];
+      final orders = <Order>[];
+      for (final summary in summaries) {
+        final mapped = OrderApiMapper.fromSummary(summary, userId: userId);
+        orders.add(await OrderApiMapper.withResolvedImages(mapped));
+      }
+      return orders;
     } catch (error) {
       throw OrderRepositoryException(_mapError(error));
     }
@@ -46,7 +48,8 @@ class ServerpodOrderRepository implements OrderRepository {
 
     try {
       final detail = await client.user.getMyOrder(parsedId);
-      return OrderApiMapper.fromDetail(detail, userId: userId);
+      final mapped = OrderApiMapper.fromDetail(detail, userId: userId);
+      return OrderApiMapper.withResolvedImages(mapped);
     } catch (error) {
       if (error is PlaceifyException && error.code == 'NOT_FOUND') {
         return null;
@@ -69,7 +72,8 @@ class ServerpodOrderRepository implements OrderRepository {
 
     try {
       final detail = await client.user.cancelMyOrder(parsedId, reason.trim());
-      return OrderApiMapper.fromDetail(detail, userId: userId);
+      final mapped = OrderApiMapper.fromDetail(detail, userId: userId);
+      return OrderApiMapper.withResolvedImages(mapped);
     } catch (error) {
       throw OrderRepositoryException(_mapError(error));
     }
@@ -90,11 +94,12 @@ class ServerpodOrderRepository implements OrderRepository {
     try {
       await _refunds.createRefund(orderId: parsedId, reason: reason);
       final detail = await client.user.getMyOrder(parsedId);
-      final order = OrderApiMapper.fromDetail(detail, userId: userId);
-      return order.copyWith(
+      final mapped = OrderApiMapper.fromDetail(detail, userId: userId);
+      final order = (await OrderApiMapper.withResolvedImages(mapped)).copyWith(
         status: ConsumerOrderStatus.returnRequested,
         returnReason: reason.trim(),
       );
+      return order;
     } catch (error) {
       throw OrderRepositoryException(_mapError(error));
     }

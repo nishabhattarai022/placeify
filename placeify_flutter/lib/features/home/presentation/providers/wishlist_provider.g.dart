@@ -44,7 +44,7 @@ final class WishlistProvider
   }
 }
 
-String _$wishlistHash() => r'5ee08885f8839c6a0ce31fbbe5f8a487e33dd247';
+String _$wishlistHash() => r'1f5d12516f3225d95303615200fa25d6ca667a1b';
 
 /// Product id → time saved (newest first when listed).
 
