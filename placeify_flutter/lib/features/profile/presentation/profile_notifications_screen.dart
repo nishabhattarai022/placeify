@@ -7,7 +7,9 @@ import '../../../core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import '../../../core/widgets/toast_overlay.dart';
 import '../data/profile_constants.dart';
 import '../data/profile_notification_mapper.dart';
+import 'providers/profile_in_app_notifications_provider.dart';
 import 'providers/profile_notifications_provider.dart';
+import 'widgets/profile_notifications_inbox_section.dart';
 import 'widgets/profile_sub_hero.dart';
 import 'widgets/shared/profile_submit_button.dart';
 import 'widgets/shared/profile_toggle_row.dart';
@@ -34,8 +36,9 @@ class _ProfileNotificationsScreenState
     if (draft == null) return;
 
     setState(() => _saving = true);
-    final error =
-        await ref.read(profileNotificationsProvider.notifier).save(draft);
+    final error = await ref
+        .read(profileNotificationsProvider.notifier)
+        .save(draft);
     if (!mounted) return;
     setState(() => _saving = false);
 
@@ -81,6 +84,7 @@ class _ProfileNotificationsScreenState
                     BottomNavTokens.scrollBottomPadding,
                   ),
                   children: [
+                    const ProfileNotificationsInboxSection(),
                     for (final row in ProfileNotificationFields.rows)
                       ProfileToggleRow(
                         title: row.title,

@@ -48,6 +48,48 @@ class ServerpodNotificationRepository {
     }
   }
 
+  Future<List<InAppNotificationSummary>> listInAppNotifications({
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    _requireAuthenticated();
+    try {
+      return await client.notification.listInAppNotifications(
+        limit: limit,
+        offset: offset,
+      );
+    } catch (error) {
+      throw NotificationRepositoryException(_mapError(error));
+    }
+  }
+
+  Future<int> unreadInAppNotificationCount() async {
+    _requireAuthenticated();
+    try {
+      return await client.notification.unreadInAppNotificationCount();
+    } catch (error) {
+      throw NotificationRepositoryException(_mapError(error));
+    }
+  }
+
+  Future<void> markInAppNotificationRead(int notificationId) async {
+    _requireAuthenticated();
+    try {
+      await client.notification.markInAppNotificationRead(notificationId);
+    } catch (error) {
+      throw NotificationRepositoryException(_mapError(error));
+    }
+  }
+
+  Future<void> markAllInAppNotificationsRead() async {
+    _requireAuthenticated();
+    try {
+      await client.notification.markAllInAppNotificationsRead();
+    } catch (error) {
+      throw NotificationRepositoryException(_mapError(error));
+    }
+  }
+
   void _requireAuthenticated() {
     if (!client.auth.isAuthenticated) {
       throw NotificationRepositoryException('Sign in to manage notifications.');
