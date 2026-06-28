@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' show Platform;
 import 'dart:math' as math;
 
@@ -15,6 +16,7 @@ import 'package:ar_flutter_plugin_plus/models/ar_node.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:vector_math/vector_math_64.dart' hide Colors;
 
@@ -22,9 +24,11 @@ import '../../home/domain/models/product.dart';
 import '../../../../core/widgets/ar_corner_bracket.dart';
 import '../data/ar_furniture_placement.dart';
 import '../data/ar_furniture_scale.dart';
+import '../data/ar_session_recorder.dart';
 import '../data/product_3d_model_loader.dart';
 import 'webcam_ar_room_screen.dart';
 import 'widgets/ar_pinch_scale_overlay.dart';
+import '../../profile/presentation/providers/profile_dashboard_provider.dart';
 
 /// Full-screen AR furniture placement (IKEA Place–style workflow).
 class ArRoomScreen extends StatefulWidget {
@@ -102,9 +106,9 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   }
 
   Vector3 get _nodeScale => ArFurnitureScale.nodeScale(
-        dimensions: widget.dimensions,
-        userMultiplier: _userScaleMultiplier,
-      );
+    dimensions: widget.dimensions,
+    userMultiplier: _userScaleMultiplier,
+  );
 
   bool get _canAdjustModel =>
       !_modelLoading && !_isPlacing && _furnitureNode != null;
@@ -168,8 +172,10 @@ class _ArRoomScreenState extends State<ArRoomScreen>
                         ),
                         const SizedBox(width: 10),
                         ArRotationControls(
-                          onRotateLeft: () => _rotateModel(-_rotationStepRadians),
-                          onRotateRight: () => _rotateModel(_rotationStepRadians),
+                          onRotateLeft: () =>
+                              _rotateModel(-_rotationStepRadians),
+                          onRotateRight: () =>
+                              _rotateModel(_rotationStepRadians),
                         ),
                       ],
                     ),
@@ -396,7 +402,10 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     _previewTicker?.stop();
 
     try {
-      await _removeFurniture(objectManager: objectManager, anchorManager: anchorManager);
+      await _removeFurniture(
+        objectManager: objectManager,
+        anchorManager: anchorManager,
+      );
 
       final anchorTransform = ArFurniturePlacement.anchorTransformForHit(
         hit: hit,
@@ -428,6 +437,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
         _isPlaced = true;
         _statusMessage = null;
       });
+      unawaited(ArSessionRecorder.recordQuietly(widget.productId));
       await _sessionManager?.setLightIntensityMultiplier(
         ArFurnitureScale.arLightIntensityMultiplier,
       );
@@ -765,9 +775,16 @@ abstract final class ArRoomLauncher {
           builder: (context) => WebcamArRoomScreen(
             modelSrc: remoteModelUrl,
             productName: productName,
+            productId: productId,
           ),
         ),
       );
+    }
+
+    if (context.mounted) {
+      final container = ProviderScope.containerOf(context);
+      container.invalidate(profileArSessionsProvider);
+      container.invalidate(profileDashboardProvider);
     }
 
     return ArRoomOpenResult.opened;
