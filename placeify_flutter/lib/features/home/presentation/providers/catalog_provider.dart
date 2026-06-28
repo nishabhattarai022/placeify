@@ -122,22 +122,25 @@ List<Product> catalogProductsByCategory(Ref ref, String categoryId) {
       .toList();
 }
 
-/// Nisha browse category list: live catalog first, mock expansion as fallback.
+/// Nisha browse category list: live catalog only.
 @riverpod
 List<Product> browseCategoryProducts(Ref ref, String uiCategoryId) {
   ref.watch(catalogIndexProvider);
-  final fromCatalog = ref
+  return ref
       .watch(catalogProductsProvider)
       .where(
-        (product) =>
-            CatalogCategoryUtils.matchesUiCategory(
-              product.categoryId,
-              uiCategoryId,
-            ),
+        (product) => CatalogCategoryUtils.matchesUiCategory(
+          product.categoryId,
+          uiCategoryId,
+        ),
       )
       .toList();
-  if (fromCatalog.isNotEmpty) return fromCatalog;
-  return MockProductRepository.productsForBrowseCategory(uiCategoryId);
+}
+
+@riverpod
+int browseCatalogItemCount(Ref ref) {
+  ref.watch(catalogIndexProvider);
+  return ref.watch(catalogProductsProvider).length;
 }
 
 @riverpod
@@ -171,8 +174,7 @@ Future<Product?> productDetail(Ref ref, String id) async {
   final cached = ref.watch(catalogIndexProvider).value?[id];
   if (cached != null) return cached;
 
-  final apiProduct =
-      await ref.read(catalogRepositoryProvider).getByUiId(id);
+  final apiProduct = await ref.read(catalogRepositoryProvider).getByUiId(id);
   if (apiProduct == null) return null;
 
   return CatalogProductMapper.toUiProduct(apiProduct);

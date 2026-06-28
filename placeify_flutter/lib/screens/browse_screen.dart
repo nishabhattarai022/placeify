@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/services/haptic_service.dart';
 import '../core/theme/app_fonts.dart';
 import '../data/furniture_categories.dart';
+import '../features/home/presentation/providers/catalog_provider.dart';
 
 FurnitureCategory _cat(String id) {
   return furnitureCategories.firstWhere((c) => c.id == id);
@@ -17,14 +19,14 @@ const double _kBentoMediumCard = 150;
 const double _kBentoSlimCard = 110;
 const double _kBentoTallCard = _kBentoShortCard * 2 + 12;
 
-class BrowseScreen extends StatefulWidget {
+class BrowseScreen extends ConsumerStatefulWidget {
   const BrowseScreen({super.key});
 
   @override
-  State<BrowseScreen> createState() => _BrowseScreenState();
+  ConsumerState<BrowseScreen> createState() => _BrowseScreenState();
 }
 
-class _BrowseScreenState extends State<BrowseScreen> {
+class _BrowseScreenState extends ConsumerState<BrowseScreen> {
   String _query = '';
 
   List<FurnitureCategory> get _filtered {
@@ -41,11 +43,12 @@ class _BrowseScreenState extends State<BrowseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(catalogIndexProvider);
     final filtered = _filtered;
     final isSearching = _query.trim().isNotEmpty;
 
     final categoryCount = furnitureCategories.length;
-    final itemCount = furnitureCatalogItemCount;
+    final itemCount = ref.watch(browseCatalogItemCountProvider);
 
     final topInset = MediaQuery.paddingOf(context).top;
 
@@ -142,8 +145,9 @@ class _BrowseScreenState extends State<BrowseScreen> {
                             color: Colors.black38,
                           ),
                           border: InputBorder.none,
-                          contentPadding:
-                              const EdgeInsets.symmetric(vertical: 14),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 14,
+                          ),
                         ),
                       ),
                     ),
@@ -168,8 +172,8 @@ class _BrowseScreenState extends State<BrowseScreen> {
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
               child: isSearching
-                  ? _buildSearchResults(filtered)
-                  : _buildBentoGrid(),
+                  ? _buildSearchResults(ref, filtered)
+                  : _buildBentoGrid(ref),
             ),
           ),
         ],
@@ -177,7 +181,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
     );
   }
 
-  Widget _buildSearchResults(List<FurnitureCategory> filtered) {
+  Widget _buildSearchResults(WidgetRef ref, List<FurnitureCategory> filtered) {
     if (filtered.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 48),
@@ -199,6 +203,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
           if (i > 0) const SizedBox(height: 10),
           _SearchCategoryRow(
             category: filtered[i],
+            itemCount: ref.watch(categoryProductCountProvider(filtered[i].id)),
             onTap: () => _openCategory(filtered[i]),
           ),
         ],
@@ -206,7 +211,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
     );
   }
 
-  Widget _buildBentoGrid() {
+  Widget _buildBentoGrid(WidgetRef ref) {
     final chairs = _cat('chairs');
     final sofas = _cat('sofas');
     final desks = _cat('desks');
@@ -215,6 +220,8 @@ class _BrowseScreenState extends State<BrowseScreen> {
     final storage = _cat('storage');
     final lighting = _cat('lighting');
     final outdoor = _cat('outdoor');
+
+    int countFor(String id) => ref.watch(categoryProductCountProvider(id));
 
     return Column(
       children: [
@@ -225,6 +232,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
               Expanded(
                 child: _CategoryCard(
                   category: chairs,
+                  itemCount: countFor(chairs.id),
                   height: _kBentoTallCard,
                   onTap: () => _openCategory(chairs),
                 ),
@@ -235,12 +243,14 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   children: [
                     _CategoryCard(
                       category: sofas,
+                      itemCount: countFor(sofas.id),
                       height: _kBentoShortCard,
                       onTap: () => _openCategory(sofas),
                     ),
                     const SizedBox(height: 12),
                     _CategoryCard(
                       category: desks,
+                      itemCount: countFor(desks.id),
                       height: _kBentoShortCard,
                       onTap: () => _openCategory(desks),
                     ),
@@ -253,6 +263,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
         const SizedBox(height: 12),
         _CategoryCard(
           category: tables,
+          itemCount: countFor(tables.id),
           height: _kBentoShortCard,
           isWide: true,
           showTag: 'Most popular',
@@ -265,6 +276,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
             Expanded(
               child: _CategoryCard(
                 category: beds,
+                itemCount: countFor(beds.id),
                 height: _kBentoMediumCard,
                 onTap: () => _openCategory(beds),
               ),
@@ -273,6 +285,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
             Expanded(
               child: _CategoryCard(
                 category: storage,
+                itemCount: countFor(storage.id),
                 height: _kBentoMediumCard,
                 onTap: () => _openCategory(storage),
               ),
@@ -285,6 +298,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
             Expanded(
               child: _CategoryCard(
                 category: lighting,
+                itemCount: countFor(lighting.id),
                 height: _kBentoSlimCard,
                 onTap: () => _openCategory(lighting),
               ),
@@ -293,6 +307,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
             Expanded(
               child: _CategoryCard(
                 category: outdoor,
+                itemCount: countFor(outdoor.id),
                 height: _kBentoSlimCard,
                 onTap: () => _openCategory(outdoor),
               ),
@@ -343,6 +358,7 @@ class _BrowseCartButton extends StatelessWidget {
 class _CategoryCard extends StatelessWidget {
   const _CategoryCard({
     required this.category,
+    required this.itemCount,
     required this.onTap,
     required this.height,
     this.isWide = false,
@@ -351,6 +367,7 @@ class _CategoryCard extends StatelessWidget {
   });
 
   final FurnitureCategory category;
+  final int itemCount;
   final VoidCallback onTap;
   final double height;
   final bool isWide;
@@ -455,7 +472,7 @@ class _CategoryCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        '${category.itemCount} items',
+                        '$itemCount items',
                         style: GoogleFonts.dmSans(
                           fontSize: 11,
                           color: Colors.white60,
@@ -486,10 +503,12 @@ class _CategoryCard extends StatelessWidget {
 class _SearchCategoryRow extends StatelessWidget {
   const _SearchCategoryRow({
     required this.category,
+    required this.itemCount,
     required this.onTap,
   });
 
   final FurnitureCategory category;
+  final int itemCount;
   final VoidCallback onTap;
 
   @override
@@ -541,7 +560,7 @@ class _SearchCategoryRow extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '${category.itemCount} items',
+                    '$itemCount items',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.dmSans(

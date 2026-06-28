@@ -231,17 +231,17 @@ final class CatalogProductsByCategoryFamily extends $Family
   String toString() => r'catalogProductsByCategoryProvider';
 }
 
-/// Nisha browse category list: live catalog first, mock expansion as fallback.
+/// Nisha browse category list: live catalog only.
 
 @ProviderFor(browseCategoryProducts)
 final browseCategoryProductsProvider = BrowseCategoryProductsFamily._();
 
-/// Nisha browse category list: live catalog first, mock expansion as fallback.
+/// Nisha browse category list: live catalog only.
 
 final class BrowseCategoryProductsProvider
     extends $FunctionalProvider<List<Product>, List<Product>, List<Product>>
     with $Provider<List<Product>> {
-  /// Nisha browse category list: live catalog first, mock expansion as fallback.
+  /// Nisha browse category list: live catalog only.
   BrowseCategoryProductsProvider._({
     required BrowseCategoryProductsFamily super.from,
     required String super.argument,
@@ -295,9 +295,9 @@ final class BrowseCategoryProductsProvider
 }
 
 String _$browseCategoryProductsHash() =>
-    r'f562f0e42a2745bdf870a2686d4c7456f35d74f4';
+    r'a8ae420f59dd78a7825656bf7aa6b045105a1972';
 
-/// Nisha browse category list: live catalog first, mock expansion as fallback.
+/// Nisha browse category list: live catalog only.
 
 final class BrowseCategoryProductsFamily extends $Family
     with $FunctionalFamilyOverride<List<Product>, String> {
@@ -310,7 +310,7 @@ final class BrowseCategoryProductsFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// Nisha browse category list: live catalog first, mock expansion as fallback.
+  /// Nisha browse category list: live catalog only.
 
   BrowseCategoryProductsProvider call(String uiCategoryId) =>
       BrowseCategoryProductsProvider._(argument: uiCategoryId, from: this);
@@ -318,6 +318,48 @@ final class BrowseCategoryProductsFamily extends $Family
   @override
   String toString() => r'browseCategoryProductsProvider';
 }
+
+@ProviderFor(browseCatalogItemCount)
+final browseCatalogItemCountProvider = BrowseCatalogItemCountProvider._();
+
+final class BrowseCatalogItemCountProvider
+    extends $FunctionalProvider<int, int, int>
+    with $Provider<int> {
+  BrowseCatalogItemCountProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'browseCatalogItemCountProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$browseCatalogItemCountHash();
+
+  @$internal
+  @override
+  $ProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  int create(Ref ref) {
+    return browseCatalogItemCount(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
+  }
+}
+
+String _$browseCatalogItemCountHash() =>
+    r'fafc65620f20da4bf23e8c9fe01ef600b1880028';
 
 @ProviderFor(categoryProductCount)
 final categoryProductCountProvider = CategoryProductCountFamily._();
