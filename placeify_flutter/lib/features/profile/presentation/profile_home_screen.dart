@@ -59,6 +59,19 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
+              leading: const Icon(Icons.person_outline),
+              title: const Text(
+                'Edit Profile',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                context.pushNamed('profileEdit');
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.settings_outlined),
               title: const Text(
                 'Settings',
@@ -240,9 +253,11 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
                         ProfileOrdersTile(
                           onTap: () => _onMenuTap(ProfileMenuRoute.orders),
                         ),
-                        for (var i = 0;
-                            i < ProfileMenuItems.accountOverview.length;
-                            i++) ...[
+                        for (
+                          var i = 0;
+                          i < ProfileMenuItems.accountOverview.length;
+                          i++
+                        ) ...[
                           if (i == 3)
                             const Divider(
                               height: 16,

@@ -11,6 +11,7 @@ import '../../../core/services/haptic_service.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/shimmer_loader.dart';
 import '../../../core/widgets/toast_overlay.dart';
+import 'widgets/order_review_sheet.dart';
 import '../../profile/presentation/widgets/profile_sub_hero.dart';
 import '../../profile/presentation/widgets/shared/profile_submit_button.dart';
 import '../domain/constants/order_strings.dart';
@@ -160,7 +161,9 @@ class _OrderDetailBody extends ConsumerWidget {
                       const SizedBox(height: 8),
                       _SummaryRow(
                         label: OrderStrings.discountLabel,
-                        value: Formatters.currencyDecimalDiscount(order.discount),
+                        value: Formatters.currencyDecimalDiscount(
+                          order.discount,
+                        ),
                         valueColor: AppColors.rust,
                       ),
                     ],
@@ -267,7 +270,9 @@ class _OrderDetailBody extends ConsumerWidget {
         ProfileSubmitButton(
           label: OrderStrings.reorderAction,
           onPressed: () {
-            ref.read(ordersProvider.notifier).reorder(order.id, context: context);
+            ref
+                .read(ordersProvider.notifier)
+                .reorder(order.id, context: context);
           },
         ),
       );
@@ -281,10 +286,7 @@ class _OrderDetailBody extends ConsumerWidget {
         OutlinedButton(
           onPressed: () {
             HapticService.light();
-            PlaceifyToast.show(
-              context,
-              '${OrderStrings.leaveReviewAction} coming soon',
-            );
+            showOrderReviewSheet(context, ref, order: order);
           },
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.espresso,

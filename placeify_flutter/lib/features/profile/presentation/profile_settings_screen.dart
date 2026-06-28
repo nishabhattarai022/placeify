@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/bottom_nav/bottom_nav_tokens.dart';
@@ -35,6 +36,38 @@ class ProfileSettingsScreen extends ConsumerWidget {
                 BottomNavTokens.scrollBottomPadding,
               ),
               children: [
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.accentBg,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.person_outline,
+                      color: AppColors.accent,
+                    ),
+                  ),
+                  title: const Text(
+                    'Edit Profile',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.espresso,
+                    ),
+                  ),
+                  subtitle: const Text(
+                    'Name, phone, and address',
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                  ),
+                  trailing: const Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.textMuted,
+                  ),
+                  onTap: () => context.pushNamed('profileEdit'),
+                ),
+                const Divider(height: 24, color: AppColors.creamDark),
                 if (kDebugMode) ...[
                   const Text(
                     'Developer',

@@ -1,11 +1,17 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
+import '../../../../core/config/placeify_server_client.dart';
+import '../../../../core/config/resolve_media_url.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/toast_overlay.dart';
 import '../../../auth/domain/models/app_user.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/profile_menu_config.dart';
+import '../providers/consumer_profile_provider.dart';
 import 'profile_hero_pattern.dart';
 import 'profile_stats_strip.dart';
 
@@ -184,21 +190,81 @@ class _UserInfoShimmer extends StatelessWidget {
   }
 }
 
-class _AvatarSection extends StatelessWidget {
+class _AvatarSection extends ConsumerStatefulWidget {
   const _AvatarSection({required this.userAsync});
 
   final AsyncValue<AppUser?> userAsync;
 
   @override
+  ConsumerState<_AvatarSection> createState() => _AvatarSectionState();
+}
+
+class _AvatarSectionState extends ConsumerState<_AvatarSection> {
+  final _imagePicker = ImagePicker();
+  bool _uploading = false;
+  String? _resolvedImageUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _resolveProfileImage();
+  }
+
+  Future<void> _resolveProfileImage() async {
+    if (!client.auth.isAuthenticated) return;
+    final profile = ref.read(consumerProfileProvider).value;
+    final imageUrl = profile?.profileImageUrl;
+    if (imageUrl == null || imageUrl.isEmpty) {
+      if (mounted) setState(() => _resolvedImageUrl = null);
+      return;
+    }
+    final resolved = await resolveMediaUrl(imageUrl);
+    if (mounted) setState(() => _resolvedImageUrl = resolved);
+  }
+
+  Future<void> _pickAndUploadPhoto() async {
+    if (!client.auth.isAuthenticated) {
+      PlaceifyToast.show(context, 'Sign in to change your photo');
+      return;
+    }
+    if (_uploading) return;
+
+    final file = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (file == null || !mounted) return;
+
+    setState(() => _uploading = true);
+    final error = await ref
+        .read(consumerProfileProvider.notifier)
+        .uploadProfileImage(file.path);
+    if (!mounted) return;
+    setState(() => _uploading = false);
+
+    if (error != null) {
+      PlaceifyToast.show(context, error);
+      return;
+    }
+
+    await _resolveProfileImage();
+    PlaceifyToast.show(context, 'Photo updated ✓');
+  }
+
+  @override
   Widget build(BuildContext context) {
+    ref.listen(consumerProfileProvider, (_, __) {
+      _resolveProfileImage();
+    });
+
     const size = ProfileMenuConfig.avatarSize;
-    final initial = userAsync.maybeWhen(
-      data: (user) =>
-          user != null && user.fullName.isNotEmpty
-              ? user.fullName.trim()[0].toUpperCase()
-              : null,
+    final initial = widget.userAsync.maybeWhen(
+      data: (user) => user != null && user.fullName.isNotEmpty
+          ? user.fullName.trim()[0].toUpperCase()
+          : null,
       orElse: () => null,
     );
+    final imageUrl = _resolvedImageUrl;
 
     return SizedBox(
       width: size + 8,
@@ -213,16 +279,45 @@ class _AvatarSection extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.accent, width: 3),
-              color: initial != null ? AppColors.accent : null,
-              image: initial == null
+              color: imageUrl == null && initial != null
+                  ? AppColors.accent
+                  : null,
+              image: imageUrl == null && initial == null
                   ? const DecorationImage(
                       image: AssetImage(ProfileMenuConfig.avatarAsset),
                       fit: BoxFit.cover,
                     )
                   : null,
             ),
+            clipBehavior: Clip.antiAlias,
             alignment: Alignment.center,
-            child: initial != null
+            child: _uploading
+                ? const Padding(
+                    padding: EdgeInsets.all(28),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : imageUrl != null
+                ? CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    fit: BoxFit.cover,
+                    width: size,
+                    height: size,
+                        errorWidget: (_, __, ___) => initial != null
+                            ? Text(
+                                initial,
+                                style: const TextStyle(
+                                  fontFamily: 'Fraunces',
+                                  fontSize: 36,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                  )
+                : initial != null
                 ? Text(
                     initial,
                     style: const TextStyle(
@@ -238,7 +333,7 @@ class _AvatarSection extends StatelessWidget {
             right: 0,
             bottom: 2,
             child: GestureDetector(
-              onTap: () => PlaceifyToast.show(context, 'Edit photo'),
+              onTap: _uploading ? null : _pickAndUploadPhoto,
               child: Container(
                 width: 30,
                 height: 30,

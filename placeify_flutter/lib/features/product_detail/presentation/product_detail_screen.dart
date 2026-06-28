@@ -13,6 +13,7 @@ import 'widgets/product_detail_cart_bar.dart';
 import 'widgets/product_detail_gallery.dart';
 import 'widgets/product_detail_header.dart';
 import 'widgets/product_detail_info_section.dart';
+import 'widgets/product_detail_reviews_section.dart';
 import 'widgets/product_detail_sold_by_row.dart';
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
@@ -54,9 +55,9 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
     );
 
     CurvedAnimation curve(double begin, double end) => CurvedAnimation(
-          parent: _entryController,
-          curve: Interval(begin, end, curve: Curves.easeOutCubic),
-        );
+      parent: _entryController,
+      curve: Interval(begin, end, curve: Curves.easeOutCubic),
+    );
 
     _galleryOpacity = curve(0.05, 0.55).drive(Tween<double>(begin: 0, end: 1));
     _gallerySlide = curve(0.05, 0.6).drive(
@@ -113,7 +114,8 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SizedBox(
-                  height: top +
+                  height:
+                      top +
                       ProductDetailTokens.headerSize +
                       ProductDetailTokens.headerTopPadding +
                       8,
@@ -135,16 +137,16 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                 ),
                 if (vendorId != null)
                   shopAsync?.maybeWhen(
-                    data: (shop) {
-                      if (shop == null) return const SizedBox.shrink();
-                      return ProductDetailSoldByRow(
-                        vendorId: vendorId,
-                        businessName: shop.businessName,
-                      );
-                    },
-                    orElse: () => const SizedBox.shrink(),
-                  ) ??
-                  const SizedBox.shrink(),
+                        data: (shop) {
+                          if (shop == null) return const SizedBox.shrink();
+                          return ProductDetailSoldByRow(
+                            vendorId: vendorId,
+                            businessName: shop.businessName,
+                          );
+                        },
+                        orElse: () => const SizedBox.shrink(),
+                      ) ??
+                      const SizedBox.shrink(),
                 SlideTransition(
                   position: _infoSlide,
                   child: FadeTransition(
@@ -166,6 +168,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                     ),
                   ),
                 ),
+                ProductDetailReviewsSection(productId: widget.productId),
                 const SizedBox(
                   height: ProductDetailTokens.cartBarBottomSpacer,
                 ),

@@ -13,6 +13,7 @@ user:
   - getCurrentUser:
   - updateProfile:
   - changePassword:
+  - uploadProfileImage:
   - becomeVendor:
   - becomeConsumer:
   - getDashboard:

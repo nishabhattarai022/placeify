@@ -7,6 +7,7 @@ import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
 import 'user_order_store.dart';
 import 'user_payment_store.dart';
+import 'user_profile_image_storage.dart';
 import 'user_repository.dart';
 
 class UserService {
@@ -115,6 +116,28 @@ class UserService {
       name,
       phone: phone,
       address: address,
+    );
+  }
+
+  Future<User> uploadProfileImage(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) async {
+    final user = await SessionService.requireUser(session);
+    final imageUrl = await UserProfileImageStorage.persist(
+      session: session,
+      userId: user.id!,
+      fileData: fileData,
+      fileName: fileName,
+    );
+
+    return User.db.updateRow(
+      session,
+      user.copyWith(
+        profileImageUrl: imageUrl,
+        updatedAt: DateTime.now(),
+      ),
     );
   }
 
