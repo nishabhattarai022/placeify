@@ -25,7 +25,7 @@ import com.google.ar.core.*
 import com.google.ar.core.exceptions.*
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
-import tech.graaf.franz.ar_flutter_plugin_plus.Serialization.deserializeMatrix4
+import tech.graaf.franz.ar_flutter_plugin_plus.Serialization.poseFromTransformMatrix
 import tech.graaf.franz.ar_flutter_plugin_plus.Serialization.serializeAnchor
 import tech.graaf.franz.ar_flutter_plugin_plus.Serialization.serializeHitResult
 import tech.graaf.franz.ar_flutter_plugin_plus.Serialization.serializePose
@@ -145,6 +145,9 @@ internal class AndroidARView(
     private val anchorsByName: MutableMap<String, Anchor> = mutableMapOf()
     private val anchorChildren: MutableMap<String, MutableList<String>> = mutableMapOf()
     private val anchorTransformsByName: MutableMap<String, FloatArray> = mutableMapOf()
+    /// Cached world matrices — recomputed only when a node transform changes.
+    private val cachedWorldMatrices: MutableMap<String, FloatArray> = mutableMapOf()
+    private val dirtyTransformNodes: MutableSet<String> = mutableSetOf()
     // Cloud anchor handler
     private lateinit var cloudAnchorHandler: CloudAnchorHandler
 
@@ -250,13 +253,12 @@ internal class AndroidARView(
                             // Create a handler thread to offload the processing of the image.
                             val handlerThread = HandlerThread("PixelCopier")
                             handlerThread.start()
-                            // Copy the GLSurfaceView (camera + ARCore draws).
+                            // Copy the GLSurfaceView (camera + Filament furniture).
                             PixelCopy.request(glSurfaceView, bitmap, { copyResult: Int ->
                                 if (copyResult == PixelCopy.SUCCESS) {
                                     try {
                                         val mainHandler = Handler(context.mainLooper)
                                         val runnable = Runnable {
-                                            // Composite Filament TextureView on top if available.
                                             filamentTextureView?.let { overlay ->
                                                 if (overlay.isAvailable) {
                                                     val overlayBitmap = overlay.getBitmap(width, height)
@@ -267,7 +269,6 @@ internal class AndroidARView(
                                                     }
                                                 }
                                             }
-
                                             val stream = ByteArrayOutputStream()
                                             bitmap.compress(Bitmap.CompressFormat.PNG, 90, stream)
                                             val data = stream.toByteArray()
@@ -333,7 +334,11 @@ internal class AndroidARView(
                             nodeName?.let{
                                 nodesByName.remove(nodeName)
                                 anchorChildren.values.forEach { it.remove(nodeName) }
-                                modelRenderer.removeModel(nodeName)
+                                cachedWorldMatrices.remove(nodeName)
+                                dirtyTransformNodes.remove(nodeName)
+                                glSurfaceView.queueEvent {
+                                    modelRenderer.removeModel(nodeName)
+                                }
                                 result.success(null)
                             }
                         }
@@ -743,6 +748,7 @@ internal class AndroidARView(
                     children.add(nodeName)
                 }
             }
+            dirtyTransformNodes.add(nodeName)
 
             loadModelForNode(nodeName)
             completableFutureSuccess.complete(true)
@@ -891,41 +897,67 @@ internal class AndroidARView(
         }
     }
 
-    private fun updateModelTransforms() {
+    private fun computeWorldMatrixForNode(
+        node: SimpleNode,
+        useStableAnchorPose: Boolean = true,
+    ): FloatArray {
         val nodeMatrix = FloatArray(16)
         val anchorMatrix = FloatArray(16)
         val modelMatrix = FloatArray(16)
-        val scaleMatrix = FloatArray(16)
-        val scaledModelMatrix = FloatArray(16)
-
-        nodesByName.values.forEach { node ->
-            matrixFromTransform(node.transformation, nodeMatrix)
-            val anchorName = node.anchorName
-            if (anchorName != null) {
+        matrixFromTransform(node.transformation, nodeMatrix)
+        val anchorName = node.anchorName
+        if (anchorName != null) {
+            val stableAnchor = anchorTransformsByName[anchorName]
+            if (stableAnchor != null && useStableAnchorPose) {
+                System.arraycopy(stableAnchor, 0, anchorMatrix, 0, 16)
+                Matrix.multiplyMM(modelMatrix, 0, anchorMatrix, 0, nodeMatrix, 0)
+            } else {
                 val anchor = anchorsByName[anchorName]
                 if (anchor != null && anchor.trackingState != TrackingState.STOPPED) {
                     anchor.pose.toMatrix(anchorMatrix, 0)
                     Matrix.multiplyMM(modelMatrix, 0, anchorMatrix, 0, nodeMatrix, 0)
+                } else if (stableAnchor != null) {
+                    System.arraycopy(stableAnchor, 0, anchorMatrix, 0, 16)
+                    Matrix.multiplyMM(modelMatrix, 0, anchorMatrix, 0, nodeMatrix, 0)
                 } else {
-                    val fallbackAnchor = anchorTransformsByName[anchorName]
-                    if (fallbackAnchor != null) {
-                        System.arraycopy(fallbackAnchor, 0, anchorMatrix, 0, 16)
-                        Matrix.multiplyMM(modelMatrix, 0, anchorMatrix, 0, nodeMatrix, 0)
-                    } else {
-                        System.arraycopy(nodeMatrix, 0, modelMatrix, 0, 16)
-                    }
+                    System.arraycopy(nodeMatrix, 0, modelMatrix, 0, 16)
                 }
-            } else {
-                System.arraycopy(nodeMatrix, 0, modelMatrix, 0, 16)
             }
+        } else {
+            System.arraycopy(nodeMatrix, 0, modelMatrix, 0, 16)
+        }
+        return modelMatrix
+    }
+
+    private fun updateModelTransforms() {
+        val scaleMatrix = FloatArray(16)
+        val scaledModelMatrix = FloatArray(16)
+
+        nodesByName.values.forEach { node ->
+            val needsRecompute =
+                dirtyTransformNodes.contains(node.name) || !cachedWorldMatrices.containsKey(node.name)
+
+            val modelMatrix = if (needsRecompute) {
+                val computed = if (node.anchorName != null) {
+                    computeWorldMatrixForNode(node, useStableAnchorPose = true)
+                } else {
+                    computeWorldMatrixForNode(node, useStableAnchorPose = false)
+                }
+                cachedWorldMatrices[node.name] = computed.clone()
+                dirtyTransformNodes.remove(node.name)
+                computed
+            } else {
+                cachedWorldMatrices[node.name]!!
+            }
+
             val modelScaleFactor = getModelScaleFactor(node.type)
             if (modelScaleFactor != 1.0f) {
                 Matrix.setIdentityM(scaleMatrix, 0)
                 Matrix.scaleM(scaleMatrix, 0, modelScaleFactor, modelScaleFactor, modelScaleFactor)
                 Matrix.multiplyMM(scaledModelMatrix, 0, modelMatrix, 0, scaleMatrix, 0)
-                modelRenderer.updateTransform(node.name, scaledModelMatrix)
+                modelRenderer.updateTransformIfChanged(node.name, scaledModelMatrix)
             } else {
-                modelRenderer.updateTransform(node.name, modelMatrix)
+                modelRenderer.updateTransformIfChanged(node.name, modelMatrix)
             }
         }
     }
@@ -948,10 +980,22 @@ internal class AndroidARView(
     }
 
     private fun transformNode(name: String, transform: ArrayList<Double>) {
-        val node = nodesByName[name]
-        if (node != null) {
-            node.transformation = transform
+        val node = nodesByName[name] ?: return
+        if (transformationsApproximatelyEqual(node.transformation, transform)) return
+        node.transformation = transform
+        dirtyTransformNodes.add(name)
+    }
+
+    private fun transformationsApproximatelyEqual(
+        a: ArrayList<Double>,
+        b: ArrayList<Double>,
+        epsilon: Double = 1e-5,
+    ): Boolean {
+        if (a.size < 16 || b.size < 16) return false
+        for (i in 0 until 16) {
+            if (kotlin.math.abs(a[i] - b[i]) > epsilon) return false
         }
+        return true
     }
 
     private fun queueTap(motionEvent: MotionEvent) {
@@ -1154,49 +1198,52 @@ internal class AndroidARView(
     }
 
     private fun getNodeWorldPosition(node: SimpleNode): FloatArray {
-        val nodeMatrix = FloatArray(16)
-        val anchorMatrix = FloatArray(16)
-        val modelMatrix = FloatArray(16)
-        matrixFromTransform(node.transformation, nodeMatrix)
-        val anchorName = node.anchorName
-        if (anchorName != null) {
-            val anchor = anchorsByName[anchorName]
-            if (anchor != null && anchor.trackingState != TrackingState.STOPPED) {
-                anchor.pose.toMatrix(anchorMatrix, 0)
-                Matrix.multiplyMM(modelMatrix, 0, anchorMatrix, 0, nodeMatrix, 0)
-            } else {
-                val fallbackAnchor = anchorTransformsByName[anchorName]
-                if (fallbackAnchor != null) {
-                    System.arraycopy(fallbackAnchor, 0, anchorMatrix, 0, 16)
-                    Matrix.multiplyMM(modelMatrix, 0, anchorMatrix, 0, nodeMatrix, 0)
-                } else {
-                    System.arraycopy(nodeMatrix, 0, modelMatrix, 0, 16)
-                }
-            }
+        val modelMatrix = if (node.anchorName != null) {
+            computeWorldMatrixForNode(node, useStableAnchorPose = true)
         } else {
-            System.arraycopy(nodeMatrix, 0, modelMatrix, 0, 16)
+            computeWorldMatrixForNode(node, useStableAnchorPose = false)
         }
         return floatArrayOf(modelMatrix[12], modelMatrix[13], modelMatrix[14])
     }
 
     private fun moveNodeToPose(node: SimpleNode, hitPose: Pose, smooth: Boolean = false) {
-        val targetPose = if (node.anchorName != null) {
-            val anchor = anchorsByName[node.anchorName]
-            if (anchor != null && anchor.trackingState != TrackingState.STOPPED) {
-                anchor.pose.inverse().compose(hitPose)
+        val hitMatrix = FloatArray(16)
+        hitPose.toMatrix(hitMatrix, 0)
+
+        val targetX: Double
+        val targetY: Double
+        val targetZ: Double
+
+        if (node.anchorName != null) {
+            val stableAnchorMatrix = anchorTransformsByName[node.anchorName]
+            if (stableAnchorMatrix != null) {
+                val invAnchor = FloatArray(16)
+                val localMatrix = FloatArray(16)
+                Matrix.invertM(invAnchor, 0, stableAnchorMatrix, 0)
+                Matrix.multiplyMM(localMatrix, 0, invAnchor, 0, hitMatrix, 0)
+                targetX = localMatrix[12].toDouble()
+                targetY = localMatrix[13].toDouble()
+                targetZ = localMatrix[14].toDouble()
             } else {
-                hitPose
+                val anchor = anchorsByName[node.anchorName]
+                val targetPose = if (anchor != null && anchor.trackingState != TrackingState.STOPPED) {
+                    anchor.pose.inverse().compose(hitPose)
+                } else {
+                    hitPose
+                }
+                targetX = targetPose.tx().toDouble()
+                targetY = targetPose.ty().toDouble()
+                targetZ = targetPose.tz().toDouble()
             }
         } else {
-            hitPose
+            targetX = hitPose.tx().toDouble()
+            targetY = hitPose.ty().toDouble()
+            targetZ = hitPose.tz().toDouble()
         }
 
         val transform = node.transformation
         if (transform.size < 16) return
 
-        val targetX = targetPose.tx().toDouble()
-        val targetY = targetPose.ty().toDouble()
-        val targetZ = targetPose.tz().toDouble()
         val smoothFactor = 0.32
 
         if (node.anchorName != null) {
@@ -1218,6 +1265,7 @@ internal class AndroidARView(
             } else targetZ
         }
         node.transformation = transform
+        dirtyTransformNodes.add(node.name)
     }
 
     private fun rotateNode(node: SimpleNode, deltaRadians: Float) {
@@ -1234,6 +1282,7 @@ internal class AndroidARView(
             updated.add(matrix[i].toDouble())
         }
         node.transformation = updated
+        dirtyTransformNodes.add(node.name)
     }
 
     private fun rotationAngle(event: MotionEvent): Float {
@@ -1254,16 +1303,13 @@ internal class AndroidARView(
 
     private fun addPlaneAnchor(transform: ArrayList<Double>, name: String): Boolean {
         val session = session ?: return false
-        val components = try {
-            deserializeMatrix4(transform)
-        } catch (_: Exception) {
-            return false
-        }
 
         val future = CompletableFuture<Boolean>()
         glSurfaceView.queueEvent {
             try {
-                val anchor = session.createAnchor(Pose(components.position, components.rotation))
+                // Use the hit-test matrix directly — deserializeMatrix4 applies legacy
+                // 180° quaternion corrections that misalign anchors on ARCore planes.
+                val anchor = session.createAnchor(poseFromTransformMatrix(transform))
                 anchorsByName[name] = anchor
                 anchorChildren.putIfAbsent(name, mutableListOf())
                 val anchorMatrix = FloatArray(16)
@@ -1283,9 +1329,13 @@ internal class AndroidARView(
     }
 
     private fun removeAnchor(name: String) {
+        val childNodes = anchorChildren.remove(name) ?: emptyList()
+        childNodes.forEach { child ->
+            cachedWorldMatrices.remove(child)
+            dirtyTransformNodes.remove(child)
+        }
         val anchor = anchorsByName.remove(name)
         anchor?.detach()
-        anchorChildren.remove(name)
         anchorTransformsByName.remove(name)
     }
 
@@ -1743,7 +1793,6 @@ internal class AndroidARView(
 
                 updateModelTransforms()
                 modelRenderer.updateCamera(viewMatrix, projectionMatrix)
-                modelRenderer.updateLightEstimate(frame.lightEstimate)
             } catch (e: Exception) {
                 // Ignore frame update errors when session is paused
             }

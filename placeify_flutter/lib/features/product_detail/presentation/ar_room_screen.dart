@@ -77,6 +77,9 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   bool _isPlacing = false;
   bool _modelLoading = true;
 
+  String _cameraTrackingState = 'INITIALIZING';
+  DateTime? _trackingSince;
+
   int _autoPlaceAttempts = 0;
   bool _autoPlaceScheduled = false;
 
@@ -109,7 +112,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1100),
     )..repeat(reverse: true);
-    _rotationSmoothTicker = createTicker(_onRotationSmoothTick)..start();
+    _rotationSmoothTicker = createTicker(_onRotationSmoothTick);
   }
 
   @override
@@ -147,6 +150,12 @@ class _ArRoomScreenState extends State<ArRoomScreen>
 
   bool get _showReticle =>
       _isPlaneDetected && !_isPlaced && !_modelLoading && !_isPlacing;
+
+  bool get _isTrackingReady =>
+      _cameraTrackingState == 'TRACKING' &&
+      _trackingSince != null &&
+      DateTime.now().difference(_trackingSince!) >=
+          ArFurnitureGestureConfig.trackingSettleDelay;
 
   @override
   Widget build(BuildContext context) {
@@ -249,6 +258,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
 
     sessionManager.onPlaneDetected = _onPlaneDetected;
     sessionManager.onPlaneOrPointTap = _onPlaneTapped;
+    sessionManager.onTrackingStateChanged = _onTrackingStateChanged;
 
     objectManager.onNodeTap = _onNodeTapped;
     objectManager.onPanStart = _onPanStart;
@@ -311,14 +321,29 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     });
   }
 
+  void _onTrackingStateChanged(String state, String reason) {
+    if (!mounted) return;
+    _cameraTrackingState = state;
+    if (state == 'TRACKING') {
+      _trackingSince ??= DateTime.now();
+    } else {
+      _trackingSince = null;
+    }
+  }
+
   void _onPlaneDetected() {
     if (!mounted || _modelLoading || _isPlaneDetected) return;
     setState(() => _isPlaneDetected = true);
     unawaited(_sessionManager?.setShowPlanes(false));
     _showTransientHint('Floor found — placing ${widget.productName}…');
     if (!_modelLoading) {
-      unawaited(_tryAutoPlace());
+      unawaited(_placeAfterPlaneStabilizes());
     }
+  }
+
+  Future<void> _placeAfterPlaneStabilizes() async {
+    await Future<void>.delayed(ArFurnitureGestureConfig.planeStabilizeDelay);
+    if (mounted) unawaited(_tryAutoPlace());
   }
 
   Future<void> _loadModel() async {
@@ -344,12 +369,17 @@ class _ArRoomScreenState extends State<ArRoomScreen>
 
     await _sessionManager?.setLightIntensityMultiplier(_arLightIntensity);
     if (_isPlaneDetected) {
-      unawaited(_tryAutoPlace());
+      unawaited(_placeAfterPlaneStabilizes());
     }
   }
 
   Future<void> _tryAutoPlace() async {
     if (_isPlaced || _isPlacing || _modelUri == null || _autoPlaceScheduled) {
+      return;
+    }
+    if (!_isTrackingReady) {
+      await Future<void>.delayed(ArFurnitureGestureConfig.autoPlaceRetryDelay);
+      if (mounted) unawaited(_tryAutoPlace());
       return;
     }
     if (_autoPlaceAttempts >= ArFurnitureGestureConfig.maxAutoPlaceAttempts) {
@@ -376,7 +406,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       return;
     }
 
-    if (hit == null) {
+    if (hit == null || hit.type != ARHitTestResultType.plane) {
       _autoPlaceScheduled = false;
       await Future<void>.delayed(ArFurnitureGestureConfig.autoPlaceRetryDelay);
       if (mounted) unawaited(_tryAutoPlace());
@@ -423,7 +453,15 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     required ARHitTestResult hit,
   }) async {
     final modelUri = _modelUri;
-    if (modelUri == null || _isPlacing) return;
+    if (modelUri == null || _isPlacing || _isPlaced) return;
+    if (!_isTrackingReady) {
+      _showTransientHint('Hold the phone steady while we lock onto the floor…');
+      return;
+    }
+    if (hit.type != ARHitTestResultType.plane) {
+      _showTransientHint('No floor surface here yet. Keep scanning.');
+      return;
+    }
 
     setState(() => _isPlacing = true);
 
@@ -458,7 +496,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
         _placedScaleMultiplier = _userScaleMultiplier;
         _placedRotationY = _smoothedRotationY;
       });
-      _applyAnchoredNodeTransform();
       await _sessionManager?.setShowPlanes(false);
       await _sessionManager?.setLightIntensityMultiplier(_arLightIntensity);
       _showTransientHint('Drag to move · twist to rotate');
@@ -469,17 +506,18 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   }
 
   ARNode _buildFurnitureNode(String modelUri) {
-    final localOffset = ArFurniturePlacement.nodeLocalOffset(
-      dimensions: widget.dimensions,
-      nodeScale: _nodeScale,
-    );
     return ARNode(
       type: NodeType.fileSystemAppFolderGLB,
       name: _nodeName,
       uri: modelUri,
-      scale: _nodeScale,
-      position: localOffset,
-      eulerAngles: Vector3(0, _smoothedRotationY, 0),
+      transformation: Matrix4.compose(
+        ArFurniturePlacement.nodeLocalOffset(
+          dimensions: widget.dimensions,
+          nodeScale: _nodeScale,
+        ),
+        Quaternion.axisAngle(Vector3(0, 1, 0), _smoothedRotationY),
+        _nodeScale,
+      ),
     );
   }
 
@@ -529,7 +567,10 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     if (_isRotating || _furnitureNode == null || !_isWorldAnchored) return;
 
     final delta = _targetRotationY - _smoothedRotationY;
-    if (delta.abs() < 0.0005) return;
+    if (delta.abs() < 0.0005) {
+      _rotationSmoothTicker?.stop();
+      return;
+    }
 
     _smoothedRotationY += delta * ArFurnitureGestureConfig.rotationSmoothFactor;
     _applyAnchoredNodeTransform();
@@ -544,16 +585,24 @@ class _ArRoomScreenState extends State<ArRoomScreen>
 
   void _applyAnchoredNodeTransform() {
     final node = _furnitureNode;
-    if (node == null) return;
+    if (node == null || !_isWorldAnchored || _isDragging || _isRotating) return;
 
-    final localOffset = ArFurniturePlacement.nodeLocalOffset(
-      dimensions: widget.dimensions,
-      nodeScale: _nodeScale,
-    );
     final currentPos = node.position;
-    node.position = Vector3(currentPos.x, localOffset.y, currentPos.z);
-    node.eulerAngles = Vector3(0, _smoothedRotationY, 0);
-    node.scale = _nodeScale;
+    final nextTransform = Matrix4.compose(
+      Vector3(currentPos.x, ArFurniturePlacement.floorClearanceM, currentPos.z),
+      Quaternion.axisAngle(Vector3(0, 1, 0), _smoothedRotationY),
+      _nodeScale,
+    );
+
+    if (_matricesApproximatelyEqual(node.transform, nextTransform)) return;
+    node.transform = nextTransform;
+  }
+
+  bool _matricesApproximatelyEqual(Matrix4 a, Matrix4 b, [double epsilon = 1e-5]) {
+    for (var i = 0; i < 16; i++) {
+      if ((a.storage[i] - b.storage[i]).abs() > epsilon) return false;
+    }
+    return true;
   }
 
   void _rotateByStep() {
