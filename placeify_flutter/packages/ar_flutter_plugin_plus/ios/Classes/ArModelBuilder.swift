@@ -68,12 +68,12 @@ class ArModelBuilder: NSObject {
                 plane.materials = [material]
                 opacity = 1.0
             } else {
-                // Use standard planes
-                opacity = 0.3
+                material.diffuse.contents = UIColor.white
+                opacity = 0.12
             }
         } else {
-            // Use standard planes
-            opacity = 0.3
+            material.diffuse.contents = UIColor.white
+            opacity = 0.12
         }
         
         let planeNode = SCNNode(geometry: plane)

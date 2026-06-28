@@ -13,6 +13,7 @@ typedef ARImageDetectionResultHandler = void Function(
     String imageName, Matrix4 transformation);
 typedef ARTrackingStateHandler = void Function(String state, String reason);
 typedef ARImageTrackingConfiguredHandler = void Function(bool success);
+typedef ARPlaneDetectedHandler = void Function();
 
 /// Manages the session configuration, parameters and events of an [ARView]
 class ARSessionManager {
@@ -36,6 +37,9 @@ class ARSessionManager {
 
   /// Receives tracking state updates from the platform
   ARTrackingStateHandler? onTrackingStateChanged;
+
+  /// Fires once when a usable horizontal plane is detected in the scene
+  ARPlaneDetectedHandler? onPlaneDetected;
 
   /// Receives a callback when image tracking database configuration finishes
   ARImageTrackingConfiguredHandler? onImageTrackingConfigured;
@@ -151,6 +155,9 @@ class ARSessionManager {
             onTrackingStateChanged!(state, reason);
           }
           break;
+        case 'onPlaneDetected':
+          onPlaneDetected?.call();
+          break;
         case 'onImageTrackingConfigured':
           if (onImageTrackingConfigured != null) {
             final arguments = call.arguments as Map<dynamic, dynamic>;
@@ -206,6 +213,32 @@ class ARSessionManager {
       'imageTrackingUpdateIntervalMs': imageTrackingUpdateIntervalMs,
       'lightIntensityMultiplier': lightIntensityMultiplier,
     });
+  }
+
+  /// Screen-center raycast against detected planes / feature points.
+  Future<List<ARHitTestResult>> hitTestScreenCenter() async {
+    try {
+      final raw = await _channel.invokeMethod<List<dynamic>>(
+        'hitTestScreenCenter',
+        {},
+      );
+      if (raw == null || raw.isEmpty) return [];
+      return raw
+          .map((e) => ARHitTestResult.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    } catch (e) {
+      print('Error caught: ' + e.toString());
+      return [];
+    }
+  }
+
+  /// Show or hide plane visualization overlays at runtime.
+  Future<void> setShowPlanes(bool show) async {
+    try {
+      await _channel.invokeMethod<void>('setShowPlanes', {'show': show});
+    } catch (e) {
+      print('Error caught: ' + e.toString());
+    }
   }
 
   /// Adjusts the lighting intensity multiplier for the AR scene.
