@@ -1,5 +1,6 @@
 package tech.graaf.franz.ar_flutter_plugin_plus.Serialization
 
+import com.google.ar.core.Pose
 import kotlin.math.sqrt
 
 data class TransformComponents(
@@ -90,4 +91,50 @@ fun deserializeMatrix4(transform: ArrayList<Double>): TransformComponents {
 
   val rotationArray = floatArrayOf(fx.toFloat(), fy.toFloat(), fz.toFloat(), fw.toFloat())
   return TransformComponents(scale, position, rotationArray)
+}
+
+/**
+ * Builds an ARCore [Pose] directly from a column-major 4×4 hit-test matrix.
+ *
+ * Unlike [deserializeMatrix4], this does not apply legacy coordinate corrections that
+ * misalign plane anchors on Android.
+ */
+fun poseFromTransformMatrix(transform: ArrayList<Double>): Pose {
+  val m = FloatArray(16) { transform[it].toFloat() }
+  val translation = floatArrayOf(m[12], m[13], m[14])
+  val rotation = FloatArray(4)
+
+  val trace = m[0] + m[5] + m[10]
+  when {
+    trace > 0f -> {
+      val s = sqrt(trace + 1f) * 2f
+      rotation[0] = (m[9] - m[6]) / s
+      rotation[1] = (m[2] - m[8]) / s
+      rotation[2] = (m[4] - m[1]) / s
+      rotation[3] = 0.25f * s
+    }
+    m[0] > m[5] && m[0] > m[10] -> {
+      val s = sqrt(1f + m[0] - m[5] - m[10]) * 2f
+      rotation[0] = 0.25f * s
+      rotation[1] = (m[1] + m[4]) / s
+      rotation[2] = (m[2] + m[6]) / s
+      rotation[3] = (m[9] - m[6]) / s
+    }
+    m[5] > m[10] -> {
+      val s = sqrt(1f + m[5] - m[0] - m[10]) * 2f
+      rotation[0] = (m[1] + m[4]) / s
+      rotation[1] = 0.25f * s
+      rotation[2] = (m[6] + m[9]) / s
+      rotation[3] = (m[2] - m[8]) / s
+    }
+    else -> {
+      val s = sqrt(1f + m[10] - m[0] - m[5]) * 2f
+      rotation[0] = (m[2] + m[6]) / s
+      rotation[1] = (m[6] + m[9]) / s
+      rotation[2] = 0.25f * s
+      rotation[3] = (m[4] - m[1]) / s
+    }
+  }
+
+  return Pose(translation, rotation)
 }

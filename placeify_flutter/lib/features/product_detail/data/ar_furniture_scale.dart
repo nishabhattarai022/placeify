@@ -16,10 +16,10 @@ abstract final class ArFurnitureScale {
   static const nativeAndroidFactor = 1.0;
 
   /// Studio neutral lighting — aligned with model-viewer `environmentImage: neutral`.
-  static const arLightIntensityMultiplier = 1.15;
+  static const arLightIntensityMultiplier = 1.0;
 
-  /// Slightly lower on Android Filament to avoid blown-out PBR textures.
-  static const androidArLightIntensityMultiplier = 0.95;
+  /// Android uses the same neutral rig as iOS after unified Filament rendering.
+  static const androidArLightIntensityMultiplier = 1.0;
 
   /// Tripo reference bounding size in meters.
   static const _tripoReferenceMaxDimensionM = 1.0;

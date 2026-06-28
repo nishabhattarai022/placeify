@@ -1,11 +1,11 @@
 package tech.graaf.franz.ar_flutter_plugin_plus
 
-import android.opengl.Matrix
+import android.opengl.Matrix as GlMatrix
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.Surface
 import android.view.TextureView
-import android.util.Log
 import com.google.android.filament.*
 import com.google.android.filament.android.UiHelper
 import com.google.android.filament.gltfio.AssetLoader
@@ -15,8 +15,13 @@ import com.google.android.filament.gltfio.MaterialProvider
 import com.google.android.filament.gltfio.ResourceLoader
 import com.google.android.filament.gltfio.UbershaderProvider
 import java.nio.ByteBuffer
-import kotlin.math.atan
 
+/**
+ * Renders GLB furniture on a transparent [TextureView] composited over the ARCore camera.
+ *
+ * Filament cannot reliably use the same EGL surface as [GLSurfaceView], so models render on a
+ * dedicated overlay while placement uses stable anchor matrices from [AndroidARView].
+ */
 internal class ModelRenderer {
     private val tag = "ModelRenderer"
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -31,7 +36,7 @@ internal class ModelRenderer {
 
     private var uiHelper: UiHelper? = null
     private var textureView: TextureView? = null
-    private var renderPending = false
+
     private var viewportWidth: Int = 0
     private var viewportHeight: Int = 0
 
@@ -39,7 +44,7 @@ internal class ModelRenderer {
     private var fillLightEntity: Int = 0
     private var indirectLight: IndirectLight? = null
     private var lightIntensityMultiplier: Float = 1.0f
-    private var studioLightingApplied: Boolean = false
+    private var lightingConfigured = false
 
     private val cameraLock = Any()
     private val cameraViewMatrix = FloatArray(16)
@@ -52,6 +57,8 @@ internal class ModelRenderer {
 
     private val modelAssets: MutableMap<String, FilamentAsset> = mutableMapOf()
     private val pendingTransforms: MutableMap<String, FloatArray> = mutableMapOf()
+    private val lastSentTransforms: MutableMap<String, FloatArray> = mutableMapOf()
+    private val rootOffsetCorrections: MutableMap<String, FloatArray> = mutableMapOf()
 
     fun attachTextureView(textureView: TextureView) {
         if (this.textureView === textureView) return
@@ -68,36 +75,24 @@ internal class ModelRenderer {
             System.arraycopy(projectionMatrix, 0, cameraProjectionMatrix, 0, 16)
             hasCamera = true
         }
-        scheduleRender()
+        renderFrameImmediate()
     }
 
-    fun updateLightEstimate(lightEstimate: com.google.ar.core.LightEstimate) {
-        if (lightEstimate.state != com.google.ar.core.LightEstimate.State.VALID) {
-            studioLightingApplied = false
-            mainHandler.post { applyStudioLighting() }
+    fun updateTransformIfChanged(name: String, modelMatrix: FloatArray) {
+        val last = lastSentTransforms[name]
+        if (last != null && matricesApproximatelyEqual(last, modelMatrix)) {
             return
         }
-        val pixelIntensity = lightEstimate.pixelIntensity.coerceIn(0.55f, 1.55f)
-        val hdrIntensity = if (lightEstimate.environmentalHdrMainLightIntensity.size >= 3) {
-            val r = lightEstimate.environmentalHdrMainLightIntensity[0]
-            val g = lightEstimate.environmentalHdrMainLightIntensity[1]
-            val b = lightEstimate.environmentalHdrMainLightIntensity[2]
-            ((r + g + b) / 3f).coerceIn(0.55f, 1.55f)
-        } else {
-            pixelIntensity
-        }
-        val ambient = ((pixelIntensity + hdrIntensity) * 0.5f).coerceIn(0.55f, 1.55f)
-        mainHandler.post {
-            applyEnvironmentalLighting(ambient)
-        }
+        lastSentTransforms[name] = modelMatrix.clone()
+        updateTransform(name, modelMatrix)
     }
 
     fun setLightIntensityMultiplier(multiplier: Float) {
         val clamped = if (multiplier.isFinite()) multiplier else 1.0f
         lightIntensityMultiplier = if (clamped <= 0f) 0.01f else clamped
-        studioLightingApplied = false
+        lightingConfigured = false
         mainHandler.post {
-            applyStudioLighting()
+            engine?.let { setupStudioLighting(it) }
         }
     }
 
@@ -119,12 +114,14 @@ internal class ModelRenderer {
             }
             resourceLoader.loadResources(asset)
             asset.releaseSourceData()
-            disableFaceCulling(asset)
+            snapModelBottomToOrigin(name, asset)
+            configureRenderableMaterials(asset)
             scene.addEntities(asset.entities)
             modelAssets[name] = asset
             pendingTransforms[name]?.let { transform ->
-                applyTransform(asset, transform)
+                applyTransform(name, asset, transform)
             }
+            Log.d(tag, "Loaded GLB $name (${asset.entities.size} entities)")
             scheduleRender()
         }
     }
@@ -140,11 +137,7 @@ internal class ModelRenderer {
             jsonBuffer.put(json)
             jsonBuffer.flip()
 
-            val asset = assetLoader.createAsset(jsonBuffer)
-            if (asset == null) {
-                Log.e(tag, "Failed to create glTF asset for $name")
-                return@post
-            }
+            val asset = assetLoader.createAsset(jsonBuffer) ?: return@post
 
             for ((uri, bytes) in resources) {
                 val resBuffer = ByteBuffer.allocateDirect(bytes.size)
@@ -156,11 +149,12 @@ internal class ModelRenderer {
             resourceLoader.loadResources(asset)
             resourceLoader.evictResourceData()
             asset.releaseSourceData()
-            disableFaceCulling(asset)
+            snapModelBottomToOrigin(name, asset)
+            configureRenderableMaterials(asset)
             scene.addEntities(asset.entities)
             modelAssets[name] = asset
             pendingTransforms[name]?.let { transform ->
-                applyTransform(asset, transform)
+                applyTransform(name, asset, transform)
             }
             scheduleRender()
         }
@@ -171,7 +165,7 @@ internal class ModelRenderer {
         mainHandler.post {
             pendingTransforms[name] = matrixCopy
             val asset = modelAssets[name] ?: return@post
-            applyTransform(asset, matrixCopy)
+            applyTransform(name, asset, matrixCopy)
             scheduleRender()
         }
     }
@@ -183,12 +177,13 @@ internal class ModelRenderer {
             scene.removeEntities(asset.entities)
             assetLoader?.destroyAsset(asset)
             pendingTransforms.remove(name)
+            lastSentTransforms.remove(name)
+            rootOffsetCorrections.remove(name)
         }
     }
 
     fun destroy() {
         mainHandler.post {
-            renderPending = false
             uiHelper?.detach()
             uiHelper = null
 
@@ -199,6 +194,9 @@ internal class ModelRenderer {
                 assetLoader?.destroyAsset(asset)
             }
             modelAssets.clear()
+            rootOffsetCorrections.clear()
+            pendingTransforms.clear()
+            lastSentTransforms.clear()
 
             resourceLoader?.destroy()
             assetLoader?.destroy()
@@ -207,7 +205,7 @@ internal class ModelRenderer {
             renderer?.let { engine.destroyRenderer(it) }
             view?.let { engine.destroyView(it) }
             scene?.let { engine.destroyScene(it) }
-            camera?.let { engine.destroyCameraComponent(camera!!.entity) }
+            camera?.let { engine.destroyCameraComponent(it.entity) }
             if (lightEntity != 0) {
                 engine.destroyEntity(lightEntity)
                 lightEntity = 0
@@ -222,7 +220,6 @@ internal class ModelRenderer {
 
             engine.destroy()
 
-            studioLightingApplied = false
             this.engine = null
             renderer = null
             view = null
@@ -231,6 +228,8 @@ internal class ModelRenderer {
             materialProvider = null
             assetLoader = null
             resourceLoader = null
+            lightingConfigured = false
+            hasCamera = false
         }
     }
 
@@ -270,102 +269,80 @@ internal class ModelRenderer {
         view!!.scene = scene
         view!!.camera = camera
         view!!.blendMode = View.BlendMode.TRANSLUCENT
-        view!!.isPostProcessingEnabled = false
+        view!!.isPostProcessingEnabled = true
         view!!.colorGrading = ColorGrading.Builder()
-            .toneMapping(ColorGrading.ToneMapping.ACES)
-            .exposure(0.92f)
+            .toneMapping(ColorGrading.ToneMapping.LINEAR)
+            .exposure(1.0f)
             .build(engine!!)
 
-        lightEntity = EntityManager.get().create()
-        LightManager.Builder(LightManager.Type.DIRECTIONAL)
-            .direction(0.35f, -0.85f, -0.4f)
-            .color(1.0f, 1.0f, 1.0f)
-            .intensity(28_000.0f)
-            .build(engine!!, lightEntity)
-        scene!!.addEntity(lightEntity)
-
-        fillLightEntity = EntityManager.get().create()
-        LightManager.Builder(LightManager.Type.DIRECTIONAL)
-            .direction(-0.55f, -0.35f, 0.75f)
-            .color(0.96f, 0.96f, 0.98f)
-            .intensity(12_000.0f)
-            .build(engine!!, fillLightEntity)
-        scene!!.addEntity(fillLightEntity)
-
-        applyStudioLighting()
+        setupStudioLighting(engine!!)
     }
 
-    /// Neutral studio rig aligned with model-viewer `environmentImage: neutral`.
-    private fun applyStudioLighting() {
-        val engine = engine ?: return
-        if (lightEntity == 0) return
-        if (studioLightingApplied) return
+    private fun setupStudioLighting(engine: Engine) {
+        if (lightingConfigured) return
+
+        if (lightEntity == 0) {
+            lightEntity = EntityManager.get().create()
+            LightManager.Builder(LightManager.Type.DIRECTIONAL)
+                .direction(0.3f, -1.0f, -0.2f)
+                .color(1.0f, 1.0f, 1.0f)
+                .intensity(55_000.0f)
+                .build(engine, lightEntity)
+            scene?.addEntity(lightEntity)
+        }
+
+        if (fillLightEntity == 0) {
+            fillLightEntity = EntityManager.get().create()
+            LightManager.Builder(LightManager.Type.DIRECTIONAL)
+                .direction(-0.4f, -0.6f, 0.5f)
+                .color(0.98f, 0.98f, 1.0f)
+                .intensity(25_000.0f)
+                .build(engine, fillLightEntity)
+            scene?.addEntity(fillLightEntity)
+        }
 
         val lightManager = engine.lightManager
-        val key = lightManager.getInstance(lightEntity)
-        val fill = if (fillLightEntity != 0) lightManager.getInstance(fillLightEntity) else 0
         val scale = lightIntensityMultiplier
-
-        if (key != 0) {
-            lightManager.setColor(key, 1.0f, 1.0f, 1.0f)
-            lightManager.setIntensity(key, 28_000.0f * scale)
+        lightManager.getInstance(lightEntity).takeIf { it != 0 }?.let { key ->
+            lightManager.setIntensity(key, 55_000.0f * scale)
         }
-        if (fill != 0) {
-            lightManager.setColor(fill, 0.96f, 0.96f, 0.98f)
-            lightManager.setIntensity(fill, 12_000.0f * scale)
+        lightManager.getInstance(fillLightEntity).takeIf { it != 0 }?.let { fill ->
+            lightManager.setIntensity(fill, 25_000.0f * scale)
         }
 
         indirectLight?.let { engine.destroyIndirectLight(it) }
         indirectLight = IndirectLight.Builder()
             .irradiance(3, neutralStudioSh())
-            .intensity(18_000.0f * scale)
-            .build(engine)
-        scene?.indirectLight = indirectLight
-
-        view!!.setShadowingEnabled(false)
-        studioLightingApplied = true
-    }
-
-    private fun applyEnvironmentalLighting(ambientIntensity: Float) {
-        val engine = engine ?: return
-        if (lightEntity == 0) return
-
-        val lightManager = engine.lightManager
-        val key = lightManager.getInstance(lightEntity)
-        val fill = if (fillLightEntity != 0) lightManager.getInstance(fillLightEntity) else 0
-        val scale = lightIntensityMultiplier * ambientIntensity
-
-        if (key != 0) {
-            lightManager.setIntensity(key, 28_000.0f * scale)
-        }
-        if (fill != 0) {
-            lightManager.setIntensity(fill, 12_000.0f * scale)
-        }
-
-        indirectLight?.let { engine.destroyIndirectLight(it) }
-        indirectLight = IndirectLight.Builder()
-            .irradiance(3, neutralStudioSh())
-            .intensity(18_000.0f * scale)
+            .intensity(35_000.0f * scale)
             .build(engine)
         scene?.indirectLight = indirectLight
         view?.setShadowingEnabled(false)
-        studioLightingApplied = true
+        lightingConfigured = true
     }
 
     private fun neutralStudioSh(): FloatArray {
         val sh = FloatArray(27)
-        sh[0] = 0.72f
-        sh[1] = 0.72f
-        sh[2] = 0.72f
+        sh[0] = 0.85f
+        sh[1] = 0.85f
+        sh[2] = 0.85f
+        sh[3] = 0.08f
+        sh[4] = 0.08f
+        sh[5] = 0.08f
+        sh[6] = 0.08f
+        sh[7] = 0.08f
+        sh[8] = 0.08f
         return sh
     }
 
     private fun scheduleRender() {
-        if (renderPending) return
-        renderPending = true
-        mainHandler.post {
-            renderPending = false
+        renderFrameImmediate()
+    }
+
+    private fun renderFrameImmediate() {
+        if (Looper.myLooper() == mainHandler.looper) {
             renderFrame()
+        } else {
+            mainHandler.postAtFrontOfQueue { renderFrame() }
         }
     }
 
@@ -416,15 +393,11 @@ internal class ModelRenderer {
         }
 
         val inverseView = FloatArray(16)
-        Matrix.invertM(inverseView, 0, viewMatrix, 0)
+        GlMatrix.invertM(inverseView, 0, viewMatrix, 0)
         camera.setModelMatrix(inverseView)
 
-        val m00 = projectionMatrix[0]
-        val m11 = projectionMatrix[5]
-        val aspect = if (m00 != 0f) (m11 / m00).toDouble() else 1.0
-        val fovY = 2.0 * atan(1.0 / m11)
-        val fovDegrees = Math.toDegrees(fovY)
-        camera.setProjection(fovDegrees, aspect, 0.1, 100.0, Camera.Fov.VERTICAL)
+        val projectionDouble = DoubleArray(16) { projectionMatrix[it].toDouble() }
+        camera.setCustomProjection(projectionDouble, 0.1, 100.0)
 
         if (renderer.beginFrame(swapChain, 0L)) {
             renderer.render(view)
@@ -432,24 +405,77 @@ internal class ModelRenderer {
         }
     }
 
-    private fun applyTransform(asset: FilamentAsset, modelMatrix: FloatArray) {
+    private fun snapModelBottomToOrigin(name: String, asset: FilamentAsset) {
+        val box = asset.boundingBox
+        val center = box.center
+        val halfExtent = box.halfExtent
+        val minY = center[1] - halfExtent[1]
+
+        val correction = FloatArray(16)
+        GlMatrix.setIdentityM(correction, 0)
+        if (kotlin.math.abs(minY) >= 1e-4f) {
+            GlMatrix.translateM(correction, 0, 0f, -minY, 0f)
+        }
+        rootOffsetCorrections[name] = correction
+    }
+
+    private fun applyTransform(name: String, asset: FilamentAsset, modelMatrix: FloatArray) {
         val engine = engine ?: return
         val transformManager = engine.transformManager
         val instance = transformManager.getInstance(asset.root)
-        if (instance != 0) {
+        if (instance == 0) return
+
+        val offset = rootOffsetCorrections[name]
+        if (offset != null) {
+            val composed = FloatArray(16)
+            GlMatrix.multiplyMM(composed, 0, modelMatrix, 0, offset, 0)
+            transformManager.setTransform(instance, composed)
+        } else {
             transformManager.setTransform(instance, modelMatrix)
         }
     }
 
-    /// Furniture meshes must render back faces when walking around the model.
-    private fun disableFaceCulling(asset: FilamentAsset) {
+    private fun configureRenderableMaterials(asset: FilamentAsset) {
         val engine = engine ?: return
         val renderableManager = engine.renderableManager
+        val materialsToCompile = mutableSetOf<Material>()
+
+        for (materialInstance in asset.instance.materialInstances) {
+            materialInstance.setDoubleSided(true)
+            materialsToCompile.add(materialInstance.material)
+        }
+
         for (entity in asset.entities) {
-            val instance = renderableManager.getInstance(entity)
-            if (instance != 0) {
-                renderableManager.setCulling(instance, false)
+            val renderableInstance = renderableManager.getInstance(entity)
+            if (renderableInstance == 0) continue
+
+            renderableManager.setCulling(renderableInstance, false)
+
+            val primitiveCount = renderableManager.getPrimitiveCount(renderableInstance)
+            for (primitiveIndex in 0 until primitiveCount) {
+                val materialInstance =
+                    renderableManager.getMaterialInstanceAt(renderableInstance, primitiveIndex)
+                materialInstance.setDoubleSided(true)
+                materialsToCompile.add(materialInstance.material)
             }
         }
+
+        for (material in materialsToCompile) {
+            material.compile(
+                Material.CompilerPriorityQueue.HIGH,
+                Material.UserVariantFilterBit.DIRECTIONAL_LIGHTING or
+                    Material.UserVariantFilterBit.DYNAMIC_LIGHTING,
+                null,
+                null,
+            )
+        }
+    }
+
+    private fun matricesApproximatelyEqual(a: FloatArray, b: FloatArray, epsilon: Float = 1e-5f): Boolean {
+        if (a.size < 16 || b.size < 16) return false
+        for (i in 0 until 16) {
+            if (kotlin.math.abs(a[i] - b[i]) > epsilon) return false
+        }
+        return true
     }
 }

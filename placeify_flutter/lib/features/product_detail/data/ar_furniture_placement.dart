@@ -6,7 +6,8 @@ import '../../home/domain/models/product.dart';
 
 /// Helpers for anchoring furniture models flush with detected AR planes.
 abstract final class ArFurniturePlacement {
-  static const floorClearanceM = 0.01;
+  /// No vertical offset — native bottom-snap aligns the model base to the plane.
+  static const floorClearanceM = 0.0;
 
   /// Picks the closest detected plane hit, falling back to feature points.
   static ARHitTestResult? bestSurfaceHit(List<ARHitTestResult> hits) {
@@ -28,19 +29,15 @@ abstract final class ArFurniturePlacement {
   }
 
   /// World anchor on the detected plane (floor contact point).
-  ///
-  /// Vertical offset for model height belongs on the node in [nodeLocalOffset],
-  /// not on the anchor — keeps the anchor locked to the physical surface.
   static Matrix4 anchorTransformForHit(ARHitTestResult hit) {
     return Matrix4.copy(hit.worldTransform);
   }
 
-  /// Local Y offset so the model's bottom rests on the anchor plane.
+  /// Local Y offset after native GLB bottom snap — only clearance remains here.
   static Vector3 nodeLocalOffset({
     required ProductDimensions dimensions,
     required Vector3 nodeScale,
   }) {
-    final halfHeightM = (dimensions.heightCm / 100.0) * nodeScale.y * 0.5;
-    return Vector3(0, halfHeightM + floorClearanceM, 0);
+    return Vector3(0, floorClearanceM, 0);
   }
 }
