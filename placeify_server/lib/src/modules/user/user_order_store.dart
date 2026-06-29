@@ -267,16 +267,6 @@ class UserOrderStore {
             ? '$primaryName × $totalQuantity'
             : primaryName;
 
-    final displayNote = order.status == OrderStatus.rejected &&
-            order.rejectionReason != null &&
-            order.rejectionReason!.trim().isNotEmpty
-        ? order.rejectionReason!.trim()
-        : latestDeliveryNote;
-
-    final primaryThumbnailUrl = items.isEmpty
-        ? null
-        : items.first.product?.thumbnailUrl;
-
     return UserOrderSummary(
       id: orderId,
       orderNumber: orderId.toString().padLeft(5, '0'),
@@ -285,9 +275,8 @@ class UserOrderStore {
       placedAt: order.placedAt,
       itemCount: totalQuantity,
       primaryProductName: displayName,
-      primaryThumbnailUrl: primaryThumbnailUrl,
       latestDeliveryStage: latestDeliveryStage,
-      latestDeliveryNote: displayNote,
+      latestDeliveryNote: latestDeliveryNote,
       orderPaymentStatus: order.paymentStatus,
     );
   }

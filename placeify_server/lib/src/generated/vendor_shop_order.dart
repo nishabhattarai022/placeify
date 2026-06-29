@@ -14,7 +14,8 @@ import 'package:serverpod/serverpod.dart' as _i1;
 import 'order_status.dart' as _i2;
 import 'vendor_order_line_item.dart' as _i3;
 import 'order_payment_status.dart' as _i4;
-import 'package:placeify_server/src/generated/protocol.dart' as _i5;
+import 'delivery_stage.dart' as _i5;
+import 'package:placeify_server/src/generated/protocol.dart' as _i6;
 
 /// Customer order containing only items from the logged-in vendor's shop.
 abstract class VendorShopOrder
@@ -31,6 +32,7 @@ abstract class VendorShopOrder
     required this.items,
     this.rejectionReason,
     required this.orderPaymentStatus,
+    this.currentDeliveryStage,
   });
 
   factory VendorShopOrder({
@@ -45,6 +47,7 @@ abstract class VendorShopOrder
     required List<_i3.VendorOrderLineItem> items,
     String? rejectionReason,
     required _i4.OrderPaymentStatus orderPaymentStatus,
+    _i5.DeliveryStage? currentDeliveryStage,
   }) = _VendorShopOrderImpl;
 
   factory VendorShopOrder.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -59,13 +62,18 @@ abstract class VendorShopOrder
       shippingAddress: jsonSerialization['shippingAddress'] as String,
       vendorTotal: (jsonSerialization['vendorTotal'] as num).toDouble(),
       itemCount: jsonSerialization['itemCount'] as int,
-      items: _i5.Protocol().deserialize<List<_i3.VendorOrderLineItem>>(
+      items: _i6.Protocol().deserialize<List<_i3.VendorOrderLineItem>>(
         jsonSerialization['items'],
       ),
       rejectionReason: jsonSerialization['rejectionReason'] as String?,
       orderPaymentStatus: _i4.OrderPaymentStatus.fromJson(
         (jsonSerialization['orderPaymentStatus'] as String),
       ),
+      currentDeliveryStage: jsonSerialization['currentDeliveryStage'] == null
+          ? null
+          : _i5.DeliveryStage.fromJson(
+              (jsonSerialization['currentDeliveryStage'] as String),
+            ),
     );
   }
 
@@ -91,6 +99,8 @@ abstract class VendorShopOrder
 
   _i4.OrderPaymentStatus orderPaymentStatus;
 
+  _i5.DeliveryStage? currentDeliveryStage;
+
   /// Returns a shallow copy of this [VendorShopOrder]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -106,6 +116,7 @@ abstract class VendorShopOrder
     List<_i3.VendorOrderLineItem>? items,
     String? rejectionReason,
     _i4.OrderPaymentStatus? orderPaymentStatus,
+    _i5.DeliveryStage? currentDeliveryStage,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -122,6 +133,8 @@ abstract class VendorShopOrder
       'items': items.toJson(valueToJson: (v) => v.toJson()),
       if (rejectionReason != null) 'rejectionReason': rejectionReason,
       'orderPaymentStatus': orderPaymentStatus.toJson(),
+      if (currentDeliveryStage != null)
+        'currentDeliveryStage': currentDeliveryStage?.toJson(),
     };
   }
 
@@ -140,6 +153,8 @@ abstract class VendorShopOrder
       'items': items.toJson(valueToJson: (v) => v.toJsonForProtocol()),
       if (rejectionReason != null) 'rejectionReason': rejectionReason,
       'orderPaymentStatus': orderPaymentStatus.toJson(),
+      if (currentDeliveryStage != null)
+        'currentDeliveryStage': currentDeliveryStage?.toJson(),
     };
   }
 
@@ -164,6 +179,7 @@ class _VendorShopOrderImpl extends VendorShopOrder {
     required List<_i3.VendorOrderLineItem> items,
     String? rejectionReason,
     required _i4.OrderPaymentStatus orderPaymentStatus,
+    _i5.DeliveryStage? currentDeliveryStage,
   }) : super._(
          orderId: orderId,
          orderNumber: orderNumber,
@@ -176,6 +192,7 @@ class _VendorShopOrderImpl extends VendorShopOrder {
          items: items,
          rejectionReason: rejectionReason,
          orderPaymentStatus: orderPaymentStatus,
+         currentDeliveryStage: currentDeliveryStage,
        );
 
   /// Returns a shallow copy of this [VendorShopOrder]
@@ -194,6 +211,7 @@ class _VendorShopOrderImpl extends VendorShopOrder {
     List<_i3.VendorOrderLineItem>? items,
     Object? rejectionReason = _Undefined,
     _i4.OrderPaymentStatus? orderPaymentStatus,
+    Object? currentDeliveryStage = _Undefined,
   }) {
     return VendorShopOrder(
       orderId: orderId ?? this.orderId,
@@ -209,6 +227,9 @@ class _VendorShopOrderImpl extends VendorShopOrder {
           ? rejectionReason
           : this.rejectionReason,
       orderPaymentStatus: orderPaymentStatus ?? this.orderPaymentStatus,
+      currentDeliveryStage: currentDeliveryStage is _i5.DeliveryStage?
+          ? currentDeliveryStage
+          : this.currentDeliveryStage,
     );
   }
 }

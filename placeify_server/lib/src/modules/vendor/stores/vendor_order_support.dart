@@ -76,6 +76,40 @@ abstract final class VendorOrderSupport {
     };
   }
 
+  static Future<Map<int, DeliveryStage>> latestDeliveryStagesForOrders(
+    Session session,
+    UuidValue vendorId,
+    Set<int> orderIds,
+  ) async {
+    if (orderIds.isEmpty) return const {};
+
+    final updates = await OrderDeliveryUpdate.db.find(
+      session,
+      where: (row) => row.vendorId.equals(vendorId),
+      orderBy: (row) => row.createdAt,
+    );
+
+    final stages = <int, DeliveryStage>{};
+    for (final update in updates) {
+      if (!orderIds.contains(update.orderId)) continue;
+      final current = stages[update.orderId];
+      if (current == null ||
+          DeliveryStage.values.indexOf(update.stage) >
+              DeliveryStage.values.indexOf(current)) {
+        stages[update.orderId] = update.stage;
+      }
+    }
+    return stages;
+  }
+
+  static VendorShopOrder withDeliveryStage(
+    VendorShopOrder order,
+    DeliveryStage? stage,
+  ) {
+    if (stage == null) return order;
+    return order.copyWith(currentDeliveryStage: stage);
+  }
+
   static Future<List<OrderItem>> loadVendorOrderItems(
     Session session,
     UuidValue vendorId,
@@ -140,6 +174,7 @@ abstract final class VendorOrderSupport {
           items: lineItems,
           rejectionReason: order.rejectionReason,
           orderPaymentStatus: order.paymentStatus,
+          currentDeliveryStage: null,
         ),
       );
     }

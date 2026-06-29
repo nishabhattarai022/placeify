@@ -13,6 +13,7 @@ user:
   - getCurrentUser:
   - updateProfile:
   - changePassword:
+  - uploadProfileImage:
   - becomeVendor:
   - becomeConsumer:
   - getDashboard:
@@ -74,6 +75,7 @@ notification:
   - unreadInAppNotificationCount:
   - markInAppNotificationRead:
   - markAllInAppNotificationsRead:
+  - watchInAppNotifications:
 order:
   - listMyOrders:
   - getOrder:
@@ -136,6 +138,7 @@ vendor:
   - listPendingRefundRequests:
   - approveRefundRequest:
   - rejectRefundRequest:
+  - listShopReviews:
 wishlist:
   - listMyWishlist:
   - addToWishlist:

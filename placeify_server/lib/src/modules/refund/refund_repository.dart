@@ -4,7 +4,6 @@ import '../../generated/protocol.dart';
 import '../../shared/pagination_helper.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
-import '../notification/order_notification_service.dart';
 
 class RefundStore {
   Future<int> countForUser(Session session, UuidValue userId) {
@@ -115,26 +114,6 @@ class RefundStore {
         refundAmount: order.totalAmount,
         status: RequestStatus.pending,
       ),
-    );
-
-    final items = await OrderItem.db.find(
-      session,
-      where: (item) => item.orderId.equals(orderId),
-    );
-    final vendorIds = items.map((item) => item.vendorId).toSet();
-    final customerName = user.name ?? 'Customer';
-    for (final vendorId in vendorIds) {
-      await OrderNotificationService.notifyVendorRefundRequest(
-        session,
-        refund: created,
-        vendorId: vendorId,
-        customerName: customerName,
-      );
-    }
-
-    await OrderNotificationService.notifyCustomerRefundSubmitted(
-      session,
-      refund: created,
     );
 
     return RefundRequestSummary(

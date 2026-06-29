@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:placeify_client/placeify_client.dart' hide Order;
 import 'package:placeify_flutter/core/config/placeify_server_client.dart';
 import 'package:placeify_flutter/core/widgets/toast_overlay.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
@@ -16,8 +17,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 part 'orders_provider.g.dart';
-
-const _ordersPollInterval = Duration(seconds: 30);
 
 @Riverpod(keepAlive: true)
 OrderRepository orderRepository(Ref ref) {
@@ -35,17 +34,27 @@ Future<String> ordersUserId(Ref ref) async {
 
 @riverpod
 class Orders extends _$Orders {
-  Timer? _pollTimer;
+  StreamSubscription<InAppNotificationSummary>? _subscription;
 
   @override
   Future<List<Order>> build() {
-    ref.onDispose(() => _pollTimer?.cancel());
+    ref.onDispose(() => _subscription?.cancel());
     if (client.auth.isAuthenticated) {
-      _pollTimer = Timer.periodic(_ordersPollInterval, (_) {
-        unawaited(refresh(silent: true));
-      });
+      unawaited(_attachRealtimeListener());
     }
     return _load();
+  }
+
+  Future<void> _attachRealtimeListener() async {
+    if (_subscription != null) return;
+    _subscription = inAppNotificationEvents.listen((notification) {
+      if (!shouldRefreshOrdersForNotification(notification)) return;
+      unawaited(refresh(silent: true));
+      final orderId = notification.referenceId?.toString();
+      if (orderId != null) {
+        ref.invalidate(orderByIdProvider(orderId));
+      }
+    });
   }
 
   Future<void> loadOrders() => refresh();

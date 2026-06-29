@@ -354,4 +354,16 @@ class VendorService {
   }) {
     return _repository.rejectRefundRequest(session, refundId, reason: reason);
   }
+
+  Future<List<VendorReviewSummary>> listShopReviews(
+    Session session, {
+    int limit = 20,
+    int offset = 0,
+  }) {
+    return _repository.listShopReviews(
+      session,
+      limit: limit,
+      offset: offset,
+    );
+  }
 }

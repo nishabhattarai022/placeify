@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
@@ -8,6 +10,7 @@ import '../../shared/session_service.dart';
 import '../../shared/user_role_audit_log.dart';
 import 'user_order_store.dart';
 import 'user_payment_store.dart';
+import 'user_profile_image_storage.dart';
 import 'user_repository.dart';
 
 class UserService {
@@ -116,6 +119,28 @@ class UserService {
       name,
       phone: phone,
       address: address,
+    );
+  }
+
+  Future<User> uploadProfileImage(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) async {
+    final user = await SessionService.requireUser(session);
+    final imageUrl = await UserProfileImageStorage.persist(
+      session: session,
+      userId: user.id!,
+      fileData: fileData,
+      fileName: fileName,
+    );
+
+    return User.db.updateRow(
+      session,
+      user.copyWith(
+        profileImageUrl: imageUrl,
+        updatedAt: DateTime.now(),
+      ),
     );
   }
 

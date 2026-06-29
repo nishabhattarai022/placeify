@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:placeify_client/placeify_client.dart' hide Order, VendorPayout;
+import 'package:placeify_flutter/core/config/placeify_server_client.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify_flutter/features/vendor/data/serverpod_vendor_payment_repository.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/payment_status.dart';
@@ -13,8 +15,6 @@ import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_s
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'vendor_payments_provider.g.dart';
-
-const _vendorPaymentsPollInterval = Duration(seconds: 30);
 
 @Riverpod(keepAlive: true)
 VendorPaymentRepository vendorPaymentRepository(Ref ref) {
@@ -39,15 +39,24 @@ class VendorPaymentsData {
 
 @riverpod
 class VendorPayments extends _$VendorPayments {
-  Timer? _pollTimer;
+  StreamSubscription<InAppNotificationSummary>? _subscription;
 
   @override
   Future<VendorPaymentsData> build() async {
-    ref.onDispose(() => _pollTimer?.cancel());
-    _pollTimer = Timer.periodic(_vendorPaymentsPollInterval, (_) {
+    ref.onDispose(() => _subscription?.cancel());
+    unawaited(_attachRealtimeListener());
+    return _load();
+  }
+
+  Future<void> _attachRealtimeListener() async {
+    if (_subscription != null) return;
+    _subscription = inAppNotificationEvents.listen((notification) {
+      if (notification.type != InAppNotificationType.paymentUpdate &&
+          notification.type != InAppNotificationType.refundUpdate) {
+        return;
+      }
       unawaited(refresh(silent: true));
     });
-    return _load();
   }
 
   Future<void> refresh({bool silent = false}) async {

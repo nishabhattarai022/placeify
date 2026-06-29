@@ -5,6 +5,7 @@ import '../../constants/demo_credentials.dart';
 import '../../data/serverpod_auth_repository.dart';
 import '../../domain/models/app_user.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../../../core/config/placeify_server_client.dart';
 
 part 'auth_provider.g.dart';
 
@@ -37,6 +38,7 @@ class CurrentUser extends _$CurrentUser {
       );
     });
     if (state.hasError) throw _unwrapError(state.error!);
+    await ensurePlaceifyRealtime();
   }
 
   Future<void> signIn({
@@ -49,6 +51,7 @@ class CurrentUser extends _$CurrentUser {
       return repo.signIn(email: email, password: password);
     });
     if (state.hasError) throw _unwrapError(state.error!);
+    await ensurePlaceifyRealtime();
   }
 
   Future<void> signInWithDemoCredentials() async {
@@ -64,6 +67,7 @@ class CurrentUser extends _$CurrentUser {
       );
     });
     if (state.hasError) throw _unwrapError(state.error!);
+    await ensurePlaceifyRealtime();
   }
 
   Future<void> signInWithDemoAdminCredentials() async {
@@ -79,11 +83,13 @@ class CurrentUser extends _$CurrentUser {
       );
     });
     if (state.hasError) throw _unwrapError(state.error!);
+    await ensurePlaceifyRealtime();
   }
 
   Future<void> signOut() async {
     final repo = await ref.read(authRepositoryProvider.future);
     await repo.signOut();
+    await resetPlaceifyRealtime();
     state = const AsyncData(null);
   }
 
