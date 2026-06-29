@@ -52,6 +52,22 @@ class AdminService {
     );
   }
 
+  Future<Admin> bootstrapFirstAdmin(Session session) {
+    return _repository.bootstrapFirstAdmin(session);
+  }
+
+  Future<Admin> promoteToAdmin(
+    Session session,
+    UuidValue targetUserId, {
+    AdminType adminType = AdminType.moderator,
+  }) {
+    return _repository.promoteToAdmin(
+      session,
+      targetUserId,
+      adminType: adminType,
+    );
+  }
+
   Future<Vendor> approveVendor(Session session, UuidValue vendorUserId) {
     return _moderation.approveVendor(session, vendorUserId);
   }

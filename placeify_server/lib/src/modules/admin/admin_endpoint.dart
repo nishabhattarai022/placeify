@@ -38,6 +38,24 @@ class AdminEndpoint extends PlaceifyAuthenticatedEndpoint {
     );
   }
 
+  /// One-time bootstrap when no admins exist yet (promotes the signed-in user).
+  Future<Admin> bootstrapFirstAdmin(Session session) {
+    return _service.bootstrapFirstAdmin(session);
+  }
+
+  /// Promotes an existing user to admin. Requires an active admin session.
+  Future<Admin> promoteToAdmin(
+    Session session,
+    UuidValue targetUserId, {
+    AdminType adminType = AdminType.moderator,
+  }) {
+    return _service.promoteToAdmin(
+      session,
+      targetUserId,
+      adminType: adminType,
+    );
+  }
+
   Future<Vendor> approveVendor(Session session, UuidValue vendorUserId) {
     return _service.approveVendor(session, vendorUserId);
   }

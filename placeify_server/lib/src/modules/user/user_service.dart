@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
@@ -177,11 +179,143 @@ class UserService {
     return _repository.buildDashboard(session, user);
   }
 
+  /// Development-only: creates or resets the demo admin auth account and profile.
+  Future<void> provisionDemoAdmin(Session session) async {
+    _requireDevelopmentMode(session);
+
+    const email = 'admin@placeify.com';
+    const password = 'demo1234';
+    const fullName = 'Demo Admin';
+    const devCode = '123456';
+
+    final emailIdp = AuthServices.instance.emailIdp;
+    await emailIdp.admin.deleteExpiredAccountRequests(session);
+
+    var account = await emailIdp.admin.findAccount(session, email: email);
+    if (account == null) {
+      await _registerDemoAdminAccount(
+        session,
+        email: email,
+        password: password,
+        devCode: devCode,
+      );
+      account = await emailIdp.admin.findAccount(session, email: email);
+    }
+
+    if (account == null) {
+      throw PlaceifyException(
+        message: 'Could not provision demo admin account.',
+        code: 'DEMO_ADMIN_PROVISION_FAILED',
+      );
+    }
+
+    await emailIdp.admin.setPassword(
+      session,
+      email: email,
+      password: password,
+    );
+    await emailIdp.admin.deleteFailedLoginAttempts(session);
+
+    await _upsertDemoAdminProfile(
+      session,
+      authUserId: account.authUserId,
+      email: email,
+      fullName: fullName,
+    );
+  }
+
+  Future<void> _registerDemoAdminAccount(
+    Session session, {
+    required String email,
+    required String password,
+    required String devCode,
+  }) async {
+    final emailIdp = AuthServices.instance.emailIdp;
+
+    for (var attempt = 0; attempt < 2; attempt++) {
+      await emailIdp.admin.deleteExpiredAccountRequests(session);
+
+      final requestId = await emailIdp.startRegistration(
+        session,
+        email: email,
+      );
+
+      try {
+        final token = await emailIdp.verifyRegistrationCode(
+          session,
+          accountRequestId: requestId,
+          verificationCode: devCode,
+        );
+        await emailIdp.finishRegistration(
+          session,
+          registrationToken: token,
+          password: password,
+        );
+        return;
+      } on EmailAccountRequestException {
+        final account = await emailIdp.admin.findAccount(session, email: email);
+        if (account != null) return;
+        if (attempt == 1) rethrow;
+      }
+    }
+  }
+
+  Future<void> _upsertDemoAdminProfile(
+    Session session, {
+    required UuidValue authUserId,
+    required String email,
+    required String fullName,
+  }) async {
+    final existing = await User.db.findFirstRow(
+      session,
+      where: (row) => row.authUserId.equals(authUserId),
+    );
+
+    if (existing == null) {
+      await User.db.insertRow(
+        session,
+        User(
+          authUserId: authUserId,
+          name: fullName,
+          email: email,
+          role: UserRole.admin,
+          status: UserAccountStatus.approved,
+          isActive: true,
+        ),
+      );
+      return;
+    }
+
+    await User.db.updateRow(
+      session,
+      existing.copyWith(
+        name: fullName,
+        email: email,
+        role: UserRole.admin,
+        status: UserAccountStatus.approved,
+        isActive: true,
+        updatedAt: DateTime.now(),
+      ),
+    );
+  }
+
+  void _requireDevelopmentMode(Session session) {
+    final mode = session.serverpod.runMode;
+    if (mode != ServerpodRunMode.development && mode != ServerpodRunMode.test) {
+      throw PlaceifyException(
+        message: 'Demo admin provisioning is only available in development.',
+        code: 'DEMO_ADMIN_FORBIDDEN',
+      );
+    }
+  }
+
   /// Promotes the configured demo admin account for local dashboard access.
   Future<User> ensureDemoAdmin(Session session) async {
+    _requireDevelopmentMode(session);
+
     const demoAdminEmail = 'admin@placeify.com';
     final user = await SessionService.requireUser(session);
-    final email = user.email?.trim().toLowerCase();
+    final email = await _resolveAuthEmail(session, user);
     if (email != demoAdminEmail) {
       throw PlaceifyException(
         message: 'Demo admin access is limited to $demoAdminEmail.',
@@ -189,11 +323,15 @@ class UserService {
       );
     }
 
-    if (user.role == UserRole.admin) return user;
+    if (user.role == UserRole.admin &&
+        user.email?.trim().toLowerCase() == demoAdminEmail) {
+      return user;
+    }
 
     return User.db.updateRow(
       session,
       user.copyWith(
+        email: demoAdminEmail,
         role: UserRole.admin,
         status: UserAccountStatus.approved,
         isActive: true,

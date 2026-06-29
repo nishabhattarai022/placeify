@@ -1,3 +1,5 @@
+devAuth:
+  - provisionDemoAdmin:
 emailIdp:
   - login:
   - startRegistration:
@@ -33,6 +35,8 @@ admin:
   - getMyAdmin:
   - getMyProfile:
   - updateMyProfile:
+  - bootstrapFirstAdmin:
+  - promoteToAdmin:
   - approveVendor:
   - rejectVendor:
   - updateUserStatus:

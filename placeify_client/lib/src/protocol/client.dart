@@ -10,10 +10,10 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:serverpod_client/serverpod_client.dart' as _i1;
+import 'dart:async' as _i2;
 import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
-    as _i1;
-import 'package:serverpod_client/serverpod_client.dart' as _i2;
-import 'dart:async' as _i3;
+    as _i3;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _i4;
 import 'package:placeify_client/src/protocol/user.dart' as _i5;
@@ -97,12 +97,28 @@ import 'package:placeify_client/src/protocol/wishlist_page.dart' as _i61;
 import 'package:placeify_client/src/protocol/wishlist_item.dart' as _i62;
 import 'protocol.dart' as _i63;
 
+/// Development-only auth helpers (no login required).
+/// {@category Endpoint}
+class EndpointDevAuth extends _i1.EndpointRef {
+  EndpointDevAuth(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'devAuth';
+
+  /// Ensures the demo admin account exists with known credentials.
+  _i2.Future<bool> provisionDemoAdmin() => caller.callServerEndpoint<bool>(
+    'devAuth',
+    'provisionDemoAdmin',
+    {},
+  );
+}
+
 /// By extending [EmailIdpBaseEndpoint], the email identity provider endpoints
 /// are made available on the server and enable the corresponding sign-in widget
 /// on the client.
 /// {@category Endpoint}
-class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
-  EndpointEmailIdp(_i2.EndpointCaller caller) : super(caller);
+class EndpointEmailIdp extends _i3.EndpointEmailIdpBase {
+  EndpointEmailIdp(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'emailIdp';
@@ -117,7 +133,7 @@ class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
   ///
   /// Throws an [AuthUserBlockedException] if the auth user is blocked.
   @override
-  _i3.Future<_i4.AuthSuccess> login({
+  _i2.Future<_i4.AuthSuccess> login({
     required String email,
     required String password,
   }) => caller.callServerEndpoint<_i4.AuthSuccess>(
@@ -140,8 +156,8 @@ class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
   /// registration. If the email is already registered, the returned ID will not
   /// be valid.
   @override
-  _i3.Future<_i2.UuidValue> startRegistration({required String email}) =>
-      caller.callServerEndpoint<_i2.UuidValue>(
+  _i2.Future<_i1.UuidValue> startRegistration({required String email}) =>
+      caller.callServerEndpoint<_i1.UuidValue>(
         'emailIdp',
         'startRegistration',
         {'email': email},
@@ -158,8 +174,8 @@ class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
   /// - [EmailAccountRequestExceptionReason.invalid] if no request exists
   ///   for the given [accountRequestId] or [verificationCode] is invalid.
   @override
-  _i3.Future<String> verifyRegistrationCode({
-    required _i2.UuidValue accountRequestId,
+  _i2.Future<String> verifyRegistrationCode({
+    required _i1.UuidValue accountRequestId,
     required String verificationCode,
   }) => caller.callServerEndpoint<String>(
     'emailIdp',
@@ -185,7 +201,7 @@ class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
   ///
   /// Returns a session for the newly created user.
   @override
-  _i3.Future<_i4.AuthSuccess> finishRegistration({
+  _i2.Future<_i4.AuthSuccess> finishRegistration({
     required String registrationToken,
     required String password,
   }) => caller.callServerEndpoint<_i4.AuthSuccess>(
@@ -211,8 +227,8 @@ class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
   ///   made too many attempts trying to request a password reset.
   ///
   @override
-  _i3.Future<_i2.UuidValue> startPasswordReset({required String email}) =>
-      caller.callServerEndpoint<_i2.UuidValue>(
+  _i2.Future<_i1.UuidValue> startPasswordReset({required String email}) =>
+      caller.callServerEndpoint<_i1.UuidValue>(
         'emailIdp',
         'startPasswordReset',
         {'email': email},
@@ -233,8 +249,8 @@ class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
   /// should be overridden to return credentials for the next step instead
   /// of the credentials for setting the password.
   @override
-  _i3.Future<String> verifyPasswordResetCode({
-    required _i2.UuidValue passwordResetRequestId,
+  _i2.Future<String> verifyPasswordResetCode({
+    required _i1.UuidValue passwordResetRequestId,
     required String verificationCode,
   }) => caller.callServerEndpoint<String>(
     'emailIdp',
@@ -260,7 +276,7 @@ class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
   ///
   /// Throws an [AuthUserBlockedException] if the auth user is blocked.
   @override
-  _i3.Future<void> finishPasswordReset({
+  _i2.Future<void> finishPasswordReset({
     required String finishPasswordResetToken,
     required String newPassword,
   }) => caller.callServerEndpoint<void>(
@@ -273,7 +289,7 @@ class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
   );
 
   @override
-  _i3.Future<bool> hasAccount() => caller.callServerEndpoint<bool>(
+  _i2.Future<bool> hasAccount() => caller.callServerEndpoint<bool>(
     'emailIdp',
     'hasAccount',
     {},
@@ -284,7 +300,7 @@ class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
 /// is made available on the server and enables automatic token refresh on the client.
 /// {@category Endpoint}
 class EndpointJwtRefresh extends _i4.EndpointRefreshJwtTokens {
-  EndpointJwtRefresh(_i2.EndpointCaller caller) : super(caller);
+  EndpointJwtRefresh(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'jwtRefresh';
@@ -308,7 +324,7 @@ class EndpointJwtRefresh extends _i4.EndpointRefreshJwtTokens {
   /// This endpoint is unauthenticated, meaning the client won't include any
   /// authentication information with the call.
   @override
-  _i3.Future<_i4.AuthSuccess> refreshAccessToken({
+  _i2.Future<_i4.AuthSuccess> refreshAccessToken({
     required String refreshToken,
   }) => caller.callServerEndpoint<_i4.AuthSuccess>(
     'jwtRefresh',
@@ -320,30 +336,30 @@ class EndpointJwtRefresh extends _i4.EndpointRefreshJwtTokens {
 
 /// Base endpoint for authenticated Placeify APIs.
 /// {@category Endpoint}
-abstract class EndpointPlaceifyAuthenticated extends _i2.EndpointRef {
-  EndpointPlaceifyAuthenticated(_i2.EndpointCaller caller) : super(caller);
+abstract class EndpointPlaceifyAuthenticated extends _i1.EndpointRef {
+  EndpointPlaceifyAuthenticated(_i1.EndpointCaller caller) : super(caller);
 
-  _i3.Future<_i5.User> requirePlaceifyUser();
+  _i2.Future<_i5.User> requirePlaceifyUser();
 
-  _i3.Future<_i5.User> requireRole(Set<_i6.UserRole> allowedRoles);
+  _i2.Future<_i5.User> requireRole(Set<_i6.UserRole> allowedRoles);
 }
 
 /// Profile and dashboard APIs for authenticated customers.
 /// {@category Endpoint}
 class EndpointUser extends EndpointPlaceifyAuthenticated {
-  EndpointUser(_i2.EndpointCaller caller) : super(caller);
+  EndpointUser(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'user';
 
-  _i3.Future<_i5.User?> getCurrentUser() =>
+  _i2.Future<_i5.User?> getCurrentUser() =>
       caller.callServerEndpoint<_i5.User?>(
         'user',
         'getCurrentUser',
         {},
       );
 
-  _i3.Future<_i5.User> updateProfile(
+  _i2.Future<_i5.User> updateProfile(
     String name, {
     String? phone,
     String? address,
@@ -357,7 +373,7 @@ class EndpointUser extends EndpointPlaceifyAuthenticated {
     },
   );
 
-  _i3.Future<_i5.User> changePassword(
+  _i2.Future<_i5.User> changePassword(
     String currentPassword,
     String newPassword,
   ) => caller.callServerEndpoint<_i5.User>(
@@ -369,7 +385,7 @@ class EndpointUser extends EndpointPlaceifyAuthenticated {
     },
   );
 
-  _i3.Future<_i5.User> uploadProfileImage(
+  _i2.Future<_i5.User> uploadProfileImage(
     _i7.ByteData fileData,
     String fileName,
   ) => caller.callServerEndpoint<_i5.User>(
@@ -381,32 +397,32 @@ class EndpointUser extends EndpointPlaceifyAuthenticated {
     },
   );
 
-  _i3.Future<_i5.User> becomeVendor() => caller.callServerEndpoint<_i5.User>(
+  _i2.Future<_i5.User> becomeVendor() => caller.callServerEndpoint<_i5.User>(
     'user',
     'becomeVendor',
     {},
   );
 
-  _i3.Future<_i5.User> becomeConsumer() => caller.callServerEndpoint<_i5.User>(
+  _i2.Future<_i5.User> becomeConsumer() => caller.callServerEndpoint<_i5.User>(
     'user',
     'becomeConsumer',
     {},
   );
 
-  _i3.Future<_i8.UserDashboard> getDashboard() =>
+  _i2.Future<_i8.UserDashboard> getDashboard() =>
       caller.callServerEndpoint<_i8.UserDashboard>(
         'user',
         'getDashboard',
         {},
       );
 
-  _i3.Future<_i5.User> ensureDemoAdmin() => caller.callServerEndpoint<_i5.User>(
+  _i2.Future<_i5.User> ensureDemoAdmin() => caller.callServerEndpoint<_i5.User>(
     'user',
     'ensureDemoAdmin',
     {},
   );
 
-  _i3.Future<List<_i9.UserOrderSummary>> listMyOrders({
+  _i2.Future<List<_i9.UserOrderSummary>> listMyOrders({
     required int limit,
     required int offset,
     _i10.OrderStatus? status,
@@ -420,14 +436,14 @@ class EndpointUser extends EndpointPlaceifyAuthenticated {
     },
   );
 
-  _i3.Future<_i11.UserOrderDetail> getMyOrder(int orderId) =>
+  _i2.Future<_i11.UserOrderDetail> getMyOrder(int orderId) =>
       caller.callServerEndpoint<_i11.UserOrderDetail>(
         'user',
         'getMyOrder',
         {'orderId': orderId},
       );
 
-  _i3.Future<_i11.UserOrderDetail> cancelMyOrder(
+  _i2.Future<_i11.UserOrderDetail> cancelMyOrder(
     int orderId,
     String reason,
   ) => caller.callServerEndpoint<_i11.UserOrderDetail>(
@@ -439,21 +455,21 @@ class EndpointUser extends EndpointPlaceifyAuthenticated {
     },
   );
 
-  _i3.Future<_i12.UserOrderPaymentSummary> getMyOrderPayment(int orderId) =>
+  _i2.Future<_i12.UserOrderPaymentSummary> getMyOrderPayment(int orderId) =>
       caller.callServerEndpoint<_i12.UserOrderPaymentSummary>(
         'user',
         'getMyOrderPayment',
         {'orderId': orderId},
       );
 
-  _i3.Future<_i12.UserOrderPaymentSummary> completePayment(int orderId) =>
+  _i2.Future<_i12.UserOrderPaymentSummary> completePayment(int orderId) =>
       caller.callServerEndpoint<_i12.UserOrderPaymentSummary>(
         'user',
         'completePayment',
         {'orderId': orderId},
       );
 
-  _i3.Future<List<_i13.UserArSessionSummary>> listMyArSessions({
+  _i2.Future<List<_i13.UserArSessionSummary>> listMyArSessions({
     required int limit,
     required int offset,
   }) => caller.callServerEndpoint<List<_i13.UserArSessionSummary>>(
@@ -466,7 +482,7 @@ class EndpointUser extends EndpointPlaceifyAuthenticated {
   );
 
   @override
-  _i3.Future<_i5.User> requirePlaceifyUser() =>
+  _i2.Future<_i5.User> requirePlaceifyUser() =>
       caller.callServerEndpoint<_i5.User>(
         'user',
         'requirePlaceifyUser',
@@ -474,7 +490,7 @@ class EndpointUser extends EndpointPlaceifyAuthenticated {
       );
 
   @override
-  _i3.Future<_i5.User> requireRole(Set<_i6.UserRole> allowedRoles) =>
+  _i2.Future<_i5.User> requireRole(Set<_i6.UserRole> allowedRoles) =>
       caller.callServerEndpoint<_i5.User>(
         'user',
         'requireRole',
@@ -485,14 +501,14 @@ class EndpointUser extends EndpointPlaceifyAuthenticated {
 /// This is an example endpoint that returns a greeting message through
 /// its [hello] method.
 /// {@category Endpoint}
-class EndpointGreeting extends _i2.EndpointRef {
-  EndpointGreeting(_i2.EndpointCaller caller) : super(caller);
+class EndpointGreeting extends _i1.EndpointRef {
+  EndpointGreeting(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'greeting';
 
   /// Returns a personalized greeting message: "Hello {name}".
-  _i3.Future<_i14.Greeting> hello(String name) =>
+  _i2.Future<_i14.Greeting> hello(String name) =>
       caller.callServerEndpoint<_i14.Greeting>(
         'greeting',
         'hello',
@@ -503,32 +519,32 @@ class EndpointGreeting extends _i2.EndpointRef {
 /// Admin profile APIs for platform administrators.
 /// {@category Endpoint}
 class EndpointAdmin extends EndpointPlaceifyAuthenticated {
-  EndpointAdmin(_i2.EndpointCaller caller) : super(caller);
+  EndpointAdmin(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'admin';
 
-  _i3.Future<bool> hasAdminProfile() => caller.callServerEndpoint<bool>(
+  _i2.Future<bool> hasAdminProfile() => caller.callServerEndpoint<bool>(
     'admin',
     'hasAdminProfile',
     {},
   );
 
-  _i3.Future<_i15.Admin?> getMyAdmin() =>
+  _i2.Future<_i15.Admin?> getMyAdmin() =>
       caller.callServerEndpoint<_i15.Admin?>(
         'admin',
         'getMyAdmin',
         {},
       );
 
-  _i3.Future<_i15.Admin> getMyProfile() =>
+  _i2.Future<_i15.Admin> getMyProfile() =>
       caller.callServerEndpoint<_i15.Admin>(
         'admin',
         'getMyProfile',
         {},
       );
 
-  _i3.Future<_i15.Admin> updateMyProfile(
+  _i2.Future<_i15.Admin> updateMyProfile(
     String fullName, {
     String? email,
     String? phoneNumber,
@@ -546,22 +562,43 @@ class EndpointAdmin extends EndpointPlaceifyAuthenticated {
     },
   );
 
-  _i3.Future<_i17.Vendor> approveVendor(_i2.UuidValue vendorUserId) =>
+  /// One-time bootstrap when no admins exist yet (promotes the signed-in user).
+  _i2.Future<_i15.Admin> bootstrapFirstAdmin() =>
+      caller.callServerEndpoint<_i15.Admin>(
+        'admin',
+        'bootstrapFirstAdmin',
+        {},
+      );
+
+  /// Promotes an existing user to admin. Requires an active admin session.
+  _i2.Future<_i15.Admin> promoteToAdmin(
+    _i1.UuidValue targetUserId, {
+    required _i16.AdminType adminType,
+  }) => caller.callServerEndpoint<_i15.Admin>(
+    'admin',
+    'promoteToAdmin',
+    {
+      'targetUserId': targetUserId,
+      'adminType': adminType,
+    },
+  );
+
+  _i2.Future<_i17.Vendor> approveVendor(_i1.UuidValue vendorUserId) =>
       caller.callServerEndpoint<_i17.Vendor>(
         'admin',
         'approveVendor',
         {'vendorUserId': vendorUserId},
       );
 
-  _i3.Future<_i5.User> rejectVendor(_i2.UuidValue vendorUserId) =>
+  _i2.Future<_i5.User> rejectVendor(_i1.UuidValue vendorUserId) =>
       caller.callServerEndpoint<_i5.User>(
         'admin',
         'rejectVendor',
         {'vendorUserId': vendorUserId},
       );
 
-  _i3.Future<_i5.User> updateUserStatus(
-    _i2.UuidValue targetUserId,
+  _i2.Future<_i5.User> updateUserStatus(
+    _i1.UuidValue targetUserId,
     _i18.UserAccountStatus status, {
     bool? isActive,
   }) => caller.callServerEndpoint<_i5.User>(
@@ -574,14 +611,14 @@ class EndpointAdmin extends EndpointPlaceifyAuthenticated {
     },
   );
 
-  _i3.Future<_i5.User> deactivateUser(_i2.UuidValue targetUserId) =>
+  _i2.Future<_i5.User> deactivateUser(_i1.UuidValue targetUserId) =>
       caller.callServerEndpoint<_i5.User>(
         'admin',
         'deactivateUser',
         {'targetUserId': targetUserId},
       );
 
-  _i3.Future<_i19.Product> removeProduct(
+  _i2.Future<_i19.Product> removeProduct(
     int productId,
     String reason,
   ) => caller.callServerEndpoint<_i19.Product>(
@@ -593,14 +630,14 @@ class EndpointAdmin extends EndpointPlaceifyAuthenticated {
     },
   );
 
-  _i3.Future<_i19.Product> flagProduct(int productId) =>
+  _i2.Future<_i19.Product> flagProduct(int productId) =>
       caller.callServerEndpoint<_i19.Product>(
         'admin',
         'flagProduct',
         {'productId': productId},
       );
 
-  _i3.Future<_i20.Complaint> fileComplaint(
+  _i2.Future<_i20.Complaint> fileComplaint(
     int productId,
     String reason,
     String description,
@@ -614,7 +651,7 @@ class EndpointAdmin extends EndpointPlaceifyAuthenticated {
     },
   );
 
-  _i3.Future<List<_i20.Complaint>> listComplaints({
+  _i2.Future<List<_i20.Complaint>> listComplaints({
     _i21.ComplaintStatus? status,
   }) => caller.callServerEndpoint<List<_i20.Complaint>>(
     'admin',
@@ -622,21 +659,21 @@ class EndpointAdmin extends EndpointPlaceifyAuthenticated {
     {'status': status},
   );
 
-  _i3.Future<_i20.Complaint> resolveComplaint(_i2.UuidValue complaintId) =>
+  _i2.Future<_i20.Complaint> resolveComplaint(_i1.UuidValue complaintId) =>
       caller.callServerEndpoint<_i20.Complaint>(
         'admin',
         'resolveComplaint',
         {'complaintId': complaintId},
       );
 
-  _i3.Future<_i22.AdminPlatformStats> getPlatformStats() =>
+  _i2.Future<_i22.AdminPlatformStats> getPlatformStats() =>
       caller.callServerEndpoint<_i22.AdminPlatformStats>(
         'admin',
         'getPlatformStats',
         {},
       );
 
-  _i3.Future<List<_i23.PlatformUserSummary>> listUsers({
+  _i2.Future<List<_i23.PlatformUserSummary>> listUsers({
     String? query,
     _i6.UserRole? role,
   }) => caller.callServerEndpoint<List<_i23.PlatformUserSummary>>(
@@ -648,7 +685,7 @@ class EndpointAdmin extends EndpointPlaceifyAuthenticated {
     },
   );
 
-  _i3.Future<List<_i24.VendorApplicationSummary>> listVendorApplications({
+  _i2.Future<List<_i24.VendorApplicationSummary>> listVendorApplications({
     _i18.UserAccountStatus? status,
   }) => caller.callServerEndpoint<List<_i24.VendorApplicationSummary>>(
     'admin',
@@ -656,15 +693,15 @@ class EndpointAdmin extends EndpointPlaceifyAuthenticated {
     {'status': status},
   );
 
-  _i3.Future<_i25.VendorApplicationDetail?> getVendorApplication(
-    _i2.UuidValue vendorId,
+  _i2.Future<_i25.VendorApplicationDetail?> getVendorApplication(
+    _i1.UuidValue vendorId,
   ) => caller.callServerEndpoint<_i25.VendorApplicationDetail?>(
     'admin',
     'getVendorApplication',
     {'vendorId': vendorId},
   );
 
-  _i3.Future<List<_i26.AdminAuditLogSummary>> getAuditLog({
+  _i2.Future<List<_i26.AdminAuditLogSummary>> getAuditLog({
     required int limit,
   }) => caller.callServerEndpoint<List<_i26.AdminAuditLogSummary>>(
     'admin',
@@ -672,7 +709,7 @@ class EndpointAdmin extends EndpointPlaceifyAuthenticated {
     {'limit': limit},
   );
 
-  _i3.Future<List<_i27.AdminVendorPayoutSummary>> listVendorPayouts({
+  _i2.Future<List<_i27.AdminVendorPayoutSummary>> listVendorPayouts({
     _i28.VendorPayoutStatus? status,
   }) => caller.callServerEndpoint<List<_i27.AdminVendorPayoutSummary>>(
     'admin',
@@ -680,14 +717,14 @@ class EndpointAdmin extends EndpointPlaceifyAuthenticated {
     {'status': status},
   );
 
-  _i3.Future<_i27.AdminVendorPayoutSummary> approveVendorPayout(int payoutId) =>
+  _i2.Future<_i27.AdminVendorPayoutSummary> approveVendorPayout(int payoutId) =>
       caller.callServerEndpoint<_i27.AdminVendorPayoutSummary>(
         'admin',
         'approveVendorPayout',
         {'payoutId': payoutId},
       );
 
-  _i3.Future<_i27.AdminVendorPayoutSummary> failVendorPayout(
+  _i2.Future<_i27.AdminVendorPayoutSummary> failVendorPayout(
     int payoutId, {
     String? reason,
   }) => caller.callServerEndpoint<_i27.AdminVendorPayoutSummary>(
@@ -699,7 +736,7 @@ class EndpointAdmin extends EndpointPlaceifyAuthenticated {
     },
   );
 
-  _i3.Future<List<_i29.AdminRefundRequestSummary>> listRefundRequests({
+  _i2.Future<List<_i29.AdminRefundRequestSummary>> listRefundRequests({
     _i30.RequestStatus? status,
   }) => caller.callServerEndpoint<List<_i29.AdminRefundRequestSummary>>(
     'admin',
@@ -707,7 +744,7 @@ class EndpointAdmin extends EndpointPlaceifyAuthenticated {
     {'status': status},
   );
 
-  _i3.Future<_i29.AdminRefundRequestSummary> approveRefundRequest(
+  _i2.Future<_i29.AdminRefundRequestSummary> approveRefundRequest(
     int refundId,
   ) => caller.callServerEndpoint<_i29.AdminRefundRequestSummary>(
     'admin',
@@ -715,7 +752,7 @@ class EndpointAdmin extends EndpointPlaceifyAuthenticated {
     {'refundId': refundId},
   );
 
-  _i3.Future<_i29.AdminRefundRequestSummary> rejectRefundRequest(
+  _i2.Future<_i29.AdminRefundRequestSummary> rejectRefundRequest(
     int refundId,
   ) => caller.callServerEndpoint<_i29.AdminRefundRequestSummary>(
     'admin',
@@ -724,7 +761,7 @@ class EndpointAdmin extends EndpointPlaceifyAuthenticated {
   );
 
   @override
-  _i3.Future<_i5.User> requirePlaceifyUser() =>
+  _i2.Future<_i5.User> requirePlaceifyUser() =>
       caller.callServerEndpoint<_i5.User>(
         'admin',
         'requirePlaceifyUser',
@@ -732,7 +769,7 @@ class EndpointAdmin extends EndpointPlaceifyAuthenticated {
       );
 
   @override
-  _i3.Future<_i5.User> requireRole(Set<_i6.UserRole> allowedRoles) =>
+  _i2.Future<_i5.User> requireRole(Set<_i6.UserRole> allowedRoles) =>
       caller.callServerEndpoint<_i5.User>(
         'admin',
         'requireRole',
@@ -742,13 +779,13 @@ class EndpointAdmin extends EndpointPlaceifyAuthenticated {
 
 /// AR product viewing session tracking.
 /// {@category Endpoint}
-class EndpointAr extends _i2.EndpointRef {
-  EndpointAr(_i2.EndpointCaller caller) : super(caller);
+class EndpointAr extends _i1.EndpointRef {
+  EndpointAr(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'ar';
 
-  _i3.Future<_i31.ARSession> recordSession(
+  _i2.Future<_i31.ARSession> recordSession(
     int productId, {
     String? deviceInfo,
     String? snapshotUrl,
@@ -762,7 +799,7 @@ class EndpointAr extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<List<_i31.ARSession>> listMySessions({
+  _i2.Future<List<_i31.ARSession>> listMySessions({
     required int limit,
     required int offset,
   }) => caller.callServerEndpoint<List<_i31.ARSession>>(
@@ -777,20 +814,20 @@ class EndpointAr extends _i2.EndpointRef {
 
 /// Authenticated shopping cart operations.
 /// {@category Endpoint}
-class EndpointCart extends _i2.EndpointRef {
-  EndpointCart(_i2.EndpointCaller caller) : super(caller);
+class EndpointCart extends _i1.EndpointRef {
+  EndpointCart(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'cart';
 
-  _i3.Future<List<_i32.CartItem>> getCartItems() =>
+  _i2.Future<List<_i32.CartItem>> getCartItems() =>
       caller.callServerEndpoint<List<_i32.CartItem>>(
         'cart',
         'getCartItems',
         {},
       );
 
-  _i3.Future<_i32.CartItem> addToCart(
+  _i2.Future<_i32.CartItem> addToCart(
     int productId, {
     required int quantity,
   }) => caller.callServerEndpoint<_i32.CartItem>(
@@ -802,7 +839,7 @@ class EndpointCart extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<_i32.CartItem> updateCartItemQuantity(
+  _i2.Future<_i32.CartItem> updateCartItemQuantity(
     int productId,
     int quantity,
   ) => caller.callServerEndpoint<_i32.CartItem>(
@@ -814,14 +851,14 @@ class EndpointCart extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<void> removeFromCart(int productId) =>
+  _i2.Future<void> removeFromCart(int productId) =>
       caller.callServerEndpoint<void>(
         'cart',
         'removeFromCart',
         {'productId': productId},
       );
 
-  _i3.Future<void> clearCart() => caller.callServerEndpoint<void>(
+  _i2.Future<void> clearCart() => caller.callServerEndpoint<void>(
     'cart',
     'clearCart',
     {},
@@ -830,13 +867,13 @@ class EndpointCart extends _i2.EndpointRef {
 
 /// Converts a cart into a persisted order.
 /// {@category Endpoint}
-class EndpointCheckout extends _i2.EndpointRef {
-  EndpointCheckout(_i2.EndpointCaller caller) : super(caller);
+class EndpointCheckout extends _i1.EndpointRef {
+  EndpointCheckout(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'checkout';
 
-  _i3.Future<_i33.CheckoutResult> checkout(_i34.CheckoutRequest request) =>
+  _i2.Future<_i33.CheckoutResult> checkout(_i34.CheckoutRequest request) =>
       caller.callServerEndpoint<_i33.CheckoutResult>(
         'checkout',
         'checkout',
@@ -846,20 +883,20 @@ class EndpointCheckout extends _i2.EndpointRef {
 
 /// Notification preference management for profile settings.
 /// {@category Endpoint}
-class EndpointNotification extends _i2.EndpointRef {
-  EndpointNotification(_i2.EndpointCaller caller) : super(caller);
+class EndpointNotification extends _i1.EndpointRef {
+  EndpointNotification(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'notification';
 
-  _i3.Future<_i35.NotificationPreference> getPreferences() =>
+  _i2.Future<_i35.NotificationPreference> getPreferences() =>
       caller.callServerEndpoint<_i35.NotificationPreference>(
         'notification',
         'getPreferences',
         {},
       );
 
-  _i3.Future<_i35.NotificationPreference> updatePreferences({
+  _i2.Future<_i35.NotificationPreference> updatePreferences({
     bool? orderUpdates,
     bool? refundStatus,
     bool? arReminders,
@@ -879,7 +916,7 @@ class EndpointNotification extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<List<_i36.InAppNotificationSummary>> listInAppNotifications({
+  _i2.Future<List<_i36.InAppNotificationSummary>> listInAppNotifications({
     required int limit,
     required int offset,
   }) => caller.callServerEndpoint<List<_i36.InAppNotificationSummary>>(
@@ -891,21 +928,21 @@ class EndpointNotification extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<int> unreadInAppNotificationCount() =>
+  _i2.Future<int> unreadInAppNotificationCount() =>
       caller.callServerEndpoint<int>(
         'notification',
         'unreadInAppNotificationCount',
         {},
       );
 
-  _i3.Future<void> markInAppNotificationRead(int notificationId) =>
+  _i2.Future<void> markInAppNotificationRead(int notificationId) =>
       caller.callServerEndpoint<void>(
         'notification',
         'markInAppNotificationRead',
         {'notificationId': notificationId},
       );
 
-  _i3.Future<void> markAllInAppNotificationsRead() =>
+  _i2.Future<void> markAllInAppNotificationsRead() =>
       caller.callServerEndpoint<void>(
         'notification',
         'markAllInAppNotificationsRead',
@@ -919,13 +956,13 @@ class EndpointNotification extends _i2.EndpointRef {
 /// [UserEndpoint.getMyOrder], and delivery data on [UserOrderDetail] instead.
 /// See `docs/CONSUMER_API_CONTRACT.md`.
 /// {@category Endpoint}
-class EndpointOrder extends _i2.EndpointRef {
-  EndpointOrder(_i2.EndpointCaller caller) : super(caller);
+class EndpointOrder extends _i1.EndpointRef {
+  EndpointOrder(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'order';
 
-  _i3.Future<_i37.OrderPage> listMyOrders({
+  _i2.Future<_i37.OrderPage> listMyOrders({
     _i38.PaginationInput? pagination,
     _i10.OrderStatus? status,
   }) => caller.callServerEndpoint<_i37.OrderPage>(
@@ -937,14 +974,14 @@ class EndpointOrder extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<_i39.Order?> getOrder(int orderId) =>
+  _i2.Future<_i39.Order?> getOrder(int orderId) =>
       caller.callServerEndpoint<_i39.Order?>(
         'order',
         'getOrder',
         {'orderId': orderId},
       );
 
-  _i3.Future<List<_i40.OrderDeliveryUpdate>> listDeliveryUpdates(int orderId) =>
+  _i2.Future<List<_i40.OrderDeliveryUpdate>> listDeliveryUpdates(int orderId) =>
       caller.callServerEndpoint<List<_i40.OrderDeliveryUpdate>>(
         'order',
         'listDeliveryUpdates',
@@ -954,27 +991,27 @@ class EndpointOrder extends _i2.EndpointRef {
 
 /// Vendor payment and payout APIs.
 /// {@category Endpoint}
-class EndpointPayment extends _i2.EndpointRef {
-  EndpointPayment(_i2.EndpointCaller caller) : super(caller);
+class EndpointPayment extends _i1.EndpointRef {
+  EndpointPayment(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'payment';
 
-  _i3.Future<_i41.VendorPaymentsOverview> getOverview() =>
+  _i2.Future<_i41.VendorPaymentsOverview> getOverview() =>
       caller.callServerEndpoint<_i41.VendorPaymentsOverview>(
         'payment',
         'getOverview',
         {},
       );
 
-  _i3.Future<List<_i42.PaymentUpdateSummary>> listPaymentUpdates(int orderId) =>
+  _i2.Future<List<_i42.PaymentUpdateSummary>> listPaymentUpdates(int orderId) =>
       caller.callServerEndpoint<List<_i42.PaymentUpdateSummary>>(
         'payment',
         'listPaymentUpdates',
         {'orderId': orderId},
       );
 
-  _i3.Future<_i42.PaymentUpdateSummary> updateOrderPaymentStatus(
+  _i2.Future<_i42.PaymentUpdateSummary> updateOrderPaymentStatus(
     int orderId,
     _i43.PaymentTransactionStatus status, {
     required String note,
@@ -988,7 +1025,7 @@ class EndpointPayment extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<_i44.VendorPayoutSummary> requestPayout() =>
+  _i2.Future<_i44.VendorPayoutSummary> requestPayout() =>
       caller.callServerEndpoint<_i44.VendorPayoutSummary>(
         'payment',
         'requestPayout',
@@ -998,42 +1035,42 @@ class EndpointPayment extends _i2.EndpointRef {
 
 /// Product browsing, search, and filtering.
 /// {@category Endpoint}
-class EndpointProduct extends _i2.EndpointRef {
-  EndpointProduct(_i2.EndpointCaller caller) : super(caller);
+class EndpointProduct extends _i1.EndpointRef {
+  EndpointProduct(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'product';
 
-  _i3.Future<List<_i45.Category>> listCategories() =>
+  _i2.Future<List<_i45.Category>> listCategories() =>
       caller.callServerEndpoint<List<_i45.Category>>(
         'product',
         'listCategories',
         {},
       );
 
-  _i3.Future<_i46.ProductPage> searchProducts(_i47.ProductSearchInput input) =>
+  _i2.Future<_i46.ProductPage> searchProducts(_i47.ProductSearchInput input) =>
       caller.callServerEndpoint<_i46.ProductPage>(
         'product',
         'searchProducts',
         {'input': input},
       );
 
-  _i3.Future<_i19.Product?> getProduct(int productId) =>
+  _i2.Future<_i19.Product?> getProduct(int productId) =>
       caller.callServerEndpoint<_i19.Product?>(
         'product',
         'getProduct',
         {'productId': productId},
       );
 
-  _i3.Future<_i48.VendorProfileDetail?> getShopProfile(
-    _i2.UuidValue vendorId,
+  _i2.Future<_i48.VendorProfileDetail?> getShopProfile(
+    _i1.UuidValue vendorId,
   ) => caller.callServerEndpoint<_i48.VendorProfileDetail?>(
     'product',
     'getShopProfile',
     {'vendorId': vendorId},
   );
 
-  _i3.Future<List<_i49.ShopListingSummary>> listApprovedShops({
+  _i2.Future<List<_i49.ShopListingSummary>> listApprovedShops({
     String? query,
   }) => caller.callServerEndpoint<List<_i49.ShopListingSummary>>(
     'product',
@@ -1042,7 +1079,7 @@ class EndpointProduct extends _i2.EndpointRef {
   );
 
   /// Backward-compatible list without pagination wrapper.
-  _i3.Future<List<_i19.Product>> listProducts({
+  _i2.Future<List<_i19.Product>> listProducts({
     String? categoryName,
     int? limit,
     int? offset,
@@ -1059,13 +1096,13 @@ class EndpointProduct extends _i2.EndpointRef {
 
 /// Refund and return requests for authenticated customers.
 /// {@category Endpoint}
-class EndpointRefund extends _i2.EndpointRef {
-  EndpointRefund(_i2.EndpointCaller caller) : super(caller);
+class EndpointRefund extends _i1.EndpointRef {
+  EndpointRefund(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'refund';
 
-  _i3.Future<List<_i50.RefundRequestSummary>> listMyRefundRequests({
+  _i2.Future<List<_i50.RefundRequestSummary>> listMyRefundRequests({
     _i38.PaginationInput? pagination,
   }) => caller.callServerEndpoint<List<_i50.RefundRequestSummary>>(
     'refund',
@@ -1073,14 +1110,14 @@ class EndpointRefund extends _i2.EndpointRef {
     {'pagination': pagination},
   );
 
-  _i3.Future<_i50.RefundRequestSummary> getRefundRequest(int refundId) =>
+  _i2.Future<_i50.RefundRequestSummary> getRefundRequest(int refundId) =>
       caller.callServerEndpoint<_i50.RefundRequestSummary>(
         'refund',
         'getRefundRequest',
         {'refundId': refundId},
       );
 
-  _i3.Future<_i50.RefundRequestSummary> createRefundRequest(
+  _i2.Future<_i50.RefundRequestSummary> createRefundRequest(
     int orderId,
     String reason,
   ) => caller.callServerEndpoint<_i50.RefundRequestSummary>(
@@ -1095,13 +1132,13 @@ class EndpointRefund extends _i2.EndpointRef {
 
 /// Product reviews from verified purchasers.
 /// {@category Endpoint}
-class EndpointReview extends _i2.EndpointRef {
-  EndpointReview(_i2.EndpointCaller caller) : super(caller);
+class EndpointReview extends _i1.EndpointRef {
+  EndpointReview(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'review';
 
-  _i3.Future<_i51.Review> submitReview(
+  _i2.Future<_i51.Review> submitReview(
     int productId,
     int orderId,
     int rating, {
@@ -1117,7 +1154,7 @@ class EndpointReview extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<List<_i51.Review>> listProductReviews(
+  _i2.Future<List<_i51.Review>> listProductReviews(
     int productId, {
     required int limit,
     required int offset,
@@ -1134,32 +1171,32 @@ class EndpointReview extends _i2.EndpointRef {
 
 /// Vendor shop and product management.
 /// {@category Endpoint}
-class EndpointVendor extends _i2.EndpointRef {
-  EndpointVendor(_i2.EndpointCaller caller) : super(caller);
+class EndpointVendor extends _i1.EndpointRef {
+  EndpointVendor(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'vendor';
 
-  _i3.Future<_i17.Vendor> getMyShop() => caller.callServerEndpoint<_i17.Vendor>(
+  _i2.Future<_i17.Vendor> getMyShop() => caller.callServerEndpoint<_i17.Vendor>(
     'vendor',
     'getMyShop',
     {},
   );
 
-  _i3.Future<_i52.VendorDashboard> getDashboard() =>
+  _i2.Future<_i52.VendorDashboard> getDashboard() =>
       caller.callServerEndpoint<_i52.VendorDashboard>(
         'vendor',
         'getDashboard',
         {},
       );
 
-  _i3.Future<bool> hasShop() => caller.callServerEndpoint<bool>(
+  _i2.Future<bool> hasShop() => caller.callServerEndpoint<bool>(
     'vendor',
     'hasShop',
     {},
   );
 
-  _i3.Future<_i17.Vendor> createShop(
+  _i2.Future<_i17.Vendor> createShop(
     String shopName, {
     String? description,
     String? logoUrl,
@@ -1187,14 +1224,14 @@ class EndpointVendor extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<_i54.VendorBankDetails?> getMyBankDetails() =>
+  _i2.Future<_i54.VendorBankDetails?> getMyBankDetails() =>
       caller.callServerEndpoint<_i54.VendorBankDetails?>(
         'vendor',
         'getMyBankDetails',
         {},
       );
 
-  _i3.Future<_i54.VendorBankDetails> saveMyBankDetails(
+  _i2.Future<_i54.VendorBankDetails> saveMyBankDetails(
     _i53.VendorBankDetailsInput input,
   ) => caller.callServerEndpoint<_i54.VendorBankDetails>(
     'vendor',
@@ -1202,14 +1239,14 @@ class EndpointVendor extends _i2.EndpointRef {
     {'input': input},
   );
 
-  _i3.Future<_i48.VendorProfileDetail> getMyProfile() =>
+  _i2.Future<_i48.VendorProfileDetail> getMyProfile() =>
       caller.callServerEndpoint<_i48.VendorProfileDetail>(
         'vendor',
         'getMyProfile',
         {},
       );
 
-  _i3.Future<_i48.VendorProfileDetail> updateMyProfile(
+  _i2.Future<_i48.VendorProfileDetail> updateMyProfile(
     _i55.VendorProfileUpdateInput input,
   ) => caller.callServerEndpoint<_i48.VendorProfileDetail>(
     'vendor',
@@ -1217,7 +1254,7 @@ class EndpointVendor extends _i2.EndpointRef {
     {'input': input},
   );
 
-  _i3.Future<String> uploadShopLogo(
+  _i2.Future<String> uploadShopLogo(
     _i7.ByteData fileData,
     String fileName,
   ) => caller.callServerEndpoint<String>(
@@ -1229,7 +1266,7 @@ class EndpointVendor extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<String> uploadShopBanner(
+  _i2.Future<String> uploadShopBanner(
     _i7.ByteData fileData,
     String fileName,
   ) => caller.callServerEndpoint<String>(
@@ -1241,7 +1278,7 @@ class EndpointVendor extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<String> uploadShopCover(
+  _i2.Future<String> uploadShopCover(
     _i7.ByteData fileData,
     String fileName,
   ) => caller.callServerEndpoint<String>(
@@ -1253,7 +1290,7 @@ class EndpointVendor extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<String> uploadDocument(
+  _i2.Future<String> uploadDocument(
     _i56.VendorDocumentType documentType,
     _i7.ByteData fileData,
     String fileName,
@@ -1268,7 +1305,7 @@ class EndpointVendor extends _i2.EndpointRef {
   );
 
   /// Alias for [uploadShopLogo].
-  _i3.Future<String> uploadLogo(
+  _i2.Future<String> uploadLogo(
     _i7.ByteData fileData,
     String fileName,
   ) => caller.callServerEndpoint<String>(
@@ -1281,7 +1318,7 @@ class EndpointVendor extends _i2.EndpointRef {
   );
 
   /// Alias for [uploadShopBanner].
-  _i3.Future<String> uploadBanner(
+  _i2.Future<String> uploadBanner(
     _i7.ByteData fileData,
     String fileName,
   ) => caller.callServerEndpoint<String>(
@@ -1293,7 +1330,7 @@ class EndpointVendor extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<_i17.Vendor> updateShop(
+  _i2.Future<_i17.Vendor> updateShop(
     String shopName, {
     String? description,
     String? logoUrl,
@@ -1307,14 +1344,14 @@ class EndpointVendor extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<List<_i19.Product>> listMyProducts() =>
+  _i2.Future<List<_i19.Product>> listMyProducts() =>
       caller.callServerEndpoint<List<_i19.Product>>(
         'vendor',
         'listMyProducts',
         {},
       );
 
-  _i3.Future<_i19.Product> createProduct(
+  _i2.Future<_i19.Product> createProduct(
     String name,
     String description,
     double price, {
@@ -1353,7 +1390,7 @@ class EndpointVendor extends _i2.EndpointRef {
   );
 
   /// Creates a vendor product and stores the uploaded photo in one call.
-  _i3.Future<_i19.Product> uploadProduct(
+  _i2.Future<_i19.Product> uploadProduct(
     _i57.VendorProductUploadInput input,
     _i7.ByteData imageData,
     String imageFileName,
@@ -1367,7 +1404,7 @@ class EndpointVendor extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<_i19.Product> updateProductThumbnail(
+  _i2.Future<_i19.Product> updateProductThumbnail(
     int productId,
     String thumbnailUrl,
   ) => caller.callServerEndpoint<_i19.Product>(
@@ -1379,7 +1416,7 @@ class EndpointVendor extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<String> uploadProductImage(
+  _i2.Future<String> uploadProductImage(
     _i7.ByteData fileData,
     String fileName, {
     required bool removeBackground,
@@ -1393,14 +1430,14 @@ class EndpointVendor extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<_i19.Product> regenerateProductModel3d(int productId) =>
+  _i2.Future<_i19.Product> regenerateProductModel3d(int productId) =>
       caller.callServerEndpoint<_i19.Product>(
         'vendor',
         'regenerateProductModel3d',
         {'productId': productId},
       );
 
-  _i3.Future<List<_i58.VendorShopOrder>> listShopOrders({
+  _i2.Future<List<_i58.VendorShopOrder>> listShopOrders({
     required int limit,
     required int offset,
     _i10.OrderStatus? status,
@@ -1414,21 +1451,21 @@ class EndpointVendor extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<_i58.VendorShopOrder> getShopOrder(int orderId) =>
+  _i2.Future<_i58.VendorShopOrder> getShopOrder(int orderId) =>
       caller.callServerEndpoint<_i58.VendorShopOrder>(
         'vendor',
         'getShopOrder',
         {'orderId': orderId},
       );
 
-  _i3.Future<_i58.VendorShopOrder> acceptShopOrder(int orderId) =>
+  _i2.Future<_i58.VendorShopOrder> acceptShopOrder(int orderId) =>
       caller.callServerEndpoint<_i58.VendorShopOrder>(
         'vendor',
         'acceptShopOrder',
         {'orderId': orderId},
       );
 
-  _i3.Future<_i58.VendorShopOrder> rejectShopOrder(
+  _i2.Future<_i58.VendorShopOrder> rejectShopOrder(
     int orderId,
     String reason,
   ) => caller.callServerEndpoint<_i58.VendorShopOrder>(
@@ -1440,14 +1477,14 @@ class EndpointVendor extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<List<_i40.OrderDeliveryUpdate>> listDeliveryUpdates(int orderId) =>
+  _i2.Future<List<_i40.OrderDeliveryUpdate>> listDeliveryUpdates(int orderId) =>
       caller.callServerEndpoint<List<_i40.OrderDeliveryUpdate>>(
         'vendor',
         'listDeliveryUpdates',
         {'orderId': orderId},
       );
 
-  _i3.Future<_i40.OrderDeliveryUpdate> submitDeliveryUpdate(
+  _i2.Future<_i40.OrderDeliveryUpdate> submitDeliveryUpdate(
     int orderId,
     _i59.DeliveryStage stage, {
     String? note,
@@ -1463,7 +1500,7 @@ class EndpointVendor extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<String> uploadDeliveryProof(
+  _i2.Future<String> uploadDeliveryProof(
     _i7.ByteData fileData,
     String fileName,
   ) => caller.callServerEndpoint<String>(
@@ -1475,7 +1512,7 @@ class EndpointVendor extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<List<_i60.VendorNotificationSummary>> listNotifications({
+  _i2.Future<List<_i60.VendorNotificationSummary>> listNotifications({
     required int limit,
   }) => caller.callServerEndpoint<List<_i60.VendorNotificationSummary>>(
     'vendor',
@@ -1483,14 +1520,14 @@ class EndpointVendor extends _i2.EndpointRef {
     {'limit': limit},
   );
 
-  _i3.Future<void> markNotificationRead(int notificationId) =>
+  _i2.Future<void> markNotificationRead(int notificationId) =>
       caller.callServerEndpoint<void>(
         'vendor',
         'markNotificationRead',
         {'notificationId': notificationId},
       );
 
-  _i3.Future<void> markAllNotificationsRead() =>
+  _i2.Future<void> markAllNotificationsRead() =>
       caller.callServerEndpoint<void>(
         'vendor',
         'markAllNotificationsRead',
@@ -1500,13 +1537,13 @@ class EndpointVendor extends _i2.EndpointRef {
 
 /// Wishlist management for authenticated customers.
 /// {@category Endpoint}
-class EndpointWishlist extends _i2.EndpointRef {
-  EndpointWishlist(_i2.EndpointCaller caller) : super(caller);
+class EndpointWishlist extends _i1.EndpointRef {
+  EndpointWishlist(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'wishlist';
 
-  _i3.Future<_i61.WishlistPage> listMyWishlist({
+  _i2.Future<_i61.WishlistPage> listMyWishlist({
     _i38.PaginationInput? pagination,
   }) => caller.callServerEndpoint<_i61.WishlistPage>(
     'wishlist',
@@ -1514,28 +1551,28 @@ class EndpointWishlist extends _i2.EndpointRef {
     {'pagination': pagination},
   );
 
-  _i3.Future<_i62.WishlistItem> addToWishlist(int productId) =>
+  _i2.Future<_i62.WishlistItem> addToWishlist(int productId) =>
       caller.callServerEndpoint<_i62.WishlistItem>(
         'wishlist',
         'addToWishlist',
         {'productId': productId},
       );
 
-  _i3.Future<void> removeFromWishlist(int productId) =>
+  _i2.Future<void> removeFromWishlist(int productId) =>
       caller.callServerEndpoint<void>(
         'wishlist',
         'removeFromWishlist',
         {'productId': productId},
       );
 
-  _i3.Future<bool> toggleWishlist(int productId) =>
+  _i2.Future<bool> toggleWishlist(int productId) =>
       caller.callServerEndpoint<bool>(
         'wishlist',
         'toggleWishlist',
         {'productId': productId},
       );
 
-  _i3.Future<bool> isWishlisted(int productId) =>
+  _i2.Future<bool> isWishlisted(int productId) =>
       caller.callServerEndpoint<bool>(
         'wishlist',
         'isWishlisted',
@@ -1546,15 +1583,15 @@ class EndpointWishlist extends _i2.EndpointRef {
 class Modules {
   Modules(Client client) {
     auth = _i4.Caller(client);
-    auth_idp = _i1.Caller(client);
+    auth_idp = _i3.Caller(client);
   }
 
   late final _i4.Caller auth;
 
-  late final _i1.Caller auth_idp;
+  late final _i3.Caller auth_idp;
 }
 
-class Client extends _i2.ServerpodClientShared {
+class Client extends _i1.ServerpodClientShared {
   Client(
     String host, {
     dynamic securityContext,
@@ -1565,12 +1602,12 @@ class Client extends _i2.ServerpodClientShared {
     Duration? streamingConnectionTimeout,
     Duration? connectionTimeout,
     Function(
-      _i2.MethodCallContext,
+      _i1.MethodCallContext,
       Object,
       StackTrace,
     )?
     onFailedCall,
-    Function(_i2.MethodCallContext)? onSucceededCall,
+    Function(_i1.MethodCallContext)? onSucceededCall,
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
@@ -1583,6 +1620,7 @@ class Client extends _i2.ServerpodClientShared {
          disconnectStreamsOnLostInternetConnection:
              disconnectStreamsOnLostInternetConnection,
        ) {
+    devAuth = EndpointDevAuth(this);
     emailIdp = EndpointEmailIdp(this);
     jwtRefresh = EndpointJwtRefresh(this);
     user = EndpointUser(this);
@@ -1601,6 +1639,8 @@ class Client extends _i2.ServerpodClientShared {
     wishlist = EndpointWishlist(this);
     modules = Modules(this);
   }
+
+  late final EndpointDevAuth devAuth;
 
   late final EndpointEmailIdp emailIdp;
 
@@ -1637,7 +1677,8 @@ class Client extends _i2.ServerpodClientShared {
   late final Modules modules;
 
   @override
-  Map<String, _i2.EndpointRef> get endpointRefLookup => {
+  Map<String, _i1.EndpointRef> get endpointRefLookup => {
+    'devAuth': devAuth,
     'emailIdp': emailIdp,
     'jwtRefresh': jwtRefresh,
     'user': user,
@@ -1657,7 +1698,7 @@ class Client extends _i2.ServerpodClientShared {
   };
 
   @override
-  Map<String, _i2.ModuleEndpointCaller> get moduleLookup => {
+  Map<String, _i1.ModuleEndpointCaller> get moduleLookup => {
     'auth': modules.auth,
     'auth_idp': modules.auth_idp,
   };

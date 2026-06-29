@@ -16,9 +16,20 @@ class AdminStore {
 
   Future<bool> hasAdminProfile(Session session) async {
     final user = await SessionService.requireUser(session);
-    if (user.role != UserRole.admin) return false;
+    if (user.role != UserRole.admin || !user.isActive) return false;
     final profile = await findByUserId(session, user.id!);
-    return profile != null;
+    if (profile == null) return true;
+    return profile.isActive;
+  }
+
+  Future<int> countActiveAdmins(Session session) {
+    return User.db.count(
+      session,
+      where: (row) =>
+          row.role.equals(UserRole.admin) &
+          row.isActive.equals(true) &
+          row.deletedAt.equals(null),
+    );
   }
 
   Admin _profileFromUser(User user) {
@@ -33,10 +44,117 @@ class AdminStore {
 
   Future<Admin> requireAdminProfile(Session session) async {
     final user = await SessionService.requireRole(session, {UserRole.admin});
+    if (!user.isActive) {
+      throw PlaceifyException(
+        message: 'Your admin account is inactive.',
+        code: 'FORBIDDEN',
+      );
+    }
+
     final existing = await findByUserId(session, user.id!);
-    if (existing != null) return existing;
+    if (existing != null) {
+      if (!existing.isActive) {
+        throw PlaceifyException(
+          message: 'Your admin account is inactive.',
+          code: 'FORBIDDEN',
+        );
+      }
+      return existing;
+    }
 
     return Admin.db.insertRow(session, _profileFromUser(user));
+  }
+
+  /// Promotes the first admin when none exist (self only). Otherwise requires
+  /// an existing active admin to promote another user.
+  Future<Admin> bootstrapFirstAdmin(Session session) async {
+    final adminCount = await countActiveAdmins(session);
+    if (adminCount > 0) {
+      throw PlaceifyException(
+        message: 'An admin account already exists.',
+        code: 'ADMIN_BOOTSTRAP_FORBIDDEN',
+      );
+    }
+
+    final user = await SessionService.requireUser(session);
+    return _promoteUserToAdmin(
+      session,
+      user,
+      adminType: AdminType.super_admin,
+    );
+  }
+
+  Future<Admin> promoteToAdmin(
+    Session session,
+    UuidValue targetUserId, {
+    AdminType adminType = AdminType.moderator,
+  }) async {
+    await requireAdminProfile(session);
+
+    final target = await User.db.findById(session, targetUserId);
+    if (target == null || target.deletedAt != null) {
+      throw PlaceifyException(
+        message: 'User not found.',
+        code: 'USER_NOT_FOUND',
+      );
+    }
+
+    return _promoteUserToAdmin(session, target, adminType: adminType);
+  }
+
+  Future<Admin> _promoteUserToAdmin(
+    Session session,
+    User target, {
+    required AdminType adminType,
+  }) async {
+    final now = DateTime.now();
+    final email = target.email?.trim().toLowerCase() ?? '';
+    if (email.isEmpty) {
+      throw PlaceifyException(
+        message: 'User must have an email before becoming an admin.',
+        code: 'INVALID_ADMIN_PROFILE',
+      );
+    }
+
+    final updatedUser = target.role == UserRole.admin
+        ? target
+        : await User.db.updateRow(
+            session,
+            target.copyWith(
+              role: UserRole.admin,
+              status: UserAccountStatus.approved,
+              isActive: true,
+              updatedAt: now,
+            ),
+          );
+
+    final existing = await findByUserId(session, updatedUser.id!);
+    if (existing != null) {
+      return Admin.db.updateRow(
+        session,
+        existing.copyWith(
+          fullName: updatedUser.name,
+          email: email,
+          phoneNumber: updatedUser.phone,
+          adminType: adminType,
+          isActive: true,
+          updatedAt: now,
+        ),
+      );
+    }
+
+    return Admin.db.insertRow(
+      session,
+      Admin(
+        userId: updatedUser.id!,
+        fullName: updatedUser.name,
+        email: email,
+        phoneNumber: updatedUser.phone,
+        adminType: adminType,
+        isActive: true,
+        updatedAt: now,
+      ),
+    );
   }
 
   Future<Admin?> getMyAdmin(Session session) async {
