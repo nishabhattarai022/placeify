@@ -96,17 +96,26 @@ class VendorProfileStore {
     ];
 
     final recentOrderItems = orderItems.take(6).toList();
+    final recentOrderIds = recentOrderItems.map((item) => item.orderId).toSet();
+    final deliveryStages = await VendorOrderSupport.latestDeliveryStagesForOrders(
+      session,
+      vendorId,
+      recentOrderIds,
+    );
+
     final recentOrders = <VendorOrderSummary>[
       for (final item in recentOrderItems)
         if (item.id != null && item.order != null)
           VendorOrderSummary(
             orderItemId: item.id!,
+            productId: item.productId,
             orderId: item.orderId,
             orderNumber: item.orderId.toString().padLeft(5, '0'),
             productName: item.product?.name ?? 'Product',
             quantity: item.quantity,
             lineTotal: item.unitPrice * item.quantity,
             status: item.order!.status,
+            currentDeliveryStage: deliveryStages[item.orderId],
             placedAt: item.order!.placedAt,
             customerName: item.order!.user?.name,
           ),

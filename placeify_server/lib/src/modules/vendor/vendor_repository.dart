@@ -5,6 +5,7 @@ import 'package:serverpod/serverpod.dart' hide Order;
 import '../../generated/protocol.dart';
 import '../marketplace/marketplace_events.dart';
 import '../notification/in_app_notification_store.dart';
+import '../review/review_repository.dart';
 import 'stores/vendor_access_guard.dart';
 import 'stores/vendor_delivery_store.dart';
 import 'stores/vendor_notification_store.dart';
@@ -26,6 +27,7 @@ class VendorStore {
     VendorProfileStore? profile,
     VendorRefundStore? refunds,
     VendorProductImageStorage? imageStorage,
+    ReviewStore? reviews,
   })  : _notifications = notifications ?? InAppNotificationStore(),
         _access = access ?? VendorAccessGuard(),
         _events = events ?? marketplaceEventDispatcher,
@@ -62,7 +64,8 @@ class VendorStore {
               access: access ?? VendorAccessGuard(),
               imageStorage: imageStorage ?? VendorProductImageStorage(),
             ),
-        _refunds = refunds ?? VendorRefundStore(access: access);
+        _refunds = refunds ?? VendorRefundStore(access: access),
+        _reviews = reviews ?? ReviewStore();
 
   final InAppNotificationStore _notifications;
   final VendorAccessGuard _access;
@@ -74,6 +77,7 @@ class VendorStore {
   final VendorProductStore _products;
   final VendorProfileStore _profile;
   final VendorRefundStore _refunds;
+  final ReviewStore _reviews;
 
   Future<VendorDashboard> getDashboard(Session session) =>
       _profile.getDashboard(session);
@@ -347,4 +351,18 @@ class VendorStore {
     String? reason,
   }) =>
       _refunds.reject(session, refundId, reason: reason);
+
+  Future<List<VendorReviewSummary>> listShopReviews(
+    Session session, {
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    final vendor = await _access.requireOwnedVendor(session);
+    return _reviews.listVendorReviews(
+      session,
+      vendor.id!,
+      limit: limit,
+      offset: offset,
+    );
+  }
 }

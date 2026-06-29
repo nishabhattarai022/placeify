@@ -2,6 +2,7 @@ abstract final class VendorRoutes {
   static const prefix = '/vendor';
   static const dashboard = '/vendor';
   static const orders = '/vendor/orders';
+  static const ordersAll = '/vendor/orders?view=all';
 
   static String orderDetail(String orderId) => '$orders/$orderId';
 
@@ -39,4 +40,8 @@ abstract final class VendorRoutes {
     payments,
     profile,
   };
+
+  /// Tab roots plus the dashboard "See all orders" list view.
+  static bool isOrdersListView(Uri uri) =>
+      uri.path == orders && uri.queryParameters['view'] == 'all';
 }

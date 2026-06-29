@@ -19,6 +19,7 @@ import '../domain/models/order.dart';
 import 'providers/orders_provider.dart';
 import 'widgets/consumer_order_status_chip.dart';
 import 'widgets/consumer_payment_status_chip.dart';
+import 'widgets/leave_review_sheet.dart';
 import 'widgets/order_item_row.dart';
 import 'widgets/order_payment_timeline.dart';
 import 'widgets/order_reason_sheets.dart';
@@ -287,13 +288,7 @@ class _OrderDetailBody extends ConsumerWidget {
       );
       addButton(
         OutlinedButton(
-          onPressed: () {
-            HapticService.light();
-            PlaceifyToast.show(
-              context,
-              '${OrderStrings.leaveReviewAction} coming soon',
-            );
-          },
+          onPressed: () => LeaveReviewSheet.show(context, ref, order: order),
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.espresso,
             side: const BorderSide(color: AppColors.sand, width: 1.5),

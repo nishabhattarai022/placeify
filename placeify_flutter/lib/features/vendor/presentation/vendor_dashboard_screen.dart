@@ -237,7 +237,7 @@ class _DashboardBody extends StatelessWidget {
             children: [
               const Text('Recent Orders', style: AppTypography.sectionTitle),
               GestureDetector(
-                onTap: () => context.go(VendorRoutes.orders),
+                onTap: () => context.go(VendorRoutes.ordersAll),
                 child: const Text('See all', style: AppTypography.seeAll),
               ),
             ],

@@ -338,4 +338,16 @@ class VendorEndpoint extends Endpoint {
   }) {
     return _service.rejectRefundRequest(session, refundId, reason: reason);
   }
+
+  Future<List<VendorReviewSummary>> listShopReviews(
+    Session session, {
+    int limit = 20,
+    int offset = 0,
+  }) {
+    return _service.listShopReviews(
+      session,
+      limit: limit,
+      offset: offset,
+    );
+  }
 }

@@ -1,0 +1,9 @@
+### Product review visible on the vendor dashboard.
+class: VendorReviewSummary
+fields:
+  id: int
+  customerName: String
+  productName: String
+  rating: int
+  comment: String?
+  createdAt: DateTime

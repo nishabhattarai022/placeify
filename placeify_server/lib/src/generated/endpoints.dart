@@ -27,25 +27,25 @@ import '../modules/refund/refund_endpoint.dart' as _i14;
 import '../modules/review/review_endpoint.dart' as _i15;
 import '../modules/vendor/vendor_endpoint.dart' as _i16;
 import '../modules/wishlist/wishlist_endpoint.dart' as _i17;
-import 'package:placeify_server/src/generated/order_status.dart' as _i18;
-import 'package:placeify_server/src/generated/user_role.dart' as _i19;
-import 'package:placeify_server/src/generated/admin_type.dart' as _i20;
-import 'package:placeify_server/src/generated/user_account_status.dart' as _i21;
-import 'package:placeify_server/src/generated/complaint_status.dart' as _i22;
+import 'dart:typed_data' as _i18;
+import 'package:placeify_server/src/generated/order_status.dart' as _i19;
+import 'package:placeify_server/src/generated/user_role.dart' as _i20;
+import 'package:placeify_server/src/generated/admin_type.dart' as _i21;
+import 'package:placeify_server/src/generated/user_account_status.dart' as _i22;
+import 'package:placeify_server/src/generated/complaint_status.dart' as _i23;
 import 'package:placeify_server/src/generated/vendor_payout_status.dart'
-    as _i23;
-import 'package:placeify_server/src/generated/request_status.dart' as _i24;
-import 'package:placeify_server/src/generated/checkout_request.dart' as _i25;
-import 'package:placeify_server/src/generated/pagination_input.dart' as _i26;
+    as _i24;
+import 'package:placeify_server/src/generated/request_status.dart' as _i25;
+import 'package:placeify_server/src/generated/checkout_request.dart' as _i26;
+import 'package:placeify_server/src/generated/pagination_input.dart' as _i27;
 import 'package:placeify_server/src/generated/payment_transaction_status.dart'
-    as _i27;
-import 'package:placeify_server/src/generated/product_search_input.dart'
     as _i28;
-import 'package:placeify_server/src/generated/vendor_bank_details_input.dart'
+import 'package:placeify_server/src/generated/product_search_input.dart'
     as _i29;
-import 'package:placeify_server/src/generated/vendor_profile_update_input.dart'
+import 'package:placeify_server/src/generated/vendor_bank_details_input.dart'
     as _i30;
-import 'dart:typed_data' as _i31;
+import 'package:placeify_server/src/generated/vendor_profile_update_input.dart'
+    as _i31;
 import 'package:placeify_server/src/generated/vendor_document_type.dart'
     as _i32;
 import 'package:placeify_server/src/generated/vendor_product_upload_input.dart'
@@ -430,6 +430,31 @@ class Endpoints extends _i1.EndpointDispatch {
                 params['newPassword'],
               ),
         ),
+        'uploadProfileImage': _i1.MethodConnector(
+          name: 'uploadProfileImage',
+          params: {
+            'fileData': _i1.ParameterDescription(
+              name: 'fileData',
+              type: _i1.getType<_i18.ByteData>(),
+              nullable: false,
+            ),
+            'fileName': _i1.ParameterDescription(
+              name: 'fileName',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['user'] as _i4.UserEndpoint).uploadProfileImage(
+                    session,
+                    params['fileData'],
+                    params['fileName'],
+                  ),
+        ),
         'becomeVendor': _i1.MethodConnector(
           name: 'becomeVendor',
           params: {},
@@ -486,7 +511,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i18.OrderStatus?>(),
+              type: _i1.getType<_i19.OrderStatus?>(),
               nullable: true,
             ),
           },
@@ -621,7 +646,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'allowedRoles': _i1.ParameterDescription(
               name: 'allowedRoles',
-              type: _i1.getType<Set<_i19.UserRole>>(),
+              type: _i1.getType<Set<_i20.UserRole>>(),
               nullable: false,
             ),
           },
@@ -715,7 +740,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'adminType': _i1.ParameterDescription(
               name: 'adminType',
-              type: _i1.getType<_i20.AdminType?>(),
+              type: _i1.getType<_i21.AdminType?>(),
               nullable: true,
             ),
             'isActive': _i1.ParameterDescription(
@@ -785,7 +810,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i21.UserAccountStatus>(),
+              type: _i1.getType<_i22.UserAccountStatus>(),
               nullable: false,
             ),
             'isActive': _i1.ParameterDescription(
@@ -942,7 +967,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i22.ComplaintStatus?>(),
+              type: _i1.getType<_i23.ComplaintStatus?>(),
               nullable: true,
             ),
           },
@@ -995,7 +1020,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'role': _i1.ParameterDescription(
               name: 'role',
-              type: _i1.getType<_i19.UserRole?>(),
+              type: _i1.getType<_i20.UserRole?>(),
               nullable: true,
             ),
           },
@@ -1014,7 +1039,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i21.UserAccountStatus?>(),
+              type: _i1.getType<_i22.UserAccountStatus?>(),
               nullable: true,
             ),
           },
@@ -1070,7 +1095,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i23.VendorPayoutStatus?>(),
+              type: _i1.getType<_i24.VendorPayoutStatus?>(),
               nullable: true,
             ),
           },
@@ -1133,7 +1158,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i24.RequestStatus?>(),
+              type: _i1.getType<_i25.RequestStatus?>(),
               nullable: true,
             ),
           },
@@ -1200,7 +1225,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'allowedRoles': _i1.ParameterDescription(
               name: 'allowedRoles',
-              type: _i1.getType<Set<_i19.UserRole>>(),
+              type: _i1.getType<Set<_i20.UserRole>>(),
               nullable: false,
             ),
           },
@@ -1377,7 +1402,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'request': _i1.ParameterDescription(
               name: 'request',
-              type: _i1.getType<_i25.CheckoutRequest>(),
+              type: _i1.getType<_i26.CheckoutRequest>(),
               nullable: false,
             ),
           },
@@ -1526,6 +1551,19 @@ class Endpoints extends _i1.EndpointDispatch {
                   (endpoints['notification'] as _i10.NotificationEndpoint)
                       .markAllInAppNotificationsRead(session),
         ),
+        'watchInAppNotifications': _i1.MethodStreamConnector(
+          name: 'watchInAppNotifications',
+          params: {},
+          streamParams: {},
+          returnType: _i1.MethodStreamReturnType.streamType,
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+                Map<String, Stream> streamParams,
+              ) => (endpoints['notification'] as _i10.NotificationEndpoint)
+                  .watchInAppNotifications(session),
+        ),
       },
     );
     connectors['order'] = _i1.EndpointConnector(
@@ -1537,12 +1575,12 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'pagination': _i1.ParameterDescription(
               name: 'pagination',
-              type: _i1.getType<_i26.PaginationInput?>(),
+              type: _i1.getType<_i27.PaginationInput?>(),
               nullable: true,
             ),
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i18.OrderStatus?>(),
+              type: _i1.getType<_i19.OrderStatus?>(),
               nullable: true,
             ),
           },
@@ -1639,7 +1677,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i27.PaymentTransactionStatus>(),
+              type: _i1.getType<_i28.PaymentTransactionStatus>(),
               nullable: false,
             ),
             'note': _i1.ParameterDescription(
@@ -1691,7 +1729,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'input': _i1.ParameterDescription(
               name: 'input',
-              type: _i1.getType<_i28.ProductSearchInput>(),
+              type: _i1.getType<_i29.ProductSearchInput>(),
               nullable: false,
             ),
           },
@@ -1814,7 +1852,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'pagination': _i1.ParameterDescription(
               name: 'pagination',
-              type: _i1.getType<_i26.PaginationInput?>(),
+              type: _i1.getType<_i27.PaginationInput?>(),
               nullable: true,
             ),
           },
@@ -2033,7 +2071,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'bankDetails': _i1.ParameterDescription(
               name: 'bankDetails',
-              type: _i1.getType<_i29.VendorBankDetailsInput?>(),
+              type: _i1.getType<_i30.VendorBankDetailsInput?>(),
               nullable: true,
             ),
           },
@@ -2071,7 +2109,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'input': _i1.ParameterDescription(
               name: 'input',
-              type: _i1.getType<_i29.VendorBankDetailsInput>(),
+              type: _i1.getType<_i30.VendorBankDetailsInput>(),
               nullable: false,
             ),
           },
@@ -2100,7 +2138,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'input': _i1.ParameterDescription(
               name: 'input',
-              type: _i1.getType<_i30.VendorProfileUpdateInput>(),
+              type: _i1.getType<_i31.VendorProfileUpdateInput>(),
               nullable: false,
             ),
           },
@@ -2119,7 +2157,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i31.ByteData>(),
+              type: _i1.getType<_i18.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -2144,7 +2182,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i31.ByteData>(),
+              type: _i1.getType<_i18.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -2169,7 +2207,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i31.ByteData>(),
+              type: _i1.getType<_i18.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -2199,7 +2237,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i31.ByteData>(),
+              type: _i1.getType<_i18.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -2225,7 +2263,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i31.ByteData>(),
+              type: _i1.getType<_i18.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -2250,7 +2288,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i31.ByteData>(),
+              type: _i1.getType<_i18.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -2424,7 +2462,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'imageData': _i1.ParameterDescription(
               name: 'imageData',
-              type: _i1.getType<_i31.ByteData>(),
+              type: _i1.getType<_i18.ByteData>(),
               nullable: false,
             ),
             'imageFileName': _i1.ParameterDescription(
@@ -2475,7 +2513,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i31.ByteData>(),
+              type: _i1.getType<_i18.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -2592,7 +2630,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i18.OrderStatus?>(),
+              type: _i1.getType<_i19.OrderStatus?>(),
               nullable: true,
             ),
           },
@@ -2732,7 +2770,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i31.ByteData>(),
+              type: _i1.getType<_i18.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -2854,6 +2892,31 @@ class Endpoints extends _i1.EndpointDispatch {
                     reason: params['reason'],
                   ),
         ),
+        'listShopReviews': _i1.MethodConnector(
+          name: 'listShopReviews',
+          params: {
+            'limit': _i1.ParameterDescription(
+              name: 'limit',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'offset': _i1.ParameterDescription(
+              name: 'offset',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i16.VendorEndpoint).listShopReviews(
+                    session,
+                    limit: params['limit'],
+                    offset: params['offset'],
+                  ),
+        ),
       },
     );
     connectors['wishlist'] = _i1.EndpointConnector(
@@ -2865,7 +2928,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'pagination': _i1.ParameterDescription(
               name: 'pagination',
-              type: _i1.getType<_i26.PaginationInput?>(),
+              type: _i1.getType<_i27.PaginationInput?>(),
               nullable: true,
             ),
           },

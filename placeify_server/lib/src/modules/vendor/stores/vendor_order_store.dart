@@ -34,11 +34,25 @@ class VendorOrderStore {
         ? orders
         : orders.where((order) => order.status == status).toList();
 
-    if (offset >= filtered.length) return [];
+    final stages = await VendorOrderSupport.latestDeliveryStagesForOrders(
+      session,
+      vendor.id!,
+      filtered.map((order) => order.orderId).toSet(),
+    );
+
+    final enriched = [
+      for (final order in filtered)
+        VendorOrderSupport.withDeliveryStage(
+          order,
+          stages[order.orderId],
+        ),
+    ];
+
+    if (offset >= enriched.length) return [];
     final end = offset + limit;
-    return filtered.sublist(
+    return enriched.sublist(
       offset,
-      end > filtered.length ? filtered.length : end,
+      end > enriched.length ? enriched.length : end,
     );
   }
 
@@ -69,7 +83,16 @@ class VendorOrderStore {
         code: 'ORDER_NOT_FOUND',
       );
     }
-    return orders.first;
+
+    final stages = await VendorOrderSupport.latestDeliveryStagesForOrders(
+      session,
+      vendor.id!,
+      {orderId},
+    );
+    return VendorOrderSupport.withDeliveryStage(
+      orders.first,
+      stages[orderId],
+    );
   }
 
   Future<VendorShopOrder> acceptShopOrder(Session session, int orderId) async {

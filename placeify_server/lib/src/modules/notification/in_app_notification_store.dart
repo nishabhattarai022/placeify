@@ -1,9 +1,14 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
 
 /// Persists in-app notifications and read state.
 class InAppNotificationStore {
+  static String userChannel(UuidValue userId) => 'in_app_$userId';
+
   Future<InAppNotification> create(
     Session session, {
     required UuidValue userId,
@@ -12,7 +17,7 @@ class InAppNotificationStore {
     required InAppNotificationType type,
     int? referenceId,
   }) async {
-    return InAppNotification.db.insertRow(
+    final row = await InAppNotification.db.insertRow(
       session,
       InAppNotification(
         userId: userId,
@@ -22,6 +27,36 @@ class InAppNotificationStore {
         referenceId: referenceId,
       ),
     );
+    final summary = _toSummary(row);
+    await _broadcastSummary(session, userId, summary);
+    return row;
+  }
+
+  Future<void> _broadcastSummary(
+    Session session,
+    UuidValue userId,
+    InAppNotificationSummary summary,
+  ) async {
+    final channel = userChannel(userId);
+    final useRedis = session.serverpod.redisController != null;
+    // #region agent log
+    _agentLog(
+      'in_app_notification_store.dart:_broadcastSummary',
+      'broadcast notification',
+      {
+        'channel': channel,
+        'notificationId': summary.id,
+        'type': summary.type.name,
+        'useRedis': useRedis,
+      },
+      hypothesisId: 'H1',
+    );
+    // #endregion
+    if (useRedis) {
+      await session.messages.postMessage(channel, summary, global: true);
+    } else {
+      await session.messages.postMessage(channel, summary, global: false);
+    }
   }
 
   Future<void> createAsync(
@@ -120,3 +155,27 @@ class InAppNotificationStore {
     );
   }
 }
+
+// #region agent log
+void _agentLog(
+  String location,
+  String message,
+  Map<String, Object?> data, {
+  required String hypothesisId,
+}) {
+  try {
+    File('/Users/rosikagajurel/Documents/College/placeify/.cursor/debug-1d536e.log')
+        .writeAsStringSync(
+      '${jsonEncode({
+        'sessionId': '1d536e',
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'location': location,
+        'message': message,
+        'data': data,
+        'hypothesisId': hypothesisId,
+      })}\n',
+      mode: FileMode.append,
+    );
+  } catch (_) {}
+}
+// #endregion

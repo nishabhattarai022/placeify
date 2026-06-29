@@ -18,7 +18,10 @@ import 'widgets/vendor_order_row.dart';
 import 'widgets/vendor_orders_empty_state.dart';
 
 class VendorOrdersScreen extends ConsumerStatefulWidget {
-  const VendorOrdersScreen({super.key});
+  const VendorOrdersScreen({this.showAllOrdersOnly = false, super.key});
+
+  /// When true (dashboard "See all"), shows every order in a simple list.
+  final bool showAllOrdersOnly;
 
   @override
   ConsumerState<VendorOrdersScreen> createState() => _VendorOrdersScreenState();
@@ -37,6 +40,10 @@ class _VendorOrdersScreenState extends ConsumerState<VendorOrdersScreen> {
   }
 
   List<VendorOrder> _filterOrders(List<VendorOrder> orders) {
+    if (widget.showAllOrdersOnly) {
+      return [...orders]..sort((a, b) => b.orderedAt.compareTo(a.orderedAt));
+    }
+
     final query = _searchQuery.trim().toLowerCase();
 
     return orders.where((order) {
@@ -98,37 +105,43 @@ class _VendorOrdersScreenState extends ConsumerState<VendorOrdersScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Orders', style: AppTypography.sectionTitle),
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _VendorOrdersSearchField(
-                          controller: _searchController,
-                          onChanged: (value) =>
-                              setState(() => _searchQuery = value),
+            if (!widget.showAllOrdersOnly)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Orders', style: AppTypography.sectionTitle),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _VendorOrdersSearchField(
+                            controller: _searchController,
+                            onChanged: (value) =>
+                                setState(() => _searchQuery = value),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      _DateFilterButton(
-                        filter: _dateFilter,
-                        onTap: _openDateFilter,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  VendorOrderFilterTabs(
-                    selectedTab: _selectedTab,
-                    onSelected: (tab) => setState(() => _selectedTab = tab),
-                  ),
-                ],
+                        const SizedBox(width: 10),
+                        _DateFilterButton(
+                          filter: _dateFilter,
+                          onTap: _openDateFilter,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    VendorOrderFilterTabs(
+                      selectedTab: _selectedTab,
+                      onSelected: (tab) => setState(() => _selectedTab = tab),
+                    ),
+                  ],
+                ),
+              )
+            else
+              const Padding(
+                padding: EdgeInsets.fromLTRB(24, 14, 24, 0),
+                child: Text('Orders', style: AppTypography.sectionTitle),
               ),
-            ),
             const SizedBox(height: 16),
             Expanded(
               child: ordersAsync.when(
@@ -141,6 +154,34 @@ class _VendorOrdersScreenState extends ConsumerState<VendorOrdersScreen> {
                   final filtered = _filterOrders(orders);
 
                   if (filtered.isEmpty) {
+                    if (widget.showAllOrdersOnly) {
+                      return RefreshIndicator(
+                        onRefresh: _onRefresh,
+                        color: AppColors.espresso,
+                        child: ListView(
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(),
+                          ),
+                          children: [
+                            SizedBox(
+                              height: MediaQuery.sizeOf(context).height * 0.35,
+                              child: Center(
+                                child: Text(
+                                  'No orders yet',
+                                  style: AppTypography.metricLabel.copyWith(
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(
+                              height: BottomNavTokens.scrollBottomPadding,
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
                     return RefreshIndicator(
                       onRefresh: _onRefresh,
                       color: AppColors.espresso,

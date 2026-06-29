@@ -195,27 +195,15 @@ class PaymentStore {
       OrderPaymentStatus? nextPaymentStatus;
 
       if (status == PaymentTransactionStatus.succeeded) {
-        if (currentPaymentStatus == OrderPaymentStatus.paymentConfirmed) {
+        if (currentPaymentStatus != OrderPaymentStatus.unpaid) {
           throw PlaceifyException(
-            message: 'Payment is already confirmed.',
+            message:
+                'Payment has already been updated and cannot be changed again.',
             code: 'PAYMENT_LOCKED',
           );
         }
 
-        if (currentPaymentStatus == OrderPaymentStatus.paymentReceived &&
-            allocation.status == PaymentTransactionStatus.succeeded) {
-          nextPaymentStatus = OrderPaymentStatus.paymentConfirmed;
-        } else if (currentPaymentStatus == OrderPaymentStatus.unpaid) {
-          nextPaymentStatus = OrderPaymentStatus.paymentReceived;
-        } else if (!OrderLifecycleStore.canAdvancePaymentStatus(
-          currentPaymentStatus,
-          OrderPaymentStatus.paymentConfirmed,
-        )) {
-          throw PlaceifyException(
-            message: 'Payment status cannot move backward.',
-            code: 'INVALID_PAYMENT_STATUS',
-          );
-        }
+        nextPaymentStatus = OrderPaymentStatus.paymentReceived;
       }
 
       if (allocation.status != PaymentTransactionStatus.succeeded &&
@@ -230,7 +218,8 @@ class PaymentStore {
           transaction: transaction,
         );
       } else if (status != PaymentTransactionStatus.succeeded) {
-        if (allocation.status == PaymentTransactionStatus.succeeded) {
+        if (allocation.status == PaymentTransactionStatus.succeeded &&
+            status != PaymentTransactionStatus.refunded) {
           throw PlaceifyException(
             message:
                 'Payment is already marked as received and cannot be changed.',
