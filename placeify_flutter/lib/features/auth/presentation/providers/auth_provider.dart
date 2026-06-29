@@ -66,21 +66,6 @@ class CurrentUser extends _$CurrentUser {
     if (state.hasError) throw _unwrapError(state.error!);
   }
 
-  Future<void> signInWithDemoAdminCredentials() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final repo = await ref.read(authRepositoryProvider.future);
-      if (repo is ServerpodAuthRepository) {
-        return repo.signInWithDemoAdminCredentials();
-      }
-      return repo.signIn(
-        email: DemoCredentials.adminEmail,
-        password: DemoCredentials.adminPassword,
-      );
-    });
-    if (state.hasError) throw _unwrapError(state.error!);
-  }
-
   Future<void> signOut() async {
     final repo = await ref.read(authRepositoryProvider.future);
     await repo.signOut();

@@ -1,10 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:placeify_flutter/features/admin/domain/enums/user_role.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/toast_overlay.dart';
+import '../domain/models/app_user.dart';
 import '../domain/repositories/auth_repository.dart';
 import 'providers/auth_provider.dart';
 import '../../../core/constants/app_spacing.dart';
@@ -24,6 +27,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _isSubmitting = false;
+  bool _isAdminLoginMode = false;
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -46,16 +50,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
+  void _toggleAdminLoginMode() {
+    HapticService.light();
+    setState(() {
+      _isAdminLoginMode = !_isAdminLoginMode;
+      _emailController.clear();
+      _passwordController.clear();
+    });
+  }
+
   Future<void> _signInWithDemo() async {
     _emailController.text = DemoCredentials.email;
     _passwordController.text = DemoCredentials.password;
     await _submit(destination: '/home');
-  }
-
-  Future<void> _signInWithDemoAdmin() async {
-    _emailController.text = DemoCredentials.adminEmail;
-    _passwordController.text = DemoCredentials.adminPassword;
-    await _submit(destination: '/admin');
   }
 
   Future<void> _submit({required String destination}) async {
@@ -66,19 +73,55 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     await HapticService.heavy();
 
     try {
-      await ref.read(currentUserProvider.notifier).signIn(
+      await ref
+          .read(currentUserProvider.notifier)
+          .signIn(
             email: _emailController.text.trim(),
             password: _passwordController.text,
           );
       if (!mounted) return;
-      context.go(destination);
+      final resolvedDestination = await _resolvePostLoginDestination(
+        ref.read(currentUserProvider).value,
+        destination,
+      );
+      if (!mounted) return;
+      context.go(resolvedDestination);
     } on AuthException catch (e) {
       if (mounted) PlaceifyToast.show(context, e.message);
     } catch (_) {
-      if (mounted) PlaceifyToast.show(context, 'Log in failed. Try again.');
+      if (mounted) {
+        PlaceifyToast.show(
+          context,
+          _isAdminLoginMode
+              ? 'Admin sign in failed. Try again.'
+              : 'Log in failed. Try again.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
+  }
+
+  Future<String> _resolvePostLoginDestination(
+    AppUser? user,
+    String fallback,
+  ) async {
+    final repo = await ref.read(authRepositoryProvider.future);
+    final verified = await repo.verifyAdminAccess();
+    if (verified) return '/admin';
+
+    if (_isAdminLoginMode && mounted) {
+      PlaceifyToast.show(
+        context,
+        'Admin access denied. Check your administrator credentials.',
+      );
+      return fallback;
+    }
+
+    if (user?.role == UserRole.admin && mounted) {
+      PlaceifyToast.show(context, 'Admin access denied.');
+    }
+    return fallback;
   }
 
   String? _required(String? value, String message) {
@@ -160,20 +203,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 letterSpacing: -1.0,
                                 height: 1.05,
                               ),
-                              children: const [
-                                TextSpan(text: 'Welcome '),
-                                TextSpan(
-                                  text: 'Back',
-                                  style: TextStyle(
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                ),
-                              ],
+                              children: _isAdminLoginMode
+                                  ? const [
+                                      TextSpan(text: 'Admin '),
+                                      TextSpan(
+                                        text: 'Sign In',
+                                        style: TextStyle(
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                      ),
+                                    ]
+                                  : const [
+                                      TextSpan(text: 'Welcome '),
+                                      TextSpan(
+                                        text: 'Back',
+                                        style: TextStyle(
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                      ),
+                                    ],
                             ),
                           ),
                           const SizedBox(height: 10),
                           Text(
-                            'Log in to continue exploring furniture in AR and connecting with vendors.',
+                            _isAdminLoginMode
+                                ? 'Enter your administrator email and password.'
+                                : 'Log in to continue exploring furniture in AR and connecting with vendors.',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w300,
@@ -186,7 +241,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           SizedBox(height: topPadding > 0 ? 36 : 40),
                           AuthTextField(
                             label: 'Email',
-                            hint: DemoCredentials.email,
+                            hint: _isAdminLoginMode
+                                ? 'Administrator email'
+                                : 'you@example.com',
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
@@ -195,99 +252,99 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           const SizedBox(height: 18),
                           AuthTextField(
                             label: 'Password',
-                            hint: 'Your password',
+                            hint: _isAdminLoginMode
+                                ? 'Administrator password'
+                                : 'Your password',
                             controller: _passwordController,
                             showVisibilityToggle: true,
                             textInputAction: TextInputAction.done,
                             validator: _passwordValidator,
                           ),
-                          const SizedBox(height: 12),
-                          Text(
-                            DemoCredentials.hint,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              color: AppColors.onboardingTextBody.withValues(
-                                alpha: 0.75,
-                              ),
-                            ),
-                          ),
                           const SizedBox(height: 32),
                           PrimaryCtaButton(
-                            label: _isSubmitting ? 'Logging in...' : 'Log In',
+                            label: _isSubmitting
+                                ? (_isAdminLoginMode
+                                      ? 'Signing in...'
+                                      : 'Logging in...')
+                                : (_isAdminLoginMode
+                                      ? 'Sign in to Admin'
+                                      : 'Log In'),
                             onTap: () => _submit(destination: '/home'),
                           ),
                           const SizedBox(height: 12),
-                          Center(
-                            child: TextButton(
-                              onPressed: _isSubmitting
-                                  ? null
-                                  : () {
-                                      HapticService.light();
-                                      _signInWithDemo();
-                                    },
-                              child: const Text(
-                                'Use demo account',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.onboardingAmber,
+                          if (!_isAdminLoginMode && kDebugMode)
+                            Center(
+                              child: TextButton(
+                                onPressed: _isSubmitting
+                                    ? null
+                                    : () {
+                                        HapticService.light();
+                                        _signInWithDemo();
+                                      },
+                                child: const Text(
+                                  'Use demo account',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.onboardingAmber,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
+                          if (!_isAdminLoginMode && kDebugMode)
+                            const SizedBox(height: 4),
                           Center(
                             child: TextButton(
                               onPressed: _isSubmitting
                                   ? null
-                                  : () {
-                                      HapticService.light();
-                                      _signInWithDemoAdmin();
-                                    },
+                                  : _toggleAdminLoginMode,
                               child: Text(
-                                'Demo Admin Access',
+                                _isAdminLoginMode
+                                    ? 'Back to user sign in'
+                                    : 'Admin sign in',
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
-                                  color: AppColors.onboardingTextBody.withValues(
-                                    alpha: 0.65,
-                                  ),
+                                  color: _isAdminLoginMode
+                                      ? AppColors.onboardingAmber
+                                      : AppColors.onboardingTextBody
+                                            .withValues(alpha: 0.65),
                                 ),
                               ),
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Center(
-                            child: TextButton(
-                              onPressed: () {
-                                HapticService.light();
-                                context.push('/register');
-                              },
-                              child: RichText(
-                                text: TextSpan(
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w400,
-                                    color: AppColors.onboardingTextBody
-                                        .withValues(alpha: 0.85),
-                                  ),
-                                  children: const [
-                                    TextSpan(
-                                      text: "Don't have an account? ",
+                          if (!_isAdminLoginMode)
+                            Center(
+                              child: TextButton(
+                                onPressed: () {
+                                  HapticService.light();
+                                  context.push('/register');
+                                },
+                                child: RichText(
+                                  text: TextSpan(
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w400,
+                                      color: AppColors.onboardingTextBody
+                                          .withValues(alpha: 0.85),
                                     ),
-                                    TextSpan(
-                                      text: 'Create one',
-                                      style: TextStyle(
-                                        color: AppColors.onboardingAmber,
-                                        fontWeight: FontWeight.w600,
+                                    children: const [
+                                      TextSpan(
+                                        text: "Don't have an account? ",
                                       ),
-                                    ),
-                                  ],
+                                      TextSpan(
+                                        text: 'Create one',
+                                        style: TextStyle(
+                                          color: AppColors.onboardingAmber,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                     ),

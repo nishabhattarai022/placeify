@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:placeify_client/placeify_client.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -96,28 +97,10 @@ class ServerpodAuthRepository implements AuthRepository {
     }
   }
 
-  /// Signs in with the demo admin account for local admin dashboard access.
-  Future<AppUser> signInWithDemoAdminCredentials() async {
-    try {
-      await signIn(
-        email: DemoCredentials.adminEmail,
-        password: DemoCredentials.adminPassword,
-      );
-    } on AuthException catch (error) {
-      if (!_isMissingAccountError(error.message)) rethrow;
-
-      await register(
-        fullName: DemoCredentials.adminFullName,
-        email: DemoCredentials.adminEmail,
-        password: DemoCredentials.adminPassword,
-      );
-      await signIn(
-        email: DemoCredentials.adminEmail,
-        password: DemoCredentials.adminPassword,
-      );
-    }
-
-    return _loadAppUser(DemoCredentials.adminEmail);
+  /// Development-only: ensures the demo admin account exists before sign-in.
+  Future<void> prepareDemoAdminAccount() async {
+    if (!kDebugMode) return;
+    await _withConnectionRetry(_provisionDemoAdminQuietly);
   }
 
   @override
@@ -143,12 +126,33 @@ class ServerpodAuthRepository implements AuthRepository {
       );
       await client.auth.updateSignedInUser(authSuccess);
       await _prefs.setString(_sessionEmailKey, normalizedEmail);
-      if (normalizedEmail == DemoCredentials.adminEmail.trim().toLowerCase()) {
-        await client.user.ensureDemoAdmin();
-      }
+      await _syncDemoAdminRoleAfterSignIn(normalizedEmail);
       return _loadAppUser(normalizedEmail);
     } catch (error) {
       throw _mapError(error);
+    }
+  }
+
+  Future<void> _provisionDemoAdminQuietly() async {
+    try {
+      await client.devAuth.provisionDemoAdmin();
+    } catch (_) {
+      // Older servers may not expose devAuth yet.
+    }
+  }
+
+  /// Dev-only role sync for the configured demo admin email after a valid login.
+  Future<void> _syncDemoAdminRoleAfterSignIn(String normalizedEmail) async {
+    if (!kDebugMode) return;
+    if (normalizedEmail != DemoCredentials.adminEmail.trim().toLowerCase()) {
+      return;
+    }
+
+    await _provisionDemoAdminQuietly();
+    try {
+      await client.user.ensureDemoAdmin();
+    } catch (_) {
+      // ensureDemoAdmin is dev-only on the server as well.
     }
   }
 
@@ -166,6 +170,16 @@ class ServerpodAuthRepository implements AuthRepository {
       return await _loadAppUser(email);
     } catch (_) {
       return null;
+    }
+  }
+
+  @override
+  Future<bool> verifyAdminAccess() async {
+    if (!client.auth.isAuthenticated) return false;
+    try {
+      return await client.admin.hasAdminProfile();
+    } catch (_) {
+      return false;
     }
   }
 
@@ -400,7 +414,9 @@ class ServerpodAuthRepository implements AuthRepository {
 
     if (errorText.contains('EmailAccountAlreadyRegisteredException') ||
         (errorText.contains('already') && errorText.contains('email'))) {
-      return AuthException('An account with this email already exists. Try logging in.');
+      return AuthException(
+        'An account with this email already exists. Try logging in.',
+      );
     }
 
     final rawMessage = error is ServerpodClientException
@@ -473,9 +489,7 @@ class ServerpodAuthRepository implements AuthRepository {
 
   bool _isMissingAccountError(String message) {
     final normalized = message.toLowerCase();
-    return normalized.contains('no account') ||
-        normalized.contains('password is wrong') ||
-        normalized.contains('invalidcredentials');
+    return normalized.contains('no account found for this email');
   }
 
   bool _isConnectionError(String message) {

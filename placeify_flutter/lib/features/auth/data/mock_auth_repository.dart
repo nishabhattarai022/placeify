@@ -88,6 +88,12 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<bool> verifyAdminAccess() async {
+    final user = await getCurrentUser();
+    return user?.role == UserRole.admin;
+  }
+
+  @override
   Future<void> signOut() async {
     await _prefs.remove(_sessionEmailKey);
   }
@@ -197,8 +203,10 @@ class MockAuthRepository implements AuthRepository {
     final current = users[index];
     final updated = switch ((vendorId, status)) {
       (final id?, _) => current.copyWith(vendorStatus: status, vendorId: id),
-      (null, VendorStatus.none) =>
-        current.copyWith(vendorStatus: status, clearVendorId: true),
+      (null, VendorStatus.none) => current.copyWith(
+        vendorStatus: status,
+        clearVendorId: true,
+      ),
       _ => current.copyWith(vendorStatus: status),
     };
     users[index] = updated;
@@ -301,26 +309,27 @@ class _StoredUser {
     );
   }
 
-  _StoredUser copyWithPassword(String newPassword) => copyWith(password: newPassword);
+  _StoredUser copyWithPassword(String newPassword) =>
+      copyWith(password: newPassword);
 
   AppUser toAppUser() => AppUser(
-        id: id,
-        fullName: fullName,
-        email: email,
-        role: role,
-        vendorStatus: vendorStatus,
-        vendorId: vendorId,
-      );
+    id: id,
+    fullName: fullName,
+    email: email,
+    role: role,
+    vendorStatus: vendorStatus,
+    vendorId: vendorId,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'fullName': fullName,
-        'email': email,
-        'password': password,
-        'role': role.name,
-        'vendorStatus': vendorStatus.name,
-        if (vendorId != null) 'vendorId': vendorId,
-      };
+    'id': id,
+    'fullName': fullName,
+    'email': email,
+    'password': password,
+    'role': role.name,
+    'vendorStatus': vendorStatus.name,
+    if (vendorId != null) 'vendorId': vendorId,
+  };
 
   factory _StoredUser.fromJson(Map<String, dynamic> json) {
     return _StoredUser(

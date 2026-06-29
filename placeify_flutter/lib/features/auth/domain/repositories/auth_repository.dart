@@ -17,6 +17,9 @@ abstract interface class AuthRepository {
 
   Future<AppUser?> getCurrentUser();
 
+  /// Confirms the signed-in user has an active admin profile on the server.
+  Future<bool> verifyAdminAccess();
+
   /// All registered users (admin user-management and application joins).
   Future<List<AppUser>> getAllUsers();
 
