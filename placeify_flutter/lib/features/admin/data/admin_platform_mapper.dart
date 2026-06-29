@@ -24,8 +24,9 @@ abstract final class AdminPlatformMapper {
       suspendedCount: stats.suspendedCount,
       recentActivity: stats.recentActivity.map(toAuditLogEntry).toList(),
       signupSeries: stats.signupSeries,
-      recentApplications:
-          stats.recentApplications.map(toVendorApplication).toList(),
+      recentApplications: stats.recentApplications
+          .map(toVendorApplication)
+          .toList(),
     );
   }
 
@@ -112,33 +113,33 @@ abstract final class AdminPlatformMapper {
   static AdminAuditAction toAuditAction(String actionType) {
     return switch (actionType) {
       'application_approved' => const AdminAuditAction.application(
-          decision: ApplicationDecision.approved,
-        ),
+        decision: ApplicationDecision.approved,
+      ),
       'application_declined' => const AdminAuditAction.application(
-          decision: ApplicationDecision.declined,
-        ),
+        decision: ApplicationDecision.declined,
+      ),
       'vendor_suspended' => const AdminAuditAction.vendor(
-          action: AuditAction.suspended,
-        ),
+        action: AuditAction.suspended,
+      ),
       'vendor_reinstated' => const AdminAuditAction.vendor(
-          action: AuditAction.reinstated,
-        ),
+        action: AuditAction.reinstated,
+      ),
       _ => const AdminAuditAction.vendor(action: AuditAction.suspended),
     };
   }
 
   static admin.UserRole toAdminRole(api.UserRole role) => switch (role) {
-        api.UserRole.consumer => admin.UserRole.customer,
-        api.UserRole.vendor => admin.UserRole.vendor,
-        api.UserRole.admin => admin.UserRole.admin,
-      };
+    api.UserRole.consumer => admin.UserRole.customer,
+    api.UserRole.vendor => admin.UserRole.vendor,
+    api.UserRole.admin => admin.UserRole.admin,
+  };
 
   static api.UserRole? toApiRole(admin.UserRole? role) => switch (role) {
-        admin.UserRole.customer => api.UserRole.consumer,
-        admin.UserRole.vendor => api.UserRole.vendor,
-        admin.UserRole.admin => api.UserRole.admin,
-        null => null,
-      };
+    admin.UserRole.customer => api.UserRole.consumer,
+    admin.UserRole.vendor => api.UserRole.vendor,
+    admin.UserRole.admin => api.UserRole.admin,
+    null => null,
+  };
 
   static VendorStatus toVendorStatus(api.UserAccountStatus status) =>
       switch (status) {
@@ -148,7 +149,9 @@ abstract final class AdminPlatformMapper {
         api.UserAccountStatus.rejected => VendorStatus.none,
       };
 
-  static api.UserAccountStatus? toApiStatus(VendorApplicationListFilter? filter) {
+  static api.UserAccountStatus? toApiStatus(
+    VendorApplicationListFilter? filter,
+  ) {
     return switch (filter) {
       VendorApplicationListFilter.pending => api.UserAccountStatus.pending,
       VendorApplicationListFilter.approved => api.UserAccountStatus.approved,

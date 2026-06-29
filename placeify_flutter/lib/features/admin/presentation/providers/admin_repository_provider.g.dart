@@ -46,4 +46,4 @@ final class AdminRepositoryProvider
   }
 }
 
-String _$adminRepositoryHash() => r'c0033e7d1432aef4f99a7b16d1d0c7c3126be2ec';
+String _$adminRepositoryHash() => r'ce2b80ae761e87f5bd178225970cbc9aae4437e9';

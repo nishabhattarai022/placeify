@@ -68,28 +68,32 @@ void main() {
       return sessionUser!;
     }
 
-    test('approve sets vendorStatus approved and unlocks vendor routes', () async {
-      final user = await registerAndApply();
-      final vendorId = user.vendorId!;
+    test(
+      'approve sets vendorStatus approved and unlocks vendor routes',
+      () async {
+        final user = await registerAndApply();
+        final vendorId = user.vendorId!;
 
-      await authRepo.updateVendorStatusForUser(
-        userId: user.id,
-        status: VendorStatus.approved,
-        vendorId: vendorId,
-      );
-      await applicationRepo.approve(userId: user.id, vendorId: vendorId);
+        await authRepo.updateVendorStatusForUser(
+          userId: user.id,
+          status: VendorStatus.approved,
+          vendorId: vendorId,
+        );
+        await applicationRepo.approve(userId: user.id, vendorId: vendorId);
 
-      final approved = (await authRepo.getAllUsers())
-          .firstWhere((u) => u.id == user.id);
-      expect(approved.vendorStatus, VendorStatus.approved);
-      expect(approved.vendorId, vendorId);
+        final approved = (await authRepo.getAllUsers()).firstWhere(
+          (u) => u.id == user.id,
+        );
+        expect(approved.vendorStatus, VendorStatus.approved);
+        expect(approved.vendorId, vendorId);
 
-      final guard = VendorAuthGuard.evaluate(
-        location: '/vendor',
-        user: approved,
-      );
-      expect(guard, isNull);
-    });
+        final guard = VendorAuthGuard.evaluate(
+          location: '/vendor',
+          user: approved,
+        );
+        expect(guard, isNull);
+      },
+    );
 
     test('decline resets vendorStatus none so user can re-register', () async {
       final user = await registerAndApply();
@@ -104,8 +108,9 @@ void main() {
         note: 'Incomplete documents',
       );
 
-      final declined = (await authRepo.getAllUsers())
-          .firstWhere((u) => u.id == user.id);
+      final declined = (await authRepo.getAllUsers()).firstWhere(
+        (u) => u.id == user.id,
+      );
       expect(declined.vendorStatus, VendorStatus.none);
       expect(declined.vendorId, isNull);
 
