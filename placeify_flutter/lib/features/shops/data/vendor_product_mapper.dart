@@ -9,27 +9,9 @@ abstract final class VendorProductMapper {
   static String consumerProductId({
     required String vendorId,
     required String productId,
-  }) =>
-      '$_idPrefix$vendorId-$productId';
+  }) => '$_idPrefix$vendorId-$productId';
 
   static bool isShopProductId(String id) => id.startsWith(_idPrefix);
-
-  /// Parses `shop-{vendorId}-{productId}` (vendor UUID may contain dashes).
-  static ({String vendorId, String productId})? parseConsumerProductId(
-    String id,
-  ) {
-    if (!isShopProductId(id)) return null;
-
-    final rest = id.substring(_idPrefix.length);
-    final productMarker = rest.lastIndexOf('-p');
-    if (productMarker <= 0) return null;
-
-    final vendorId = rest.substring(0, productMarker);
-    final productId = rest.substring(productMarker + 1);
-    if (vendorId.isEmpty || productId.isEmpty) return null;
-
-    return (vendorId: vendorId, productId: productId);
-  }
 
   static Product toConsumerProduct(VendorProduct vendorProduct) {
     final imageUrl = vendorProduct.imageUrls.isNotEmpty

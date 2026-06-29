@@ -65,8 +65,9 @@ class _CatalogProductCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
-              borderRadius:
-                  BorderRadius.circular(HomeScreenTokens.cardImageRadius),
+              borderRadius: BorderRadius.circular(
+                HomeScreenTokens.cardImageRadius,
+              ),
               child: SizedBox(
                 height: HomeScreenTokens.cardImageHeight,
                 width: double.infinity,

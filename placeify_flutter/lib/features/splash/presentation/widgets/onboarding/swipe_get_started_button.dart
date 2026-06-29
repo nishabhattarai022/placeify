@@ -72,7 +72,7 @@ class _SwipeGetStartedButtonState extends State<SwipeGetStartedButton>
 
     final shouldComplete =
         _dragX >= _maxDrag * SwipeGetStartedButton._completeThreshold ||
-            (details.primaryVelocity != null && details.primaryVelocity! > 800);
+        (details.primaryVelocity != null && details.primaryVelocity! > 800);
 
     if (shouldComplete) {
       _finish();

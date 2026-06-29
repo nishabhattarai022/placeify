@@ -39,48 +39,48 @@ abstract final class HomeScreenTokens {
       'assets/images/splash/3d-room-decor-with-furniture-minimalist-beige-tones.jpg';
 
   static TextStyle exploreTitle() => AppFonts.cormorantGaramond(
-        fontSize: 64,
-        fontWeight: FontWeight.w700,
-        fontStyle: FontStyle.italic,
-        color: Colors.black87,
-        letterSpacing: -1.0,
-        height: 1.0,
-      );
+    fontSize: 64,
+    fontWeight: FontWeight.w700,
+    fontStyle: FontStyle.italic,
+    color: Colors.black87,
+    letterSpacing: -1.0,
+    height: 1.0,
+  );
 
   static TextStyle exploreSubtitle() => AppFonts.dmSans(
-        fontSize: 14,
-        fontWeight: FontWeight.w300,
-        color: Colors.black54,
-        height: 1.4,
-        letterSpacing: -0.1,
-      );
+    fontSize: 14,
+    fontWeight: FontWeight.w300,
+    color: Colors.black54,
+    height: 1.4,
+    letterSpacing: -0.1,
+  );
 
   static TextStyle sectionTitle() => AppFonts.dmSans(
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
-        color: Colors.black87,
-        letterSpacing: -0.3,
-      );
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+    color: Colors.black87,
+    letterSpacing: -0.3,
+  );
 
   static TextStyle productName() => AppFonts.cormorantGaramond(
-        fontSize: 18,
-        fontWeight: FontWeight.w500,
-        color: Colors.black87,
-        height: 1.15,
-        letterSpacing: -0.2,
-      );
+    fontSize: 18,
+    fontWeight: FontWeight.w500,
+    color: Colors.black87,
+    height: 1.15,
+    letterSpacing: -0.2,
+  );
 
   static TextStyle productPrice() => AppFonts.dmSans(
-        fontSize: 19,
-        fontWeight: FontWeight.w800,
-        color: Colors.black87,
-        letterSpacing: -0.4,
-      );
+    fontSize: 19,
+    fontWeight: FontWeight.w800,
+    color: Colors.black87,
+    letterSpacing: -0.4,
+  );
 
   static TextStyle discoverCtaLabel() => AppFonts.dmSans(
-        fontSize: 13,
-        fontWeight: FontWeight.w500,
-        color: Colors.white,
-        letterSpacing: -0.15,
-      );
+    fontSize: 13,
+    fontWeight: FontWeight.w500,
+    color: Colors.white,
+    letterSpacing: -0.15,
+  );
 }

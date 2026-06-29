@@ -105,10 +105,10 @@ class _AuthTextFieldState extends State<AuthTextField> {
   Widget build(BuildContext context) {
     final fieldTheme = Theme.of(context).copyWith(
       colorScheme: Theme.of(context).colorScheme.copyWith(
-            primary: AppColors.bark,
-            secondary: AppColors.bark,
-            surfaceTint: AppColors.bark,
-          ),
+        primary: AppColors.bark,
+        secondary: AppColors.bark,
+        surfaceTint: AppColors.bark,
+      ),
       textSelectionTheme: const TextSelectionThemeData(
         cursorColor: AppColors.bark,
         selectionColor: Color(0x408B7355),

@@ -69,8 +69,7 @@ class _ImageContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fit =
-        imageUrl.startsWith('assets/') ? BoxFit.contain : BoxFit.cover;
+    final fit = imageUrl.startsWith('assets/') ? BoxFit.contain : BoxFit.cover;
 
     if (imageUrl.startsWith('assets/')) {
       return Image.asset(

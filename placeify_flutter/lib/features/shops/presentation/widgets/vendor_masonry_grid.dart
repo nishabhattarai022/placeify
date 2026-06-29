@@ -39,8 +39,7 @@ class VendorMasonryGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final crossAxisCount =
-        MediaQuery.sizeOf(context).width > 600 ? 3 : 2;
+    final crossAxisCount = MediaQuery.sizeOf(context).width > 600 ? 3 : 2;
 
     return SliverPadding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),

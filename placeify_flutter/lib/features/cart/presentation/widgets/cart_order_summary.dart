@@ -102,8 +102,7 @@ class _CartOrderSummaryState extends State<CartOrderSummary> {
                   GestureDetector(
                     onTapDown: (_) => setState(() => _checkoutPressed = true),
                     onTapUp: (_) => setState(() => _checkoutPressed = false),
-                    onTapCancel: () =>
-                        setState(() => _checkoutPressed = false),
+                    onTapCancel: () => setState(() => _checkoutPressed = false),
                     onTap: () {
                       HapticService.medium();
                       widget.onCheckout();

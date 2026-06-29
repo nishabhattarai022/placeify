@@ -103,10 +103,10 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
                       PlaceifySelectTile(
                         label:
                             '${country.isoCode}  ${country.name}  ${country.dialCode}',
-                        selected: _selectedCountry.isoCode == country.isoCode &&
+                        selected:
+                            _selectedCountry.isoCode == country.isoCode &&
                             _selectedCountry.dialCode == country.dialCode,
-                        semanticsLabel:
-                            '${country.name}, ${country.dialCode}',
+                        semanticsLabel: '${country.name}, ${country.dialCode}',
                         onTap: () => _selectCountry(sheetContext, country),
                       ),
                   ],
@@ -132,8 +132,7 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
   @override
   Widget build(BuildContext context) {
     const borderRadius = BorderRadius.all(Radius.circular(14));
-    final borderColor =
-        widget.hasError ? AppColors.coral : AppColors.creamDark;
+    final borderColor = widget.hasError ? AppColors.coral : AppColors.creamDark;
 
     return Container(
       decoration: BoxDecoration(
@@ -160,7 +159,9 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
               keyboardType: TextInputType.phone,
               inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(_selectedCountry.localMaxLength),
+                LengthLimitingTextInputFormatter(
+                  _selectedCountry.localMaxLength,
+                ),
               ],
               style: const TextStyle(
                 fontSize: 14,

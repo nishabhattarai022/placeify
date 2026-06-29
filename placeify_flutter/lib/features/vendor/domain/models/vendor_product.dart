@@ -35,11 +35,7 @@ abstract class VendorProduct with _$VendorProduct {
 
   bool get isLowStock => stock <= lowStockThreshold;
 
-  bool get isOnSale =>
-      originalPrice != null && originalPrice! > price;
-
-  String? get primaryImageUrl =>
-      imageUrls.isNotEmpty ? imageUrls.first : null;
+  bool get isOnSale => originalPrice != null && originalPrice! > price;
 
   double get discountPercent => isOnSale
       ? ((originalPrice! - price) / originalPrice! * 100).roundToDouble()

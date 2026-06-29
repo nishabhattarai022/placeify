@@ -30,7 +30,9 @@ Future<String> resolveServerUrl({
   }
 
   for (var attempt = 0; attempt <= retries; attempt++) {
-    final resolved = await _resolveOnce(forceRefresh: forceRefresh || attempt > 0);
+    final resolved = await _resolveOnce(
+      forceRefresh: forceRefresh || attempt > 0,
+    );
     if (await _canReachServer(resolved)) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_cachedServerUrlKey, resolved);
@@ -113,11 +115,21 @@ Future<List<String>> _buildCandidates() async {
 
   final isPhysical = await _isPhysicalMobileDevice();
   if (isPhysical) {
-    return [...physicalApiUrl, ...localApiUrl, ...emulatorApiUrl, ...loopbackApiUrl];
+    return [
+      ...physicalApiUrl,
+      ...localApiUrl,
+      ...emulatorApiUrl,
+      ...loopbackApiUrl,
+    ];
   }
 
   // Emulators/simulators: never probe a stale LAN IP first.
-  return [...emulatorApiUrl, ...localApiUrl, ...loopbackApiUrl, ...physicalApiUrl];
+  return [
+    ...emulatorApiUrl,
+    ...localApiUrl,
+    ...loopbackApiUrl,
+    ...physicalApiUrl,
+  ];
 }
 
 Future<bool> _isPhysicalMobileDevice() async {

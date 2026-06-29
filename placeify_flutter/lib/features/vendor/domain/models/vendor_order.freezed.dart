@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$VendorOrder {
 
- String get id; String get orderNumber; String get vendorId; String get productId; String get productName; int get quantity; double get totalAmount; OrderStatus get status; String get customerName; DateTime get orderedAt; OrderPaymentStatus get orderPaymentStatus;
+ String get id; String get orderNumber; String get vendorId; String get productId; String get productName; int get quantity; double get totalAmount; OrderStatus get status; String get customerName; DateTime get orderedAt;
 /// Create a copy of VendorOrder
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $VendorOrderCopyWith<VendorOrder> get copyWith => _$VendorOrderCopyWithImpl<Vend
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VendorOrder&&(identical(other.id, id) || other.id == id)&&(identical(other.orderNumber, orderNumber) || other.orderNumber == orderNumber)&&(identical(other.vendorId, vendorId) || other.vendorId == vendorId)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.totalAmount, totalAmount) || other.totalAmount == totalAmount)&&(identical(other.status, status) || other.status == status)&&(identical(other.customerName, customerName) || other.customerName == customerName)&&(identical(other.orderedAt, orderedAt) || other.orderedAt == orderedAt)&&(identical(other.orderPaymentStatus, orderPaymentStatus) || other.orderPaymentStatus == orderPaymentStatus));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VendorOrder&&(identical(other.id, id) || other.id == id)&&(identical(other.orderNumber, orderNumber) || other.orderNumber == orderNumber)&&(identical(other.vendorId, vendorId) || other.vendorId == vendorId)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.totalAmount, totalAmount) || other.totalAmount == totalAmount)&&(identical(other.status, status) || other.status == status)&&(identical(other.customerName, customerName) || other.customerName == customerName)&&(identical(other.orderedAt, orderedAt) || other.orderedAt == orderedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,orderNumber,vendorId,productId,productName,quantity,totalAmount,status,customerName,orderedAt,orderPaymentStatus);
+int get hashCode => Object.hash(runtimeType,id,orderNumber,vendorId,productId,productName,quantity,totalAmount,status,customerName,orderedAt);
 
 @override
 String toString() {
-  return 'VendorOrder(id: $id, orderNumber: $orderNumber, vendorId: $vendorId, productId: $productId, productName: $productName, quantity: $quantity, totalAmount: $totalAmount, status: $status, customerName: $customerName, orderedAt: $orderedAt, orderPaymentStatus: $orderPaymentStatus)';
+  return 'VendorOrder(id: $id, orderNumber: $orderNumber, vendorId: $vendorId, productId: $productId, productName: $productName, quantity: $quantity, totalAmount: $totalAmount, status: $status, customerName: $customerName, orderedAt: $orderedAt)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $VendorOrderCopyWith<$Res>  {
   factory $VendorOrderCopyWith(VendorOrder value, $Res Function(VendorOrder) _then) = _$VendorOrderCopyWithImpl;
 @useResult
 $Res call({
- String id, String orderNumber, String vendorId, String productId, String productName, int quantity, double totalAmount, OrderStatus status, String customerName, DateTime orderedAt, OrderPaymentStatus orderPaymentStatus
+ String id, String orderNumber, String vendorId, String productId, String productName, int quantity, double totalAmount, OrderStatus status, String customerName, DateTime orderedAt
 });
 
 
@@ -65,7 +65,7 @@ class _$VendorOrderCopyWithImpl<$Res>
 
 /// Create a copy of VendorOrder
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? orderNumber = null,Object? vendorId = null,Object? productId = null,Object? productName = null,Object? quantity = null,Object? totalAmount = null,Object? status = null,Object? customerName = null,Object? orderedAt = null,Object? orderPaymentStatus = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? orderNumber = null,Object? vendorId = null,Object? productId = null,Object? productName = null,Object? quantity = null,Object? totalAmount = null,Object? status = null,Object? customerName = null,Object? orderedAt = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,orderNumber: null == orderNumber ? _self.orderNumber : orderNumber // ignore: cast_nullable_to_non_nullable
@@ -77,8 +77,7 @@ as int,totalAmount: null == totalAmount ? _self.totalAmount : totalAmount // ign
 as double,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as OrderStatus,customerName: null == customerName ? _self.customerName : customerName // ignore: cast_nullable_to_non_nullable
 as String,orderedAt: null == orderedAt ? _self.orderedAt : orderedAt // ignore: cast_nullable_to_non_nullable
-as DateTime,orderPaymentStatus: null == orderPaymentStatus ? _self.orderPaymentStatus : orderPaymentStatus // ignore: cast_nullable_to_non_nullable
-as OrderPaymentStatus,
+as DateTime,
   ));
 }
 
@@ -163,10 +162,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String orderNumber,  String vendorId,  String productId,  String productName,  int quantity,  double totalAmount,  OrderStatus status,  String customerName,  DateTime orderedAt,  OrderPaymentStatus orderPaymentStatus)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String orderNumber,  String vendorId,  String productId,  String productName,  int quantity,  double totalAmount,  OrderStatus status,  String customerName,  DateTime orderedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VendorOrder() when $default != null:
-return $default(_that.id,_that.orderNumber,_that.vendorId,_that.productId,_that.productName,_that.quantity,_that.totalAmount,_that.status,_that.customerName,_that.orderedAt,_that.orderPaymentStatus);case _:
+return $default(_that.id,_that.orderNumber,_that.vendorId,_that.productId,_that.productName,_that.quantity,_that.totalAmount,_that.status,_that.customerName,_that.orderedAt);case _:
   return orElse();
 
 }
@@ -184,10 +183,10 @@ return $default(_that.id,_that.orderNumber,_that.vendorId,_that.productId,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String orderNumber,  String vendorId,  String productId,  String productName,  int quantity,  double totalAmount,  OrderStatus status,  String customerName,  DateTime orderedAt,  OrderPaymentStatus orderPaymentStatus)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String orderNumber,  String vendorId,  String productId,  String productName,  int quantity,  double totalAmount,  OrderStatus status,  String customerName,  DateTime orderedAt)  $default,) {final _that = this;
 switch (_that) {
 case _VendorOrder():
-return $default(_that.id,_that.orderNumber,_that.vendorId,_that.productId,_that.productName,_that.quantity,_that.totalAmount,_that.status,_that.customerName,_that.orderedAt,_that.orderPaymentStatus);case _:
+return $default(_that.id,_that.orderNumber,_that.vendorId,_that.productId,_that.productName,_that.quantity,_that.totalAmount,_that.status,_that.customerName,_that.orderedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -204,10 +203,10 @@ return $default(_that.id,_that.orderNumber,_that.vendorId,_that.productId,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String orderNumber,  String vendorId,  String productId,  String productName,  int quantity,  double totalAmount,  OrderStatus status,  String customerName,  DateTime orderedAt,  OrderPaymentStatus orderPaymentStatus)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String orderNumber,  String vendorId,  String productId,  String productName,  int quantity,  double totalAmount,  OrderStatus status,  String customerName,  DateTime orderedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _VendorOrder() when $default != null:
-return $default(_that.id,_that.orderNumber,_that.vendorId,_that.productId,_that.productName,_that.quantity,_that.totalAmount,_that.status,_that.customerName,_that.orderedAt,_that.orderPaymentStatus);case _:
+return $default(_that.id,_that.orderNumber,_that.vendorId,_that.productId,_that.productName,_that.quantity,_that.totalAmount,_that.status,_that.customerName,_that.orderedAt);case _:
   return null;
 
 }
@@ -219,7 +218,7 @@ return $default(_that.id,_that.orderNumber,_that.vendorId,_that.productId,_that.
 @JsonSerializable()
 
 class _VendorOrder extends VendorOrder {
-  const _VendorOrder({required this.id, required this.orderNumber, required this.vendorId, required this.productId, required this.productName, required this.quantity, required this.totalAmount, required this.status, required this.customerName, required this.orderedAt, this.orderPaymentStatus = OrderPaymentStatus.unpaid}): super._();
+  const _VendorOrder({required this.id, required this.orderNumber, required this.vendorId, required this.productId, required this.productName, required this.quantity, required this.totalAmount, required this.status, required this.customerName, required this.orderedAt}): super._();
   factory _VendorOrder.fromJson(Map<String, dynamic> json) => _$VendorOrderFromJson(json);
 
 @override final  String id;
@@ -232,7 +231,6 @@ class _VendorOrder extends VendorOrder {
 @override final  OrderStatus status;
 @override final  String customerName;
 @override final  DateTime orderedAt;
-@override@JsonKey() final  OrderPaymentStatus orderPaymentStatus;
 
 /// Create a copy of VendorOrder
 /// with the given fields replaced by the non-null parameter values.
@@ -247,16 +245,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VendorOrder&&(identical(other.id, id) || other.id == id)&&(identical(other.orderNumber, orderNumber) || other.orderNumber == orderNumber)&&(identical(other.vendorId, vendorId) || other.vendorId == vendorId)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.totalAmount, totalAmount) || other.totalAmount == totalAmount)&&(identical(other.status, status) || other.status == status)&&(identical(other.customerName, customerName) || other.customerName == customerName)&&(identical(other.orderedAt, orderedAt) || other.orderedAt == orderedAt)&&(identical(other.orderPaymentStatus, orderPaymentStatus) || other.orderPaymentStatus == orderPaymentStatus));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VendorOrder&&(identical(other.id, id) || other.id == id)&&(identical(other.orderNumber, orderNumber) || other.orderNumber == orderNumber)&&(identical(other.vendorId, vendorId) || other.vendorId == vendorId)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.totalAmount, totalAmount) || other.totalAmount == totalAmount)&&(identical(other.status, status) || other.status == status)&&(identical(other.customerName, customerName) || other.customerName == customerName)&&(identical(other.orderedAt, orderedAt) || other.orderedAt == orderedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,orderNumber,vendorId,productId,productName,quantity,totalAmount,status,customerName,orderedAt,orderPaymentStatus);
+int get hashCode => Object.hash(runtimeType,id,orderNumber,vendorId,productId,productName,quantity,totalAmount,status,customerName,orderedAt);
 
 @override
 String toString() {
-  return 'VendorOrder(id: $id, orderNumber: $orderNumber, vendorId: $vendorId, productId: $productId, productName: $productName, quantity: $quantity, totalAmount: $totalAmount, status: $status, customerName: $customerName, orderedAt: $orderedAt, orderPaymentStatus: $orderPaymentStatus)';
+  return 'VendorOrder(id: $id, orderNumber: $orderNumber, vendorId: $vendorId, productId: $productId, productName: $productName, quantity: $quantity, totalAmount: $totalAmount, status: $status, customerName: $customerName, orderedAt: $orderedAt)';
 }
 
 
@@ -267,7 +265,7 @@ abstract mixin class _$VendorOrderCopyWith<$Res> implements $VendorOrderCopyWith
   factory _$VendorOrderCopyWith(_VendorOrder value, $Res Function(_VendorOrder) _then) = __$VendorOrderCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String orderNumber, String vendorId, String productId, String productName, int quantity, double totalAmount, OrderStatus status, String customerName, DateTime orderedAt, OrderPaymentStatus orderPaymentStatus
+ String id, String orderNumber, String vendorId, String productId, String productName, int quantity, double totalAmount, OrderStatus status, String customerName, DateTime orderedAt
 });
 
 
@@ -284,7 +282,7 @@ class __$VendorOrderCopyWithImpl<$Res>
 
 /// Create a copy of VendorOrder
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? orderNumber = null,Object? vendorId = null,Object? productId = null,Object? productName = null,Object? quantity = null,Object? totalAmount = null,Object? status = null,Object? customerName = null,Object? orderedAt = null,Object? orderPaymentStatus = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? orderNumber = null,Object? vendorId = null,Object? productId = null,Object? productName = null,Object? quantity = null,Object? totalAmount = null,Object? status = null,Object? customerName = null,Object? orderedAt = null,}) {
   return _then(_VendorOrder(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,orderNumber: null == orderNumber ? _self.orderNumber : orderNumber // ignore: cast_nullable_to_non_nullable
@@ -296,8 +294,7 @@ as int,totalAmount: null == totalAmount ? _self.totalAmount : totalAmount // ign
 as double,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as OrderStatus,customerName: null == customerName ? _self.customerName : customerName // ignore: cast_nullable_to_non_nullable
 as String,orderedAt: null == orderedAt ? _self.orderedAt : orderedAt // ignore: cast_nullable_to_non_nullable
-as DateTime,orderPaymentStatus: null == orderPaymentStatus ? _self.orderPaymentStatus : orderPaymentStatus // ignore: cast_nullable_to_non_nullable
-as OrderPaymentStatus,
+as DateTime,
   ));
 }
 

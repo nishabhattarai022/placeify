@@ -1,5 +1,5 @@
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
-import 'package:placeify_flutter/features/vendor/data/serverpod_vendor_payment_repository.dart';
+import 'package:placeify_flutter/features/vendor/data/mock_vendor_payment_repository.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/payment_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/payment_update.dart';
@@ -11,7 +11,7 @@ part 'vendor_payments_provider.g.dart';
 
 @Riverpod(keepAlive: true)
 VendorPaymentRepository vendorPaymentRepository(Ref ref) {
-  return const ServerpodVendorPaymentRepository();
+  return MockVendorPaymentRepository();
 }
 
 class VendorPaymentsData {
@@ -103,7 +103,6 @@ class VendorPayments extends _$VendorPayments {
         note: note,
       );
       ref.invalidateSelf();
-      ref.invalidate(orderPaymentAuditTrailProvider(orderId));
       return null;
     } on VendorPaymentException catch (e) {
       return e.message;

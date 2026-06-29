@@ -26,6 +26,7 @@ trap cleanup EXIT
 for _ in $(seq 1 90); do
   if curl -sf http://127.0.0.1:8080/ >/dev/null 2>&1; then
     echo "✓ Migrations applied"
+    "$SCRIPT_DIR/ensure-schema-repair.sh" postgres placeify
     exit 0
   fi
   if ! kill -0 "$server_pid" 2>/dev/null; then

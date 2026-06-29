@@ -55,7 +55,10 @@ abstract final class VendorProfileMapper {
       bannerUrl: _isRemoteUrl(profile.bannerUrl) ? profile.bannerUrl : null,
       instagramHandle: profile.socialLinks.instagram,
       facebookHandle: profile.socialLinks.facebook,
-      operatingHours: _encodeSchedule(profile.schedule, profile.socialLinks.website),
+      operatingHours: _encodeSchedule(
+        profile.schedule,
+        profile.socialLinks.website,
+      ),
     );
   }
 
@@ -68,8 +71,10 @@ abstract final class VendorProfileMapper {
     if (trimmed.startsWith('/')) {
       // Static uploads are served by the Serverpod web server (port 8082).
       final apiUri = Uri.parse(serverUrl);
-      final segments =
-          trimmed.split('/').where((segment) => segment.isNotEmpty).toList();
+      final segments = trimmed
+          .split('/')
+          .where((segment) => segment.isNotEmpty)
+          .toList();
       return Uri(
         scheme: apiUri.scheme,
         host: apiUri.host,
@@ -105,8 +110,7 @@ abstract final class VendorProfileMapper {
       if (decoded is List) {
         return [
           for (final item in decoded)
-            if (item is Map<String, dynamic>)
-              VendorOperatingDay.fromJson(item),
+            if (item is Map<String, dynamic>) VendorOperatingDay.fromJson(item),
         ];
       }
     } catch (_) {

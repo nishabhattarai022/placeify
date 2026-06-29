@@ -59,8 +59,9 @@ class _CategoryStepState extends ConsumerState<CategoryStep> {
     final selected = uiState.form.category.categories;
     final fieldErrors = uiState.fieldErrors;
     final categoriesError = fieldErrors[VendorRegistrationFieldKeys.categories];
-    final hasCategoriesError =
-        fieldErrors.containsKey(VendorRegistrationFieldKeys.categories);
+    final hasCategoriesError = fieldErrors.containsKey(
+      VendorRegistrationFieldKeys.categories,
+    );
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
@@ -121,7 +122,10 @@ class _CategoryStepState extends ConsumerState<CategoryStep> {
             controller: _description,
             hint: 'Briefly describe your brand and product style',
             onChanged: (v) => _sync(
-              ref.read(vendorRegistrationProvider).form.category
+              ref
+                  .read(vendorRegistrationProvider)
+                  .form
+                  .category
                   .copyWith(description: v),
             ),
           ),

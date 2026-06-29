@@ -16,8 +16,7 @@ class SelectedCategory extends _$SelectedCategory {
 }
 
 @riverpod
-List<ProductCategory> categories(Ref ref) =>
-    MockProductRepository.categories;
+List<ProductCategory> categories(Ref ref) => MockProductRepository.categories;
 
 @riverpod
 List<Product> filteredProducts(Ref ref) {
@@ -40,6 +39,6 @@ Product? productById(Ref ref, String id) {
 
 String categoryTitle(String categoryId) {
   return MockProductRepository.categories
-          .firstWhere((c) => c.id == categoryId)
-          .label;
+      .firstWhere((c) => c.id == categoryId)
+      .label;
 }

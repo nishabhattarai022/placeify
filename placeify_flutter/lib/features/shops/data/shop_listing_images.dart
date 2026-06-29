@@ -18,14 +18,6 @@ abstract final class ShopListingImages {
         'assets/images/splash/3d-room-decor-with-furniture-minimalist-beige-tones.jpg',
     AdminSeedData.approvedVendorId:
         'assets/images/splash/pexels-blackcurrant-great-2016663774-35378675.jpg',
-    AdminSeedData.shopVendorNestId:
-        'assets/images/splash/Diane_Sofa_Venice_Vegan_Suede_Sage_1.jpg',
-    AdminSeedData.shopVendorHimalayaId:
-        'assets/images/splash/462222_1_800.jpg',
-    AdminSeedData.shopVendorCraftsId:
-        'assets/images/splash/Tola_Lounge_Chair_Venice_Vegan_Suede_Sage_1_0.jpg',
-    AdminSeedData.shopVendorUrbanId:
-        'assets/images/splash/pexels-suhailat-35160826.jpg',
   };
 
   static const _vendorLogos = {
@@ -33,14 +25,6 @@ abstract final class ShopListingImages {
         'assets/images/splash/Tola_Lounge_Chair_Venice_Vegan_Suede_Sage_1_0.jpg',
     AdminSeedData.approvedVendorId:
         'assets/images/splash/pexels-suhailat-35160826.jpg',
-    AdminSeedData.shopVendorNestId:
-        'assets/images/splash/3d-room-decor-with-furniture-minimalist-beige-tones.jpg',
-    AdminSeedData.shopVendorHimalayaId:
-        'assets/images/splash/pexels-blackcurrant-great-2016663774-35378675.jpg',
-    AdminSeedData.shopVendorCraftsId:
-        'assets/images/splash/462222_1_800.jpg',
-    AdminSeedData.shopVendorUrbanId:
-        'assets/images/splash/Diane_Sofa_Venice_Vegan_Suede_Sage_1.jpg',
   };
 
   static String resolveLogoUrl(

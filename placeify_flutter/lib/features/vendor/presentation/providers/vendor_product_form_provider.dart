@@ -15,7 +15,9 @@ class VendorProductForm extends _$VendorProductForm {
   @override
   VendorProductFormState build() => VendorProductFormState.initial();
 
-  void update(VendorProductFormState Function(VendorProductFormState current) updater) {
+  void update(
+    VendorProductFormState Function(VendorProductFormState current) updater,
+  ) {
     state = updater(state);
   }
 
@@ -23,12 +25,9 @@ class VendorProductForm extends _$VendorProductForm {
     state = VendorProductFormState.initial();
   }
 
-  Future<void> prepareForRoute({
-    String? productId,
-    bool forceReload = false,
-  }) async {
+  Future<void> prepareForRoute({String? productId}) async {
     if (productId != null) {
-      if (!forceReload && state.editingProductId == productId) return;
+      if (state.editingProductId == productId) return;
       await _loadProduct(productId);
       return;
     }
@@ -133,7 +132,10 @@ class VendorProductForm extends _$VendorProductForm {
     reorderImages(index, 0);
   }
 
-  void _updateImage(String imageId, VendorProductImageItem Function(VendorProductImageItem) updater) {
+  void _updateImage(
+    String imageId,
+    VendorProductImageItem Function(VendorProductImageItem) updater,
+  ) {
     final images = state.images.map((image) {
       if (image.id != imageId) return image;
       return updater(image);
@@ -166,7 +168,9 @@ class VendorProductForm extends _$VendorProductForm {
 
     final service = BackgroundRemovalService();
     try {
-      final result = await service.removeBackground(sourcePath: image.localPath!);
+      final result = await service.removeBackground(
+        sourcePath: image.localPath!,
+      );
       cache.cache(imageId, result.processedPath);
       _updateImage(
         imageId,
@@ -253,15 +257,13 @@ class VendorProductForm extends _$VendorProductForm {
       return 'Enter a valid list price';
     }
 
-    if (state.isEditing) {
-      final discount = double.tryParse(state.discountPercent.trim());
-      if (discount != null && (discount < 0 || discount > 100)) {
-        return 'Discount must be between 0 and 100';
-      }
+    final discount = double.tryParse(state.discountPercent.trim());
+    if (discount != null && (discount < 0 || discount > 100)) {
+      return 'Discount must be between 0 and 100';
+    }
 
-      if (state.computedSalePrice <= 0) {
-        return 'Sale price must be greater than zero';
-      }
+    if (state.computedSalePrice <= 0) {
+      return 'Sale price must be greater than zero';
     }
 
     final stock = int.tryParse(state.stock.trim());
@@ -315,9 +317,9 @@ class VendorProductForm extends _$VendorProductForm {
 
       final String? error;
       if (state.isEditing) {
-        error = (await productsNotifier.updateProduct(product)).error;
+        error = await productsNotifier.updateProduct(product);
       } else {
-        error = (await productsNotifier.createProduct(product)).error;
+        error = await productsNotifier.createProduct(product);
       }
 
       if (error != null) {
@@ -342,48 +344,21 @@ class VendorProductForm extends _$VendorProductForm {
 
   VendorProduct _buildProduct(String vendorId, {VendorProduct? existing}) {
     final listPrice = state.parsedListPrice!;
-
-    if (state.isEditing) {
-      final salePrice = state.computedSalePrice;
-      final hasDiscount = state.parsedDiscountPercent > 0;
-
-      return VendorProduct(
-        id: state.editingProductId ?? '',
-        vendorId: vendorId,
-        name: state.name.trim(),
-        sku: state.sku.trim(),
-        price: salePrice,
-        originalPrice: hasDiscount ? listPrice : null,
-        stock: int.parse(state.stock.trim()),
-        categoryId: state.categoryId,
-        description: state.description.trim(),
-        brand: state.brand.trim(),
-        offerLabel: state.offerLabel.trim(),
-        widthCm: _dimensionToCm(state.width),
-        heightCm: _dimensionToCm(state.height),
-        depthCm: _dimensionToCm(state.depth),
-        weightKg: _optionalDimensionToCm(state.weight),
-        hasArView: state.hasArView,
-        isActive: state.isActive,
-        materials: state.materials.trim(),
-        warrantyNote: state.warrantyNote.trim(),
-        shippingNote: state.shippingNote.trim(),
-        imageUrls: state.images.map((image) => image.displaySource).toList(),
-        lowStockThreshold: _parseLowStockThreshold(),
-        createdAt: existing?.createdAt ?? DateTime.now(),
-      );
-    }
+    final salePrice = state.computedSalePrice;
+    final hasDiscount = state.parsedDiscountPercent > 0;
 
     return VendorProduct(
       id: state.editingProductId ?? '',
       vendorId: vendorId,
       name: state.name.trim(),
       sku: state.sku.trim(),
-      price: listPrice,
+      price: salePrice,
+      originalPrice: hasDiscount ? listPrice : null,
       stock: int.parse(state.stock.trim()),
       categoryId: state.categoryId,
       description: state.description.trim(),
       brand: state.brand.trim(),
+      offerLabel: state.offerLabel.trim(),
       widthCm: _dimensionToCm(state.width),
       heightCm: _dimensionToCm(state.height),
       depthCm: _dimensionToCm(state.depth),

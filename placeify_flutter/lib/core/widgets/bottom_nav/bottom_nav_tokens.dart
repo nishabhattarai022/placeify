@@ -34,9 +34,6 @@ abstract final class BottomNavTokens {
 
   static const double scrollBottomPadding = 100;
 
-  /// Bottom inset for FABs so they sit above the floating pill nav.
-  static const double fabBottomPadding = 96;
-
   // Admin pill — navy slate palette (distinct from vendor forest green).
   static const Color adminPillColor = AppColors.adminSlate;
   static const Color adminIconActive = AppColors.warmWhite;

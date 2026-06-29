@@ -107,7 +107,7 @@ final class OrdersProvider extends $AsyncNotifierProvider<Orders, List<Order>> {
   Orders create() => Orders();
 }
 
-String _$ordersHash() => r'2da2fa3128db05f885e770e3779e3051bb4c4bd8';
+String _$ordersHash() => r'27519920d2502d70a473c04c1b81f3fba64e6ce9';
 
 abstract class _$Orders extends $AsyncNotifier<List<Order>> {
   FutureOr<List<Order>> build();

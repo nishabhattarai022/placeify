@@ -11,6 +11,7 @@ import '../../../core/widgets/toast_overlay.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_payout.dart';
 import 'providers/vendor_payments_provider.dart';
 import 'widgets/payment_status_chip.dart';
+import 'widgets/payment_update_sheet.dart';
 
 class VendorPaymentsScreen extends ConsumerWidget {
   const VendorPaymentsScreen({super.key});
@@ -43,13 +44,16 @@ class VendorPaymentsScreen extends ConsumerWidget {
                   parent: BouncingScrollPhysics(),
                 ),
                 padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
-                itemCount: data.payouts.length + 1,
+                itemCount: data.payouts.length + 2,
                 itemBuilder: (context, index) {
                   if (index == 0) {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Payments', style: AppTypography.sectionTitle),
+                        const Text(
+                          'Payments',
+                          style: AppTypography.sectionTitle,
+                        ),
                         const SizedBox(height: 16),
                         _SummaryCards(data: data),
                         const SizedBox(height: 24),
@@ -82,7 +86,23 @@ class VendorPaymentsScreen extends ConsumerWidget {
                     );
                   }
 
-                  final payout = data.payouts[index - 1];
+                  if (index == 1) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: OutlinedButton.icon(
+                        onPressed: () => PaymentUpdateSheet.show(
+                          context,
+                          ref,
+                          orderId: 'vo2',
+                          orderLabel: 'Order #4820',
+                        ),
+                        icon: const Icon(Icons.edit_outlined, size: 18),
+                        label: const Text('Manual payment update'),
+                      ),
+                    );
+                  }
+
+                  final payout = data.payouts[index - 2];
                   return _PayoutRow(payout: payout);
                 },
               ),
@@ -116,7 +136,9 @@ class VendorPaymentsScreen extends ConsumerWidget {
 
     if (confirmed != true || !context.mounted) return;
 
-    final error = await ref.read(vendorPaymentsProvider.notifier).requestPayout();
+    final error = await ref
+        .read(vendorPaymentsProvider.notifier)
+        .requestPayout();
     if (!context.mounted) return;
     if (error != null) {
       PlaceifyToast.show(context, error);

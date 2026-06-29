@@ -13,7 +13,9 @@ int readWishlistCount(WidgetRef ref) {
   final local = ref.watch(wishlistProvider).length;
   if (local > 0) return local;
 
-  return ref.watch(profileDashboardProvider).maybeWhen(
+  return ref
+      .watch(profileDashboardProvider)
+      .maybeWhen(
         data: (dashboard) => dashboard?.wishlistCount ?? 0,
         orElse: () => 0,
       );

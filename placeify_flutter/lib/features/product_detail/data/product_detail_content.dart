@@ -126,13 +126,13 @@ abstract final class ProductDetailContentRepository {
     List<ProductSpec> defaultSpecs,
   ) {
     final vendorProduct = _vendorProductForShopProduct(product);
-    final description = vendorProduct != null &&
-            vendorProduct.description.trim().isNotEmpty
+    final description =
+        vendorProduct != null && vendorProduct.description.trim().isNotEmpty
         ? vendorProduct.description
         : 'The ${product.name} combines thoughtful craftsmanship with everyday '
-            'comfort, making it a versatile piece for modern living spaces.';
-    final galleryImages = vendorProduct != null &&
-            vendorProduct.imageUrls.isNotEmpty
+              'comfort, making it a versatile piece for modern living spaces.';
+    final galleryImages =
+        vendorProduct != null && vendorProduct.imageUrls.isNotEmpty
         ? vendorProduct.imageUrls
         : _galleryFor(product);
 

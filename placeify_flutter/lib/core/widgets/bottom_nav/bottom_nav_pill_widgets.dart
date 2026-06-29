@@ -124,9 +124,9 @@ class BottomNavIconButton extends StatefulWidget {
     this.badgeCount = 0,
     super.key,
   }) : assert(
-          icon != null || assetPath != null,
-          'Provide either icon or assetPath',
-        );
+         icon != null || assetPath != null,
+         'Provide either icon or assetPath',
+       );
 
   final IconData? icon;
   final String? assetPath;

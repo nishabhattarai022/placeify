@@ -186,7 +186,10 @@ class _ProductCardFooter extends StatelessWidget {
             product.brand.toUpperCase(),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTypography.brandName.copyWith(fontSize: 9, letterSpacing: 0.8),
+            style: AppTypography.brandName.copyWith(
+              fontSize: 9,
+              letterSpacing: 0.8,
+            ),
           ),
           const SizedBox(height: 2),
           Text(

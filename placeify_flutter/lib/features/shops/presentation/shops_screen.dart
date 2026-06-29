@@ -163,8 +163,9 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
                                   )
                                 : null,
                             border: InputBorder.none,
-                            contentPadding:
-                                const EdgeInsets.symmetric(vertical: 14),
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 14,
+                            ),
                           ),
                         ),
                       ),

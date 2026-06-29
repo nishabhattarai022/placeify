@@ -10,13 +10,15 @@ class RefundListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusLabel =
-        refund.status == RefundStatus.refunded ? 'Refunded' : 'Under Review';
+    final statusLabel = refund.status == RefundStatus.refunded
+        ? 'Refunded'
+        : 'Under Review';
     final statusBg = refund.status == RefundStatus.refunded
         ? AppColors.tealBg
         : AppColors.accentBg;
-    final statusFg =
-        refund.status == RefundStatus.refunded ? AppColors.teal : AppColors.accent;
+    final statusFg = refund.status == RefundStatus.refunded
+        ? AppColors.teal
+        : AppColors.accent;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -36,7 +38,10 @@ class RefundListItem extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             alignment: Alignment.center,
-            child: Text(refund.thumbEmoji, style: const TextStyle(fontSize: 24)),
+            child: Text(
+              refund.thumbEmoji,
+              style: const TextStyle(fontSize: 24),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -61,7 +66,10 @@ class RefundListItem extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: statusBg,
                     borderRadius: BorderRadius.circular(999),

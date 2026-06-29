@@ -45,7 +45,6 @@ abstract final class VendorStrings {
   static const saveChanges = 'Save Changes';
   static const noChangesLabel = 'No Changes';
   static const productSaved = 'Product saved successfully';
-  static const productUploaded = 'Product uploaded successfully';
   static const changesSaved = 'Changes saved';
 }
 

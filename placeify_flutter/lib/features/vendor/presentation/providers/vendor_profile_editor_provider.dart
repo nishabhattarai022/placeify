@@ -51,7 +51,9 @@ class VendorProfileEditor extends _$VendorProfileEditor {
     }
   }
 
-  void updateDraft(models.VendorProfile Function(models.VendorProfile current) updater) {
+  void updateDraft(
+    models.VendorProfile Function(models.VendorProfile current) updater,
+  ) {
     final draft = state.draft;
     if (draft == null) return;
     state = state.copyWith(

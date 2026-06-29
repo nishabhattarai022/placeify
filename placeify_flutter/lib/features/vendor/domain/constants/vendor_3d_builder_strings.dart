@@ -15,7 +15,7 @@ abstract final class Vendor3dBuilderStrings {
 
   static const captureSectionTitle = 'Reference photos';
   static const captureSectionHint =
-      'Upload front, left, back, and right photos. Good lighting improves model accuracy.';
+      'Add clear shots from each angle. Good lighting improves model accuracy.';
 
   static const dimensionsSectionTitle = 'Confirm dimensions';
   static const dimensionsSectionHint =
@@ -25,20 +25,19 @@ abstract final class Vendor3dBuilderStrings {
   static const generateSectionHint =
       'Placeify reconstructs a lightweight GLB preview customers can place in AR.';
 
-  static const doneCta = 'Done';
+  static const attachCta = 'Attach to product';
   static const generateCta = 'Generate 3D model';
   static const regenerateCta = 'Regenerate model';
 
   static const modelReady = '3D model ready';
-  static const modelProcessing =
-      'Generating model… This usually takes 1–3 minutes.';
+  static const modelProcessing = 'Generating model…';
+  static const modelAttached = 'AR preview enabled on this product';
   static const modelFailed =
       'Generation failed. Check your photos and try again.';
 
   static const noProducts = 'Add a product before building a 3D model.';
   static const selectProductFirst = 'Select a product to continue.';
-  static const addPhotosFirst =
-      'Add four reference photos: front, left, back, and right.';
+  static const addPhotosFirst = 'Add at least two reference photos.';
   static const dimensionsRequired = 'Enter width, depth, and height first.';
 
   static String productsNeedingModels(int count) {

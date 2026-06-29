@@ -57,7 +57,8 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
 
   List<Order> _sortedFilteredOrders() {
     final orders = ref.watch(filteredOrdersProvider(_selectedFilter));
-    final sorted = [...orders]..sort((a, b) => b.placedAt.compareTo(a.placedAt));
+    final sorted = [...orders]
+      ..sort((a, b) => b.placedAt.compareTo(a.placedAt));
 
     final query = _searchQuery.trim().toLowerCase();
     if (query.isEmpty) return sorted;

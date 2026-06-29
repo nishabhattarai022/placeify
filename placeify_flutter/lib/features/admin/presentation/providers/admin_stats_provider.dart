@@ -1,4 +1,5 @@
-import 'package:placeify_flutter/features/admin/domain/models/admin_stats.dart' as models;
+import 'package:placeify_flutter/features/admin/domain/models/admin_stats.dart'
+    as models;
 import 'package:placeify_flutter/features/admin/presentation/providers/admin_repository_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 

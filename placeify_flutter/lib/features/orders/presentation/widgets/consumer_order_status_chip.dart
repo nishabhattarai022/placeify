@@ -72,49 +72,47 @@ class _ConsumerOrderStatusChipState extends State<ConsumerOrderStatusChip>
   }
 
   (Color bg, Color fg, FontWeight weight) _colors() => switch (widget.status) {
-        ConsumerOrderStatus.placed => (
-            AppColors.creamDark,
-            AppColors.textMuted,
-            FontWeight.w600,
-          ),
-        ConsumerOrderStatus.confirmed || ConsumerOrderStatus.packed => (
-            AppColors.accentBg,
-            AppColors.accent,
-            FontWeight.w600,
-          ),
-        ConsumerOrderStatus.dispatched => (
-            AppColors.tealBg,
-            AppColors.teal,
-            FontWeight.w600,
-          ),
-        ConsumerOrderStatus.inTransit => (
-            AppColors.accentBg,
-            AppColors.accent,
-            FontWeight.w700,
-          ),
-        ConsumerOrderStatus.outForDelivery => (
-            AppColors.sageBg,
-            AppColors.forest,
-            FontWeight.w600,
-          ),
-        ConsumerOrderStatus.delivered => (
-            AppColors.sageBg,
-            AppColors.sage,
-            FontWeight.w600,
-          ),
-        ConsumerOrderStatus.cancelled => (
-            AppColors.coralBg,
-            AppColors.coral,
-            FontWeight.w600,
-          ),
-        ConsumerOrderStatus.returnRequested ||
-        ConsumerOrderStatus.returned =>
-          (
-            AppColors.lavenderBg,
-            AppColors.lavender,
-            FontWeight.w600,
-          ),
-      };
+    ConsumerOrderStatus.placed => (
+      AppColors.creamDark,
+      AppColors.textMuted,
+      FontWeight.w600,
+    ),
+    ConsumerOrderStatus.confirmed || ConsumerOrderStatus.packed => (
+      AppColors.accentBg,
+      AppColors.accent,
+      FontWeight.w600,
+    ),
+    ConsumerOrderStatus.dispatched => (
+      AppColors.tealBg,
+      AppColors.teal,
+      FontWeight.w600,
+    ),
+    ConsumerOrderStatus.inTransit => (
+      AppColors.accentBg,
+      AppColors.accent,
+      FontWeight.w700,
+    ),
+    ConsumerOrderStatus.outForDelivery => (
+      AppColors.sageBg,
+      AppColors.forest,
+      FontWeight.w600,
+    ),
+    ConsumerOrderStatus.delivered => (
+      AppColors.sageBg,
+      AppColors.sage,
+      FontWeight.w600,
+    ),
+    ConsumerOrderStatus.cancelled => (
+      AppColors.coralBg,
+      AppColors.coral,
+      FontWeight.w600,
+    ),
+    ConsumerOrderStatus.returnRequested || ConsumerOrderStatus.returned => (
+      AppColors.lavenderBg,
+      AppColors.lavender,
+      FontWeight.w600,
+    ),
+  };
 
   @override
   Widget build(BuildContext context) {

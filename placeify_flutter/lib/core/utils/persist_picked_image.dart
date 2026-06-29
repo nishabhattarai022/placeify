@@ -18,7 +18,9 @@ abstract final class PersistPickedImage {
     return destination.path;
   }
 
-  static Future<List<String>> copyAllToTemp(Iterable<String> sourcePaths) async {
+  static Future<List<String>> copyAllToTemp(
+    Iterable<String> sourcePaths,
+  ) async {
     final persisted = <String>[];
     for (final path in sourcePaths) {
       final copied = await copyToTemp(path);

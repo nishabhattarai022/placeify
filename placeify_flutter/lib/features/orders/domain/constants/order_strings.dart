@@ -23,18 +23,19 @@ abstract final class OrderStrings {
   static String ordersSubtitle(int count, int inTransit) {
     final orderPart = count == 1 ? '1 order' : '$count orders';
     if (inTransit <= 0) return orderPart;
-    final transitPart =
-        inTransit == 1 ? '1 in transit' : '$inTransit in transit';
+    final transitPart = inTransit == 1
+        ? '1 in transit'
+        : '$inTransit in transit';
     return '$orderPart · $transitPart';
   }
 
   static String filterLabel(OrderListFilter filter) => switch (filter) {
-        OrderListFilter.all => 'All',
-        OrderListFilter.active => 'Active',
-        OrderListFilter.delivered => 'Delivered',
-        OrderListFilter.cancelled => 'Cancelled',
-        OrderListFilter.returns => 'Returns',
-      };
+    OrderListFilter.all => 'All',
+    OrderListFilter.active => 'Active',
+    OrderListFilter.delivered => 'Delivered',
+    OrderListFilter.cancelled => 'Cancelled',
+    OrderListFilter.returns => 'Returns',
+  };
 
   static String statusLabel(ConsumerOrderStatus status) => status.label;
 
@@ -42,25 +43,24 @@ abstract final class OrderStrings {
 
   // — Empty states —
   static String emptyTitle(OrderListFilter filter) => switch (filter) {
-        OrderListFilter.all => 'No orders yet',
-        OrderListFilter.active => 'No active orders',
-        OrderListFilter.delivered => 'No delivered orders',
-        OrderListFilter.cancelled => 'No cancelled orders',
-        OrderListFilter.returns => 'No returns',
-      };
+    OrderListFilter.all => 'No orders yet',
+    OrderListFilter.active => 'No active orders',
+    OrderListFilter.delivered => 'No delivered orders',
+    OrderListFilter.cancelled => 'No cancelled orders',
+    OrderListFilter.returns => 'No returns',
+  };
 
   static String emptySubtitle(OrderListFilter filter) => switch (filter) {
-        OrderListFilter.all =>
-          'When you place an order, it will show up here.',
-        OrderListFilter.active =>
-          'Orders on the way or being prepared will appear here.',
-        OrderListFilter.delivered =>
-          'Delivered orders from the last few months show here.',
-        OrderListFilter.cancelled =>
-          'Cancelled orders are kept here for your records.',
-        OrderListFilter.returns =>
-          'Return requests and completed returns appear here.',
-      };
+    OrderListFilter.all => 'When you place an order, it will show up here.',
+    OrderListFilter.active =>
+      'Orders on the way or being prepared will appear here.',
+    OrderListFilter.delivered =>
+      'Delivered orders from the last few months show here.',
+    OrderListFilter.cancelled =>
+      'Cancelled orders are kept here for your records.',
+    OrderListFilter.returns =>
+      'Return requests and completed returns appear here.',
+  };
 
   static const emptyCta = 'Browse furniture';
 

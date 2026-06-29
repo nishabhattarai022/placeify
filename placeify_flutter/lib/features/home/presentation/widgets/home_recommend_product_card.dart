@@ -75,8 +75,9 @@ class _HomeRecommendProductCardState
                   color: _elevated
                       ? HomeScreenTokens.cardBgHover
                       : HomeScreenTokens.cardBg,
-                  borderRadius:
-                      BorderRadius.circular(HomeScreenTokens.cardRadius),
+                  borderRadius: BorderRadius.circular(
+                    HomeScreenTokens.cardRadius,
+                  ),
                   boxShadow: _elevated
                       ? [
                           BoxShadow(
@@ -213,12 +214,9 @@ class _CartCorner extends StatelessWidget {
             decoration: BoxDecoration(
               color: HomeScreenTokens.cardBg,
               borderRadius: BorderRadius.only(
-                topLeft:
-                    Radius.circular(HomeScreenTokens.cartButtonRadius),
-                topRight:
-                    Radius.circular(HomeScreenTokens.cartButtonRadius),
-                bottomLeft:
-                    Radius.circular(HomeScreenTokens.cartButtonRadius),
+                topLeft: Radius.circular(HomeScreenTokens.cartButtonRadius),
+                topRight: Radius.circular(HomeScreenTokens.cartButtonRadius),
+                bottomLeft: Radius.circular(HomeScreenTokens.cartButtonRadius),
                 bottomRight: Radius.circular(
                   HomeScreenTokens.cardRadius -
                       HomeScreenTokens.cartButtonCornerInset,

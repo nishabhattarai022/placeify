@@ -25,7 +25,9 @@ class _HomeCategoryFilterChipsState
   Widget build(BuildContext context) {
     final selectedId = ref.watch(selectedRoomProvider);
     final rooms = HomeCategoriesConfig.rooms;
-    final selectedIndex = rooms.indexWhere((r) => r.id == selectedId).clamp(0, rooms.length - 1);
+    final selectedIndex = rooms
+        .indexWhere((r) => r.id == selectedId)
+        .clamp(0, rooms.length - 1);
 
     return LayoutBuilder(
       builder: (context, constraints) {

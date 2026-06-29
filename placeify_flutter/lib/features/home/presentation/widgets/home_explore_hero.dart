@@ -38,7 +38,8 @@ class HomeExploreHero extends StatelessWidget {
           ),
           Padding(
             padding: EdgeInsets.only(
-              top: MediaQuery.paddingOf(context).top +
+              top:
+                  MediaQuery.paddingOf(context).top +
                   HomeScreenTokens.heroTitleTopGap,
               left: HomeScreenTokens.screenPadding,
               right: HomeScreenTokens.screenPadding,

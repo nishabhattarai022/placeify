@@ -23,10 +23,12 @@ enum VendorProductSort {
     return switch (this) {
       VendorProductSort.newest => b.createdAt.compareTo(a.createdAt),
       VendorProductSort.oldest => a.createdAt.compareTo(b.createdAt),
-      VendorProductSort.nameAsc =>
-        a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-      VendorProductSort.nameDesc =>
-        b.name.toLowerCase().compareTo(a.name.toLowerCase()),
+      VendorProductSort.nameAsc => a.name.toLowerCase().compareTo(
+        b.name.toLowerCase(),
+      ),
+      VendorProductSort.nameDesc => b.name.toLowerCase().compareTo(
+        a.name.toLowerCase(),
+      ),
       VendorProductSort.priceHigh => b.price.compareTo(a.price),
       VendorProductSort.priceLow => a.price.compareTo(b.price),
       VendorProductSort.stockHigh => b.stock.compareTo(a.stock),

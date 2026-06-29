@@ -167,8 +167,9 @@ class _VendorOnboardingChecklistState
                           color: isChecked
                               ? AppColors.textMuted
                               : AppColors.textPrimary,
-                          decoration:
-                              isChecked ? TextDecoration.lineThrough : null,
+                          decoration: isChecked
+                              ? TextDecoration.lineThrough
+                              : null,
                         ),
                       ),
                     ),

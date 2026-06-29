@@ -51,7 +51,9 @@ class _HomeRecommendHeaderState extends State<HomeRecommendHeader> {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: arrowActive
-                    ? Colors.black.withValues(alpha: _arrowPressed ? 0.08 : 0.05)
+                    ? Colors.black.withValues(
+                        alpha: _arrowPressed ? 0.08 : 0.05,
+                      )
                     : Colors.transparent,
                 shape: BoxShape.circle,
               ),

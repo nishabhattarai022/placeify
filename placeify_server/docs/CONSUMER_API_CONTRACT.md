@@ -62,7 +62,7 @@ user.getDashboard → UserDashboard
 ```
 
 **UserDashboard fields (stable):**
-`profile`, `orderCount`, `wishlistCount`, `cartItemCount`, `arSessionCount`, `refundCount`
+`profile`, `orderCount` (excludes cancelled/autoCancelled/rejected orders), `wishlistCount`, `cartItemCount`, `arSessionCount`, `refundCount`
 
 ### 2. Catalog
 
@@ -71,6 +71,16 @@ product.searchProducts(ProductSearchInput) → ProductPage
 product.getProduct(productId) → Product?
 product.listCategories() → List<Category>
 ```
+
+**Seed catalog (Phase 4 — Nisha browse alignment):**
+- **8 categories:** `chairs`, `sofas`, `desks`, `beds`, `tables`, `storage`, `lighting`, `outdoor`
+- **18 products:** UI ids `p1`…`p18` (insert order in `catalog_seed.dart`; client maps DB id ↔ `pn` via `ProductIdCodec`)
+- **Legacy rows:** older DBs may use `lights`, `decor`, or `tables` for some categories; Flutter `CatalogCategoryUtils.matchesUiCategory` maps these when browsing
+
+**Consumer browse behavior:**
+- `browseCategoryProductsProvider` — live catalog first, `MockProductRepository` fallback when API index is empty
+- `homeRecommendedProductsProvider` — room-based picks from live catalog, mock home cards when empty
+- `productByIdProvider` — catalog index, then mock, then shop sync lookup (unchanged hybrid)
 
 ### 3. Cart & checkout
 

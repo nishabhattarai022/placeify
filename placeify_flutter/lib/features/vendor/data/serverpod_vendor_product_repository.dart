@@ -57,9 +57,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
       throw VendorProductActionException('Add at least one product photo.');
     }
 
-    if (product.widthCm <= 0 ||
-        product.depthCm <= 0 ||
-        product.heightCm <= 0) {
+    if (product.widthCm <= 0 || product.depthCm <= 0 || product.heightCm <= 0) {
       throw VendorProductActionException(
         'Enter valid width, depth, and height.',
       );
@@ -103,8 +101,9 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
           careInstructions: 'See product description for care details.',
           categoryId: await _resolveCategoryId(product.categoryId),
           weightKg: product.weightKg > 0 ? product.weightKg : null,
-          assemblyNote:
-              product.brand.trim().isNotEmpty ? product.brand.trim() : null,
+          assemblyNote: product.brand.trim().isNotEmpty
+              ? product.brand.trim()
+              : null,
           warranty: product.offerLabel.trim().isNotEmpty
               ? product.offerLabel.trim()
               : null,
@@ -145,10 +144,13 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
       depthCm: product.depthCm,
       heightCm: product.heightCm,
       weightKg: product.weightKg > 0 ? product.weightKg : null,
-      assemblyNote: product.brand.trim().isNotEmpty ? product.brand.trim() : null,
+      assemblyNote: product.brand.trim().isNotEmpty
+          ? product.brand.trim()
+          : null,
       careInstructions: 'See product description for care details.',
-      warranty:
-          product.offerLabel.trim().isNotEmpty ? product.offerLabel.trim() : null,
+      warranty: product.offerLabel.trim().isNotEmpty
+          ? product.offerLabel.trim()
+          : null,
       thumbnailUrl: multiview.thumbnailUrl,
       viewImageUrls: multiview.viewImageUrls,
     );
@@ -166,9 +168,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
       throw VendorProductActionException('Product not found.');
     }
 
-    if (product.widthCm <= 0 ||
-        product.depthCm <= 0 ||
-        product.heightCm <= 0) {
+    if (product.widthCm <= 0 || product.depthCm <= 0 || product.heightCm <= 0) {
       throw VendorProductActionException(
         'Enter valid width, depth, and height.',
       );
@@ -251,7 +251,9 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
       careInstructions: 'See product description for care details.',
       categoryId: await _resolveCategoryId(product.categoryId),
       weightKg: product.weightKg > 0 ? product.weightKg : null,
-      assemblyNote: product.brand.trim().isNotEmpty ? product.brand.trim() : null,
+      assemblyNote: product.brand.trim().isNotEmpty
+          ? product.brand.trim()
+          : null,
       warranty: product.offerLabel.trim().isNotEmpty
           ? product.offerLabel.trim()
           : null,
@@ -397,10 +399,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
 
     final phone = profile.phone?.trim();
     final address = profile.address?.trim();
-    if (phone == null ||
-        phone.isEmpty ||
-        address == null ||
-        address.isEmpty) {
+    if (phone == null || phone.isEmpty || address == null || address.isEmpty) {
       throw VendorProductActionException(
         'Complete your phone and address in Profile settings before uploading.',
       );
@@ -460,7 +459,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
   }
 
   Future<({String thumbnailUrl, List<String> viewImageUrls})>
-      _uploadMultiviewUrlsFromSources(List<String> sources) async {
+  _uploadMultiviewUrlsFromSources(List<String> sources) async {
     if (sources.length < 4) {
       throw VendorProductActionException(
         'Please upload 4 photos (front, left, back, right) for 3D generation.',
@@ -555,10 +554,10 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
   }
 
   String _map3dError(Object error) => _mapError(
-        error,
-        fallback:
-            'Could not build 3D preview. Check your connection and try again.',
-      );
+    error,
+    fallback:
+        'Could not build 3D preview. Check your connection and try again.',
+  );
 
   String _mapError(
     Object error, {
@@ -605,7 +604,8 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     final lower = raw.toLowerCase();
     return lower.contains('future not completed') ||
         lower.contains('timeoutexception') ||
-        (lower.contains('timed out') && !lower.contains('tripo generation timed out'));
+        (lower.contains('timed out') &&
+            !lower.contains('tripo generation timed out'));
   }
 
   String _messageForServerCode(
@@ -635,7 +635,8 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     if (haystack.contains('BG_REMOVAL_FAILED')) {
       return 'Could not process the photo background. Try another image.';
     }
-    if (haystack.contains('INVALID_PHONE') || haystack.contains('INVALID_ADDRESS')) {
+    if (haystack.contains('INVALID_PHONE') ||
+        haystack.contains('INVALID_ADDRESS')) {
       return 'Complete your phone and address in Profile settings before uploading.';
     }
     if (haystack.contains('PRODUCT_NOT_FOUND')) {
@@ -662,7 +663,8 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
       }
       return '3D generation failed. Check your Tripo API key and account credits, then try again.';
     }
-    if (haystack.contains('INVALID_FILE') || haystack.contains('INVALID_FILE_TYPE')) {
+    if (haystack.contains('INVALID_FILE') ||
+        haystack.contains('INVALID_FILE_TYPE')) {
       return 'Use a JPG, PNG, or WEBP photo under 8 MB.';
     }
     if (haystack.contains('INVALID_MATERIALS')) {

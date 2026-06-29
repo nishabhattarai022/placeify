@@ -25,8 +25,7 @@ abstract final class ArFurnitureScale {
   static double baseScaleFromDimensions(ProductDimensions dimensions) {
     final maxCm = _maxDimensionCm(dimensions);
     final targetMeters = maxCm / 100.0;
-    return (targetMeters / _tripoReferenceMaxDimensionM)
-        .clamp(0.35, 2.5);
+    return (targetMeters / _tripoReferenceMaxDimensionM).clamp(0.35, 2.5);
   }
 
   static double _maxDimensionCm(ProductDimensions dimensions) {
@@ -46,7 +45,10 @@ abstract final class ArFurnitureScale {
     return Vector3.all(base * clamped);
   }
 
-  static Vector3 applyUserMultiplier(Vector3 currentScale, double userMultiplier) {
+  static Vector3 applyUserMultiplier(
+    Vector3 currentScale,
+    double userMultiplier,
+  ) {
     final clamped = userMultiplier.clamp(minUserMultiplier, maxUserMultiplier);
     final magnitude = currentScale.x;
     final base = magnitude / (userMultiplier == 0 ? 1 : userMultiplier);

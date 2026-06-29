@@ -7,15 +7,15 @@ sealed class WishlistToggleResult {
   factory WishlistToggleResult.error(String message) = WishlistToggleError;
 
   String? get errorMessage => switch (this) {
-        WishlistToggleError(:final message) => message,
-        _ => null,
-      };
+    WishlistToggleError(:final message) => message,
+    _ => null,
+  };
 
   String? get successMessage => switch (this) {
-        WishlistToggleAdded() => 'Added to wishlist',
-        WishlistToggleRemoved() => 'Removed from wishlist',
-        _ => null,
-      };
+    WishlistToggleAdded() => 'Added to wishlist',
+    WishlistToggleRemoved() => 'Removed from wishlist',
+    _ => null,
+  };
 }
 
 final class WishlistToggleAdded extends WishlistToggleResult {

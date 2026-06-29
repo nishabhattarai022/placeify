@@ -64,8 +64,7 @@ class BackgroundRemovalSheet {
                         width: double.infinity,
                         fit: BoxFit.cover,
                       ),
-                    )
-                  ,
+                    ),
                   if (current.bgRemovalError != null) ...[
                     const SizedBox(height: 12),
                     Text(
@@ -89,7 +88,8 @@ class BackgroundRemovalSheet {
                             child: const Text('Restore original'),
                           ),
                         ),
-                      if (current.hasBackgroundRemoved) const SizedBox(width: 10),
+                      if (current.hasBackgroundRemoved)
+                        const SizedBox(width: 10),
                       Expanded(
                         child: FilledButton(
                           style: FilledButton.styleFrom(
@@ -102,8 +102,9 @@ class BackgroundRemovalSheet {
                                     Navigator.pop(sheetContext);
                                     return;
                                   }
-                                  final error =
-                                      await notifier.removeBackground(item.id);
+                                  final error = await notifier.removeBackground(
+                                    item.id,
+                                  );
                                   if (!context.mounted) return;
                                   if (error != null) {
                                     PlaceifyToast.show(context, error);
@@ -113,10 +114,10 @@ class BackgroundRemovalSheet {
                             current.isProcessingBg
                                 ? 'Processing…'
                                 : current.hasBackgroundRemoved
-                                    ? 'Done'
-                                    : current.bgRemovalError != null
-                                        ? 'Retry'
-                                        : 'Remove BG',
+                                ? 'Done'
+                                : current.bgRemovalError != null
+                                ? 'Retry'
+                                : 'Remove BG',
                           ),
                         ),
                       ),

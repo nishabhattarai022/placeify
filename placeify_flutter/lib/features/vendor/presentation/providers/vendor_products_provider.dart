@@ -1,12 +1,7 @@
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
-import 'package:placeify_flutter/features/home/presentation/providers/catalog_provider.dart';
-import 'package:placeify_flutter/features/vendor/data/mock_vendor_product_repository.dart'
-    show VendorProductActionException;
-import 'package:placeify_flutter/features/vendor/data/serverpod_vendor_product_repository.dart';
+import 'package:placeify_flutter/features/vendor/data/mock_vendor_product_repository.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product.dart';
-import 'package:placeify_flutter/features/vendor/domain/repositories/vendor_product_repository.dart';
-import 'package:placeify_flutter/features/shops/presentation/providers/consumer_shop_provider.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_profile_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -41,15 +36,13 @@ class VendorProducts extends _$VendorProducts {
     ref.read(vendorProductsSavingProvider.notifier).state = value;
   }
 
-  Future<({VendorProduct? product, String? error})> createProduct(
-    VendorProduct product,
-  ) async {
+  Future<String?> createProduct(VendorProduct product) async {
     await _setSaving(true);
     try {
       final user = await ref.read(currentUserProvider.future);
       final vendorId = user?.vendorId;
       if (vendorId == null) {
-        return (product: null, error: 'Vendor account not found.');
+        return 'Vendor account not found.';
       }
 
       final repo = ref.read(vendorProductRepositoryProvider);
@@ -57,28 +50,20 @@ class VendorProducts extends _$VendorProducts {
 
       final products = state.value ?? [];
       state = AsyncData([created, ...products]);
-      await publishProductToCustomerCatalog(ref, created);
-      return (product: created, error: null);
+      return null;
     } on VendorProductActionException catch (e) {
-      return (product: null, error: e.message);
-    } catch (error) {
-      return (
-        product: null,
-        error: _unexpectedProductError(error, 'Could not create product. Try again.'),
-      );
+      return e.message;
+    } catch (_) {
+      return 'Could not create product. Try again.';
     } finally {
       await _setSaving(false);
     }
   }
 
-  Future<({VendorProduct? product, String? error})> updateProduct(
-    VendorProduct product,
-  ) async {
+  Future<String?> updateProduct(VendorProduct product) async {
     final previous = state;
     final products = state.value;
-    if (products == null) {
-      return (product: null, error: 'Products are still loading.');
-    }
+    if (products == null) return 'Products are still loading.';
 
     final index = products.indexWhere((item) => item.id == product.id);
     if (index >= 0) {
@@ -95,7 +80,7 @@ class VendorProducts extends _$VendorProducts {
       final vendorId = user?.vendorId;
       if (vendorId == null) {
         state = previous;
-        return (product: null, error: 'Vendor account not found.');
+        return 'Vendor account not found.';
       }
 
       final repo = ref.read(vendorProductRepositoryProvider);
@@ -108,61 +93,13 @@ class VendorProducts extends _$VendorProducts {
       } else {
         await refresh();
       }
-      await publishProductToCustomerCatalog(ref, updated);
-      return (product: updated, error: null);
-    } on VendorProductActionException catch (e) {
-      state = previous;
-      return (product: null, error: e.message);
-    } catch (error) {
-      state = previous;
-      return (
-        product: null,
-        error: _unexpectedProductError(error, 'Could not update product. Try again.'),
-      );
-    } finally {
-      await _setSaving(false);
-    }
-  }
-
-  Future<String?> regenerateProductModel3d(
-    String productId, {
-    List<String>? imageSources,
-  }) async {
-    await _setSaving(true);
-    try {
-      final user = await ref.read(currentUserProvider.future);
-      final vendorId = user?.vendorId;
-      if (vendorId == null) {
-        return 'Vendor account not found.';
-      }
-
-      final repo = ref.read(vendorProductRepositoryProvider);
-      final updated = await repo.regenerateProductModel3d(
-        vendorId,
-        productId,
-        imageSources: imageSources,
-      );
-
-      final products = state.value;
-      if (products != null) {
-        final index = products.indexWhere((item) => item.id == productId);
-        if (index >= 0) {
-          final synced = [...products];
-          synced[index] = updated;
-          state = AsyncData(synced);
-        } else {
-          await refresh();
-        }
-      }
-      await publishProductToCustomerCatalog(ref, updated);
       return null;
     } on VendorProductActionException catch (e) {
+      state = previous;
       return e.message;
-    } catch (error) {
-      return _unexpectedProductError(
-        error,
-        'Could not build 3D preview. Try again.',
-      );
+    } catch (_) {
+      state = previous;
+      return 'Could not update product. Try again.';
     } finally {
       await _setSaving(false);
     }
@@ -190,7 +127,7 @@ class VendorProducts extends _$VendorProducts {
         offerLabel: '${discountPercent.round()}% off',
       );
       final error = await updateProduct(updated);
-      if (error.error != null) return error.error;
+      if (error != null) return error;
     }
 
     return null;
@@ -229,12 +166,5 @@ class VendorProducts extends _$VendorProducts {
     } finally {
       await _setSaving(false);
     }
-  }
-
-  String _unexpectedProductError(Object error, String fallback) {
-    if (error is StateError) return error.message;
-    final text = error.toString().replaceFirst('Exception: ', '').trim();
-    if (text.isEmpty || text == error.runtimeType.toString()) return fallback;
-    return text.length <= 160 ? text : fallback;
   }
 }

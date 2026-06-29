@@ -12,16 +12,14 @@ abstract final class ArFurniturePlacement {
   static ARHitTestResult? bestSurfaceHit(List<ARHitTestResult> hits) {
     if (hits.isEmpty) return null;
 
-    final planes = hits
-        .where((hit) => hit.type == ARHitTestResultType.plane)
-        .toList()
-      ..sort((a, b) => a.distance.compareTo(b.distance));
+    final planes =
+        hits.where((hit) => hit.type == ARHitTestResultType.plane).toList()
+          ..sort((a, b) => a.distance.compareTo(b.distance));
     if (planes.isNotEmpty) return planes.first;
 
-    final points = hits
-        .where((hit) => hit.type == ARHitTestResultType.point)
-        .toList()
-      ..sort((a, b) => a.distance.compareTo(b.distance));
+    final points =
+        hits.where((hit) => hit.type == ARHitTestResultType.point).toList()
+          ..sort((a, b) => a.distance.compareTo(b.distance));
     if (points.isNotEmpty) return points.first;
 
     return hits.first;

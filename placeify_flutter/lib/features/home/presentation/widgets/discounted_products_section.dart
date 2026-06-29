@@ -121,10 +121,8 @@ class _DiscountedProductsSectionState extends State<DiscountedProductsSection> {
                         product: product,
                         cleanTagline: cleanTagline,
                         ctaPressed: _ctaPressed,
-                        onCtaTapDown: (_) =>
-                            setState(() => _ctaPressed = true),
-                        onCtaTapUp: (_) =>
-                            setState(() => _ctaPressed = false),
+                        onCtaTapDown: (_) => setState(() => _ctaPressed = true),
+                        onCtaTapUp: (_) => setState(() => _ctaPressed = false),
                         onCtaTapCancel: () =>
                             setState(() => _ctaPressed = false),
                         onCtaTap: _onShopNow,

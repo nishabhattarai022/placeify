@@ -14,7 +14,10 @@ abstract final class OrderApiMapper {
       userId: userId,
       vendorId: '0',
       vendorName: summary.primaryProductName ?? 'Vendor',
-      status: mapStatus(summary.status, latestStage: summary.latestDeliveryStage),
+      status: mapStatus(
+        summary.status,
+        latestStage: summary.latestDeliveryStage,
+      ),
       items: [
         OrderItem(
           productId: summary.id.toString(),
@@ -91,8 +94,7 @@ abstract final class OrderApiMapper {
     return switch (status) {
       OrderPaymentStatus.unpaid => PaymentStatus.pending,
       OrderPaymentStatus.paymentReceived ||
-      OrderPaymentStatus.paymentConfirmed =>
-        PaymentStatus.paid,
+      OrderPaymentStatus.paymentConfirmed => PaymentStatus.paid,
     };
   }
 

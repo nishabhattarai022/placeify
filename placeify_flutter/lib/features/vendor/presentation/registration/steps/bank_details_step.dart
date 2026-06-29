@@ -78,10 +78,14 @@ class _BankDetailsStepState extends ConsumerState<BankDetailsStep> {
           child: ProfileTextInput(
             controller: _accountHolder,
             hint: 'Name on the account',
-            hasError: fieldErrors
-                .containsKey(VendorRegistrationFieldKeys.accountHolderName),
+            hasError: fieldErrors.containsKey(
+              VendorRegistrationFieldKeys.accountHolderName,
+            ),
             onChanged: (v) => _sync(
-              ref.read(vendorRegistrationProvider).form.bank
+              ref
+                  .read(vendorRegistrationProvider)
+                  .form
+                  .bank
                   .copyWith(accountHolderName: v),
               clearErrorFor: VendorRegistrationFieldKeys.accountHolderName,
             ),
@@ -93,10 +97,14 @@ class _BankDetailsStepState extends ConsumerState<BankDetailsStep> {
           child: ProfileTextInput(
             controller: _bankName,
             hint: VendorFormStrings.bankNameHint,
-            hasError:
-                fieldErrors.containsKey(VendorRegistrationFieldKeys.bankName),
+            hasError: fieldErrors.containsKey(
+              VendorRegistrationFieldKeys.bankName,
+            ),
             onChanged: (v) => _sync(
-              ref.read(vendorRegistrationProvider).form.bank
+              ref
+                  .read(vendorRegistrationProvider)
+                  .form
+                  .bank
                   .copyWith(bankName: v),
               clearErrorFor: VendorRegistrationFieldKeys.bankName,
             ),
@@ -109,10 +117,14 @@ class _BankDetailsStepState extends ConsumerState<BankDetailsStep> {
             controller: _accountNumber,
             hint: '••••••••••',
             keyboardType: TextInputType.number,
-            hasError: fieldErrors
-                .containsKey(VendorRegistrationFieldKeys.accountNumber),
+            hasError: fieldErrors.containsKey(
+              VendorRegistrationFieldKeys.accountNumber,
+            ),
             onChanged: (v) => _sync(
-              ref.read(vendorRegistrationProvider).form.bank
+              ref
+                  .read(vendorRegistrationProvider)
+                  .form
+                  .bank
                   .copyWith(accountNumber: v),
               clearErrorFor: VendorRegistrationFieldKeys.accountNumber,
             ),
@@ -124,10 +136,14 @@ class _BankDetailsStepState extends ConsumerState<BankDetailsStep> {
           child: ProfileTextInput(
             controller: _routingNumber,
             hint: VendorFormStrings.branchSwiftHint,
-            hasError: fieldErrors
-                .containsKey(VendorRegistrationFieldKeys.routingNumber),
+            hasError: fieldErrors.containsKey(
+              VendorRegistrationFieldKeys.routingNumber,
+            ),
             onChanged: (v) => _sync(
-              ref.read(vendorRegistrationProvider).form.bank
+              ref
+                  .read(vendorRegistrationProvider)
+                  .form
+                  .bank
                   .copyWith(routingNumber: v),
               clearErrorFor: VendorRegistrationFieldKeys.routingNumber,
             ),

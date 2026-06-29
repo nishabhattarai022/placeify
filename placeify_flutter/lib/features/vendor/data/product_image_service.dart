@@ -15,7 +15,8 @@ class CameraPermissionException implements Exception {
 }
 
 class ProductImageService {
-  ProductImageService({ImagePicker? picker}) : _picker = picker ?? ImagePicker();
+  ProductImageService({ImagePicker? picker})
+    : _picker = picker ?? ImagePicker();
 
   final ImagePicker _picker;
 
@@ -60,8 +61,10 @@ class ProductImageService {
   }
 
   String _normalizeFileName(String fileName, Uint8List bytes) {
-    if (RegExp(r'\.(jpe?g|png|webp|heic)$', caseSensitive: false)
-        .hasMatch(fileName)) {
+    if (RegExp(
+      r'\.(jpe?g|png|webp|heic)$',
+      caseSensitive: false,
+    ).hasMatch(fileName)) {
       return fileName;
     }
 

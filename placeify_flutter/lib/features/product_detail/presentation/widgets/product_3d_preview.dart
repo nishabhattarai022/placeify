@@ -94,8 +94,8 @@ class _Product3dPreviewState extends State<Product3dPreview> {
                 style: FilledButton.styleFrom(
                   backgroundColor: ProductDetailTokens.cartBarBg,
                   foregroundColor: Colors.white,
-                  disabledBackgroundColor:
-                      ProductDetailTokens.cartBarBg.withValues(alpha: 0.6),
+                  disabledBackgroundColor: ProductDetailTokens.cartBarBg
+                      .withValues(alpha: 0.6),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(999),
                   ),

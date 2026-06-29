@@ -42,8 +42,9 @@ abstract final class MockProductRepository implements ProductRepository {
   /// Full browse category list sized to match [FurnitureCategory.itemCount].
   static List<Product> productsForBrowseCategory(String categoryId) {
     final target = furnitureCategoryById(categoryId)?.itemCount ?? 0;
-    final base =
-        products.where((p) => p.categoryId == categoryId).toList(growable: false);
+    final base = products
+        .where((p) => p.categoryId == categoryId)
+        .toList(growable: false);
     if (base.isEmpty || target <= 0) return base;
     if (base.length >= target) {
       final slice = base.take(target).toList(growable: false);
@@ -56,9 +57,7 @@ abstract final class MockProductRepository implements ProductRepository {
       final template = base[i % base.length];
       final cycle = i ~/ base.length;
       final id = cycle == 0 ? template.id : '${template.id}-v${i + 1}';
-      final name = cycle == 0
-          ? template.name
-          : '${template.name} ${i + 1}';
+      final name = cycle == 0 ? template.name : '${template.name} ${i + 1}';
       final priceOffset = (i % 7) * 11;
       expanded.add(
         template.copyWith(
@@ -135,8 +134,7 @@ abstract final class MockProductRepository implements ProductRepository {
       brand: 'Zenspace',
       sku: 'MS03712',
       price: 94,
-      imageUrl:
-          'assets/images/splash/Diane_Sofa_Venice_Vegan_Suede_Sage_1.jpg',
+      imageUrl: 'assets/images/splash/Diane_Sofa_Venice_Vegan_Suede_Sage_1.jpg',
       svgIconPath: 'assets/icons/ic_chair.svg',
       hasArView: false,
       categoryId: 'chairs',
@@ -351,8 +349,7 @@ abstract final class MockProductRepository implements ProductRepository {
       brand: 'Lumen',
       sku: 'PL66002',
       price: 120,
-      imageUrl:
-          'assets/images/splash/Diane_Sofa_Venice_Vegan_Suede_Sage_1.jpg',
+      imageUrl: 'assets/images/splash/Diane_Sofa_Venice_Vegan_Suede_Sage_1.jpg',
       svgIconPath: 'assets/icons/ic_lamp.svg',
       hasArView: false,
       categoryId: 'lighting',

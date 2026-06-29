@@ -20,10 +20,10 @@ abstract class VendorPayout with _$VendorPayout {
       _$VendorPayoutFromJson(json);
 
   String get statusLabel => switch (status) {
-        PaymentStatus.pending => 'Pending',
-        PaymentStatus.paid => 'Paid',
-        PaymentStatus.partial => 'Partial',
-        PaymentStatus.refunded => 'Refunded',
-        PaymentStatus.failed => 'Failed',
-      };
+    PaymentStatus.pending => 'Pending',
+    PaymentStatus.paid => 'Paid',
+    PaymentStatus.partial => 'Partial',
+    PaymentStatus.refunded => 'Refunded',
+    PaymentStatus.failed => 'Failed',
+  };
 }

@@ -16,30 +16,30 @@ class PaymentStatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final (bg, fg, label) = switch (status) {
       PaymentStatus.pending => (
-          AppColors.accentBg,
-          AppColors.accent,
-          'Pending',
-        ),
+        AppColors.accentBg,
+        AppColors.accent,
+        'Pending',
+      ),
       PaymentStatus.paid => (
-          AppColors.sageBg,
-          AppColors.sage,
-          'Paid',
-        ),
+        AppColors.sageBg,
+        AppColors.sage,
+        'Paid',
+      ),
       PaymentStatus.partial => (
-          AppColors.lavenderBg,
-          AppColors.lavender,
-          'Partial',
-        ),
+        AppColors.lavenderBg,
+        AppColors.lavender,
+        'Partial',
+      ),
       PaymentStatus.refunded => (
-          AppColors.coralBg,
-          AppColors.coral,
-          'Refunded',
-        ),
+        AppColors.coralBg,
+        AppColors.coral,
+        'Refunded',
+      ),
       PaymentStatus.failed => (
-          AppColors.coralBg,
-          AppColors.rust,
-          'Failed',
-        ),
+        AppColors.coralBg,
+        AppColors.rust,
+        'Failed',
+      ),
     };
 
     return Container(

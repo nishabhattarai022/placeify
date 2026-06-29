@@ -32,8 +32,9 @@ class ChairsCatalogCompactCard extends ConsumerWidget {
       child: Container(
         decoration: BoxDecoration(
           color: ChairsCatalogTokens.imageWell,
-          borderRadius:
-              BorderRadius.circular(ChairsCatalogTokens.compactCardRadius),
+          borderRadius: BorderRadius.circular(
+            ChairsCatalogTokens.compactCardRadius,
+          ),
           boxShadow: ChairsCatalogTokens.cardShadow,
         ),
         clipBehavior: Clip.antiAlias,

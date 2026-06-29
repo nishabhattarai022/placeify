@@ -16,7 +16,13 @@ import 'package:placeify_flutter/features/admin/presentation/providers/admin_use
 import 'package:placeify_flutter/features/admin/presentation/widgets/admin_empty_state.dart';
 import 'package:placeify_flutter/features/profile/presentation/widgets/profile_sub_hero.dart';
 
-enum _AuditActionFilter { all, approvals, declines, suspensions, reinstatements }
+enum _AuditActionFilter {
+  all,
+  approvals,
+  declines,
+  suspensions,
+  reinstatements,
+}
 
 enum _AuditDateFilter { all, last7Days, last30Days }
 
@@ -36,21 +42,21 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
     return switch (_actionFilter) {
       _AuditActionFilter.all => true,
       _AuditActionFilter.approvals => entry.action.maybeWhen(
-            application: (d) => d == ApplicationDecision.approved,
-            orElse: () => false,
-          ),
+        application: (d) => d == ApplicationDecision.approved,
+        orElse: () => false,
+      ),
       _AuditActionFilter.declines => entry.action.maybeWhen(
-            application: (d) => d == ApplicationDecision.declined,
-            orElse: () => false,
-          ),
+        application: (d) => d == ApplicationDecision.declined,
+        orElse: () => false,
+      ),
       _AuditActionFilter.suspensions => entry.action.maybeWhen(
-            vendor: (a) => a == AuditAction.suspended,
-            orElse: () => false,
-          ),
+        vendor: (a) => a == AuditAction.suspended,
+        orElse: () => false,
+      ),
       _AuditActionFilter.reinstatements => entry.action.maybeWhen(
-            vendor: (a) => a == AuditAction.reinstated,
-            orElse: () => false,
-          ),
+        vendor: (a) => a == AuditAction.reinstated,
+        orElse: () => false,
+      ),
     };
   }
 
@@ -69,7 +75,8 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
     final auditAsync = ref.watch(adminAuditLogProvider);
     final usersAsync = ref.watch(adminUsersListProvider('', null));
 
-    final userNames = usersAsync.value?.fold<Map<String, String>>(
+    final userNames =
+        usersAsync.value?.fold<Map<String, String>>(
           {},
           (map, user) => map..[user.id] = user.name,
         ) ??
@@ -104,7 +111,8 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                 _FilterChip(
                   label: AdminStrings.filterAll,
                   isSelected: _dateFilter == _AuditDateFilter.all,
-                  onTap: () => setState(() => _dateFilter = _AuditDateFilter.all),
+                  onTap: () =>
+                      setState(() => _dateFilter = _AuditDateFilter.all),
                 ),
                 const SizedBox(width: 8),
                 _FilterChip(
@@ -148,11 +156,9 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                 ),
               ),
               data: (entries) {
-                final filtered = entries
-                    .where(_matchesAction)
-                    .where(_matchesDate)
-                    .toList()
-                  ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+                final filtered =
+                    entries.where(_matchesAction).where(_matchesDate).toList()
+                      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
                 if (filtered.isEmpty) {
                   return const Center(
@@ -197,12 +203,12 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
   }
 
   String _actionLabel(_AuditActionFilter filter) => switch (filter) {
-        _AuditActionFilter.all => AdminStrings.filterAll,
-        _AuditActionFilter.approvals => 'Approvals',
-        _AuditActionFilter.declines => 'Declines',
-        _AuditActionFilter.suspensions => 'Suspensions',
-        _AuditActionFilter.reinstatements => 'Reinstatements',
-      };
+    _AuditActionFilter.all => AdminStrings.filterAll,
+    _AuditActionFilter.approvals => 'Approvals',
+    _AuditActionFilter.declines => 'Declines',
+    _AuditActionFilter.suspensions => 'Suspensions',
+    _AuditActionFilter.reinstatements => 'Reinstatements',
+  };
 }
 
 class _FilterChip extends StatelessWidget {

@@ -34,7 +34,9 @@ class ChairsCatalogWideCard extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
         decoration: BoxDecoration(
           color: ChairsCatalogTokens.imageWell,
-          borderRadius: BorderRadius.circular(ChairsCatalogTokens.wideCardRadius),
+          borderRadius: BorderRadius.circular(
+            ChairsCatalogTokens.wideCardRadius,
+          ),
           boxShadow: ChairsCatalogTokens.cardShadow,
         ),
         child: Column(
@@ -56,7 +58,10 @@ class ChairsCatalogWideCard extends ConsumerWidget {
                 ),
                 alignment: Alignment.center,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   child: _isAsset
                       ? Image.asset(
                           product.imageUrl,

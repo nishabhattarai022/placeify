@@ -103,7 +103,10 @@ class _ProfilePasswordScreenState extends ConsumerState<ProfilePasswordScreen> {
       PlaceifyToast.show(context, error.message);
     } catch (_) {
       if (!mounted) return;
-      PlaceifyToast.show(context, 'Could not update password. Please try again.');
+      PlaceifyToast.show(
+        context,
+        'Could not update password. Please try again.',
+      );
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -205,8 +208,7 @@ class _ProfilePasswordScreenState extends ConsumerState<ProfilePasswordScreen> {
                                 : Icons.visibility_outlined,
                             color: AppColors.textMuted,
                           ),
-                          onPressed: () =>
-                              setState(() => _showNew = !_showNew),
+                          onPressed: () => setState(() => _showNew = !_showNew),
                         ),
                       ),
                       PasswordStrengthPanel(password: _newController.text),

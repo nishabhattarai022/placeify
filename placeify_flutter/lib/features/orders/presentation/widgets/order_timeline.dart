@@ -124,27 +124,27 @@ class _OrderTimelineState extends State<OrderTimeline>
   List<({ConsumerOrderStatus status, String label})> _terminalSteps() {
     return switch (widget.order.status) {
       ConsumerOrderStatus.cancelled => [
-          (
-            status: ConsumerOrderStatus.cancelled,
-            label: OrderStrings.statusLabel(ConsumerOrderStatus.cancelled),
-          ),
-        ],
+        (
+          status: ConsumerOrderStatus.cancelled,
+          label: OrderStrings.statusLabel(ConsumerOrderStatus.cancelled),
+        ),
+      ],
       ConsumerOrderStatus.returnRequested => [
-          (
-            status: ConsumerOrderStatus.returnRequested,
-            label: OrderStrings.statusLabel(ConsumerOrderStatus.returnRequested),
-          ),
-        ],
+        (
+          status: ConsumerOrderStatus.returnRequested,
+          label: OrderStrings.statusLabel(ConsumerOrderStatus.returnRequested),
+        ),
+      ],
       ConsumerOrderStatus.returned => [
-          (
-            status: ConsumerOrderStatus.returnRequested,
-            label: OrderStrings.statusLabel(ConsumerOrderStatus.returnRequested),
-          ),
-          (
-            status: ConsumerOrderStatus.returned,
-            label: OrderStrings.statusLabel(ConsumerOrderStatus.returned),
-          ),
-        ],
+        (
+          status: ConsumerOrderStatus.returnRequested,
+          label: OrderStrings.statusLabel(ConsumerOrderStatus.returnRequested),
+        ),
+        (
+          status: ConsumerOrderStatus.returned,
+          label: OrderStrings.statusLabel(ConsumerOrderStatus.returned),
+        ),
+      ],
       _ => const [],
     };
   }
@@ -162,7 +162,8 @@ class _OrderTimelineState extends State<OrderTimeline>
             label: OrderStrings.statusLabel(OrderTimeline._lifecycle[i]),
             state: _stepState(i, activeIndex),
             update: _updateFor(OrderTimeline._lifecycle[i]),
-            isLast: i == OrderTimeline._lifecycle.length - 1 && terminals.isEmpty,
+            isLast:
+                i == OrderTimeline._lifecycle.length - 1 && terminals.isEmpty,
             showPulse: _showPulse(i, _stepState(i, activeIndex)),
             pulseAnimation: _pulseController,
           ),
@@ -199,20 +200,20 @@ class _TimelineStepRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final (dotColor, lineColor, titleColor) = switch (state) {
       _TimelineStepState.completed => (
-          AppColors.teal,
-          AppColors.teal,
-          AppColors.textPrimary,
-        ),
+        AppColors.teal,
+        AppColors.teal,
+        AppColors.textPrimary,
+      ),
       _TimelineStepState.active => (
-          AppColors.accent,
-          AppColors.creamDark,
-          AppColors.textPrimary,
-        ),
+        AppColors.accent,
+        AppColors.creamDark,
+        AppColors.textPrimary,
+      ),
       _TimelineStepState.pending => (
-          AppColors.creamDark,
-          AppColors.creamDark,
-          AppColors.textMuted,
-        ),
+        AppColors.creamDark,
+        AppColors.creamDark,
+        AppColors.textMuted,
+      ),
     };
 
     return IntrinsicHeight(
@@ -385,18 +386,18 @@ class _TerminalStepRow extends StatelessWidget {
   final bool isLast;
 
   Color _color() => switch (status) {
-        ConsumerOrderStatus.cancelled => AppColors.coral,
-        ConsumerOrderStatus.returnRequested => AppColors.lavender,
-        ConsumerOrderStatus.returned => AppColors.lavender,
-        _ => AppColors.textMuted,
-      };
+    ConsumerOrderStatus.cancelled => AppColors.coral,
+    ConsumerOrderStatus.returnRequested => AppColors.lavender,
+    ConsumerOrderStatus.returned => AppColors.lavender,
+    _ => AppColors.textMuted,
+  };
 
   IconData _icon() => switch (status) {
-        ConsumerOrderStatus.cancelled => Icons.block,
-        ConsumerOrderStatus.returnRequested => Icons.assignment_return_outlined,
-        ConsumerOrderStatus.returned => Icons.check_circle_outline,
-        _ => Icons.info_outline,
-      };
+    ConsumerOrderStatus.cancelled => Icons.block,
+    ConsumerOrderStatus.returnRequested => Icons.assignment_return_outlined,
+    ConsumerOrderStatus.returned => Icons.check_circle_outline,
+    _ => Icons.info_outline,
+  };
 
   @override
   Widget build(BuildContext context) {

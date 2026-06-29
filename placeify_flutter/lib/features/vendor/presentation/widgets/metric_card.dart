@@ -24,7 +24,9 @@ class MetricCard extends StatelessWidget {
         children: [
           Text(
             metric.label.toUpperCase(),
-            style: AppTypography.metricLabel.copyWith(color: AppColors.textMuted),
+            style: AppTypography.metricLabel.copyWith(
+              color: AppColors.textMuted,
+            ),
           ),
           const SizedBox(height: 8),
           Text(metric.value, style: AppTypography.metricValueMedium),
@@ -35,14 +37,19 @@ class MetricCard extends StatelessWidget {
                 SvgPicture.asset(
                   metric.iconPath!,
                   width: 14,
-                  colorFilter: ColorFilter.mode(metric.trendColor, BlendMode.srcIn),
+                  colorFilter: ColorFilter.mode(
+                    metric.trendColor,
+                    BlendMode.srcIn,
+                  ),
                 ),
                 const SizedBox(width: 6),
               ],
               Flexible(
                 child: Text(
                   metric.trendLabel,
-                  style: AppTypography.trendText.copyWith(color: metric.trendColor),
+                  style: AppTypography.trendText.copyWith(
+                    color: metric.trendColor,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

@@ -23,7 +23,6 @@ class TopProductStat {
     required this.revenue,
     required this.progressFraction,
     required this.barColor,
-    this.imageUrl,
   });
 
   final String name;
@@ -31,5 +30,4 @@ class TopProductStat {
   final String revenue;
   final double progressFraction;
   final Color barColor;
-  final String? imageUrl;
 }

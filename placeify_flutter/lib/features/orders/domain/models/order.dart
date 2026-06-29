@@ -39,20 +39,19 @@ abstract class Order with _$Order {
   factory Order.fromJson(Map<String, dynamic> json) => _$OrderFromJson(json);
 
   bool get isActive => switch (status) {
-        ConsumerOrderStatus.placed ||
-        ConsumerOrderStatus.confirmed ||
-        ConsumerOrderStatus.packed ||
-        ConsumerOrderStatus.dispatched ||
-        ConsumerOrderStatus.inTransit ||
-        ConsumerOrderStatus.outForDelivery =>
-          true,
-        _ => false,
-      };
+    ConsumerOrderStatus.placed ||
+    ConsumerOrderStatus.confirmed ||
+    ConsumerOrderStatus.packed ||
+    ConsumerOrderStatus.dispatched ||
+    ConsumerOrderStatus.inTransit ||
+    ConsumerOrderStatus.outForDelivery => true,
+    _ => false,
+  };
 
   bool get isCancellable => switch (status) {
-        ConsumerOrderStatus.placed || ConsumerOrderStatus.confirmed => true,
-        _ => false,
-      };
+    ConsumerOrderStatus.placed || ConsumerOrderStatus.confirmed => true,
+    _ => false,
+  };
 
   bool get isDelivered => status == ConsumerOrderStatus.delivered;
 
@@ -72,10 +71,10 @@ abstract class Order with _$Order {
 
 extension OrderFilterX on Order {
   bool matchesListFilter(OrderListFilter filter) => switch (filter) {
-        OrderListFilter.all => true,
-        OrderListFilter.active => isActive,
-        OrderListFilter.delivered => isDelivered,
-        OrderListFilter.cancelled => isCancelled,
-        OrderListFilter.returns => isReturn,
-      };
+    OrderListFilter.all => true,
+    OrderListFilter.active => isActive,
+    OrderListFilter.delivered => isDelivered,
+    OrderListFilter.cancelled => isCancelled,
+    OrderListFilter.returns => isReturn,
+  };
 }

@@ -144,8 +144,7 @@ class PlaceifySelectTile extends StatelessWidget {
                     label,
                     style: GoogleFonts.dmSans(
                       fontSize: 14,
-                      fontWeight:
-                          selected ? FontWeight.w600 : FontWeight.w400,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                       color: selected
                           ? AppColors.espresso
                           : AppColors.textPrimary,

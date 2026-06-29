@@ -88,8 +88,7 @@ class _VendorReinstateSheetBodyState extends State<_VendorReinstateSheetBody> {
       children: [
         PlaceifyBottomSheetHeader(
           title: 'Reinstate ${widget.vendor.businessName}?',
-          subtitle:
-              'This vendor will regain access to the vendor dashboard.',
+          subtitle: 'This vendor will regain access to the vendor dashboard.',
         ),
         const SizedBox(height: AppSpacing.xl),
         Row(

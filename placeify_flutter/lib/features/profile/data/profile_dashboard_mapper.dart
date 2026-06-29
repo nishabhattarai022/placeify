@@ -12,12 +12,12 @@ abstract final class ProfileDashboardMapper {
   ];
 
   static List<ProfileStat> stats(UserDashboard dashboard) => [
-        ProfileStat(value: '${dashboard.orderCount}', label: 'Orders'),
-        ProfileStat(value: '${dashboard.wishlistCount}', label: 'Wishlist'),
-        ProfileStat(
-          value: '${dashboard.arSessionCount}',
-          label: 'AR Tries',
-        ),
-        ProfileStat(value: '${dashboard.refundCount}', label: 'Refunds'),
-      ];
+    ProfileStat(value: '${dashboard.orderCount}', label: 'Orders'),
+    ProfileStat(value: '${dashboard.wishlistCount}', label: 'Wishlist'),
+    ProfileStat(
+      value: '${dashboard.arSessionCount}',
+      label: 'AR Tries',
+    ),
+    ProfileStat(value: '${dashboard.refundCount}', label: 'Refunds'),
+  ];
 }

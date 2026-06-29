@@ -71,11 +71,12 @@ String _formatDayKeys(List<String> dayKeys) {
     'sunday': 'Sun',
   };
 
-  final indices = dayKeys
-      .map((key) => vendorWeekDayKeys.indexOf(key))
-      .where((index) => index >= 0)
-      .toList()
-    ..sort();
+  final indices =
+      dayKeys
+          .map((key) => vendorWeekDayKeys.indexOf(key))
+          .where((index) => index >= 0)
+          .toList()
+        ..sort();
 
   if (indices.isEmpty) return dayKeys.join(', ');
 
@@ -163,7 +164,8 @@ List<VendorScheduleDisplayGroup> buildVendorScheduleDisplayGroups(
       day.isClosed ? 'closed' : '${day.openTime}|${day.closeTime}';
 
   for (var i = 1; i <= ordered.length; i++) {
-    final isBreak = i == ordered.length ||
+    final isBreak =
+        i == ordered.length ||
         blockKey(ordered[i]) != blockKey(ordered[rangeStart]);
 
     if (!isBreak) continue;

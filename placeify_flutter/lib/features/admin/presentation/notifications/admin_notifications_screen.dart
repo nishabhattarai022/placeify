@@ -172,7 +172,9 @@ class _NotificationTile extends StatelessWidget {
             color: isUnread ? AppColors.warmWhite : AppColors.cream,
             borderRadius: AppRadii.md,
             border: Border.all(
-              color: isUnread ? AppColors.espresso.withValues(alpha: 0.12) : AppColors.creamDark,
+              color: isUnread
+                  ? AppColors.espresso.withValues(alpha: 0.12)
+                  : AppColors.creamDark,
               width: 1.5,
             ),
           ),
@@ -207,8 +209,9 @@ class _NotificationTile extends StatelessWidget {
                             notification.title,
                             style: TextStyle(
                               fontSize: 14,
-                              fontWeight:
-                                  isUnread ? FontWeight.w700 : FontWeight.w600,
+                              fontWeight: isUnread
+                                  ? FontWeight.w700
+                                  : FontWeight.w600,
                               color: AppColors.espresso,
                             ),
                           ),

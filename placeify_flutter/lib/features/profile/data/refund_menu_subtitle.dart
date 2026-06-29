@@ -8,7 +8,9 @@ String readRefundMenuSubtitle(
   WidgetRef ref, {
   String fallback = 'View refund requests',
 }) {
-  return ref.watch(profileRefundsProvider).maybeWhen(
+  return ref
+      .watch(profileRefundsProvider)
+      .maybeWhen(
         data: (state) => formatRefundMenuSubtitle(
           pendingTotal: state.pendingTotal,
           activeCount: state.active.length,

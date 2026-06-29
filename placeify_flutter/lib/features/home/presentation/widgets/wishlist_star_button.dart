@@ -34,8 +34,10 @@ class _WishlistStarButtonState extends ConsumerState<WishlistStarButton>
     _popScale = TweenSequence<double>([
       TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.45), weight: 180),
       TweenSequenceItem(
-        tween: Tween(begin: 1.45, end: 1.0)
-            .chain(CurveTween(curve: Curves.elasticOut)),
+        tween: Tween(
+          begin: 1.45,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.elasticOut)),
         weight: 280,
       ),
     ]).animate(_popController);
@@ -50,8 +52,9 @@ class _WishlistStarButtonState extends ConsumerState<WishlistStarButton>
   @override
   Widget build(BuildContext context) {
     ref.watch(wishlistProvider);
-    final isSaved =
-        ref.read(wishlistProvider.notifier).isLiked(widget.product.id);
+    final isSaved = ref
+        .read(wishlistProvider.notifier)
+        .isLiked(widget.product.id);
 
     return Semantics(
       button: true,
@@ -59,14 +62,18 @@ class _WishlistStarButtonState extends ConsumerState<WishlistStarButton>
       child: GestureDetector(
         onTap: () async {
           if (ref.read(currentUserProvider).value == null) {
-            PlaceifyToast.show(context, 'Sign in to save items to your wishlist');
+            PlaceifyToast.show(
+              context,
+              'Sign in to save items to your wishlist',
+            );
             context.push('/login');
             return;
           }
 
           HapticService.medium();
-          final result =
-              await ref.read(wishlistProvider.notifier).toggle(widget.product.id);
+          final result = await ref
+              .read(wishlistProvider.notifier)
+              .toggle(widget.product.id);
           if (!context.mounted) return;
           final error = result.errorMessage;
           if (error != null) {

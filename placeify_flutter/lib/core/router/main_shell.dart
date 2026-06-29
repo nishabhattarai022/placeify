@@ -94,22 +94,22 @@ class MainShell extends StatelessWidget {
               ),
             )
           : showVendorNav
-              ? SafeArea(
-                  top: false,
-                  child: PlaceifyBottomNav(
-                    activeIndex: _vendorActiveIndex(location),
-                    mode: PlaceifyBottomNavMode.vendor,
-                  ),
-                )
-              : showAdminNav
-                  ? SafeArea(
-                      top: false,
-                      child: PlaceifyBottomNav(
-                        activeIndex: _adminActiveIndex(location),
-                        mode: PlaceifyBottomNavMode.admin,
-                      ),
-                    )
-                  : null,
+          ? SafeArea(
+              top: false,
+              child: PlaceifyBottomNav(
+                activeIndex: _vendorActiveIndex(location),
+                mode: PlaceifyBottomNavMode.vendor,
+              ),
+            )
+          : showAdminNav
+          ? SafeArea(
+              top: false,
+              child: PlaceifyBottomNav(
+                activeIndex: _adminActiveIndex(location),
+                mode: PlaceifyBottomNavMode.admin,
+              ),
+            )
+          : null,
     );
   }
 }

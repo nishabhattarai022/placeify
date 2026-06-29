@@ -5,8 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../home/presentation/providers/catalog_provider.dart';
-import '../../../../home/presentation/providers/category_provider.dart';
 import '../../../../home/presentation/providers/wishlist_provider.dart';
 import '../../../../home/presentation/providers/wishlist_count.dart';
 import '../../../../../core/constants/app_colors.dart';
@@ -21,7 +19,7 @@ import 'wishlist_sort_provider.dart';
 import 'wishlist_sort_sheet.dart';
 
 /// Wishlist list — category-style rows with sort control.
-class WishlistGridView extends ConsumerStatefulWidget {
+class WishlistGridView extends ConsumerWidget {
   const WishlistGridView({
     this.searchQuery = '',
     this.showBottomPadding = true,
@@ -32,53 +30,23 @@ class WishlistGridView extends ConsumerStatefulWidget {
   final bool showBottomPadding;
 
   @override
-  ConsumerState<WishlistGridView> createState() => _WishlistGridViewState();
-}
-
-class _WishlistGridViewState extends ConsumerState<WishlistGridView> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _resolveProducts());
-  }
-
-  Future<void> _resolveProducts() async {
-    final savedAt = ref.read(wishlistProvider);
-    if (savedAt.isEmpty) return;
-    await ref
-        .read(catalogIndexProvider.notifier)
-        .ensureProducts(savedAt.keys);
-    if (mounted) setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    ref.listen(wishlistProvider, (previous, next) {
-      if (next.length != (previous?.length ?? 0)) {
-        unawaited(_resolveProducts());
-      }
-    });
-    ref.watch(catalogIndexProvider);
-    final savedAt = ref.watch(wishlistProvider);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final snapshot = ref.watch(wishlistProvider);
     final sort = ref.watch(wishlistSortProvider);
     final sortedProducts = sortWishlistProducts(
-      products: [
-        for (final id in savedAt.keys)
-          if (ref.watch(productByIdProvider(id)) != null)
-            ref.watch(productByIdProvider(id))!,
-      ],
-      savedAt: savedAt,
+      products: snapshot.products,
+      savedAt: snapshot.savedAt,
       sort: sort,
     );
 
-    final query = widget.searchQuery.trim().toLowerCase();
+    final query = searchQuery.trim().toLowerCase();
     final products = query.isEmpty
         ? sortedProducts
         : sortedProducts
-            .where((p) => p.name.toLowerCase().contains(query))
-            .toList();
+              .where((p) => p.name.toLowerCase().contains(query))
+              .toList();
 
-    if (savedAt.isEmpty) {
+    if (snapshot.isEmpty) {
       final expectedCount = readWishlistCount(ref);
       if (expectedCount > 0) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -113,16 +81,16 @@ class _WishlistGridViewState extends ConsumerState<WishlistGridView> {
           ),
           Expanded(
             child: _WishlistNoSearchResultsState(
-              query: widget.searchQuery.trim(),
+              query: searchQuery.trim(),
             ),
           ),
         ],
       );
     }
 
-    final bottom = widget.showBottomPadding
+    final bottom = showBottomPadding
         ? BottomNavTokens.scrollBottomPadding +
-            MediaQuery.paddingOf(context).bottom
+              MediaQuery.paddingOf(context).bottom
         : 32.0;
 
     return Column(

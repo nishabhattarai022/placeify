@@ -83,20 +83,4 @@ class MockVendorProductRepository implements VendorProductRepository {
 
     return VendorMockConfig.upsertProduct(product);
   }
-
-  @override
-  Future<VendorProduct> regenerateProductModel3d(
-    String vendorId,
-    String productId, {
-    List<String>? imageSources,
-  }) async {
-    await Future<void>.delayed(const Duration(milliseconds: 300));
-
-    final product = VendorMockConfig.productById(productId);
-    if (product == null || product.vendorId != vendorId) {
-      throw VendorProductActionException('Product not found.');
-    }
-
-    return product;
-  }
 }

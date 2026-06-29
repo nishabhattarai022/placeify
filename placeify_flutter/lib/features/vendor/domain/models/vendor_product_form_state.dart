@@ -137,9 +137,7 @@ class VendorProductFormState {
   }
 
   static double displayToCm(double value, VendorProductDimensionUnit unit) {
-    return unit == VendorProductDimensionUnit.inch
-        ? value * cmPerInch
-        : value;
+    return unit == VendorProductDimensionUnit.inch ? value * cmPerInch : value;
   }
 
   static double cmToDisplay(double cm, VendorProductDimensionUnit unit) {

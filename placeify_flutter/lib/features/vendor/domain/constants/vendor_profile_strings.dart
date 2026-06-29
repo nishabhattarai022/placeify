@@ -93,8 +93,7 @@ abstract final class VendorProfileStrings {
     'sunday': 'Sunday',
   };
 
-  static String dayLabel(String dayKey) =>
-      dayLabels[dayKey] ?? dayKey;
+  static String dayLabel(String dayKey) => dayLabels[dayKey] ?? dayKey;
 
   // Edit bar
   static const saveChanges = 'Save Changes';
@@ -108,7 +107,6 @@ abstract final class VendorProfileStrings {
 
   // Settings link
   static const storeSettings = 'Store settings';
-  static const switchToShopping = 'Switch to shopping';
 
   // Empty / loading
   static const noProfileFound = 'No vendor profile found.';

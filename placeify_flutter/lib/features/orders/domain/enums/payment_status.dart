@@ -11,9 +11,9 @@ enum PaymentStatus {
 
 extension PaymentStatusX on PaymentStatus {
   String get label => switch (this) {
-        PaymentStatus.pending => 'Pending',
-        PaymentStatus.paid => 'Paid',
-        PaymentStatus.failed => 'Failed',
-        PaymentStatus.refunded => 'Refunded',
-      };
+    PaymentStatus.pending => 'Pending',
+    PaymentStatus.paid => 'Paid',
+    PaymentStatus.failed => 'Failed',
+    PaymentStatus.refunded => 'Refunded',
+  };
 }

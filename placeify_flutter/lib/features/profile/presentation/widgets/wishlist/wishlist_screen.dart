@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../home/presentation/providers/catalog_provider.dart';
 import '../../../../home/presentation/providers/wishlist_provider.dart';
 import '../../../../home/presentation/providers/wishlist_count.dart';
 import '../../../../../core/constants/app_colors.dart';
@@ -47,7 +46,6 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
   @override
   Widget build(BuildContext context) {
     ref.watch(wishlistProvider);
-    ref.watch(catalogIndexProvider);
     final visibleCount = _visibleProductCount();
 
     return Scaffold(
@@ -124,4 +122,3 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
     );
   }
 }
-

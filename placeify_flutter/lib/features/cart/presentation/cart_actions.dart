@@ -48,7 +48,9 @@ Future<void> checkoutCart(WidgetRef ref, BuildContext context) async {
     return;
   }
 
-  final message = await ref.read(cartProvider.notifier).checkout(
+  final message = await ref
+      .read(cartProvider.notifier)
+      .checkout(
         paymentMethod: PaymentMethod.cod,
       );
   if (!context.mounted) return;

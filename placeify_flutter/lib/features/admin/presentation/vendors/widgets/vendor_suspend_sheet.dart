@@ -49,7 +49,8 @@ class _VendorSuspendSheetBody extends StatefulWidget {
   final VoidCallback onSuspended;
 
   @override
-  State<_VendorSuspendSheetBody> createState() => _VendorSuspendSheetBodyState();
+  State<_VendorSuspendSheetBody> createState() =>
+      _VendorSuspendSheetBodyState();
 }
 
 class _VendorSuspendSheetBodyState extends State<_VendorSuspendSheetBody> {
@@ -78,7 +79,9 @@ class _VendorSuspendSheetBodyState extends State<_VendorSuspendSheetBody> {
     HapticService.medium();
     Navigator.pop(widget.sheetContext);
 
-    final reason = _selectedReason!.formatNote(otherDetail: _otherController.text);
+    final reason = _selectedReason!.formatNote(
+      otherDetail: _otherController.text,
+    );
     final error = await widget.ref
         .read(adminVendorActionsProvider.notifier)
         .suspend(

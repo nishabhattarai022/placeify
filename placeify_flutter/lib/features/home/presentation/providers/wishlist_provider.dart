@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:placeify_client/placeify_client.dart';
+import 'package:placeify_client/placeify_client.dart' hide Product;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
@@ -8,6 +8,9 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../cart/data/product_id_codec.dart';
 import '../../../../core/config/placeify_server_client.dart';
 import '../../data/catalog_product_mapper.dart';
+import '../../data/serverpod_product_repository.dart';
+import '../../domain/models/product.dart';
+import '../../domain/models/wishlist_snapshot.dart';
 import '../../../profile/data/wishlist_api_errors.dart';
 import '../providers/catalog_provider.dart';
 import '../../../profile/presentation/providers/profile_dashboard_provider.dart';
@@ -16,13 +19,10 @@ import 'wishlist_toggle_result.dart';
 
 part 'wishlist_provider.g.dart';
 
-/// Product id → time saved (newest first when listed).
 @Riverpod(keepAlive: true)
 class Wishlist extends _$Wishlist {
   @override
-  Map<String, DateTime> build() {
-    // Do not watch [catalogIndexProvider] here — catalog syncs every 20s and
-    // would rebuild this notifier, resetting wishlist state to {}.
+  WishlistSnapshot build() {
     ref.listen(catalogIndexProvider, (previous, next) {
       if (!next.hasValue || state.isEmpty) return;
       unawaited(
@@ -30,67 +30,95 @@ class Wishlist extends _$Wishlist {
       );
     });
     ref.listen(currentUserProvider, (previous, next) {
-      if (next.value == null) {
-        state = {};
-        return;
-      }
-      unawaited(_refresh());
+      // Only react to resolved auth data — never clear on AsyncLoading (e.g.
+      // profile refresh), which was wiping the list while counts stayed up.
+      next.whenData((user) {
+        if (user == null) {
+          state = WishlistSnapshot.empty;
+          return;
+        }
+        unawaited(_refresh());
+      });
     });
     Future.microtask(_refresh);
-    return {};
+    return WishlistSnapshot.empty;
   }
 
   Future<void> refresh() => _refresh();
 
   Future<void> _refresh() async {
     if (!client.auth.isAuthenticated) {
-      state = {};
+      state = WishlistSnapshot.empty;
       return;
     }
 
     try {
-      final page = await ref.read(userWishlistRepositoryProvider).listWishlist(
+      final page = await ref
+          .read(userWishlistRepositoryProvider)
+          .listWishlist(
             pagination: PaginationInput(page: 1, pageSize: 100),
           );
 
       final catalog = ref.read(catalogIndexProvider.notifier);
-      final uiIds = <String>[];
-      final nextState = <String, DateTime>{};
+      final productRepo = ref.read(catalogRepositoryProvider);
+      final nextSavedAt = <String, DateTime>{};
+      final nextProducts = <Product>[];
 
       for (final item in page.items) {
         final dbProductId = item.product?.id ?? item.productId;
         final uiId = ProductIdCodec.fromDatabaseId(dbProductId);
-        uiIds.add(uiId);
-        nextState[uiId] = item.createdAt;
+        nextSavedAt[uiId] = item.createdAt;
 
+        Product? uiProduct;
         final apiProduct = item.product;
         if (apiProduct?.id != null) {
           try {
-            final uiProduct = await CatalogProductMapper.toUiProduct(apiProduct!);
-            catalog.upsertProduct(uiProduct);
+            uiProduct = await CatalogProductMapper.toUiProduct(apiProduct!);
           } catch (_) {
-            // ensureProducts below still attempts a direct fetch.
+            // Fall through to direct fetch below.
           }
         }
+
+        uiProduct ??= await _fetchUiProduct(productRepo, uiId);
+        if (uiProduct == null) continue;
+
+        nextProducts.add(uiProduct);
+        catalog.upsertProduct(uiProduct);
       }
 
-      state = nextState;
+      state = WishlistSnapshot(
+        savedAt: nextSavedAt,
+        products: nextProducts,
+      );
 
-      if (uiIds.isNotEmpty) {
+      if (nextSavedAt.isNotEmpty) {
         try {
-          await catalog.ensureProducts(uiIds);
+          await catalog.ensureProducts(nextSavedAt.keys);
         } catch (_) {
-          // Catalog enrichment must not block wishlist ids/count sync.
+          // Catalog enrichment must not block wishlist display.
         }
       }
     } catch (_) {
-      // Keep previous state on transient errors.
+      // Keep previous snapshot on transient errors.
+    }
+  }
+
+  Future<Product?> _fetchUiProduct(
+    ServerpodProductRepository repo,
+    String uiId,
+  ) async {
+    try {
+      final apiProduct = await repo.getByUiId(uiId);
+      if (apiProduct == null) return null;
+      return CatalogProductMapper.toUiProduct(apiProduct);
+    } catch (_) {
+      return null;
     }
   }
 
   bool isLiked(String productId) {
     final id = ProductIdCodec.normalizeUiProductId(productId);
-    return state.containsKey(id);
+    return state.savedAt.containsKey(id);
   }
 
   Future<WishlistToggleResult> toggle(String productId) async {
@@ -101,7 +129,7 @@ class Wishlist extends _$Wishlist {
       );
     }
 
-    final wasLiked = state.containsKey(id);
+    final wasLiked = state.savedAt.containsKey(id);
 
     try {
       final repo = ref.read(userWishlistRepositoryProvider);

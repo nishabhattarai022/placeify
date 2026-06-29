@@ -1,6 +1,7 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart' show consolidateHttpClientResponseBytes, kIsWeb;
+import 'package:flutter/foundation.dart'
+    show consolidateHttpClientResponseBytes, kIsWeb;
 import 'package:path_provider/path_provider.dart';
 
 /// Cached GLB on disk, ready for [NodeType.fileSystemAppFolderGLB].

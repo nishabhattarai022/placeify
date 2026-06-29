@@ -15,7 +15,6 @@ import 'package:placeify_flutter/core/widgets/shimmer_loader.dart';
 import 'package:placeify_flutter/core/widgets/toast_overlay.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_profile_strings.dart';
-import 'package:placeify_flutter/features/vendor/domain/constants/vendor_settings_strings.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_profile.dart';
 import 'package:placeify_flutter/features/vendor/domain/validators/vendor_profile_validator.dart';
@@ -388,7 +387,9 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
         _isLogoLoading = false;
       });
       _markDirty();
-      await ref.read(vendorProfileProvider.notifier).updateLogo(result.processedPath);
+      await ref
+          .read(vendorProfileProvider.notifier)
+          .updateLogo(result.processedPath);
     } catch (error) {
       if (!mounted) return;
       setState(() => _isLogoLoading = false);
@@ -465,19 +466,6 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
     context.pushNamed('vendorSettings');
   }
 
-  Future<void> _signOut() async {
-    HapticService.light();
-    await ref.read(currentUserProvider.notifier).signOut();
-    if (!mounted) return;
-    PlaceifyToast.show(context, VendorSettingsStrings.signedOut);
-    context.go('/splash');
-  }
-
-  void _switchToShopping() {
-    HapticService.light();
-    context.go('/home');
-  }
-
   @override
   Widget build(BuildContext context) {
     final profileAsync = ref.watch(vendorProfileProvider);
@@ -521,33 +509,33 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
           child: isLoading
               ? const _ProfileShimmer()
               : _form == null
-                  ? const _ProfileEmpty()
-                  : Column(
-                      children: [
-                        Expanded(
-                          child: AnimatedSwitcher(
-                            duration: _switchDuration,
-                            child: _isEditMode
-                                ? _buildBody(
-                                    key: const ValueKey('edit'),
-                                    isEditMode: true,
-                                    showActiveBadge: showActiveBadge,
-                                  )
-                                : _buildBody(
-                                    key: const ValueKey('view'),
-                                    isEditMode: false,
-                                    showActiveBadge: showActiveBadge,
-                                  ),
-                          ),
-                        ),
-                        if (_isEditMode)
-                          ProfileEditBottomBar(
-                            isSaving: _isSaving,
-                            onSave: _handleSave,
-                            onCancel: _handleCancel,
-                          ),
-                      ],
+              ? const _ProfileEmpty()
+              : Column(
+                  children: [
+                    Expanded(
+                      child: AnimatedSwitcher(
+                        duration: _switchDuration,
+                        child: _isEditMode
+                            ? _buildBody(
+                                key: const ValueKey('edit'),
+                                isEditMode: true,
+                                showActiveBadge: showActiveBadge,
+                              )
+                            : _buildBody(
+                                key: const ValueKey('view'),
+                                isEditMode: false,
+                                showActiveBadge: showActiveBadge,
+                              ),
+                      ),
                     ),
+                    if (_isEditMode)
+                      ProfileEditBottomBar(
+                        isSaving: _isSaving,
+                        onSave: _handleSave,
+                        onCancel: _handleCancel,
+                      ),
+                  ],
+                ),
         ),
       ),
     );
@@ -609,9 +597,12 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
           onBusinessNameChanged: isEditMode
               ? (value) => _updateForm((p) => p.copyWith(businessName: value))
               : null,
-          onBannerTap:
-              isEditMode ? () => _showImagePickerSheet(isLogo: false) : null,
-          onLogoTap: isEditMode ? () => _showImagePickerSheet(isLogo: true) : null,
+          onBannerTap: isEditMode
+              ? () => _showImagePickerSheet(isLogo: false)
+              : null,
+          onLogoTap: isEditMode
+              ? () => _showImagePickerSheet(isLogo: true)
+              : null,
         ),
         const SizedBox(height: 20),
         const ProfileStatsStrip(),
@@ -652,34 +643,28 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
           websiteController: isEditMode ? _website : null,
           onInstagramChanged: isEditMode
               ? (value) => _updateForm(
-                    (p) => p.copyWith(
-                      socialLinks: p.socialLinks.copyWith(instagram: value),
-                    ),
-                  )
+                  (p) => p.copyWith(
+                    socialLinks: p.socialLinks.copyWith(instagram: value),
+                  ),
+                )
               : null,
           onFacebookChanged: isEditMode
               ? (value) => _updateForm(
-                    (p) => p.copyWith(
-                      socialLinks: p.socialLinks.copyWith(facebook: value),
-                    ),
-                  )
+                  (p) => p.copyWith(
+                    socialLinks: p.socialLinks.copyWith(facebook: value),
+                  ),
+                )
               : null,
           onWebsiteChanged: isEditMode
               ? (value) => _updateForm(
-                    (p) => p.copyWith(
-                      socialLinks: p.socialLinks.copyWith(website: value),
-                    ),
-                  )
+                  (p) => p.copyWith(
+                    socialLinks: p.socialLinks.copyWith(website: value),
+                  ),
+                )
               : null,
         ),
         const SizedBox(height: 14),
         _SettingsLink(onTap: _openSettings),
-        if (!isEditMode) ...[
-          const SizedBox(height: 10),
-          _SwitchToShoppingLink(onTap: _switchToShopping),
-          const SizedBox(height: 10),
-          _SignOutLink(onTap: _signOut),
-        ],
       ],
     );
   }
@@ -716,82 +701,6 @@ class _SettingsLink extends StatelessWidget {
               ),
             ),
             Icon(Icons.chevron_right, color: AppColors.textMuted),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SwitchToShoppingLink extends StatelessWidget {
-  const _SwitchToShoppingLink({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedScaleTap(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.creamDark, width: 1.5),
-        ),
-        child: const Row(
-          children: [
-            Icon(Icons.storefront_outlined, color: AppColors.espresso, size: 20),
-            SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                VendorProfileStrings.switchToShopping,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.espresso,
-                ),
-              ),
-            ),
-            Icon(Icons.chevron_right, color: AppColors.textMuted),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SignOutLink extends StatelessWidget {
-  const _SignOutLink({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedScaleTap(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.creamDark, width: 1.5),
-        ),
-        child: const Row(
-          children: [
-            Icon(Icons.logout_outlined, color: AppColors.coral, size: 20),
-            SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                VendorSettingsStrings.signOutTitle,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.coral,
-                ),
-              ),
-            ),
-            Icon(Icons.chevron_right, color: AppColors.coral),
           ],
         ),
       ),

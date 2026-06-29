@@ -143,6 +143,24 @@ CREATE INDEX "customization_request_vendor_id" ON "customization_request" USING 
 CREATE INDEX "customization_request_user_id" ON "customization_request" USING btree ("userId");
 
 --
+-- Class InAppNotification as table in_app_notification
+--
+CREATE TABLE "in_app_notification" (
+    "id" bigserial PRIMARY KEY,
+    "userId" uuid NOT NULL,
+    "title" text NOT NULL,
+    "message" text NOT NULL,
+    "type" text NOT NULL,
+    "referenceId" bigint,
+    "isRead" boolean NOT NULL DEFAULT false,
+    "createdAt" timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes
+CREATE INDEX "in_app_notification_user_id" ON "in_app_notification" USING btree ("userId");
+CREATE INDEX "in_app_notification_user_unread" ON "in_app_notification" USING btree ("userId", "isRead");
+
+--
 -- Class NotificationPreference as table notification_preference
 --
 CREATE TABLE "notification_preference" (
@@ -167,9 +185,13 @@ CREATE TABLE "order" (
     "id" bigserial PRIMARY KEY,
     "userId" uuid NOT NULL,
     "status" text NOT NULL DEFAULT 'pending'::text,
+    "deliveryStatus" text,
+    "paymentStatus" text NOT NULL DEFAULT 'unpaid'::text,
     "totalAmount" double precision NOT NULL,
     "shippingAddress" text NOT NULL,
     "rejectionReason" text,
+    "autoExpiresAt" timestamp without time zone,
+    "version" bigint NOT NULL DEFAULT 1,
     "placedAt" timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -177,6 +199,7 @@ CREATE TABLE "order" (
 -- Indexes
 CREATE INDEX "order_user_id" ON "order" USING btree ("userId");
 CREATE INDEX "order_status" ON "order" USING btree ("status");
+CREATE INDEX "order_auto_expires_at" ON "order" USING btree ("autoExpiresAt");
 
 --
 -- Class OrderDeliveryUpdate as table order_delivery_update
@@ -210,6 +233,23 @@ CREATE TABLE "order_item" (
 CREATE INDEX "order_item_order_id" ON "order_item" USING btree ("orderId");
 CREATE INDEX "order_item_vendor_id" ON "order_item" USING btree ("vendorId");
 CREATE INDEX "order_item_vendor_order" ON "order_item" USING btree ("vendorId", "orderId");
+
+--
+-- Class OrderStatusHistory as table order_status_history
+--
+CREATE TABLE "order_status_history" (
+    "id" bigserial PRIMARY KEY,
+    "orderId" bigint NOT NULL,
+    "previousStatus" text,
+    "newStatus" text NOT NULL,
+    "statusType" text NOT NULL,
+    "changedById" uuid,
+    "changedAt" timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "note" text
+);
+
+-- Indexes
+CREATE INDEX "order_status_history_order_id" ON "order_status_history" USING btree ("orderId");
 
 --
 -- Class OrderVendorPayment as table order_vendor_payment
@@ -274,6 +314,7 @@ CREATE TABLE "product" (
     "warranty" text,
     "model3dUrl" text,
     "thumbnailUrl" text,
+    "viewImageUrls" json,
     "status" text NOT NULL DEFAULT 'active'::text,
     "removedReason" text,
     "removedById" uuid,
@@ -362,6 +403,7 @@ CREATE TABLE "vendor" (
     "city" text,
     "country" text,
     "shopCategory" text,
+    "contactEmail" text,
     "logoUrl" text,
     "bannerUrl" text,
     "coverUrl" text,
@@ -378,6 +420,23 @@ CREATE TABLE "vendor" (
 
 -- Indexes
 CREATE UNIQUE INDEX "vendor_user_id" ON "vendor" USING btree ("userId");
+
+--
+-- Class VendorBankDetails as table vendor_bank_details
+--
+CREATE TABLE "vendor_bank_details" (
+    "id" bigserial PRIMARY KEY,
+    "vendorId" uuid NOT NULL,
+    "accountHolderName" text NOT NULL,
+    "bankName" text NOT NULL,
+    "accountNumber" text NOT NULL,
+    "branchCode" text NOT NULL,
+    "createdAt" timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes
+CREATE UNIQUE INDEX "vendor_bank_details_vendor_id" ON "vendor_bank_details" USING btree ("vendorId");
 
 --
 -- Class VendorDocument as table vendor_document
@@ -998,6 +1057,16 @@ ALTER TABLE ONLY "customization_request"
     ON UPDATE NO ACTION;
 
 --
+-- Foreign relations for "in_app_notification" table
+--
+ALTER TABLE ONLY "in_app_notification"
+    ADD CONSTRAINT "in_app_notification_fk_0"
+    FOREIGN KEY("userId")
+    REFERENCES "user"("id")
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION;
+
+--
 -- Foreign relations for "notification_preference" table
 --
 ALTER TABLE ONLY "notification_preference"
@@ -1052,6 +1121,22 @@ ALTER TABLE ONLY "order_item"
     ADD CONSTRAINT "order_item_fk_2"
     FOREIGN KEY("vendorId")
     REFERENCES "vendor"("id")
+    ON DELETE SET NULL
+    ON UPDATE NO ACTION;
+
+--
+-- Foreign relations for "order_status_history" table
+--
+ALTER TABLE ONLY "order_status_history"
+    ADD CONSTRAINT "order_status_history_fk_0"
+    FOREIGN KEY("orderId")
+    REFERENCES "order"("id")
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION;
+ALTER TABLE ONLY "order_status_history"
+    ADD CONSTRAINT "order_status_history_fk_1"
+    FOREIGN KEY("changedById")
+    REFERENCES "user"("id")
     ON DELETE SET NULL
     ON UPDATE NO ACTION;
 
@@ -1183,6 +1268,16 @@ ALTER TABLE ONLY "vendor"
     FOREIGN KEY("approvedById")
     REFERENCES "admin"("id")
     ON DELETE NO ACTION
+    ON UPDATE NO ACTION;
+
+--
+-- Foreign relations for "vendor_bank_details" table
+--
+ALTER TABLE ONLY "vendor_bank_details"
+    ADD CONSTRAINT "vendor_bank_details_fk_0"
+    FOREIGN KEY("vendorId")
+    REFERENCES "vendor"("id")
+    ON DELETE CASCADE
     ON UPDATE NO ACTION;
 
 --
@@ -1436,9 +1531,9 @@ ALTER TABLE ONLY "serverpod_auth_idp_passkey_account"
 -- MIGRATION VERSION FOR placeify
 --
 INSERT INTO "serverpod_migrations" ("module", "version", "timestamp")
-    VALUES ('placeify', '20260622042659795', now())
+    VALUES ('placeify', '20260622153000000', now())
     ON CONFLICT ("module")
-    DO UPDATE SET "version" = '20260622042659795', "timestamp" = now();
+    DO UPDATE SET "version" = '20260622153000000', "timestamp" = now();
 
 --
 -- MIGRATION VERSION FOR serverpod

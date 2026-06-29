@@ -24,7 +24,6 @@ class MockConsumerShopRepository implements ConsumerShopRepository {
   @override
   Future<List<ShopListing>> listShops({String? query}) async {
     await AdminSeedData.ensureSeeded(_prefs);
-    ConsumerShopSeed.ensureCatalogProfiles();
     await _ensureApprovedProfiles();
 
     final vendorIds = await _approvedVendorIds();
@@ -60,7 +59,6 @@ class MockConsumerShopRepository implements ConsumerShopRepository {
   @override
   Future<ShopListing?> getShop(String vendorId) async {
     await AdminSeedData.ensureSeeded(_prefs);
-    ConsumerShopSeed.ensureCatalogProfiles();
     await _ensureApprovedProfiles();
 
     final profile = VendorMockConfig.profileFor(vendorId);
@@ -72,9 +70,9 @@ class MockConsumerShopRepository implements ConsumerShopRepository {
 
   @override
   Future<List<Product>> getShopProducts(String vendorId) async {
-    return _vendorProductsFor(vendorId)
-        .map(VendorProductMapper.toConsumerProduct)
-        .toList();
+    return _vendorProductsFor(
+      vendorId,
+    ).map(VendorProductMapper.toConsumerProduct).toList();
   }
 
   /// Synchronous lookup for [productByIdProvider] and cart resolution.
@@ -87,11 +85,9 @@ class MockConsumerShopRepository implements ConsumerShopRepository {
   static void _ensureProductIndex() {
     if (_productIndex.isNotEmpty) return;
 
-    ConsumerShopSeed.ensureCatalogProfiles();
-
     for (final vendorId in [
       VendorMockConfig.demoVendorId,
-      ...ConsumerShopSeed.catalogVendorIds,
+      AdminSeedData.approvedVendorId,
     ]) {
       for (final vendorProduct in _vendorProductsFor(vendorId)) {
         final product = VendorProductMapper.toConsumerProduct(vendorProduct);
@@ -102,9 +98,9 @@ class MockConsumerShopRepository implements ConsumerShopRepository {
 
   static List<VendorProduct> _vendorProductsFor(String vendorId) {
     if (VendorMockConfig.isKnownVendor(vendorId)) {
-      return VendorMockConfig.productsFor(vendorId)
-          .where((product) => product.isActive)
-          .toList();
+      return VendorMockConfig.productsFor(
+        vendorId,
+      ).where((product) => product.isActive).toList();
     }
     if (ConsumerShopSeed.hasSeedProducts(vendorId)) {
       return ConsumerShopSeed.productsFor(vendorId);
@@ -113,10 +109,7 @@ class MockConsumerShopRepository implements ConsumerShopRepository {
   }
 
   Future<Set<String>> _approvedVendorIds() async {
-    final ids = <String>{
-      VendorMockConfig.demoVendorId,
-      ...AdminSeedData.catalogShopVendorIds,
-    };
+    final ids = <String>{VendorMockConfig.demoVendorId};
     final users = await _authRepository.getAllUsers();
     for (final user in users) {
       if (user.vendorStatus == VendorStatus.approved && user.vendorId != null) {
@@ -146,17 +139,8 @@ class MockConsumerShopRepository implements ConsumerShopRepository {
       logoUrl: ShopListingImages.resolveLogoUrl(profile, products),
       bannerUrl: ShopListingImages.resolveBannerUrl(profile, products),
       productCount: products.length,
-      averageRating: _averageRatingFor(profile.id),
+      averageRating: VendorMockConfig.statsFor(profile.id).averageRating,
     );
-  }
-
-  double _averageRatingFor(String vendorId) {
-    final fromStats = VendorMockConfig.statsFor(vendorId).averageRating;
-    if (fromStats > 0) return fromStats;
-    if (ConsumerShopSeed.hasSeedProducts(vendorId)) {
-      return ConsumerShopSeed.averageRatingFor(vendorId);
-    }
-    return 0;
   }
 
   String _localityFromAddress(String address) {

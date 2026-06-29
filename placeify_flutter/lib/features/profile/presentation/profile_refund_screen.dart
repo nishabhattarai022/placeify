@@ -35,7 +35,8 @@ class _ProfileRefundScreenState extends ConsumerState<ProfileRefundScreen> {
 
   Future<void> _submit() async {
     final state = ref.read(profileRefundsProvider).value;
-    final order = _selectedOrder ??
+    final order =
+        _selectedOrder ??
         (state != null && state.orderOptions.isNotEmpty
             ? state.orderOptions.first
             : null);
@@ -45,7 +46,9 @@ class _ProfileRefundScreenState extends ConsumerState<ProfileRefundScreen> {
     }
 
     setState(() => _submitting = true);
-    final error = await ref.read(profileRefundsProvider.notifier).submitRefund(
+    final error = await ref
+        .read(profileRefundsProvider.notifier)
+        .submitRefund(
           orderId: order.orderId,
           reason: _reason,
           details: _detailsController.text,
@@ -84,7 +87,8 @@ class _ProfileRefundScreenState extends ConsumerState<ProfileRefundScreen> {
                 reason: _reason,
                 detailsController: _detailsController,
                 submitting: _submitting,
-                onOrderChanged: (order) => setState(() => _selectedOrder = order),
+                onOrderChanged: (order) =>
+                    setState(() => _selectedOrder = order),
                 onReasonChanged: (reason) => setState(() => _reason = reason),
                 onSubmit: _submit,
               ),
@@ -94,7 +98,8 @@ class _ProfileRefundScreenState extends ConsumerState<ProfileRefundScreen> {
                 reason: _reason,
                 detailsController: _detailsController,
                 submitting: _submitting,
-                onOrderChanged: (order) => setState(() => _selectedOrder = order),
+                onOrderChanged: (order) =>
+                    setState(() => _selectedOrder = order),
                 onReasonChanged: (reason) => setState(() => _reason = reason),
                 onSubmit: _submit,
               ),
@@ -130,8 +135,8 @@ class _RefundBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final orderOptions = state.orderOptions;
-    final selected = order ??
-        (orderOptions.isNotEmpty ? orderOptions.first : null);
+    final selected =
+        order ?? (orderOptions.isNotEmpty ? orderOptions.first : null);
     final walletCredit = state.completedTotal;
 
     return ListView(

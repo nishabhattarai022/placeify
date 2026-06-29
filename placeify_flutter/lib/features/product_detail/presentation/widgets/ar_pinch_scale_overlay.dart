@@ -61,8 +61,10 @@ class _ArPinchScaleOverlayState extends State<ArPinchScaleOverlay> {
     if (startSpan == null || startMultiplier == null || startSpan <= 0) return;
 
     final ratio = _currentSpan() / startSpan;
-    final next = (startMultiplier * ratio)
-        .clamp(widget.minMultiplier, widget.maxMultiplier);
+    final next = (startMultiplier * ratio).clamp(
+      widget.minMultiplier,
+      widget.maxMultiplier,
+    );
     widget.onMultiplierChanged(next);
   }
 
@@ -132,11 +134,11 @@ class _ArScaleControlsState extends State<ArScaleControls> {
               onPressed: widget.multiplier <= widget.minMultiplier
                   ? null
                   : () => widget.onChanged(
-                        (widget.multiplier - 0.1).clamp(
-                          widget.minMultiplier,
-                          widget.maxMultiplier,
-                        ),
+                      (widget.multiplier - 0.1).clamp(
+                        widget.minMultiplier,
+                        widget.maxMultiplier,
                       ),
+                    ),
               icon: const Icon(Icons.remove, color: Colors.white, size: 20),
             ),
             Text(
@@ -152,11 +154,11 @@ class _ArScaleControlsState extends State<ArScaleControls> {
               onPressed: widget.multiplier >= widget.maxMultiplier
                   ? null
                   : () => widget.onChanged(
-                        (widget.multiplier + 0.1).clamp(
-                          widget.minMultiplier,
-                          widget.maxMultiplier,
-                        ),
+                      (widget.multiplier + 0.1).clamp(
+                        widget.minMultiplier,
+                        widget.maxMultiplier,
                       ),
+                    ),
               icon: const Icon(Icons.add, color: Colors.white, size: 20),
             ),
           ],

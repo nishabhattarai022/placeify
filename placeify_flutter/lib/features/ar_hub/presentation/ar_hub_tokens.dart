@@ -29,12 +29,12 @@ abstract final class ArHubTokens {
   static const String ctaLabel = 'Try AR Assistant';
 
   static List<BoxShadow> softShadow({double alpha = 0.06}) => [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: alpha),
-          blurRadius: 14,
-          offset: const Offset(0, 4),
-        ),
-      ];
+    BoxShadow(
+      color: Colors.black.withValues(alpha: alpha),
+      blurRadius: 14,
+      offset: const Offset(0, 4),
+    ),
+  ];
 
   static BoxDecoration headerButtonDecoration = BoxDecoration(
     color: background,

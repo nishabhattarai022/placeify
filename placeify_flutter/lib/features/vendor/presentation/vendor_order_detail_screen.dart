@@ -1,9 +1,7 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:placeify_client/placeify_client.dart' show OrderPaymentStatus;
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_radii.dart';
@@ -18,54 +16,41 @@ import '../domain/constants/vendor_routes.dart';
 import '../domain/enums/order_status.dart';
 import '../domain/models/delivery_update.dart';
 import '../domain/models/vendor_order.dart';
+import '../domain/enums/payment_status.dart';
 import '../domain/models/payment_update.dart';
-import 'providers/vendor_notifications_provider.dart';
 import 'providers/vendor_order_detail_provider.dart';
 import 'providers/vendor_payments_provider.dart';
-import 'providers/vendor_product_image_provider.dart';
 import 'widgets/order_action_sheet.dart';
 import 'widgets/order_status_chip.dart';
 import 'widgets/order_timeline_widget.dart';
+import 'widgets/payment_status_chip.dart';
 import 'widgets/payment_update_sheet.dart';
-import 'widgets/vendor_list_thumbnail.dart';
 
 class VendorOrderDetailScreen extends ConsumerWidget {
   const VendorOrderDetailScreen({required this.orderId, super.key});
 
   final String orderId;
 
-  Future<void> _acknowledgeOrderNotification(
-    WidgetRef ref,
-    String orderId,
-  ) async {
-    final notifier = ref.read(vendorNotificationsProvider.notifier);
-    await notifier.refresh();
-    notifier.markOrderNotificationReadForOrderId(orderId);
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final detailAsync = ref.watch(vendorOrderDetailProvider(orderId));
-
-    ref.listen(vendorOrderDetailProvider(orderId), (previous, next) {
-      next.whenData((detail) {
-        if (detail == null) return;
-        unawaited(_acknowledgeOrderNotification(ref, detail.order.id));
-      });
-    });
 
     return Scaffold(
       backgroundColor: AppColors.cream,
       body: detailAsync.when(
         loading: () => const _OrderDetailShimmer(),
-        error: (_, __) => _OrderDetailError(onRetry: () {
-          ref.invalidate(vendorOrderDetailProvider(orderId));
-        }),
+        error: (_, __) => _OrderDetailError(
+          onRetry: () {
+            ref.invalidate(vendorOrderDetailProvider(orderId));
+          },
+        ),
         data: (detail) {
           if (detail == null) {
-            return _OrderDetailError(onRetry: () {
-              ref.invalidate(vendorOrderDetailProvider(orderId));
-            });
+            return _OrderDetailError(
+              onRetry: () {
+                ref.invalidate(vendorOrderDetailProvider(orderId));
+              },
+            );
           }
 
           return _OrderDetailBody(
@@ -93,11 +78,11 @@ class _OrderDetailBody extends ConsumerWidget {
         ? order.totalAmount / order.quantity
         : order.totalAmount;
     final isPending = order.status == OrderStatus.pending;
-    final canUpdateDelivery = !isPending &&
+    final canUpdateDelivery =
+        !isPending &&
         order.status != OrderStatus.rejected &&
         order.status != OrderStatus.cancelled &&
         order.status != OrderStatus.delivered;
-    final imageUrl = ref.watch(vendorProductImageUrlProvider(order.productId));
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(
@@ -143,11 +128,23 @@ class _OrderDetailBody extends ConsumerWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    VendorListThumbnail(
-                      label: order.productName,
-                      imageUrl: imageUrl,
-                      fallbackIconPath: _iconForProduct(order.productName),
-                      size: 56,
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: AppColors.cream,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: SvgPicture.asset(
+                          _iconForProduct(order.productName),
+                          width: 26,
+                          colorFilter: const ColorFilter.mode(
+                            AppColors.bark,
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -296,21 +293,17 @@ class _PaymentSection extends ConsumerWidget {
             },
           ),
           const SizedBox(height: 16),
-          if (order.orderPaymentStatus !=
-              OrderPaymentStatus.paymentConfirmed)
-            OutlinedButton(
-              onPressed: () async {
-                HapticService.light();
-                await PaymentUpdateSheet.show(
-                  context,
-                  ref,
-                  orderId: order.id,
-                  orderLabel: 'Order #${order.orderNumber}',
-                  orderPaymentStatus: order.orderPaymentStatus,
-                );
-                ref.invalidate(orderPaymentAuditTrailProvider(order.id));
-                ref.invalidate(vendorOrderDetailProvider(order.id));
-              },
+          OutlinedButton(
+            onPressed: () async {
+              HapticService.light();
+              await PaymentUpdateSheet.show(
+                context,
+                ref,
+                orderId: order.id,
+                orderLabel: 'Order #${order.orderNumber}',
+              );
+              ref.invalidate(orderPaymentAuditTrailProvider(order.id));
+            },
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.vendorForest,
               side: const BorderSide(color: AppColors.vendorForest),
@@ -329,6 +322,16 @@ class _PaymentAuditRow extends StatelessWidget {
 
   final PaymentUpdate update;
 
+  static String _statusLabel(PaymentStatus status) {
+    return switch (status) {
+      PaymentStatus.pending => 'Pending',
+      PaymentStatus.paid => 'Received',
+      PaymentStatus.partial => 'Partial',
+      PaymentStatus.refunded => 'Refunded',
+      PaymentStatus.failed => 'Failed',
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -344,16 +347,8 @@ class _PaymentAuditRow extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  update.note,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
+              PaymentStatusChip(status: update.status),
+              const Spacer(),
               Text(
                 Formatters.shortDate(update.updatedAt),
                 style: const TextStyle(
@@ -363,14 +358,26 @@ class _PaymentAuditRow extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
-            Formatters.currencyFull(update.amount),
+            '${_statusLabel(update.status)} · ${Formatters.currencyFull(update.amount)}',
             style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.textSecondary,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.espresso,
             ),
           ),
+          if (update.note.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              update.note,
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+                height: 1.35,
+              ),
+            ),
+          ],
         ],
       ),
     );

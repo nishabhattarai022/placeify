@@ -37,8 +37,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     final editMode = ref.watch(cartEditModeProvider);
     final totals = ref.watch(cartTotalsProvider);
 
-    final listBottomInset = CartTokens.summaryOverlayHeight +
-        CartTokens.summaryScrollUnderlap;
+    final listBottomInset =
+        CartTokens.summaryOverlayHeight + CartTokens.summaryScrollUnderlap;
 
     return Scaffold(
       backgroundColor: CartTokens.background,
@@ -86,10 +86,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                               item: item,
                               product: product,
                               editMode: editMode,
-                              onIncrement: () =>
-                                  cart.increment(item.productId),
-                              onDecrement: () =>
-                                  cart.decrement(item.productId),
+                              onIncrement: () => cart.increment(item.productId),
+                              onDecrement: () => cart.decrement(item.productId),
                               onRemove: () {
                                 HapticService.light();
                                 cart.remove(item.productId);

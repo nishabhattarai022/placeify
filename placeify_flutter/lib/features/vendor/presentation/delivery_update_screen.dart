@@ -144,7 +144,8 @@ class _DeliveryUpdateScreenState extends ConsumerState<DeliveryUpdateScreen> {
           final nextStage = _nextStage(detail.deliveryUpdates);
           _selectedStage ??= nextStage;
 
-          final canSubmit = nextStage != null &&
+          final canSubmit =
+              nextStage != null &&
               _selectedStage == nextStage &&
               !_isSubmitting &&
               order.status != OrderStatus.pending &&
@@ -195,8 +196,8 @@ class _DeliveryUpdateScreenState extends ConsumerState<DeliveryUpdateScreen> {
                           children: DeliveryStage.values.map((stage) {
                             final isNext = stage == nextStage;
                             final isSelected = _selectedStage == stage;
-                            final isPast = DeliveryStage.values
-                                    .indexOf(stage) <
+                            final isPast =
+                                DeliveryStage.values.indexOf(stage) <
                                 DeliveryStage.values.indexOf(nextStage);
 
                             return FilterChip(
@@ -225,8 +226,8 @@ class _DeliveryUpdateScreenState extends ConsumerState<DeliveryUpdateScreen> {
                                 color: isNext
                                     ? AppColors.accent
                                     : isPast
-                                        ? AppColors.sage
-                                        : AppColors.textMuted,
+                                    ? AppColors.sage
+                                    : AppColors.textMuted,
                               ),
                             );
                           }).toList(),
@@ -271,8 +272,9 @@ class _DeliveryUpdateScreenState extends ConsumerState<DeliveryUpdateScreen> {
                                     width: 32,
                                     height: 32,
                                     decoration: BoxDecoration(
-                                      color: AppColors.espresso
-                                          .withValues(alpha: 0.72),
+                                      color: AppColors.espresso.withValues(
+                                        alpha: 0.72,
+                                      ),
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Icon(
@@ -420,7 +422,10 @@ class _DeliveryUpdateError extends StatelessWidget {
         const ProfileSubHero(title: 'Update Delivery'),
         Expanded(
           child: Center(
-            child: TextButton(onPressed: onRetry, child: const Text('Try again')),
+            child: TextButton(
+              onPressed: onRetry,
+              child: const Text('Try again'),
+            ),
           ),
         ),
       ],

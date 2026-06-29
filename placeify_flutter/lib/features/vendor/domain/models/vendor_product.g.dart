@@ -14,7 +14,8 @@ _VendorProduct _$VendorProductFromJson(Map<String, dynamic> json) =>
       sku: json['sku'] as String,
       price: (json['price'] as num).toDouble(),
       stock: (json['stock'] as num).toInt(),
-      imageUrls: (json['imageUrls'] as List<dynamic>?)
+      imageUrls:
+          (json['imageUrls'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           const [],

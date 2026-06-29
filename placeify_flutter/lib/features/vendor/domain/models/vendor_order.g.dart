@@ -17,12 +17,6 @@ _VendorOrder _$VendorOrderFromJson(Map<String, dynamic> json) => _VendorOrder(
   status: $enumDecode(_$OrderStatusEnumMap, json['status']),
   customerName: json['customerName'] as String,
   orderedAt: DateTime.parse(json['orderedAt'] as String),
-  orderPaymentStatus:
-      $enumDecodeNullable(
-        _$OrderPaymentStatusEnumMap,
-        json['orderPaymentStatus'],
-      ) ??
-      OrderPaymentStatus.unpaid,
 );
 
 Map<String, dynamic> _$VendorOrderToJson(_VendorOrder instance) =>
@@ -37,7 +31,6 @@ Map<String, dynamic> _$VendorOrderToJson(_VendorOrder instance) =>
       'status': _$OrderStatusEnumMap[instance.status]!,
       'customerName': instance.customerName,
       'orderedAt': instance.orderedAt.toIso8601String(),
-      'orderPaymentStatus': instance.orderPaymentStatus,
     };
 
 const _$OrderStatusEnumMap = {
@@ -48,10 +41,4 @@ const _$OrderStatusEnumMap = {
   OrderStatus.shipped: 'shipped',
   OrderStatus.delivered: 'delivered',
   OrderStatus.cancelled: 'cancelled',
-};
-
-const _$OrderPaymentStatusEnumMap = {
-  OrderPaymentStatus.unpaid: 'unpaid',
-  OrderPaymentStatus.paymentReceived: 'paymentReceived',
-  OrderPaymentStatus.paymentConfirmed: 'paymentConfirmed',
 };

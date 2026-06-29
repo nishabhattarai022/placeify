@@ -29,11 +29,12 @@ const Duration placeifyLongRequestTimeout = Duration(minutes: 10);
 
 Future<void> _createClient({required bool forceRefresh}) async {
   serverUrl = await resolveServerUrl(forceRefresh: forceRefresh);
-  client = Client(
-    serverUrl,
-    connectionTimeout: placeifyLongRequestTimeout,
-  )
-    ..connectivityMonitor = FlutterConnectivityMonitor()
-    ..authSessionManager = _authSessionManager;
+  client =
+      Client(
+          serverUrl,
+          connectionTimeout: placeifyLongRequestTimeout,
+        )
+        ..connectivityMonitor = FlutterConnectivityMonitor()
+        ..authSessionManager = _authSessionManager;
   await client.auth.initialize();
 }

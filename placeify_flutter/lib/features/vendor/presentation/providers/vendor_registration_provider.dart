@@ -145,8 +145,9 @@ class VendorRegistrationNotifier extends _$VendorRegistrationNotifier {
   }
 
   Future<String?> submit() async {
-    final invalidStep =
-        VendorRegistrationValidator.firstInvalidStep(state.form);
+    final invalidStep = VendorRegistrationValidator.firstInvalidStep(
+      state.form,
+    );
     if (invalidStep != null) {
       final errors = validateStep(invalidStep);
       state = state.copyWith(

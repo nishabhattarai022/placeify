@@ -54,7 +54,9 @@ class VendorApplicationActions extends _$VendorApplicationActions {
     if (!ref.mounted) return 'Could not approve application';
 
     try {
-      await ref.read(currentUserProvider.notifier).updateVendorStatusForUser(
+      await ref
+          .read(currentUserProvider.notifier)
+          .updateVendorStatusForUser(
             userId: userId,
             status: VendorStatus.approved,
             vendorId: vendorId,
@@ -80,7 +82,9 @@ class VendorApplicationActions extends _$VendorApplicationActions {
     if (!ref.mounted) return 'Could not decline application';
 
     try {
-      await ref.read(currentUserProvider.notifier).updateVendorStatusForUser(
+      await ref
+          .read(currentUserProvider.notifier)
+          .updateVendorStatusForUser(
             userId: userId,
             status: VendorStatus.none,
             vendorId: null,

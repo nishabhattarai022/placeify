@@ -38,7 +38,8 @@ class _VendorCardCompactState extends State<VendorCardCompact> {
     final details = ShopListingDetails.forShop(shop);
 
     return Semantics(
-      label: '${shop.businessName}, ${shop.locality}, '
+      label:
+          '${shop.businessName}, ${shop.locality}, '
           '${shop.productCount} ${ShopStrings.productCountLabel}',
       button: true,
       excludeSemantics: true,

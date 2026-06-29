@@ -1,7 +1,17 @@
 abstract final class Formatters {
   static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   /// Nepali Rupee prefix (ISO 4217: NPR).
@@ -45,6 +55,10 @@ abstract final class Formatters {
 
   static String shortDate(DateTime date) {
     return '${_months[date.month - 1]} ${date.day}';
+  }
+
+  static String longDate(DateTime date) {
+    return '${_months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
   static String orderMeta(String orderNumber, DateTime date) {

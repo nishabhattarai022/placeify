@@ -62,8 +62,8 @@ class ProfileRefunds extends _$ProfileRefunds {
     final orderOptions = [
       for (final order in orders)
         if (!order.isCancelled)
-          if (int.tryParse(order.id)
-              case final orderId? when !pendingOrderIds.contains(orderId))
+          if (int.tryParse(order.id) case final orderId?
+              when !pendingOrderIds.contains(orderId))
             RefundOrderOption(
               orderId: orderId,
               label:

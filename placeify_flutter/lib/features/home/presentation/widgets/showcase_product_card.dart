@@ -97,7 +97,8 @@ class _ProductImage extends StatelessWidget {
         product.imageUrl,
         fit: BoxFit.contain,
         height: 120,
-        errorBuilder: (_, __, ___) => _FallbackIcon(svgPath: product.svgIconPath),
+        errorBuilder: (_, __, ___) =>
+            _FallbackIcon(svgPath: product.svgIconPath),
       );
     }
 

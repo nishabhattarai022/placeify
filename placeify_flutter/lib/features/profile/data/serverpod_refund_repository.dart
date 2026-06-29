@@ -23,7 +23,10 @@ class ServerpodRefundRepository {
     _requireAuthenticated();
     try {
       return await client.refund.listMyRefundRequests(
-        pagination: PaginationInput(page: (offset ~/ limit) + 1, pageSize: limit),
+        pagination: PaginationInput(
+          page: (offset ~/ limit) + 1,
+          pageSize: limit,
+        ),
       );
     } catch (error) {
       throw RefundRepositoryException(_mapError(error));

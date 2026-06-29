@@ -120,22 +120,20 @@ abstract final class HomeCategoriesConfig {
     required String id,
     required List<String> roomIds,
     List<Color>? swatches,
-  }) =>
-      RecommendProduct(
-        id: id,
-        productId: product.id,
-        displayName: product.name,
-        displayPrice: 'NPR ${product.price.toInt()}',
-        imageAsset: product.imageUrl.startsWith('http')
-            ? _fallbackAsset
-            : product.imageUrl,
-        roomIds: roomIds,
-        swatches: swatches ?? _defaultSwatches,
-      );
+  }) => RecommendProduct(
+    id: id,
+    productId: product.id,
+    displayName: product.name,
+    displayPrice: 'NPR ${product.price.toInt()}',
+    imageAsset: product.imageUrl.startsWith('http')
+        ? _fallbackAsset
+        : product.imageUrl,
+    roomIds: roomIds,
+    swatches: swatches ?? _defaultSwatches,
+  );
 
-  static List<RecommendProduct> forRoom(String roomId) => recommended
-      .where((p) => p.roomIds.contains(roomId))
-      .toList();
+  static List<RecommendProduct> forRoom(String roomId) =>
+      recommended.where((p) => p.roomIds.contains(roomId)).toList();
 }
 
 class RoomCategory {

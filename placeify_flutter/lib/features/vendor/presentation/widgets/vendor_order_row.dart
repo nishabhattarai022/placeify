@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/services/haptic_service.dart';
@@ -9,10 +10,8 @@ import '../../../../core/constants/app_radii.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../domain/enums/order_status.dart';
 import '../../domain/models/vendor_order.dart';
-import '../providers/vendor_product_image_provider.dart';
 import 'order_action_sheet.dart';
 import 'order_status_chip.dart';
-import 'vendor_list_thumbnail.dart';
 
 class VendorOrderRow extends ConsumerStatefulWidget {
   const VendorOrderRow({required this.order, super.key});
@@ -30,7 +29,6 @@ class _VendorOrderRowState extends ConsumerState<VendorOrderRow> {
   Widget build(BuildContext context) {
     final order = widget.order;
     final meta = Formatters.orderMeta(order.orderNumber, order.orderedAt);
-    final imageUrl = ref.watch(vendorProductImageUrlProvider(order.productId));
 
     return GestureDetector(
       onTap: () {
@@ -53,10 +51,23 @@ class _VendorOrderRowState extends ConsumerState<VendorOrderRow> {
         ),
         child: Row(
           children: [
-            VendorListThumbnail(
-              label: order.productName,
-              imageUrl: imageUrl,
-              fallbackIconPath: _iconForProduct(order.productName),
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: AppColors.cream,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: SvgPicture.asset(
+                  _iconForProduct(order.productName),
+                  width: 24,
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.bark,
+                    BlendMode.srcIn,
+                  ),
+                ),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(

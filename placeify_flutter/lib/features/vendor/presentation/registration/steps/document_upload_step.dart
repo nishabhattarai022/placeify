@@ -140,8 +140,8 @@ class _DocumentTile extends StatelessWidget {
               color: hasError
                   ? AppColors.coral
                   : hasFile
-                      ? AppColors.vendorForest
-                      : AppColors.creamDark,
+                  ? AppColors.vendorForest
+                  : AppColors.creamDark,
               width: 1.5,
             ),
           ),
@@ -158,7 +158,9 @@ class _DocumentTile extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 child: Icon(
-                  hasFile ? Icons.check_circle_outline : Icons.upload_file_outlined,
+                  hasFile
+                      ? Icons.check_circle_outline
+                      : Icons.upload_file_outlined,
                   color: hasError ? AppColors.coral : AppColors.vendorForest,
                   size: 22,
                 ),

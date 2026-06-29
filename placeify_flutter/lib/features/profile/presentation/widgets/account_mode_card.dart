@@ -118,8 +118,8 @@ class _AccountModeBody extends ConsumerWidget {
                       isVendor
                           ? 'Managing your shop'
                           : user.hasVendorShop
-                              ? 'Browsing as a customer'
-                              : 'Ready to start selling?',
+                          ? 'Browsing as a customer'
+                          : 'Ready to start selling?',
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppColors.textMuted,
@@ -137,8 +137,8 @@ class _AccountModeBody extends ConsumerWidget {
             isVendor
                 ? 'Switch to shopping to browse furniture, use AR preview, and place orders.'
                 : user.isVendorAccount
-                    ? 'Your shop is registered. Switch anytime to manage products and orders.'
-                    : 'Register your shop once, then switch between buying and selling with one login.',
+                ? 'Your shop is registered. Switch anytime to manage products and orders.'
+                : 'Register your shop once, then switch between buying and selling with one login.',
             style: const TextStyle(
               fontSize: 13,
               height: 1.45,

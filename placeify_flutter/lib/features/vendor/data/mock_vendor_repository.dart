@@ -50,7 +50,9 @@ class MockVendorRepository implements VendorRepository {
     await Future<void>.delayed(const Duration(milliseconds: 350));
 
     if (simulateProfileUpdateError) {
-      throw Exception('Could not save profile. Check your connection and try again.');
+      throw Exception(
+        'Could not save profile. Check your connection and try again.',
+      );
     }
 
     final updated = VendorMockConfig.updateProfile(profile);
@@ -69,7 +71,6 @@ class MockVendorRepository implements VendorRepository {
   @override
   Future<List<VendorOrder>> getOrders(String vendorId, {int limit = 20}) async {
     await Future<void>.delayed(const Duration(milliseconds: 150));
-    VendorMockConfig.ensureDefaultOrders();
     return VendorMockConfig.ordersFor(vendorId, limit: limit);
   }
 
@@ -97,8 +98,10 @@ class MockVendorRepository implements VendorRepository {
       throw VendorOrderActionException('Only pending orders can be accepted.');
     }
 
-    final updated =
-        VendorMockConfig.updateOrderStatus(orderId, OrderStatus.accepted);
+    final updated = VendorMockConfig.updateOrderStatus(
+      orderId,
+      OrderStatus.accepted,
+    );
     if (updated == null) {
       throw VendorOrderActionException('Order not found.');
     }
@@ -131,8 +134,10 @@ class MockVendorRepository implements VendorRepository {
       throw VendorOrderActionException('Only pending orders can be rejected.');
     }
 
-    final updated =
-        VendorMockConfig.updateOrderStatus(orderId, OrderStatus.rejected);
+    final updated = VendorMockConfig.updateOrderStatus(
+      orderId,
+      OrderStatus.rejected,
+    );
     if (updated == null) {
       throw VendorOrderActionException('Order not found.');
     }
@@ -218,12 +223,6 @@ class MockVendorRepository implements VendorRepository {
     await Future<void>.delayed(const Duration(milliseconds: 150));
     return VendorMockConfig.notificationsFor(vendorId);
   }
-
-  @override
-  Future<void> markNotificationRead(String notificationId) async {}
-
-  @override
-  Future<void> markAllNotificationsRead() async {}
 
   @override
   Future<List<VendorPayout>> getPayouts(String vendorId) async {

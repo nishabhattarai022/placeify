@@ -38,8 +38,9 @@ class ProductDetailInfoSection extends StatelessWidget {
         padding: const EdgeInsets.all(ProductDetailTokens.infoCardPadding),
         decoration: BoxDecoration(
           color: ProductDetailTokens.infoCardBg,
-          borderRadius:
-              BorderRadius.circular(ProductDetailTokens.infoCardRadius),
+          borderRadius: BorderRadius.circular(
+            ProductDetailTokens.infoCardRadius,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,19 +113,19 @@ class ProductDetailInfoSection extends StatelessWidget {
 }
 
 TextStyle _bodyStyle() => AppFonts.dmSans(
-      fontSize: 13.5,
-      fontWeight: FontWeight.w400,
-      color: ProductDetailTokens.textSecondary,
-      height: 1.55,
-      letterSpacing: -0.05,
-    );
+  fontSize: 13.5,
+  fontWeight: FontWeight.w400,
+  color: ProductDetailTokens.textSecondary,
+  height: 1.55,
+  letterSpacing: -0.05,
+);
 
 TextStyle _sectionHeading() => AppFonts.dmSans(
-      fontSize: 13,
-      fontWeight: FontWeight.w700,
-      color: ProductDetailTokens.textPrimary,
-      letterSpacing: 0.4,
-    );
+  fontSize: 13,
+  fontWeight: FontWeight.w700,
+  color: ProductDetailTokens.textPrimary,
+  letterSpacing: 0.4,
+);
 
 class _ExpandedDetails extends StatelessWidget {
   const _ExpandedDetails({

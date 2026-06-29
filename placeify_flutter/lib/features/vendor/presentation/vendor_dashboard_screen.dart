@@ -19,6 +19,7 @@ import 'package:placeify_flutter/features/vendor/presentation/widgets/metric_car
 import 'package:placeify_flutter/features/vendor/presentation/widgets/revenue_card.dart';
 import 'package:placeify_flutter/features/vendor/presentation/widgets/top_products_chart.dart';
 import 'package:placeify_flutter/features/vendor/presentation/widgets/upload_product_button.dart';
+import 'package:placeify_flutter/features/vendor/presentation/widgets/vendor_dashboard_fab.dart';
 import 'package:placeify_flutter/features/vendor/presentation/widgets/vendor_onboarding_checklist.dart';
 import 'package:placeify_flutter/features/vendor/presentation/widgets/vendor_order_row.dart';
 import 'package:placeify_flutter/features/vendor/presentation/widgets/vendor_reviews_section.dart';
@@ -110,6 +111,8 @@ class _VendorDashboardScreenState extends ConsumerState<VendorDashboardScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.cream,
+      floatingActionButton: const VendorDashboardFab(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,18 +151,18 @@ class _VendorDashboardScreenState extends ConsumerState<VendorDashboardScreen> {
               child: showShimmer
                   ? const _DashboardShimmer()
                   : statsAsync.hasError && data == null
-                      ? _DashboardError(onRetry: _onRefresh)
-                      : data == null
-                          ? const _DashboardShimmer()
-                          : RefreshIndicator(
-                              color: AppColors.vendorForest,
-                              onRefresh: _onRefresh,
-                              child: _DashboardBody(
-                                data: data,
-                                metrics: _metricsFor(data),
-                                scrollController: _scrollController,
-                              ),
-                            ),
+                  ? _DashboardError(onRetry: _onRefresh)
+                  : data == null
+                  ? const _DashboardShimmer()
+                  : RefreshIndicator(
+                      color: AppColors.vendorForest,
+                      onRefresh: _onRefresh,
+                      child: _DashboardBody(
+                        data: data,
+                        metrics: _metricsFor(data),
+                        scrollController: _scrollController,
+                      ),
+                    ),
             ),
           ],
         ),

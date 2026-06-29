@@ -27,10 +27,12 @@ enum VendorOrderDateFilter {
 
     return switch (this) {
       VendorOrderDateFilter.today => orderDay == today,
-      VendorOrderDateFilter.last7Days =>
-        orderedAt.isAfter(now.subtract(const Duration(days: 7))),
-      VendorOrderDateFilter.last30Days =>
-        orderedAt.isAfter(now.subtract(const Duration(days: 30))),
+      VendorOrderDateFilter.last7Days => orderedAt.isAfter(
+        now.subtract(const Duration(days: 7)),
+      ),
+      VendorOrderDateFilter.last30Days => orderedAt.isAfter(
+        now.subtract(const Duration(days: 30)),
+      ),
       VendorOrderDateFilter.all => true,
     };
   }

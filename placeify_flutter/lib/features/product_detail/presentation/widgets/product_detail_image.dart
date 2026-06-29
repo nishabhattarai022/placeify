@@ -28,8 +28,7 @@ class ProductDetailImage extends StatelessWidget {
         fit: fit,
         alignment: Alignment.center,
         placeholder: (_, __) => const ColoredBox(color: Color(0xFFF3F3F3)),
-        errorWidget: (_, __, ___) =>
-            const ColoredBox(color: Color(0xFFF3F3F3)),
+        errorWidget: (_, __, ___) => const ColoredBox(color: Color(0xFFF3F3F3)),
       );
     }
 

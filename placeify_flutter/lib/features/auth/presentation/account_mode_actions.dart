@@ -18,8 +18,7 @@ Future<void> openVendorExperience(
     return;
   }
 
-  final shouldSwitchMode =
-      user.isVendorAccount && user.role != UserRole.vendor;
+  final shouldSwitchMode = user.isVendorAccount && user.role != UserRole.vendor;
   if (shouldSwitchMode) {
     try {
       await ref.read(currentUserProvider.notifier).switchToVendorMode();

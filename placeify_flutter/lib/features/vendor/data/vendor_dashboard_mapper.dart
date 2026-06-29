@@ -77,7 +77,9 @@ abstract final class VendorDashboardMapper {
 
   /// Builds a six-month revenue trend from order line totals when the API
   /// does not expose a dedicated time-series field.
-  static List<double> revenueSeriesFromDashboard(api.VendorDashboard dashboard) {
+  static List<double> revenueSeriesFromDashboard(
+    api.VendorDashboard dashboard,
+  ) {
     final now = DateTime.now();
     final buckets = List<double>.filled(6, 0);
 

@@ -49,10 +49,11 @@ class ServerpodConsumerShopRepository implements ConsumerShopRepository {
 
     final products = <Product>[];
     for (final product in page.items) {
-      final vendorProduct = await vendor_mapper.VendorProductMapper.fromApiProduct(
-        product,
-        vendorId: vendorId,
-      );
+      final vendorProduct =
+          await vendor_mapper.VendorProductMapper.fromApiProduct(
+            product,
+            vendorId: vendorId,
+          );
       products.add(VendorProductMapper.toConsumerProduct(vendorProduct));
     }
     return products;

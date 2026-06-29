@@ -249,24 +249,34 @@ abstract final class CatalogSeed {
     );
     if (existing != null) return existing;
 
-    final owner = await User.db.findFirstRow(
+    final users = await User.db.find(
       session,
       orderBy: (row) => row.createdAt,
     );
-    if (owner == null) {
-      throw PlaceifyException(message: 'Register at least one user before loading the catalog.',
-        code: 'CATALOG_SEED_REQUIRES_USER',
+    for (final owner in users) {
+      final ownerId = owner.id;
+      if (ownerId == null) continue;
+
+      final ownsVendor = await Vendor.db.findFirstRow(
+        session,
+        where: (row) => row.userId.equals(ownerId),
+      );
+      if (ownsVendor != null) continue;
+
+      return Vendor.db.insertRow(
+        session,
+        Vendor(
+          userId: ownerId,
+          shopName: 'Placeify Demo Store',
+          description: 'Sample furniture for development and testing',
+          rating: 4.8,
+        ),
       );
     }
 
-    return Vendor.db.insertRow(
-      session,
-      Vendor(
-        userId: owner.id!,
-        shopName: 'Placeify Demo Store',
-        description: 'Sample furniture for development and testing',
-        rating: 4.8,
-      ),
+    throw PlaceifyException(
+      message: 'Register at least one user without a vendor before loading the catalog.',
+      code: 'CATALOG_SEED_REQUIRES_USER',
     );
   }
 }

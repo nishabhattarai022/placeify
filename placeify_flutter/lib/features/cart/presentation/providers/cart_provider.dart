@@ -178,7 +178,9 @@ class Cart extends _$Cart {
     }
   }
 
-  Future<String> checkout({PaymentMethod paymentMethod = PaymentMethod.cod}) async {
+  Future<String> checkout({
+    PaymentMethod paymentMethod = PaymentMethod.cod,
+  }) async {
     if (!client.auth.isAuthenticated) {
       return 'Sign in to checkout';
     }

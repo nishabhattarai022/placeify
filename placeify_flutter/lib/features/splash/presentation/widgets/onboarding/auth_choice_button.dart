@@ -57,16 +57,17 @@ class _AuthChoiceButtonState extends State<AuthChoiceButton>
   Color get _leadingIconColor =>
       _isLogin ? AppColors.charcoal : AppColors.authCtaSignUpIcon;
 
-  Color get _trailingArrowColor =>
-      _isLogin ? AppColors.charcoal : Colors.white;
+  Color get _trailingArrowColor => _isLogin ? AppColors.charcoal : Colors.white;
 
-  String get _leadingIconAsset =>
-      _isLogin ? AuthChoiceButton._loginLeadingIcon : AuthChoiceButton._signUpLeadingIcon;
+  String get _leadingIconAsset => _isLogin
+      ? AuthChoiceButton._loginLeadingIcon
+      : AuthChoiceButton._signUpLeadingIcon;
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor =
-        _isLogin ? AppColors.authCtaLoginBg : AppColors.authCtaSignUpBg;
+    final backgroundColor = _isLogin
+        ? AppColors.authCtaLoginBg
+        : AppColors.authCtaSignUpBg;
 
     return GestureDetector(
       onTapDown: (_) => _press.forward(),
@@ -197,9 +198,7 @@ class _LeadingIconCircle extends StatelessWidget {
       width: AuthChoiceButton._leadingCircleSize,
       height: AuthChoiceButton._leadingCircleSize,
       decoration: BoxDecoration(
-        color: isLogin
-            ? AppColors.authCtaLoginIconCircle
-            : Colors.black,
+        color: isLogin ? AppColors.authCtaLoginIconCircle : Colors.black,
         shape: BoxShape.circle,
       ),
       alignment: Alignment.center,

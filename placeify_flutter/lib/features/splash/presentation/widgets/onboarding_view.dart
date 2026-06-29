@@ -120,75 +120,75 @@ class OnboardingView extends StatelessWidget {
             child: SingleChildScrollView(
               physics: const ClampingScrollPhysics(),
               child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AnimatedSlideIn(
-                  opacity: tagOpacity,
-                  slide: tagSlide,
-                  child: OnboardingTagChip(label: slide.tag),
-                ),
-                const SizedBox(height: 20),
-                AnimatedSlideIn(
-                  opacity: headlineOpacity,
-                  slide: headlineSlide,
-                  child: OnboardingHeadline(slide: slide),
-                ),
-                const SizedBox(height: 16),
-                AnimatedSlideIn(
-                  opacity: bodyOpacity,
-                  slide: bodySlide,
-                  child: Text(
-                    slide.body,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w300,
-                      color: AppColors.onboardingTextBody,
-                      height: 1.70,
-                      letterSpacing: 0.1,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedSlideIn(
+                    opacity: tagOpacity,
+                    slide: tagSlide,
+                    child: OnboardingTagChip(label: slide.tag),
+                  ),
+                  const SizedBox(height: 20),
+                  AnimatedSlideIn(
+                    opacity: headlineOpacity,
+                    slide: headlineSlide,
+                    child: OnboardingHeadline(slide: slide),
+                  ),
+                  const SizedBox(height: 16),
+                  AnimatedSlideIn(
+                    opacity: bodyOpacity,
+                    slide: bodySlide,
+                    child: Text(
+                      slide.body,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w300,
+                        color: AppColors.onboardingTextBody,
+                        height: 1.70,
+                        letterSpacing: 0.1,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 36),
-                AnimatedSlideIn(
-                  opacity: ctaOpacity,
-                  slide: ctaSlide,
-                  child: currentPage == slides.length - 1
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            FadeTransition(
-                              opacity: dotsOpacity,
-                              child: Center(
+                  const SizedBox(height: 36),
+                  AnimatedSlideIn(
+                    opacity: ctaOpacity,
+                    slide: ctaSlide,
+                    child: currentPage == slides.length - 1
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              FadeTransition(
+                                opacity: dotsOpacity,
+                                child: Center(
+                                  child: OnboardingPageDots(
+                                    count: slides.length,
+                                    active: currentPage,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              SwipeGetStartedButton(onComplete: onNext),
+                            ],
+                          )
+                        : Row(
+                            children: [
+                              FadeTransition(
+                                opacity: dotsOpacity,
                                 child: OnboardingPageDots(
                                   count: slides.length,
                                   active: currentPage,
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 24),
-                            SwipeGetStartedButton(onComplete: onNext),
-                          ],
-                        )
-                      : Row(
-                          children: [
-                            FadeTransition(
-                              opacity: dotsOpacity,
-                              child: OnboardingPageDots(
-                                count: slides.length,
-                                active: currentPage,
+                              const Spacer(),
+                              OnboardingNextButton(
+                                isLast: false,
+                                arrowBob: arrowBob,
+                                onTap: onNext,
                               ),
-                            ),
-                            const Spacer(),
-                            OnboardingNextButton(
-                              isLast: false,
-                              arrowBob: arrowBob,
-                              onTap: onNext,
-                            ),
-                          ],
-                        ),
-                ),
-              ],
+                            ],
+                          ),
+                  ),
+                ],
               ),
             ),
           ),

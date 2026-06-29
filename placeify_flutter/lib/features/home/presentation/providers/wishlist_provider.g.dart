@@ -8,15 +8,12 @@ part of 'wishlist_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Product id → time saved (newest first when listed).
 
 @ProviderFor(Wishlist)
 final wishlistProvider = WishlistProvider._();
 
-/// Product id → time saved (newest first when listed).
 final class WishlistProvider
-    extends $NotifierProvider<Wishlist, Map<String, DateTime>> {
-  /// Product id → time saved (newest first when listed).
+    extends $NotifierProvider<Wishlist, WishlistSnapshot> {
   WishlistProvider._()
     : super(
         from: null,
@@ -36,29 +33,27 @@ final class WishlistProvider
   Wishlist create() => Wishlist();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(Map<String, DateTime> value) {
+  Override overrideWithValue(WishlistSnapshot value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<Map<String, DateTime>>(value),
+      providerOverride: $SyncValueProvider<WishlistSnapshot>(value),
     );
   }
 }
 
-String _$wishlistHash() => r'c6466c1f229d5fd845a4562423d5c230727ffb10';
+String _$wishlistHash() => r'0020b58290b51339f0abf2eec3dd210b257631c5';
 
-/// Product id → time saved (newest first when listed).
-
-abstract class _$Wishlist extends $Notifier<Map<String, DateTime>> {
-  Map<String, DateTime> build();
+abstract class _$Wishlist extends $Notifier<WishlistSnapshot> {
+  WishlistSnapshot build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<Map<String, DateTime>, Map<String, DateTime>>;
+    final ref = this.ref as $Ref<WishlistSnapshot, WishlistSnapshot>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<Map<String, DateTime>, Map<String, DateTime>>,
-              Map<String, DateTime>,
+              AnyNotifier<WishlistSnapshot, WishlistSnapshot>,
+              WishlistSnapshot,
               Object?,
               Object?
             >;

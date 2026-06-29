@@ -37,8 +37,9 @@ class ProductDetailSoldByRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             color: ProductDetailTokens.infoCardBg,
-            borderRadius:
-                BorderRadius.circular(ProductDetailTokens.infoCardRadius),
+            borderRadius: BorderRadius.circular(
+              ProductDetailTokens.infoCardRadius,
+            ),
             border: Border.all(
               color: Colors.black.withValues(alpha: 0.06),
             ),

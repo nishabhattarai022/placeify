@@ -20,7 +20,7 @@ class OrderRepositoryException implements Exception {
 /// Live customer orders via [client.user] and refunds for return requests.
 class ServerpodOrderRepository implements OrderRepository {
   const ServerpodOrderRepository({ServerpodRefundRepository? refunds})
-      : _refunds = refunds ?? const ServerpodRefundRepository();
+    : _refunds = refunds ?? const ServerpodRefundRepository();
 
   final ServerpodRefundRepository _refunds;
 

@@ -95,12 +95,12 @@ class _AdminVendorsScreenState extends ConsumerState<AdminVendorsScreen> {
                         final filtered = query.isEmpty
                             ? vendors
                             : vendors
-                                .where(
-                                  (v) => v.businessName
-                                      .toLowerCase()
-                                      .contains(query),
-                                )
-                                .toList();
+                                  .where(
+                                    (v) => v.businessName
+                                        .toLowerCase()
+                                        .contains(query),
+                                  )
+                                  .toList();
                         if (filtered.isEmpty) {
                           return RefreshIndicator(
                             color: AppColors.espresso,
@@ -169,7 +169,11 @@ class _VendorsSearchField extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14),
       child: Row(
         children: [
-          const Icon(Icons.search_rounded, size: 20, color: AppColors.textMuted),
+          const Icon(
+            Icons.search_rounded,
+            size: 20,
+            color: AppColors.textMuted,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: TextField(

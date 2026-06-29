@@ -50,7 +50,7 @@ Module: `user` endpoint · Tables: `user`, `order`, `wishlist_item`, `ar_session
 | Field | Source |
 |-------|--------|
 | `profile` | `user` row |
-| `orderCount` | Count of `order` for user |
+| `orderCount` | Count of non-cancelled `order` rows for user (excludes `cancelled`, `autoCancelled`, `rejected`) |
 | `wishlistCount` | Count of `wishlist_item` for user |
 | `cartItemCount` | Total quantity of items in the user's cart |
 | `arSessionCount` | Count of `ar_session` for user |

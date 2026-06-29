@@ -6,8 +6,7 @@ import 'app_user.dart';
 extension AppUserX on AppUser {
   bool get isVendorMode => role == UserRole.vendor;
 
-  bool get isVendorAccount =>
-      isVendorMode || vendorStatus != VendorStatus.none;
+  bool get isVendorAccount => isVendorMode || vendorStatus != VendorStatus.none;
 
   bool get hasVendorShop => vendorId != null && vendorId!.isNotEmpty;
 

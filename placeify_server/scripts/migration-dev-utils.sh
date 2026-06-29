@@ -161,16 +161,18 @@ reconcile_schema_ahead_of_registry() {
     return 0
   fi
 
+  if migration_registry_matches_db "$db_version"; then
+    # Valid registry version behind latest — let apply-migrations run pending SQL.
+    return 0
+  fi
+
   if [[ "$(_table_exists refund_request)" != "t" ]]; then
     return 0
   fi
 
-  if migration_registry_matches_db "$db_version"; then
-    echo "==> Schema ahead of registry: refund_request exists but version is $db_version"
-    echo "    Marking placeify as latest ($latest)"
-    _bump_placeify_version "$latest"
-    echo "✓ Migration registry aligned to $latest"
-  fi
+  echo "==> Orphan migration $db_version with schema present — aligning to $latest"
+  _bump_placeify_version "$latest"
+  echo "✓ Migration registry aligned to $latest"
 }
 
 _column_exists() {

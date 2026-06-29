@@ -53,8 +53,24 @@ class PlaceifyChairPainter extends CustomPainter {
     if (showScanLines) {
       final upper = upperScanOpacity ?? scanLineOpacity;
       final lower = lowerScanOpacity ?? scanLineOpacity;
-      drawRoundedRect(10, 82, 190, 84, 1, AppColors.arScanUpper, opacity: upper);
-      drawRoundedRect(10, 116, 190, 118, 1, AppColors.arScanLower, opacity: lower);
+      drawRoundedRect(
+        10,
+        82,
+        190,
+        84,
+        1,
+        AppColors.arScanUpper,
+        opacity: upper,
+      );
+      drawRoundedRect(
+        10,
+        116,
+        190,
+        118,
+        1,
+        AppColors.arScanLower,
+        opacity: lower,
+      );
     }
 
     if (showArBrackets) {
@@ -73,10 +89,26 @@ class PlaceifyChairPainter extends CustomPainter {
         canvas.drawPath(path, bracketPaint);
       }
 
-      drawBracket([const Offset(14, 52), const Offset(14, 44), const Offset(22, 44)]);
-      drawBracket([const Offset(186, 52), const Offset(186, 44), const Offset(178, 44)]);
-      drawBracket([const Offset(14, 144), const Offset(14, 152), const Offset(22, 152)]);
-      drawBracket([const Offset(186, 144), const Offset(186, 152), const Offset(178, 152)]);
+      drawBracket([
+        const Offset(14, 52),
+        const Offset(14, 44),
+        const Offset(22, 44),
+      ]);
+      drawBracket([
+        const Offset(186, 52),
+        const Offset(186, 44),
+        const Offset(178, 44),
+      ]);
+      drawBracket([
+        const Offset(14, 144),
+        const Offset(14, 152),
+        const Offset(22, 152),
+      ]);
+      drawBracket([
+        const Offset(186, 144),
+        const Offset(186, 152),
+        const Offset(178, 152),
+      ]);
     }
   }
 

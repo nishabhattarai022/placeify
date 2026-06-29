@@ -130,7 +130,8 @@ class _VendorNotificationsScreenState
         children: [
           _NotificationsHeader(
             onMarkAllRead: notificationsAsync.maybeWhen(
-              data: (state) => state.unreadCount > 0 ? _confirmMarkAllRead : null,
+              data: (state) =>
+                  state.unreadCount > 0 ? _confirmMarkAllRead : null,
               orElse: () => null,
             ),
           ),
@@ -152,8 +153,8 @@ class _VendorNotificationsScreenState
                       onClear: state.typeFilters.isEmpty
                           ? null
                           : () => ref
-                              .read(vendorNotificationsProvider.notifier)
-                              .clearTypeFilters(),
+                                .read(vendorNotificationsProvider.notifier)
+                                .clearTypeFilters(),
                     ),
                     Expanded(
                       child: state.visible.isEmpty
@@ -165,8 +166,11 @@ class _VendorNotificationsScreenState
                                 onClearFilters: state.typeFilters.isEmpty
                                     ? null
                                     : () => ref
-                                        .read(vendorNotificationsProvider.notifier)
-                                        .clearTypeFilters(),
+                                          .read(
+                                            vendorNotificationsProvider
+                                                .notifier,
+                                          )
+                                          .clearTypeFilters(),
                               ),
                             )
                           : RefreshIndicator(

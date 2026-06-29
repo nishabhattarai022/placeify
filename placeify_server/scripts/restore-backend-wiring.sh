@@ -29,6 +29,7 @@ WIRING_FILES=(
   placeify_flutter/lib/features/cart/domain/constants/cart_strings.dart
   placeify_flutter/lib/features/home/presentation/providers/category_provider.dart
   placeify_flutter/lib/features/home/presentation/providers/category_provider.g.dart
+  placeify_flutter/lib/features/home/domain/models/wishlist_snapshot.dart
   placeify_flutter/lib/features/home/presentation/providers/wishlist_provider.dart
   placeify_flutter/lib/features/home/presentation/providers/wishlist_toggle_result.dart
   placeify_flutter/lib/features/home/presentation/providers/wishlist_count.dart

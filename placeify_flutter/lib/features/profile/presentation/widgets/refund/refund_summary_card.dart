@@ -155,7 +155,9 @@ class _RefundActionBtn extends StatelessWidget {
         decoration: BoxDecoration(
           color: primary ? AppColors.espresso : AppColors.cream,
           borderRadius: BorderRadius.circular(999),
-          border: primary ? null : Border.all(color: AppColors.sand, width: 1.5),
+          border: primary
+              ? null
+              : Border.all(color: AppColors.sand, width: 1.5),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

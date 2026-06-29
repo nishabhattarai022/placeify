@@ -28,9 +28,7 @@ class _VendorApplicationsScreenState
   bool _hasLoaded = false;
 
   Future<void> _onRefresh() async {
-    await ref
-        .read(vendorApplicationsListProvider(_filter).notifier)
-        .refresh();
+    await ref.read(vendorApplicationsListProvider(_filter).notifier).refresh();
   }
 
   String _emptyMessage() {
@@ -43,7 +41,9 @@ class _VendorApplicationsScreenState
 
   @override
   Widget build(BuildContext context) {
-    final applicationsAsync = ref.watch(vendorApplicationsListProvider(_filter));
+    final applicationsAsync = ref.watch(
+      vendorApplicationsListProvider(_filter),
+    );
     final statsAsync = ref.watch(adminStatsProvider);
     final stats = statsAsync.value;
 

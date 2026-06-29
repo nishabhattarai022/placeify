@@ -96,7 +96,9 @@ class HomeFeaturedProductCard extends StatelessWidget {
                           child: Icon(
                             Icons.open_in_new,
                             size: 18,
-                            color: AppColors.textSecondary.withValues(alpha: 0.8),
+                            color: AppColors.textSecondary.withValues(
+                              alpha: 0.8,
+                            ),
                           ),
                         ),
                       ),

@@ -5,11 +5,23 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR/.."
 
+if [[ ! -f config/passwords.yaml ]]; then
+  cp config/passwords.yaml.example config/passwords.yaml
+fi
+
 echo "==> Start Postgres (dev + test)"
 docker compose up -d postgres postgres_test >/dev/null
 
+echo "==> Reconcile dev migration registry (if needed)"
+if [[ -x "$SCRIPT_DIR/reconcile-migrations.sh" ]]; then
+  "$SCRIPT_DIR/reconcile-migrations.sh" || true
+fi
+
 echo "==> Apply migrations (dev database)"
-dart bin/main.dart --apply-migrations 2>/dev/null || true
+"$SCRIPT_DIR/apply-migrations.sh"
+
+echo "==> Apply migrations (test database)"
+"$SCRIPT_DIR/apply-test-migrations.sh"
 
 echo "==> Consumer API contract verification"
 dart test \

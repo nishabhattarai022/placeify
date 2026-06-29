@@ -43,10 +43,12 @@ class VendorProfileEditorState {
       lastSaved: lastSaved ?? this.lastSaved,
       isSaving: isSaving ?? this.isSaving,
       saveError: clearSaveError ? null : (saveError ?? this.saveError),
-      localLogoPath:
-          clearLocalLogo ? null : (localLogoPath ?? this.localLogoPath),
-      localBannerPath:
-          clearLocalBanner ? null : (localBannerPath ?? this.localBannerPath),
+      localLogoPath: clearLocalLogo
+          ? null
+          : (localLogoPath ?? this.localLogoPath),
+      localBannerPath: clearLocalBanner
+          ? null
+          : (localBannerPath ?? this.localBannerPath),
     );
   }
 }

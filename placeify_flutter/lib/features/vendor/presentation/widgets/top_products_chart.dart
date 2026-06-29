@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radii.dart';
 import '../../../../core/constants/app_typography.dart';
 import '../../domain/models/vendor_metric.dart';
-import 'vendor_list_thumbnail.dart';
 
 class TopProductsChart extends StatelessWidget {
   const TopProductsChart({required this.products, super.key});
@@ -48,7 +48,9 @@ class TopProductsChart extends StatelessWidget {
           ...List.generate(products.length, (i) {
             final p = products[i];
             return Padding(
-              padding: EdgeInsets.only(bottom: i < products.length - 1 ? 14 : 0),
+              padding: EdgeInsets.only(
+                bottom: i < products.length - 1 ? 14 : 0,
+              ),
               child: _ProductRow(
                 stat: p,
                 delay: Duration(milliseconds: 200 + i * 150),
@@ -85,10 +87,10 @@ class _ProductRowState extends State<_ProductRow> {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        VendorListThumbnail(
-          label: widget.stat.name,
-          imageUrl: widget.stat.imageUrl,
-          fallbackIconPath: widget.stat.iconPath,
+        SvgPicture.asset(
+          widget.stat.iconPath,
+          width: 20,
+          colorFilter: const ColorFilter.mode(AppColors.bark, BlendMode.srcIn),
         ),
         const SizedBox(width: 12),
         Expanded(

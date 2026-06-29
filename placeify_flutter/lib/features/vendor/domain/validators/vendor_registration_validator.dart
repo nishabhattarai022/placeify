@@ -95,8 +95,7 @@ abstract final class VendorRegistrationValidator {
     final errors = <String, String>{};
 
     if (address.street.trim().isEmpty) {
-      errors[VendorRegistrationFieldKeys.street] =
-          'Street address is required';
+      errors[VendorRegistrationFieldKeys.street] = 'Street address is required';
     }
     if (address.city.trim().isEmpty) {
       errors[VendorRegistrationFieldKeys.city] = 'City is required';

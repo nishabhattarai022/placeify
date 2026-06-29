@@ -20,25 +20,25 @@ class OrderStatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final (bg, fg) = switch (status) {
       OrderStatus.pending => (
-          AppColors.accent.withValues(alpha: 0.14),
-          AppColors.accent,
-        ),
+        AppColors.accent.withValues(alpha: 0.14),
+        AppColors.accent,
+      ),
       OrderStatus.accepted || OrderStatus.processing => (
-          AppColors.sage.withValues(alpha: 0.14),
-          AppColors.sage,
-        ),
+        AppColors.sage.withValues(alpha: 0.14),
+        AppColors.sage,
+      ),
       OrderStatus.shipped => (
-          AppColors.sage.withValues(alpha: 0.14),
-          AppColors.sage,
-        ),
+        AppColors.sage.withValues(alpha: 0.14),
+        AppColors.sage,
+      ),
       OrderStatus.delivered => (
-          AppColors.tealBg,
-          AppColors.teal,
-        ),
+        AppColors.tealBg,
+        AppColors.teal,
+      ),
       OrderStatus.rejected || OrderStatus.cancelled => (
-          AppColors.rust.withValues(alpha: 0.12),
-          AppColors.rust,
-        ),
+        AppColors.rust.withValues(alpha: 0.12),
+        AppColors.rust,
+      ),
     };
 
     return Container(

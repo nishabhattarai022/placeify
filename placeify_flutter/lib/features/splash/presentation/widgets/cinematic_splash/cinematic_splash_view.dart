@@ -55,7 +55,11 @@ class _CinematicSplashViewState extends State<CinematicSplashView>
     _line2Reveal = _interval(0.22, 0.52, curve: Curves.easeInOutCubic);
     _heroDim = _interval(0.48, 0.72);
     _stageOpacity = _interval(0.12, 0.36);
-    _stageProgress = _interval(0.18, 0.58, curve: CinematicSplashTokens.stageEase);
+    _stageProgress = _interval(
+      0.18,
+      0.58,
+      curve: CinematicSplashTokens.stageEase,
+    );
     _deviceOpacity = _interval(0.44, 0.68);
     _deviceScale = Tween<double>(begin: 0.88, end: 1).animate(
       _interval(0.44, 0.72, curve: CinematicSplashTokens.deviceEase),
@@ -66,7 +70,11 @@ class _CinematicSplashViewState extends State<CinematicSplashView>
     _badgeOpacity = _interval(0.58, 0.82);
     _brandOpacity = _interval(0.62, 0.9);
     _brandSlide = _slideInterval(0.62, 0.92, dy: 12);
-    _deviceTilt = _interval(0.44, 0.78, curve: CinematicSplashTokens.deviceEase);
+    _deviceTilt = _interval(
+      0.44,
+      0.78,
+      curve: CinematicSplashTokens.deviceEase,
+    );
 
     _timeline.forward();
   }
@@ -143,23 +151,17 @@ class _CinematicSplashViewState extends State<CinematicSplashView>
                         child: Column(
                           children: [
                             SizedBox(height: tight ? 24 : (compact ? 32 : 44)),
-                            AnimatedBuilder(
-                              animation:
-                                  Listenable.merge([_heroOpacity, _heroDim]),
-                              builder: (context, child) {
-                                return Opacity(
-                                  opacity: (_heroOpacity.value *
-                                          (1 - _heroDim.value * 0.35))
-                                      .clamp(0.0, 1.0),
-                                  child: child,
-                                );
-                              },
+                            FadeTransition(
+                              opacity: _heroOpacity,
                               child: SlideTransition(
                                 position: _heroSlide,
-                                child: _HeroHeadline(
-                                  line1Size: heroSize,
-                                  line2Size: heroLarge,
-                                  line2Reveal: _line2Reveal.value,
+                                child: Opacity(
+                                  opacity: 1 - _heroDim.value * 0.35,
+                                  child: _HeroHeadline(
+                                    line1Size: heroSize,
+                                    line2Size: heroLarge,
+                                    line2Reveal: _line2Reveal.value,
+                                  ),
                                 ),
                               ),
                             ),
@@ -171,14 +173,17 @@ class _CinematicSplashViewState extends State<CinematicSplashView>
                                     0,
                                     _deviceLift.value * (tight ? 0.35 : 1),
                                   ),
-                                  child: ScaleTransition(
-                                    scale: _deviceScale,
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: CinematicPhoneMockup(
-                                        tiltProgress: _deviceTilt.value,
-                                        contentOpacity: _deviceOpacity,
-                                        badgeOpacity: _badgeOpacity,
+                                  child: FadeTransition(
+                                    opacity: _deviceOpacity,
+                                    child: ScaleTransition(
+                                      scale: _deviceScale,
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: CinematicPhoneMockup(
+                                          tiltProgress: _deviceTilt.value,
+                                          contentOpacity: _deviceOpacity,
+                                          badgeOpacity: _badgeOpacity,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -218,7 +223,9 @@ class _AmbienceLayer extends StatelessWidget {
       children: [
         CustomPaint(
           painter: _GridPainter(
-            lineColor: CinematicSplashTokens.foreground.withValues(alpha: 0.045),
+            lineColor: CinematicSplashTokens.foreground.withValues(
+              alpha: 0.045,
+            ),
           ),
           size: Size.infinite,
         ),
@@ -430,8 +437,9 @@ class _PremiumStageCard extends StatelessWidget {
           ),
           DecoratedBox(
             decoration: BoxDecoration(
-              borderRadius:
-                  BorderRadius.circular(CinematicSplashTokens.cardRadius),
+              borderRadius: BorderRadius.circular(
+                CinematicSplashTokens.cardRadius,
+              ),
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
