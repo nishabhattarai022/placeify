@@ -1,4 +1,5 @@
 import 'package:placeify/features/auth/presentation/providers/auth_provider.dart';
+import 'package:placeify/features/shops/data/mock_consumer_shop_repository.dart';
 import 'package:placeify/features/vendor/data/mock_vendor_product_repository.dart';
 import 'package:placeify/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_product.dart';
@@ -50,6 +51,7 @@ class VendorProducts extends _$VendorProducts {
 
       final products = state.value ?? [];
       state = AsyncData([created, ...products]);
+      MockConsumerShopRepository.refreshProductIndex();
       return null;
     } on VendorProductActionException catch (e) {
       return e.message;
@@ -93,6 +95,7 @@ class VendorProducts extends _$VendorProducts {
       } else {
         await refresh();
       }
+      MockConsumerShopRepository.refreshProductIndex();
       return null;
     } on VendorProductActionException catch (e) {
       state = previous;
@@ -156,6 +159,7 @@ class VendorProducts extends _$VendorProducts {
 
       final repo = ref.read(vendorProductRepositoryProvider);
       await repo.deleteProducts(vendorId, productIds.toList());
+      MockConsumerShopRepository.refreshProductIndex();
       return null;
     } on VendorProductActionException catch (e) {
       state = previous;

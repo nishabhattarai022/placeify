@@ -22,7 +22,7 @@ class ProductDetailGallery extends StatelessWidget {
     final safeIndex = selectedIndex.clamp(0, images.length - 1);
     final heroHeight = MediaQuery.sizeOf(context).height *
         ProductDetailTokens.heroHeightFactor;
-    final thumbs = images.take(5).toList();
+    final thumbs = images.take(ProductDetailTokens.maxGalleryThumbs).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
