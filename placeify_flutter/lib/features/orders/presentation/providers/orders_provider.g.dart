@@ -127,6 +127,52 @@ abstract class _$Orders extends $AsyncNotifier<List<Order>> {
   }
 }
 
+@ProviderFor(userOrderCounts)
+final userOrderCountsProvider = UserOrderCountsProvider._();
+
+final class UserOrderCountsProvider
+    extends
+        $FunctionalProvider<
+          UserOrderCounts?,
+          UserOrderCounts?,
+          UserOrderCounts?
+        >
+    with $Provider<UserOrderCounts?> {
+  UserOrderCountsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'userOrderCountsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$userOrderCountsHash();
+
+  @$internal
+  @override
+  $ProviderElement<UserOrderCounts?> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  UserOrderCounts? create(Ref ref) {
+    return userOrderCounts(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(UserOrderCounts? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<UserOrderCounts?>(value),
+    );
+  }
+}
+
+String _$userOrderCountsHash() => r'cfd34de22a97611e5505629f9b21761f490d77db';
+
 @ProviderFor(ordersCount)
 final ordersCountProvider = OrdersCountProvider._();
 
@@ -165,7 +211,85 @@ final class OrdersCountProvider extends $FunctionalProvider<int, int, int>
   }
 }
 
-String _$ordersCountHash() => r'9d5f0a6d59db8d93be9c45bb6c215a075f5ebedf';
+String _$ordersCountHash() => r'd1c664fc7d17333332cc991bf0c5b783daf7190e';
+
+@ProviderFor(orderListTitleCount)
+final orderListTitleCountProvider = OrderListTitleCountFamily._();
+
+final class OrderListTitleCountProvider
+    extends $FunctionalProvider<int, int, int>
+    with $Provider<int> {
+  OrderListTitleCountProvider._({
+    required OrderListTitleCountFamily super.from,
+    required OrderListFilter super.argument,
+  }) : super(
+         retry: null,
+         name: r'orderListTitleCountProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$orderListTitleCountHash();
+
+  @override
+  String toString() {
+    return r'orderListTitleCountProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  int create(Ref ref) {
+    final argument = this.argument as OrderListFilter;
+    return orderListTitleCount(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is OrderListTitleCountProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$orderListTitleCountHash() =>
+    r'd1888f4827ce3141af703b2646dcdf54c86da45f';
+
+final class OrderListTitleCountFamily extends $Family
+    with $FunctionalFamilyOverride<int, OrderListFilter> {
+  OrderListTitleCountFamily._()
+    : super(
+        retry: null,
+        name: r'orderListTitleCountProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  OrderListTitleCountProvider call(OrderListFilter filter) =>
+      OrderListTitleCountProvider._(argument: filter, from: this);
+
+  @override
+  String toString() => r'orderListTitleCountProvider';
+}
 
 @ProviderFor(inTransitOrderCount)
 final inTransitOrderCountProvider = InTransitOrderCountProvider._();
@@ -499,7 +623,7 @@ final class FilteredOrdersProvider
   }
 }
 
-String _$filteredOrdersHash() => r'd1f467c7919b5ff14a58c46dc523913266cd80e3';
+String _$filteredOrdersHash() => r'7b1bf77c1a8d5663ced9da98be9c30802e66977d';
 
 final class FilteredOrdersFamily extends $Family
     with $FunctionalFamilyOverride<List<Order>, OrderListFilter> {

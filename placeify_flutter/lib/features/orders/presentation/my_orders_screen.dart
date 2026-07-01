@@ -11,6 +11,7 @@ import '../../../core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import '../../../core/widgets/shimmer_loader.dart';
 import '../../../core/widgets/superscript_count_title.dart';
 import '../../home/presentation/chairs_catalog_tokens.dart';
+import '../../profile/presentation/providers/profile_dashboard_provider.dart';
 import '../domain/constants/order_strings.dart';
 import '../domain/enums/order_list_filter.dart';
 import '../domain/models/order.dart';
@@ -36,7 +37,10 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
   String _searchQuery = '';
 
   Future<void> _onRefresh() async {
-    await ref.read(ordersProvider.notifier).refresh();
+    await Future.wait<void>([
+      ref.read(ordersProvider.notifier).refresh(),
+      ref.read(profileDashboardProvider.notifier).refresh(),
+    ]);
   }
 
   void _onFilterSelected(OrderListFilter filter) {
@@ -57,27 +61,29 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
 
   List<Order> _sortedFilteredOrders() {
     final orders = ref.watch(filteredOrdersProvider(_selectedFilter));
-    final sorted = [...orders]
+    final sorted = List<Order>.from(orders)
       ..sort((a, b) => b.placedAt.compareTo(a.placedAt));
 
     final query = _searchQuery.trim().toLowerCase();
     if (query.isEmpty) return sorted;
 
-    return sorted.where((order) {
-      if (order.orderNumber.toLowerCase().contains(query)) return true;
-      if (order.id.toLowerCase().contains(query)) return true;
-      if (order.vendorName.toLowerCase().contains(query)) return true;
-      for (final item in order.items) {
-        if (item.productName.toLowerCase().contains(query)) return true;
-      }
-      return false;
-    }).toList();
+    return sorted
+        .where((order) {
+          if (order.orderNumber.toLowerCase().contains(query)) return true;
+          if (order.id.toLowerCase().contains(query)) return true;
+          if (order.vendorName.toLowerCase().contains(query)) return true;
+          for (final item in order.items) {
+            if (item.productName.toLowerCase().contains(query)) return true;
+          }
+          return false;
+        })
+        .toList(growable: false);
   }
 
   @override
   Widget build(BuildContext context) {
     final ordersAsync = ref.watch(ordersProvider);
-    final orderCount = ref.watch(ordersCountProvider);
+    final orderCount = ref.watch(orderListTitleCountProvider(_selectedFilter));
     final filteredOrders = _sortedFilteredOrders();
     final bottomInset = MediaQuery.paddingOf(context).bottom;
 

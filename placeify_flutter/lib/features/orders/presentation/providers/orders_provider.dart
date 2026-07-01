@@ -9,7 +9,9 @@ import 'package:placeify_flutter/features/orders/domain/constants/order_strings.
 import 'package:placeify_flutter/features/orders/domain/enums/consumer_order_status.dart';
 import 'package:placeify_flutter/features/orders/domain/enums/order_list_filter.dart';
 import 'package:placeify_flutter/features/orders/domain/models/order.dart';
+import 'package:placeify_flutter/features/orders/domain/order_count_display.dart';
 import 'package:placeify_flutter/features/orders/domain/repositories/order_repository.dart';
+import 'package:placeify_client/placeify_client.dart' hide Order;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
@@ -174,10 +176,35 @@ class Orders extends _$Orders {
 }
 
 @riverpod
+UserOrderCounts? userOrderCounts(Ref ref) {
+  return ref.watch(profileDashboardProvider).maybeWhen(
+    data: (dashboard) => dashboard?.orderCounts,
+    orElse: () => null,
+  );
+}
+
+@riverpod
 int ordersCount(Ref ref) {
+  final counts = ref.watch(userOrderCountsProvider);
+  if (counts != null) return counts.activeOrders;
+
   final orders = ref.watch(ordersProvider);
   return orders.maybeWhen(
-    data: (list) => list.length,
+    data: (list) => list.where((order) => !order.isCancelled).length,
+    orElse: () => 0,
+  );
+}
+
+@riverpod
+int orderListTitleCount(Ref ref, OrderListFilter filter) {
+  final counts = ref.watch(userOrderCountsProvider);
+  if (counts != null) {
+    return orderListTitleCountFor(filter: filter, counts: counts);
+  }
+
+  final orders = ref.watch(ordersProvider);
+  return orders.maybeWhen(
+    data: (list) => list.where((order) => order.matchesListFilter(filter)).length,
     orElse: () => 0,
   );
 }
@@ -244,7 +271,8 @@ Future<Order?> orderById(Ref ref, String orderId) async {
 List<Order> filteredOrders(Ref ref, OrderListFilter filter) {
   final orders = ref.watch(ordersProvider);
   return orders.maybeWhen(
-    data: (list) => list.where((o) => o.matchesListFilter(filter)).toList(),
-    orElse: () => const [],
+    data: (list) =>
+        list.where((o) => o.matchesListFilter(filter)).toList(growable: false),
+    orElse: () => const <Order>[],
   );
 }
