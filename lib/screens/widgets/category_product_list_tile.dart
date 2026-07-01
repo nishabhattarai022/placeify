@@ -7,7 +7,9 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/haptic_service.dart';
 import '../../core/utils/formatters.dart';
+import '../../features/home/data/product_reviews_repository.dart';
 import '../../features/home/domain/models/product.dart';
+import '../../features/home/presentation/widgets/product_rating_row.dart';
 
 /// Editorial full-width product row for category listing screens.
 class CategoryProductListTile extends StatelessWidget {
@@ -24,6 +26,8 @@ class CategoryProductListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final reviewSummary = ProductReviewsRepository.forProduct(product);
+
     return GestureDetector(
       onTap: () {
         HapticService.light();
@@ -102,6 +106,8 @@ class CategoryProductListTile extends StatelessWidget {
                         color: Colors.black38,
                       ),
                     ),
+                    const SizedBox(height: 6),
+                    ProductRatingRow(summary: reviewSummary),
                   ],
                 ),
               ),

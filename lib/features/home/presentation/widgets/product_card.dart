@@ -14,6 +14,8 @@ import '../../../../core/widgets/animated_scale_tap.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
 import '../../../cart/presentation/cart_actions.dart';
 import '../../domain/models/product.dart';
+import '../../data/product_reviews_repository.dart';
+import 'product_rating_row.dart';
 import 'wishlist_star_button.dart';
 
 /// Home grid product tile — fills grid cell without overflow.
@@ -176,6 +178,8 @@ class _ProductCardFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final reviewSummary = ProductReviewsRepository.forProduct(product);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
       child: Column(
@@ -205,6 +209,8 @@ class _ProductCardFooter extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: AppTypography.skuCode.copyWith(fontSize: 10),
           ),
+          const SizedBox(height: 6),
+          ProductRatingRow(summary: reviewSummary, compact: true),
           const SizedBox(height: 8),
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
