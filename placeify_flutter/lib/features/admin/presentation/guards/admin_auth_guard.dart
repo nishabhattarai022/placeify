@@ -1,5 +1,5 @@
-import 'package:placeify_client/placeify_client.dart';
 import 'package:placeify_flutter/features/auth/domain/models/app_user.dart';
+import 'package:placeify_flutter/features/auth/domain/models/app_user_extensions.dart';
 
 class AdminAuthRedirect {
   const AdminAuthRedirect({required this.location, this.toastMessage});
@@ -17,7 +17,7 @@ abstract final class AdminAuthGuard {
     required AppUser? user,
   }) {
     if (!location.startsWith(_prefix)) return null;
-    if (user?.role == UserRole.admin) return null;
+    if (user?.isAdmin ?? false) return null;
 
     if (user == null) {
       return const AdminAuthRedirect(

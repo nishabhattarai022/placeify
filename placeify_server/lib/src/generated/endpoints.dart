@@ -800,6 +800,108 @@ class Endpoints extends _i1.EndpointDispatch {
                 params['vendorUserId'],
               ),
         ),
+        'suspendVendor': _i1.MethodConnector(
+          name: 'suspendVendor',
+          params: {
+            'vendorUserId': _i1.ParameterDescription(
+              name: 'vendorUserId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+            'reason': _i1.ParameterDescription(
+              name: 'reason',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['admin'] as _i6.AdminEndpoint).suspendVendor(
+                    session,
+                    params['vendorUserId'],
+                    params['reason'],
+                  ),
+        ),
+        'getVendorReinstateTerms': _i1.MethodConnector(
+          name: 'getVendorReinstateTerms',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i6.AdminEndpoint)
+                  .getVendorReinstateTerms(session),
+        ),
+        'reactivateVendor': _i1.MethodConnector(
+          name: 'reactivateVendor',
+          params: {
+            'vendorUserId': _i1.ParameterDescription(
+              name: 'vendorUserId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+            'termsAccepted': _i1.ParameterDescription(
+              name: 'termsAccepted',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            ),
+            'termsNote': _i1.ParameterDescription(
+              name: 'termsNote',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['admin'] as _i6.AdminEndpoint).reactivateVendor(
+                    session,
+                    params['vendorUserId'],
+                    termsAccepted: params['termsAccepted'],
+                    termsNote: params['termsNote'],
+                  ),
+        ),
+        'suspendUser': _i1.MethodConnector(
+          name: 'suspendUser',
+          params: {
+            'targetUserId': _i1.ParameterDescription(
+              name: 'targetUserId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i6.AdminEndpoint).suspendUser(
+                session,
+                params['targetUserId'],
+              ),
+        ),
+        'activateUser': _i1.MethodConnector(
+          name: 'activateUser',
+          params: {
+            'targetUserId': _i1.ParameterDescription(
+              name: 'targetUserId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i6.AdminEndpoint).activateUser(
+                session,
+                params['targetUserId'],
+              ),
+        ),
         'updateUserStatus': _i1.MethodConnector(
           name: 'updateUserStatus',
           params: {
@@ -1033,6 +1135,25 @@ class Endpoints extends _i1.EndpointDispatch {
                 query: params['query'],
                 role: params['role'],
               ),
+        ),
+        'getUserDetail': _i1.MethodConnector(
+          name: 'getUserDetail',
+          params: {
+            'userId': _i1.ParameterDescription(
+              name: 'userId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['admin'] as _i6.AdminEndpoint).getUserDetail(
+                    session,
+                    params['userId'],
+                  ),
         ),
         'listVendorApplications': _i1.MethodConnector(
           name: 'listVendorApplications',

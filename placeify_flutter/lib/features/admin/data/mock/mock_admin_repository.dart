@@ -155,7 +155,11 @@ class MockAdminRepository implements AdminRepository {
   }
 
   @override
-  Future<void> reinstateVendor(String userId) async {
+  Future<void> reinstateVendor(
+    String userId, {
+    bool termsAccepted = true,
+    String? termsNote,
+  }) async {
     final user = await _findUser(userId);
     if (user?.vendorId == null) return;
 

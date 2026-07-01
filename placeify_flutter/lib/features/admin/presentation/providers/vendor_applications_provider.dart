@@ -1,9 +1,8 @@
+import 'package:placeify_flutter/features/admin/data/serverpod_admin_api.dart';
 import 'package:placeify_flutter/features/admin/domain/enums/vendor_application_list_filter.dart';
 import 'package:placeify_flutter/features/admin/domain/models/vendor_application.dart';
 import 'package:placeify_flutter/features/admin/presentation/providers/admin_stats_provider.dart';
 import 'package:placeify_flutter/features/admin/presentation/providers/vendor_application_repository_provider.dart';
-import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
-import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_profile_provider.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_stats_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -54,20 +53,13 @@ class VendorApplicationActions extends _$VendorApplicationActions {
     if (!ref.mounted) return 'Could not approve application';
 
     try {
-      await ref.read(currentUserProvider.notifier).updateVendorStatusForUser(
-            userId: userId,
-            status: VendorStatus.approved,
-            vendorId: vendorId,
-          );
-      if (!ref.mounted) return 'Could not approve application';
-
       await repo.approve(userId: userId, vendorId: vendorId);
       if (!ref.mounted) return 'Could not approve application';
 
       _invalidateAfterDecision(vendorId);
       return null;
-    } catch (_) {
-      return 'Could not approve application';
+    } catch (error) {
+      return _actionErrorMessage(error, 'Could not approve application');
     }
   }
 
@@ -80,21 +72,19 @@ class VendorApplicationActions extends _$VendorApplicationActions {
     if (!ref.mounted) return 'Could not decline application';
 
     try {
-      await ref.read(currentUserProvider.notifier).updateVendorStatusForUser(
-            userId: userId,
-            status: VendorStatus.none,
-            vendorId: null,
-          );
-      if (!ref.mounted) return 'Could not decline application';
-
       await repo.decline(userId: userId, note: note);
       if (!ref.mounted) return 'Could not decline application';
 
       _invalidateAfterDecision(vendorId);
       return null;
-    } catch (_) {
-      return 'Could not decline application';
+    } catch (error) {
+      return _actionErrorMessage(error, 'Could not decline application');
     }
+  }
+
+  String _actionErrorMessage(Object error, String fallback) {
+    if (error is AdminApiException) return error.message;
+    return fallback;
   }
 
   void _invalidateAfterDecision(String vendorId) {

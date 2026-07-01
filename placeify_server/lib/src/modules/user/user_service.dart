@@ -8,6 +8,7 @@ import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
 import '../../shared/user_role_audit_log.dart';
+import '../admin/admin_repository.dart';
 import 'user_order_store.dart';
 import 'user_payment_store.dart';
 import 'user_profile_image_storage.dart';
@@ -214,9 +215,13 @@ class UserService {
       );
     }
 
-    if (user.role == UserRole.admin) return user;
+    final adminStore = AdminStore();
+    if (user.role == UserRole.admin) {
+      await adminStore.requireAdminProfile(session);
+      return user;
+    }
 
-    return User.db.updateRow(
+    final updated = await User.db.updateRow(
       session,
       user.copyWith(
         role: UserRole.admin,
@@ -225,6 +230,8 @@ class UserService {
         updatedAt: DateTime.now(),
       ),
     );
+    await adminStore.requireAdminProfile(session);
+    return updated;
   }
 
   Future<List<UserOrderSummary>> listMyOrders(

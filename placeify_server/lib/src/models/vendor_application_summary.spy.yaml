@@ -7,3 +7,5 @@ fields:
   contactEmail: String
   submittedAt: DateTime
   status: UserAccountStatus
+  moderationNote: String?
+  moderatedAt: DateTime?

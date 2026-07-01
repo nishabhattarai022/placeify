@@ -95,6 +95,19 @@ class _AdminVendorRowState extends State<AdminVendorRow> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  if (vendor.moderationNote != null &&
+                      vendor.moderationNote!.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      vendor.moderationNote!,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.rust,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ],
               ),
             ),

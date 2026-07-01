@@ -39,6 +39,8 @@ abstract class Vendor implements _i1.SerializableModel {
     this.approvedById,
     this.approvedBy,
     this.approvedAt,
+    this.moderationNote,
+    this.moderatedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : isOpen = isOpen ?? true,
@@ -68,6 +70,8 @@ abstract class Vendor implements _i1.SerializableModel {
     _i1.UuidValue? approvedById,
     _i3.Admin? approvedBy,
     DateTime? approvedAt,
+    String? moderationNote,
+    DateTime? moderatedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) = _VendorImpl;
@@ -111,6 +115,12 @@ abstract class Vendor implements _i1.SerializableModel {
       approvedAt: jsonSerialization['approvedAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['approvedAt']),
+      moderationNote: jsonSerialization['moderationNote'] as String?,
+      moderatedAt: jsonSerialization['moderatedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['moderatedAt'],
+            ),
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
@@ -170,6 +180,12 @@ abstract class Vendor implements _i1.SerializableModel {
 
   DateTime? approvedAt;
 
+  /// Admin suspend reason or reinstate terms note.
+  String? moderationNote;
+
+  /// When the vendor was last suspended or reinstated by admin.
+  DateTime? moderatedAt;
+
   DateTime createdAt;
 
   DateTime updatedAt;
@@ -199,6 +215,8 @@ abstract class Vendor implements _i1.SerializableModel {
     _i1.UuidValue? approvedById,
     _i3.Admin? approvedBy,
     DateTime? approvedAt,
+    String? moderationNote,
+    DateTime? moderatedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   });
@@ -227,6 +245,8 @@ abstract class Vendor implements _i1.SerializableModel {
       if (approvedById != null) 'approvedById': approvedById?.toJson(),
       if (approvedBy != null) 'approvedBy': approvedBy?.toJson(),
       if (approvedAt != null) 'approvedAt': approvedAt?.toJson(),
+      if (moderationNote != null) 'moderationNote': moderationNote,
+      if (moderatedAt != null) 'moderatedAt': moderatedAt?.toJson(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
     };
@@ -263,6 +283,8 @@ class _VendorImpl extends Vendor {
     _i1.UuidValue? approvedById,
     _i3.Admin? approvedBy,
     DateTime? approvedAt,
+    String? moderationNote,
+    DateTime? moderatedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : super._(
@@ -287,6 +309,8 @@ class _VendorImpl extends Vendor {
          approvedById: approvedById,
          approvedBy: approvedBy,
          approvedAt: approvedAt,
+         moderationNote: moderationNote,
+         moderatedAt: moderatedAt,
          createdAt: createdAt,
          updatedAt: updatedAt,
        );
@@ -317,6 +341,8 @@ class _VendorImpl extends Vendor {
     Object? approvedById = _Undefined,
     Object? approvedBy = _Undefined,
     Object? approvedAt = _Undefined,
+    Object? moderationNote = _Undefined,
+    Object? moderatedAt = _Undefined,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -354,6 +380,10 @@ class _VendorImpl extends Vendor {
           ? approvedBy
           : this.approvedBy?.copyWith(),
       approvedAt: approvedAt is DateTime? ? approvedAt : this.approvedAt,
+      moderationNote: moderationNote is String?
+          ? moderationNote
+          : this.moderationNote,
+      moderatedAt: moderatedAt is DateTime? ? moderatedAt : this.moderatedAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

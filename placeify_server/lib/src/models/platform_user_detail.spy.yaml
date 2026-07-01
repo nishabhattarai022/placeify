@@ -1,0 +1,15 @@
+### Full platform user record for admin user detail views.
+class: PlatformUserDetail
+fields:
+  id: UuidValue
+  name: String
+  email: String
+  role: UserRole
+  status: UserAccountStatus
+  isActive: bool
+  phone: String?
+  address: String?
+  vendorId: UuidValue?
+  vendorShopName: String?
+  createdAt: DateTime
+  updatedAt: DateTime

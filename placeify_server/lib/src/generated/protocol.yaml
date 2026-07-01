@@ -35,6 +35,11 @@ admin:
   - updateMyProfile:
   - approveVendor:
   - rejectVendor:
+  - suspendVendor:
+  - getVendorReinstateTerms:
+  - reactivateVendor:
+  - suspendUser:
+  - activateUser:
   - updateUserStatus:
   - deactivateUser:
   - removeProduct:
@@ -46,6 +51,7 @@ admin:
   - resolveComplaint:
   - getPlatformStats:
   - listUsers:
+  - getUserDetail:
   - listVendorApplications:
   - getVendorApplication:
   - getAuditLog:

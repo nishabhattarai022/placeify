@@ -1,4 +1,8 @@
+import 'package:placeify_client/placeify_client.dart';
+import 'package:placeify_flutter/core/debug/agent_debug_log.dart';
+import 'package:placeify_flutter/features/admin/data/serverpod_admin_api.dart';
 import 'package:placeify_flutter/features/admin/domain/enums/admin_vendor_list_filter.dart';
+import 'package:placeify_flutter/features/admin/domain/enums/vendor_application_list_filter.dart';
 import 'package:placeify_flutter/features/admin/domain/models/vendor_application.dart';
 import 'package:placeify_flutter/features/admin/presentation/providers/admin_repository_provider.dart';
 import 'package:placeify_flutter/features/admin/presentation/providers/admin_stats_provider.dart';
@@ -69,31 +73,65 @@ class AdminVendorActions extends _$AdminVendorActions {
   }) async {
     final repo = await ref.read(adminRepositoryProvider.future);
     try {
+      // #region agent log
+      AgentDebugLog.log(
+        'admin_vendors_provider.dart:suspend:entry',
+        'admin suspend action',
+        {
+          'userId': userId,
+          'vendorId': vendorId,
+          'reasonLength': reason?.trim().length ?? 0,
+        },
+        hypothesisId: 'C',
+        runId: 'post-fix',
+      );
+      // #endregion
       await repo.suspendVendor(userId, reason: reason);
-      _invalidateAfterAction(vendorId);
+      await _refreshAfterAction(vendorId);
       return null;
-    } catch (_) {
-      return 'Could not suspend vendor';
+    } catch (error) {
+      return _actionErrorMessage(error, 'Could not suspend vendor');
     }
   }
 
   Future<String?> reinstate({
     required String userId,
     required String vendorId,
+    bool termsAccepted = true,
+    String? termsNote,
   }) async {
     final repo = await ref.read(adminRepositoryProvider.future);
     try {
-      await repo.reinstateVendor(userId);
-      _invalidateAfterAction(vendorId);
+      await repo.reinstateVendor(
+        userId,
+        termsAccepted: termsAccepted,
+        termsNote: termsNote,
+      );
+      await _refreshAfterAction(vendorId);
       return null;
-    } catch (_) {
-      return 'Could not reinstate vendor';
+    } catch (error) {
+      return _actionErrorMessage(error, 'Could not reinstate vendor');
     }
   }
 
-  void _invalidateAfterAction(String vendorId) {
+  String _actionErrorMessage(Object error, String fallback) {
+    if (error is AdminApiException) return error.message;
+    if (error is PlaceifyException) return error.message;
+    final message = error.toString();
+    if (message.isNotEmpty && !message.startsWith('Exception:')) {
+      return message;
+    }
+    return fallback;
+  }
+
+  Future<void> _refreshAfterAction(String vendorId) async {
     ref.invalidate(vendorApplicationDetailProvider(vendorId));
-    ref.invalidate(adminVendorsListProvider);
+    for (final filter in AdminVendorListFilter.values) {
+      await ref.read(adminVendorsListProvider(filter).notifier).refresh();
+    }
+    for (final filter in VendorApplicationListFilter.values) {
+      await ref.read(vendorApplicationsListProvider(filter).notifier).refresh();
+    }
     ref.invalidate(adminStatsProvider);
     ref.invalidate(adminUsersListProvider);
   }
