@@ -56,6 +56,10 @@ class UserEndpoint extends PlaceifyAuthenticatedEndpoint {
     return _service.getDashboard(session);
   }
 
+  Future<UserOrderCounts> getMyOrderCounts(Session session) {
+    return _service.getMyOrderCounts(session);
+  }
+
   Future<User> ensureDemoAdmin(Session session) {
     return _service.ensureDemoAdmin(session);
   }

@@ -12,7 +12,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
 import 'user.dart' as _i2;
-import 'package:placeify_server/src/generated/protocol.dart' as _i3;
+import 'user_order_counts.dart' as _i3;
+import 'package:placeify_server/src/generated/protocol.dart' as _i4;
 
 /// Aggregated profile dashboard data for the logged-in customer.
 abstract class UserDashboard
@@ -20,6 +21,7 @@ abstract class UserDashboard
   UserDashboard._({
     required this.profile,
     required this.orderCount,
+    required this.orderCounts,
     required this.wishlistCount,
     required this.cartItemCount,
     required this.arSessionCount,
@@ -29,6 +31,7 @@ abstract class UserDashboard
   factory UserDashboard({
     required _i2.User profile,
     required int orderCount,
+    required _i3.UserOrderCounts orderCounts,
     required int wishlistCount,
     required int cartItemCount,
     required int arSessionCount,
@@ -37,10 +40,13 @@ abstract class UserDashboard
 
   factory UserDashboard.fromJson(Map<String, dynamic> jsonSerialization) {
     return UserDashboard(
-      profile: _i3.Protocol().deserialize<_i2.User>(
+      profile: _i4.Protocol().deserialize<_i2.User>(
         jsonSerialization['profile'],
       ),
       orderCount: jsonSerialization['orderCount'] as int,
+      orderCounts: _i4.Protocol().deserialize<_i3.UserOrderCounts>(
+        jsonSerialization['orderCounts'],
+      ),
       wishlistCount: jsonSerialization['wishlistCount'] as int,
       cartItemCount: jsonSerialization['cartItemCount'] as int,
       arSessionCount: jsonSerialization['arSessionCount'] as int,
@@ -50,7 +56,10 @@ abstract class UserDashboard
 
   _i2.User profile;
 
+  /// Same value as [orderCounts.activeOrders] (kept for backward compatibility).
   int orderCount;
+
+  _i3.UserOrderCounts orderCounts;
 
   int wishlistCount;
 
@@ -66,6 +75,7 @@ abstract class UserDashboard
   UserDashboard copyWith({
     _i2.User? profile,
     int? orderCount,
+    _i3.UserOrderCounts? orderCounts,
     int? wishlistCount,
     int? cartItemCount,
     int? arSessionCount,
@@ -77,6 +87,7 @@ abstract class UserDashboard
       '__className__': 'UserDashboard',
       'profile': profile.toJson(),
       'orderCount': orderCount,
+      'orderCounts': orderCounts.toJson(),
       'wishlistCount': wishlistCount,
       'cartItemCount': cartItemCount,
       'arSessionCount': arSessionCount,
@@ -90,6 +101,7 @@ abstract class UserDashboard
       '__className__': 'UserDashboard',
       'profile': profile.toJsonForProtocol(),
       'orderCount': orderCount,
+      'orderCounts': orderCounts.toJsonForProtocol(),
       'wishlistCount': wishlistCount,
       'cartItemCount': cartItemCount,
       'arSessionCount': arSessionCount,
@@ -107,6 +119,7 @@ class _UserDashboardImpl extends UserDashboard {
   _UserDashboardImpl({
     required _i2.User profile,
     required int orderCount,
+    required _i3.UserOrderCounts orderCounts,
     required int wishlistCount,
     required int cartItemCount,
     required int arSessionCount,
@@ -114,6 +127,7 @@ class _UserDashboardImpl extends UserDashboard {
   }) : super._(
          profile: profile,
          orderCount: orderCount,
+         orderCounts: orderCounts,
          wishlistCount: wishlistCount,
          cartItemCount: cartItemCount,
          arSessionCount: arSessionCount,
@@ -127,6 +141,7 @@ class _UserDashboardImpl extends UserDashboard {
   UserDashboard copyWith({
     _i2.User? profile,
     int? orderCount,
+    _i3.UserOrderCounts? orderCounts,
     int? wishlistCount,
     int? cartItemCount,
     int? arSessionCount,
@@ -135,6 +150,7 @@ class _UserDashboardImpl extends UserDashboard {
     return UserDashboard(
       profile: profile ?? this.profile.copyWith(),
       orderCount: orderCount ?? this.orderCount,
+      orderCounts: orderCounts ?? this.orderCounts.copyWith(),
       wishlistCount: wishlistCount ?? this.wishlistCount,
       cartItemCount: cartItemCount ?? this.cartItemCount,
       arSessionCount: arSessionCount ?? this.arSessionCount,

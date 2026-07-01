@@ -113,6 +113,46 @@ void main() {
 
         dashboard = await endpoints.user.getDashboard(auth.session);
         expect(dashboard.orderCount, 0);
+        expect(dashboard.orderCounts.activeOrders, 0);
+        expect(dashboard.orderCounts.cancelledOrders, 1);
+      },
+    );
+
+    test(
+      'when mixed active and cancelled orders then orderCounts stay consistent',
+      () async {
+        final auth = await createAuthenticatedUser(sessionBuilder, endpoints);
+
+        final setupSession = sessionBuilder.build();
+        final seeded = await seedProductForUser(setupSession, auth.profile);
+
+        for (var i = 0; i < 30; i++) {
+          await seedOrderForUser(setupSession, auth.profile, seeded.product);
+        }
+        for (var i = 0; i < 5; i++) {
+          final cancelled = await seedOrderForUser(
+            setupSession,
+            auth.profile,
+            seeded.product,
+          );
+          await Order.db.updateRow(
+            setupSession,
+            cancelled.copyWith(status: OrderStatus.cancelled),
+          );
+        }
+        await setupSession.close();
+
+        final dashboard = await endpoints.user.getDashboard(auth.session);
+        final counts = dashboard.orderCounts;
+        final directCounts =
+            await endpoints.user.getMyOrderCounts(auth.session);
+
+        expect(dashboard.orderCount, 30);
+        expect(counts.totalOrders, 35);
+        expect(counts.activeOrders, 30);
+        expect(counts.cancelledOrders, 5);
+        expect(directCounts.activeOrders, 30);
+        expect(directCounts.totalOrders, 35);
       },
     );
 

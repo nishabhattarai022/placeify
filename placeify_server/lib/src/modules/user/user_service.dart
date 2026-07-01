@@ -7,6 +7,7 @@ import 'package:serverpod_auth_idp_server/providers/email.dart';
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
+import 'order_count_store.dart';
 import 'user_order_store.dart';
 import 'user_payment_store.dart';
 import 'user_profile_image_storage.dart';
@@ -177,6 +178,11 @@ class UserService {
   Future<UserDashboard> getDashboard(Session session) async {
     final user = await SessionService.requireUser(session);
     return _repository.buildDashboard(session, user);
+  }
+
+  Future<UserOrderCounts> getMyOrderCounts(Session session) async {
+    final user = await SessionService.requireUser(session);
+    return OrderCountStore.forUser(session, user.id!);
   }
 
   /// Development-only: creates or resets the demo admin auth account and profile.

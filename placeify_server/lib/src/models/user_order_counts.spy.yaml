@@ -1,0 +1,12 @@
+### Aggregated order counters for the logged-in customer.
+class: UserOrderCounts
+fields:
+  ### All orders ever placed (includes cancelled).
+  totalOrders: int
+  ### Non-terminal orders: excludes cancelled, autoCancelled, and rejected.
+  activeOrders: int
+  cancelledOrders: int
+  deliveredOrders: int
+  ### Orders currently in fulfilment (not delivered or terminal).
+  inProgressOrders: int
+  returnOrders: int

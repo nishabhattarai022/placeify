@@ -63,72 +63,74 @@ import 'user.dart' as _i50;
 import 'user_account_status.dart' as _i51;
 import 'user_ar_session_summary.dart' as _i52;
 import 'user_dashboard.dart' as _i53;
-import 'user_order_delivery_event.dart' as _i54;
-import 'user_order_detail.dart' as _i55;
-import 'user_order_line_item.dart' as _i56;
-import 'user_order_payment_event.dart' as _i57;
-import 'user_order_payment_summary.dart' as _i58;
-import 'user_order_summary.dart' as _i59;
-import 'user_role.dart' as _i60;
-import 'vendor.dart' as _i61;
-import 'vendor_application_detail.dart' as _i62;
-import 'vendor_application_summary.dart' as _i63;
-import 'vendor_bank_details.dart' as _i64;
-import 'vendor_bank_details_input.dart' as _i65;
-import 'vendor_dashboard.dart' as _i66;
-import 'vendor_document.dart' as _i67;
-import 'vendor_document_type.dart' as _i68;
-import 'vendor_notification_summary.dart' as _i69;
-import 'vendor_notification_type.dart' as _i70;
-import 'vendor_order_line_item.dart' as _i71;
-import 'vendor_order_summary.dart' as _i72;
-import 'vendor_payments_overview.dart' as _i73;
-import 'vendor_payout.dart' as _i74;
-import 'vendor_payout_status.dart' as _i75;
-import 'vendor_payout_summary.dart' as _i76;
-import 'vendor_product_stat.dart' as _i77;
-import 'vendor_product_upload_input.dart' as _i78;
-import 'vendor_profile_detail.dart' as _i79;
-import 'vendor_profile_update_input.dart' as _i80;
-import 'vendor_shop_order.dart' as _i81;
-import 'wishlist_item.dart' as _i82;
-import 'wishlist_page.dart' as _i83;
-import 'package:placeify_client/src/protocol/user_role.dart' as _i84;
-import 'package:placeify_client/src/protocol/user_order_summary.dart' as _i85;
+import 'user_order_counts.dart' as _i54;
+import 'user_order_delivery_event.dart' as _i55;
+import 'user_order_detail.dart' as _i56;
+import 'user_order_line_item.dart' as _i57;
+import 'user_order_payment_event.dart' as _i58;
+import 'user_order_payment_summary.dart' as _i59;
+import 'user_order_summary.dart' as _i60;
+import 'user_role.dart' as _i61;
+import 'vendor.dart' as _i62;
+import 'vendor_application_detail.dart' as _i63;
+import 'vendor_application_summary.dart' as _i64;
+import 'vendor_bank_details.dart' as _i65;
+import 'vendor_bank_details_input.dart' as _i66;
+import 'vendor_dashboard.dart' as _i67;
+import 'vendor_document.dart' as _i68;
+import 'vendor_document_type.dart' as _i69;
+import 'vendor_notification_summary.dart' as _i70;
+import 'vendor_notification_type.dart' as _i71;
+import 'vendor_order_line_item.dart' as _i72;
+import 'vendor_order_summary.dart' as _i73;
+import 'vendor_payments_overview.dart' as _i74;
+import 'vendor_payout.dart' as _i75;
+import 'vendor_payout_status.dart' as _i76;
+import 'vendor_payout_summary.dart' as _i77;
+import 'vendor_product_stat.dart' as _i78;
+import 'vendor_product_upload_input.dart' as _i79;
+import 'vendor_profile_detail.dart' as _i80;
+import 'vendor_profile_update_input.dart' as _i81;
+import 'vendor_shop_order.dart' as _i82;
+import 'wishlist_item.dart' as _i83;
+import 'wishlist_page.dart' as _i84;
+import 'package:placeify_client/src/protocol/user_role.dart' as _i85;
+import 'package:placeify_client/src/protocol/user_order_summary.dart' as _i86;
 import 'package:placeify_client/src/protocol/user_ar_session_summary.dart'
-    as _i86;
-import 'package:placeify_client/src/protocol/complaint.dart' as _i87;
+    as _i87;
+import 'package:placeify_client/src/protocol/complaint.dart' as _i88;
 import 'package:placeify_client/src/protocol/platform_user_summary.dart'
-    as _i88;
-import 'package:placeify_client/src/protocol/vendor_application_summary.dart'
     as _i89;
-import 'package:placeify_client/src/protocol/admin_audit_log_summary.dart'
+import 'package:placeify_client/src/protocol/vendor_application_summary.dart'
     as _i90;
-import 'package:placeify_client/src/protocol/admin_vendor_payout_summary.dart'
+import 'package:placeify_client/src/protocol/admin_audit_log_summary.dart'
     as _i91;
-import 'package:placeify_client/src/protocol/admin_refund_request_summary.dart'
+import 'package:placeify_client/src/protocol/admin_vendor_payout_summary.dart'
     as _i92;
-import 'package:placeify_client/src/protocol/ar_session.dart' as _i93;
-import 'package:placeify_client/src/protocol/cart_item.dart' as _i94;
+import 'package:placeify_client/src/protocol/admin_refund_request_summary.dart'
+    as _i93;
+import 'package:placeify_client/src/protocol/ar_session.dart' as _i94;
+import 'package:placeify_client/src/protocol/cart_item.dart' as _i95;
 import 'package:placeify_client/src/protocol/in_app_notification_summary.dart'
-    as _i95;
-import 'package:placeify_client/src/protocol/order_delivery_update.dart'
     as _i96;
-import 'package:placeify_client/src/protocol/payment_update_summary.dart'
+import 'package:placeify_client/src/protocol/order_delivery_update.dart'
     as _i97;
-import 'package:placeify_client/src/protocol/category.dart' as _i98;
-import 'package:placeify_client/src/protocol/shop_listing_summary.dart' as _i99;
-import 'package:placeify_client/src/protocol/product.dart' as _i100;
+import 'package:placeify_client/src/protocol/payment_update_summary.dart'
+    as _i98;
+import 'package:placeify_client/src/protocol/category.dart' as _i99;
+import 'package:placeify_client/src/protocol/shop_listing_summary.dart'
+    as _i100;
+import 'package:placeify_client/src/protocol/product.dart' as _i101;
 import 'package:placeify_client/src/protocol/refund_request_summary.dart'
-    as _i101;
-import 'package:placeify_client/src/protocol/review.dart' as _i102;
-import 'package:placeify_client/src/protocol/vendor_shop_order.dart' as _i103;
+    as _i102;
+import 'package:placeify_client/src/protocol/review.dart' as _i103;
+import 'package:placeify_client/src/protocol/vendor_shop_order.dart' as _i104;
 import 'package:placeify_client/src/protocol/vendor_notification_summary.dart'
-    as _i104;
-import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _i105;
-import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
+import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _i106;
+import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
+    as _i107;
 export 'admin.dart';
 export 'admin_audit_log_summary.dart';
 export 'admin_platform_stats.dart';
@@ -181,6 +183,7 @@ export 'user.dart';
 export 'user_account_status.dart';
 export 'user_ar_session_summary.dart';
 export 'user_dashboard.dart';
+export 'user_order_counts.dart';
 export 'user_order_delivery_event.dart';
 export 'user_order_detail.dart';
 export 'user_order_line_item.dart';
@@ -403,95 +406,98 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i53.UserDashboard) {
       return _i53.UserDashboard.fromJson(data) as T;
     }
-    if (t == _i54.UserOrderDeliveryEvent) {
-      return _i54.UserOrderDeliveryEvent.fromJson(data) as T;
+    if (t == _i54.UserOrderCounts) {
+      return _i54.UserOrderCounts.fromJson(data) as T;
     }
-    if (t == _i55.UserOrderDetail) {
-      return _i55.UserOrderDetail.fromJson(data) as T;
+    if (t == _i55.UserOrderDeliveryEvent) {
+      return _i55.UserOrderDeliveryEvent.fromJson(data) as T;
     }
-    if (t == _i56.UserOrderLineItem) {
-      return _i56.UserOrderLineItem.fromJson(data) as T;
+    if (t == _i56.UserOrderDetail) {
+      return _i56.UserOrderDetail.fromJson(data) as T;
     }
-    if (t == _i57.UserOrderPaymentEvent) {
-      return _i57.UserOrderPaymentEvent.fromJson(data) as T;
+    if (t == _i57.UserOrderLineItem) {
+      return _i57.UserOrderLineItem.fromJson(data) as T;
     }
-    if (t == _i58.UserOrderPaymentSummary) {
-      return _i58.UserOrderPaymentSummary.fromJson(data) as T;
+    if (t == _i58.UserOrderPaymentEvent) {
+      return _i58.UserOrderPaymentEvent.fromJson(data) as T;
     }
-    if (t == _i59.UserOrderSummary) {
-      return _i59.UserOrderSummary.fromJson(data) as T;
+    if (t == _i59.UserOrderPaymentSummary) {
+      return _i59.UserOrderPaymentSummary.fromJson(data) as T;
     }
-    if (t == _i60.UserRole) {
-      return _i60.UserRole.fromJson(data) as T;
+    if (t == _i60.UserOrderSummary) {
+      return _i60.UserOrderSummary.fromJson(data) as T;
     }
-    if (t == _i61.Vendor) {
-      return _i61.Vendor.fromJson(data) as T;
+    if (t == _i61.UserRole) {
+      return _i61.UserRole.fromJson(data) as T;
     }
-    if (t == _i62.VendorApplicationDetail) {
-      return _i62.VendorApplicationDetail.fromJson(data) as T;
+    if (t == _i62.Vendor) {
+      return _i62.Vendor.fromJson(data) as T;
     }
-    if (t == _i63.VendorApplicationSummary) {
-      return _i63.VendorApplicationSummary.fromJson(data) as T;
+    if (t == _i63.VendorApplicationDetail) {
+      return _i63.VendorApplicationDetail.fromJson(data) as T;
     }
-    if (t == _i64.VendorBankDetails) {
-      return _i64.VendorBankDetails.fromJson(data) as T;
+    if (t == _i64.VendorApplicationSummary) {
+      return _i64.VendorApplicationSummary.fromJson(data) as T;
     }
-    if (t == _i65.VendorBankDetailsInput) {
-      return _i65.VendorBankDetailsInput.fromJson(data) as T;
+    if (t == _i65.VendorBankDetails) {
+      return _i65.VendorBankDetails.fromJson(data) as T;
     }
-    if (t == _i66.VendorDashboard) {
-      return _i66.VendorDashboard.fromJson(data) as T;
+    if (t == _i66.VendorBankDetailsInput) {
+      return _i66.VendorBankDetailsInput.fromJson(data) as T;
     }
-    if (t == _i67.VendorDocument) {
-      return _i67.VendorDocument.fromJson(data) as T;
+    if (t == _i67.VendorDashboard) {
+      return _i67.VendorDashboard.fromJson(data) as T;
     }
-    if (t == _i68.VendorDocumentType) {
-      return _i68.VendorDocumentType.fromJson(data) as T;
+    if (t == _i68.VendorDocument) {
+      return _i68.VendorDocument.fromJson(data) as T;
     }
-    if (t == _i69.VendorNotificationSummary) {
-      return _i69.VendorNotificationSummary.fromJson(data) as T;
+    if (t == _i69.VendorDocumentType) {
+      return _i69.VendorDocumentType.fromJson(data) as T;
     }
-    if (t == _i70.VendorNotificationType) {
-      return _i70.VendorNotificationType.fromJson(data) as T;
+    if (t == _i70.VendorNotificationSummary) {
+      return _i70.VendorNotificationSummary.fromJson(data) as T;
     }
-    if (t == _i71.VendorOrderLineItem) {
-      return _i71.VendorOrderLineItem.fromJson(data) as T;
+    if (t == _i71.VendorNotificationType) {
+      return _i71.VendorNotificationType.fromJson(data) as T;
     }
-    if (t == _i72.VendorOrderSummary) {
-      return _i72.VendorOrderSummary.fromJson(data) as T;
+    if (t == _i72.VendorOrderLineItem) {
+      return _i72.VendorOrderLineItem.fromJson(data) as T;
     }
-    if (t == _i73.VendorPaymentsOverview) {
-      return _i73.VendorPaymentsOverview.fromJson(data) as T;
+    if (t == _i73.VendorOrderSummary) {
+      return _i73.VendorOrderSummary.fromJson(data) as T;
     }
-    if (t == _i74.VendorPayout) {
-      return _i74.VendorPayout.fromJson(data) as T;
+    if (t == _i74.VendorPaymentsOverview) {
+      return _i74.VendorPaymentsOverview.fromJson(data) as T;
     }
-    if (t == _i75.VendorPayoutStatus) {
-      return _i75.VendorPayoutStatus.fromJson(data) as T;
+    if (t == _i75.VendorPayout) {
+      return _i75.VendorPayout.fromJson(data) as T;
     }
-    if (t == _i76.VendorPayoutSummary) {
-      return _i76.VendorPayoutSummary.fromJson(data) as T;
+    if (t == _i76.VendorPayoutStatus) {
+      return _i76.VendorPayoutStatus.fromJson(data) as T;
     }
-    if (t == _i77.VendorProductStat) {
-      return _i77.VendorProductStat.fromJson(data) as T;
+    if (t == _i77.VendorPayoutSummary) {
+      return _i77.VendorPayoutSummary.fromJson(data) as T;
     }
-    if (t == _i78.VendorProductUploadInput) {
-      return _i78.VendorProductUploadInput.fromJson(data) as T;
+    if (t == _i78.VendorProductStat) {
+      return _i78.VendorProductStat.fromJson(data) as T;
     }
-    if (t == _i79.VendorProfileDetail) {
-      return _i79.VendorProfileDetail.fromJson(data) as T;
+    if (t == _i79.VendorProductUploadInput) {
+      return _i79.VendorProductUploadInput.fromJson(data) as T;
     }
-    if (t == _i80.VendorProfileUpdateInput) {
-      return _i80.VendorProfileUpdateInput.fromJson(data) as T;
+    if (t == _i80.VendorProfileDetail) {
+      return _i80.VendorProfileDetail.fromJson(data) as T;
     }
-    if (t == _i81.VendorShopOrder) {
-      return _i81.VendorShopOrder.fromJson(data) as T;
+    if (t == _i81.VendorProfileUpdateInput) {
+      return _i81.VendorProfileUpdateInput.fromJson(data) as T;
     }
-    if (t == _i82.WishlistItem) {
-      return _i82.WishlistItem.fromJson(data) as T;
+    if (t == _i82.VendorShopOrder) {
+      return _i82.VendorShopOrder.fromJson(data) as T;
     }
-    if (t == _i83.WishlistPage) {
-      return _i83.WishlistPage.fromJson(data) as T;
+    if (t == _i83.WishlistItem) {
+      return _i83.WishlistItem.fromJson(data) as T;
+    }
+    if (t == _i84.WishlistPage) {
+      return _i84.WishlistPage.fromJson(data) as T;
     }
     if (t == _i1.getType<_i2.Admin?>()) {
       return (data != null ? _i2.Admin.fromJson(data) : null) as T;
@@ -677,120 +683,123 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i1.getType<_i53.UserDashboard?>()) {
       return (data != null ? _i53.UserDashboard.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i54.UserOrderDeliveryEvent?>()) {
-      return (data != null ? _i54.UserOrderDeliveryEvent.fromJson(data) : null)
+    if (t == _i1.getType<_i54.UserOrderCounts?>()) {
+      return (data != null ? _i54.UserOrderCounts.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i55.UserOrderDeliveryEvent?>()) {
+      return (data != null ? _i55.UserOrderDeliveryEvent.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i55.UserOrderDetail?>()) {
-      return (data != null ? _i55.UserOrderDetail.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i56.UserOrderDetail?>()) {
+      return (data != null ? _i56.UserOrderDetail.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i56.UserOrderLineItem?>()) {
-      return (data != null ? _i56.UserOrderLineItem.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i57.UserOrderLineItem?>()) {
+      return (data != null ? _i57.UserOrderLineItem.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i57.UserOrderPaymentEvent?>()) {
-      return (data != null ? _i57.UserOrderPaymentEvent.fromJson(data) : null)
+    if (t == _i1.getType<_i58.UserOrderPaymentEvent?>()) {
+      return (data != null ? _i58.UserOrderPaymentEvent.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i58.UserOrderPaymentSummary?>()) {
-      return (data != null ? _i58.UserOrderPaymentSummary.fromJson(data) : null)
+    if (t == _i1.getType<_i59.UserOrderPaymentSummary?>()) {
+      return (data != null ? _i59.UserOrderPaymentSummary.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i59.UserOrderSummary?>()) {
-      return (data != null ? _i59.UserOrderSummary.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i60.UserOrderSummary?>()) {
+      return (data != null ? _i60.UserOrderSummary.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i60.UserRole?>()) {
-      return (data != null ? _i60.UserRole.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i61.UserRole?>()) {
+      return (data != null ? _i61.UserRole.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i61.Vendor?>()) {
-      return (data != null ? _i61.Vendor.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i62.Vendor?>()) {
+      return (data != null ? _i62.Vendor.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i62.VendorApplicationDetail?>()) {
-      return (data != null ? _i62.VendorApplicationDetail.fromJson(data) : null)
+    if (t == _i1.getType<_i63.VendorApplicationDetail?>()) {
+      return (data != null ? _i63.VendorApplicationDetail.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i63.VendorApplicationSummary?>()) {
+    if (t == _i1.getType<_i64.VendorApplicationSummary?>()) {
       return (data != null
-              ? _i63.VendorApplicationSummary.fromJson(data)
+              ? _i64.VendorApplicationSummary.fromJson(data)
               : null)
           as T;
     }
-    if (t == _i1.getType<_i64.VendorBankDetails?>()) {
-      return (data != null ? _i64.VendorBankDetails.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i65.VendorBankDetails?>()) {
+      return (data != null ? _i65.VendorBankDetails.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i65.VendorBankDetailsInput?>()) {
-      return (data != null ? _i65.VendorBankDetailsInput.fromJson(data) : null)
+    if (t == _i1.getType<_i66.VendorBankDetailsInput?>()) {
+      return (data != null ? _i66.VendorBankDetailsInput.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i66.VendorDashboard?>()) {
-      return (data != null ? _i66.VendorDashboard.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i67.VendorDashboard?>()) {
+      return (data != null ? _i67.VendorDashboard.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i67.VendorDocument?>()) {
-      return (data != null ? _i67.VendorDocument.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i68.VendorDocument?>()) {
+      return (data != null ? _i68.VendorDocument.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i68.VendorDocumentType?>()) {
-      return (data != null ? _i68.VendorDocumentType.fromJson(data) : null)
+    if (t == _i1.getType<_i69.VendorDocumentType?>()) {
+      return (data != null ? _i69.VendorDocumentType.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i69.VendorNotificationSummary?>()) {
+    if (t == _i1.getType<_i70.VendorNotificationSummary?>()) {
       return (data != null
-              ? _i69.VendorNotificationSummary.fromJson(data)
+              ? _i70.VendorNotificationSummary.fromJson(data)
               : null)
           as T;
     }
-    if (t == _i1.getType<_i70.VendorNotificationType?>()) {
-      return (data != null ? _i70.VendorNotificationType.fromJson(data) : null)
+    if (t == _i1.getType<_i71.VendorNotificationType?>()) {
+      return (data != null ? _i71.VendorNotificationType.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i71.VendorOrderLineItem?>()) {
-      return (data != null ? _i71.VendorOrderLineItem.fromJson(data) : null)
+    if (t == _i1.getType<_i72.VendorOrderLineItem?>()) {
+      return (data != null ? _i72.VendorOrderLineItem.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i72.VendorOrderSummary?>()) {
-      return (data != null ? _i72.VendorOrderSummary.fromJson(data) : null)
+    if (t == _i1.getType<_i73.VendorOrderSummary?>()) {
+      return (data != null ? _i73.VendorOrderSummary.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i73.VendorPaymentsOverview?>()) {
-      return (data != null ? _i73.VendorPaymentsOverview.fromJson(data) : null)
+    if (t == _i1.getType<_i74.VendorPaymentsOverview?>()) {
+      return (data != null ? _i74.VendorPaymentsOverview.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i74.VendorPayout?>()) {
-      return (data != null ? _i74.VendorPayout.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i75.VendorPayout?>()) {
+      return (data != null ? _i75.VendorPayout.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i75.VendorPayoutStatus?>()) {
-      return (data != null ? _i75.VendorPayoutStatus.fromJson(data) : null)
+    if (t == _i1.getType<_i76.VendorPayoutStatus?>()) {
+      return (data != null ? _i76.VendorPayoutStatus.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i76.VendorPayoutSummary?>()) {
-      return (data != null ? _i76.VendorPayoutSummary.fromJson(data) : null)
+    if (t == _i1.getType<_i77.VendorPayoutSummary?>()) {
+      return (data != null ? _i77.VendorPayoutSummary.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i77.VendorProductStat?>()) {
-      return (data != null ? _i77.VendorProductStat.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i78.VendorProductStat?>()) {
+      return (data != null ? _i78.VendorProductStat.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i78.VendorProductUploadInput?>()) {
+    if (t == _i1.getType<_i79.VendorProductUploadInput?>()) {
       return (data != null
-              ? _i78.VendorProductUploadInput.fromJson(data)
+              ? _i79.VendorProductUploadInput.fromJson(data)
               : null)
           as T;
     }
-    if (t == _i1.getType<_i79.VendorProfileDetail?>()) {
-      return (data != null ? _i79.VendorProfileDetail.fromJson(data) : null)
+    if (t == _i1.getType<_i80.VendorProfileDetail?>()) {
+      return (data != null ? _i80.VendorProfileDetail.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i80.VendorProfileUpdateInput?>()) {
+    if (t == _i1.getType<_i81.VendorProfileUpdateInput?>()) {
       return (data != null
-              ? _i80.VendorProfileUpdateInput.fromJson(data)
+              ? _i81.VendorProfileUpdateInput.fromJson(data)
               : null)
           as T;
     }
-    if (t == _i1.getType<_i81.VendorShopOrder?>()) {
-      return (data != null ? _i81.VendorShopOrder.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i82.VendorShopOrder?>()) {
+      return (data != null ? _i82.VendorShopOrder.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i82.WishlistItem?>()) {
-      return (data != null ? _i82.WishlistItem.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i83.WishlistItem?>()) {
+      return (data != null ? _i83.WishlistItem.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i83.WishlistPage?>()) {
-      return (data != null ? _i83.WishlistPage.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i84.WishlistPage?>()) {
+      return (data != null ? _i84.WishlistPage.fromJson(data) : null) as T;
     }
     if (t == List<_i3.AdminAuditLogSummary>) {
       return (data as List)
@@ -801,9 +810,9 @@ class Protocol extends _i1.SerializationManager {
     if (t == List<double>) {
       return (data as List).map((e) => deserialize<double>(e)).toList() as T;
     }
-    if (t == List<_i63.VendorApplicationSummary>) {
+    if (t == List<_i64.VendorApplicationSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i63.VendorApplicationSummary>(e))
+              .map((e) => deserialize<_i64.VendorApplicationSummary>(e))
               .toList()
           as T;
     }
@@ -824,152 +833,152 @@ class Protocol extends _i1.SerializationManager {
       return (data as List).map((e) => deserialize<_i41.Product>(e)).toList()
           as T;
     }
-    if (t == List<_i56.UserOrderLineItem>) {
+    if (t == List<_i57.UserOrderLineItem>) {
       return (data as List)
-              .map((e) => deserialize<_i56.UserOrderLineItem>(e))
+              .map((e) => deserialize<_i57.UserOrderLineItem>(e))
               .toList()
           as T;
     }
-    if (t == List<_i54.UserOrderDeliveryEvent>) {
+    if (t == List<_i55.UserOrderDeliveryEvent>) {
       return (data as List)
-              .map((e) => deserialize<_i54.UserOrderDeliveryEvent>(e))
+              .map((e) => deserialize<_i55.UserOrderDeliveryEvent>(e))
               .toList()
           as T;
     }
-    if (t == List<_i57.UserOrderPaymentEvent>) {
+    if (t == List<_i58.UserOrderPaymentEvent>) {
       return (data as List)
-              .map((e) => deserialize<_i57.UserOrderPaymentEvent>(e))
+              .map((e) => deserialize<_i58.UserOrderPaymentEvent>(e))
               .toList()
           as T;
     }
-    if (t == List<_i72.VendorOrderSummary>) {
+    if (t == List<_i73.VendorOrderSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i72.VendorOrderSummary>(e))
+              .map((e) => deserialize<_i73.VendorOrderSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i77.VendorProductStat>) {
+    if (t == List<_i78.VendorProductStat>) {
       return (data as List)
-              .map((e) => deserialize<_i77.VendorProductStat>(e))
+              .map((e) => deserialize<_i78.VendorProductStat>(e))
               .toList()
           as T;
     }
-    if (t == List<_i76.VendorPayoutSummary>) {
+    if (t == List<_i77.VendorPayoutSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i76.VendorPayoutSummary>(e))
+              .map((e) => deserialize<_i77.VendorPayoutSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i71.VendorOrderLineItem>) {
+    if (t == List<_i72.VendorOrderLineItem>) {
       return (data as List)
-              .map((e) => deserialize<_i71.VendorOrderLineItem>(e))
+              .map((e) => deserialize<_i72.VendorOrderLineItem>(e))
               .toList()
           as T;
     }
-    if (t == List<_i82.WishlistItem>) {
+    if (t == List<_i83.WishlistItem>) {
       return (data as List)
-              .map((e) => deserialize<_i82.WishlistItem>(e))
+              .map((e) => deserialize<_i83.WishlistItem>(e))
               .toList()
           as T;
     }
-    if (t == Set<_i84.UserRole>) {
-      return (data as List).map((e) => deserialize<_i84.UserRole>(e)).toSet()
+    if (t == Set<_i85.UserRole>) {
+      return (data as List).map((e) => deserialize<_i85.UserRole>(e)).toSet()
           as T;
     }
-    if (t == List<_i85.UserOrderSummary>) {
+    if (t == List<_i86.UserOrderSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i85.UserOrderSummary>(e))
+              .map((e) => deserialize<_i86.UserOrderSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i86.UserArSessionSummary>) {
+    if (t == List<_i87.UserArSessionSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i86.UserArSessionSummary>(e))
+              .map((e) => deserialize<_i87.UserArSessionSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i87.Complaint>) {
-      return (data as List).map((e) => deserialize<_i87.Complaint>(e)).toList()
+    if (t == List<_i88.Complaint>) {
+      return (data as List).map((e) => deserialize<_i88.Complaint>(e)).toList()
           as T;
     }
-    if (t == List<_i88.PlatformUserSummary>) {
+    if (t == List<_i89.PlatformUserSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i88.PlatformUserSummary>(e))
+              .map((e) => deserialize<_i89.PlatformUserSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i89.VendorApplicationSummary>) {
+    if (t == List<_i90.VendorApplicationSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i89.VendorApplicationSummary>(e))
+              .map((e) => deserialize<_i90.VendorApplicationSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i90.AdminAuditLogSummary>) {
+    if (t == List<_i91.AdminAuditLogSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i90.AdminAuditLogSummary>(e))
+              .map((e) => deserialize<_i91.AdminAuditLogSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i91.AdminVendorPayoutSummary>) {
+    if (t == List<_i92.AdminVendorPayoutSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i91.AdminVendorPayoutSummary>(e))
+              .map((e) => deserialize<_i92.AdminVendorPayoutSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i92.AdminRefundRequestSummary>) {
+    if (t == List<_i93.AdminRefundRequestSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i92.AdminRefundRequestSummary>(e))
+              .map((e) => deserialize<_i93.AdminRefundRequestSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i93.ARSession>) {
-      return (data as List).map((e) => deserialize<_i93.ARSession>(e)).toList()
+    if (t == List<_i94.ARSession>) {
+      return (data as List).map((e) => deserialize<_i94.ARSession>(e)).toList()
           as T;
     }
-    if (t == List<_i94.CartItem>) {
-      return (data as List).map((e) => deserialize<_i94.CartItem>(e)).toList()
+    if (t == List<_i95.CartItem>) {
+      return (data as List).map((e) => deserialize<_i95.CartItem>(e)).toList()
           as T;
     }
-    if (t == List<_i95.InAppNotificationSummary>) {
+    if (t == List<_i96.InAppNotificationSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i95.InAppNotificationSummary>(e))
+              .map((e) => deserialize<_i96.InAppNotificationSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i96.OrderDeliveryUpdate>) {
+    if (t == List<_i97.OrderDeliveryUpdate>) {
       return (data as List)
-              .map((e) => deserialize<_i96.OrderDeliveryUpdate>(e))
+              .map((e) => deserialize<_i97.OrderDeliveryUpdate>(e))
               .toList()
           as T;
     }
-    if (t == List<_i97.PaymentUpdateSummary>) {
+    if (t == List<_i98.PaymentUpdateSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i97.PaymentUpdateSummary>(e))
+              .map((e) => deserialize<_i98.PaymentUpdateSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i98.Category>) {
-      return (data as List).map((e) => deserialize<_i98.Category>(e)).toList()
+    if (t == List<_i99.Category>) {
+      return (data as List).map((e) => deserialize<_i99.Category>(e)).toList()
           as T;
     }
-    if (t == List<_i99.ShopListingSummary>) {
+    if (t == List<_i100.ShopListingSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i99.ShopListingSummary>(e))
+              .map((e) => deserialize<_i100.ShopListingSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i100.Product>) {
-      return (data as List).map((e) => deserialize<_i100.Product>(e)).toList()
+    if (t == List<_i101.Product>) {
+      return (data as List).map((e) => deserialize<_i101.Product>(e)).toList()
           as T;
     }
-    if (t == List<_i101.RefundRequestSummary>) {
+    if (t == List<_i102.RefundRequestSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i101.RefundRequestSummary>(e))
+              .map((e) => deserialize<_i102.RefundRequestSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i102.Review>) {
-      return (data as List).map((e) => deserialize<_i102.Review>(e)).toList()
+    if (t == List<_i103.Review>) {
+      return (data as List).map((e) => deserialize<_i103.Review>(e)).toList()
           as T;
     }
     if (t == List<String>) {
@@ -981,23 +990,23 @@ class Protocol extends _i1.SerializationManager {
               : null)
           as T;
     }
-    if (t == List<_i103.VendorShopOrder>) {
+    if (t == List<_i104.VendorShopOrder>) {
       return (data as List)
-              .map((e) => deserialize<_i103.VendorShopOrder>(e))
+              .map((e) => deserialize<_i104.VendorShopOrder>(e))
               .toList()
           as T;
     }
-    if (t == List<_i104.VendorNotificationSummary>) {
+    if (t == List<_i105.VendorNotificationSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i104.VendorNotificationSummary>(e))
+              .map((e) => deserialize<_i105.VendorNotificationSummary>(e))
               .toList()
           as T;
     }
-    try {
-      return _i105.Protocol().deserialize<T>(data, t);
-    } on _i1.DeserializationTypeNotFoundException catch (_) {}
     try {
       return _i106.Protocol().deserialize<T>(data, t);
+    } on _i1.DeserializationTypeNotFoundException catch (_) {}
+    try {
+      return _i107.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
   }
@@ -1056,36 +1065,37 @@ class Protocol extends _i1.SerializationManager {
       _i51.UserAccountStatus => 'UserAccountStatus',
       _i52.UserArSessionSummary => 'UserArSessionSummary',
       _i53.UserDashboard => 'UserDashboard',
-      _i54.UserOrderDeliveryEvent => 'UserOrderDeliveryEvent',
-      _i55.UserOrderDetail => 'UserOrderDetail',
-      _i56.UserOrderLineItem => 'UserOrderLineItem',
-      _i57.UserOrderPaymentEvent => 'UserOrderPaymentEvent',
-      _i58.UserOrderPaymentSummary => 'UserOrderPaymentSummary',
-      _i59.UserOrderSummary => 'UserOrderSummary',
-      _i60.UserRole => 'UserRole',
-      _i61.Vendor => 'Vendor',
-      _i62.VendorApplicationDetail => 'VendorApplicationDetail',
-      _i63.VendorApplicationSummary => 'VendorApplicationSummary',
-      _i64.VendorBankDetails => 'VendorBankDetails',
-      _i65.VendorBankDetailsInput => 'VendorBankDetailsInput',
-      _i66.VendorDashboard => 'VendorDashboard',
-      _i67.VendorDocument => 'VendorDocument',
-      _i68.VendorDocumentType => 'VendorDocumentType',
-      _i69.VendorNotificationSummary => 'VendorNotificationSummary',
-      _i70.VendorNotificationType => 'VendorNotificationType',
-      _i71.VendorOrderLineItem => 'VendorOrderLineItem',
-      _i72.VendorOrderSummary => 'VendorOrderSummary',
-      _i73.VendorPaymentsOverview => 'VendorPaymentsOverview',
-      _i74.VendorPayout => 'VendorPayout',
-      _i75.VendorPayoutStatus => 'VendorPayoutStatus',
-      _i76.VendorPayoutSummary => 'VendorPayoutSummary',
-      _i77.VendorProductStat => 'VendorProductStat',
-      _i78.VendorProductUploadInput => 'VendorProductUploadInput',
-      _i79.VendorProfileDetail => 'VendorProfileDetail',
-      _i80.VendorProfileUpdateInput => 'VendorProfileUpdateInput',
-      _i81.VendorShopOrder => 'VendorShopOrder',
-      _i82.WishlistItem => 'WishlistItem',
-      _i83.WishlistPage => 'WishlistPage',
+      _i54.UserOrderCounts => 'UserOrderCounts',
+      _i55.UserOrderDeliveryEvent => 'UserOrderDeliveryEvent',
+      _i56.UserOrderDetail => 'UserOrderDetail',
+      _i57.UserOrderLineItem => 'UserOrderLineItem',
+      _i58.UserOrderPaymentEvent => 'UserOrderPaymentEvent',
+      _i59.UserOrderPaymentSummary => 'UserOrderPaymentSummary',
+      _i60.UserOrderSummary => 'UserOrderSummary',
+      _i61.UserRole => 'UserRole',
+      _i62.Vendor => 'Vendor',
+      _i63.VendorApplicationDetail => 'VendorApplicationDetail',
+      _i64.VendorApplicationSummary => 'VendorApplicationSummary',
+      _i65.VendorBankDetails => 'VendorBankDetails',
+      _i66.VendorBankDetailsInput => 'VendorBankDetailsInput',
+      _i67.VendorDashboard => 'VendorDashboard',
+      _i68.VendorDocument => 'VendorDocument',
+      _i69.VendorDocumentType => 'VendorDocumentType',
+      _i70.VendorNotificationSummary => 'VendorNotificationSummary',
+      _i71.VendorNotificationType => 'VendorNotificationType',
+      _i72.VendorOrderLineItem => 'VendorOrderLineItem',
+      _i73.VendorOrderSummary => 'VendorOrderSummary',
+      _i74.VendorPaymentsOverview => 'VendorPaymentsOverview',
+      _i75.VendorPayout => 'VendorPayout',
+      _i76.VendorPayoutStatus => 'VendorPayoutStatus',
+      _i77.VendorPayoutSummary => 'VendorPayoutSummary',
+      _i78.VendorProductStat => 'VendorProductStat',
+      _i79.VendorProductUploadInput => 'VendorProductUploadInput',
+      _i80.VendorProfileDetail => 'VendorProfileDetail',
+      _i81.VendorProfileUpdateInput => 'VendorProfileUpdateInput',
+      _i82.VendorShopOrder => 'VendorShopOrder',
+      _i83.WishlistItem => 'WishlistItem',
+      _i84.WishlistPage => 'WishlistPage',
       _ => null,
     };
   }
@@ -1204,72 +1214,74 @@ class Protocol extends _i1.SerializationManager {
         return 'UserArSessionSummary';
       case _i53.UserDashboard():
         return 'UserDashboard';
-      case _i54.UserOrderDeliveryEvent():
+      case _i54.UserOrderCounts():
+        return 'UserOrderCounts';
+      case _i55.UserOrderDeliveryEvent():
         return 'UserOrderDeliveryEvent';
-      case _i55.UserOrderDetail():
+      case _i56.UserOrderDetail():
         return 'UserOrderDetail';
-      case _i56.UserOrderLineItem():
+      case _i57.UserOrderLineItem():
         return 'UserOrderLineItem';
-      case _i57.UserOrderPaymentEvent():
+      case _i58.UserOrderPaymentEvent():
         return 'UserOrderPaymentEvent';
-      case _i58.UserOrderPaymentSummary():
+      case _i59.UserOrderPaymentSummary():
         return 'UserOrderPaymentSummary';
-      case _i59.UserOrderSummary():
+      case _i60.UserOrderSummary():
         return 'UserOrderSummary';
-      case _i60.UserRole():
+      case _i61.UserRole():
         return 'UserRole';
-      case _i61.Vendor():
+      case _i62.Vendor():
         return 'Vendor';
-      case _i62.VendorApplicationDetail():
+      case _i63.VendorApplicationDetail():
         return 'VendorApplicationDetail';
-      case _i63.VendorApplicationSummary():
+      case _i64.VendorApplicationSummary():
         return 'VendorApplicationSummary';
-      case _i64.VendorBankDetails():
+      case _i65.VendorBankDetails():
         return 'VendorBankDetails';
-      case _i65.VendorBankDetailsInput():
+      case _i66.VendorBankDetailsInput():
         return 'VendorBankDetailsInput';
-      case _i66.VendorDashboard():
+      case _i67.VendorDashboard():
         return 'VendorDashboard';
-      case _i67.VendorDocument():
+      case _i68.VendorDocument():
         return 'VendorDocument';
-      case _i68.VendorDocumentType():
+      case _i69.VendorDocumentType():
         return 'VendorDocumentType';
-      case _i69.VendorNotificationSummary():
+      case _i70.VendorNotificationSummary():
         return 'VendorNotificationSummary';
-      case _i70.VendorNotificationType():
+      case _i71.VendorNotificationType():
         return 'VendorNotificationType';
-      case _i71.VendorOrderLineItem():
+      case _i72.VendorOrderLineItem():
         return 'VendorOrderLineItem';
-      case _i72.VendorOrderSummary():
+      case _i73.VendorOrderSummary():
         return 'VendorOrderSummary';
-      case _i73.VendorPaymentsOverview():
+      case _i74.VendorPaymentsOverview():
         return 'VendorPaymentsOverview';
-      case _i74.VendorPayout():
+      case _i75.VendorPayout():
         return 'VendorPayout';
-      case _i75.VendorPayoutStatus():
+      case _i76.VendorPayoutStatus():
         return 'VendorPayoutStatus';
-      case _i76.VendorPayoutSummary():
+      case _i77.VendorPayoutSummary():
         return 'VendorPayoutSummary';
-      case _i77.VendorProductStat():
+      case _i78.VendorProductStat():
         return 'VendorProductStat';
-      case _i78.VendorProductUploadInput():
+      case _i79.VendorProductUploadInput():
         return 'VendorProductUploadInput';
-      case _i79.VendorProfileDetail():
+      case _i80.VendorProfileDetail():
         return 'VendorProfileDetail';
-      case _i80.VendorProfileUpdateInput():
+      case _i81.VendorProfileUpdateInput():
         return 'VendorProfileUpdateInput';
-      case _i81.VendorShopOrder():
+      case _i82.VendorShopOrder():
         return 'VendorShopOrder';
-      case _i82.WishlistItem():
+      case _i83.WishlistItem():
         return 'WishlistItem';
-      case _i83.WishlistPage():
+      case _i84.WishlistPage():
         return 'WishlistPage';
     }
-    className = _i105.Protocol().getClassNameForObject(data);
+    className = _i106.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth_core.$className';
     }
-    className = _i106.Protocol().getClassNameForObject(data);
+    className = _i107.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth_idp.$className';
     }
@@ -1438,103 +1450,106 @@ class Protocol extends _i1.SerializationManager {
     if (dataClassName == 'UserDashboard') {
       return deserialize<_i53.UserDashboard>(data['data']);
     }
+    if (dataClassName == 'UserOrderCounts') {
+      return deserialize<_i54.UserOrderCounts>(data['data']);
+    }
     if (dataClassName == 'UserOrderDeliveryEvent') {
-      return deserialize<_i54.UserOrderDeliveryEvent>(data['data']);
+      return deserialize<_i55.UserOrderDeliveryEvent>(data['data']);
     }
     if (dataClassName == 'UserOrderDetail') {
-      return deserialize<_i55.UserOrderDetail>(data['data']);
+      return deserialize<_i56.UserOrderDetail>(data['data']);
     }
     if (dataClassName == 'UserOrderLineItem') {
-      return deserialize<_i56.UserOrderLineItem>(data['data']);
+      return deserialize<_i57.UserOrderLineItem>(data['data']);
     }
     if (dataClassName == 'UserOrderPaymentEvent') {
-      return deserialize<_i57.UserOrderPaymentEvent>(data['data']);
+      return deserialize<_i58.UserOrderPaymentEvent>(data['data']);
     }
     if (dataClassName == 'UserOrderPaymentSummary') {
-      return deserialize<_i58.UserOrderPaymentSummary>(data['data']);
+      return deserialize<_i59.UserOrderPaymentSummary>(data['data']);
     }
     if (dataClassName == 'UserOrderSummary') {
-      return deserialize<_i59.UserOrderSummary>(data['data']);
+      return deserialize<_i60.UserOrderSummary>(data['data']);
     }
     if (dataClassName == 'UserRole') {
-      return deserialize<_i60.UserRole>(data['data']);
+      return deserialize<_i61.UserRole>(data['data']);
     }
     if (dataClassName == 'Vendor') {
-      return deserialize<_i61.Vendor>(data['data']);
+      return deserialize<_i62.Vendor>(data['data']);
     }
     if (dataClassName == 'VendorApplicationDetail') {
-      return deserialize<_i62.VendorApplicationDetail>(data['data']);
+      return deserialize<_i63.VendorApplicationDetail>(data['data']);
     }
     if (dataClassName == 'VendorApplicationSummary') {
-      return deserialize<_i63.VendorApplicationSummary>(data['data']);
+      return deserialize<_i64.VendorApplicationSummary>(data['data']);
     }
     if (dataClassName == 'VendorBankDetails') {
-      return deserialize<_i64.VendorBankDetails>(data['data']);
+      return deserialize<_i65.VendorBankDetails>(data['data']);
     }
     if (dataClassName == 'VendorBankDetailsInput') {
-      return deserialize<_i65.VendorBankDetailsInput>(data['data']);
+      return deserialize<_i66.VendorBankDetailsInput>(data['data']);
     }
     if (dataClassName == 'VendorDashboard') {
-      return deserialize<_i66.VendorDashboard>(data['data']);
+      return deserialize<_i67.VendorDashboard>(data['data']);
     }
     if (dataClassName == 'VendorDocument') {
-      return deserialize<_i67.VendorDocument>(data['data']);
+      return deserialize<_i68.VendorDocument>(data['data']);
     }
     if (dataClassName == 'VendorDocumentType') {
-      return deserialize<_i68.VendorDocumentType>(data['data']);
+      return deserialize<_i69.VendorDocumentType>(data['data']);
     }
     if (dataClassName == 'VendorNotificationSummary') {
-      return deserialize<_i69.VendorNotificationSummary>(data['data']);
+      return deserialize<_i70.VendorNotificationSummary>(data['data']);
     }
     if (dataClassName == 'VendorNotificationType') {
-      return deserialize<_i70.VendorNotificationType>(data['data']);
+      return deserialize<_i71.VendorNotificationType>(data['data']);
     }
     if (dataClassName == 'VendorOrderLineItem') {
-      return deserialize<_i71.VendorOrderLineItem>(data['data']);
+      return deserialize<_i72.VendorOrderLineItem>(data['data']);
     }
     if (dataClassName == 'VendorOrderSummary') {
-      return deserialize<_i72.VendorOrderSummary>(data['data']);
+      return deserialize<_i73.VendorOrderSummary>(data['data']);
     }
     if (dataClassName == 'VendorPaymentsOverview') {
-      return deserialize<_i73.VendorPaymentsOverview>(data['data']);
+      return deserialize<_i74.VendorPaymentsOverview>(data['data']);
     }
     if (dataClassName == 'VendorPayout') {
-      return deserialize<_i74.VendorPayout>(data['data']);
+      return deserialize<_i75.VendorPayout>(data['data']);
     }
     if (dataClassName == 'VendorPayoutStatus') {
-      return deserialize<_i75.VendorPayoutStatus>(data['data']);
+      return deserialize<_i76.VendorPayoutStatus>(data['data']);
     }
     if (dataClassName == 'VendorPayoutSummary') {
-      return deserialize<_i76.VendorPayoutSummary>(data['data']);
+      return deserialize<_i77.VendorPayoutSummary>(data['data']);
     }
     if (dataClassName == 'VendorProductStat') {
-      return deserialize<_i77.VendorProductStat>(data['data']);
+      return deserialize<_i78.VendorProductStat>(data['data']);
     }
     if (dataClassName == 'VendorProductUploadInput') {
-      return deserialize<_i78.VendorProductUploadInput>(data['data']);
+      return deserialize<_i79.VendorProductUploadInput>(data['data']);
     }
     if (dataClassName == 'VendorProfileDetail') {
-      return deserialize<_i79.VendorProfileDetail>(data['data']);
+      return deserialize<_i80.VendorProfileDetail>(data['data']);
     }
     if (dataClassName == 'VendorProfileUpdateInput') {
-      return deserialize<_i80.VendorProfileUpdateInput>(data['data']);
+      return deserialize<_i81.VendorProfileUpdateInput>(data['data']);
     }
     if (dataClassName == 'VendorShopOrder') {
-      return deserialize<_i81.VendorShopOrder>(data['data']);
+      return deserialize<_i82.VendorShopOrder>(data['data']);
     }
     if (dataClassName == 'WishlistItem') {
-      return deserialize<_i82.WishlistItem>(data['data']);
+      return deserialize<_i83.WishlistItem>(data['data']);
     }
     if (dataClassName == 'WishlistPage') {
-      return deserialize<_i83.WishlistPage>(data['data']);
+      return deserialize<_i84.WishlistPage>(data['data']);
     }
     if (dataClassName.startsWith('serverpod_auth_core.')) {
       data['className'] = dataClassName.substring(20);
-      return _i105.Protocol().deserializeByClassName(data);
+      return _i106.Protocol().deserializeByClassName(data);
     }
     if (dataClassName.startsWith('serverpod_auth_idp.')) {
       data['className'] = dataClassName.substring(19);
-      return _i106.Protocol().deserializeByClassName(data);
+      return _i107.Protocol().deserializeByClassName(data);
     }
     return super.deserializeByClassName(data);
   }
@@ -1549,10 +1564,10 @@ class Protocol extends _i1.SerializationManager {
       return null;
     }
     try {
-      return _i105.Protocol().mapRecordToJson(record);
+      return _i106.Protocol().mapRecordToJson(record);
     } catch (_) {}
     try {
-      return _i106.Protocol().mapRecordToJson(record);
+      return _i107.Protocol().mapRecordToJson(record);
     } catch (_) {}
     throw Exception('Unsupported record type ${record.runtimeType}');
   }

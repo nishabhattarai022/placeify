@@ -509,6 +509,16 @@ class Endpoints extends _i1.EndpointDispatch {
               ) async =>
                   (endpoints['user'] as _i5.UserEndpoint).getDashboard(session),
         ),
+        'getMyOrderCounts': _i1.MethodConnector(
+          name: 'getMyOrderCounts',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['user'] as _i5.UserEndpoint)
+                  .getMyOrderCounts(session),
+        ),
         'ensureDemoAdmin': _i1.MethodConnector(
           name: 'ensureDemoAdmin',
           params: {},

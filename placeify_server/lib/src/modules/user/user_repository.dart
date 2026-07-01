@@ -4,6 +4,7 @@ import '../../generated/protocol.dart';
 import '../ar/ar_repository.dart';
 import '../refund/refund_repository.dart';
 import '../wishlist/wishlist_repository.dart';
+import 'order_count_store.dart';
 
 class UserProfileStore {
   UserProfileStore({
@@ -75,30 +76,14 @@ class UserProfileStore {
     return items.fold<int>(0, (sum, item) => sum + item.quantity);
   }
 
-  /// Profile stat: orders that are not terminal failures (cancelled/rejected).
-  Future<int> _countDashboardOrders(Session session, UuidValue userId) async {
-    final excluded = await Order.db.count(
-      session,
-      where: (order) {
-        return order.userId.equals(userId) &
-            (order.status.equals(OrderStatus.cancelled) |
-                order.status.equals(OrderStatus.autoCancelled) |
-                order.status.equals(OrderStatus.rejected));
-      },
-    );
-
-    final total = await Order.db.count(
-      session,
-      where: (order) => order.userId.equals(userId),
-    );
-
-    return total - excluded;
-  }
-
   Future<UserDashboard> buildDashboard(Session session, User user) async {
     final userId = user.id!;
 
-    final orderCount = await _countDashboardOrders(session, userId);
+    final orderCounts = await OrderCountStore.forUser(
+      session,
+      userId,
+      refundStore: _refundStore,
+    );
 
     final wishlistCount = await _wishlistStore.countForUser(session, userId);
     final arSessionCount = await _arSessionStore.countForUser(session, userId);
@@ -107,7 +92,8 @@ class UserProfileStore {
 
     return UserDashboard(
       profile: user,
-      orderCount: orderCount,
+      orderCount: orderCounts.activeOrders,
+      orderCounts: orderCounts,
       wishlistCount: wishlistCount,
       cartItemCount: cartItemCount,
       arSessionCount: arSessionCount,
