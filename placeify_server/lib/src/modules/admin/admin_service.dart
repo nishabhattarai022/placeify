@@ -60,6 +60,40 @@ class AdminService {
     return _moderation.rejectVendor(session, vendorUserId);
   }
 
+  Future<VendorModerationResult> suspendVendor(
+    Session session,
+    UuidValue vendorUserId,
+    String reason,
+  ) {
+    return _moderation.suspendVendor(session, vendorUserId, reason);
+  }
+
+  Future<String> getVendorReinstateTerms(Session session) {
+    return _moderation.getReinstateTerms(session);
+  }
+
+  Future<VendorModerationResult> reactivateVendor(
+    Session session,
+    UuidValue vendorUserId, {
+    required bool termsAccepted,
+    String? termsNote,
+  }) {
+    return _moderation.reactivateVendor(
+      session,
+      vendorUserId,
+      termsAccepted: termsAccepted,
+      termsNote: termsNote,
+    );
+  }
+
+  Future<User> suspendUser(Session session, UuidValue targetUserId) {
+    return _moderation.suspendUser(session, targetUserId);
+  }
+
+  Future<User> activateUser(Session session, UuidValue targetUserId) {
+    return _moderation.activateUser(session, targetUserId);
+  }
+
   Future<User> updateUserStatus(
     Session session,
     UuidValue targetUserId,
@@ -133,6 +167,13 @@ class AdminService {
     UserRole? role,
   }) {
     return _platform.listUsers(session, query: query, role: role);
+  }
+
+  Future<PlatformUserDetail?> getUserDetail(
+    Session session,
+    UuidValue userId,
+  ) {
+    return _platform.getUserDetail(session, userId);
   }
 
   Future<List<VendorApplicationSummary>> listVendorApplications(

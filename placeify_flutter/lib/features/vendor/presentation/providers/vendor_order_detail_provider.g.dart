@@ -66,7 +66,7 @@ final class VendorOrderDetailProvider
   }
 }
 
-String _$vendorOrderDetailHash() => r'b7773c6f92e94521ddfccd12bc0cd393f91bb443';
+String _$vendorOrderDetailHash() => r'c49ae01f258180a1e7aef72ce334fbb75a6bf3b6';
 
 final class VendorOrderDetailFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<VendorOrderDetail?>, String> {

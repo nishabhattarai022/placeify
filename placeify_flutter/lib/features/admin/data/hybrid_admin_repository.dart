@@ -41,21 +41,31 @@ class HybridAdminRepository implements AdminRepository {
 
   @override
   Future<void> suspendVendor(String userId, {String? reason}) async {
-    await _api.updateUserStatus(
+    await _api.suspendVendor(
       userId,
-      UserAccountStatus.suspended,
-      isActive: false,
+      reason: reason ?? 'Suspended by admin',
     );
     await _fallback.suspendVendor(userId, reason: reason);
   }
 
   @override
-  Future<void> reinstateVendor(String userId) async {
-    await _api.updateUserStatus(
+  Future<void> reinstateVendor(
+    String userId, {
+    bool termsAccepted = true,
+    String? termsNote,
+  }) async {
+    if (!termsAccepted) {
+      throw UnsupportedError('Terms must be accepted.');
+    }
+    await _api.reactivateVendor(
       userId,
-      UserAccountStatus.approved,
-      isActive: true,
+      termsAccepted: termsAccepted,
+      termsNote: termsNote,
     );
-    await _fallback.reinstateVendor(userId);
+    await _fallback.reinstateVendor(
+      userId,
+      termsAccepted: termsAccepted,
+      termsNote: termsNote,
+    );
   }
 }

@@ -20,5 +20,9 @@ abstract interface class AdminRepository {
 
   Future<void> suspendVendor(String userId, {String? reason});
 
-  Future<void> reinstateVendor(String userId);
+  Future<void> reinstateVendor(
+    String userId, {
+    bool termsAccepted = true,
+    String? termsNote,
+  });
 }

@@ -2,6 +2,7 @@
 class: AdminPlatformStats
 fields:
   totalVendors: int
+  totalCustomers: int
   pendingCount: int
   totalUsers: int
   platformGmv: double

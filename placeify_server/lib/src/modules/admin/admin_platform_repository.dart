@@ -3,6 +3,7 @@ import 'package:serverpod/serverpod.dart' hide Order;
 import '../../generated/protocol.dart';
 import '../vendor/vendor_shop_category_codec.dart';
 import 'admin_repository.dart';
+import 'admin_vendor_lifecycle.dart';
 
 /// Read-side admin platform queries backed by PostgreSQL.
 class AdminPlatformStore {
@@ -23,19 +24,35 @@ class AdminPlatformStore {
       where: (row) => row.deletedAt.equals(null),
     );
 
-    final vendorUsers = users.where((user) => user.role == UserRole.vendor);
-    final approvedCount =
-        vendorUsers.where((user) => user.status == UserAccountStatus.approved).length;
+    final totalCustomers =
+        users.where((user) => user.role == UserRole.consumer).length;
 
-    final pendingApplications = await listVendorApplications(
+    final vendors = await Vendor.db.find(
       session,
-      status: UserAccountStatus.pending,
+      include: Vendor.include(user: User.include()),
     );
-    final pendingCount = pendingApplications.length;
-    final declinedCount =
-        vendorUsers.where((user) => user.status == UserAccountStatus.rejected).length;
-    final suspendedCount =
-        vendorUsers.where((user) => user.status == UserAccountStatus.suspended).length;
+
+    var approvedCount = 0;
+    var pendingCount = 0;
+    var declinedCount = 0;
+    var suspendedCount = 0;
+    for (final vendor in vendors) {
+      final vendorUser = vendor.user;
+      if (vendorUser == null) continue;
+
+      switch (vendorUser.status) {
+        case UserAccountStatus.pending:
+          pendingCount++;
+        case UserAccountStatus.approved:
+          if (vendorUser.role == UserRole.vendor) {
+            approvedCount++;
+          }
+        case UserAccountStatus.rejected:
+          declinedCount++;
+        case UserAccountStatus.suspended:
+          suspendedCount++;
+      }
+    }
 
     final gmvResult = await session.db.unsafeQuery(
       'SELECT COALESCE(SUM("totalAmount"), 0) AS gmv FROM "order" WHERE "status" = @status',
@@ -56,6 +73,7 @@ class AdminPlatformStore {
 
     return AdminPlatformStats(
       totalVendors: approvedCount,
+      totalCustomers: totalCustomers,
       pendingCount: pendingCount,
       totalUsers: users.length,
       platformGmv: platformGmv,
@@ -65,6 +83,36 @@ class AdminPlatformStore {
       recentActivity: recentActivity,
       signupSeries: _signupSeriesFor(users),
       recentApplications: recentApplications,
+    );
+  }
+
+  Future<PlatformUserDetail?> getUserDetail(
+    Session session,
+    UuidValue userId,
+  ) async {
+    await _requireAdmin(session);
+
+    final user = await User.db.findById(session, userId);
+    if (user == null || user.id == null) return null;
+
+    final vendor = await Vendor.db.findFirstRow(
+      session,
+      where: (row) => row.userId.equals(userId),
+    );
+
+    return PlatformUserDetail(
+      id: user.id!,
+      name: user.name,
+      email: user.email ?? '',
+      role: user.role,
+      status: user.status,
+      isActive: user.isActive,
+      phone: user.phone,
+      address: user.address,
+      vendorId: vendor?.id,
+      vendorShopName: vendor?.shopName,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     );
   }
 
@@ -136,7 +184,10 @@ class AdminPlatformStore {
       final user = vendor.user;
       final vendorId = vendor.id;
       if (user == null || vendorId == null) continue;
-      if (status != null && user.status != status) continue;
+      if (status != null &&
+          !AdminVendorLifecycle.matchesListFilter(user, vendor, status)) {
+        continue;
+      }
 
       applications.add(
         VendorApplicationSummary(
@@ -145,9 +196,19 @@ class AdminPlatformStore {
           businessName: vendor.shopName,
           contactEmail: vendor.contactEmail ?? user.email ?? '',
           submittedAt: vendor.createdAt,
-          status: user.status,
+          status: AdminVendorLifecycle.effectiveAccountStatus(user, vendor),
+          moderationNote: vendor.moderationNote,
+          moderatedAt: vendor.moderatedAt,
         ),
       );
+    }
+
+    if (status == UserAccountStatus.suspended) {
+      applications.sort((a, b) {
+        final aTime = a.moderatedAt ?? a.submittedAt;
+        final bTime = b.moderatedAt ?? b.submittedAt;
+        return bTime.compareTo(aTime);
+      });
     }
 
     if (limit != null && applications.length > limit) {
@@ -189,7 +250,7 @@ class AdminPlatformStore {
     return VendorApplicationDetail(
       vendorId: vendorId,
       userId: user.id!,
-      status: user.status,
+      status: AdminVendorLifecycle.effectiveAccountStatus(user, vendor),
       submittedAt: vendor.createdAt,
       businessName: vendor.shopName,
       contactName: user.name,
@@ -206,6 +267,8 @@ class AdminPlatformStore {
       businessLicenseUrl: documentUrl(VendorDocumentType.businessLicense),
       governmentIdUrl: documentUrl(VendorDocumentType.governmentId),
       taxCertificateUrl: documentUrl(VendorDocumentType.taxCertificate),
+      moderationNote: vendor.moderationNote,
+      moderatedAt: vendor.moderatedAt,
     );
   }
 
@@ -221,6 +284,8 @@ class AdminPlatformStore {
       orderDescending: true,
       limit: limit * 4,
     );
+    final vendors = await Vendor.db.find(session);
+    final vendorByUserId = {for (final vendor in vendors) vendor.userId: vendor};
     final users = allUsers
         .where((user) => user.statusChangedById != null)
         .take(limit)
@@ -235,7 +300,7 @@ class AdminPlatformStore {
             actorAdminId: user.statusChangedById!,
             targetUserId: user.id!,
             timestamp: user.updatedAt,
-            note: null,
+            note: vendorByUserId[user.id!]?.moderationNote,
           ),
     ];
   }

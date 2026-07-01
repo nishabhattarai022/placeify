@@ -57,6 +57,8 @@ abstract final class AdminPlatformMapper {
         ),
       ),
       status: toVendorStatus(summary.status),
+      moderationNote: summary.moderationNote,
+      moderatedAt: summary.moderatedAt,
     );
   }
 
@@ -95,6 +97,8 @@ abstract final class AdminPlatformMapper {
         ),
       ),
       status: toVendorStatus(detail.status),
+      moderationNote: detail.moderationNote,
+      moderatedAt: detail.moderatedAt,
     );
   }
 

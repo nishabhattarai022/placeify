@@ -134,6 +134,40 @@ class _VendorDetailBody extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
+                if (vendor.status == VendorStatus.suspended &&
+                    vendor.moderationNote != null) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.warmWhite,
+                      borderRadius: AppRadii.md,
+                      border: Border.all(color: AppColors.rust, width: 1.5),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Suspension reason',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.rust,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          vendor.moderationNote!,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 ApplicationDetailSections(
                   registration: vendor.registration,
                 ),

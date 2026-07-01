@@ -1,0 +1,9 @@
+### Result of admin vendor suspend or reinstate actions.
+class: VendorModerationResult
+fields:
+  vendorUserId: UuidValue
+  vendorId: UuidValue
+  status: UserAccountStatus
+  message: String
+  moderationNote: String?
+  moderatedAt: DateTime?

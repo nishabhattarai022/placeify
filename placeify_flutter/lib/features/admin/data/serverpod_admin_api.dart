@@ -2,6 +2,7 @@ import 'package:placeify_client/placeify_client.dart';
 import 'package:serverpod_client/serverpod_client.dart';
 
 import '../../../core/config/placeify_server_client.dart';
+import '../../../core/debug/agent_debug_log.dart';
 
 class AdminApiException implements Exception {
   AdminApiException(this.message);
@@ -27,6 +28,96 @@ class ServerpodAdminApi {
   Future<void> rejectVendor(String userId) async {
     try {
       await client.admin.rejectVendor(UuidValue.fromString(userId));
+    } catch (error) {
+      throw AdminApiException(_mapError(error));
+    }
+  }
+
+  Future<void> suspendVendor(String userId, {required String reason}) async {
+    // #region agent log
+    AgentDebugLog.log(
+      'serverpod_admin_api.dart:suspendVendor:entry',
+      'calling admin.suspendVendor',
+      {
+        'userId': userId,
+        'reasonLength': reason.length,
+      },
+      hypothesisId: 'C',
+    );
+    // #endregion
+    try {
+      await client.admin.suspendVendor(
+        UuidValue.fromString(userId),
+        reason,
+      );
+      // #region agent log
+      AgentDebugLog.log(
+        'serverpod_admin_api.dart:suspendVendor:success',
+        'suspendVendor succeeded',
+        {'userId': userId},
+        hypothesisId: 'D',
+      );
+      // #endregion
+    } catch (error) {
+      // #region agent log
+      AgentDebugLog.log(
+        'serverpod_admin_api.dart:suspendVendor:error',
+        'suspendVendor failed',
+        {
+          'userId': userId,
+          'errorType': error.runtimeType.toString(),
+          'error': error.toString(),
+        },
+        hypothesisId: 'D',
+      );
+      // #endregion
+      throw AdminApiException(_mapError(error));
+    }
+  }
+
+  Future<String> getVendorReinstateTerms() async {
+    try {
+      return await client.admin.getVendorReinstateTerms();
+    } catch (error) {
+      throw AdminApiException(_mapError(error));
+    }
+  }
+
+  Future<void> reactivateVendor(
+    String userId, {
+    required bool termsAccepted,
+    String? termsNote,
+  }) async {
+    try {
+      await client.admin.reactivateVendor(
+        UuidValue.fromString(userId),
+        termsAccepted: termsAccepted,
+        termsNote: termsNote,
+      );
+    } catch (error) {
+      throw AdminApiException(_mapError(error));
+    }
+  }
+
+  Future<void> suspendUser(String userId) async {
+    try {
+      await client.admin.suspendUser(UuidValue.fromString(userId));
+    } catch (error) {
+      throw AdminApiException(_mapError(error));
+    }
+  }
+
+  Future<void> activateUser(String userId) async {
+    try {
+      await client.admin.activateUser(UuidValue.fromString(userId));
+    } catch (error) {
+      throw AdminApiException(_mapError(error));
+    }
+  }
+
+  Future<PlatformUserDetail?> getUserDetail(String userId) async {
+    try {
+      return await client.admin.getUserDetail(UuidValue.fromString(userId));
     } catch (error) {
       throw AdminApiException(_mapError(error));
     }
@@ -145,6 +236,29 @@ class ServerpodAdminApi {
   String _mapError(Object error) {
     if (error is AdminApiException) return error.message;
     if (error is PlaceifyException) return error.message;
-    return error.toString();
+
+    final raw = switch (error) {
+      ServerpodClientException(:final message) => message,
+      _ => error.toString(),
+    };
+
+    if (raw.contains('Method not found') || raw.contains('suspendVendor')) {
+      return 'Server is missing suspend support. Restart placeify_server after pulling the latest code.';
+    }
+
+    if (raw.contains('moderationNote') || raw.contains('moderatedAt')) {
+      return 'Database migration pending. Restart placeify_server to apply migrations.';
+    }
+
+    final colonIndex = raw.indexOf(': ');
+    if (colonIndex > 0 && colonIndex < 40) {
+      final message = raw.substring(colonIndex + 2).trim();
+      if (message.isNotEmpty && !message.startsWith('Exception')) {
+        return message.length <= 200 ? message : message.substring(0, 200);
+      }
+    }
+
+    if (error is ServerpodClientException) return error.message;
+    return raw;
   }
 }

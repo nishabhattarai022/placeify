@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 
 import 'package:placeify_client/placeify_client.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
@@ -52,30 +50,6 @@ bool shouldRefreshVendorDashboardForNotification(
       notification.type == InAppNotificationType.productUpdate;
 }
 
-// #region agent log
-void _agentLog(
-  String location,
-  String message,
-  Map<String, Object?> data, {
-  required String hypothesisId,
-}) {
-  try {
-    File('/Users/rosikagajurel/Documents/College/placeify/.cursor/debug-1d536e.log')
-        .writeAsStringSync(
-      '${jsonEncode({
-        'sessionId': '1d536e',
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
-        'location': location,
-        'message': message,
-        'data': data,
-        'hypothesisId': hypothesisId,
-      })}\n',
-      mode: FileMode.append,
-    );
-  } catch (_) {}
-}
-// #endregion
-
 Future<void> _ensureInAppNotificationWatch() async {
   if (!client.auth.isAuthenticated) return;
 
@@ -88,55 +62,18 @@ Future<void> _ensureInAppNotificationWatch() async {
 
   _inAppNotificationSubscription = stream.listen(
     (notification) {
-      // #region agent log
-      _agentLog(
-        'placeify_server_client.dart:stream',
-        'notification received',
-        {
-          'id': notification.id,
-          'type': notification.type.name,
-          'referenceId': notification.referenceId,
-        },
-        hypothesisId: 'H2',
-      );
-      // #endregion
       final controller = _inAppNotificationController;
       if (controller != null && !controller.isClosed) {
         controller.add(notification);
       }
     },
     onError: (Object error, StackTrace stackTrace) {
-      // #region agent log
-      _agentLog(
-        'placeify_server_client.dart:stream',
-        'stream error',
-        {'error': error.toString()},
-        hypothesisId: 'H3',
-      );
-      // #endregion
       _scheduleRealtimeReconnect();
     },
     onDone: () {
-      // #region agent log
-      _agentLog(
-        'placeify_server_client.dart:stream',
-        'stream closed',
-        {},
-        hypothesisId: 'H3',
-      );
-      // #endregion
       _scheduleRealtimeReconnect();
     },
   );
-
-  // #region agent log
-  _agentLog(
-    'placeify_server_client.dart:_ensureInAppNotificationWatch',
-    'stream subscribed',
-    {'serverUrl': serverUrl},
-    hypothesisId: 'H2',
-  );
-  // #endregion
 }
 
 void _scheduleRealtimeReconnect() {
