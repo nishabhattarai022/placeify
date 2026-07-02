@@ -55,4 +55,11 @@ class ProductEndpoint extends Endpoint {
     );
     return page.items;
   }
+
+  Future<List<SpecialOfferSummary>> listSpecialOffers(
+    Session session, {
+    int limit = 12,
+  }) {
+    return _service.listSpecialOffers(session, limit: limit);
+  }
 }

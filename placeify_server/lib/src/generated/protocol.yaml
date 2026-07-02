@@ -94,6 +94,7 @@ product:
   - getShopProfile:
   - listApprovedShops:
   - listProducts:
+  - listSpecialOffers:
 refund:
   - listMyRefundRequests:
   - getRefundRequest:

@@ -1,0 +1,20 @@
+### Vendor special offer linked to a single catalog product.
+class: SpecialOffer
+table: special_offer
+fields:
+  product: Product?, relation(onDelete=Cascade)
+  originalPrice: double
+  discountedPrice: double
+  tagline: String
+  cardColorHex: String, default="#A8B5A0"
+  isActive: bool, default=true
+  displayOrder: int, default=0
+  createdAt: DateTime, default=now
+  updatedAt: DateTime, default=now
+
+indexes:
+  special_offer_product_id:
+    fields: productId
+    unique: true
+  special_offer_active_order:
+    fields: isActive, displayOrder

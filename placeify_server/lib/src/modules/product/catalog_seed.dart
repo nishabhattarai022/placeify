@@ -2,6 +2,7 @@ import 'package:serverpod/serverpod.dart';
 
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
+import 'special_offer_seed.dart';
 
 /// Inserts demo categories, vendor, and products when the catalog is empty.
 abstract final class CatalogSeed {
@@ -45,10 +46,12 @@ abstract final class CatalogSeed {
     final count = await Product.db.count(session);
     if (count > 0) {
       await _insertMissingSeedProducts(session, vendor: vendor, categories: categories);
+      await SpecialOfferSeed.ensureDemoOffers(session);
       return;
     }
 
     await _insertAllSeedProducts(session, vendor: vendor, categories: categories);
+    await SpecialOfferSeed.ensureDemoOffers(session);
   }
 
   static Future<Map<String, Category>> _loadCategoriesByName(

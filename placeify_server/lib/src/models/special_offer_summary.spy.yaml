@@ -1,0 +1,11 @@
+### Active special offer row for the home carousel.
+class: SpecialOfferSummary
+fields:
+  productId: int
+  productName: String
+  imageUrl: String?
+  originalPrice: double
+  discountedPrice: double
+  discountPercent: int
+  tagline: String
+  cardColorHex: String

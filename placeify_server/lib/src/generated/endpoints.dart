@@ -1848,6 +1848,25 @@ class Endpoints extends _i1.EndpointDispatch {
                     offset: params['offset'],
                   ),
         ),
+        'listSpecialOffers': _i1.MethodConnector(
+          name: 'listSpecialOffers',
+          params: {
+            'limit': _i1.ParameterDescription(
+              name: 'limit',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['product'] as _i14.ProductEndpoint)
+                  .listSpecialOffers(
+                    session,
+                    limit: params['limit'],
+                  ),
+        ),
       },
     );
     connectors['refund'] = _i1.EndpointConnector(
