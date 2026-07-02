@@ -40,7 +40,7 @@ class HomeRecommendSection extends ConsumerWidget {
           },
           child: products.isEmpty
               ? const _EmptyRecommendations(key: ValueKey('empty_recommendations'))
-              : _RecommendProductRow(
+              : _RecommendProductGrid(
                   key: const ValueKey('recommendations'),
                   products: products,
                 ),
@@ -50,23 +50,37 @@ class HomeRecommendSection extends ConsumerWidget {
   }
 }
 
-class _RecommendProductRow extends StatelessWidget {
-  const _RecommendProductRow({required this.products, super.key});
+class _RecommendProductGrid extends StatelessWidget {
+  const _RecommendProductGrid({required this.products, super.key});
 
   final List<RecommendProduct> products;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
       children: [
-        for (var i = 0; i < products.length; i++) ...[
-          if (i > 0) const SizedBox(width: HomeScreenTokens.productGap),
-          Expanded(
-            child: HomeRecommendProductCard(
-              key: ValueKey(products[i].id),
-              product: products[i],
-            ),
+        for (var i = 0; i < products.length; i += 2) ...[
+          if (i > 0) const SizedBox(height: HomeScreenTokens.productGap),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: HomeRecommendProductCard(
+                  key: ValueKey(products[i].id),
+                  product: products[i],
+                ),
+              ),
+              if (i + 1 < products.length) ...[
+                const SizedBox(width: HomeScreenTokens.productGap),
+                Expanded(
+                  child: HomeRecommendProductCard(
+                    key: ValueKey(products[i + 1].id),
+                    product: products[i + 1],
+                  ),
+                ),
+              ] else
+                const Expanded(child: SizedBox.shrink()),
+            ],
           ),
         ],
       ],
