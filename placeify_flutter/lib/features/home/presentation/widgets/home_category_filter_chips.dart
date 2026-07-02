@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/theme/app_fonts.dart';
@@ -86,8 +87,12 @@ class _HomeCategoryFilterChipsState
                         ),
                         onTap: () {
                           HapticService.light();
+                          final room = rooms[i];
                           ref.read(selectedRoomProvider.notifier).state =
-                              rooms[i].id;
+                              room.id;
+                          context.push(
+                            '/products?category=${Uri.encodeQueryComponent(room.name)}',
+                          );
                         },
                       ),
                     ),

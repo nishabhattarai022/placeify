@@ -1,26 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/services/haptic_service.dart';
+import '../data/home_categories_config.dart';
+import '../providers/home_room_provider.dart';
 import '../theme/home_screen_tokens.dart';
 
 /// "Recommend for you" row with trailing arrow.
-class HomeRecommendHeader extends StatefulWidget {
+class HomeRecommendHeader extends ConsumerStatefulWidget {
   const HomeRecommendHeader({super.key});
 
   @override
-  State<HomeRecommendHeader> createState() => _HomeRecommendHeaderState();
+  ConsumerState<HomeRecommendHeader> createState() =>
+      _HomeRecommendHeaderState();
 }
 
-class _HomeRecommendHeaderState extends State<HomeRecommendHeader> {
+class _HomeRecommendHeaderState extends ConsumerState<HomeRecommendHeader> {
   bool _arrowHovered = false;
   bool _arrowPressed = false;
 
   void _onArrowTap() {
     HapticService.light();
-    context.go('/browse');
+    final roomId = ref.read(selectedRoomProvider);
+    final category = HomeCategoriesConfig.apiCategoryForRoom(roomId);
+    context.push('/products?category=${Uri.encodeQueryComponent(category)}');
   }
 
   @override

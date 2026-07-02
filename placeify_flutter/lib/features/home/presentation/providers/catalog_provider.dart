@@ -12,6 +12,8 @@ import '../../data/mock_product_repository.dart';
 import '../../data/serverpod_product_repository.dart';
 import '../../data/vendor_product_catalog_mapper.dart';
 import '../../domain/models/product.dart';
+import 'home_room_provider.dart';
+import 'room_category_products_provider.dart';
 
 part 'catalog_provider.g.dart';
 
@@ -228,6 +230,8 @@ void invalidateCustomerCatalog(Ref ref) {
   ref.invalidate(catalogNewestProductsProvider);
   ref.invalidate(productDetailProvider);
   ref.invalidate(homeRecommendedProductsProvider);
+  ref.invalidate(roomCategoryProductsProvider);
+  ref.invalidate(recommendedProductsProvider);
   ref.invalidate(catalogProductCountProvider);
 }
 

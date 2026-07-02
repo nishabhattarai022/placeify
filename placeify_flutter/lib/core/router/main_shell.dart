@@ -22,6 +22,7 @@ class MainShell extends StatelessWidget {
     if (location.startsWith('${ShopRoutes.shops}/') ||
         location.startsWith('/browse/category') ||
         location.startsWith('/category') ||
+        location.startsWith('/products') ||
         location.startsWith('/product')) {
       return -1;
     }
@@ -57,6 +58,7 @@ class MainShell extends StatelessWidget {
     if (location.startsWith('/product/')) return false;
     if (location.startsWith('${ShopRoutes.shops}/')) return false;
     if (location.startsWith('/browse/category')) return false;
+    if (location.startsWith('/products')) return false;
     if (location == '/cart') return false;
     if (location == '/profile/augmented-reality') return false;
     return true;

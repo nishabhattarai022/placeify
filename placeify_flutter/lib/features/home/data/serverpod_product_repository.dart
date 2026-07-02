@@ -28,4 +28,8 @@ class ServerpodProductRepository {
     if (id == null) return Future.value(null);
     return client.product.getProduct(id);
   }
+
+  Future<List<SpecialOfferSummary>> listSpecialOffers({int limit = 12}) {
+    return client.product.listSpecialOffers(limit: limit);
+  }
 }

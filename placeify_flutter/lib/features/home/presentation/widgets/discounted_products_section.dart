@@ -1,23 +1,25 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/services/haptic_service.dart';
 import '../../data/discounted_products.dart';
+import '../providers/special_offers_provider.dart';
 
-/// Auto-cycling premium promo card. One card on screen at all times — content
-/// (background gradient, watermark, copy, image, price tag) swaps inside it.
-class DiscountedProductsSection extends StatefulWidget {
+/// Auto-cycling premium promo card. Each slide links to its product detail page.
+class DiscountedProductsSection extends ConsumerStatefulWidget {
   const DiscountedProductsSection({super.key});
 
   @override
-  State<DiscountedProductsSection> createState() =>
+  ConsumerState<DiscountedProductsSection> createState() =>
       _DiscountedProductsSectionState();
 }
 
-class _DiscountedProductsSectionState extends State<DiscountedProductsSection> {
+class _DiscountedProductsSectionState
+    extends ConsumerState<DiscountedProductsSection> {
   static const _cardHeight = 224.0;
   static const _cardRadius = 26.0;
   static const _headerSpacing = 14.0;
@@ -31,12 +33,7 @@ class _DiscountedProductsSectionState extends State<DiscountedProductsSection> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(_autoplayInterval, (_) {
-      if (!mounted) return;
-      setState(() {
-        _currentIndex = (_currentIndex + 1) % discountedProducts.length;
-      });
-    });
+    _startAutoplay(1);
   }
 
   @override
@@ -45,136 +42,203 @@ class _DiscountedProductsSectionState extends State<DiscountedProductsSection> {
     super.dispose();
   }
 
-  void _onShopNow() {
-    HapticService.light();
-    context.go('/browse');
-  }
-
-  void _onDotTap(int i) {
-    if (i == _currentIndex) return;
-    HapticService.selection();
-    setState(() => _currentIndex = i);
-    // Reset autoplay so the user's manual selection has its full 4s window.
+  void _startAutoplay(int itemCount) {
     _timer?.cancel();
+    if (itemCount <= 1) return;
     _timer = Timer.periodic(_autoplayInterval, (_) {
       if (!mounted) return;
       setState(() {
-        _currentIndex = (_currentIndex + 1) % discountedProducts.length;
+        _currentIndex = (_currentIndex + 1) % itemCount;
       });
     });
   }
 
+  void _openProduct(DiscountedProduct product) {
+    HapticService.light();
+    context.push('/product/${product.id}');
+  }
+
+  void _onDotTap(int i, int itemCount) {
+    if (i == _currentIndex) return;
+    HapticService.selection();
+    setState(() => _currentIndex = i);
+    _startAutoplay(itemCount);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final product = discountedProducts[_currentIndex];
-    final darkAccent = Color.lerp(product.cardColor, Colors.black, 0.22)!;
-    final cleanTagline = product.tagline.replaceFirst('— ', '');
+    final offersAsync = ref.watch(specialOffersProvider);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
+    return offersAsync.when(
+      loading: () => const _OffersLoading(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (offers) {
+        if (offers.isEmpty) return const SizedBox.shrink();
+
+        final safeIndex = _currentIndex.clamp(0, offers.length - 1).toInt();
+        if (safeIndex != _currentIndex) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) setState(() => _currentIndex = safeIndex);
+          });
+        }
+
+        if (_timer == null && offers.length > 1) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _startAutoplay(offers.length);
+          });
+        }
+
+        final product = offers[safeIndex];
+        final darkAccent = Color.lerp(product.cardColor, Colors.black, 0.22)!;
+        final cleanTagline = product.tagline.replaceFirst('— ', '');
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Special Offers',
-              style: GoogleFonts.dmSans(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-                letterSpacing: -0.2,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  'Special Offers',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                Text(
+                  '${safeIndex + 1} / ${offers.length}',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black45,
+                    letterSpacing: 0.4,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ],
             ),
-            Text(
-              '${_currentIndex + 1} / ${discountedProducts.length}',
-              style: GoogleFonts.dmSans(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Colors.black45,
-                letterSpacing: 0.4,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: _headerSpacing),
-        SizedBox(
-          width: double.infinity,
-          height: _cardHeight,
-          child: Stack(
-            children: [
-              _CardBackground(
-                cardColor: product.cardColor,
-                darkAccent: darkAccent,
+            const SizedBox(height: _headerSpacing),
+            GestureDetector(
+              onTap: () => _openProduct(product),
+              child: SizedBox(
+                width: double.infinity,
                 height: _cardHeight,
-                radius: _cardRadius,
-                swapDuration: _swapDuration,
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 14, 16),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                child: Stack(
                   children: [
-                    Expanded(
-                      child: _TextPanel(
-                        product: product,
-                        cleanTagline: cleanTagline,
-                        ctaPressed: _ctaPressed,
-                        onCtaTapDown: (_) => setState(() => _ctaPressed = true),
-                        onCtaTapUp: (_) => setState(() => _ctaPressed = false),
-                        onCtaTapCancel: () =>
-                            setState(() => _ctaPressed = false),
-                        onCtaTap: _onShopNow,
+                    _CardBackground(
+                      cardColor: product.cardColor,
+                      darkAccent: darkAccent,
+                      height: _cardHeight,
+                      radius: _cardRadius,
+                      swapDuration: _swapDuration,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 14, 16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            child: _TextPanel(
+                              product: product,
+                              cleanTagline: cleanTagline,
+                              ctaPressed: _ctaPressed,
+                              onCtaTapDown: (_) =>
+                                  setState(() => _ctaPressed = true),
+                              onCtaTapUp: (_) =>
+                                  setState(() => _ctaPressed = false),
+                              onCtaTapCancel: () =>
+                                  setState(() => _ctaPressed = false),
+                              onCtaTap: () => _openProduct(product),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          AspectRatio(
+                            aspectRatio: 0.92,
+                            child: GestureDetector(
+                              onTap: () => _openProduct(product),
+                              child: _ProductFrame(
+                                product: product,
+                                swapDuration: _swapDuration,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    AspectRatio(
-                      aspectRatio: 0.92,
-                      child: _ProductFrame(
+                    Positioned(
+                      top: 6,
+                      right: 8,
+                      child: _PriceTag(
                         product: product,
-                        swapDuration: _swapDuration,
+                        duration: _swapDuration,
                       ),
                     ),
                   ],
                 ),
               ),
-              Positioned(
-                top: 6,
-                right: 8,
-                child: _PriceTag(product: product, duration: _swapDuration),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        Center(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (var i = 0; i < discountedProducts.length; i++) ...[
-                if (i > 0) const SizedBox(width: 6),
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => _onDotTap(i),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 320),
-                      curve: Curves.easeOutCubic,
-                      width: i == _currentIndex ? 22 : 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: i == _currentIndex
-                            ? Colors.black87
-                            : Colors.black26,
-                        borderRadius: BorderRadius.circular(999),
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (var i = 0; i < offers.length; i++) ...[
+                    if (i > 0) const SizedBox(width: 6),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _onDotTap(i, offers.length),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 320),
+                          curve: Curves.easeOutCubic,
+                          width: i == safeIndex ? 22 : 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: i == safeIndex
+                                ? Colors.black87
+                                : Colors.black26,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              ],
-            ],
+                  ],
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _OffersLoading extends StatelessWidget {
+  const _OffersLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Special Offers',
+          style: GoogleFonts.dmSans(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 14),
+        Container(
+          height: 224,
+          decoration: BoxDecoration(
+            color: Colors.black12,
+            borderRadius: BorderRadius.circular(26),
           ),
         ),
       ],
@@ -206,8 +270,6 @@ class _CardBackground extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(radius),
-        // Solid fill — matches the chair PNG's multiplied background exactly
-        // so the chair appears to have no visible rectangular frame.
         color: cardColor,
         boxShadow: [
           BoxShadow(
@@ -222,8 +284,6 @@ class _CardBackground extends StatelessWidget {
         borderRadius: BorderRadius.circular(radius),
         child: Stack(
           children: [
-            // Soft warm highlight across the upper-left to add depth without
-            // breaking the solid-color match underneath the chair.
             Positioned(
               left: -60,
               top: -30,
@@ -241,7 +301,6 @@ class _CardBackground extends StatelessWidget {
                 ),
               ),
             ),
-            // Subtle dark vignette tucked into the bottom-left for contrast.
             Positioned(
               left: -40,
               bottom: -40,
@@ -259,7 +318,6 @@ class _CardBackground extends StatelessWidget {
                 ),
               ),
             ),
-            // Subtle top-edge sheen for premium feel.
             Positioned(
               left: 0,
               right: 0,
@@ -301,7 +359,6 @@ class _TextPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Kicker pill (static across product changes).
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
@@ -323,7 +380,6 @@ class _TextPanel extends StatelessWidget {
             ),
           ),
         ),
-        // Animated discount + tagline.
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 420),
           switchInCurve: Curves.easeOutCubic,
@@ -383,7 +439,6 @@ class _TextPanel extends StatelessWidget {
             ],
           ),
         ),
-        // Shop Now CTA.
         GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTapDown: onCtaTapDown,
@@ -503,9 +558,6 @@ class _PriceTag extends StatelessWidget {
   }
 }
 
-/// Clean, framed product image container — rounded square with a soft cream
-/// interior, hairline border and a subtle drop shadow. Swaps between products
-/// with a calm crossfade (no motion, no scale, no jump).
 class _ProductFrame extends StatelessWidget {
   const _ProductFrame({
     required this.product,
@@ -553,18 +605,42 @@ class _ProductFrame extends StatelessWidget {
           },
           child: SizedBox.expand(
             key: ValueKey<String>('frame_${product.imagePath}'),
-            child: Image.asset(
-              product.imagePath,
-              fit: BoxFit.cover,
-              alignment: Alignment.center,
-              width: double.infinity,
-              height: double.infinity,
-              errorBuilder: (_, __, ___) => const ColoredBox(
-                color: Color(0xFFEFE9DC),
-              ),
-            ),
+            child: _OfferImage(path: product.imagePath),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _OfferImage extends StatelessWidget {
+  const _OfferImage({required this.path});
+
+  final String path;
+
+  @override
+  Widget build(BuildContext context) {
+    if (path.startsWith('http')) {
+      return Image.network(
+        path,
+        fit: BoxFit.cover,
+        alignment: Alignment.center,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (_, __, ___) => const ColoredBox(
+          color: Color(0xFFEFE9DC),
+        ),
+      );
+    }
+
+    return Image.asset(
+      path,
+      fit: BoxFit.cover,
+      alignment: Alignment.center,
+      width: double.infinity,
+      height: double.infinity,
+      errorBuilder: (_, __, ___) => const ColoredBox(
+        color: Color(0xFFEFE9DC),
       ),
     );
   }

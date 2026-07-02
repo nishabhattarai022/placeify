@@ -17,7 +17,7 @@ class HomeRecommendSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final roomId = ref.watch(selectedRoomProvider);
-    final products = ref.watch(recommendedProductsProvider);
+    final productsAsync = ref.watch(recommendedProductsProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,12 +42,16 @@ class HomeRecommendSection extends ConsumerWidget {
               ),
             );
           },
-          child: products.isEmpty
-              ? _EmptyRecommendations(key: ValueKey('empty_$roomId'))
-              : _RecommendProductRow(
-                  key: ValueKey(roomId),
-                  products: products,
-                ),
+          child: productsAsync.when(
+            loading: () => _LoadingRecommendations(key: ValueKey('loading_$roomId')),
+            error: (_, __) => _EmptyRecommendations(key: ValueKey('error_$roomId')),
+            data: (products) => products.isEmpty
+                ? _EmptyRecommendations(key: ValueKey('empty_$roomId'))
+                : _RecommendProductRow(
+                    key: ValueKey(roomId),
+                    products: products,
+                  ),
+          ),
         ),
       ],
     );
@@ -74,6 +78,24 @@ class _RecommendProductRow extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+class _LoadingRecommendations extends StatelessWidget {
+  const _LoadingRecommendations({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 48),
+      child: Center(
+        child: SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(strokeWidth: 2.5),
+        ),
+      ),
     );
   }
 }

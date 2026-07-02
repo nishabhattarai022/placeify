@@ -47,6 +47,7 @@ import '../../features/home/presentation/bookmarks_screen.dart';
 import '../../data/furniture_categories.dart';
 import '../../screens/browse_screen.dart';
 import '../../screens/category_screen.dart';
+import '../../screens/room_products_screen.dart';
 import '../../features/ar_hub/presentation/ar_powered_screen.dart';
 import '../../features/profile/presentation/profile_ar_history_screen.dart';
 import '../../features/profile/presentation/profile_home_screen.dart';
@@ -391,6 +392,18 @@ List<RouteBase> get _appRoutes => [
           key: ValueKey<String>(state.uri.toString()),
           child: const CartScreen(),
         ),
+      ),
+      GoRoute(
+        path: '/products',
+        name: 'roomProducts',
+        pageBuilder: (context, state) {
+          final category =
+              state.uri.queryParameters['category']?.trim() ?? 'Living Room';
+          return _slidePage(
+            key: ValueKey<String>('products-${Uri.encodeComponent(category)}'),
+            child: RoomProductsScreen(category: category),
+          );
+        },
       ),
       GoRoute(
         path: '/product/:productId',
