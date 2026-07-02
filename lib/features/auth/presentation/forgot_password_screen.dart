@@ -4,29 +4,30 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/widgets/toast_overlay.dart';
-import '../domain/repositories/auth_repository.dart';
-import 'providers/auth_provider.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/services/haptic_service.dart';
+import '../../../core/widgets/toast_overlay.dart';
 import '../../splash/presentation/widgets/onboarding/primary_cta_button.dart';
 import '../constants/auth_assets.dart';
-import '../constants/demo_credentials.dart';
+import '../domain/repositories/auth_repository.dart';
+import 'providers/auth_provider.dart';
 import 'widgets/auth_text_field.dart';
 import 'widgets/foggy_image_background.dart';
 
-class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+class ForgotPasswordScreen extends ConsumerStatefulWidget {
+  const ForgotPasswordScreen({super.key});
 
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() =>
+      _ForgotPasswordScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   bool _isSubmitting = false;
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmController = TextEditingController();
 
   @override
   void initState() {
@@ -43,22 +44,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmController.dispose();
     super.dispose();
   }
 
-  Future<void> _signInWithDemo() async {
-    _emailController.text = DemoCredentials.email;
-    _passwordController.text = DemoCredentials.password;
-    await _submit(destination: '/home');
-  }
-
-  Future<void> _signInWithDemoAdmin() async {
-    _emailController.text = DemoCredentials.adminEmail;
-    _passwordController.text = DemoCredentials.adminPassword;
-    await _submit(destination: '/admin');
-  }
-
-  Future<void> _submit({required String destination}) async {
+  Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_isSubmitting) return;
 
@@ -66,16 +56,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     await HapticService.heavy();
 
     try {
-      await ref.read(currentUserProvider.notifier).signIn(
+      await ref.read(currentUserProvider.notifier).resetPassword(
             email: _emailController.text.trim(),
-            password: _passwordController.text,
+            newPassword: _passwordController.text,
           );
       if (!mounted) return;
-      context.go(destination);
+      PlaceifyToast.show(context, 'Password updated — you can log in now');
+      context.go('/login');
     } on AuthException catch (e) {
       if (mounted) PlaceifyToast.show(context, e.message);
     } catch (_) {
-      if (mounted) PlaceifyToast.show(context, 'Log in failed. Try again.');
+      if (mounted) {
+        PlaceifyToast.show(context, 'Could not reset password. Try again.');
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -97,8 +90,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   String? _passwordValidator(String? value) {
-    final required = _required(value, 'Enter your password');
+    final required = _required(value, 'Enter a new password');
     if (required != null) return required;
+    if (value!.length < 8) {
+      return 'Use at least 8 characters';
+    }
+    return null;
+  }
+
+  String? _confirmValidator(String? value) {
+    final required = _required(value, 'Confirm your new password');
+    if (required != null) return required;
+    if (value != _passwordController.text) {
+      return 'Passwords do not match';
+    }
     return null;
   }
 
@@ -126,7 +131,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       if (context.canPop()) {
                         context.pop();
                       } else {
-                        context.go('/splash');
+                        context.go('/login');
                       }
                     },
                     icon: Icon(
@@ -154,16 +159,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             TextSpan(
                               style: const TextStyle(
                                 fontFamily: 'Fraunces',
-                                fontSize: 40,
+                                fontSize: 36,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.onboardingTextHead,
-                                letterSpacing: -1.0,
-                                height: 1.05,
+                                letterSpacing: -0.8,
+                                height: 1.08,
                               ),
                               children: const [
-                                TextSpan(text: 'Welcome '),
+                                TextSpan(text: 'Forgot '),
                                 TextSpan(
-                                  text: 'Back',
+                                  text: 'Password?',
                                   style: TextStyle(
                                     fontStyle: FontStyle.italic,
                                   ),
@@ -173,7 +178,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const SizedBox(height: 10),
                           Text(
-                            'Log in to continue exploring furniture in AR and connecting with vendors.',
+                            'Enter the email for your account and choose a new password.',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w300,
@@ -183,10 +188,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               height: 1.55,
                             ),
                           ),
-                          SizedBox(height: topPadding > 0 ? 36 : 40),
+                          SizedBox(height: topPadding > 0 ? 32 : 36),
                           AuthTextField(
                             label: 'Email',
-                            hint: DemoCredentials.email,
+                            hint: 'you@example.com',
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
@@ -194,123 +199,44 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const SizedBox(height: 18),
                           AuthTextField(
-                            label: 'Password',
-                            hint: 'Your password',
+                            label: 'New password',
+                            hint: 'At least 8 characters',
                             controller: _passwordController,
                             showVisibilityToggle: true,
-                            textInputAction: TextInputAction.done,
+                            textInputAction: TextInputAction.next,
                             validator: _passwordValidator,
                           ),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: _isSubmitting
-                                  ? null
-                                  : () {
-                                      HapticService.light();
-                                      context.push('/login/forgot-password');
-                                    },
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                  vertical: 2,
-                                ),
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: const Text(
-                                'Forgot password?',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.onboardingAmber,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            DemoCredentials.hint,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              color: AppColors.onboardingTextBody.withValues(
-                                alpha: 0.75,
-                              ),
-                            ),
+                          const SizedBox(height: 18),
+                          AuthTextField(
+                            label: 'Confirm new password',
+                            hint: 'Repeat new password',
+                            controller: _confirmController,
+                            showVisibilityToggle: true,
+                            textInputAction: TextInputAction.done,
+                            validator: _confirmValidator,
                           ),
                           const SizedBox(height: 32),
                           PrimaryCtaButton(
-                            label: _isSubmitting ? 'Logging in...' : 'Log In',
-                            onTap: () => _submit(destination: '/home'),
+                            label: _isSubmitting
+                                ? 'Updating...'
+                                : 'Update Password',
+                            onTap: _submit,
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 16),
                           Center(
                             child: TextButton(
                               onPressed: _isSubmitting
                                   ? null
                                   : () {
                                       HapticService.light();
-                                      _signInWithDemo();
+                                      context.go('/login');
                                     },
                               child: const Text(
-                                'Use demo account',
+                                'Back to log in',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.onboardingAmber,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Center(
-                            child: TextButton(
-                              onPressed: _isSubmitting
-                                  ? null
-                                  : () {
-                                      HapticService.light();
-                                      _signInWithDemoAdmin();
-                                    },
-                              child: Text(
-                                'Demo Admin Access',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.onboardingTextBody.withValues(
-                                    alpha: 0.65,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Center(
-                            child: TextButton(
-                              onPressed: () {
-                                HapticService.light();
-                                context.push('/register');
-                              },
-                              child: RichText(
-                                text: TextSpan(
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w400,
-                                    color: AppColors.onboardingTextBody
-                                        .withValues(alpha: 0.85),
-                                  ),
-                                  children: const [
-                                    TextSpan(
-                                      text: "Don't have an account? ",
-                                    ),
-                                    TextSpan(
-                                      text: 'Create one',
-                                      style: TextStyle(
-                                        color: AppColors.onboardingAmber,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
                                 ),
                               ),
                             ),

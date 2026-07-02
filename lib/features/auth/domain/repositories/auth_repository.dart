@@ -39,6 +39,12 @@ abstract interface class AuthRepository {
   Future<ConsumerProfileDetails?> getConsumerProfile();
 
   Future<AppUser> updateConsumerProfile(ConsumerProfileDetails profile);
+
+  /// Sets a new password for the account matching [email] (no session required).
+  Future<void> resetPassword({
+    required String email,
+    required String newPassword,
+  });
 }
 
 class AuthException implements Exception {

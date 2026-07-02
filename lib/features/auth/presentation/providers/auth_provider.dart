@@ -75,6 +75,14 @@ class CurrentUser extends _$CurrentUser {
     return repo.getConsumerProfile();
   }
 
+  Future<void> resetPassword({
+    required String email,
+    required String newPassword,
+  }) async {
+    final repo = await ref.read(authRepositoryProvider.future);
+    await repo.resetPassword(email: email, newPassword: newPassword);
+  }
+
   /// Updates vendor onboarding status and refreshes auth state for router/profile UI.
   Future<void> updateVendorStatus({
     required VendorStatus status,

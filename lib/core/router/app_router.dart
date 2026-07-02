@@ -21,6 +21,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../constants/app_durations.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
+import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/vendor/presentation/registration/vendor_registration_screen.dart';
@@ -160,6 +161,18 @@ List<RouteBase> get _appRoutes => [
         transitionsBuilder: _fadeTransition,
         transitionDuration: AppDurations.slow,
       ),
+      routes: [
+        GoRoute(
+          path: 'forgot-password',
+          name: 'forgotPassword',
+          pageBuilder: (context, state) => CustomTransitionPage(
+            key: state.pageKey,
+            child: const ForgotPasswordScreen(),
+            transitionsBuilder: _fadeTransition,
+            transitionDuration: AppDurations.slow,
+          ),
+        ),
+      ],
     ),
     GoRoute(
       path: '/vendor/register',

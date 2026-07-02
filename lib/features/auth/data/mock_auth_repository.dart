@@ -184,6 +184,32 @@ class MockAuthRepository implements AuthRepository {
     return users[index].toAppUser();
   }
 
+  @override
+  Future<void> resetPassword({
+    required String email,
+    required String newPassword,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+
+    final normalizedEmail = email.trim().toLowerCase();
+    if (normalizedEmail.isEmpty) {
+      throw AuthException('Enter your email');
+    }
+    if (newPassword.length < 8) {
+      throw AuthException('Password must be at least 8 characters');
+    }
+
+    final users = await _loadUsers();
+    final index = users.indexWhere((u) => u.email == normalizedEmail);
+    if (index == -1) {
+      throw AuthException('No account found for this email');
+    }
+
+    final current = users[index];
+    users[index] = current.copyWith(password: newPassword);
+    await _saveUsers(users);
+  }
+
   Future<List<_StoredUser>> _loadUsers() async {
     final raw = _prefs.getString(_usersKey);
     var users = <_StoredUser>[];
@@ -273,6 +299,7 @@ class _StoredUser {
   _StoredUser copyWith({
     String? fullName,
     String? email,
+    String? password,
     UserRole? role,
     VendorStatus? vendorStatus,
     String? vendorId,
@@ -286,7 +313,7 @@ class _StoredUser {
       id: id,
       fullName: fullName ?? this.fullName,
       email: email ?? this.email,
-      password: password,
+      password: password ?? this.password,
       role: role ?? this.role,
       vendorStatus: vendorStatus ?? this.vendorStatus,
       vendorId: clearVendorId ? null : (vendorId ?? this.vendorId),
