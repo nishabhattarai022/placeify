@@ -80,16 +80,16 @@ import 'package:placeify_server/src/generated/vendor_profile_detail.dart'
     as _i47;
 import 'package:placeify_server/src/generated/shop_listing_summary.dart'
     as _i48;
+import 'dart:typed_data' as _i49;
 import 'package:placeify_server/src/generated/refund_request_summary.dart'
-    as _i49;
-import 'package:placeify_server/src/generated/review.dart' as _i50;
-import 'package:placeify_server/src/generated/vendor_dashboard.dart' as _i51;
+    as _i50;
+import 'package:placeify_server/src/generated/review.dart' as _i51;
+import 'package:placeify_server/src/generated/vendor_dashboard.dart' as _i52;
 import 'package:placeify_server/src/generated/vendor_bank_details_input.dart'
-    as _i52;
-import 'package:placeify_server/src/generated/vendor_bank_details.dart' as _i53;
+    as _i53;
+import 'package:placeify_server/src/generated/vendor_bank_details.dart' as _i54;
 import 'package:placeify_server/src/generated/vendor_profile_update_input.dart'
-    as _i54;
-import 'dart:typed_data' as _i55;
+    as _i55;
 import 'package:placeify_server/src/generated/vendor_document_type.dart'
     as _i56;
 import 'package:placeify_server/src/generated/vendor_product_upload_input.dart'
@@ -2938,6 +2938,37 @@ class _ProductEndpoint {
       }
     });
   }
+
+  _i3.Future<_i49.ByteData?> getModel3dAsset(
+    _i1.TestSessionBuilder sessionBuilder,
+    int productId,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'product',
+            method: 'getModel3dAsset',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'product',
+          methodName: 'getModel3dAsset',
+          parameters: _i1.testObjectToJson({'productId': productId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i49.ByteData?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 }
 
 class _RefundEndpoint {
@@ -2950,7 +2981,7 @@ class _RefundEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<List<_i49.RefundRequestSummary>> listMyRefundRequests(
+  _i3.Future<List<_i50.RefundRequestSummary>> listMyRefundRequests(
     _i1.TestSessionBuilder sessionBuilder, {
     _i37.PaginationInput? pagination,
   }) async {
@@ -2973,7 +3004,7 @@ class _RefundEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i49.RefundRequestSummary>>);
+                as _i3.Future<List<_i50.RefundRequestSummary>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2981,7 +3012,7 @@ class _RefundEndpoint {
     });
   }
 
-  _i3.Future<_i49.RefundRequestSummary> getRefundRequest(
+  _i3.Future<_i50.RefundRequestSummary> getRefundRequest(
     _i1.TestSessionBuilder sessionBuilder,
     int refundId,
   ) async {
@@ -3004,7 +3035,7 @@ class _RefundEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i49.RefundRequestSummary>);
+                as _i3.Future<_i50.RefundRequestSummary>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3012,7 +3043,7 @@ class _RefundEndpoint {
     });
   }
 
-  _i3.Future<_i49.RefundRequestSummary> createRefundRequest(
+  _i3.Future<_i50.RefundRequestSummary> createRefundRequest(
     _i1.TestSessionBuilder sessionBuilder,
     int orderId,
     String reason,
@@ -3039,7 +3070,7 @@ class _RefundEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i49.RefundRequestSummary>);
+                as _i3.Future<_i50.RefundRequestSummary>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3058,7 +3089,7 @@ class _ReviewEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i50.Review> submitReview(
+  _i3.Future<_i51.Review> submitReview(
     _i1.TestSessionBuilder sessionBuilder,
     int productId,
     int orderId,
@@ -3089,7 +3120,7 @@ class _ReviewEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i50.Review>);
+                as _i3.Future<_i51.Review>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3097,7 +3128,7 @@ class _ReviewEndpoint {
     });
   }
 
-  _i3.Future<List<_i50.Review>> listProductReviews(
+  _i3.Future<List<_i51.Review>> listProductReviews(
     _i1.TestSessionBuilder sessionBuilder,
     int productId, {
     required int limit,
@@ -3126,7 +3157,7 @@ class _ReviewEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i50.Review>>);
+                as _i3.Future<List<_i51.Review>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3175,7 +3206,7 @@ class _VendorEndpoint {
     });
   }
 
-  _i3.Future<_i51.VendorDashboard> getDashboard(
+  _i3.Future<_i52.VendorDashboard> getDashboard(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -3197,7 +3228,7 @@ class _VendorEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i51.VendorDashboard>);
+                as _i3.Future<_i52.VendorDashboard>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3244,7 +3275,7 @@ class _VendorEndpoint {
     String? country,
     String? shopCategory,
     String? contactEmail,
-    _i52.VendorBankDetailsInput? bankDetails,
+    _i53.VendorBankDetailsInput? bankDetails,
   }) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -3284,7 +3315,7 @@ class _VendorEndpoint {
     });
   }
 
-  _i3.Future<_i53.VendorBankDetails?> getMyBankDetails(
+  _i3.Future<_i54.VendorBankDetails?> getMyBankDetails(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -3306,7 +3337,7 @@ class _VendorEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i53.VendorBankDetails?>);
+                as _i3.Future<_i54.VendorBankDetails?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3314,9 +3345,9 @@ class _VendorEndpoint {
     });
   }
 
-  _i3.Future<_i53.VendorBankDetails> saveMyBankDetails(
+  _i3.Future<_i54.VendorBankDetails> saveMyBankDetails(
     _i1.TestSessionBuilder sessionBuilder,
-    _i52.VendorBankDetailsInput input,
+    _i53.VendorBankDetailsInput input,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -3337,7 +3368,7 @@ class _VendorEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i53.VendorBankDetails>);
+                as _i3.Future<_i54.VendorBankDetails>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3377,7 +3408,7 @@ class _VendorEndpoint {
 
   _i3.Future<_i47.VendorProfileDetail> updateMyProfile(
     _i1.TestSessionBuilder sessionBuilder,
-    _i54.VendorProfileUpdateInput input,
+    _i55.VendorProfileUpdateInput input,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -3408,7 +3439,7 @@ class _VendorEndpoint {
 
   _i3.Future<String> uploadShopLogo(
     _i1.TestSessionBuilder sessionBuilder,
-    _i55.ByteData fileData,
+    _i49.ByteData fileData,
     String fileName,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -3443,7 +3474,7 @@ class _VendorEndpoint {
 
   _i3.Future<String> uploadShopBanner(
     _i1.TestSessionBuilder sessionBuilder,
-    _i55.ByteData fileData,
+    _i49.ByteData fileData,
     String fileName,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -3478,7 +3509,7 @@ class _VendorEndpoint {
 
   _i3.Future<String> uploadShopCover(
     _i1.TestSessionBuilder sessionBuilder,
-    _i55.ByteData fileData,
+    _i49.ByteData fileData,
     String fileName,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -3514,7 +3545,7 @@ class _VendorEndpoint {
   _i3.Future<String> uploadDocument(
     _i1.TestSessionBuilder sessionBuilder,
     _i56.VendorDocumentType documentType,
-    _i55.ByteData fileData,
+    _i49.ByteData fileData,
     String fileName,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -3550,7 +3581,7 @@ class _VendorEndpoint {
 
   _i3.Future<String> uploadLogo(
     _i1.TestSessionBuilder sessionBuilder,
-    _i55.ByteData fileData,
+    _i49.ByteData fileData,
     String fileName,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -3585,7 +3616,7 @@ class _VendorEndpoint {
 
   _i3.Future<String> uploadBanner(
     _i1.TestSessionBuilder sessionBuilder,
-    _i55.ByteData fileData,
+    _i49.ByteData fileData,
     String fileName,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -3749,7 +3780,7 @@ class _VendorEndpoint {
   _i3.Future<_i18.Product> uploadProduct(
     _i1.TestSessionBuilder sessionBuilder,
     _i57.VendorProductUploadInput input,
-    _i55.ByteData imageData,
+    _i49.ByteData imageData,
     String imageFileName,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -3820,7 +3851,7 @@ class _VendorEndpoint {
 
   _i3.Future<String> uploadProductImage(
     _i1.TestSessionBuilder sessionBuilder,
-    _i55.ByteData fileData,
+    _i49.ByteData fileData,
     String fileName, {
     required bool removeBackground,
   }) async {
@@ -4092,7 +4123,7 @@ class _VendorEndpoint {
 
   _i3.Future<String> uploadDeliveryProof(
     _i1.TestSessionBuilder sessionBuilder,
-    _i55.ByteData fileData,
+    _i49.ByteData fileData,
     String fileName,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {

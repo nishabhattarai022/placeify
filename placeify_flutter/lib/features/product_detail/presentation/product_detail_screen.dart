@@ -85,9 +85,24 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
   }
 
   Future<void> _openArRoom(BuildContext context, Product product) async {
-    final modelUrl = await Product3dModelResolver.ensureSrcForProduct(product);
+    final preview = await Product3dModelResolver.ensurePreviewSourceForProduct(
+      product,
+    );
     if (!context.mounted) return;
-    if (modelUrl == null || modelUrl.isEmpty) {
+    if (preview?.unavailableMessage != null ||
+        preview?.src == null ||
+        preview!.src.isEmpty) {
+      PlaceifyToast.show(
+        context,
+        preview?.unavailableMessage ??
+            '3D model is not available for this product yet.',
+      );
+      return;
+    }
+
+    final remoteUrl = await Product3dModelResolver.ensureSrcForProduct(product);
+    if (!context.mounted) return;
+    if (remoteUrl == null || remoteUrl.isEmpty) {
       PlaceifyToast.show(
         context,
         '3D model is not available for this product yet.',
@@ -97,7 +112,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
 
     final result = await ArRoomLauncher.open(
       context: context,
-      remoteModelUrl: modelUrl,
+      remoteModelUrl: remoteUrl,
       productId: product.id,
       productName: product.name,
       dimensions: product.dimensions,

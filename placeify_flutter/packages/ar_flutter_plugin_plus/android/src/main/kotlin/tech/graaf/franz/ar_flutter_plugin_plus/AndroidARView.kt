@@ -121,6 +121,9 @@ internal class AndroidARView(
 
     private var lastTrackingState: TrackingState? = null
     private var lastTrackingFailureReason: TrackingFailureReason? = null
+    private var lastTapX: Float? = null
+    private var lastTapY: Float? = null
+    private var lastTapAtMs: Long = 0L
 
     private var worldOriginAnchor: Anchor? = null
     private var lastWorldOriginMatrix: FloatArray? = null
@@ -897,31 +900,26 @@ internal class AndroidARView(
         }
     }
 
-    private fun computeWorldMatrixForNode(
-        node: SimpleNode,
-        useStableAnchorPose: Boolean = true,
-    ): FloatArray {
+    private fun computeWorldMatrixForNode(node: SimpleNode): FloatArray {
         val nodeMatrix = FloatArray(16)
         val anchorMatrix = FloatArray(16)
         val modelMatrix = FloatArray(16)
         matrixFromTransform(node.transformation, nodeMatrix)
         val anchorName = node.anchorName
         if (anchorName != null) {
+            val anchor = anchorsByName[anchorName]
             val stableAnchor = anchorTransformsByName[anchorName]
-            if (stableAnchor != null && useStableAnchorPose) {
+            // Prefer the live ARCore anchor pose so the model stays locked to the
+            // physical floor as SLAM refines the world — frozen matrices drift and
+            // make furniture appear glued to the camera feed.
+            if (anchor != null && anchor.trackingState == TrackingState.TRACKING) {
+                anchor.pose.toMatrix(anchorMatrix, 0)
+                Matrix.multiplyMM(modelMatrix, 0, anchorMatrix, 0, nodeMatrix, 0)
+            } else if (stableAnchor != null) {
                 System.arraycopy(stableAnchor, 0, anchorMatrix, 0, 16)
                 Matrix.multiplyMM(modelMatrix, 0, anchorMatrix, 0, nodeMatrix, 0)
             } else {
-                val anchor = anchorsByName[anchorName]
-                if (anchor != null && anchor.trackingState != TrackingState.STOPPED) {
-                    anchor.pose.toMatrix(anchorMatrix, 0)
-                    Matrix.multiplyMM(modelMatrix, 0, anchorMatrix, 0, nodeMatrix, 0)
-                } else if (stableAnchor != null) {
-                    System.arraycopy(stableAnchor, 0, anchorMatrix, 0, 16)
-                    Matrix.multiplyMM(modelMatrix, 0, anchorMatrix, 0, nodeMatrix, 0)
-                } else {
-                    System.arraycopy(nodeMatrix, 0, modelMatrix, 0, 16)
-                }
+                System.arraycopy(nodeMatrix, 0, modelMatrix, 0, 16)
             }
         } else {
             System.arraycopy(nodeMatrix, 0, modelMatrix, 0, 16)
@@ -934,20 +932,21 @@ internal class AndroidARView(
         val scaledModelMatrix = FloatArray(16)
 
         nodesByName.values.forEach { node ->
-            val needsRecompute =
-                dirtyTransformNodes.contains(node.name) || !cachedWorldMatrices.containsKey(node.name)
-
-            val modelMatrix = if (needsRecompute) {
-                val computed = if (node.anchorName != null) {
-                    computeWorldMatrixForNode(node, useStableAnchorPose = true)
-                } else {
-                    computeWorldMatrixForNode(node, useStableAnchorPose = false)
-                }
-                cachedWorldMatrices[node.name] = computed.clone()
-                dirtyTransformNodes.remove(node.name)
-                computed
+            val modelMatrix = if (node.anchorName != null) {
+                // Anchored furniture must track the live plane anchor every frame.
+                computeWorldMatrixForNode(node)
             } else {
-                cachedWorldMatrices[node.name]!!
+                val needsRecompute =
+                    dirtyTransformNodes.contains(node.name) ||
+                        !cachedWorldMatrices.containsKey(node.name)
+                if (needsRecompute) {
+                    val computed = computeWorldMatrixForNode(node)
+                    cachedWorldMatrices[node.name] = computed.clone()
+                    dirtyTransformNodes.remove(node.name)
+                    computed
+                } else {
+                    cachedWorldMatrices[node.name]!!
+                }
             }
 
             val modelScaleFactor = getModelScaleFactor(node.type)
@@ -1198,11 +1197,7 @@ internal class AndroidARView(
     }
 
     private fun getNodeWorldPosition(node: SimpleNode): FloatArray {
-        val modelMatrix = if (node.anchorName != null) {
-            computeWorldMatrixForNode(node, useStableAnchorPose = true)
-        } else {
-            computeWorldMatrixForNode(node, useStableAnchorPose = false)
-        }
+        val modelMatrix = computeWorldMatrixForNode(node)
         return floatArrayOf(modelMatrix[12], modelMatrix[13], modelMatrix[14])
     }
 
@@ -1301,20 +1296,58 @@ internal class AndroidARView(
         return MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_DOWN, x, y, 0)
     }
 
+    private fun pickBestPlaneHit(hits: List<HitResult>): HitResult? {
+        val planeHits = hits.filter { hit ->
+            val trackable = hit.trackable
+            trackable is Plane &&
+                trackable.trackingState == TrackingState.TRACKING &&
+                trackable.isPoseInPolygon(hit.hitPose)
+        }
+        if (planeHits.isNotEmpty()) {
+            return planeHits.minByOrNull { it.distance }
+        }
+        return hits.firstOrNull { hit ->
+            val trackable = hit.trackable
+            trackable is Point && trackable.trackingState == TrackingState.TRACKING
+        }
+    }
+
+    private fun createAnchorForPlacement(
+        session: Session,
+        frame: Frame?,
+        transform: ArrayList<Double>,
+    ): Anchor {
+        val recentTap = SystemClock.uptimeMillis() - lastTapAtMs <= 750L
+        val tapX = if (recentTap) lastTapX else null
+        val tapY = if (recentTap) lastTapY else null
+        val width = glSurfaceView.width
+        val height = glSurfaceView.height
+        val x = tapX ?: (width / 2f)
+        val y = tapY ?: (height / 2f)
+
+        if (frame != null && width > 0 && height > 0) {
+            val hit = pickBestPlaneHit(frame.hitTest(x, y))
+            if (hit != null) {
+                return hit.createAnchor()
+            }
+        }
+
+        return session.createAnchor(poseFromTransformMatrix(transform))
+    }
+
     private fun addPlaneAnchor(transform: ArrayList<Double>, name: String): Boolean {
         val session = session ?: return false
 
         val future = CompletableFuture<Boolean>()
         glSurfaceView.queueEvent {
             try {
-                // Use the hit-test matrix directly — deserializeMatrix4 applies legacy
-                // 180° quaternion corrections that misalign anchors on ARCore planes.
-                val anchor = session.createAnchor(poseFromTransformMatrix(transform))
+                val frame = currentFrame
+                val anchor = createAnchorForPlacement(session, frame, transform)
                 anchorsByName[name] = anchor
                 anchorChildren.putIfAbsent(name, mutableListOf())
                 val anchorMatrix = FloatArray(16)
-                matrixFromTransform(transform, anchorMatrix)
-                anchorTransformsByName[name] = anchorMatrix
+                anchor.pose.toMatrix(anchorMatrix, 0)
+                anchorTransformsByName[name] = anchorMatrix.clone()
                 future.complete(true)
             } catch (e: Exception) {
                 future.complete(false)
@@ -1361,6 +1394,9 @@ internal class AndroidARView(
         } ?: return
 
         try {
+            lastTapX = tap.x
+            lastTapY = tap.y
+            lastTapAtMs = SystemClock.uptimeMillis()
             val serialized = serializePlaneAndPointHits(frame.hitTest(tap))
             activity.runOnUiThread {
                 sessionManagerChannel.invokeMethod("onPlaneOrPointTap", serialized)
