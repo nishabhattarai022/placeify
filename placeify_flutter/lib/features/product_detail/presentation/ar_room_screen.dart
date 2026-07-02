@@ -496,6 +496,8 @@ class _ArRoomScreenState extends State<ArRoomScreen>
         _placedScaleMultiplier = _userScaleMultiplier;
         _placedRotationY = _smoothedRotationY;
       });
+      // Lock local transform to anchor space — position must not track the camera.
+      _applyAnchoredNodeTransform();
       await _sessionManager?.setShowPlanes(false);
       await _sessionManager?.setLightIntensityMultiplier(_arLightIntensity);
       _showTransientHint('Drag to move · twist to rotate');
@@ -587,9 +589,15 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     final node = _furnitureNode;
     if (node == null || !_isWorldAnchored || _isDragging || _isRotating) return;
 
-    final currentPos = node.position;
+    // Keep translation in anchor-local space (XZ from drag, Y = floor clearance).
+    // Never rebuild from world/camera position — that makes the model follow the phone.
+    final localTranslation = node.transform.getTranslation();
     final nextTransform = Matrix4.compose(
-      Vector3(currentPos.x, ArFurniturePlacement.floorClearanceM, currentPos.z),
+      Vector3(
+        localTranslation.x,
+        ArFurniturePlacement.floorClearanceM,
+        localTranslation.z,
+      ),
       Quaternion.axisAngle(Vector3(0, 1, 0), _smoothedRotationY),
       _nodeScale,
     );

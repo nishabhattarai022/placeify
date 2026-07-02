@@ -87,6 +87,7 @@ product:
   - getShopProfile:
   - listApprovedShops:
   - listProducts:
+  - getModel3dAsset:
 refund:
   - listMyRefundRequests:
   - getRefundRequest:

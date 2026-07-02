@@ -15,6 +15,7 @@ import com.google.android.filament.gltfio.MaterialProvider
 import com.google.android.filament.gltfio.ResourceLoader
 import com.google.android.filament.gltfio.UbershaderProvider
 import java.nio.ByteBuffer
+import kotlin.math.atan
 
 /**
  * Renders GLB furniture on a transparent [TextureView] composited over the ARCore camera.
@@ -396,8 +397,14 @@ internal class ModelRenderer {
         GlMatrix.invertM(inverseView, 0, viewMatrix, 0)
         camera.setModelMatrix(inverseView)
 
-        val projectionDouble = DoubleArray(16) { projectionMatrix[it].toDouble() }
-        camera.setCustomProjection(projectionDouble, 0.1, 100.0)
+        // Match ARCore's OpenGL projection so the Filament overlay aligns with the
+        // GLSurfaceView camera feed (setCustomProjection caused camera-locked drift).
+        val m00 = projectionMatrix[0]
+        val m11 = projectionMatrix[5]
+        val aspect = if (m00 != 0f) (m11 / m00).toDouble() else 1.0
+        val fovY = 2.0 * atan(1.0 / m11.toDouble())
+        val fovDegrees = Math.toDegrees(fovY)
+        camera.setProjection(fovDegrees, aspect, 0.1, 100.0, Camera.Fov.VERTICAL)
 
         if (renderer.beginFrame(swapChain, 0L)) {
             renderer.render(view)
