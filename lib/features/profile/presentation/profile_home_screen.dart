@@ -74,8 +74,6 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
       case 1:
         context.go('/bookmarks');
       case 2:
-        context.pushNamed('profileAugmentedReality');
-      case 3:
         context.pushNamed('profileRefund');
     }
   }
@@ -86,14 +84,14 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
         context.pushNamed('profileOrders');
       case ProfileMenuRoute.wishlist:
         context.go('/bookmarks');
-      case ProfileMenuRoute.augmentedReality:
-        context.pushNamed('profileAugmentedReality');
       case ProfileMenuRoute.refund:
         context.pushNamed('profileRefund');
       case ProfileMenuRoute.notifications:
         context.pushNamed('profileNotifications');
       case ProfileMenuRoute.password:
         context.pushNamed('profilePassword');
+      case ProfileMenuRoute.editProfile:
+        context.pushNamed('profileEdit');
       case ProfileMenuRoute.vendor:
         break;
       case ProfileMenuRoute.signOut:
@@ -175,7 +173,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
                         for (var i = 0;
                             i < ProfileMenuItems.accountOverview.length;
                             i++) ...[
-                          if (i == 3)
+                          if (i == 2)
                             const Divider(
                               height: 16,
                               color: AppColors.creamDark,

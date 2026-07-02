@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/mock_auth_repository.dart';
 import '../../domain/models/app_user.dart';
+import '../../domain/models/consumer_profile_details.dart';
 import '../../domain/repositories/auth_repository.dart';
 
 part 'auth_provider.g.dart';
@@ -58,6 +59,20 @@ class CurrentUser extends _$CurrentUser {
       final repo = await ref.read(authRepositoryProvider.future);
       return repo.getCurrentUser();
     });
+  }
+
+  Future<void> updateConsumerProfile(ConsumerProfileDetails profile) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final repo = await ref.read(authRepositoryProvider.future);
+      return repo.updateConsumerProfile(profile);
+    });
+    if (state.hasError) throw state.error!;
+  }
+
+  Future<ConsumerProfileDetails?> loadConsumerProfile() async {
+    final repo = await ref.read(authRepositoryProvider.future);
+    return repo.getConsumerProfile();
   }
 
   /// Updates vendor onboarding status and refreshes auth state for router/profile UI.

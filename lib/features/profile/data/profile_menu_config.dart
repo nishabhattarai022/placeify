@@ -14,17 +14,16 @@ abstract final class ProfileMenuConfig {
   static const double headerOverlap = 0;
 
   static const int wishlistCount = 8;
-  static const int arTriesCount = 24;
   static const int refundsCount = 2;
 }
 
 enum ProfileMenuRoute {
   orders,
   wishlist,
-  augmentedReality,
   refund,
   notifications,
   password,
+  editProfile,
   vendor,
   signOut,
 }
@@ -66,14 +65,6 @@ abstract final class ProfileMenuItems {
       route: ProfileMenuRoute.wishlist,
     ),
     ProfileMenuItemData(
-      title: 'Augmented Reality',
-      subtitle: 'Preview furniture in your space',
-      icon: Icons.view_in_ar_outlined,
-      iconColor: AppColors.lavender,
-      backgroundColor: AppColors.lavenderBg,
-      route: ProfileMenuRoute.augmentedReality,
-    ),
-    ProfileMenuItemData(
       title: 'Refund & Returns',
       subtitle: 'NPR 45.00 pending · 2 active',
       icon: Icons.paid_outlined,
@@ -96,6 +87,14 @@ abstract final class ProfileMenuItems {
       iconColor: AppColors.coral,
       backgroundColor: AppColors.coralBg,
       route: ProfileMenuRoute.password,
+    ),
+    ProfileMenuItemData(
+      title: 'Edit Profile',
+      subtitle: 'Name, email, phone & bio',
+      icon: Icons.person_outline_rounded,
+      iconColor: AppColors.sage,
+      backgroundColor: AppColors.sageBg,
+      route: ProfileMenuRoute.editProfile,
     ),
   ];
 

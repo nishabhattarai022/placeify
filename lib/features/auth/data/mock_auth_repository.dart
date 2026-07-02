@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/demo_credentials.dart';
 import '../domain/models/app_user.dart';
+import '../domain/models/consumer_profile_details.dart';
 import '../domain/repositories/auth_repository.dart';
 
 /// Local mock backend: stores registered users and the active session.
@@ -132,6 +133,57 @@ class MockAuthRepository implements AuthRepository {
     await _saveUsers(users);
   }
 
+  @override
+  Future<ConsumerProfileDetails?> getConsumerProfile() async {
+    final email = _prefs.getString(_sessionEmailKey);
+    if (email == null) return null;
+
+    final users = await _loadUsers();
+    final match = users.where((u) => u.email == email).firstOrNull;
+    return match?.toConsumerProfile();
+  }
+
+  @override
+  Future<AppUser> updateConsumerProfile(ConsumerProfileDetails profile) async {
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+
+    final sessionEmail = _prefs.getString(_sessionEmailKey);
+    if (sessionEmail == null) {
+      throw AuthException('You must be signed in to update your profile');
+    }
+
+    final normalizedEmail = profile.email.trim().toLowerCase();
+    final users = await _loadUsers();
+    final index = users.indexWhere((u) => u.email == sessionEmail);
+    if (index == -1) {
+      throw AuthException('Account not found');
+    }
+
+    final duplicate = users
+        .where((u) => u.email == normalizedEmail && u.id != users[index].id)
+        .firstOrNull;
+    if (duplicate != null) {
+      throw AuthException('An account with this email already exists');
+    }
+
+    final current = users[index];
+    users[index] = current.copyWith(
+      fullName: profile.fullName.trim(),
+      email: normalizedEmail,
+      username: profile.username.trim(),
+      phone: profile.phone.trim(),
+      bio: profile.bio.trim(),
+      city: profile.city.trim(),
+    );
+    await _saveUsers(users);
+
+    if (sessionEmail != normalizedEmail) {
+      await _prefs.setString(_sessionEmailKey, normalizedEmail);
+    }
+
+    return users[index].toAppUser();
+  }
+
   Future<List<_StoredUser>> _loadUsers() async {
     final raw = _prefs.getString(_usersKey);
     var users = <_StoredUser>[];
@@ -200,6 +252,10 @@ class _StoredUser {
     this.role = UserRole.customer,
     this.vendorStatus = VendorStatus.none,
     this.vendorId,
+    this.username = '',
+    this.phone = '',
+    this.bio = '',
+    this.city = '',
   });
 
   final String id;
@@ -209,21 +265,35 @@ class _StoredUser {
   final UserRole role;
   final VendorStatus vendorStatus;
   final String? vendorId;
+  final String username;
+  final String phone;
+  final String bio;
+  final String city;
 
   _StoredUser copyWith({
+    String? fullName,
+    String? email,
     UserRole? role,
     VendorStatus? vendorStatus,
     String? vendorId,
     bool clearVendorId = false,
+    String? username,
+    String? phone,
+    String? bio,
+    String? city,
   }) {
     return _StoredUser(
       id: id,
-      fullName: fullName,
-      email: email,
+      fullName: fullName ?? this.fullName,
+      email: email ?? this.email,
       password: password,
       role: role ?? this.role,
       vendorStatus: vendorStatus ?? this.vendorStatus,
       vendorId: clearVendorId ? null : (vendorId ?? this.vendorId),
+      username: username ?? this.username,
+      phone: phone ?? this.phone,
+      bio: bio ?? this.bio,
+      city: city ?? this.city,
     );
   }
 
@@ -236,6 +306,20 @@ class _StoredUser {
         vendorId: vendorId,
       );
 
+  ConsumerProfileDetails toConsumerProfile() => ConsumerProfileDetails(
+        fullName: fullName,
+        email: email,
+        username: username.isNotEmpty ? username : _defaultUsername(email),
+        phone: phone,
+        bio: bio,
+        city: city,
+      );
+
+  static String _defaultUsername(String email) {
+    final local = email.split('@').first;
+    return local.replaceAll(RegExp(r'[^a-z0-9_]'), '').toLowerCase();
+  }
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'fullName': fullName,
@@ -244,6 +328,10 @@ class _StoredUser {
         'role': role.name,
         'vendorStatus': vendorStatus.name,
         if (vendorId != null) 'vendorId': vendorId,
+        if (username.isNotEmpty) 'username': username,
+        if (phone.isNotEmpty) 'phone': phone,
+        if (bio.isNotEmpty) 'bio': bio,
+        if (city.isNotEmpty) 'city': city,
       };
 
   factory _StoredUser.fromJson(Map<String, dynamic> json) {
@@ -259,6 +347,10 @@ class _StoredUser {
           ? VendorStatus.values.byName(json['vendorStatus'] as String)
           : VendorStatus.none,
       vendorId: json['vendorId'] as String?,
+      username: json['username'] as String? ?? '',
+      phone: json['phone'] as String? ?? '',
+      bio: json['bio'] as String? ?? '',
+      city: json['city'] as String? ?? '',
     );
   }
 }
