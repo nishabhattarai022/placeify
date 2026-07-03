@@ -113,28 +113,30 @@ import 'package:placeify_client/src/protocol/admin_refund_request_summary.dart'
     as _i95;
 import 'package:placeify_client/src/protocol/ar_session.dart' as _i96;
 import 'package:placeify_client/src/protocol/cart_item.dart' as _i97;
-import 'package:placeify_client/src/protocol/in_app_notification_summary.dart'
+import 'package:placeify_client/src/protocol/customization_request.dart'
     as _i98;
-import 'package:placeify_client/src/protocol/order_delivery_update.dart'
+import 'package:placeify_client/src/protocol/in_app_notification_summary.dart'
     as _i99;
-import 'package:placeify_client/src/protocol/payment_update_summary.dart'
+import 'package:placeify_client/src/protocol/order_delivery_update.dart'
     as _i100;
-import 'package:placeify_client/src/protocol/category.dart' as _i101;
+import 'package:placeify_client/src/protocol/payment_update_summary.dart'
+    as _i101;
+import 'package:placeify_client/src/protocol/category.dart' as _i102;
 import 'package:placeify_client/src/protocol/shop_listing_summary.dart'
-    as _i102;
-import 'package:placeify_client/src/protocol/product.dart' as _i103;
+    as _i103;
+import 'package:placeify_client/src/protocol/product.dart' as _i104;
 import 'package:placeify_client/src/protocol/special_offer_summary.dart'
-    as _i104;
-import 'package:placeify_client/src/protocol/refund_request_summary.dart'
     as _i105;
-import 'package:placeify_client/src/protocol/review.dart' as _i106;
-import 'package:placeify_client/src/protocol/vendor_shop_order.dart' as _i107;
+import 'package:placeify_client/src/protocol/refund_request_summary.dart'
+    as _i106;
+import 'package:placeify_client/src/protocol/review.dart' as _i107;
+import 'package:placeify_client/src/protocol/vendor_shop_order.dart' as _i108;
 import 'package:placeify_client/src/protocol/vendor_notification_summary.dart'
-    as _i108;
-import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _i109;
-import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
+import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _i110;
+import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
+    as _i111;
 export 'admin.dart';
 export 'admin_audit_log_summary.dart';
 export 'admin_platform_stats.dart';
@@ -958,52 +960,58 @@ class Protocol extends _i1.SerializationManager {
       return (data as List).map((e) => deserialize<_i97.CartItem>(e)).toList()
           as T;
     }
-    if (t == List<_i98.InAppNotificationSummary>) {
+    if (t == List<_i98.CustomizationRequest>) {
       return (data as List)
-              .map((e) => deserialize<_i98.InAppNotificationSummary>(e))
+              .map((e) => deserialize<_i98.CustomizationRequest>(e))
               .toList()
           as T;
     }
-    if (t == List<_i99.OrderDeliveryUpdate>) {
+    if (t == List<_i99.InAppNotificationSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i99.OrderDeliveryUpdate>(e))
+              .map((e) => deserialize<_i99.InAppNotificationSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i100.PaymentUpdateSummary>) {
+    if (t == List<_i100.OrderDeliveryUpdate>) {
       return (data as List)
-              .map((e) => deserialize<_i100.PaymentUpdateSummary>(e))
+              .map((e) => deserialize<_i100.OrderDeliveryUpdate>(e))
               .toList()
           as T;
     }
-    if (t == List<_i101.Category>) {
-      return (data as List).map((e) => deserialize<_i101.Category>(e)).toList()
-          as T;
-    }
-    if (t == List<_i102.ShopListingSummary>) {
+    if (t == List<_i101.PaymentUpdateSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i102.ShopListingSummary>(e))
+              .map((e) => deserialize<_i101.PaymentUpdateSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i103.Product>) {
-      return (data as List).map((e) => deserialize<_i103.Product>(e)).toList()
+    if (t == List<_i102.Category>) {
+      return (data as List).map((e) => deserialize<_i102.Category>(e)).toList()
           as T;
     }
-    if (t == List<_i104.SpecialOfferSummary>) {
+    if (t == List<_i103.ShopListingSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i104.SpecialOfferSummary>(e))
+              .map((e) => deserialize<_i103.ShopListingSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i105.RefundRequestSummary>) {
+    if (t == List<_i104.Product>) {
+      return (data as List).map((e) => deserialize<_i104.Product>(e)).toList()
+          as T;
+    }
+    if (t == List<_i105.SpecialOfferSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i105.RefundRequestSummary>(e))
+              .map((e) => deserialize<_i105.SpecialOfferSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i106.Review>) {
-      return (data as List).map((e) => deserialize<_i106.Review>(e)).toList()
+    if (t == List<_i106.RefundRequestSummary>) {
+      return (data as List)
+              .map((e) => deserialize<_i106.RefundRequestSummary>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i107.Review>) {
+      return (data as List).map((e) => deserialize<_i107.Review>(e)).toList()
           as T;
     }
     if (t == List<String>) {
@@ -1015,23 +1023,23 @@ class Protocol extends _i1.SerializationManager {
               : null)
           as T;
     }
-    if (t == List<_i107.VendorShopOrder>) {
+    if (t == List<_i108.VendorShopOrder>) {
       return (data as List)
-              .map((e) => deserialize<_i107.VendorShopOrder>(e))
+              .map((e) => deserialize<_i108.VendorShopOrder>(e))
               .toList()
           as T;
     }
-    if (t == List<_i108.VendorNotificationSummary>) {
+    if (t == List<_i109.VendorNotificationSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i108.VendorNotificationSummary>(e))
+              .map((e) => deserialize<_i109.VendorNotificationSummary>(e))
               .toList()
           as T;
     }
-    try {
-      return _i109.Protocol().deserialize<T>(data, t);
-    } on _i1.DeserializationTypeNotFoundException catch (_) {}
     try {
       return _i110.Protocol().deserialize<T>(data, t);
+    } on _i1.DeserializationTypeNotFoundException catch (_) {}
+    try {
+      return _i111.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
   }
@@ -1308,11 +1316,11 @@ class Protocol extends _i1.SerializationManager {
       case _i86.WishlistPage():
         return 'WishlistPage';
     }
-    className = _i109.Protocol().getClassNameForObject(data);
+    className = _i110.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth_core.$className';
     }
-    className = _i110.Protocol().getClassNameForObject(data);
+    className = _i111.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth_idp.$className';
     }
@@ -1582,11 +1590,11 @@ class Protocol extends _i1.SerializationManager {
     }
     if (dataClassName.startsWith('serverpod_auth_core.')) {
       data['className'] = dataClassName.substring(20);
-      return _i109.Protocol().deserializeByClassName(data);
+      return _i110.Protocol().deserializeByClassName(data);
     }
     if (dataClassName.startsWith('serverpod_auth_idp.')) {
       data['className'] = dataClassName.substring(19);
-      return _i110.Protocol().deserializeByClassName(data);
+      return _i111.Protocol().deserializeByClassName(data);
     }
     return super.deserializeByClassName(data);
   }
@@ -1601,10 +1609,10 @@ class Protocol extends _i1.SerializationManager {
       return null;
     }
     try {
-      return _i109.Protocol().mapRecordToJson(record);
+      return _i110.Protocol().mapRecordToJson(record);
     } catch (_) {}
     try {
-      return _i110.Protocol().mapRecordToJson(record);
+      return _i111.Protocol().mapRecordToJson(record);
     } catch (_) {}
     throw Exception('Unsupported record type ${record.runtimeType}');
   }

@@ -38,6 +38,8 @@ abstract class Product implements _i1.SerializableModel {
     this.model3dUrl,
     this.thumbnailUrl,
     this.viewImageUrls,
+    double? averageRating,
+    int? reviewCount,
     _i2.ProductStatus? status,
     this.removedReason,
     this.removedById,
@@ -45,7 +47,9 @@ abstract class Product implements _i1.SerializableModel {
     this.removedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
-  }) : status = status ?? _i2.ProductStatus.active,
+  }) : averageRating = averageRating ?? 0.0,
+       reviewCount = reviewCount ?? 0,
+       status = status ?? _i2.ProductStatus.active,
        createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
 
@@ -69,6 +73,8 @@ abstract class Product implements _i1.SerializableModel {
     String? model3dUrl,
     String? thumbnailUrl,
     List<String>? viewImageUrls,
+    double? averageRating,
+    int? reviewCount,
     _i2.ProductStatus? status,
     String? removedReason,
     _i1.UuidValue? removedById,
@@ -111,6 +117,8 @@ abstract class Product implements _i1.SerializableModel {
           : _i6.Protocol().deserialize<List<String>>(
               jsonSerialization['viewImageUrls'],
             ),
+      averageRating: (jsonSerialization['averageRating'] as num?)?.toDouble(),
+      reviewCount: jsonSerialization['reviewCount'] as int?,
       status: jsonSerialization['status'] == null
           ? null
           : _i2.ProductStatus.fromJson((jsonSerialization['status'] as String)),
@@ -179,6 +187,11 @@ abstract class Product implements _i1.SerializableModel {
   /// Extra product photos for multiview 3D generation (left, back, right, etc.).
   List<String>? viewImageUrls;
 
+  /// Aggregated from product reviews (updated when reviews are submitted).
+  double averageRating;
+
+  int reviewCount;
+
   _i2.ProductStatus status;
 
   /// Why the product was removed from the catalog.
@@ -218,6 +231,8 @@ abstract class Product implements _i1.SerializableModel {
     String? model3dUrl,
     String? thumbnailUrl,
     List<String>? viewImageUrls,
+    double? averageRating,
+    int? reviewCount,
     _i2.ProductStatus? status,
     String? removedReason,
     _i1.UuidValue? removedById,
@@ -249,6 +264,8 @@ abstract class Product implements _i1.SerializableModel {
       if (model3dUrl != null) 'model3dUrl': model3dUrl,
       if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
       if (viewImageUrls != null) 'viewImageUrls': viewImageUrls?.toJson(),
+      'averageRating': averageRating,
+      'reviewCount': reviewCount,
       'status': status.toJson(),
       if (removedReason != null) 'removedReason': removedReason,
       if (removedById != null) 'removedById': removedById?.toJson(),
@@ -288,6 +305,8 @@ class _ProductImpl extends Product {
     String? model3dUrl,
     String? thumbnailUrl,
     List<String>? viewImageUrls,
+    double? averageRating,
+    int? reviewCount,
     _i2.ProductStatus? status,
     String? removedReason,
     _i1.UuidValue? removedById,
@@ -315,6 +334,8 @@ class _ProductImpl extends Product {
          model3dUrl: model3dUrl,
          thumbnailUrl: thumbnailUrl,
          viewImageUrls: viewImageUrls,
+         averageRating: averageRating,
+         reviewCount: reviewCount,
          status: status,
          removedReason: removedReason,
          removedById: removedById,
@@ -348,6 +369,8 @@ class _ProductImpl extends Product {
     Object? model3dUrl = _Undefined,
     Object? thumbnailUrl = _Undefined,
     Object? viewImageUrls = _Undefined,
+    double? averageRating,
+    int? reviewCount,
     _i2.ProductStatus? status,
     Object? removedReason = _Undefined,
     Object? removedById = _Undefined,
@@ -382,6 +405,8 @@ class _ProductImpl extends Product {
       viewImageUrls: viewImageUrls is List<String>?
           ? viewImageUrls
           : this.viewImageUrls?.map((e0) => e0).toList(),
+      averageRating: averageRating ?? this.averageRating,
+      reviewCount: reviewCount ?? this.reviewCount,
       status: status ?? this.status,
       removedReason: removedReason is String?
           ? removedReason

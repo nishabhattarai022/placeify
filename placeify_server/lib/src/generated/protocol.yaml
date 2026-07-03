@@ -71,6 +71,9 @@ cart:
   - clearCart:
 checkout:
   - checkout:
+customization:
+  - createRequest:
+  - listMyRequests:
 notification:
   - getPreferences:
   - updatePreferences:

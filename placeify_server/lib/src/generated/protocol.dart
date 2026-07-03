@@ -118,24 +118,26 @@ import 'package:placeify_server/src/generated/admin_refund_request_summary.dart'
     as _i98;
 import 'package:placeify_server/src/generated/ar_session.dart' as _i99;
 import 'package:placeify_server/src/generated/cart_item.dart' as _i100;
-import 'package:placeify_server/src/generated/in_app_notification_summary.dart'
+import 'package:placeify_server/src/generated/customization_request.dart'
     as _i101;
-import 'package:placeify_server/src/generated/order_delivery_update.dart'
+import 'package:placeify_server/src/generated/in_app_notification_summary.dart'
     as _i102;
-import 'package:placeify_server/src/generated/payment_update_summary.dart'
+import 'package:placeify_server/src/generated/order_delivery_update.dart'
     as _i103;
-import 'package:placeify_server/src/generated/category.dart' as _i104;
+import 'package:placeify_server/src/generated/payment_update_summary.dart'
+    as _i104;
+import 'package:placeify_server/src/generated/category.dart' as _i105;
 import 'package:placeify_server/src/generated/shop_listing_summary.dart'
-    as _i105;
-import 'package:placeify_server/src/generated/product.dart' as _i106;
+    as _i106;
+import 'package:placeify_server/src/generated/product.dart' as _i107;
 import 'package:placeify_server/src/generated/special_offer_summary.dart'
-    as _i107;
-import 'package:placeify_server/src/generated/refund_request_summary.dart'
     as _i108;
-import 'package:placeify_server/src/generated/review.dart' as _i109;
-import 'package:placeify_server/src/generated/vendor_shop_order.dart' as _i110;
+import 'package:placeify_server/src/generated/refund_request_summary.dart'
+    as _i109;
+import 'package:placeify_server/src/generated/review.dart' as _i110;
+import 'package:placeify_server/src/generated/vendor_shop_order.dart' as _i111;
 import 'package:placeify_server/src/generated/vendor_notification_summary.dart'
-    as _i111;
+    as _i112;
 export 'admin.dart';
 export 'admin_audit_log_summary.dart';
 export 'admin_platform_stats.dart';
@@ -2139,6 +2141,20 @@ class Protocol extends _i1.SerializationManagerServer {
           columnType: _i2.ColumnType.json,
           isNullable: true,
           dartType: 'List<String>?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'averageRating',
+          columnType: _i2.ColumnType.doublePrecision,
+          isNullable: false,
+          dartType: 'double',
+          columnDefault: '0',
+        ),
+        _i2.ColumnDefinition(
+          name: 'reviewCount',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
         ),
         _i2.ColumnDefinition(
           name: 'status',
@@ -4236,52 +4252,58 @@ class Protocol extends _i1.SerializationManagerServer {
       return (data as List).map((e) => deserialize<_i100.CartItem>(e)).toList()
           as T;
     }
-    if (t == List<_i101.InAppNotificationSummary>) {
+    if (t == List<_i101.CustomizationRequest>) {
       return (data as List)
-              .map((e) => deserialize<_i101.InAppNotificationSummary>(e))
+              .map((e) => deserialize<_i101.CustomizationRequest>(e))
               .toList()
           as T;
     }
-    if (t == List<_i102.OrderDeliveryUpdate>) {
+    if (t == List<_i102.InAppNotificationSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i102.OrderDeliveryUpdate>(e))
+              .map((e) => deserialize<_i102.InAppNotificationSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i103.PaymentUpdateSummary>) {
+    if (t == List<_i103.OrderDeliveryUpdate>) {
       return (data as List)
-              .map((e) => deserialize<_i103.PaymentUpdateSummary>(e))
+              .map((e) => deserialize<_i103.OrderDeliveryUpdate>(e))
               .toList()
           as T;
     }
-    if (t == List<_i104.Category>) {
-      return (data as List).map((e) => deserialize<_i104.Category>(e)).toList()
-          as T;
-    }
-    if (t == List<_i105.ShopListingSummary>) {
+    if (t == List<_i104.PaymentUpdateSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i105.ShopListingSummary>(e))
+              .map((e) => deserialize<_i104.PaymentUpdateSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i106.Product>) {
-      return (data as List).map((e) => deserialize<_i106.Product>(e)).toList()
+    if (t == List<_i105.Category>) {
+      return (data as List).map((e) => deserialize<_i105.Category>(e)).toList()
           as T;
     }
-    if (t == List<_i107.SpecialOfferSummary>) {
+    if (t == List<_i106.ShopListingSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i107.SpecialOfferSummary>(e))
+              .map((e) => deserialize<_i106.ShopListingSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i108.RefundRequestSummary>) {
+    if (t == List<_i107.Product>) {
+      return (data as List).map((e) => deserialize<_i107.Product>(e)).toList()
+          as T;
+    }
+    if (t == List<_i108.SpecialOfferSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i108.RefundRequestSummary>(e))
+              .map((e) => deserialize<_i108.SpecialOfferSummary>(e))
               .toList()
           as T;
     }
-    if (t == List<_i109.Review>) {
-      return (data as List).map((e) => deserialize<_i109.Review>(e)).toList()
+    if (t == List<_i109.RefundRequestSummary>) {
+      return (data as List)
+              .map((e) => deserialize<_i109.RefundRequestSummary>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i110.Review>) {
+      return (data as List).map((e) => deserialize<_i110.Review>(e)).toList()
           as T;
     }
     if (t == List<String>) {
@@ -4293,15 +4315,15 @@ class Protocol extends _i1.SerializationManagerServer {
               : null)
           as T;
     }
-    if (t == List<_i110.VendorShopOrder>) {
+    if (t == List<_i111.VendorShopOrder>) {
       return (data as List)
-              .map((e) => deserialize<_i110.VendorShopOrder>(e))
+              .map((e) => deserialize<_i111.VendorShopOrder>(e))
               .toList()
           as T;
     }
-    if (t == List<_i111.VendorNotificationSummary>) {
+    if (t == List<_i112.VendorNotificationSummary>) {
       return (data as List)
-              .map((e) => deserialize<_i111.VendorNotificationSummary>(e))
+              .map((e) => deserialize<_i112.VendorNotificationSummary>(e))
               .toList()
           as T;
     }

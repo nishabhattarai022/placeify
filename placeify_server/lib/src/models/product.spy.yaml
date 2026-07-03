@@ -19,6 +19,9 @@ fields:
   thumbnailUrl: String?
   ### Extra product photos for multiview 3D generation (left, back, right, etc.).
   viewImageUrls: List<String>?
+  ### Aggregated from product reviews (updated when reviews are submitted).
+  averageRating: double, default=0
+  reviewCount: int, default=0
   status: ProductStatus, default=active
   ### Why the product was removed from the catalog.
   removedReason: String?

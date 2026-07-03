@@ -3,6 +3,7 @@ import 'package:serverpod/serverpod.dart' hide Order;
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
+import 'product_rating_stats.dart';
 
 class ReviewStore {
   Future<Review> submitReview(
@@ -42,7 +43,7 @@ class ReviewStore {
       );
     }
 
-    return Review.db.insertRow(
+    final review = await Review.db.insertRow(
       session,
       Review(
         userId: user.id!,
@@ -52,6 +53,8 @@ class ReviewStore {
         comment: comment?.trim(),
       ),
     );
+    await ProductRatingStats.refreshForProduct(session, productId);
+    return review;
   }
 
   Future<List<Review>> listProductReviews(
