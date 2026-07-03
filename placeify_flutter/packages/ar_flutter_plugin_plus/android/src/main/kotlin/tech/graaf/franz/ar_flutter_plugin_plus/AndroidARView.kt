@@ -4,27 +4,20 @@ import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
-import android.os.HandlerThread
 import android.os.SystemClock
-import android.opengl.GLES20
-import android.opengl.GLSurfaceView
 import android.opengl.Matrix
 import android.util.Log
 import android.view.MotionEvent
 import android.view.TextureView
-import android.view.PixelCopy
 import android.view.View
 import android.view.ViewConfiguration
 import android.widget.Toast
 import android.widget.FrameLayout
 import com.google.ar.core.*
 import com.google.ar.core.exceptions.*
-import javax.microedition.khronos.egl.EGLConfig
-import javax.microedition.khronos.opengles.GL10
 import tech.graaf.franz.ar_flutter_plugin_plus.Serialization.poseFromTransformMatrix
 import tech.graaf.franz.ar_flutter_plugin_plus.Serialization.serializeAnchor
 import tech.graaf.franz.ar_flutter_plugin_plus.Serialization.serializeHitResult
@@ -39,12 +32,11 @@ import java.io.ByteArrayOutputStream
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.File
-import java.nio.FloatBuffer
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.EnumSet
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
 import android.R
@@ -79,10 +71,8 @@ internal class AndroidARView(
 
     private lateinit var viewContext: Context
     private lateinit var rootView: FrameLayout
-    private lateinit var glSurfaceView: GLSurfaceView
-    private lateinit var renderer: ArCoreRenderer
-    private lateinit var modelRenderer: ModelRenderer
-    private var filamentTextureView: TextureView? = null
+    private lateinit var textureView: TextureView
+    private lateinit var filamentRenderer: FilamentArRenderer
 
     private val sessionManagerChannel = MethodChannel(messenger, "arsession_$id")
     private val objectManagerChannel = MethodChannel(messenger, "arobjects_$id")
@@ -90,11 +80,6 @@ internal class AndroidARView(
 
     private var session: Session? = null
     private var currentFrame: Frame? = null
-
-    private val backgroundRenderer = BackgroundRenderer()
-    private val axisRenderer = AxisRenderer()
-    private val planeRenderer = SimplePlaneRenderer()
-    private val pointCloudRenderer = PointCloudRenderer()
 
     private var showFeaturePoints = false
     private var showPlanes = false
@@ -117,6 +102,8 @@ internal class AndroidARView(
     private var lastRotationAngle = 0f
     private var hasReportedPlaneDetection = false
     private var planeDetectionFrameSkip = 0
+    private var ancillaryFrameSkip = 0
+    private var imageTrackingEnabled = false
     private val touchSlop by lazy { ViewConfiguration.get(viewContext).scaledTouchSlop }
 
     private var lastTrackingState: TrackingState? = null
@@ -156,7 +143,6 @@ internal class AndroidARView(
 
     private var onFrameUpdateListener: ((Long) -> Unit)? = null
     private var isSessionResumed = false
-    private var pendingSessionResume = false
     private lateinit var activityLifecycleCallbacks: Application.ActivityLifecycleCallbacks
 
     // Method channel handlers
@@ -169,7 +155,7 @@ internal class AndroidARView(
                         }
                         "setLightIntensityMultiplier" -> {
                             val multiplier = call.argument<Number>("multiplier")?.toFloat() ?: 1.0f
-                            modelRenderer.setLightIntensityMultiplier(multiplier)
+                            filamentRenderer.setLightIntensityMultiplier(multiplier)
                             result.success(null)
                         }
                         "setShowPlanes" -> {
@@ -178,8 +164,8 @@ internal class AndroidARView(
                         }
                         "hitTestScreenCenter" -> {
                             val frame = currentFrame
-                            val width = glSurfaceView.width
-                            val height = glSurfaceView.height
+                            val width = textureView.width
+                            val height = textureView.height
                             if (frame == null || width <= 0 || height <= 0) {
                                 result.success(ArrayList<HashMap<String, Any>>())
                                 return
@@ -249,43 +235,32 @@ internal class AndroidARView(
                             }
                         }
                         "snapshot" -> {
-                            val width = glSurfaceView.width
-                            val height = glSurfaceView.height
-                            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-
-                            // Create a handler thread to offload the processing of the image.
-                            val handlerThread = HandlerThread("PixelCopier")
-                            handlerThread.start()
-                            // Copy the GLSurfaceView (camera + Filament furniture).
-                            PixelCopy.request(glSurfaceView, bitmap, { copyResult: Int ->
-                                if (copyResult == PixelCopy.SUCCESS) {
-                                    try {
-                                        val mainHandler = Handler(context.mainLooper)
-                                        val runnable = Runnable {
-                                            filamentTextureView?.let { overlay ->
-                                                if (overlay.isAvailable) {
-                                                    val overlayBitmap = overlay.getBitmap(width, height)
-                                                    if (overlayBitmap != null) {
-                                                        val canvas = Canvas(bitmap)
-                                                        canvas.drawBitmap(overlayBitmap, 0f, 0f, null)
-                                                        overlayBitmap.recycle()
-                                                    }
-                                                }
-                                            }
-                                            val stream = ByteArrayOutputStream()
-                                            bitmap.compress(Bitmap.CompressFormat.PNG, 90, stream)
-                                            val data = stream.toByteArray()
-                                            result.success(data)
-                                        }
-                                        mainHandler.post(runnable)
-                                    } catch (e: IOException) {
-                                        result.error("e", e.message, e.stackTrace)
-                                    }
-                                } else {
+                            val width = textureView.width
+                            val height = textureView.height
+                            if (width <= 0 || height <= 0) {
+                                result.error("e", "failed to take screenshot", null)
+                                return
+                            }
+                            try {
+                                val captured = textureView.bitmap
+                                if (captured == null) {
                                     result.error("e", "failed to take screenshot", null)
+                                    return
                                 }
-                                handlerThread.quitSafely()
-                            }, Handler(handlerThread.looper))
+                                val bitmap = if (captured.width == width && captured.height == height) {
+                                    captured
+                                } else {
+                                    Bitmap.createScaledBitmap(captured, width, height, true).also {
+                                        if (it !== captured) captured.recycle()
+                                    }
+                                }
+                                val stream = ByteArrayOutputStream()
+                                bitmap.compress(Bitmap.CompressFormat.PNG, 90, stream)
+                                bitmap.recycle()
+                                result.success(stream.toByteArray())
+                            } catch (e: IOException) {
+                                result.error("e", e.message, e.stackTrace)
+                            }
                         }
                         "dispose" -> {
                             dispose()
@@ -339,9 +314,7 @@ internal class AndroidARView(
                                 anchorChildren.values.forEach { it.remove(nodeName) }
                                 cachedWorldMatrices.remove(nodeName)
                                 dirtyTransformNodes.remove(nodeName)
-                                glSurfaceView.queueEvent {
-                                    modelRenderer.removeModel(nodeName)
-                                }
+                                filamentRenderer.removeModel(nodeName)
                                 result.success(null)
                             }
                         }
@@ -451,35 +424,28 @@ internal class AndroidARView(
             ViewGroup.LayoutParams.MATCH_PARENT
         )
 
-        glSurfaceView = GLSurfaceView(context)
-        glSurfaceView.layoutParams = FrameLayout.LayoutParams(
+        textureView = TextureView(context)
+        textureView.layoutParams = FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT
         )
-        glSurfaceView.setEGLContextClientVersion(3)
-        glSurfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0)
-        glSurfaceView.preserveEGLContextOnPause = true
-        renderer = ArCoreRenderer()
-        glSurfaceView.setRenderer(renderer)
-        glSurfaceView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
+        textureView.isOpaque = true
+        textureView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
 
-        modelRenderer = ModelRenderer()
+        filamentRenderer = FilamentArRenderer(
+            context = viewContext,
+            textureView = textureView,
+            sessionProvider = { session },
+            isSessionResumed = { isSessionResumed },
+            onFrameAvailable = { frame -> handleArCoreFrame(frame) },
+            onDisplayGeometryChanged = { rotation, width, height ->
+                session?.setDisplayGeometry(rotation, width, height)
+            },
+        )
 
-        rootView.addView(glSurfaceView)
+        rootView.addView(textureView)
 
-        // Filament overlay removed for step-by-step testing
-
-        glSurfaceView.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
-            val width = glSurfaceView.width
-            val height = glSurfaceView.height
-            if (width > 0 && height > 0) {
-                glSurfaceView.queueEvent {
-                    renderer.onLayoutChanged(width, height)
-                }
-            }
-        }
-
-        glSurfaceView.setOnTouchListener { _, motionEvent ->
+        textureView.setOnTouchListener { _, motionEvent ->
             if (motionEvent.actionMasked == MotionEvent.ACTION_DOWN) {
                 queueTap(motionEvent)
             }
@@ -515,13 +481,13 @@ internal class AndroidARView(
                     }
 
                     override fun onActivityPaused(activity: Activity) {
+                        // Stop rendering before pausing ARCore to avoid session.update races.
+                        this@AndroidARView.onPause()
                         try {
                             session?.pause()
                         } catch (e: Exception) {
-                            Log.e(TAG, "Error in onActivityPaused: ${e.message}")
+                            Log.e(TAG, "Error in onActivityPaused: ${e.message}", e)
                         }
-                        
-                        this@AndroidARView.onPause()
                     }
 
                     override fun onActivityStopped(activity: Activity) {
@@ -544,11 +510,7 @@ internal class AndroidARView(
     }
 
     fun onResume() {
-        glSurfaceView.onResume()
-        if (!renderer.isSurfaceCreated) {
-            pendingSessionResume = true
-            return
-        }
+        filamentRenderer.attach()
         resumeSessionInternal()
     }
 
@@ -561,7 +523,7 @@ internal class AndroidARView(
             }
             showAnimatedGuide = false
         }
-        glSurfaceView.onPause()
+        filamentRenderer.detach()
         activeAugmentedImages.clear()
         lastAugmentedImageUpdateMs.clear()
         isSessionResumed = false
@@ -571,9 +533,9 @@ internal class AndroidARView(
         try {
             session?.resume()
             isSessionResumed = true
-            pendingSessionResume = false
         } catch (e: Exception) {
-            Log.e(TAG, "Error resuming session: ${e.message}")
+            isSessionResumed = false
+            Log.e(TAG, "Error resuming session: ${e.javaClass.simpleName}: ${e.message}", e)
         }
     }
 
@@ -581,7 +543,7 @@ internal class AndroidARView(
         try {
             worldOriginAnchor?.detach()
             worldOriginAnchor = null
-            modelRenderer.destroy()
+            filamentRenderer.destroy()
             session?.close()
             session = null
 
@@ -650,12 +612,8 @@ internal class AndroidARView(
         // Create and configure ARCore session
         if (session == null) {
             session = Session(activity)
-            renderer.session = session
-            if (backgroundRenderer.textureId != -1) {
-                session?.setCameraTextureName(backgroundRenderer.textureId)
-            }
-            renderer.onSessionReady()
         }
+        session?.let { filamentRenderer.bindSession(it) }
 
         val config = session!!.config
         when (argPlaneDetectionConfig) {
@@ -667,8 +625,10 @@ internal class AndroidARView(
         config.depthMode = Config.DepthMode.DISABLED
         config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
         config.focusMode = Config.FocusMode.AUTO
-        config.lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
+        // Filament uses its own studio rig — skip ARCore HDR estimation for CPU savings.
+        config.lightEstimationMode = Config.LightEstimationMode.DISABLED
         session!!.configure(config)
+        configureBestCameraConfig(session!!)
 
         // Configure image tracking
         applyImageTrackingSettings(
@@ -692,13 +652,13 @@ internal class AndroidARView(
 
         // Now that configuration is complete, start the AR session
         if (!isARInitialized) {
-            onResume()
             isARInitialized = true
         }
+        onResume()
 
         // Apply lighting multiplier if provided
         argLightIntensityMultiplier?.toFloat()?.let { multiplier ->
-            modelRenderer.setLightIntensityMultiplier(multiplier)
+            filamentRenderer.setLightIntensityMultiplier(multiplier)
         }
 
         result.success(null)
@@ -706,9 +666,11 @@ internal class AndroidARView(
 
     private fun onFrame(frameTimeNanos: Long) {
         val frame = currentFrame ?: return
-        
+
+        ancillaryFrameSkip++
+
         // hide instructions view if no longer required
-        if (showAnimatedGuide){
+        if (showAnimatedGuide) {
             for (plane in frame.getUpdatedTrackables(Plane::class.java)) {
                 if (plane.trackingState === TrackingState.TRACKING) {
                     animatedGuide?.let { guide ->
@@ -721,16 +683,68 @@ internal class AndroidARView(
             }
         }
 
-        // Feature points are rendered in the GL renderer when enabled.
-        
         val updatedAnchors = frame.updatedAnchors
-        // Notify the cloudManager of all the updates.
-        if (this::cloudAnchorHandler.isInitialized) { cloudAnchorHandler.onUpdate(updatedAnchors) }
+        if (this::cloudAnchorHandler.isInitialized) {
+            cloudAnchorHandler.onUpdate(updatedAnchors)
+        }
 
-        // Check for image tracking
-        checkForTrackedImages()
+        val scanForPlanes = !hasReportedPlaneDetection
+        val scanForImages = imageTrackingEnabled || continuousImageTracking
+        if (scanForPlanes || scanForImages || ancillaryFrameSkip % 2 == 0) {
+            if (scanForImages) {
+                checkForTrackedImages()
+            }
+            if (scanForPlanes || ancillaryFrameSkip % 2 == 0) {
+                reportPlaneDetectedIfNeeded(frame)
+            }
+        }
+    }
 
-        reportPlaneDetectedIfNeeded(frame)
+    /**
+     * Picks the highest-resolution camera mode, preferring 60fps when it is close in
+     * resolution to the best 30fps mode (smooth motion without sacrificing too much detail).
+     */
+    private fun configureBestCameraConfig(session: Session) {
+        try {
+            val filter60 = CameraConfigFilter(session)
+                .setTargetFps(EnumSet.of(CameraConfig.TargetFps.TARGET_FPS_60))
+            val configs60 = session.getSupportedCameraConfigs(filter60)
+
+            val filter30 = CameraConfigFilter(session)
+                .setTargetFps(EnumSet.of(CameraConfig.TargetFps.TARGET_FPS_30))
+            val configs30 = session.getSupportedCameraConfigs(filter30)
+
+            fun resolutionPixels(config: CameraConfig): Long {
+                val size = config.imageSize
+                return size.width.toLong() * size.height.toLong()
+            }
+
+            val best60 = configs60.maxByOrNull(::resolutionPixels)
+            val best30 = configs30.maxByOrNull(::resolutionPixels)
+
+            val selected = when {
+                best60 != null && best30 != null -> {
+                    val px60 = resolutionPixels(best60)
+                    val px30 = resolutionPixels(best30)
+                    if (px60 >= px30 * 85 / 100) best60 else best30
+                }
+                best60 != null -> best60
+                best30 != null -> best30
+                else -> session.getSupportedCameraConfigs(CameraConfigFilter(session))
+                    .maxByOrNull(::resolutionPixels)
+            }
+
+            if (selected != null) {
+                session.cameraConfig = selected
+                val size = selected.imageSize
+                Log.d(
+                    TAG,
+                    "AR camera config: ${size.width}x${size.height}, fps=${selected.fpsRange}",
+                )
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to select camera config, using ARCore default", e)
+        }
     }
 
     private fun addNode(dict_node: HashMap<String, Any>, dict_anchor: HashMap<String, Any>? = null): CompletableFuture<Boolean>{
@@ -743,7 +757,14 @@ internal class AndroidARView(
             val uri = dict_node["uri"] as String
 
             val anchorName: String? = dict_anchor?.get("name") as? String
-            nodesByName[nodeName] = SimpleNode(nodeName, transformation, nodeType, uri, anchorName)
+            nodesByName[nodeName] = SimpleNode(
+                name = nodeName,
+                transformation = transformation,
+                type = nodeType,
+                uri = uri,
+                anchorName = anchorName,
+                worldLocked = anchorName != null,
+            )
 
             if (anchorName != null) {
                 val children = anchorChildren.getOrPut(anchorName) { mutableListOf() }
@@ -765,10 +786,6 @@ internal class AndroidARView(
     private fun loadModelForNode(nodeName: String) {
         val node = nodesByName[nodeName] ?: return
 
-        activity.runOnUiThread {
-            ensureFilamentOverlay()
-        }
-
         modelIoExecutor.execute {
             try {
                 when (node.type) {
@@ -776,37 +793,25 @@ internal class AndroidARView(
                         val gltfBytes = readFlutterAssetBytes(node.uri)
                         val basePath = node.uri.substringBeforeLast("/", "")
                         val resourceMap = loadGltfResourcesFromAssets(gltfBytes, basePath)
-                        // Parsing glTF with external resources is not yet wired; keep step-by-step.
-                        glSurfaceView.queueEvent {
-                            modelRenderer.loadGltf(node.name, gltfBytes, resourceMap)
-                        }
+                        filamentRenderer.loadGltf(node.name, gltfBytes, resourceMap)
                     }
                     1 -> { // localGLB
                         val glbBytes = readFlutterAssetBytes(node.uri)
-                        glSurfaceView.queueEvent {
-                            modelRenderer.loadGlb(node.name, glbBytes)
-                        }
+                        filamentRenderer.loadGlb(node.name, glbBytes)
                     }
                     2 -> { // webGLB
                         val glbBytes = readUrlBytes(node.uri)
-                        glSurfaceView.queueEvent {
-                            modelRenderer.loadGlb(node.name, glbBytes)
-                        }
+                        filamentRenderer.loadGlb(node.name, glbBytes)
                     }
                     3 -> { // fileSystemAppFolderGLB
                         val glbBytes = readFileBytes(node.uri)
-                        glSurfaceView.queueEvent {
-                            modelRenderer.loadGlb(node.name, glbBytes)
-                        }
+                        filamentRenderer.loadGlb(node.name, glbBytes)
                     }
                     4 -> { // fileSystemAppFolderGLTF2
                         val gltfBytes = readFileBytes(node.uri)
                         val basePath = File(node.uri).parent ?: ""
                         val resourceMap = loadGltfResourcesFromFile(gltfBytes, basePath)
-                        // Parsing glTF with external resources is not yet wired; keep step-by-step.
-                        glSurfaceView.queueEvent {
-                            modelRenderer.loadGltf(node.name, gltfBytes, resourceMap)
-                        }
+                        filamentRenderer.loadGltf(node.name, gltfBytes, resourceMap)
                     }
                     else -> {
                         activity.runOnUiThread {
@@ -907,19 +912,19 @@ internal class AndroidARView(
         matrixFromTransform(node.transformation, nodeMatrix)
         val anchorName = node.anchorName
         if (anchorName != null) {
-            val anchor = anchorsByName[anchorName]
             val stableAnchor = anchorTransformsByName[anchorName]
-            // Prefer the live ARCore anchor pose so the model stays locked to the
-            // physical floor as SLAM refines the world — frozen matrices drift and
-            // make furniture appear glued to the camera feed.
-            if (anchor != null && anchor.trackingState == TrackingState.TRACKING) {
-                anchor.pose.toMatrix(anchorMatrix, 0)
-                Matrix.multiplyMM(modelMatrix, 0, anchorMatrix, 0, nodeMatrix, 0)
-            } else if (stableAnchor != null) {
+            if (stableAnchor != null) {
+                // Frozen at placement — never follow live plane refinement (causes jitter).
                 System.arraycopy(stableAnchor, 0, anchorMatrix, 0, 16)
                 Matrix.multiplyMM(modelMatrix, 0, anchorMatrix, 0, nodeMatrix, 0)
             } else {
-                System.arraycopy(nodeMatrix, 0, modelMatrix, 0, 16)
+                val anchor = anchorsByName[anchorName]
+                if (anchor != null && anchor.trackingState == TrackingState.TRACKING) {
+                    anchor.pose.toMatrix(anchorMatrix, 0)
+                    Matrix.multiplyMM(modelMatrix, 0, anchorMatrix, 0, nodeMatrix, 0)
+                } else {
+                    System.arraycopy(nodeMatrix, 0, modelMatrix, 0, 16)
+                }
             }
         } else {
             System.arraycopy(nodeMatrix, 0, modelMatrix, 0, 16)
@@ -928,37 +933,34 @@ internal class AndroidARView(
     }
 
     private fun updateModelTransforms() {
+        if (nodesByName.isEmpty()) return
+
+        // After placement the world matrix is frozen — skip all matrix work until the
+        // user drags, rotates, or scales (dirtyTransformNodes).
+        if (dirtyTransformNodes.isEmpty()) {
+            return
+        }
+
         val scaleMatrix = FloatArray(16)
         val scaledModelMatrix = FloatArray(16)
 
-        nodesByName.values.forEach { node ->
-            val modelMatrix = if (node.anchorName != null) {
-                // Anchored furniture must track the live plane anchor every frame.
-                computeWorldMatrixForNode(node)
-            } else {
-                val needsRecompute =
-                    dirtyTransformNodes.contains(node.name) ||
-                        !cachedWorldMatrices.containsKey(node.name)
-                if (needsRecompute) {
-                    val computed = computeWorldMatrixForNode(node)
-                    cachedWorldMatrices[node.name] = computed.clone()
-                    dirtyTransformNodes.remove(node.name)
-                    computed
-                } else {
-                    cachedWorldMatrices[node.name]!!
-                }
-            }
+        val dirtyNames = dirtyTransformNodes.toList()
+        dirtyNames.forEach { nodeName ->
+            val node = nodesByName[nodeName] ?: return@forEach
+            val modelMatrix = computeWorldMatrixForNode(node)
+            cachedWorldMatrices[node.name] = modelMatrix.clone()
 
             val modelScaleFactor = getModelScaleFactor(node.type)
             if (modelScaleFactor != 1.0f) {
                 Matrix.setIdentityM(scaleMatrix, 0)
                 Matrix.scaleM(scaleMatrix, 0, modelScaleFactor, modelScaleFactor, modelScaleFactor)
                 Matrix.multiplyMM(scaledModelMatrix, 0, modelMatrix, 0, scaleMatrix, 0)
-                modelRenderer.updateTransformIfChanged(node.name, scaledModelMatrix)
+                filamentRenderer.updateTransformIfChanged(node.name, scaledModelMatrix)
             } else {
-                modelRenderer.updateTransformIfChanged(node.name, modelMatrix)
+                filamentRenderer.updateTransformIfChanged(node.name, modelMatrix)
             }
         }
+        dirtyTransformNodes.removeAll(dirtyNames.toSet())
     }
 
     private fun getModelScaleFactor(nodeType: Int): Float {
@@ -980,7 +982,9 @@ internal class AndroidARView(
 
     private fun transformNode(name: String, transform: ArrayList<Double>) {
         val node = nodesByName[name] ?: return
-        if (transformationsApproximatelyEqual(node.transformation, transform)) return
+        val epsilon = if (node.worldLocked && !isPanning && !isRotating) 2e-3 else 1e-5
+        if (transformationsApproximatelyEqual(node.transformation, transform, epsilon)) return
+
         node.transformation = transform
         dirtyTransformNodes.add(name)
     }
@@ -1300,16 +1304,17 @@ internal class AndroidARView(
         val planeHits = hits.filter { hit ->
             val trackable = hit.trackable
             trackable is Plane &&
+                trackable.type == Plane.Type.HORIZONTAL_UPWARD_FACING &&
                 trackable.trackingState == TrackingState.TRACKING &&
                 trackable.isPoseInPolygon(hit.hitPose)
         }
-        if (planeHits.isNotEmpty()) {
-            return planeHits.minByOrNull { it.distance }
+        if (planeHits.isEmpty()) {
+            return hits.firstOrNull { hit ->
+                val trackable = hit.trackable
+                trackable is Point && trackable.trackingState == TrackingState.TRACKING
+            }
         }
-        return hits.firstOrNull { hit ->
-            val trackable = hit.trackable
-            trackable is Point && trackable.trackingState == TrackingState.TRACKING
-        }
+        return planeHits.minByOrNull { it.distance }
     }
 
     private fun createAnchorForPlacement(
@@ -1320,15 +1325,17 @@ internal class AndroidARView(
         val recentTap = SystemClock.uptimeMillis() - lastTapAtMs <= 750L
         val tapX = if (recentTap) lastTapX else null
         val tapY = if (recentTap) lastTapY else null
-        val width = glSurfaceView.width
-        val height = glSurfaceView.height
+        val width = textureView.width
+        val height = textureView.height
         val x = tapX ?: (width / 2f)
         val y = tapY ?: (height / 2f)
 
         if (frame != null && width > 0 && height > 0) {
             val hit = pickBestPlaneHit(frame.hitTest(x, y))
             if (hit != null) {
-                return hit.createAnchor()
+                // World-fixed pose from the hit — do NOT use hit.createAnchor() which
+                // stays tied to plane refinement and causes visible vibration.
+                return session.createAnchor(hit.hitPose)
             }
         }
 
@@ -1338,25 +1345,16 @@ internal class AndroidARView(
     private fun addPlaneAnchor(transform: ArrayList<Double>, name: String): Boolean {
         val session = session ?: return false
 
-        val future = CompletableFuture<Boolean>()
-        glSurfaceView.queueEvent {
-            try {
-                val frame = currentFrame
-                val anchor = createAnchorForPlacement(session, frame, transform)
-                anchorsByName[name] = anchor
-                anchorChildren.putIfAbsent(name, mutableListOf())
-                val anchorMatrix = FloatArray(16)
-                anchor.pose.toMatrix(anchorMatrix, 0)
-                anchorTransformsByName[name] = anchorMatrix.clone()
-                future.complete(true)
-            } catch (e: Exception) {
-                future.complete(false)
-            }
-        }
-
         return try {
-            future.get(2, TimeUnit.SECONDS)
-        } catch (_: Exception) {
+            val frame = currentFrame
+            val anchor = createAnchorForPlacement(session, frame, transform)
+            anchorsByName[name] = anchor
+            anchorChildren.putIfAbsent(name, mutableListOf())
+            val anchorMatrix = FloatArray(16)
+            anchor.pose.toMatrix(anchorMatrix, 0)
+            anchorTransformsByName[name] = anchorMatrix.clone()
+            true
+        } catch (e: Exception) {
             false
         }
     }
@@ -1531,7 +1529,13 @@ internal class AndroidARView(
         if (intervalMs != null) {
             imageTrackingUpdateIntervalMs = intervalMs.toLong()
         }
-        imagePaths?.let { setupImageTrackingAsync(it) }
+        if (imagePaths != null) {
+            if (imagePaths.isEmpty()) {
+                imageTrackingEnabled = false
+            } else {
+                setupImageTrackingAsync(imagePaths)
+            }
+        }
     }
 
     private fun imageCacheKey(imagePaths: List<String>): String {
@@ -1606,6 +1610,7 @@ internal class AndroidARView(
                             val imageDatabase = AugmentedImageDatabase.deserialize(session, inputStream)
                             config.augmentedImageDatabase = imageDatabase
                             session.configure(config)
+                            imageTrackingEnabled = true
                             sessionManagerChannel.invokeMethod(
                                 "onImageTrackingConfigured",
                                 mapOf("success" to true, "cached" to true)
@@ -1634,6 +1639,7 @@ internal class AndroidARView(
                         val config = session.config
                         config.augmentedImageDatabase = imageDatabase
                         session.configure(config)
+                        imageTrackingEnabled = true
                         sessionManagerChannel.invokeMethod(
                             "onImageTrackingConfigured",
                             mapOf("success" to success)
@@ -1666,194 +1672,54 @@ internal class AndroidARView(
         }
     }
 
-    private inner class ArCoreRenderer : GLSurfaceView.Renderer {
-        var session: Session? = null
-        private var viewportWidth: Int = 0
-        private var viewportHeight: Int = 0
-        private var lastRotation: Int = -1
-        var isSurfaceCreated = false
-            private set
-        private var hasSurface = false
-        private var displayGeometryApplied = false
+    private fun handleArCoreFrame(frame: Frame) {
+        currentFrame = frame
+        handleQueuedTap(frame)
+        onFrameUpdateListener?.invoke(frame.timestamp)
 
-        fun onSessionReady() {
-            displayGeometryApplied = false
-            applyDisplayGeometryIfAvailable()
-            if (backgroundRenderer.textureId != -1) {
-                session?.setCameraTextureName(backgroundRenderer.textureId)
-            }
+        val camera = frame.camera
+        val cameraTrackingState = camera.trackingState
+        val trackingFailureReason = if (cameraTrackingState == TrackingState.PAUSED) {
+            camera.trackingFailureReason
+        } else {
+            com.google.ar.core.TrackingFailureReason.NONE
         }
 
-        fun onLayoutChanged(width: Int, height: Int) {
-            viewportWidth = width
-            viewportHeight = height
-            displayGeometryApplied = false
-            if (hasSurface) {
-                GLES20.glViewport(0, 0, width, height)
-            }
-            applyDisplayGeometryIfAvailable()
-        }
-
-        private fun applyDisplayGeometryIfAvailable() {
-            if (viewportWidth <= 0 || viewportHeight <= 0) {
-                return
-            }
-            val rotation = activity.windowManager.defaultDisplay.rotation
-            if (!displayGeometryApplied || rotation != lastRotation) {
-                lastRotation = rotation
-                session?.setDisplayGeometry(rotation, viewportWidth, viewportHeight)
-                displayGeometryApplied = true
-            }
-        }
-
-        override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
-            GLES20.glClearColor(0f, 0f, 0f, 1f)
-            backgroundRenderer.initialize()
-            axisRenderer.initialize()
-            planeRenderer.initialize()
-            pointCloudRenderer.initialize()
-            session?.setCameraTextureName(backgroundRenderer.textureId)
-            isSurfaceCreated = true
-            if (pendingSessionResume) {
-                activity.runOnUiThread {
-                    resumeSessionInternal()
-                }
-            }
-        }
-
-        override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
-            viewportWidth = width
-            viewportHeight = height
-            hasSurface = true
-            displayGeometryApplied = false
-            GLES20.glViewport(0, 0, width, height)
-            if (width > 0 && height > 0) {
-                lastRotation = activity.windowManager.defaultDisplay.rotation
-                session?.setDisplayGeometry(lastRotation, width, height)
-                displayGeometryApplied = true
-            }
-        }
-
-        override fun onDrawFrame(gl: GL10?) {
-            GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
-            try {
-                if (!isSessionResumed) {
-                    return
-                }
-                if (viewportWidth <= 0 || viewportHeight <= 0) {
-                    val width = glSurfaceView.width
-                    val height = glSurfaceView.height
-                    if (width > 0 && height > 0) {
-                        onLayoutChanged(width, height)
-                    } else {
-                        return
-                    }
-                }
-                applyDisplayGeometryIfAvailable()
-                val frame = session?.update() ?: return
-                currentFrame = frame
-                handleQueuedTap(frame)
-                onFrameUpdateListener?.invoke(frame.timestamp)
-                val camera = frame.camera
-                val cameraTrackingState = camera.trackingState
-                val trackingFailureReason = if (cameraTrackingState == TrackingState.PAUSED) {
-                    camera.trackingFailureReason
-                } else {
-                    com.google.ar.core.TrackingFailureReason.NONE
-                }
-
-                if (lastTrackingState != cameraTrackingState ||
-                    lastTrackingFailureReason != trackingFailureReason) {
-                    lastTrackingState = cameraTrackingState
-                    lastTrackingFailureReason = trackingFailureReason
-                    activity.runOnUiThread {
-                        sessionManagerChannel.invokeMethod(
-                            "onTrackingState",
-                            mapOf(
-                                "state" to cameraTrackingState.name,
-                                "reason" to trackingFailureReason.name
-                            )
-                        )
-                    }
-                }
-                backgroundRenderer.draw(frame)
-
-                val viewMatrix = FloatArray(16)
-                val projectionMatrix = FloatArray(16)
-                camera.getViewMatrix(viewMatrix, 0)
-                camera.getProjectionMatrix(projectionMatrix, 0, 0.1f, 100.0f)
-
-                if (showPlanes) {
-                    val planes = session?.getAllTrackables(Plane::class.java) ?: emptyList()
-                    planeRenderer.draw(planes, viewMatrix, projectionMatrix)
-                }
-
-                if (showFeaturePoints) {
-                    val pointCloud = frame.acquirePointCloud()
-                    pointCloudRenderer.draw(pointCloud, viewMatrix, projectionMatrix)
-                    pointCloud.release()
-                }
-
-                if (showWorldOrigin) {
-                    val cameraTracking = frame.camera.trackingState == TrackingState.TRACKING
-                    if (cameraTracking) {
-                        stableTrackingFrames++
-                        nonTrackingFrames = 0
-                    } else {
-                        stableTrackingFrames = 0
-                        nonTrackingFrames++
-                        if (nonTrackingFrames >= nonTrackingResetThreshold) {
-                            worldOriginAnchor?.detach()
-                            worldOriginAnchor = null
-                            lastWorldOriginMatrix = null
-                        }
-                    }
-
-                    if (worldOriginAnchor == null && stableTrackingFrames >= requiredStableTrackingFrames) {
-                        worldOriginAnchor = session?.createAnchor(Pose.IDENTITY)
-                    }
-
-                    worldOriginAnchor?.let { anchor ->
-                        if (anchor.trackingState == TrackingState.TRACKING) {
-                            val modelMatrix = FloatArray(16)
-                            anchor.pose.toMatrix(modelMatrix, 0)
-                            lastWorldOriginMatrix = modelMatrix
-                            axisRenderer.draw(frame, modelMatrix)
-                        } else if (anchor.trackingState != TrackingState.STOPPED) {
-                            lastWorldOriginMatrix?.let { frozenMatrix ->
-                                axisRenderer.draw(frame, frozenMatrix)
-                            }
-                        }
-                    }
-                }
-
-                updateModelTransforms()
-                modelRenderer.updateCamera(viewMatrix, projectionMatrix)
-            } catch (e: Exception) {
-                // Ignore frame update errors when session is paused
-            }
-        }
-    }
-
-    private fun ensureFilamentOverlay() {
-        if (filamentTextureView != null) return
-        filamentTextureView = TextureView(viewContext).apply {
-            layoutParams = FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
+        if (lastTrackingState != cameraTrackingState ||
+            lastTrackingFailureReason != trackingFailureReason) {
+            lastTrackingState = cameraTrackingState
+            lastTrackingFailureReason = trackingFailureReason
+            sessionManagerChannel.invokeMethod(
+                "onTrackingState",
+                mapOf(
+                    "state" to cameraTrackingState.name,
+                    "reason" to trackingFailureReason.name,
+                ),
             )
-            isOpaque = false
-            isClickable = true
-            setOnTouchListener { _, motionEvent ->
-                if (motionEvent.actionMasked == MotionEvent.ACTION_DOWN) {
-                    queueTap(motionEvent)
+        }
+
+        if (showWorldOrigin) {
+            val cameraTracking = frame.camera.trackingState == TrackingState.TRACKING
+            if (cameraTracking) {
+                stableTrackingFrames++
+                nonTrackingFrames = 0
+            } else {
+                stableTrackingFrames = 0
+                nonTrackingFrames++
+                if (nonTrackingFrames >= nonTrackingResetThreshold) {
+                    worldOriginAnchor?.detach()
+                    worldOriginAnchor = null
+                    lastWorldOriginMatrix = null
                 }
-                handleGestureTouch(motionEvent)
-                true
+            }
+
+            if (worldOriginAnchor == null && stableTrackingFrames >= requiredStableTrackingFrames) {
+                worldOriginAnchor = session?.createAnchor(Pose.IDENTITY)
             }
         }
-        rootView.addView(filamentTextureView)
-        filamentTextureView?.let { modelRenderer.attachTextureView(it) }
+
+        updateModelTransforms()
+        onFrame(frame.timestamp)
     }
 
     private data class SimpleNode(
@@ -1861,7 +1727,8 @@ internal class AndroidARView(
         var transformation: ArrayList<Double>,
         val type: Int,
         val uri: String,
-        var anchorName: String?
+        var anchorName: String?,
+        val worldLocked: Boolean = false,
     )
 
 }
