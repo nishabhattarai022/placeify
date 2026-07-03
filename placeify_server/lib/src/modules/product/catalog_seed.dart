@@ -1,7 +1,7 @@
 import 'package:serverpod/serverpod.dart';
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 
 import '../../generated/protocol.dart';
-import '../../shared/placeify_exception.dart';
 import 'catalog_seed_image_storage.dart';
 import 'catalog_seed_images.dart';
 import 'special_offer_seed.dart';
@@ -26,6 +26,11 @@ abstract final class CatalogSeed {
     'light': 'lighting',
     'decor': 'storage',
   };
+
+  /// Dedicated vendor account for seeded catalog products — never a consumer login.
+  static const catalogVendorEmail = 'catalog-vendor@placeify.app';
+  static const catalogVendorName = 'Placeify Catalog';
+  static const demoStoreName = 'Placeify Demo Store';
 
   /// Ensures all Nisha browse categories exist (also on existing databases).
   static Future<void> ensureCategories(Session session) async {
@@ -397,65 +402,100 @@ abstract final class CatalogSeed {
   }
 
   static Future<Vendor> _ensureDemoVendor(Session session) async {
+    final catalogOwner = await _ensureCatalogVendorUser(session);
+
     final existing = await Vendor.db.findFirstRow(
       session,
-      where: (row) => row.shopName.equals('Placeify Demo Store'),
+      where: (row) => row.shopName.equals(demoStoreName),
     );
+
     if (existing != null) {
-      await _ensureApprovedVendorOwner(session, existing.userId);
+      if (existing.userId != catalogOwner.id) {
+        final previousOwnerId = existing.userId;
+        final reassigned = await Vendor.db.updateRow(
+          session,
+          existing.copyWith(userId: catalogOwner.id!),
+        );
+        await _restoreConsumerRoleAfterDemoStoreTransfer(
+          session,
+          previousOwnerId: previousOwnerId,
+          catalogVendorUserId: catalogOwner.id!,
+        );
+        return reassigned;
+      }
       return existing;
     }
 
-    final users = await User.db.find(
+    return Vendor.db.insertRow(
       session,
-      orderBy: (row) => row.createdAt,
-    );
-    for (final owner in users) {
-      final ownerId = owner.id;
-      if (ownerId == null) continue;
-
-      final ownsVendor = await Vendor.db.findFirstRow(
-        session,
-        where: (row) => row.userId.equals(ownerId),
-      );
-      if (ownsVendor != null) continue;
-
-      final vendor = await Vendor.db.insertRow(
-        session,
-        Vendor(
-          userId: ownerId,
-          shopName: 'Placeify Demo Store',
-          description: 'Sample furniture for development and testing',
-          rating: 4.8,
-        ),
-      );
-      await _ensureApprovedVendorOwner(session, ownerId);
-      return vendor;
-    }
-
-    throw PlaceifyException(
-      message: 'Register at least one user without a vendor before loading the catalog.',
-      code: 'CATALOG_SEED_REQUIRES_USER',
+      Vendor(
+        userId: catalogOwner.id!,
+        shopName: demoStoreName,
+        description: 'Sample furniture for development and testing',
+        rating: 4.8,
+      ),
     );
   }
 
-  static Future<void> _ensureApprovedVendorOwner(
-    Session session,
-    UuidValue userId,
-  ) async {
-    final owner = await User.db.findById(session, userId);
-    if (owner == null) return;
-
-    if (owner.role == UserRole.vendor &&
-        owner.status == UserAccountStatus.approved &&
-        owner.isActive) {
-      return;
+  static Future<User> _ensureCatalogVendorUser(Session session) async {
+    final existing = await User.db.findFirstRow(
+      session,
+      where: (row) => row.email.equals(catalogVendorEmail),
+    );
+    if (existing != null) {
+      if (existing.role != UserRole.vendor ||
+          existing.status != UserAccountStatus.approved ||
+          !existing.isActive) {
+        return User.db.updateRow(
+          session,
+          existing.copyWith(
+            role: UserRole.vendor,
+            status: UserAccountStatus.approved,
+            isActive: true,
+            updatedAt: DateTime.now(),
+          ),
+        );
+      }
+      return existing;
     }
+
+    return User.db.insertRow(
+      session,
+      User(
+        authUserId: (await AuthUsers().create(session)).id!,
+        name: catalogVendorName,
+        email: catalogVendorEmail,
+        role: UserRole.vendor,
+        status: UserAccountStatus.approved,
+        isActive: true,
+      ),
+    );
+  }
+
+  /// Older seeds attached the demo store to the first consumer account.
+  static Future<void> _restoreConsumerRoleAfterDemoStoreTransfer(
+    Session session, {
+    required UuidValue previousOwnerId,
+    required UuidValue catalogVendorUserId,
+  }) async {
+    if (previousOwnerId == catalogVendorUserId) return;
+
+    final owner = await User.db.findById(session, previousOwnerId);
+    if (owner == null) return;
+    if (owner.email?.trim().toLowerCase() == catalogVendorEmail) return;
+
+    final remainingShops = await Vendor.db.count(
+      session,
+      where: (row) => row.userId.equals(previousOwnerId),
+    );
+    if (remainingShops > 0) return;
+
+    if (owner.role != UserRole.vendor) return;
 
     await User.db.updateRow(
       session,
       owner.copyWith(
-        role: UserRole.vendor,
+        role: UserRole.consumer,
         status: UserAccountStatus.approved,
         isActive: true,
         updatedAt: DateTime.now(),

@@ -1,4 +1,5 @@
 import '../../features/auth/domain/models/app_user.dart';
+import '../../features/admin/domain/enums/user_role.dart';
 
 /// Client-side mirror of server vendor self-purchase restrictions.
 abstract final class VendorPurchasePolicy {
@@ -25,11 +26,13 @@ abstract final class VendorPurchasePolicy {
   }
 
   /// Regular customers and guests are always allowed to purchase.
+  /// Only active vendor accounts are blocked from buying their own shop listings.
   static bool canPurchase({
     required AppUser? user,
     String? productVendorId,
   }) {
     if (user == null) return true;
+    if (user.role != UserRole.vendor) return true;
     return !isOwnShopProduct(
       buyerVendorId: user.vendorId,
       productVendorId: productVendorId,

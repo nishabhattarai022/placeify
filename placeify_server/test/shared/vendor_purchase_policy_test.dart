@@ -1,6 +1,7 @@
+import 'package:placeify_server/src/generated/placeify_exception.dart';
 import 'package:placeify_server/src/generated/protocol.dart';
 import 'package:placeify_server/src/shared/vendor_purchase_policy.dart';
-import 'package:serverpod/serverpod.dart';
+import 'package:serverpod/serverpod.dart' show UuidValue;
 import 'package:test/test.dart';
 
 void main() {

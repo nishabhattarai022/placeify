@@ -23,6 +23,7 @@ void main() {
             fullName: 'Customer',
             email: 'c@example.com',
             role: UserRole.customer,
+            vendorId: 'shop-a',
           ),
           productVendorId: 'shop-a',
         ),

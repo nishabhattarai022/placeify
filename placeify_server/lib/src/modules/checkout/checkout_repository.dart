@@ -4,6 +4,7 @@ import '../../generated/protocol.dart';
 import '../notification/order_notification_service.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
+import '../../shared/vendor_purchase_policy.dart';
 import '../checkout/checkout_order_setup.dart';
 import '../order/order_lifecycle_store.dart';
 import '../payment/payment_repository.dart';
@@ -38,6 +39,16 @@ class CheckoutStore {
     if (cartItems.isEmpty) {
       throw PlaceifyException(message: 'Your cart is empty.', code: 'CART_EMPTY');
     }
+
+    final products = cartItems
+        .map((item) => item.product)
+        .whereType<Product>()
+        .toList(growable: false);
+    await VendorPurchasePolicy.assertCanCheckoutForUser(
+      session,
+      user,
+      products,
+    );
 
     final totalAmount = cartItems.fold<double>(
       0,

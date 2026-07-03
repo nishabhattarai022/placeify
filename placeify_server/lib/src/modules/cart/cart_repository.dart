@@ -3,6 +3,7 @@ import 'package:serverpod/serverpod.dart';
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
+import '../../shared/vendor_purchase_policy.dart';
 import '../product/product_repository.dart';
 
 class CartStore {
@@ -40,6 +41,12 @@ class CartStore {
     final product = await _productRepository.requireActiveProduct(
       session,
       productId,
+    );
+    final user = await SessionService.requireUser(session);
+    await VendorPurchasePolicy.assertCanAddProductToCartForUser(
+      session,
+      user,
+      product,
     );
     final cart = await SessionService.requireCart(session);
 
