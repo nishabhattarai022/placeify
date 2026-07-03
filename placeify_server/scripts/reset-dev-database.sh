@@ -12,6 +12,8 @@ cd "$SERVER_DIR"
 echo "==> Stopping server processes"
 "$SCRIPT_DIR/stop-server.sh"
 
+"$SCRIPT_DIR/ensure-docker.sh"
+
 echo "==> Removing Docker volumes (ALL local dev data will be deleted)"
 docker compose down -v
 
@@ -20,4 +22,5 @@ docker compose up -d postgres redis
 _wait_for_postgres
 
 echo "==> Starting Placeify server with migrations (Ctrl+C to stop)"
+echo "    Catalog seed (18 products + images) runs on first product.listCategories / searchProducts call."
 exec dart bin/main.dart --apply-migrations

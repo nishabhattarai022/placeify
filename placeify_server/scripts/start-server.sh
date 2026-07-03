@@ -30,6 +30,7 @@ if [[ ! -f config/passwords.yaml ]]; then
 fi
 
 echo "==> Starting Docker (Postgres + Redis)"
+"$(dirname "$0")/ensure-docker.sh"
 docker compose up -d
 
 # Auto-fix orphan migration ids (e.g. 20260613181356657) before Serverpod starts.

@@ -15,6 +15,7 @@ if [ ! -f "$SERVER/config/passwords.yaml" ]; then
 fi
 
 echo "==> Starting Docker (Postgres + Redis)"
+"$SERVER/scripts/ensure-docker.sh"
 cd "$SERVER"
 docker compose up -d
 

@@ -2,6 +2,8 @@ import 'package:serverpod/serverpod.dart';
 
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
+import 'catalog_seed_image_storage.dart';
+import 'catalog_seed_images.dart';
 import 'special_offer_seed.dart';
 
 /// Inserts demo categories, vendor, and products when the catalog is empty.
@@ -17,6 +19,13 @@ abstract final class CatalogSeed {
     'lighting',
     'outdoor',
   ];
+
+  /// Legacy browse rows from older seeds — remapped on every catalog ensure.
+  static const legacyCategoryRenames = <String, String>{
+    'lights': 'lighting',
+    'light': 'lighting',
+    'decor': 'storage',
+  };
 
   /// Ensures all Nisha browse categories exist (also on existing databases).
   static Future<void> ensureCategories(Session session) async {
@@ -37,20 +46,71 @@ abstract final class CatalogSeed {
     }
   }
 
+  /// Moves products off deprecated category names and deletes empty legacy rows.
+  static Future<void> reconcileLegacyCategories(Session session) async {
+    await ensureCategories(session);
+    final canonical = await _loadCategoriesByName(session);
+
+    for (final entry in legacyCategoryRenames.entries) {
+      final legacy = await Category.db.findFirstRow(
+        session,
+        where: (row) => row.name.equals(entry.key),
+      );
+      if (legacy == null || legacy.id == null) continue;
+
+      final legacyId = legacy.id!;
+      final target = canonical[entry.value];
+      if (target?.id == null) continue;
+
+      final legacyProducts = await Product.db.find(
+        session,
+        where: (row) => row.categoryId.equals(legacyId),
+      );
+      for (final product in legacyProducts) {
+        await Product.db.updateRow(
+          session,
+          product.copyWith(
+            categoryId: target!.id,
+            updatedAt: DateTime.now(),
+          ),
+        );
+      }
+
+      final stillUsed = await Product.db.count(
+        session,
+        where: (row) => row.categoryId.equals(legacyId),
+      );
+      if (stillUsed == 0) {
+        await Category.db.deleteRow(session, legacy);
+      }
+    }
+  }
+
   static Future<void> ensureDemoCatalog(Session session) async {
     await ensureCategories(session);
+    await reconcileLegacyCategories(session);
 
     final vendor = await _ensureDemoVendor(session);
     final categories = await _loadCategoriesByName(session);
 
     final count = await Product.db.count(session);
     if (count > 0) {
-      await _insertMissingSeedProducts(session, vendor: vendor, categories: categories);
+      await _insertMissingSeedProducts(
+        session,
+        vendor: vendor,
+        categories: categories,
+      );
+      await _reconcileSeedProducts(session, categories: categories);
+      await ensureSeedProductImages(session);
       await SpecialOfferSeed.ensureDemoOffers(session);
       return;
     }
 
-    await _insertAllSeedProducts(session, vendor: vendor, categories: categories);
+    await _insertAllSeedProducts(
+      session,
+      vendor: vendor,
+      categories: categories,
+    );
     await SpecialOfferSeed.ensureDemoOffers(session);
   }
 
@@ -188,6 +248,59 @@ abstract final class CatalogSeed {
     ),
   ];
 
+  static List<String> get demoProductNames =>
+      _demoProducts.map((seed) => seed.name).toList(growable: false);
+
+  static Future<void> ensureSeedProductImages(Session session) async {
+    for (final seed in _demoProducts) {
+      final product = await Product.db.findFirstRow(
+        session,
+        where: (row) => row.name.equals(seed.name),
+      );
+      if (product == null) continue;
+
+      final imageSet = CatalogSeedImages.forProduct(seed.name);
+      final thumbnailUrl = await CatalogSeedImageStorage.resolveUrl(
+        session,
+        imageSet.thumbnail,
+      );
+      final viewImageUrls = await CatalogSeedImageStorage.resolveUrls(
+        session,
+        imageSet.views,
+      );
+
+      final missingThumbnail = product.thumbnailUrl == null ||
+          product.thumbnailUrl!.trim().isEmpty;
+      final missingViews =
+          product.viewImageUrls == null || product.viewImageUrls!.isEmpty;
+
+      if (!missingThumbnail &&
+          !missingViews &&
+          product.thumbnailUrl == thumbnailUrl &&
+          _sameUrls(product.viewImageUrls, viewImageUrls)) {
+        continue;
+      }
+
+      await Product.db.updateRow(
+        session,
+        product.copyWith(
+          thumbnailUrl: thumbnailUrl,
+          viewImageUrls: viewImageUrls,
+          updatedAt: DateTime.now(),
+        ),
+      );
+    }
+  }
+
+  static bool _sameUrls(List<String>? left, List<String> right) {
+    if (left == null) return false;
+    if (left.length != right.length) return false;
+    for (var i = 0; i < left.length; i++) {
+      if (left[i] != right[i]) return false;
+    }
+    return true;
+  }
+
   static Future<void> _insertAllSeedProducts(
     Session session, {
     required Vendor vendor,
@@ -224,6 +337,32 @@ abstract final class CatalogSeed {
     }
   }
 
+  static Future<void> _reconcileSeedProducts(
+    Session session, {
+    required Map<String, Category> categories,
+  }) async {
+    for (final seed in _demoProducts) {
+      final existing = await Product.db.findFirstRow(
+        session,
+        where: (row) => row.name.equals(seed.name),
+      );
+      if (existing == null) continue;
+
+      final category = categories[seed.category];
+      if (category?.id == null || existing.categoryId == category!.id) {
+        continue;
+      }
+
+      await Product.db.updateRow(
+        session,
+        existing.copyWith(
+          categoryId: category.id,
+          updatedAt: DateTime.now(),
+        ),
+      );
+    }
+  }
+
   static Future<void> _insertSeedProduct(
     Session session, {
     required ({String name, String category, double price, String description})
@@ -232,6 +371,16 @@ abstract final class CatalogSeed {
     required Map<String, Category> categories,
   }) async {
     final category = categories[seed.category];
+    final imageSet = CatalogSeedImages.forProduct(seed.name);
+    final thumbnailUrl = await CatalogSeedImageStorage.resolveUrl(
+      session,
+      imageSet.thumbnail,
+    );
+    final viewImageUrls = await CatalogSeedImageStorage.resolveUrls(
+      session,
+      imageSet.views,
+    );
+
     await Product.db.insertRow(
       session,
       Product(
@@ -240,6 +389,8 @@ abstract final class CatalogSeed {
         name: seed.name,
         description: seed.description,
         price: seed.price,
+        thumbnailUrl: thumbnailUrl,
+        viewImageUrls: viewImageUrls,
         status: ProductStatus.active,
       ),
     );
@@ -250,7 +401,10 @@ abstract final class CatalogSeed {
       session,
       where: (row) => row.shopName.equals('Placeify Demo Store'),
     );
-    if (existing != null) return existing;
+    if (existing != null) {
+      await _ensureApprovedVendorOwner(session, existing.userId);
+      return existing;
+    }
 
     final users = await User.db.find(
       session,
@@ -266,7 +420,7 @@ abstract final class CatalogSeed {
       );
       if (ownsVendor != null) continue;
 
-      return Vendor.db.insertRow(
+      final vendor = await Vendor.db.insertRow(
         session,
         Vendor(
           userId: ownerId,
@@ -275,11 +429,37 @@ abstract final class CatalogSeed {
           rating: 4.8,
         ),
       );
+      await _ensureApprovedVendorOwner(session, ownerId);
+      return vendor;
     }
 
     throw PlaceifyException(
       message: 'Register at least one user without a vendor before loading the catalog.',
       code: 'CATALOG_SEED_REQUIRES_USER',
+    );
+  }
+
+  static Future<void> _ensureApprovedVendorOwner(
+    Session session,
+    UuidValue userId,
+  ) async {
+    final owner = await User.db.findById(session, userId);
+    if (owner == null) return;
+
+    if (owner.role == UserRole.vendor &&
+        owner.status == UserAccountStatus.approved &&
+        owner.isActive) {
+      return;
+    }
+
+    await User.db.updateRow(
+      session,
+      owner.copyWith(
+        role: UserRole.vendor,
+        status: UserAccountStatus.approved,
+        isActive: true,
+        updatedAt: DateTime.now(),
+      ),
     );
   }
 }

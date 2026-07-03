@@ -3,14 +3,20 @@ import 'package:serverpod/serverpod.dart';
 import '../../generated/protocol.dart';
 import '../../shared/pagination_helper.dart';
 import '../../shared/placeify_exception.dart';
+import 'catalog_seed.dart';
 
 /// Product catalog queries with search, filter, and pagination.
 class CatalogRepository {
-  Future<List<Category>> listCategories(Session session) {
-    return Category.db.find(
+  Future<List<Category>> listCategories(Session session) async {
+    final rows = await Category.db.find(
       session,
       orderBy: (row) => row.name,
     );
+    final byName = {for (final row in rows) row.name: row};
+    return [
+      for (final name in CatalogSeed.defaultCategoryNames)
+        if (byName[name] != null) byName[name]!,
+    ];
   }
 
   Future<ProductPage> searchProducts(

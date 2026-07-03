@@ -49,13 +49,27 @@ WIRING_FILES=(
   placeify_flutter/lib/features/cart/presentation/cart_actions.dart
   placeify_flutter/lib/features/cart/presentation/widgets/cart_line_card.dart
   placeify_flutter/lib/features/home/data/catalog_category_utils.dart
+  placeify_flutter/lib/features/home/data/catalog_image_resolver.dart
+  placeify_flutter/lib/features/home/data/catalog_demo_image_catalog.dart
   placeify_flutter/lib/features/home/data/catalog_product_mapper.dart
+  placeify_flutter/lib/features/home/data/special_offer_mapper.dart
+  placeify_flutter/lib/features/home/data/vendor_product_catalog_mapper.dart
   placeify_flutter/lib/features/home/data/serverpod_product_repository.dart
   placeify_flutter/lib/features/home/presentation/providers/catalog_provider.dart
   placeify_flutter/lib/features/home/presentation/providers/catalog_provider.g.dart
   placeify_flutter/lib/features/home/presentation/providers/home_room_provider.dart
   placeify_flutter/lib/features/home/presentation/providers/home_room_provider.g.dart
+  placeify_flutter/lib/features/home/presentation/providers/room_category_products_provider.dart
+  placeify_flutter/lib/features/home/presentation/providers/room_category_products_provider.g.dart
+  placeify_flutter/lib/features/home/presentation/providers/special_offers_provider.dart
+  placeify_flutter/lib/features/home/presentation/providers/special_offers_provider.g.dart
+  placeify_flutter/lib/features/home/presentation/widgets/chairs_catalog_grid.dart
+  placeify_flutter/lib/features/home/presentation/widgets/discounted_products_section.dart
+  placeify_flutter/lib/features/home/presentation/widgets/home_recommend_section.dart
   placeify_flutter/lib/screens/category_screen.dart
+  placeify_flutter/lib/screens/room_products_screen.dart
+  placeify_flutter/lib/screens/widgets/category_product_list_tile.dart
+  placeify_flutter/lib/core/router/app_router.dart
   placeify_flutter/lib/features/orders/data/order_api_mapper.dart
   placeify_flutter/lib/features/orders/presentation/providers/orders_provider.dart
   placeify_flutter/lib/features/orders/presentation/providers/orders_provider.g.dart

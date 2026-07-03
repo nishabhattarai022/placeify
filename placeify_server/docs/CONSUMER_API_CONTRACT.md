@@ -33,6 +33,7 @@
 | `refund` | Return/refund requests | Yes |
 | `notification` | Preference toggles + in-app feed | Yes |
 | `review` | Submit/list product reviews | Yes |
+| `customization` | Product customization / design requests | Yes |
 | `ar` | Record/list AR sessions | Yes |
 
 ### Deprecated (do not use in consumer app)
@@ -70,12 +71,21 @@ user.getDashboard → UserDashboard
 product.searchProducts(ProductSearchInput) → ProductPage
 product.getProduct(productId) → Product?
 product.listCategories() → List<Category>
+product.listApprovedShops({query?}) → List<ShopListingSummary>
 ```
+
+**`Product` list/detail rating fields (no N+1 review calls):**
+- `averageRating: double` — `0.0` when there are no reviews
+- `reviewCount: int` — `0` when there are no reviews
+- Updated automatically when `review.submitReview` succeeds
+
+**Room browse labels:** No backend room taxonomy. Frontend maps display rooms (e.g. “Living Room”) to furniture categories (`sofas`, `chairs`, `tables`, …) client-side.
 
 **Seed catalog (Phase 4 — Nisha browse alignment):**
 - **8 categories:** `chairs`, `sofas`, `desks`, `beds`, `tables`, `storage`, `lighting`, `outdoor`
 - **18 products:** UI ids `p1`…`p18` (insert order in `catalog_seed.dart`; client maps DB id ↔ `pn` via `ProductIdCodec`)
-- **Legacy rows:** older DBs may use `lights`, `decor`, or `tables` for some categories; Flutter `CatalogCategoryUtils.matchesUiCategory` maps these when browsing
+- **Images:** each seed product has `thumbnailUrl` and `viewImageUrls` under `/uploads/catalog-seed/` (materialized from `assets/catalog_seed/` on first catalog ensure)
+- **Legacy rows:** `lights` / `decor` categories are remapped to `lighting` / `storage` and deleted when empty during catalog ensure
 
 **Consumer browse behavior:**
 - `browseCategoryProductsProvider` — live catalog first, `MockProductRepository` fallback when API index is empty
@@ -182,6 +192,36 @@ user.listMyArSessions(limit, offset) → List<UserArSessionSummary>
 - Consumer **cannot** call `user.completePayment` — returns `FORBIDDEN`.
 - Vendor confirms payment via `payment.updateOrderPaymentStatus`.
 - Consumer reads status via `user.getMyOrderPayment` / `UserOrderDetail.payment`.
+- `PaymentMethod.esewa` and `PaymentMethod.khalti` exist for checkout metadata only — **no live gateway integration yet** (production/later).
+
+---
+
+## Customization requests
+
+```
+customization.createRequest(productId, description, {attachmentUrl?}) → CustomizationRequest
+customization.listMyRequests({limit, offset}) → List<CustomizationRequest>
+```
+
+Authenticated consumer requests are linked to the product vendor automatically.
+
+---
+
+## Notification preferences (production/later jobs)
+
+`notification_preference.priceDropAlerts` and `promotions` flags exist. Background jobs to send price-drop or promo pushes are **not implemented** yet.
+
+---
+
+## Profile image
+
+`user.uploadProfileImage(fileData, fileName)` stores a file under `/uploads/profiles/` and updates `user.profileImageUrl`. Frontend upload UI is separate.
+
+---
+
+## Multiple saved addresses (production/later)
+
+Checkout still uses a single `CheckoutRequest.shippingAddress` string. `user.address` remains a single profile field. A `user_address` book is **not implemented** yet.
 
 ---
 

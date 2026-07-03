@@ -5,8 +5,13 @@ Quick guide to get the Serverpod backend running locally.
 ## Prerequisites
 
 - Dart SDK 3.8+
-- Docker Desktop (running)
+- Docker Desktop (installed; scripts auto-start it on macOS)
 - Serverpod CLI 3.4.8
+
+**macOS — start Docker at login (recommended):**  
+Docker Desktop → **Settings** → **General** → enable **Start Docker Desktop when you sign in to your computer**.
+
+`./scripts/start-server.sh` and `./scripts/ensure-docker.sh` will launch Docker Desktop if it is not already running.
 
 ```bash
 dart pub global activate serverpod_cli 3.4.8
@@ -35,8 +40,17 @@ Run the **placeify_server** launch configuration (starts Docker + server with mi
 ### Option B — Terminal
 
 ```bash
+# Starts Docker Desktop automatically if needed, then Postgres + Redis + server
+cd placeify_server
+./scripts/start-server.sh
+```
+
+Or manually:
+
+```bash
 # 1. Start Postgres + Redis
 cd placeify_server
+./scripts/ensure-docker.sh
 docker compose up -d
 
 # 2. Install deps & generate code
@@ -96,6 +110,32 @@ cd placeify_server && ./scripts/verify-consumer-contract.sh
 
 When your teammate adds UI, check the matrix first: most consumer features already have endpoints — gaps are usually **frontend wiring**, not missing backend.
 
+## Demo catalog seed
+
+On the first `product.listCategories` or `product.searchProducts` call, the server ensures:
+
+- **8 browse categories:** `chairs`, `sofas`, `desks`, `beds`, `tables`, `storage`, `lighting`, `outdoor`
+- **18 demo products** (`p1`…`p18` insert order) with `thumbnailUrl` and `viewImageUrls` under `/uploads/catalog-seed/`
+- Legacy rows (`lights`, `decor`) remapped to `lighting` / `storage` when empty
+
+Bundled source images live in `assets/catalog_seed/`. They are copied into `web/static/uploads/catalog-seed/` at runtime.
+
+Fresh database after pull:
+
+```bash
+cd placeify_server
+./scripts/reset-dev-database.sh
+```
+
+Register a user (e.g. `demo@placeify.app`), then open browse — seed runs automatically.
+
+Verify seed contract:
+
+```bash
+cd placeify_server
+dart test test/integration/catalog_seed_contract_test.dart
+```
+
 ## Troubleshooting
 
 | Problem | Fix |
@@ -105,3 +145,4 @@ When your teammate adds UI, check the matrix first: most consumer features alrea
 | Port 8090 in use | `docker compose down` then retry |
 | Checkout returns 500 Internal Server Error | Run `./scripts/fix-migrations.sh` then restart the server — adds missing `paymentMethod` column on `payment_transaction` |
 | Code out of sync after model changes | `serverpod generate` from `placeify_server/` |
+| Empty catalog / missing product images | `./scripts/reset-dev-database.sh`, register a user, call `product.listCategories` |
