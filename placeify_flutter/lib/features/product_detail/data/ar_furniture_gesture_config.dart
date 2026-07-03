@@ -16,7 +16,7 @@ abstract final class ArFurnitureGestureConfig {
   static const autoPlaceRetryDelay = Duration(milliseconds: 180);
 
   /// Wait for plane refinement before anchoring furniture.
-  static const planeStabilizeDelay = Duration(milliseconds: 600);
+  static const planeStabilizeDelay = Duration(milliseconds: 750);
 
   /// Hold steady tracking for this long before placement is allowed.
   static const trackingSettleDelay = Duration(milliseconds: 500);

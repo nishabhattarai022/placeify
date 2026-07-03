@@ -496,8 +496,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
         _placedScaleMultiplier = _userScaleMultiplier;
         _placedRotationY = _smoothedRotationY;
       });
-      // Lock local transform to anchor space — position must not track the camera.
-      _applyAnchoredNodeTransform();
       await _sessionManager?.setShowPlanes(false);
       await _sessionManager?.setLightIntensityMultiplier(_arLightIntensity);
       _showTransientHint('Drag to move · twist to rotate');
@@ -544,7 +542,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   Future<void> _onPanEnd(String nodeName, Matrix4 transform) async {
     if (!_isPlaced || nodeName != _nodeName) return;
     setState(() => _isDragging = false);
-    _furnitureNode?.transform = transform;
+    // Native side already holds the final drag position; only sync rotation here.
     _syncRotationFromNode(transform);
     _scheduleHideEditingControls();
   }
@@ -606,7 +604,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     node.transform = nextTransform;
   }
 
-  bool _matricesApproximatelyEqual(Matrix4 a, Matrix4 b, [double epsilon = 1e-5]) {
+  bool _matricesApproximatelyEqual(Matrix4 a, Matrix4 b, [double epsilon = 2e-3]) {
     for (var i = 0; i < 16; i++) {
       if ((a.storage[i] - b.storage[i]).abs() > epsilon) return false;
     }

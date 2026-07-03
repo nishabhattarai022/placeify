@@ -29,6 +29,7 @@ abstract final class ArFurniturePlacement {
   }
 
   /// World anchor on the detected plane (floor contact point).
+  /// Native code freezes this matrix at placement — it is never updated per frame.
   static Matrix4 anchorTransformForHit(ARHitTestResult hit) {
     return Matrix4.copy(hit.worldTransform);
   }
