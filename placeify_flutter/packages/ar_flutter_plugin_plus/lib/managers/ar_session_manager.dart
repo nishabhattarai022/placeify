@@ -253,6 +253,18 @@ class ARSessionManager {
     }
   }
 
+  /// Toggle real-world depth occlusion at runtime without restarting the session.
+  /// ARCore depth mode stays enabled; this only toggles the Filament depth write pass.
+  Future<void> setDepthOcclusionEnabled(bool enabled) async {
+    try {
+      await _channel.invokeMethod<void>('setDepthOcclusionEnabled', {
+        'enabled': enabled,
+      });
+    } catch (e) {
+      print('Error caught: ' + e.toString());
+    }
+  }
+
   /// Precompiles and caches the image tracking database asynchronously.
   /// This can be called once to warm up the image database for faster reuse.
   Future<bool> precompileImageTrackingDatabase(

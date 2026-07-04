@@ -18,6 +18,7 @@ import com.google.android.filament.gltfio.MaterialProvider
 import com.google.android.filament.gltfio.ResourceLoader
 import com.google.android.filament.gltfio.UbershaderProvider
 import com.google.ar.core.Frame
+import com.google.ar.core.LightEstimate
 import com.google.ar.core.Session
 import com.google.ar.core.exceptions.CameraNotAvailableException
 import com.google.ar.core.exceptions.MissingGlContextException
@@ -75,7 +76,21 @@ internal class FilamentArRenderer(
     private var fillLightEntity = 0
     private var indirectLight: IndirectLight? = null
     private var lightIntensityMultiplier = 1.0f
+    private var environmentLightScale = 1.0f
+    var environmentalLightEstimationEnabled = false
+    var depthOcclusionEnabled = false
+        set(value) {
+            field = value
+            cameraBackground?.depthOcclusionEnabled = value
+        }
     private var lightingConfigured = false
+    private var cameraDiagnosticLogged = false
+
+    private val scratchViewMatrix = FloatArray(16)
+    private val scratchProjectionMatrix = FloatArray(16)
+    private val scratchInverseView = FloatArray(16)
+    private val scratchProjectionDouble = DoubleArray(16)
+    private val scratchComposedTransform = FloatArray(16)
 
     private var materialProvider: MaterialProvider? = null
     private var assetLoader: AssetLoader? = null
@@ -151,7 +166,12 @@ internal class FilamentArRenderer(
             pendingTransforms[name]?.let { transform ->
                 applyTransform(name, asset, transform)
             }
-            Log.d(tag, "Loaded GLB $name (${asset.entities.size} entities)")
+            val correction = rootOffsetCorrections[name]
+            Log.d(
+                tag,
+                "Loaded GLB $name (${asset.entities.size} entities) " +
+                    "rootOffsetY=${correction?.let { it[13] } ?: 0f}",
+            )
         }
     }
 
@@ -298,7 +318,9 @@ internal class FilamentArRenderer(
             return
         }
         try {
-            cameraBackground = CameraBackgroundRenderer(context, engine, scene, textureIds)
+            cameraBackground = CameraBackgroundRenderer(context, engine, scene, textureIds).apply {
+                depthOcclusionEnabled = this@FilamentArRenderer.depthOcclusionEnabled
+            }
             pendingSession?.let { session ->
                 cameraBackground?.bindSession(session)
             }
@@ -424,19 +446,22 @@ internal class FilamentArRenderer(
         }
 
         val arCamera = frame.camera
-        val viewMatrix = FloatArray(16)
-        val projectionMatrix = FloatArray(16)
-        arCamera.getViewMatrix(viewMatrix, 0)
-        arCamera.getProjectionMatrix(projectionMatrix, 0, 0.1f, 100.0f)
+        arCamera.getViewMatrix(scratchViewMatrix, 0)
+        arCamera.getProjectionMatrix(scratchProjectionMatrix, 0, 0.1f, 100.0f)
 
-        val inverseView = FloatArray(16)
-        GlMatrix.invertM(inverseView, 0, viewMatrix, 0)
-        camera.setModelMatrix(inverseView)
+        GlMatrix.invertM(scratchInverseView, 0, scratchViewMatrix, 0)
+        camera.setModelMatrix(scratchInverseView)
 
-        val projectionDouble = DoubleArray(16) { projectionMatrix[it].toDouble() }
-        camera.setCustomProjection(projectionDouble, 0.1, 100.0)
+        for (i in 0 until 16) {
+            scratchProjectionDouble[i] = scratchProjectionMatrix[i].toDouble()
+        }
+        camera.setCustomProjection(scratchProjectionDouble, 0.1, 100.0)
+
+        logCameraDiagnosticsIfNeeded(arCamera, scratchProjectionMatrix)
 
         cameraBackground?.update(frame)
+
+        updateEnvironmentalLightEstimate(frame)
 
         // Present using the ARCore capture timestamp so the camera image and display stay in sync.
         val presentTimeNanos = frame.timestamp
@@ -569,14 +594,50 @@ internal class FilamentArRenderer(
         view!!.scene = scene
         view!!.camera = camera
         view!!.blendMode = View.BlendMode.OPAQUE
-        view!!.isPostProcessingEnabled = false
+        view!!.isPostProcessingEnabled = true
         view!!.colorGrading = ColorGrading.Builder()
-            .toneMapping(ColorGrading.ToneMapping.LINEAR)
+            .toneMapping(ColorGrading.ToneMapping.FILMIC)
             .exposure(1.0f)
             .build(createdEngine)
 
         setupStudioLighting(createdEngine)
         ensureCameraBackground(createdEngine, scene!!)
+    }
+
+    fun updateEnvironmentalLightEstimate(frame: Frame) {
+        if (!environmentalLightEstimationEnabled) return
+        val engine = engine ?: return
+
+        val estimate = frame.lightEstimate
+        val newScale = if (estimate.state == LightEstimate.State.VALID) {
+            // pixelIntensity ~0.5 is a typical indoor scene; scale studio lights to match.
+            (estimate.pixelIntensity / 0.5f).coerceIn(0.35f, 2.2f)
+        } else {
+            1.0f
+        }
+        if (kotlin.math.abs(newScale - environmentLightScale) < 0.02f) return
+        environmentLightScale = newScale
+        applyDirectionalLightIntensities(engine)
+    }
+
+    private fun effectiveLightScale(): Float = lightIntensityMultiplier * environmentLightScale
+
+    private fun applyDirectionalLightIntensities(engine: Engine) {
+        if (lightEntity == 0 && fillLightEntity == 0) return
+        val scale = effectiveLightScale()
+        val lightManager = engine.lightManager
+        lightManager.getInstance(lightEntity).takeIf { it != 0 }?.let { key ->
+            lightManager.setIntensity(key, 55_000.0f * scale)
+        }
+        lightManager.getInstance(fillLightEntity).takeIf { it != 0 }?.let { fill ->
+            lightManager.setIntensity(fill, 25_000.0f * scale)
+        }
+        indirectLight?.let { engine.destroyIndirectLight(it) }
+        indirectLight = IndirectLight.Builder()
+            .irradiance(3, neutralStudioSh())
+            .intensity(22_000.0f * scale)
+            .build(engine)
+        scene?.indirectLight = indirectLight
     }
 
     private fun setupStudioLighting(engine: Engine) {
@@ -602,21 +663,7 @@ internal class FilamentArRenderer(
             scene?.addEntity(fillLightEntity)
         }
 
-        val lightManager = engine.lightManager
-        val scale = lightIntensityMultiplier
-        lightManager.getInstance(lightEntity).takeIf { it != 0 }?.let { key ->
-            lightManager.setIntensity(key, 55_000.0f * scale)
-        }
-        lightManager.getInstance(fillLightEntity).takeIf { it != 0 }?.let { fill ->
-            lightManager.setIntensity(fill, 25_000.0f * scale)
-        }
-
-        indirectLight?.let { engine.destroyIndirectLight(it) }
-        indirectLight = IndirectLight.Builder()
-            .irradiance(3, neutralStudioSh())
-            .intensity(22_000.0f * scale)
-            .build(engine)
-        scene?.indirectLight = indirectLight
+        applyDirectionalLightIntensities(engine)
         view?.setShadowingEnabled(false)
         lightingConfigured = true
     }
@@ -650,6 +697,31 @@ internal class FilamentArRenderer(
             GlMatrix.translateM(correction, 0, 0f, -floorSinkM, 0f)
         }
         rootOffsetCorrections[name] = correction
+        Log.d(
+            tag,
+            "snapModelBottomToOrigin $name: minY=$minY correctionY=${correction[13]} " +
+                "halfExtentY=${halfExtent[1]}",
+        )
+    }
+
+    private fun logCameraDiagnosticsIfNeeded(
+        arCamera: com.google.ar.core.Camera,
+        projectionMatrix: FloatArray,
+    ) {
+        if (cameraDiagnosticLogged) return
+        if (arCamera.trackingState != com.google.ar.core.TrackingState.TRACKING) return
+
+        cameraDiagnosticLogged = true
+        val imageDims = arCamera.imageIntrinsics.imageDimensions
+        val textureDims = arCamera.textureIntrinsics.imageDimensions
+        Log.d(
+            tag,
+            "Camera diagnostic depthOcclusionEnabled=$depthOcclusionEnabled " +
+                "colorImage=${imageDims[0]}x${imageDims[1]} " +
+                "texture=${textureDims[0]}x${textureDims[1]} " +
+                "proj=[${projectionMatrix[0]}, ${projectionMatrix[5]}, " +
+                "${projectionMatrix[10]}, ${projectionMatrix[14]}]",
+        )
     }
 
     private fun applyTransform(name: String, asset: FilamentAsset, modelMatrix: FloatArray) {
@@ -660,9 +732,8 @@ internal class FilamentArRenderer(
 
         val offset = rootOffsetCorrections[name]
         if (offset != null) {
-            val composed = FloatArray(16)
-            GlMatrix.multiplyMM(composed, 0, modelMatrix, 0, offset, 0)
-            transformManager.setTransform(instance, composed)
+            GlMatrix.multiplyMM(scratchComposedTransform, 0, modelMatrix, 0, offset, 0)
+            transformManager.setTransform(instance, scratchComposedTransform)
         } else {
             transformManager.setTransform(instance, modelMatrix)
         }

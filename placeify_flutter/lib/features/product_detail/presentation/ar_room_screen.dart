@@ -13,7 +13,7 @@ import 'package:ar_flutter_plugin_plus/managers/ar_session_manager.dart';
 import 'package:ar_flutter_plugin_plus/models/ar_anchor.dart';
 import 'package:ar_flutter_plugin_plus/models/ar_hittest_result.dart';
 import 'package:ar_flutter_plugin_plus/models/ar_node.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -76,6 +76,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   bool _isRotating = false;
   bool _isPlacing = false;
   bool _modelLoading = true;
+  bool _depthOcclusionEnabled = true;
 
   String _cameraTrackingState = 'INITIALIZING';
   DateTime? _trackingSince;
@@ -132,6 +133,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       ));
     }
 
+    ArFurniturePlacement.resetFloorReference();
     _sessionManager?.dispose();
     super.dispose();
   }
@@ -198,9 +200,20 @@ class _ArRoomScreenState extends State<ArRoomScreen>
                       foregroundColor: Colors.white,
                     ),
                     onPressed: () => Navigator.of(context).pop(),
+                    onLongPress: kDebugMode ? _toggleDepthOcclusionDebug : null,
                     icon: const Icon(Icons.close),
                   ),
                 ),
+                if (kDebugMode && _isPlaced)
+                  Align(
+                    alignment: Alignment.topLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 52, left: 8),
+                      child: _ArFloatingHint(
+                        message: 'Occlusion: ${_depthOcclusionEnabled ? "ON" : "OFF"} (long-press ✕)',
+                      ),
+                    ),
+                  ),
                 if (_isPlaced)
                   Align(
                     alignment: Alignment.topRight,
@@ -277,7 +290,16 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     _showTransientHint('Move your phone slowly to find the floor');
   }
 
+  Future<void> _toggleDepthOcclusionDebug() async {
+    final next = !_depthOcclusionEnabled;
+    await _sessionManager?.setDepthOcclusionEnabled(next);
+    if (!mounted) return;
+    setState(() => _depthOcclusionEnabled = next);
+    _showTransientHint('Depth occlusion ${next ? "enabled" : "disabled"}');
+  }
+
   Future<void> _initSession() async {
+    ArFurniturePlacement.resetFloorReference();
     await _sessionManager?.onInitialize(
       showAnimatedGuide: false,
       autoHideCoachingOverlay: true,
@@ -542,8 +564,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   Future<void> _onPanEnd(String nodeName, Matrix4 transform) async {
     if (!_isPlaced || nodeName != _nodeName) return;
     setState(() => _isDragging = false);
-    // Native side already holds the final drag position; only sync rotation here.
-    _syncRotationFromNode(transform);
+    _writeConstrainedNodeTransform(transform);
     _scheduleHideEditingControls();
   }
 
@@ -558,8 +579,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   Future<void> _onRotationEnd(String nodeName, Matrix4 transform) async {
     if (!_isPlaced || nodeName != _nodeName) return;
     setState(() => _isRotating = false);
-    _furnitureNode?.transform = transform;
-    _syncRotationFromNode(transform);
+    _writeConstrainedNodeTransform(transform);
     _scheduleHideEditingControls();
   }
 
@@ -583,25 +603,26 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     _placedRotationY = yaw;
   }
 
+  /// Single entry point for writing node transforms after gestures or UI edits.
+  void _writeConstrainedNodeTransform(Matrix4 raw, {double? yawRadians}) {
+    final node = _furnitureNode;
+    if (node == null || !_isWorldAnchored) return;
+
+    final nextTransform = ArFurniturePlacement.constrainedLocalTransform(
+      rawGestureTransform: raw,
+      yawRadians: yawRadians,
+      scale: _nodeScale,
+    );
+    if (_matricesApproximatelyEqual(node.transform, nextTransform)) return;
+    node.transform = nextTransform;
+    _syncRotationFromNode(nextTransform);
+  }
+
   void _applyAnchoredNodeTransform() {
     final node = _furnitureNode;
     if (node == null || !_isWorldAnchored || _isDragging || _isRotating) return;
 
-    // Keep translation in anchor-local space (XZ from drag, Y = floor clearance).
-    // Never rebuild from world/camera position — that makes the model follow the phone.
-    final localTranslation = node.transform.getTranslation();
-    final nextTransform = Matrix4.compose(
-      Vector3(
-        localTranslation.x,
-        ArFurniturePlacement.floorClearanceM,
-        localTranslation.z,
-      ),
-      Quaternion.axisAngle(Vector3(0, 1, 0), _smoothedRotationY),
-      _nodeScale,
-    );
-
-    if (_matricesApproximatelyEqual(node.transform, nextTransform)) return;
-    node.transform = nextTransform;
+    _writeConstrainedNodeTransform(node.transform, yawRadians: _smoothedRotationY);
   }
 
   bool _matricesApproximatelyEqual(Matrix4 a, Matrix4 b, [double epsilon = 2e-3]) {
@@ -653,6 +674,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
 
   void _resetPlacement() {
     if (!_isPlaced) return;
+    ArFurniturePlacement.resetFloorReference();
     setState(() {
       _userScaleMultiplier = _placedScaleMultiplier;
       _targetRotationY = _placedRotationY;

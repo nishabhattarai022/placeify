@@ -22,6 +22,8 @@ material {
 fragment {
     void material(inout MaterialInputs material) {
         prepareMaterial(material);
+        // ARCore camera is display-referred; inverseTonemapSRGB lifts to linear HDR so
+        // Filament post-processing (FILMIC + sRGB output) can tone-map correctly.
         material.baseColor.rgb = inverseTonemapSRGB(texture(materialParams_cameraTexture, getUV0()).rgb);
         material.baseColor.a = 1.f;
     }
