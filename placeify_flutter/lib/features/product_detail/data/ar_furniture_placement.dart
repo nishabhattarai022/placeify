@@ -2,7 +2,7 @@ import 'package:ar_flutter_plugin_plus/datatypes/hittest_result_types.dart';
 import 'package:ar_flutter_plugin_plus/models/ar_hittest_result.dart';
 import 'package:ar_flutter_plugin_plus/models/ar_node.dart';
 import 'package:vector_math/vector_math_64.dart';
-
+import 'dart:math' as math;
 import '../../home/domain/models/product.dart';
 
 /// Helpers for anchoring furniture models flush with detected AR planes.
@@ -88,6 +88,13 @@ abstract final class ArFurniturePlacement {
     );
   }
 
+  /// Anchor-local Y-axis yaw (radians) for horizontal floor placement.
+  /// Uses the rotation column of the 4×4 matrix — reliable with uniform scale,
+  /// unlike [Matrix4.matrixEulerAngles].y which maps to pitch in this codebase.
+  static double yawFromTransform(Matrix4 matrix) {
+    return math.atan2(matrix.storage[8], matrix.storage[0]);
+  }
+
   /// Anchor-local transform locked to floor clearance and yaw-only rotation.
   /// All gesture-driven node writes should pass through this function.
   static Matrix4 constrainedLocalTransform({
@@ -96,8 +103,7 @@ abstract final class ArFurniturePlacement {
     double? yawRadians,
   }) {
     final local = rawGestureTransform.getTranslation();
-    final yaw = yawRadians ?? rawGestureTransform.matrixEulerAngles.y;
-    return Matrix4.compose(
+    final yaw = yawRadians ?? yawFromTransform(rawGestureTransform);    return Matrix4.compose(
       Vector3(local.x, floorClearanceM, local.z),
       Quaternion.axisAngle(Vector3(0, 1, 0), yaw),
       scale,

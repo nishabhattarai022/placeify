@@ -37,8 +37,11 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
     private var panCurrentVelocity: CGPoint?
     private var panCurrentTranslation: CGPoint?
     private var rotationStartLocation: CGPoint?
-    private var rotation: CGFloat?
-    private var rotationVelocity: CGFloat?
+    private var rotatingNode: SCNNode?
+    private var lastRotationRadians: CGFloat = 0
+    private var pendingRotationDelta: Float = 0
+    private var panGestureRecognizer: UIPanGestureRecognizer?
+    private var rotationGestureRecognizer: UIRotationGestureRecognizer?
     private var panningNode: SCNNode?
     private var panningNodeCurrentWorldLocation: SCNVector3?
     private var lightIntensityMultiplier: CGFloat = 1.0
@@ -360,6 +363,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                 let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
                 panGestureRecognizer.maximumNumberOfTouches = 1
                 panGestureRecognizer.delegate = self
+                self.panGestureRecognizer = panGestureRecognizer
                 self.sceneView.gestureRecognizers?.append(panGestureRecognizer)
             }
         }
@@ -368,6 +372,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             if (configHandleRotation){
                 let rotationGestureRecognizer = UIRotationGestureRecognizer(target: self, action: #selector(handleRotation(_:)))
                 rotationGestureRecognizer.delegate = self
+                self.rotationGestureRecognizer = rotationGestureRecognizer
                 self.sceneView.gestureRecognizers?.append(rotationGestureRecognizer)
             }
         }
@@ -775,67 +780,157 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             return
         }
 
-        // State Begins
-        if recognizer.state == UIGestureRecognizer.State.began
-        {
+        if recognizer.state == UIGestureRecognizer.State.began {
+            cancelActivePanIfNeeded()
             rotationStartLocation = recognizer.location(in: sceneView)
-            if let startLocation = rotationStartLocation {
-                let allHitResults = sceneView.hitTest(startLocation, options: [SCNHitTestOption.searchMode : SCNHitTestSearchMode.closest.rawValue])
-                // Because 3D model loading can lead to composed nodes, we have to traverse through a node's parent until the parent node with the name assigned by the Flutter API is found
-                let nodeHitResults: Array<String> = allHitResults.compactMap {
-                    if let nearestNode = nearestFlutterManagedNode(node: $0.node) {
-                        panningNode = nearestNode
-                        return nearestNode.name
-                    }else{
-                        return nil
-                    }
+            lastRotationRadians = recognizer.rotation
+            pendingRotationDelta = 0
+
+            guard let startLocation = rotationStartLocation else { return }
+            rotatingNode = resolveRotationNode(at: startLocation, in: sceneView)
+            if let node = rotatingNode {
+                self.objectManagerChannel.invokeMethod("onRotationStart", arguments: node.name)
+            }
+            return
+        }
+
+        if recognizer.state == UIGestureRecognizer.State.changed {
+            guard let rotateNode = rotatingNode else { return }
+
+            let currentRotation = recognizer.rotation
+            var delta = Float(currentRotation - lastRotationRadians)
+            lastRotationRadians = currentRotation
+            if abs(delta) > Float.pi {
+                delta = delta > 0 ? delta - 2 * Float.pi : delta + 2 * Float.pi
+            }
+
+            applyRotationDelta(to: rotateNode, deltaRadians: delta)
+            self.objectManagerChannel.invokeMethod("onRotationChange", arguments: rotateNode.name)
+            return
+        }
+
+        if recognizer.state == UIGestureRecognizer.State.ended ||
+            recognizer.state == UIGestureRecognizer.State.cancelled ||
+            recognizer.state == UIGestureRecognizer.State.failed {
+            if let rotateNode = rotatingNode {
+                flushPendingRotation(on: rotateNode)
+                self.objectManagerChannel.invokeMethod(
+                    "onRotationEnd",
+                    arguments: serializeLocalTransformation(node: rotateNode)
+                )
+            }
+            rotationStartLocation = nil
+            rotatingNode = nil
+            lastRotationRadians = 0
+            pendingRotationDelta = 0
+        }
+    }
+
+    private static let rotationSensitivity: Float = 0.85
+    private static let rotationSmoothFactor: Float = 0.28
+    private static let rotationDeadZoneRadians: Float = 0.004
+    private static let rotationHitMaxHorizontalDistanceM: Float = 0.8
+    private static let rotationScreenHitRadiusPx: CGFloat = 140
+
+    private func resolveRotationNode(at location: CGPoint, in sceneView: ARSCNView) -> SCNNode? {
+        let allHitResults = sceneView.hitTest(
+            location,
+            options: [SCNHitTestOption.searchMode: SCNHitTestSearchMode.closest.rawValue]
+        )
+        for result in allHitResults {
+            if let nearestNode = nearestFlutterManagedNode(node: result.node) {
+                return nearestNode
+            }
+        }
+
+        if let fallbackNode = singleFlutterManagedNode(in: sceneView) {
+            let projected = sceneView.projectPoint(fallbackNode.worldPosition)
+            if projected.z >= 0 && projected.z <= 1 {
+                let dx = CGFloat(projected.x) - location.x
+                let dy = CGFloat(projected.y) - location.y
+                if dx * dx + dy * dy <= rotationScreenHitRadiusPx * rotationScreenHitRadiusPx {
+                    return fallbackNode
                 }
-                if (nodeHitResults.count != 0 && panningNode != nil) {
-                    self.objectManagerChannel.invokeMethod("onRotationStart", arguments: panningNode!.name) // Chaining of Array and Set is used to remove duplicates
-                    return
-                }
-                if let fallbackNode = singleFlutterManagedNode(in: sceneView) {
-                    panningNode = fallbackNode
-                    self.objectManagerChannel.invokeMethod("onRotationStart", arguments: fallbackNode.name)
-                    return
+            }
+
+            if let query = sceneView.raycastQuery(from: location, allowing: .estimatedPlane, alignment: .any),
+               let raycast = sceneView.session.raycast(query).first {
+                let hitX = raycast.worldTransform.columns.3.x
+                let hitZ = raycast.worldTransform.columns.3.z
+                let nodePos = fallbackNode.worldPosition
+                let dx = hitX - nodePos.x
+                let dz = hitZ - nodePos.z
+                if dx * dx + dz * dz <=
+                    rotationHitMaxHorizontalDistanceM * rotationHitMaxHorizontalDistanceM {
+                    return fallbackNode
                 }
             }
         }
-        // State Changes
-        if(recognizer.state == UIGestureRecognizer.State.changed)
-        {
-            // the velocity of the gesture is how fast it is moving. This can be used to translate the position of the node.
-            rotation = recognizer.rotation
-            rotationVelocity = recognizer.velocity
 
-            if let r = rotationVelocity, let panNode = panningNode {
-                // velocity needs to be reduced substantially otherwise the rotation change seems too fast as radians; also needs inverting to match the movement of the fingers as they rotate on the screen
-                let r2 = (r*0.01) * -1
-                let nodeRotation = panNode.rotation
-                let rotation: SCNQuaternion!
-                let planeAlignment = self.tappedPlaneAnchorAlignment
-                if planeAlignment == .horizontal {
-                    rotation = SCNQuaternion(x: 0, y: 1, z: 0, w: nodeRotation.w+Float(r2)) // quickest way to convert screen into world positions (meters)
-                }else{
-                    rotation = SCNQuaternion(x: 0, y: 0, z: 1, w: nodeRotation.w+Float(r2)) // quickest way to convert screen into world positions (meters)
-                }
-                panNode.rotation = rotation
-                self.objectManagerChannel.invokeMethod("onRotationChange", arguments: panNode.name)
+        return nil
+    }
+
+    private func applyRotationDelta(to node: SCNNode, deltaRadians: Float) {
+        if abs(deltaRadians) < Self.rotationDeadZoneRadians {
+            if abs(pendingRotationDelta) >= Self.rotationDeadZoneRadians {
+                let residual = pendingRotationDelta * Self.rotationSmoothFactor
+                pendingRotationDelta -= residual
+                applyImmediateRotation(to: node, deltaRadians: residual)
             }
+            return
+        }
 
-            // update position of panning node if it has been created
-            // panningNode.position + the gesture delta
+        pendingRotationDelta += deltaRadians * Self.rotationSensitivity
+        let applied = pendingRotationDelta * Self.rotationSmoothFactor
+        pendingRotationDelta -= applied
+        if abs(applied) < Self.rotationDeadZoneRadians { return }
+        applyImmediateRotation(to: node, deltaRadians: applied)
+    }
+
+    private func applyImmediateRotation(to node: SCNNode, deltaRadians: Float) {
+        if tappedPlaneAnchorAlignment == .horizontal {
+            node.eulerAngles.y += deltaRadians
+        } else {
+            node.eulerAngles.z += deltaRadians
         }
-        // State Ended
-        if(recognizer.state == UIGestureRecognizer.State.ended)
-        {
-            // kill variables
-            rotation = nil
-            rotationVelocity = nil
-            self.objectManagerChannel.invokeMethod("onRotationEnd", arguments: serializeLocalTransformation(node: panningNode))
-            panningNode = nil
+    }
+
+    private func flushPendingRotation(on node: SCNNode) {
+        if abs(pendingRotationDelta) < Self.rotationDeadZoneRadians {
+            pendingRotationDelta = 0
+            return
         }
-    
+        applyImmediateRotation(to: node, deltaRadians: pendingRotationDelta)
+        pendingRotationDelta = 0
+    }
+
+    private func cancelActivePanIfNeeded() {
+        if panningNode != nil {
+            self.objectManagerChannel.invokeMethod(
+                "onPanEnd",
+                arguments: serializeLocalTransformation(node: panningNode)
+            )
+        }
+        panningNode = nil
+        panStartLocation = nil
+        panCurrentLocation = nil
+        panCurrentVelocity = nil
+        panCurrentTranslation = nil
+        panningNodeCurrentWorldLocation = nil
+        if let panGestureRecognizer = panGestureRecognizer {
+            panGestureRecognizer.isEnabled = false
+            panGestureRecognizer.isEnabled = true
+        }
+    }
+
+    func gestureRecognizer(
+        _ gestureRecognizer: UIGestureRecognizer,
+        shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
+    ) -> Bool {
+        let isPanRotationPair =
+            (gestureRecognizer is UIPanGestureRecognizer && otherGestureRecognizer is UIRotationGestureRecognizer) ||
+            (gestureRecognizer is UIRotationGestureRecognizer && otherGestureRecognizer is UIPanGestureRecognizer)
+        return !isPanRotationPair
     }
 
     // Recursive helper function to traverse a node's parents until a Flutter-managed node is found
