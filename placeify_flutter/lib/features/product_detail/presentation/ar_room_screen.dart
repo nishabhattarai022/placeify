@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io' show Platform;
-import 'dart:math' show pi;
 
 import 'package:ar_flutter_plugin_plus/ar_flutter_plugin_plus.dart';
 import 'package:ar_flutter_plugin_plus/datatypes/config_planedetection.dart';
@@ -13,9 +12,8 @@ import 'package:ar_flutter_plugin_plus/managers/ar_session_manager.dart';
 import 'package:ar_flutter_plugin_plus/models/ar_anchor.dart';
 import 'package:ar_flutter_plugin_plus/models/ar_hittest_result.dart';
 import 'package:ar_flutter_plugin_plus/models/ar_node.dart';
-import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:vector_math/vector_math_64.dart' hide Colors;
 
@@ -26,7 +24,6 @@ import '../data/ar_furniture_placement.dart';
 import '../data/ar_furniture_scale.dart';
 import '../data/product_3d_model_loader.dart';
 import 'webcam_ar_room_screen.dart';
-import 'widgets/ar_furniture_gesture_overlay.dart';
 import 'widgets/ar_placement_controls.dart';
 
 /// Full-screen AR furniture placement (IKEA Place–style workflow).
@@ -76,7 +73,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   bool _isRotating = false;
   bool _isPlacing = false;
   bool _modelLoading = true;
-  bool _depthOcclusionEnabled = true;
 
   String _cameraTrackingState = 'INITIALIZING';
   DateTime? _trackingSince;
@@ -87,7 +83,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   double _userScaleMultiplier = ArFurnitureScale.defaultUserMultiplier;
   double _placedScaleMultiplier = ArFurnitureScale.defaultUserMultiplier;
   double _placedRotationY = 0;
-  double _targetRotationY = 0;
   double _smoothedRotationY = 0;
 
   String? _hintMessage;
@@ -99,7 +94,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
 
   late final AnimationController _scanPulseController;
   late final AnimationController _reticlePulseController;
-  Ticker? _rotationSmoothTicker;
 
   @override
   void initState() {
@@ -113,14 +107,12 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1100),
     )..repeat(reverse: true);
-    _rotationSmoothTicker = createTicker(_onRotationSmoothTick);
   }
 
   @override
   void dispose() {
     _hintHideTimer?.cancel();
     _controlsHideTimer?.cancel();
-    _rotationSmoothTicker?.dispose();
     _scanPulseController.dispose();
     _reticlePulseController.dispose();
 
@@ -178,17 +170,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
             IgnorePointer(
               child: _PlacementReticle(pulse: _reticlePulseController),
             ),
-          if (_isPlaced)
-            ArFurnitureGestureOverlay(
-              enabled: _isPlaced && !_modelLoading,
-              initialMultiplier: _userScaleMultiplier,
-              currentRotationY: _targetRotationY,
-              minMultiplier: ArFurnitureScale.minUserMultiplier,
-              maxMultiplier: ArFurnitureScale.maxUserMultiplier,
-              onMultiplierChanged: _onPinchScaleChanged,
-              onRotationChanged: _onPinchRotationChanged,
-              onGestureEnd: _scheduleHideEditingControls,
-            ),
           SafeArea(
             child: Stack(
               children: [
@@ -200,20 +181,9 @@ class _ArRoomScreenState extends State<ArRoomScreen>
                       foregroundColor: Colors.white,
                     ),
                     onPressed: () => Navigator.of(context).pop(),
-                    onLongPress: kDebugMode ? _toggleDepthOcclusionDebug : null,
                     icon: const Icon(Icons.close),
                   ),
                 ),
-                if (kDebugMode && _isPlaced)
-                  Align(
-                    alignment: Alignment.topLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 52, left: 8),
-                      child: _ArFloatingHint(
-                        message: 'Occlusion: ${_depthOcclusionEnabled ? "ON" : "OFF"} (long-press ✕)',
-                      ),
-                    ),
-                  ),
                 if (_isPlaced)
                   Align(
                     alignment: Alignment.topRight,
@@ -237,10 +207,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
                       scaleMultiplier: _userScaleMultiplier,
                       minMultiplier: ArFurnitureScale.minUserMultiplier,
                       maxMultiplier: ArFurnitureScale.maxUserMultiplier,
-                      onRotate: () {
-                        _rotateByStep();
-                        _showEditingControls();
-                      },
                       onScaleChanged: (value) {
                         _onScaleSliderChanged(value);
                         _showEditingControls();
@@ -290,14 +256,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     _showTransientHint('Move your phone slowly to find the floor');
   }
 
-  Future<void> _toggleDepthOcclusionDebug() async {
-    final next = !_depthOcclusionEnabled;
-    await _sessionManager?.setDepthOcclusionEnabled(next);
-    if (!mounted) return;
-    setState(() => _depthOcclusionEnabled = next);
-    _showTransientHint('Depth occlusion ${next ? "enabled" : "disabled"}');
-  }
-
   Future<void> _initSession() async {
     ArFurniturePlacement.resetFloorReference();
     await _sessionManager?.onInitialize(
@@ -308,10 +266,11 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       showWorldOrigin: false,
       handleTaps: true,
       handlePans: true,
-      handleRotation: false,
+      handleRotation: true,
       lightIntensityMultiplier: _arLightIntensity,
     );
     await _sessionManager?.setLightIntensityMultiplier(_arLightIntensity);
+    await _sessionManager?.setDepthOcclusionEnabled(false);
   }
 
   void _showEditingControls() {
@@ -583,34 +542,19 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     _scheduleHideEditingControls();
   }
 
-  void _onRotationSmoothTick(Duration elapsed) {
-    if (_isRotating || _furnitureNode == null || !_isWorldAnchored) return;
-
-    final delta = _targetRotationY - _smoothedRotationY;
-    if (delta.abs() < 0.0005) {
-      _rotationSmoothTicker?.stop();
-      return;
-    }
-
-    _smoothedRotationY += delta * ArFurnitureGestureConfig.rotationSmoothFactor;
-    _applyAnchoredNodeTransform();
-  }
-
   void _syncRotationFromNode(Matrix4 transform) {
-    final yaw = transform.matrixEulerAngles.y;
-    _targetRotationY = yaw;
+    final yaw = ArFurniturePlacement.yawFromTransform(transform);
     _smoothedRotationY = yaw;
     _placedRotationY = yaw;
   }
 
   /// Single entry point for writing node transforms after gestures or UI edits.
-  void _writeConstrainedNodeTransform(Matrix4 raw, {double? yawRadians}) {
+  void _writeConstrainedNodeTransform(Matrix4 raw) {
     final node = _furnitureNode;
     if (node == null || !_isWorldAnchored) return;
 
     final nextTransform = ArFurniturePlacement.constrainedLocalTransform(
       rawGestureTransform: raw,
-      yawRadians: yawRadians,
       scale: _nodeScale,
     );
     if (_matricesApproximatelyEqual(node.transform, nextTransform)) return;
@@ -622,7 +566,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     final node = _furnitureNode;
     if (node == null || !_isWorldAnchored || _isDragging || _isRotating) return;
 
-    _writeConstrainedNodeTransform(node.transform, yawRadians: _smoothedRotationY);
+    _writeConstrainedNodeTransform(node.transform);
   }
 
   bool _matricesApproximatelyEqual(Matrix4 a, Matrix4 b, [double epsilon = 2e-3]) {
@@ -630,14 +574,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       if ((a.storage[i] - b.storage[i]).abs() > epsilon) return false;
     }
     return true;
-  }
-
-  void _rotateByStep() {
-    if (!_isPlaced) return;
-    _targetRotationY += pi / 4;
-    _smoothedRotationY = _targetRotationY;
-    _placedRotationY = _targetRotationY;
-    _applyAnchoredNodeTransform();
   }
 
   void _onScaleSliderChanged(double multiplier) {
@@ -651,33 +587,11 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     _applyAnchoredNodeTransform();
   }
 
-  void _onPinchScaleChanged(double multiplier) {
-    if (_furnitureNode == null) return;
-    final clamped = multiplier.clamp(
-      ArFurnitureScale.minUserMultiplier,
-      ArFurnitureScale.maxUserMultiplier,
-    );
-    if (clamped == _userScaleMultiplier) return;
-    setState(() => _userScaleMultiplier = clamped);
-    _applyAnchoredNodeTransform();
-    _showEditingControls();
-  }
-
-  void _onPinchRotationChanged(double rotationY) {
-    if (_furnitureNode == null) return;
-    _targetRotationY = rotationY;
-    _smoothedRotationY = rotationY;
-    _placedRotationY = rotationY;
-    _applyAnchoredNodeTransform();
-    _showEditingControls();
-  }
-
   void _resetPlacement() {
     if (!_isPlaced) return;
     ArFurniturePlacement.resetFloorReference();
     setState(() {
       _userScaleMultiplier = _placedScaleMultiplier;
-      _targetRotationY = _placedRotationY;
       _smoothedRotationY = _placedRotationY;
     });
     _applyAnchoredNodeTransform();

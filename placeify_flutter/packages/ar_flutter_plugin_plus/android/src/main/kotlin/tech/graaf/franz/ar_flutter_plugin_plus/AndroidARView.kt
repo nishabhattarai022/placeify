@@ -83,10 +83,30 @@ internal class AndroidARView(
         private const val MIN_PLACEMENT_PLANE_EXTENT_M = 0.15f
         /** Warn when placing before the session has this much stable tracking. */
         private const val PREFERRED_SESSION_STABLE_FRAMES_FOR_PLACEMENT = 15
-        /** Reject drag hits closer than this to a floor-plane polygon edge (wall seam bleed). */
+        /** Min distance from a single wall plane surface while dragging (prevents half-in-wall). */
+        private const val MIN_WALL_CLEARANCE_FACE_M = 0.12f
+        /** Relaxed clearance at floor corners where two walls meet. */
+        private const val MIN_WALL_CLEARANCE_CORNER_M = 0.04f
+        /** Count vertical walls within this distance of the snap point as a corner. */
+        private const val WALL_CORNER_DETECT_RANGE_M = 0.35f
+        /** Polygon edge distance — diagnostics only (not used for drag rejection). */
         private const val MIN_PLANE_EDGE_MARGIN_M = 0.06f
-        /** Reject a single drag frame whose hit jumps farther than this from the current pose. */
-        private const val MAX_DRAG_JUMP_M = 0.35f
+        /** Max |plane.centerY - referenceFloorY| for a plane to be treated as the placement floor. */
+        private const val MAX_DRAG_PLANE_HEIGHT_BAND_M = 0.15f
+        /** Cap per-frame drag displacement; larger jumps are clamped instead of rejected. */
+        private const val MAX_DRAG_JUMP_M = 0.25f
+        /** Interpolation factor for smooth drag follow (higher = snappier). */
+        private const val DRAG_SMOOTH_FACTOR = 0.45f
+        /** Matches [ArFurnitureGestureConfig.rotationSensitivity] on Flutter. */
+        private const val ROTATION_SENSITIVITY = 0.85f
+        /** Matches [ArFurnitureGestureConfig.rotationSmoothFactor] on Flutter. */
+        private const val ROTATION_SMOOTH_FACTOR = 0.28f
+        /** Matches [ArFurnitureGestureConfig.rotationDeadZoneRadians] on Flutter. */
+        private const val ROTATION_DEAD_ZONE_RADIANS = 0.004f
+        /** Max horizontal world distance from hit to node center for twist start. */
+        private const val ROTATION_HIT_MAX_HORIZONTAL_DISTANCE_M = 0.8f
+        /** Screen-space fallback radius when plane hit test misses the model. */
+        private const val ROTATION_SCREEN_HIT_RADIUS_PX = 140f
     }
     private val TAG = "AndroidARView"
 
@@ -121,9 +141,12 @@ internal class AndroidARView(
     private var panStartX = 0f
     private var panStartY = 0f
     private var lastRotationAngle = 0f
+    private var pendingRotationDelta = 0f
     private var hasReportedPlaneDetection = false
     /// Y-height of the floor plane at initial placement; drag hits must stay within tolerance.
     private var referenceFloorY: Float? = null
+    /// World pose at placement — defines the "room interior" side of vertical wall planes.
+    private var placementInteriorPose: Pose? = null
     private val floorHeightToleranceM = 0.05f
     private var planeDetectionFrameSkip = 0
     private var ancillaryFrameSkip = 0
@@ -673,13 +696,13 @@ internal class AndroidARView(
             else -> config.planeFindingMode = Config.PlaneFindingMode.DISABLED
         }
         config.depthMode = if (session!!.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
-            Log.d(TAG, "Enabling ARCore AUTOMATIC depth mode for real-world occlusion")
+            Log.d(TAG, "ARCore AUTOMATIC depth available (rendering occlusion disabled by default)")
             Config.DepthMode.AUTOMATIC
         } else {
-            Log.d(TAG, "ARCore depth not supported; virtual objects will not be occluded")
+            Log.d(TAG, "ARCore depth not supported")
             Config.DepthMode.DISABLED
         }
-        filamentRenderer.depthOcclusionEnabled = config.depthMode != Config.DepthMode.DISABLED
+        filamentRenderer.depthOcclusionEnabled = false
         config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
         config.focusMode = Config.FocusMode.AUTO
         config.lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
@@ -1021,6 +1044,321 @@ internal class AndroidARView(
         return minDist
     }
 
+    private fun isTrackingFloorPlane(plane: Plane): Boolean {
+        return plane.type == Plane.Type.HORIZONTAL_UPWARD_FACING &&
+            plane.trackingState == TrackingState.TRACKING
+    }
+
+    private fun planeHeightDeltaFromReference(plane: Plane, referenceFloorY: Float): Float {
+        return kotlin.math.abs(plane.centerPose.ty() - referenceFloorY)
+    }
+
+    private fun snapPoseToReferenceFloorY(pose: Pose, referenceFloorY: Float): Pose {
+        return Pose.makeTranslation(pose.tx(), referenceFloorY, pose.tz())
+    }
+
+    private fun findBestFloorPlaneForSnapPose(worldPose: Pose, referenceFloorY: Float): Plane? {
+        val session = session ?: return null
+        var bestPlane: Plane? = null
+        var bestHeightDelta = Float.MAX_VALUE
+        for (plane in session.getAllTrackables(Plane::class.java)) {
+            if (!isTrackingFloorPlane(plane)) continue
+            if (!plane.isPoseInPolygon(worldPose)) continue
+            val heightDelta = planeHeightDeltaFromReference(plane, referenceFloorY)
+            if (heightDelta < bestHeightDelta) {
+                bestHeightDelta = heightDelta
+                bestPlane = plane
+            }
+        }
+        return if (bestHeightDelta <= MAX_DRAG_PLANE_HEIGHT_BAND_M) bestPlane else null
+    }
+
+    /** Signed distance along the plane normal (+Z for vertical walls, +Y for floor). */
+    private fun signedDistanceToPlaneNormal(plane: Plane, worldPose: Pose): Float {
+        val local = plane.centerPose.inverse().compose(worldPose)
+        return when (plane.type) {
+            Plane.Type.VERTICAL -> local.tz()
+            Plane.Type.HORIZONTAL_UPWARD_FACING -> local.ty()
+            else -> Float.MAX_VALUE
+        }
+    }
+
+    private fun countNearbyVerticalWalls(snapPose: Pose, referenceFloorY: Float): Int {
+        val session = session ?: return 0
+        var count = 0
+        for (trackable in session.getAllTrackables(Plane::class.java)) {
+            val wall = trackable as? Plane ?: continue
+            if (wall.type != Plane.Type.VERTICAL || wall.trackingState != TrackingState.TRACKING) {
+                continue
+            }
+            if (kotlin.math.abs(snapPose.ty() - referenceFloorY) > MAX_DRAG_PLANE_HEIGHT_BAND_M) {
+                continue
+            }
+            if (kotlin.math.abs(signedDistanceToPlaneNormal(wall, snapPose)) < WALL_CORNER_DETECT_RANGE_M) {
+                count++
+            }
+        }
+        return count
+    }
+
+    private fun requiredWallClearance(snapPose: Pose, referenceFloorY: Float): Float {
+        return if (countNearbyVerticalWalls(snapPose, referenceFloorY) >= 2) {
+            MIN_WALL_CLEARANCE_CORNER_M
+        } else {
+            MIN_WALL_CLEARANCE_FACE_M
+        }
+    }
+
+    private fun hasTrackedVerticalWalls(): Boolean {
+        val session = session ?: return false
+        for (trackable in session.getAllTrackables(Plane::class.java)) {
+            val wall = trackable as? Plane ?: continue
+            if (wall.type == Plane.Type.VERTICAL && wall.trackingState == TrackingState.TRACKING) {
+                return true
+            }
+        }
+        return false
+    }
+
+    /**
+     * Validates a drag snap pose: must lie on a reference-height floor plane and must not
+     * cross or penetrate tracked vertical wall planes (corners use relaxed clearance).
+     */
+    private fun validateDragSnapPose(snapPose: Pose, referenceFloorY: Float): Boolean {
+        val floorPlane = findBestFloorPlaneForSnapPose(snapPose, referenceFloorY) ?: return false
+
+        if (!hasTrackedVerticalWalls()) {
+            if (distanceToPolygonEdge(floorPlane, snapPose) <= MIN_PLANE_EDGE_MARGIN_M) {
+                return false
+            }
+            return true
+        }
+
+        val interior = placementInteriorPose ?: return true
+        val session = session ?: return true
+
+        val clearance = requiredWallClearance(snapPose, referenceFloorY)
+        for (trackable in session.getAllTrackables(Plane::class.java)) {
+            val wall = trackable as? Plane ?: continue
+            if (wall.type != Plane.Type.VERTICAL || wall.trackingState != TrackingState.TRACKING) {
+                continue
+            }
+            if (kotlin.math.abs(snapPose.ty() - referenceFloorY) > MAX_DRAG_PLANE_HEIGHT_BAND_M) {
+                continue
+            }
+
+            val snapDist = signedDistanceToPlaneNormal(wall, snapPose)
+            val interiorDist = signedDistanceToPlaneNormal(wall, interior)
+            if (snapDist * interiorDist < 0f) return false
+
+            if (kotlin.math.abs(snapDist) < clearance) return false
+        }
+        return true
+    }
+
+    /** Returns [snapPose] when it passes floor and wall validation. */
+    private fun acceptDragSnapPose(snapPose: Pose, referenceFloorY: Float): Pose? {
+        return if (validateDragSnapPose(snapPose, referenceFloorY)) snapPose else null
+    }
+
+    /**
+     * Picks the best floor hit for dragging — prefers planes whose center Y is closest to the
+     * placement floor, among in-polygon hits within [MAX_DRAG_PLANE_HEIGHT_BAND_M].
+     */
+    private fun pickBestDragPlaneHit(hits: List<HitResult>, referenceFloorY: Float?): HitResult? {
+        if (referenceFloorY == null) {
+            return hits.firstOrNull { result ->
+                val plane = result.trackable as? Plane ?: return@firstOrNull false
+                isTrackingFloorPlane(plane) && plane.isPoseInPolygon(result.hitPose)
+            }
+        }
+
+        data class Candidate(val hit: HitResult, val planeHeightDelta: Float, val edgeDist: Float)
+
+        val candidates = hits.mapNotNull { result ->
+            val plane = result.trackable as? Plane ?: return@mapNotNull null
+            if (!isTrackingFloorPlane(plane)) return@mapNotNull null
+            if (!plane.isPoseInPolygon(result.hitPose)) return@mapNotNull null
+            val snapPose = snapPoseToReferenceFloorY(result.hitPose, referenceFloorY)
+            if (!plane.isPoseInPolygon(snapPose)) return@mapNotNull null
+            if (!validateDragSnapPose(snapPose, referenceFloorY)) return@mapNotNull null
+            val edgeDist = distanceToPolygonEdge(plane, snapPose)
+            Candidate(result, planeHeightDeltaFromReference(plane, referenceFloorY), edgeDist)
+        }
+        if (candidates.isEmpty()) return null
+
+        val inBand = candidates.filter { it.planeHeightDelta <= MAX_DRAG_PLANE_HEIGHT_BAND_M }
+        val pool = inBand.ifEmpty {
+            listOf(candidates.minBy { it.planeHeightDelta })
+        }
+        return pool.maxWithOrNull(
+            compareBy<Candidate> { it.planeHeightDelta }.thenByDescending { it.edgeDist },
+        )?.hit
+    }
+
+    /** Uses in-polygon plane hit XZ snapped to the reference floor Y. */
+    private fun fallbackSnapPoseFromPlaneHits(
+        hits: List<HitResult>,
+        referenceFloorY: Float,
+    ): Pose? {
+        data class PlaneSnap(val snapPose: Pose, val planeHeightDelta: Float, val edgeDist: Float)
+
+        val snaps = hits.mapNotNull { result ->
+            val plane = result.trackable as? Plane ?: return@mapNotNull null
+            if (!isTrackingFloorPlane(plane)) return@mapNotNull null
+            if (!plane.isPoseInPolygon(result.hitPose)) return@mapNotNull null
+            val snapPose = snapPoseToReferenceFloorY(result.hitPose, referenceFloorY)
+            if (!plane.isPoseInPolygon(snapPose)) return@mapNotNull null
+            if (!validateDragSnapPose(snapPose, referenceFloorY)) return@mapNotNull null
+            val edgeDist = distanceToPolygonEdge(plane, snapPose)
+            PlaneSnap(snapPose, planeHeightDeltaFromReference(plane, referenceFloorY), edgeDist)
+        }
+        if (snaps.isEmpty()) return null
+
+        val inBand = snaps.filter { it.planeHeightDelta <= MAX_DRAG_PLANE_HEIGHT_BAND_M }
+        val pool = inBand.ifEmpty { listOf(snaps.minBy { it.planeHeightDelta }) }
+        return pool.maxWithOrNull(
+            compareBy<PlaneSnap> { it.planeHeightDelta }.thenByDescending { it.edgeDist },
+        )?.snapPose
+    }
+
+    /**
+     * When ARCore returns no direct floor hit (e.g. ray over open floor but hits an elevated plane
+     * first), project the touch ray onto the reference floor Y and validate against tracked planes.
+     */
+    private fun fallbackSnapPoseFromRay(
+        frame: Frame,
+        screenX: Float,
+        screenY: Float,
+        referenceFloorY: Float,
+    ): Pose? {
+        val viewWidth = textureView.width
+        val viewHeight = textureView.height
+        if (viewWidth <= 0 || viewHeight <= 0) return null
+
+        val rayPose = intersectScreenRayWithHorizontalPlane(
+            frame,
+            screenX,
+            screenY,
+            viewWidth,
+            viewHeight,
+            referenceFloorY,
+        ) ?: return null
+
+        return acceptDragSnapPose(rayPose, referenceFloorY)
+    }
+
+    /**
+     * Fallback using feature/depth hit XZ snapped to the reference floor height.
+     */
+    private fun fallbackSnapPoseFromFeatureHits(
+        hits: List<HitResult>,
+        referenceFloorY: Float,
+    ): Pose? {
+        for (result in hits) {
+            when (result.trackable) {
+                is Point, is DepthPoint -> {
+                    val snapPose = Pose.makeTranslation(
+                        result.hitPose.tx(),
+                        referenceFloorY,
+                        result.hitPose.tz(),
+                    )
+                    acceptDragSnapPose(snapPose, referenceFloorY)?.let { return it }
+                }
+            }
+        }
+        return null
+    }
+
+    /** Intersects the camera ray through [screenX]/[screenY] with horizontal plane y=[planeY]. */
+    private fun intersectScreenRayWithHorizontalPlane(
+        frame: Frame,
+        screenX: Float,
+        screenY: Float,
+        viewWidth: Int,
+        viewHeight: Int,
+        planeY: Float,
+    ): Pose? {
+        val camera = frame.camera
+        val viewMatrix = FloatArray(16)
+        val projMatrix = FloatArray(16)
+        camera.getViewMatrix(viewMatrix, 0)
+        camera.getProjectionMatrix(projMatrix, 0, 0.1f, 100f)
+
+        val vpMatrix = FloatArray(16)
+        Matrix.multiplyMM(vpMatrix, 0, projMatrix, 0, viewMatrix, 0)
+        val invVp = FloatArray(16)
+        if (!Matrix.invertM(invVp, 0, vpMatrix, 0)) return null
+
+        val ndcX = (screenX / viewWidth) * 2f - 1f
+        val ndcY = 1f - (screenY / viewHeight) * 2f
+
+        fun unproject(ndcZ: Float): FloatArray {
+            val ndc = floatArrayOf(ndcX, ndcY, ndcZ, 1f)
+            val world = FloatArray(4)
+            Matrix.multiplyMV(world, 0, invVp, 0, ndc, 0)
+            if (kotlin.math.abs(world[3]) > 1e-6f) {
+                world[0] /= world[3]
+                world[1] /= world[3]
+                world[2] /= world[3]
+            }
+            return world
+        }
+
+        val near = unproject(-1f)
+        val far = unproject(1f)
+        val dx = far[0] - near[0]
+        val dy = far[1] - near[1]
+        val dz = far[2] - near[2]
+        if (kotlin.math.abs(dy) < 1e-6f) return null
+
+        val t = (planeY - near[1]) / dy
+        if (t < 0f) return null
+
+        val hitX = near[0] + dx * t
+        val hitZ = near[2] + dz * t
+        return Pose.makeTranslation(hitX, planeY, hitZ)
+    }
+
+    /** Limits per-frame displacement and locks Y to the reference floor for anchored drags. */
+    private fun finalizeDragHitPose(
+        currentMatrix: FloatArray,
+        hitPose: Pose,
+        referenceFloorY: Float?,
+    ): Pose {
+        var pose = if (referenceFloorY != null) {
+            snapPoseToReferenceFloorY(hitPose, referenceFloorY)
+        } else {
+            hitPose
+        }
+
+        pose.toMatrix(scratchHitMatrix, 0)
+        val jumpM = translationDeltaM(currentMatrix, scratchHitMatrix)
+        if (jumpM <= MAX_DRAG_JUMP_M) return pose
+
+        val t = MAX_DRAG_JUMP_M / jumpM
+        val cx = currentMatrix[12]
+        val cy = currentMatrix[13]
+        val cz = currentMatrix[14]
+        val tx = scratchHitMatrix[12]
+        val ty = scratchHitMatrix[13]
+        val tz = scratchHitMatrix[14]
+        val clampedX = cx + (tx - cx) * t
+        val clampedY = referenceFloorY ?: (cy + (ty - cy) * t)
+        val clampedZ = cz + (tz - cz) * t
+        if (BuildConfig.DEBUG) {
+            Log.d(
+                TAG,
+                "dragHit: clamped jump ${"%.3f".format(jumpM)}m -> ${"%.3f".format(MAX_DRAG_JUMP_M)}m",
+            )
+        }
+        val clampedPose = Pose.makeTranslation(clampedX, clampedY, clampedZ)
+        if (referenceFloorY != null && !validateDragSnapPose(clampedPose, referenceFloorY)) {
+            return Pose.makeTranslation(cx, referenceFloorY, cz)
+        }
+        return clampedPose
+    }
+
     private fun rotationMatrixToQuaternion(m: FloatArray, out: FloatArray) {
         val trace = m[0] + m[5] + m[10]
         when {
@@ -1325,6 +1663,7 @@ internal class AndroidARView(
                 isRotating = false
                 panPending = false
                 lastRotationAngle = 0f
+                pendingRotationDelta = 0f
 
                 // Only prepare drag gestures for world-anchored nodes; preview nodes
                 // must receive taps for plane placement.
@@ -1344,12 +1683,19 @@ internal class AndroidARView(
                 if (!enableRotation || motionEvent.pointerCount < 2) {
                     return panPending || isPanning
                 }
+                cancelQueuedTap()
+                cancelActivePanGesture()
+
                 val anchored = findNearestAnchoredNodeToCamera(frame) ?: return false
+                if (!isTwoFingerTouchNearNode(frame, motionEvent, anchored)) {
+                    return panPending || isPanning
+                }
+
                 activeGestureNodeName = anchored.name
                 isRotating = true
                 isPanning = false
                 panPending = false
-                cancelQueuedTap()
+                pendingRotationDelta = 0f
                 lastRotationAngle = rotationAngle(motionEvent)
                 objectManagerChannel.invokeMethod("onRotationStart", anchored.name)
                 return true
@@ -1357,7 +1703,7 @@ internal class AndroidARView(
             MotionEvent.ACTION_MOVE -> {
                 val nodeName = activeGestureNodeName
 
-                if (panPending && enablePans && nodeName != null) {
+                if (panPending && enablePans && nodeName != null && motionEvent.pointerCount < 2) {
                     val dx = motionEvent.x - panStartX
                     val dy = motionEvent.y - panStartY
                     if (dx * dx + dy * dy > touchSlop * touchSlop) {
@@ -1375,20 +1721,29 @@ internal class AndroidARView(
 
                 if (isRotating && enableRotation && motionEvent.pointerCount >= 2) {
                     val currentAngle = rotationAngle(motionEvent)
-                    val delta = currentAngle - lastRotationAngle
+                    var delta = normalizeAngleDelta(currentAngle - lastRotationAngle)
                     lastRotationAngle = currentAngle
 
-                    rotateNode(node, delta)
+                    applyRotationDelta(node, delta)
                     objectManagerChannel.invokeMethod("onRotationChange", node.name)
                     return true
                 }
 
-                if (isPanning && enablePans) {
-                    val hitPose = hitTestPlaneOrPoint(frame, motionEvent, node) ?: return false
-                    moveNodeToPose(node, hitPose, smooth = true)
+                if (isPanning && enablePans && motionEvent.pointerCount < 2) {
+                    val hitPose = hitTestPlaneOrPoint(frame, motionEvent, node)
+                    if (hitPose != null) {
+                        moveNodeToPose(node, hitPose, smooth = true)
+                    }
                     return true
                 }
-                return panPending
+                return panPending || isRotating
+            }
+            MotionEvent.ACTION_POINTER_UP -> {
+                if (isRotating && motionEvent.pointerCount - 1 < 2) {
+                    finishRotationGesture()
+                    return true
+                }
+                return panPending || isPanning || isRotating
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 val nodeName = activeGestureNodeName
@@ -1402,6 +1757,7 @@ internal class AndroidARView(
                         )
                     }
                     if (isRotating && transform != null) {
+                        flushPendingRotation(node)
                         objectManagerChannel.invokeMethod(
                             "onRotationEnd",
                             mapOf("name" to nodeName, "transform" to transform)
@@ -1413,10 +1769,156 @@ internal class AndroidARView(
                 isRotating = false
                 panPending = false
                 lastRotationAngle = 0f
+                pendingRotationDelta = 0f
                 return false
             }
             else -> return false
         }
+    }
+
+    private fun cancelActivePanGesture() {
+        if (!isPanning && !panPending) return
+        val nodeName = activeGestureNodeName
+        if (isPanning && nodeName != null) {
+            val node = nodesByName[nodeName]
+            val transform = node?.transformation
+            if (transform != null) {
+                objectManagerChannel.invokeMethod(
+                    "onPanEnd",
+                    mapOf("name" to nodeName, "transform" to transform)
+                )
+            }
+        }
+        isPanning = false
+        panPending = false
+    }
+
+    private fun finishRotationGesture() {
+        val nodeName = activeGestureNodeName
+        if (nodeName != null) {
+            val node = nodesByName[nodeName]
+            if (node != null) {
+                flushPendingRotation(node)
+                val transform = node.transformation
+                objectManagerChannel.invokeMethod(
+                    "onRotationEnd",
+                    mapOf("name" to nodeName, "transform" to transform)
+                )
+            }
+        }
+        isRotating = false
+        pendingRotationDelta = 0f
+        lastRotationAngle = 0f
+    }
+
+    private fun isTwoFingerTouchNearNode(
+        frame: Frame,
+        motionEvent: MotionEvent,
+        node: SimpleNode,
+    ): Boolean {
+        val midpoint = motionEventMidpoint(motionEvent) ?: return false
+        try {
+            val midX = midpoint.x
+            val midY = midpoint.y
+            val hits = frame.hitTest(midpoint)
+            val floorY = referenceFloorY
+            val viewWidth = textureView.width
+            val viewHeight = textureView.height
+
+            val hitPose = if (floorY != null && viewWidth > 0 && viewHeight > 0) {
+                fallbackSnapPoseFromRay(frame, midX, midY, floorY)
+                    ?: pickBestDragPlaneHit(hits, floorY)?.hitPose
+                    ?: hits.firstOrNull()?.hitPose
+            } else {
+                hits.firstOrNull()?.hitPose
+            }
+
+            if (hitPose != null) {
+                val nearest = findNearestNode(hitPose)
+                if (nearest?.name == node.name) {
+                    val pos = getNodeWorldPosition(node)
+                    val dx = hitPose.tx() - pos[0]
+                    val dz = hitPose.tz() - pos[2]
+                    val horizontalDistSq = dx * dx + dz * dz
+                    if (horizontalDistSq <=
+                        ROTATION_HIT_MAX_HORIZONTAL_DISTANCE_M * ROTATION_HIT_MAX_HORIZONTAL_DISTANCE_M
+                    ) {
+                        return true
+                    }
+                }
+            }
+
+            val screen = projectWorldToScreen(frame, getNodeWorldPosition(node)) ?: return false
+            val touchMidX = (motionEvent.getX(0) + motionEvent.getX(1)) / 2f
+            val touchMidY = (motionEvent.getY(0) + motionEvent.getY(1)) / 2f
+            val dx = screen[0] - touchMidX
+            val dy = screen[1] - touchMidY
+            return dx * dx + dy * dy <=
+                ROTATION_SCREEN_HIT_RADIUS_PX * ROTATION_SCREEN_HIT_RADIUS_PX
+        } finally {
+            midpoint.recycle()
+        }
+    }
+
+    private fun projectWorldToScreen(frame: Frame, worldPos: FloatArray): FloatArray? {
+        val viewWidth = textureView.width
+        val viewHeight = textureView.height
+        if (viewWidth <= 0 || viewHeight <= 0) return null
+
+        val camera = frame.camera
+        val viewMatrix = FloatArray(16)
+        val projMatrix = FloatArray(16)
+        camera.getViewMatrix(viewMatrix, 0)
+        camera.getProjectionMatrix(projMatrix, 0, 0.1f, 100f)
+
+        val vpMatrix = FloatArray(16)
+        Matrix.multiplyMM(vpMatrix, 0, projMatrix, 0, viewMatrix, 0)
+
+        val world = floatArrayOf(worldPos[0], worldPos[1], worldPos[2], 1f)
+        val clip = FloatArray(4)
+        Matrix.multiplyMV(clip, 0, vpMatrix, 0, world, 0)
+        if (kotlin.math.abs(clip[3]) < 1e-6f) return null
+
+        val ndcX = clip[0] / clip[3]
+        val ndcY = clip[1] / clip[3]
+        if (ndcX < -1f || ndcX > 1f || ndcY < -1f || ndcY > 1f) return null
+
+        val screenX = (ndcX + 1f) * 0.5f * viewWidth
+        val screenY = (1f - ndcY) * 0.5f * viewHeight
+        return floatArrayOf(screenX, screenY)
+    }
+
+    private fun normalizeAngleDelta(delta: Float): Float {
+        var normalized = delta
+        if (normalized > Math.PI) normalized -= (2 * Math.PI).toFloat()
+        if (normalized < -Math.PI) normalized += (2 * Math.PI).toFloat()
+        return normalized
+    }
+
+    private fun applyRotationDelta(node: SimpleNode, deltaRadians: Float) {
+        if (kotlin.math.abs(deltaRadians) < ROTATION_DEAD_ZONE_RADIANS) {
+            if (kotlin.math.abs(pendingRotationDelta) >= ROTATION_DEAD_ZONE_RADIANS) {
+                val residual = pendingRotationDelta * ROTATION_SMOOTH_FACTOR
+                pendingRotationDelta -= residual
+                rotateNode(node, -residual)
+            }
+            return
+        }
+
+        pendingRotationDelta += deltaRadians * ROTATION_SENSITIVITY
+        val applied = pendingRotationDelta * ROTATION_SMOOTH_FACTOR
+        pendingRotationDelta -= applied
+        if (kotlin.math.abs(applied) < ROTATION_DEAD_ZONE_RADIANS) return
+        rotateNode(node, -applied)
+    }
+
+    private fun flushPendingRotation(node: SimpleNode) {
+        if (kotlin.math.abs(pendingRotationDelta) < ROTATION_DEAD_ZONE_RADIANS) {
+            pendingRotationDelta = 0f
+            return
+        }
+        rotateNode(node, -pendingRotationDelta)
+        pendingRotationDelta = 0f
     }
 
     private fun hitTestPlaneOrPoint(
@@ -1429,31 +1931,21 @@ internal class AndroidARView(
         logDragHitDiagnostics(hitResults)
 
         val floorY = referenceFloorY
-        val planeHit = hitResults.firstOrNull { result ->
-            val trackable = result.trackable
-            if (trackable !is Plane) return@firstOrNull false
-            val isFloorPlane = trackable.type == Plane.Type.HORIZONTAL_UPWARD_FACING &&
-                trackable.trackingState == TrackingState.TRACKING &&
-                trackable.isPoseInPolygon(result.hitPose)
-            if (!isFloorPlane) return@firstOrNull false
-            val isNearFloorHeight = floorY == null ||
-                kotlin.math.abs(result.hitPose.ty() - floorY) < floorHeightToleranceM
-            if (!isNearFloorHeight) return@firstOrNull false
-            distanceToPolygonEdge(trackable, result.hitPose) > MIN_PLANE_EDGE_MARGIN_M
-        } ?: return null
-
-        planeHit.hitPose.toMatrix(scratchHitMatrix, 0)
-        val jumpM = translationDeltaM(currentMatrix, scratchHitMatrix)
-        if (jumpM > MAX_DRAG_JUMP_M) {
-            if (BuildConfig.DEBUG) {
-                Log.d(
-                    TAG,
-                    "dragHit: rejected jump=${"%.3f".format(jumpM)}m > MAX_DRAG_JUMP_M=$MAX_DRAG_JUMP_M",
-                )
-            }
-            return null
+        var hitPose: Pose? = null
+        if (floorY != null) {
+            // Ray-to-floor first: works in open areas and room corners without polygon edge rejection.
+            hitPose = fallbackSnapPoseFromRay(frame, motionEvent.x, motionEvent.y, floorY)
+                ?: pickBestDragPlaneHit(hitResults, floorY)?.hitPose
+                ?: fallbackSnapPoseFromPlaneHits(hitResults, floorY)
+                ?: fallbackSnapPoseFromFeatureHits(hitResults, floorY)
+        } else {
+            hitPose = pickBestDragPlaneHit(hitResults, null)?.hitPose
         }
-        return planeHit.hitPose
+
+        if (hitPose == null) return null
+        val finalPose = finalizeDragHitPose(currentMatrix, hitPose, floorY)
+        if (floorY != null && !validateDragSnapPose(finalPose, floorY)) return null
+        return finalPose
     }
 
     /**
@@ -1515,27 +2007,34 @@ internal class AndroidARView(
             }
 
             val passesFloorPlane = trackable is Plane &&
-                trackable.type == Plane.Type.HORIZONTAL_UPWARD_FACING &&
-                trackable.trackingState == TrackingState.TRACKING &&
+                isTrackingFloorPlane(trackable) &&
                 trackable.isPoseInPolygon(result.hitPose)
             val passesHeight = floorY == null ||
                 kotlin.math.abs(hitY - floorY) < floorHeightToleranceM
-            var edgeDistStr = " edgeDist=n/a"
-            var passesEdgeMargin = true
-            var rejectedTooCloseToEdge = false
-            if (trackable is Plane && passesFloorPlane) {
-                val edgeDist = distanceToPolygonEdge(trackable, result.hitPose)
-                passesEdgeMargin = edgeDist > MIN_PLANE_EDGE_MARGIN_M
-                rejectedTooCloseToEdge = !passesEdgeMargin
-                edgeDistStr = " edgeDist=${"%.3f".format(edgeDist)} passesEdgeMargin=$passesEdgeMargin"
-                if (rejectedTooCloseToEdge) {
-                    edgeDistStr += " REJECTED_TOO_CLOSE_TO_EDGE"
+            val planeHeightDelta = if (trackable is Plane && floorY != null) {
+                planeHeightDeltaFromReference(trackable, floorY)
+            } else {
+                null
+            }
+            val passesPlaneHeightBand = planeHeightDelta == null ||
+                planeHeightDelta <= MAX_DRAG_PLANE_HEIGHT_BAND_M
+            var wallStr = ""
+            if (floorY != null && trackable is Plane && isTrackingFloorPlane(trackable)) {
+                val snapPose = snapPoseToReferenceFloorY(result.hitPose, floorY)
+                val edgeDist = distanceToPolygonEdge(trackable, snapPose)
+                val passesDrag = validateDragSnapPose(snapPose, floorY)
+                val clearance = requiredWallClearance(snapPose, floorY)
+                wallStr = " planeHeightDelta=${"%.3f".format(planeHeightDelta)}" +
+                    " passesPlaneHeightBand=$passesPlaneHeightBand edgeDist=${"%.3f".format(edgeDist)}" +
+                    " wallClearance=${"%.3f".format(clearance)} passesDrag=$passesDrag"
+                if (!passesDrag) {
+                    wallStr += " REJECTED_WALL_OR_FLOOR"
                 }
             }
             Log.d(
                 TAG,
                 "dragHit[$index] type=$typeStr state=$stateStr hitY=$hitY" +
-                    " passesFloorPlane=$passesFloorPlane passesHeight=$passesHeight$edgeDistStr$extra",
+                    " passesFloorPlane=$passesFloorPlane passesHeight=$passesHeight$wallStr$extra",
             )
         }
     }
@@ -1649,7 +2148,7 @@ internal class AndroidARView(
         val transform = node.transformation
         if (transform.size < 16) return
 
-        val smoothFactor = 0.32
+        val smoothFactor = if (smooth) DRAG_SMOOTH_FACTOR else 1.0f
 
         if (node.anchorName != null) {
             transform[12] = if (smooth) {
@@ -1709,8 +2208,7 @@ internal class AndroidARView(
         val planeHits = hits.filter { hit ->
             val trackable = hit.trackable
             trackable is Plane &&
-                trackable.type == Plane.Type.HORIZONTAL_UPWARD_FACING &&
-                trackable.trackingState == TrackingState.TRACKING &&
+                isTrackingFloorPlane(trackable) &&
                 trackable.isPoseInPolygon(hit.hitPose)
         }
         if (planeHits.isEmpty()) {
@@ -1763,6 +2261,7 @@ internal class AndroidARView(
                 }
                 // Lock drag hit-testing to the floor height established at placement.
                 referenceFloorY = hit.hitPose.ty()
+                placementInteriorPose = hit.hitPose
                 Log.d(
                     TAG,
                     "Placement anchor: hitY=${hit.hitPose.ty()} tx=${hit.hitPose.tx()} " +
@@ -1815,6 +2314,7 @@ internal class AndroidARView(
         anchorStableTrackingFrames.remove(name)
         if (anchorsByName.isEmpty()) {
             referenceFloorY = null
+            placementInteriorPose = null
         }
     }
 

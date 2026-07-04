@@ -25,14 +25,13 @@ class ArDoneButton extends StatelessWidget {
   }
 }
 
-/// Rotate / Reset / Scale controls that auto-hide when idle.
+/// Reset / Scale controls that auto-hide when idle.
 class ArEditingToolbar extends StatelessWidget {
   const ArEditingToolbar({
     required this.visible,
     required this.scaleMultiplier,
     required this.minMultiplier,
     required this.maxMultiplier,
-    required this.onRotate,
     required this.onScaleChanged,
     required this.onReset,
     super.key,
@@ -42,7 +41,6 @@ class ArEditingToolbar extends StatelessWidget {
   final double scaleMultiplier;
   final double minMultiplier;
   final double maxMultiplier;
-  final VoidCallback onRotate;
   final ValueChanged<double> onScaleChanged;
   final VoidCallback onReset;
 
@@ -71,13 +69,8 @@ class ArEditingToolbar extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _ToolbarIconButton(
-                          icon: Icons.rotate_right_outlined,
-                          label: 'Rotate',
-                          onTap: onRotate,
-                        ),
-                        const SizedBox(width: 8),
                         _ToolbarIconButton(
                           icon: Icons.restart_alt_outlined,
                           label: 'Reset',
