@@ -23,8 +23,9 @@ import java.nio.ShortBuffer
 /**
  * Renders the ARCore camera feed as a Filament fullscreen quad behind scene content.
  *
- * [textureIds] must be created with [OpenGL.createExternalTextureId] while Filament's GL
- * context is current (inside [com.google.android.filament.Renderer.beginFrame]).
+ * When [depthOcclusionEnabled] is true and a depth image is available, switches to a material
+ * that writes real-world depth via [gl_FragDepth] while compositing the camera (hello_ar_filament
+ * pattern). Virtual geometry can then depth-test against the background pass.
  */
 internal class CameraBackgroundRenderer(
     private val context: Context,
@@ -36,11 +37,13 @@ internal class CameraBackgroundRenderer(
         const val TEXTURE_COUNT = 6
         private const val TAG = "CameraBackgroundRenderer"
         private const val CAMERA_PRIORITY_BACKGROUND = 7
+        /** Push trusted real-world depth away from camera to reduce false interior holes. */
+        const val DEFAULT_OCCLUSION_BIAS_MM = 55f
+        /** Ignore depth pixels below this confidence (0..1). */
+        const val DEFAULT_MIN_CONFIDENCE = 0.38f
         private const val FLOAT_SIZE_BYTES = 4
         private const val POSITION_BUFFER_INDEX = 0
         private const val UV_BUFFER_INDEX = 1
-        // Single large triangle (SceneView / ARCore pattern) — avoids quad winding issues
-        // with Filament's device-domain camera material.
         private const val VERTEX_COUNT = 3
 
         private val CAMERA_VERTICES = floatArrayOf(
@@ -61,11 +64,20 @@ internal class CameraBackgroundRenderer(
     private val entity = EntityManager.get().create()
     private val cameraTextures: Map<Int, Texture>
     private var activeCameraTexture: Texture
-    private val material: Material
-    private val materialInstance: MaterialInstance
+    private val flatMaterial: Material
+    private val flatMaterialInstance: MaterialInstance
+    private var depthMaterial: Material? = null
+    private var depthMaterialInstance: MaterialInstance? = null
+    private var arDepthTexture: ArDepthTexture? = null
     private val vertexBuffer: VertexBuffer
     private val indexBuffer: IndexBuffer
     private val uvTransform = FloatArray(16)
+    private var renderableInstance = 0
+    private var usingDepthMaterial = false
+
+    var depthOcclusionEnabled = false
+    var occlusionBiasMm = DEFAULT_OCCLUSION_BIAS_MM
+    var minConfidence = DEFAULT_MIN_CONFIDENCE
 
     private val uvCoordinates: FloatBuffer =
         ByteBuffer.allocateDirect(CAMERA_UVS.size * FLOAT_SIZE_BYTES)
@@ -99,12 +111,12 @@ internal class CameraBackgroundRenderer(
                 rewind()
             }
         }
-        material = Material.Builder()
+        flatMaterial = Material.Builder()
             .payload(materialBuffer, materialBuffer.remaining())
             .build(engine)
-        materialInstance = material.createInstance().apply {
+        flatMaterialInstance = flatMaterial.createInstance().apply {
             setParameter("uvTransform", MaterialInstance.FloatElement.MAT4, uvTransform, 0, 1)
-            setParameter("cameraTexture", activeCameraTexture, TextureSampler())
+            setParameter("cameraTexture", activeCameraTexture, CameraTextureSampler())
         }
 
         vertexBuffer = VertexBuffer.Builder()
@@ -153,9 +165,10 @@ internal class CameraBackgroundRenderer(
                 vertexBuffer,
                 indexBuffer,
             )
-            .material(0, materialInstance)
+            .material(0, flatMaterialInstance)
             .build(engine, entity)
 
+        renderableInstance = engine.renderableManager.getInstance(entity)
         scene.addEntity(entity)
         Log.d(TAG, "Created camera background with ${textureIds.size} external textures")
     }
@@ -175,43 +188,130 @@ internal class CameraBackgroundRenderer(
         cameraTextures[frame.cameraTextureName]?.let { texture ->
             if (texture !== activeCameraTexture) {
                 activeCameraTexture = texture
-                materialInstance.setParameter("cameraTexture", texture, TextureSampler())
+                flatMaterialInstance.setParameter("cameraTexture", texture, CameraTextureSampler())
+                depthMaterialInstance?.setParameter("cameraTexture", texture, CameraTextureSampler())
             }
         }
 
-        if (transformedUvCoordinates == null || frame.hasDisplayGeometryChanged()) {
-            val transformed = transformedUvCoordinates ?: uvCoordinates.duplicate().also {
-                transformedUvCoordinates = it
-            }
-            transformed.position(0)
+        updateUvCoordinates(frame)
 
-            frame.transformCoordinates2d(
-                Coordinates2d.VIEW_NORMALIZED,
-                uvCoordinates,
-                Coordinates2d.TEXTURE_NORMALIZED,
-                transformed,
-            )
-            transformed.position(0)
-
-            for (i in 1 until VERTEX_COUNT * 2 step 2) {
-                transformed.put(i, 1.0f - transformed.get(i))
+        if (depthOcclusionEnabled) {
+            val depthUploader = ensureDepthMaterial()
+            depthUploader?.update(frame)
+            if (depthUploader?.hasValidDepth == true) {
+                val depthTexture = depthUploader.getTexture()
+                if (depthTexture != null) {
+                    switchToDepthMaterial(depthTexture, depthUploader)
+                } else {
+                    switchToFlatMaterial()
+                }
+            } else {
+                switchToFlatMaterial()
             }
-            transformed.position(0)
-            vertexBuffer.setBufferAt(engine, UV_BUFFER_INDEX, transformed)
+        } else if (usingDepthMaterial) {
+            switchToFlatMaterial()
         }
     }
 
     fun destroy() {
         scene.removeEntity(entity)
         engine.destroyEntity(entity)
-        engine.destroyMaterialInstance(materialInstance)
-        engine.destroyMaterial(material)
+        engine.destroyMaterialInstance(flatMaterialInstance)
+        engine.destroyMaterial(flatMaterial)
+        depthMaterialInstance?.let { engine.destroyMaterialInstance(it) }
+        depthMaterial?.let { engine.destroyMaterial(it) }
+        arDepthTexture?.destroy()
         engine.destroyVertexBuffer(vertexBuffer)
         engine.destroyIndexBuffer(indexBuffer)
         cameraTextures.values.forEach { engine.destroyTexture(it) }
     }
 
-    private class TextureSampler : com.google.android.filament.TextureSampler(
+    private fun updateUvCoordinates(frame: Frame) {
+        if (transformedUvCoordinates != null && !frame.hasDisplayGeometryChanged()) {
+            return
+        }
+
+        val transformed = transformedUvCoordinates ?: uvCoordinates.duplicate().also {
+            transformedUvCoordinates = it
+        }
+        transformed.position(0)
+
+        frame.transformCoordinates2d(
+            Coordinates2d.VIEW_NORMALIZED,
+            uvCoordinates,
+            Coordinates2d.TEXTURE_NORMALIZED,
+            transformed,
+        )
+        transformed.position(0)
+
+        for (i in 1 until VERTEX_COUNT * 2 step 2) {
+            transformed.put(i, 1.0f - transformed.get(i))
+        }
+        transformed.position(0)
+        vertexBuffer.setBufferAt(engine, UV_BUFFER_INDEX, transformed)
+    }
+
+    private fun ensureDepthMaterial(): ArDepthTexture? {
+        if (arDepthTexture != null) {
+            return arDepthTexture
+        }
+
+        return try {
+            val depthMaterialBuffer =
+                context.assets.open("materials/camera_stream_depth.filamat").use { input ->
+                    val bytes = input.readBytes()
+                    ByteBuffer.allocateDirect(bytes.size).apply {
+                        put(bytes)
+                        rewind()
+                    }
+                }
+            val createdDepthMaterial = Material.Builder()
+                .payload(depthMaterialBuffer, depthMaterialBuffer.remaining())
+                .build(engine)
+            val createdDepthInstance = createdDepthMaterial.createInstance().apply {
+                setParameter("uvTransform", MaterialInstance.FloatElement.MAT4, uvTransform, 0, 1)
+                setParameter("cameraTexture", activeCameraTexture, CameraTextureSampler())
+                setParameter("depthTextureInvSize", 1f, 1f)
+                setParameter("occlusionBiasMm", occlusionBiasMm)
+                setParameter("minConfidence", minConfidence)
+            }
+            depthMaterial = createdDepthMaterial
+            depthMaterialInstance = createdDepthInstance
+            ArDepthTexture(engine).also { arDepthTexture = it }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to initialize depth camera material", e)
+            null
+        }
+    }
+
+    private fun switchToDepthMaterial(depthTexture: Texture, depthUploader: ArDepthTexture) {
+        val depthInstance = depthMaterialInstance ?: return
+        if (renderableInstance == 0) return
+
+        val invSize = depthUploader.textureInvSize
+        depthInstance.setParameter("depthTexture", depthTexture, DepthTextureSampler())
+        depthInstance.setParameter("depthTextureInvSize", invSize[0], invSize[1])
+        depthInstance.setParameter("occlusionBiasMm", occlusionBiasMm)
+        depthInstance.setParameter("minConfidence", minConfidence)
+        if (!usingDepthMaterial) {
+            engine.renderableManager.setMaterialInstanceAt(renderableInstance, 0, depthInstance)
+            usingDepthMaterial = true
+        }
+    }
+
+    private fun switchToFlatMaterial() {
+        if (renderableInstance == 0 || !usingDepthMaterial) return
+        engine.renderableManager.setMaterialInstanceAt(renderableInstance, 0, flatMaterialInstance)
+        usingDepthMaterial = false
+    }
+
+    private class CameraTextureSampler : com.google.android.filament.TextureSampler(
+        MinFilter.LINEAR,
+        MagFilter.LINEAR,
+        WrapMode.CLAMP_TO_EDGE,
+    )
+
+    private class DepthTextureSampler : com.google.android.filament.TextureSampler(
         MinFilter.LINEAR,
         MagFilter.LINEAR,
         WrapMode.CLAMP_TO_EDGE,

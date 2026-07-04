@@ -66,6 +66,27 @@ internal class AndroidARView(
 ) : PlatformView {
     companion object {
         private val cachedImageDatabaseBytes: MutableMap<String, ByteArray> = mutableMapOf()
+
+        /** Log frozen-vs-live anchor delta every N frames (diagnostic). */
+        private const val ANCHOR_DRIFT_LOG_INTERVAL_FRAMES = 30
+        /** Fraction of live anchor pose blended per frame (2–5% avoids plane-refinement jitter). */
+        private const val ANCHOR_RESYNC_ALPHA = 0.03f
+        /** Faster catch-up when relocalization produces a large jump. */
+        private const val ANCHOR_RESYNC_LARGE_DRIFT_ALPHA = 0.12f
+        /** Positional delta below this is ignored (sub-millimeter noise). */
+        private const val ANCHOR_RESYNC_MIN_DELTA_M = 0.002f
+        /** Above this, treat as relocalization and use accelerated lerp. */
+        private const val ANCHOR_RESYNC_LARGE_DELTA_M = 0.05f
+        /** Require this many consecutive TRACKING frames before re-syncing. */
+        private const val ANCHOR_RESYNC_STABLE_FRAMES_REQUIRED = 5
+        /** Prefer planes at least this wide/deep for initial placement. */
+        private const val MIN_PLACEMENT_PLANE_EXTENT_M = 0.15f
+        /** Warn when placing before the session has this much stable tracking. */
+        private const val PREFERRED_SESSION_STABLE_FRAMES_FOR_PLACEMENT = 15
+        /** Reject drag hits closer than this to a floor-plane polygon edge (wall seam bleed). */
+        private const val MIN_PLANE_EDGE_MARGIN_M = 0.06f
+        /** Reject a single drag frame whose hit jumps farther than this from the current pose. */
+        private const val MAX_DRAG_JUMP_M = 0.35f
     }
     private val TAG = "AndroidARView"
 
@@ -101,6 +122,9 @@ internal class AndroidARView(
     private var panStartY = 0f
     private var lastRotationAngle = 0f
     private var hasReportedPlaneDetection = false
+    /// Y-height of the floor plane at initial placement; drag hits must stay within tolerance.
+    private var referenceFloorY: Float? = null
+    private val floorHeightToleranceM = 0.05f
     private var planeDetectionFrameSkip = 0
     private var ancillaryFrameSkip = 0
     private var imageTrackingEnabled = false
@@ -117,6 +141,8 @@ internal class AndroidARView(
     private var stableTrackingFrames = 0
     private var nonTrackingFrames = 0
     private val requiredStableTrackingFrames = 10
+    /** Consecutive TRACKING frames for the session (independent of showWorldOrigin). */
+    private var sessionStableTrackingFrames = 0
     private val activeAugmentedImages: MutableSet<String> = mutableSetOf()
     private val lastAugmentedImageUpdateMs: MutableMap<String, Long> = mutableMapOf()
     private var continuousImageTracking = false
@@ -135,6 +161,24 @@ internal class AndroidARView(
     private val anchorsByName: MutableMap<String, Anchor> = mutableMapOf()
     private val anchorChildren: MutableMap<String, MutableList<String>> = mutableMapOf()
     private val anchorTransformsByName: MutableMap<String, FloatArray> = mutableMapOf()
+    /** Consecutive TRACKING frames per anchor before drift re-sync is applied. */
+    private val anchorStableTrackingFrames: MutableMap<String, Int> = mutableMapOf()
+    private var anchorDriftLogFrameCounter = 0
+
+    private val scratchLiveAnchorMatrix = FloatArray(16)
+    private val scratchNodeMatrix = FloatArray(16)
+    private val scratchAnchorMatrix = FloatArray(16)
+    private val scratchModelMatrix = FloatArray(16)
+    private val scratchScaleMatrix = FloatArray(16)
+    private val scratchScaledModelMatrix = FloatArray(16)
+    private val scratchHitMatrix = FloatArray(16)
+    private val scratchInvAnchor = FloatArray(16)
+    private val scratchLocalMatrix = FloatArray(16)
+    private val scratchGestureMatrix = FloatArray(16)
+    private val scratchQFrozen = FloatArray(4)
+    private val scratchQLive = FloatArray(4)
+    private val scratchQBlended = FloatArray(4)
+    private val scratchWorldPosition = FloatArray(3)
     /// Cached world matrices — recomputed only when a node transform changes.
     private val cachedWorldMatrices: MutableMap<String, FloatArray> = mutableMapOf()
     private val dirtyTransformNodes: MutableSet<String> = mutableSetOf()
@@ -156,6 +200,12 @@ internal class AndroidARView(
                         "setLightIntensityMultiplier" -> {
                             val multiplier = call.argument<Number>("multiplier")?.toFloat() ?: 1.0f
                             filamentRenderer.setLightIntensityMultiplier(multiplier)
+                            result.success(null)
+                        }
+                        "setDepthOcclusionEnabled" -> {
+                            val enabled = call.argument<Boolean>("enabled") == true
+                            filamentRenderer.depthOcclusionEnabled = enabled
+                            Log.d(TAG, "Depth occlusion rendering ${if (enabled) "enabled" else "disabled"} (runtime toggle)")
                             result.success(null)
                         }
                         "setShowPlanes" -> {
@@ -622,13 +672,20 @@ internal class AndroidARView(
             3 -> config.planeFindingMode = Config.PlaneFindingMode.HORIZONTAL_AND_VERTICAL
             else -> config.planeFindingMode = Config.PlaneFindingMode.DISABLED
         }
-        config.depthMode = Config.DepthMode.DISABLED
+        config.depthMode = if (session!!.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
+            Log.d(TAG, "Enabling ARCore AUTOMATIC depth mode for real-world occlusion")
+            Config.DepthMode.AUTOMATIC
+        } else {
+            Log.d(TAG, "ARCore depth not supported; virtual objects will not be occluded")
+            Config.DepthMode.DISABLED
+        }
+        filamentRenderer.depthOcclusionEnabled = config.depthMode != Config.DepthMode.DISABLED
         config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
         config.focusMode = Config.FocusMode.AUTO
-        // Filament uses its own studio rig — skip ARCore HDR estimation for CPU savings.
-        config.lightEstimationMode = Config.LightEstimationMode.DISABLED
+        config.lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
         session!!.configure(config)
         configureBestCameraConfig(session!!)
+        filamentRenderer.environmentalLightEstimationEnabled = true
 
         // Configure image tracking
         applyImageTrackingSettings(
@@ -701,45 +758,44 @@ internal class AndroidARView(
     }
 
     /**
-     * Picks the highest-resolution camera mode, preferring 60fps when it is close in
-     * resolution to the best 30fps mode (smooth motion without sacrificing too much detail).
+     * Picks a 30 fps camera mode at or below 1280x720 to leave headroom for depth + Filament.
      */
     private fun configureBestCameraConfig(session: Session) {
+        val maxWidth = 1280
+        val maxHeight = 720
         try {
-            val filter60 = CameraConfigFilter(session)
-                .setTargetFps(EnumSet.of(CameraConfig.TargetFps.TARGET_FPS_60))
-            val configs60 = session.getSupportedCameraConfigs(filter60)
-
             val filter30 = CameraConfigFilter(session)
                 .setTargetFps(EnumSet.of(CameraConfig.TargetFps.TARGET_FPS_30))
             val configs30 = session.getSupportedCameraConfigs(filter30)
+            if (configs30.isEmpty()) {
+                Log.w(TAG, "No 30fps camera configs available; using ARCore default")
+                return
+            }
 
             fun resolutionPixels(config: CameraConfig): Long {
                 val size = config.imageSize
                 return size.width.toLong() * size.height.toLong()
             }
 
-            val best60 = configs60.maxByOrNull(::resolutionPixels)
-            val best30 = configs30.maxByOrNull(::resolutionPixels)
-
-            val selected = when {
-                best60 != null && best30 != null -> {
-                    val px60 = resolutionPixels(best60)
-                    val px30 = resolutionPixels(best30)
-                    if (px60 >= px30 * 85 / 100) best60 else best30
-                }
-                best60 != null -> best60
-                best30 != null -> best30
-                else -> session.getSupportedCameraConfigs(CameraConfigFilter(session))
-                    .maxByOrNull(::resolutionPixels)
+            val withinCap = configs30.filter { config ->
+                val size = config.imageSize
+                size.width <= maxWidth && size.height <= maxHeight
             }
+
+            val selected = withinCap.maxByOrNull(::resolutionPixels)
+                ?: configs30.minByOrNull { config ->
+                    val size = config.imageSize
+                    kotlin.math.max(0, size.width - maxWidth) +
+                        kotlin.math.max(0, size.height - maxHeight)
+                }
 
             if (selected != null) {
                 session.cameraConfig = selected
                 val size = selected.imageSize
                 Log.d(
                     TAG,
-                    "AR camera config: ${size.width}x${size.height}, fps=${selected.fpsRange}",
+                    "AR camera config: ${size.width}x${size.height}, fps=${selected.fpsRange}, " +
+                        "depthMode=${session.config.depthMode} (capped <= ${maxWidth}x$maxHeight @30fps)",
                 )
             }
         } catch (e: Exception) {
@@ -905,44 +961,286 @@ internal class AndroidARView(
         }
     }
 
+    private fun translationDeltaM(a: FloatArray, b: FloatArray): Float {
+        val dx = b[12] - a[12]
+        val dy = b[13] - a[13]
+        val dz = b[14] - a[14]
+        return kotlin.math.sqrt(dx * dx + dy * dy + dz * dz)
+    }
+
+    /** Minimum distance from (px, pz) to the line segment (x1,z1)-(x2,z2) in the XZ plane. */
+    private fun pointToSegmentDist(
+        px: Float,
+        pz: Float,
+        x1: Float,
+        z1: Float,
+        x2: Float,
+        z2: Float,
+    ): Float {
+        val dx = x2 - x1
+        val dz = z2 - z1
+        val lenSq = dx * dx + dz * dz
+        if (lenSq < 1e-10f) {
+            val dpx = px - x1
+            val dpz = pz - z1
+            return kotlin.math.sqrt(dpx * dpx + dpz * dpz)
+        }
+        var t = ((px - x1) * dx + (pz - z1) * dz) / lenSq
+        t = t.coerceIn(0f, 1f)
+        val projX = x1 + t * dx
+        val projZ = z1 + t * dz
+        val dpx = px - projX
+        val dpz = pz - projZ
+        return kotlin.math.sqrt(dpx * dpx + dpz * dpz)
+    }
+
+    /**
+     * Distance from [hitPose] to the nearest edge of [plane]'s convex polygon,
+     * measured in the plane's local XZ coordinates.
+     */
+    private fun distanceToPolygonEdge(plane: Plane, hitPose: Pose): Float {
+        val localPose = plane.centerPose.inverse().compose(hitPose)
+        val px = localPose.tx()
+        val pz = localPose.tz()
+
+        val polygon = plane.polygon
+        val limit = polygon.limit()
+        if (limit < 4) return Float.MAX_VALUE
+
+        val vertexCount = limit / 2
+        var minDist = Float.MAX_VALUE
+        for (i in 0 until vertexCount) {
+            val x1 = polygon.get(i * 2)
+            val z1 = polygon.get(i * 2 + 1)
+            val next = (i + 1) % vertexCount
+            val x2 = polygon.get(next * 2)
+            val z2 = polygon.get(next * 2 + 1)
+            val dist = pointToSegmentDist(px, pz, x1, z1, x2, z2)
+            if (dist < minDist) minDist = dist
+        }
+        return minDist
+    }
+
+    private fun rotationMatrixToQuaternion(m: FloatArray, out: FloatArray) {
+        val trace = m[0] + m[5] + m[10]
+        when {
+            trace > 0f -> {
+                val s = kotlin.math.sqrt(trace + 1f) * 2f
+                out[3] = 0.25f * s
+                out[0] = (m[9] - m[6]) / s
+                out[1] = (m[2] - m[8]) / s
+                out[2] = (m[4] - m[1]) / s
+            }
+            m[0] > m[5] && m[0] > m[10] -> {
+                val s = kotlin.math.sqrt(1f + m[0] - m[5] - m[10]) * 2f
+                out[3] = (m[9] - m[6]) / s
+                out[0] = 0.25f * s
+                out[1] = (m[1] + m[4]) / s
+                out[2] = (m[2] + m[8]) / s
+            }
+            m[5] > m[10] -> {
+                val s = kotlin.math.sqrt(1f + m[5] - m[0] - m[10]) * 2f
+                out[3] = (m[2] - m[8]) / s
+                out[0] = (m[1] + m[4]) / s
+                out[1] = 0.25f * s
+                out[2] = (m[6] + m[9]) / s
+            }
+            else -> {
+                val s = kotlin.math.sqrt(1f + m[10] - m[0] - m[5]) * 2f
+                out[3] = (m[4] - m[1]) / s
+                out[0] = (m[2] + m[8]) / s
+                out[1] = (m[6] + m[9]) / s
+                out[2] = 0.25f * s
+            }
+        }
+        val length = kotlin.math.sqrt(out[0] * out[0] + out[1] * out[1] + out[2] * out[2] + out[3] * out[3])
+        if (length > 0f) {
+            out[0] /= length
+            out[1] /= length
+            out[2] /= length
+            out[3] /= length
+        }
+    }
+
+    private fun slerpQuaternion(a: FloatArray, b: FloatArray, t: Float, out: FloatArray) {
+        var bx = b[0]
+        var by = b[1]
+        var bz = b[2]
+        var bw = b[3]
+        var dot = a[0] * bx + a[1] * by + a[2] * bz + a[3] * bw
+        if (dot < 0f) {
+            dot = -dot
+            bx = -bx
+            by = -by
+            bz = -bz
+            bw = -bw
+        }
+        if (dot > 0.9995f) {
+            out[0] = a[0] + t * (bx - a[0])
+            out[1] = a[1] + t * (by - a[1])
+            out[2] = a[2] + t * (bz - a[2])
+            out[3] = a[3] + t * (bw - a[3])
+            val length = kotlin.math.sqrt(
+                out[0] * out[0] + out[1] * out[1] + out[2] * out[2] + out[3] * out[3],
+            )
+            if (length > 0f) {
+                out[0] /= length
+                out[1] /= length
+                out[2] /= length
+                out[3] /= length
+            }
+            return
+        }
+        val theta0 = kotlin.math.acos(dot.coerceIn(-1f, 1f))
+        val theta = theta0 * t
+        val sinTheta = kotlin.math.sin(theta)
+        val sinTheta0 = kotlin.math.sin(theta0)
+        val s0 = kotlin.math.cos(theta) - dot * sinTheta / sinTheta0
+        val s1 = sinTheta / sinTheta0
+        out[0] = s0 * a[0] + s1 * bx
+        out[1] = s0 * a[1] + s1 * by
+        out[2] = s0 * a[2] + s1 * bz
+        out[3] = s0 * a[3] + s1 * bw
+    }
+
+    private fun applyQuaternionToRotationMatrix(matrix: FloatArray, q: FloatArray) {
+        val x = q[0]
+        val y = q[1]
+        val z = q[2]
+        val w = q[3]
+        matrix[0] = 1f - 2f * (y * y + z * z)
+        matrix[1] = 2f * (x * y + z * w)
+        matrix[2] = 2f * (x * z - y * w)
+        matrix[4] = 2f * (x * y - z * w)
+        matrix[5] = 1f - 2f * (x * x + z * z)
+        matrix[6] = 2f * (y * z + x * w)
+        matrix[8] = 2f * (x * z + y * w)
+        matrix[9] = 2f * (y * z - x * w)
+        matrix[10] = 1f - 2f * (x * x + y * y)
+    }
+
+    /** Slowly blend the frozen anchor matrix toward the live ARCore anchor pose. */
+    private fun lerpAnchorTransformTowardLive(frozen: FloatArray, live: FloatArray, alpha: Float) {
+        frozen[12] += (live[12] - frozen[12]) * alpha
+        frozen[13] += (live[13] - frozen[13]) * alpha
+        frozen[14] += (live[14] - frozen[14]) * alpha
+        rotationMatrixToQuaternion(frozen, scratchQFrozen)
+        rotationMatrixToQuaternion(live, scratchQLive)
+        slerpQuaternion(scratchQFrozen, scratchQLive, alpha, scratchQBlended)
+        applyQuaternionToRotationMatrix(frozen, scratchQBlended)
+    }
+
+    private fun logAnchorDriftDiagnostics() {
+        if (anchorTransformsByName.isEmpty()) return
+        anchorDriftLogFrameCounter++
+        if (anchorDriftLogFrameCounter % ANCHOR_DRIFT_LOG_INTERVAL_FRAMES != 0) return
+
+        for ((name, frozen) in anchorTransformsByName) {
+            val anchor = anchorsByName[name]
+            if (anchor == null) {
+                Log.d(TAG, "AnchorDrift[$name]: anchor missing")
+                continue
+            }
+            val tracking = anchor.trackingState
+            if (tracking != TrackingState.TRACKING) {
+                Log.d(
+                    TAG,
+                    "AnchorDrift[$name]: tracking=$tracking " +
+                        "stableFrames=${anchorStableTrackingFrames[name] ?: 0}",
+                )
+                continue
+            }
+            anchor.pose.toMatrix(scratchLiveAnchorMatrix, 0)
+            val dx = scratchLiveAnchorMatrix[12] - frozen[12]
+            val dy = scratchLiveAnchorMatrix[13] - frozen[13]
+            val dz = scratchLiveAnchorMatrix[14] - frozen[14]
+            val deltaM = translationDeltaM(frozen, scratchLiveAnchorMatrix)
+            Log.d(
+                TAG,
+                "AnchorDrift[$name]: delta=${"%.4f".format(deltaM)}m " +
+                    "d=(${String.format("%.3f", dx)},${String.format("%.3f", dy)},${String.format("%.3f", dz)}) " +
+                    "frozenY=${String.format("%.3f", frozen[13])} liveY=${String.format("%.3f", scratchLiveAnchorMatrix[13])} " +
+                    "sessionStable=$sessionStableTrackingFrames " +
+                    "anchorStable=${anchorStableTrackingFrames[name] ?: 0}",
+            )
+        }
+    }
+
+    /**
+     * Re-sync frozen anchor transforms toward live [Anchor.pose] so relocalization
+     * corrections are not opted out of. Uses confidence-gated exponential smoothing
+     * to avoid the frame-to-frame jitter that motivated the original hard freeze.
+     */
+    private fun resyncFrozenAnchorsToLivePose() {
+        if (anchorTransformsByName.isEmpty()) return
+
+        var anyAnchorMoved = false
+        for ((anchorName, frozen) in anchorTransformsByName) {
+            val anchor = anchorsByName[anchorName] ?: continue
+            when (anchor.trackingState) {
+                TrackingState.TRACKING -> {
+                    val stable = (anchorStableTrackingFrames[anchorName] ?: 0) + 1
+                    anchorStableTrackingFrames[anchorName] = stable
+                    if (stable < ANCHOR_RESYNC_STABLE_FRAMES_REQUIRED) continue
+
+                    anchor.pose.toMatrix(scratchLiveAnchorMatrix, 0)
+                    val deltaM = translationDeltaM(frozen, scratchLiveAnchorMatrix)
+                    if (deltaM < ANCHOR_RESYNC_MIN_DELTA_M) continue
+
+                    val alpha = if (deltaM >= ANCHOR_RESYNC_LARGE_DELTA_M) {
+                        Log.i(
+                            TAG,
+                            "AnchorResync[$anchorName]: large drift ${"%.3f".format(deltaM)}m, " +
+                                "accelerated lerp",
+                        )
+                        ANCHOR_RESYNC_LARGE_DRIFT_ALPHA
+                    } else {
+                        ANCHOR_RESYNC_ALPHA
+                    }
+                    lerpAnchorTransformTowardLive(frozen, scratchLiveAnchorMatrix, alpha)
+                    anyAnchorMoved = true
+                }
+                else -> anchorStableTrackingFrames[anchorName] = 0
+            }
+        }
+
+        if (anyAnchorMoved) {
+            for ((_, childNodes) in anchorChildren) {
+                childNodes.forEach { dirtyTransformNodes.add(it) }
+            }
+        }
+    }
+
     private fun computeWorldMatrixForNode(node: SimpleNode): FloatArray {
-        val nodeMatrix = FloatArray(16)
-        val anchorMatrix = FloatArray(16)
-        val modelMatrix = FloatArray(16)
-        matrixFromTransform(node.transformation, nodeMatrix)
+        matrixFromTransform(node.transformation, scratchNodeMatrix)
         val anchorName = node.anchorName
         if (anchorName != null) {
             val stableAnchor = anchorTransformsByName[anchorName]
             if (stableAnchor != null) {
-                // Frozen at placement — never follow live plane refinement (causes jitter).
-                System.arraycopy(stableAnchor, 0, anchorMatrix, 0, 16)
-                Matrix.multiplyMM(modelMatrix, 0, anchorMatrix, 0, nodeMatrix, 0)
+                System.arraycopy(stableAnchor, 0, scratchAnchorMatrix, 0, 16)
+                Matrix.multiplyMM(scratchModelMatrix, 0, scratchAnchorMatrix, 0, scratchNodeMatrix, 0)
             } else {
                 val anchor = anchorsByName[anchorName]
                 if (anchor != null && anchor.trackingState == TrackingState.TRACKING) {
-                    anchor.pose.toMatrix(anchorMatrix, 0)
-                    Matrix.multiplyMM(modelMatrix, 0, anchorMatrix, 0, nodeMatrix, 0)
+                    anchor.pose.toMatrix(scratchAnchorMatrix, 0)
+                    Matrix.multiplyMM(scratchModelMatrix, 0, scratchAnchorMatrix, 0, scratchNodeMatrix, 0)
                 } else {
-                    System.arraycopy(nodeMatrix, 0, modelMatrix, 0, 16)
+                    System.arraycopy(scratchNodeMatrix, 0, scratchModelMatrix, 0, 16)
                 }
             }
         } else {
-            System.arraycopy(nodeMatrix, 0, modelMatrix, 0, 16)
+            System.arraycopy(scratchNodeMatrix, 0, scratchModelMatrix, 0, 16)
         }
-        return modelMatrix
+        return scratchModelMatrix
     }
 
     private fun updateModelTransforms() {
         if (nodesByName.isEmpty()) return
 
-        // After placement the world matrix is frozen — skip all matrix work until the
-        // user drags, rotates, or scales (dirtyTransformNodes).
+        // Recompute only when a node is dirty (gesture) or anchor re-sync marked it dirty.
         if (dirtyTransformNodes.isEmpty()) {
             return
         }
-
-        val scaleMatrix = FloatArray(16)
-        val scaledModelMatrix = FloatArray(16)
 
         val dirtyNames = dirtyTransformNodes.toList()
         dirtyNames.forEach { nodeName ->
@@ -952,10 +1250,10 @@ internal class AndroidARView(
 
             val modelScaleFactor = getModelScaleFactor(node.type)
             if (modelScaleFactor != 1.0f) {
-                Matrix.setIdentityM(scaleMatrix, 0)
-                Matrix.scaleM(scaleMatrix, 0, modelScaleFactor, modelScaleFactor, modelScaleFactor)
-                Matrix.multiplyMM(scaledModelMatrix, 0, modelMatrix, 0, scaleMatrix, 0)
-                filamentRenderer.updateTransformIfChanged(node.name, scaledModelMatrix)
+                Matrix.setIdentityM(scratchScaleMatrix, 0)
+                Matrix.scaleM(scratchScaleMatrix, 0, modelScaleFactor, modelScaleFactor, modelScaleFactor)
+                Matrix.multiplyMM(scratchScaledModelMatrix, 0, modelMatrix, 0, scratchScaleMatrix, 0)
+                filamentRenderer.updateTransformIfChanged(node.name, scratchScaledModelMatrix)
             } else {
                 filamentRenderer.updateTransformIfChanged(node.name, modelMatrix)
             }
@@ -1086,7 +1384,7 @@ internal class AndroidARView(
                 }
 
                 if (isPanning && enablePans) {
-                    val hitPose = hitTestPlaneOrPoint(frame, motionEvent) ?: return false
+                    val hitPose = hitTestPlaneOrPoint(frame, motionEvent, node) ?: return false
                     moveNodeToPose(node, hitPose, smooth = true)
                     return true
                 }
@@ -1121,17 +1419,125 @@ internal class AndroidARView(
         }
     }
 
-    private fun hitTestPlaneOrPoint(frame: Frame, motionEvent: MotionEvent): Pose? {
+    private fun hitTestPlaneOrPoint(
+        frame: Frame,
+        motionEvent: MotionEvent,
+        node: SimpleNode,
+    ): Pose? {
         val hitResults = frame.hitTest(motionEvent)
-        val hit = hitResults.firstOrNull { result ->
-            when (val trackable = result.trackable) {
-                is Plane -> trackable.trackingState == TrackingState.TRACKING &&
-                        trackable.isPoseInPolygon(result.hitPose)
-                is Point -> trackable.trackingState == TrackingState.TRACKING
-                else -> false
+        val currentMatrix = computeWorldMatrixForNode(node)
+        logDragHitDiagnostics(hitResults)
+
+        val floorY = referenceFloorY
+        val planeHit = hitResults.firstOrNull { result ->
+            val trackable = result.trackable
+            if (trackable !is Plane) return@firstOrNull false
+            val isFloorPlane = trackable.type == Plane.Type.HORIZONTAL_UPWARD_FACING &&
+                trackable.trackingState == TrackingState.TRACKING &&
+                trackable.isPoseInPolygon(result.hitPose)
+            if (!isFloorPlane) return@firstOrNull false
+            val isNearFloorHeight = floorY == null ||
+                kotlin.math.abs(result.hitPose.ty() - floorY) < floorHeightToleranceM
+            if (!isNearFloorHeight) return@firstOrNull false
+            distanceToPolygonEdge(trackable, result.hitPose) > MIN_PLANE_EDGE_MARGIN_M
+        } ?: return null
+
+        planeHit.hitPose.toMatrix(scratchHitMatrix, 0)
+        val jumpM = translationDeltaM(currentMatrix, scratchHitMatrix)
+        if (jumpM > MAX_DRAG_JUMP_M) {
+            if (BuildConfig.DEBUG) {
+                Log.d(
+                    TAG,
+                    "dragHit: rejected jump=${"%.3f".format(jumpM)}m > MAX_DRAG_JUMP_M=$MAX_DRAG_JUMP_M",
+                )
             }
+            return null
         }
-        return hit?.hitPose
+        return planeHit.hitPose
+    }
+
+    /**
+     * Temporary diagnostic logging — remove after confirming wall-drag mechanism.
+     * Logs every hit result during pan drags to verify seam polygon growth.
+     */
+    private fun logDragHitDiagnostics(hitResults: List<HitResult>) {
+        if (!BuildConfig.DEBUG) return
+        if (hitResults.isEmpty()) {
+            Log.d(TAG, "dragHit: no hit results")
+            return
+        }
+        val floorY = referenceFloorY
+        hitResults.forEachIndexed { index, result ->
+            val trackable = result.trackable
+            val typeStr = when (trackable) {
+                is Plane -> "Plane(${trackable.type})"
+                is Point -> "Point"
+                else -> trackable.javaClass.simpleName
+            }
+            val hitY = result.hitPose.ty()
+            val stateStr = trackable.trackingState.name
+
+            var extra = ""
+            if (trackable is Plane) {
+                val planeY = trackable.centerPose.ty()
+                val deltaFromPlane = hitY - planeY
+                extra += " planeY=$planeY hitDeltaFromPlane=$deltaFromPlane" +
+                    " extentX=${trackable.extentX} extentZ=${trackable.extentZ}"
+                if (floorY != null) {
+                    extra += " deltaFromRefFloor=${hitY - floorY}"
+                }
+
+                val polygon = trackable.polygon
+                val polyLimit = polygon.limit()
+                if (polyLimit >= 6) {
+                    var minX = Float.MAX_VALUE
+                    var maxX = -Float.MAX_VALUE
+                    var minZ = Float.MAX_VALUE
+                    var maxZ = -Float.MAX_VALUE
+                    for (i in 0 until polyLimit step 2) {
+                        val px = polygon.get(i)
+                        val pz = polygon.get(i + 1)
+                        minX = minOf(minX, px)
+                        maxX = maxOf(maxX, px)
+                        minZ = minOf(minZ, pz)
+                        maxZ = maxOf(maxZ, pz)
+                    }
+                    val spanX = maxX - minX
+                    val spanZ = maxZ - minZ
+                    extra += " polySpanX=$spanX polySpanZ=$spanZ polyVerts=${polyLimit / 2}"
+                    if (kotlin.math.abs(deltaFromPlane) > 0.3f) {
+                        extra += " ABNORMAL_HIT_DELTA"
+                    }
+                    if (spanX > 10f || spanZ > 10f) {
+                        extra += " LARGE_POLYGON"
+                    }
+                }
+            }
+
+            val passesFloorPlane = trackable is Plane &&
+                trackable.type == Plane.Type.HORIZONTAL_UPWARD_FACING &&
+                trackable.trackingState == TrackingState.TRACKING &&
+                trackable.isPoseInPolygon(result.hitPose)
+            val passesHeight = floorY == null ||
+                kotlin.math.abs(hitY - floorY) < floorHeightToleranceM
+            var edgeDistStr = " edgeDist=n/a"
+            var passesEdgeMargin = true
+            var rejectedTooCloseToEdge = false
+            if (trackable is Plane && passesFloorPlane) {
+                val edgeDist = distanceToPolygonEdge(trackable, result.hitPose)
+                passesEdgeMargin = edgeDist > MIN_PLANE_EDGE_MARGIN_M
+                rejectedTooCloseToEdge = !passesEdgeMargin
+                edgeDistStr = " edgeDist=${"%.3f".format(edgeDist)} passesEdgeMargin=$passesEdgeMargin"
+                if (rejectedTooCloseToEdge) {
+                    edgeDistStr += " REJECTED_TOO_CLOSE_TO_EDGE"
+                }
+            }
+            Log.d(
+                TAG,
+                "dragHit[$index] type=$typeStr state=$stateStr hitY=$hitY" +
+                    " passesFloorPlane=$passesFloorPlane passesHeight=$passesHeight$edgeDistStr$extra",
+            )
+        }
     }
 
     private fun findNearestNode(hitPose: Pose): SimpleNode? {
@@ -1202,12 +1608,14 @@ internal class AndroidARView(
 
     private fun getNodeWorldPosition(node: SimpleNode): FloatArray {
         val modelMatrix = computeWorldMatrixForNode(node)
-        return floatArrayOf(modelMatrix[12], modelMatrix[13], modelMatrix[14])
+        scratchWorldPosition[0] = modelMatrix[12]
+        scratchWorldPosition[1] = modelMatrix[13]
+        scratchWorldPosition[2] = modelMatrix[14]
+        return scratchWorldPosition
     }
 
     private fun moveNodeToPose(node: SimpleNode, hitPose: Pose, smooth: Boolean = false) {
-        val hitMatrix = FloatArray(16)
-        hitPose.toMatrix(hitMatrix, 0)
+        hitPose.toMatrix(scratchHitMatrix, 0)
 
         val targetX: Double
         val targetY: Double
@@ -1216,13 +1624,11 @@ internal class AndroidARView(
         if (node.anchorName != null) {
             val stableAnchorMatrix = anchorTransformsByName[node.anchorName]
             if (stableAnchorMatrix != null) {
-                val invAnchor = FloatArray(16)
-                val localMatrix = FloatArray(16)
-                Matrix.invertM(invAnchor, 0, stableAnchorMatrix, 0)
-                Matrix.multiplyMM(localMatrix, 0, invAnchor, 0, hitMatrix, 0)
-                targetX = localMatrix[12].toDouble()
-                targetY = localMatrix[13].toDouble()
-                targetZ = localMatrix[14].toDouble()
+                Matrix.invertM(scratchInvAnchor, 0, stableAnchorMatrix, 0)
+                Matrix.multiplyMM(scratchLocalMatrix, 0, scratchInvAnchor, 0, scratchHitMatrix, 0)
+                targetX = scratchLocalMatrix[12].toDouble()
+                targetY = scratchLocalMatrix[13].toDouble()
+                targetZ = scratchLocalMatrix[14].toDouble()
             } else {
                 val anchor = anchorsByName[node.anchorName]
                 val targetPose = if (anchor != null && anchor.trackingState != TrackingState.STOPPED) {
@@ -1271,14 +1677,13 @@ internal class AndroidARView(
         val transform = node.transformation
         if (transform.size < 16) return
 
-        val matrix = FloatArray(16)
-        matrixFromTransform(transform, matrix)
+        matrixFromTransform(transform, scratchGestureMatrix)
         val deltaDegrees = Math.toDegrees(deltaRadians.toDouble()).toFloat()
-        Matrix.rotateM(matrix, 0, deltaDegrees, 0f, 1f, 0f)
+        Matrix.rotateM(scratchGestureMatrix, 0, deltaDegrees, 0f, 1f, 0f)
 
         val updated = ArrayList<Double>(16)
         for (i in 0 until 16) {
-            updated.add(matrix[i].toDouble())
+            updated.add(scratchGestureMatrix[i].toDouble())
         }
         node.transformation = updated
         dirtyTransformNodes.add(node.name)
@@ -1314,7 +1719,21 @@ internal class AndroidARView(
                 trackable is Point && trackable.trackingState == TrackingState.TRACKING
             }
         }
-        return planeHits.minByOrNull { it.distance }
+
+        val qualityPlanes = planeHits.filter { hit ->
+            val plane = hit.trackable as Plane
+            plane.extentX >= MIN_PLACEMENT_PLANE_EXTENT_M &&
+                plane.extentZ >= MIN_PLACEMENT_PLANE_EXTENT_M
+        }
+        val candidates = qualityPlanes.ifEmpty {
+            Log.w(
+                TAG,
+                "Placement: no plane >= ${MIN_PLACEMENT_PLANE_EXTENT_M}m extent; " +
+                    "using closest of ${planeHits.size} smaller plane(s)",
+            )
+            planeHits
+        }
+        return candidates.minByOrNull { it.distance }
     }
 
     private fun createAnchorForPlacement(
@@ -1333,6 +1752,25 @@ internal class AndroidARView(
         if (frame != null && width > 0 && height > 0) {
             val hit = pickBestPlaneHit(frame.hitTest(x, y))
             if (hit != null) {
+                val plane = hit.trackable as? Plane
+                if (sessionStableTrackingFrames < PREFERRED_SESSION_STABLE_FRAMES_FOR_PLACEMENT) {
+                    Log.w(
+                        TAG,
+                        "Placement with limited tracking convergence: " +
+                            "sessionStable=$sessionStableTrackingFrames " +
+                            "(prefer >= $PREFERRED_SESSION_STABLE_FRAMES_FOR_PLACEMENT)",
+                    )
+                }
+                // Lock drag hit-testing to the floor height established at placement.
+                referenceFloorY = hit.hitPose.ty()
+                Log.d(
+                    TAG,
+                    "Placement anchor: hitY=${hit.hitPose.ty()} tx=${hit.hitPose.tx()} " +
+                        "tz=${hit.hitPose.tz()} referenceFloorY=$referenceFloorY " +
+                        "planeExtent=${plane?.extentX ?: 0f}x${plane?.extentZ ?: 0f} " +
+                        "sessionStable=$sessionStableTrackingFrames " +
+                        "depthMode=${session.config.depthMode}",
+                )
                 // World-fixed pose from the hit — do NOT use hit.createAnchor() which
                 // stays tied to plane refinement and causes visible vibration.
                 return session.createAnchor(hit.hitPose)
@@ -1350,9 +1788,15 @@ internal class AndroidARView(
             val anchor = createAnchorForPlacement(session, frame, transform)
             anchorsByName[name] = anchor
             anchorChildren.putIfAbsent(name, mutableListOf())
-            val anchorMatrix = FloatArray(16)
-            anchor.pose.toMatrix(anchorMatrix, 0)
-            anchorTransformsByName[name] = anchorMatrix.clone()
+            anchor.pose.toMatrix(scratchAnchorMatrix, 0)
+            anchorTransformsByName[name] = scratchAnchorMatrix.clone()
+            anchorStableTrackingFrames[name] = 0
+            anchorDriftLogFrameCounter = 0
+            Log.d(
+                TAG,
+                "Anchor placed[$name]: frozen at tx=${scratchAnchorMatrix[12]} ty=${scratchAnchorMatrix[13]} " +
+                    "tz=${scratchAnchorMatrix[14]} sessionStable=$sessionStableTrackingFrames",
+            )
             true
         } catch (e: Exception) {
             false
@@ -1368,6 +1812,10 @@ internal class AndroidARView(
         val anchor = anchorsByName.remove(name)
         anchor?.detach()
         anchorTransformsByName.remove(name)
+        anchorStableTrackingFrames.remove(name)
+        if (anchorsByName.isEmpty()) {
+            referenceFloorY = null
+        }
     }
 
     private fun serializePlaneAndPointHits(
@@ -1698,6 +2146,12 @@ internal class AndroidARView(
             )
         }
 
+        if (cameraTrackingState == TrackingState.TRACKING) {
+            sessionStableTrackingFrames++
+        } else {
+            sessionStableTrackingFrames = 0
+        }
+
         if (showWorldOrigin) {
             val cameraTracking = frame.camera.trackingState == TrackingState.TRACKING
             if (cameraTracking) {
@@ -1718,8 +2172,9 @@ internal class AndroidARView(
             }
         }
 
+        logAnchorDriftDiagnostics()
+        resyncFrozenAnchorsToLivePose()
         updateModelTransforms()
-        onFrame(frame.timestamp)
     }
 
     private data class SimpleNode(
