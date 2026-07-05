@@ -28,6 +28,9 @@ abstract class Complaint implements _i1.SerializableModel {
     required this.reason,
     this.description,
     _i2.ComplaintStatus? status,
+    this.assignedToId,
+    this.assignedTo,
+    this.internalNote,
     this.resolvedById,
     this.resolvedBy,
     this.resolvedAt,
@@ -46,6 +49,9 @@ abstract class Complaint implements _i1.SerializableModel {
     required String reason,
     String? description,
     _i2.ComplaintStatus? status,
+    _i1.UuidValue? assignedToId,
+    _i5.Admin? assignedTo,
+    String? internalNote,
     _i1.UuidValue? resolvedById,
     _i5.Admin? resolvedBy,
     DateTime? resolvedAt,
@@ -79,6 +85,17 @@ abstract class Complaint implements _i1.SerializableModel {
           : _i2.ComplaintStatus.fromJson(
               (jsonSerialization['status'] as String),
             ),
+      assignedToId: jsonSerialization['assignedToId'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(
+              jsonSerialization['assignedToId'],
+            ),
+      assignedTo: jsonSerialization['assignedTo'] == null
+          ? null
+          : _i6.Protocol().deserialize<_i5.Admin>(
+              jsonSerialization['assignedTo'],
+            ),
+      internalNote: jsonSerialization['internalNote'] as String?,
       resolvedById: jsonSerialization['resolvedById'] == null
           ? null
           : _i1.UuidValueJsonExtension.fromJson(
@@ -120,6 +137,14 @@ abstract class Complaint implements _i1.SerializableModel {
 
   _i2.ComplaintStatus status;
 
+  _i1.UuidValue? assignedToId;
+
+  /// Admin assigned to review this complaint.
+  _i5.Admin? assignedTo;
+
+  /// Internal admin-only notes (not visible to reporters).
+  String? internalNote;
+
   _i1.UuidValue? resolvedById;
 
   /// Admin who marked this complaint resolved or rejected.
@@ -143,6 +168,9 @@ abstract class Complaint implements _i1.SerializableModel {
     String? reason,
     String? description,
     _i2.ComplaintStatus? status,
+    _i1.UuidValue? assignedToId,
+    _i5.Admin? assignedTo,
+    String? internalNote,
     _i1.UuidValue? resolvedById,
     _i5.Admin? resolvedBy,
     DateTime? resolvedAt,
@@ -161,6 +189,9 @@ abstract class Complaint implements _i1.SerializableModel {
       'reason': reason,
       if (description != null) 'description': description,
       'status': status.toJson(),
+      if (assignedToId != null) 'assignedToId': assignedToId?.toJson(),
+      if (assignedTo != null) 'assignedTo': assignedTo?.toJson(),
+      if (internalNote != null) 'internalNote': internalNote,
       if (resolvedById != null) 'resolvedById': resolvedById?.toJson(),
       if (resolvedBy != null) 'resolvedBy': resolvedBy?.toJson(),
       if (resolvedAt != null) 'resolvedAt': resolvedAt?.toJson(),
@@ -187,6 +218,9 @@ class _ComplaintImpl extends Complaint {
     required String reason,
     String? description,
     _i2.ComplaintStatus? status,
+    _i1.UuidValue? assignedToId,
+    _i5.Admin? assignedTo,
+    String? internalNote,
     _i1.UuidValue? resolvedById,
     _i5.Admin? resolvedBy,
     DateTime? resolvedAt,
@@ -201,6 +235,9 @@ class _ComplaintImpl extends Complaint {
          reason: reason,
          description: description,
          status: status,
+         assignedToId: assignedToId,
+         assignedTo: assignedTo,
+         internalNote: internalNote,
          resolvedById: resolvedById,
          resolvedBy: resolvedBy,
          resolvedAt: resolvedAt,
@@ -221,6 +258,9 @@ class _ComplaintImpl extends Complaint {
     String? reason,
     Object? description = _Undefined,
     _i2.ComplaintStatus? status,
+    Object? assignedToId = _Undefined,
+    Object? assignedTo = _Undefined,
+    Object? internalNote = _Undefined,
     Object? resolvedById = _Undefined,
     Object? resolvedBy = _Undefined,
     Object? resolvedAt = _Undefined,
@@ -238,6 +278,13 @@ class _ComplaintImpl extends Complaint {
       reason: reason ?? this.reason,
       description: description is String? ? description : this.description,
       status: status ?? this.status,
+      assignedToId: assignedToId is _i1.UuidValue?
+          ? assignedToId
+          : this.assignedToId,
+      assignedTo: assignedTo is _i5.Admin?
+          ? assignedTo
+          : this.assignedTo?.copyWith(),
+      internalNote: internalNote is String? ? internalNote : this.internalNote,
       resolvedById: resolvedById is _i1.UuidValue?
           ? resolvedById
           : this.resolvedById,

@@ -3,9 +3,10 @@ import 'package:serverpod/serverpod.dart' hide Order;
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
-import '../admin/admin_repository.dart';
 import '../notification/order_notification_service.dart';
 import '../payment/payment_sync.dart';
+import 'admin_action_audit_log.dart';
+import 'admin_repository.dart';
 
 /// Admin finance operations: payout approval and refund resolution.
 class AdminFinanceStore {
@@ -13,15 +14,17 @@ class AdminFinanceStore {
 
   final AdminStore _adminStore;
 
-  Future<void> _requireAdmin(Session session) async {
-    await _adminStore.requireAdminProfile(session);
+  Future<Admin> _requireAdmin(Session session) {
+    return _adminStore.requireAdminProfile(session);
   }
 
   Future<List<AdminVendorPayoutSummary>> listVendorPayouts(
     Session session, {
     VendorPayoutStatus? status,
+    PaginationInput? pagination,
   }) async {
     await _requireAdmin(session);
+    final paging = _resolvePagination(pagination);
 
     final payouts = await VendorPayout.db.find(
       session,
@@ -29,6 +32,8 @@ class AdminFinanceStore {
       include: VendorPayout.include(vendor: Vendor.include()),
       orderBy: (row) => row.createdAt,
       orderDescending: true,
+      limit: paging.limit,
+      offset: paging.offset,
     );
 
     return [
@@ -53,7 +58,7 @@ class AdminFinanceStore {
     Session session,
     int payoutId,
   ) async {
-    await _requireAdmin(session);
+    final admin = await _requireAdmin(session);
 
     final payout = await VendorPayout.db.findById(
       session,
@@ -70,18 +75,36 @@ class AdminFinanceStore {
       );
     }
 
-    final updated = await VendorPayout.db.updateRow(
-      session,
-      payout.copyWith(
-        status: VendorPayoutStatus.paid,
-        paidAt: DateTime.now(),
-      ),
-    );
+    final previousStatus = payout.status.name;
+
+    final updated = await session.db.transaction((transaction) async {
+      final row = await VendorPayout.db.updateRow(
+        session,
+        payout.copyWith(
+          status: VendorPayoutStatus.paid,
+          paidAt: DateTime.now(),
+        ),
+        transaction: transaction,
+      );
+
+      await AdminActionAuditLog.record(
+        session,
+        actorAdminId: admin.id!,
+        actionType: AdminActionType.approvePayout,
+        targetPayoutId: payoutId,
+        targetVendorId: payout.vendorId,
+        previousStatus: previousStatus,
+        newStatus: VendorPayoutStatus.paid.name,
+        transaction: transaction,
+      );
+
+      return row;
+    });
 
     return AdminVendorPayoutSummary(
       id: updated.id!,
       vendorId: updated.vendorId,
-      businessName: updated.vendor?.shopName ?? 'Vendor',
+      businessName: updated.vendor?.shopName ?? payout.vendor?.shopName ?? 'Vendor',
       amount: updated.amount,
       status: updated.status,
       reference: updated.reference,
@@ -97,7 +120,7 @@ class AdminFinanceStore {
     int payoutId, {
     String? reason,
   }) async {
-    await _requireAdmin(session);
+    final admin = await _requireAdmin(session);
 
     final payout = await VendorPayout.db.findById(
       session,
@@ -114,15 +137,34 @@ class AdminFinanceStore {
       );
     }
 
-    final updated = await VendorPayout.db.updateRow(
-      session,
-      payout.copyWith(status: VendorPayoutStatus.failed),
-    );
+    final previousStatus = payout.status.name;
+
+    final updated = await session.db.transaction((transaction) async {
+      final row = await VendorPayout.db.updateRow(
+        session,
+        payout.copyWith(status: VendorPayoutStatus.failed),
+        transaction: transaction,
+      );
+
+      await AdminActionAuditLog.record(
+        session,
+        actorAdminId: admin.id!,
+        actionType: AdminActionType.failPayout,
+        targetPayoutId: payoutId,
+        targetVendorId: payout.vendorId,
+        previousStatus: previousStatus,
+        newStatus: VendorPayoutStatus.failed.name,
+        reason: reason,
+        transaction: transaction,
+      );
+
+      return row;
+    });
 
     return AdminVendorPayoutSummary(
       id: updated.id!,
       vendorId: updated.vendorId,
-      businessName: updated.vendor?.shopName ?? 'Vendor',
+      businessName: updated.vendor?.shopName ?? payout.vendor?.shopName ?? 'Vendor',
       amount: updated.amount,
       status: updated.status,
       reference: updated.reference,
@@ -136,8 +178,10 @@ class AdminFinanceStore {
   Future<List<AdminRefundRequestSummary>> listRefundRequests(
     Session session, {
     RequestStatus? status,
+    PaginationInput? pagination,
   }) async {
     await _requireAdmin(session);
+    final paging = _resolvePagination(pagination);
 
     final rows = await RefundRequest.db.find(
       session,
@@ -145,6 +189,8 @@ class AdminFinanceStore {
       include: RefundRequest.include(user: User.include()),
       orderBy: (row) => row.createdAt,
       orderDescending: true,
+      limit: paging.limit,
+      offset: paging.offset,
     );
 
     return [
@@ -185,6 +231,7 @@ class AdminFinanceStore {
     int refundId, {
     required bool approve,
   }) async {
+    final admin = await _requireAdmin(session);
     final row = await RefundRequest.db.findById(
       session,
       refundId,
@@ -202,11 +249,15 @@ class AdminFinanceStore {
     }
 
     final adminUser = await SessionService.requireUser(session);
+    final previousStatus = row.status.name;
+    final newStatus =
+        approve ? RequestStatus.completed : RequestStatus.rejected;
+
     final updated = await session.db.transaction((transaction) async {
       final resolved = await RefundRequest.db.updateRow(
         session,
         row.copyWith(
-          status: approve ? RequestStatus.completed : RequestStatus.rejected,
+          status: newStatus,
           updatedAt: DateTime.now(),
         ),
         transaction: transaction,
@@ -221,14 +272,29 @@ class AdminFinanceStore {
         );
       }
 
+      await AdminActionAuditLog.record(
+        session,
+        actorAdminId: admin.id!,
+        actionType:
+            approve ? AdminActionType.approveRefund : AdminActionType.rejectRefund,
+        targetRefundId: refundId,
+        targetUserId: row.userId,
+        previousStatus: previousStatus,
+        newStatus: newStatus.name,
+        reason: row.reason,
+        transaction: transaction,
+      );
+
       return resolved;
     });
 
-    await OrderNotificationService.notifyRefundDecision(
-      session,
-      refund: updated,
-      approved: approve,
-    );
+    try {
+      await OrderNotificationService.notifyRefundDecision(
+        session,
+        refund: updated,
+        approved: approve,
+      );
+    } catch (_) {}
 
     return AdminRefundRequestSummary(
       id: updated.id!,
@@ -241,5 +307,14 @@ class AdminFinanceStore {
       status: updated.status,
       createdAt: updated.createdAt,
     );
+  }
+
+  ({int limit, int offset}) _resolvePagination(PaginationInput? pagination) {
+    if (pagination == null) {
+      return (limit: 1000, offset: 0);
+    }
+    final page = pagination.page.clamp(1, 1000000);
+    final pageSize = pagination.pageSize.clamp(1, 100);
+    return (limit: pageSize, offset: (page - 1) * pageSize);
   }
 }

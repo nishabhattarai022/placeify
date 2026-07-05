@@ -8,6 +8,10 @@ fields:
   reason: String
   description: String?
   status: ComplaintStatus, default=pending
+  ### Admin assigned to review this complaint.
+  assignedTo: Admin?, relation(optional)
+  ### Internal admin-only notes (not visible to reporters).
+  internalNote: String?
   ### Admin who marked this complaint resolved or rejected.
   resolvedBy: Admin?, relation(optional)
   resolvedAt: DateTime?

@@ -1,5 +1,4 @@
 import 'package:placeify_client/placeify_client.dart';
-import 'package:placeify_flutter/core/debug/agent_debug_log.dart';
 import 'package:placeify_flutter/features/admin/data/serverpod_admin_api.dart';
 import 'package:placeify_flutter/features/admin/domain/enums/admin_vendor_list_filter.dart';
 import 'package:placeify_flutter/features/admin/domain/enums/vendor_application_list_filter.dart';
@@ -73,25 +72,15 @@ class AdminVendorActions extends _$AdminVendorActions {
   }) async {
     final repo = await ref.read(adminRepositoryProvider.future);
     try {
-      // #region agent log
-      AgentDebugLog.log(
-        'admin_vendors_provider.dart:suspend:entry',
-        'admin suspend action',
-        {
-          'userId': userId,
-          'vendorId': vendorId,
-          'reasonLength': reason?.trim().length ?? 0,
-        },
-        hypothesisId: 'C',
-        runId: 'post-fix',
-      );
-      // #endregion
       await repo.suspendVendor(userId, reason: reason);
-      await _refreshAfterAction(vendorId);
-      return null;
     } catch (error) {
       return _actionErrorMessage(error, 'Could not suspend vendor');
     }
+
+    try {
+      await _refreshAfterAction(vendorId);
+    } catch (_) {}
+    return null;
   }
 
   Future<String?> reinstate({
@@ -107,11 +96,14 @@ class AdminVendorActions extends _$AdminVendorActions {
         termsAccepted: termsAccepted,
         termsNote: termsNote,
       );
-      await _refreshAfterAction(vendorId);
-      return null;
     } catch (error) {
       return _actionErrorMessage(error, 'Could not reinstate vendor');
     }
+
+    try {
+      await _refreshAfterAction(vendorId);
+    } catch (_) {}
+    return null;
   }
 
   String _actionErrorMessage(Object error, String fallback) {

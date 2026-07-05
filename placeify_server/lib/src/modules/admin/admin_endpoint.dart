@@ -118,6 +118,14 @@ class AdminEndpoint extends PlaceifyAuthenticatedEndpoint {
     return _service.flagProduct(session, productId);
   }
 
+  Future<Product> setProductFeatured(
+    Session session,
+    int productId, {
+    required bool featured,
+  }) {
+    return _service.setProductFeatured(session, productId, featured: featured);
+  }
+
   Future<Complaint> fileComplaint(
     Session session,
     int productId,
@@ -130,12 +138,41 @@ class AdminEndpoint extends PlaceifyAuthenticatedEndpoint {
   Future<List<Complaint>> listComplaints(
     Session session, {
     ComplaintStatus? status,
+    PaginationInput? pagination,
   }) {
-    return _service.listComplaints(session, status: status);
+    return _service.listComplaints(
+      session,
+      status: status,
+      pagination: pagination,
+    );
+  }
+
+  Future<Complaint> assignComplaint(
+    Session session,
+    UuidValue complaintId, {
+    String? internalNote,
+  }) {
+    return _service.assignComplaint(
+      session,
+      complaintId,
+      internalNote: internalNote,
+    );
   }
 
   Future<Complaint> resolveComplaint(Session session, UuidValue complaintId) {
     return _service.resolveComplaint(session, complaintId);
+  }
+
+  Future<Complaint> reopenComplaint(
+    Session session,
+    UuidValue complaintId, {
+    String? internalNote,
+  }) {
+    return _service.reopenComplaint(
+      session,
+      complaintId,
+      internalNote: internalNote,
+    );
   }
 
   Future<AdminPlatformStats> getPlatformStats(Session session) {
@@ -146,8 +183,14 @@ class AdminEndpoint extends PlaceifyAuthenticatedEndpoint {
     Session session, {
     String? query,
     UserRole? role,
+    PaginationInput? pagination,
   }) {
-    return _service.listUsers(session, query: query, role: role);
+    return _service.listUsers(
+      session,
+      query: query,
+      role: role,
+      pagination: pagination,
+    );
   }
 
   Future<PlatformUserDetail?> getUserDetail(
@@ -160,8 +203,13 @@ class AdminEndpoint extends PlaceifyAuthenticatedEndpoint {
   Future<List<VendorApplicationSummary>> listVendorApplications(
     Session session, {
     UserAccountStatus? status,
+    PaginationInput? pagination,
   }) {
-    return _service.listVendorApplications(session, status: status);
+    return _service.listVendorApplications(
+      session,
+      status: status,
+      pagination: pagination,
+    );
   }
 
   Future<VendorApplicationDetail?> getVendorApplication(
@@ -174,15 +222,25 @@ class AdminEndpoint extends PlaceifyAuthenticatedEndpoint {
   Future<List<AdminAuditLogSummary>> getAuditLog(
     Session session, {
     int limit = 50,
+    PaginationInput? pagination,
   }) {
-    return _service.getAuditLog(session, limit: limit);
+    return _service.getAuditLog(
+      session,
+      limit: limit,
+      pagination: pagination,
+    );
   }
 
   Future<List<AdminVendorPayoutSummary>> listVendorPayouts(
     Session session, {
     VendorPayoutStatus? status,
+    PaginationInput? pagination,
   }) {
-    return _service.listVendorPayouts(session, status: status);
+    return _service.listVendorPayouts(
+      session,
+      status: status,
+      pagination: pagination,
+    );
   }
 
   Future<AdminVendorPayoutSummary> approveVendorPayout(
@@ -203,8 +261,13 @@ class AdminEndpoint extends PlaceifyAuthenticatedEndpoint {
   Future<List<AdminRefundRequestSummary>> listRefundRequests(
     Session session, {
     RequestStatus? status,
+    PaginationInput? pagination,
   }) {
-    return _service.listRefundRequests(session, status: status);
+    return _service.listRefundRequests(
+      session,
+      status: status,
+      pagination: pagination,
+    );
   }
 
   Future<AdminRefundRequestSummary> approveRefundRequest(

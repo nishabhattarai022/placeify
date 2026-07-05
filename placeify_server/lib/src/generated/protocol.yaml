@@ -46,9 +46,12 @@ admin:
   - deleteProduct:
   - restoreProduct:
   - flagProduct:
+  - setProductFeatured:
   - fileComplaint:
   - listComplaints:
+  - assignComplaint:
   - resolveComplaint:
+  - reopenComplaint:
   - getPlatformStats:
   - listUsers:
   - getUserDetail:

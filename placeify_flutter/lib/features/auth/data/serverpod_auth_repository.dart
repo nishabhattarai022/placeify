@@ -143,9 +143,7 @@ class ServerpodAuthRepository implements AuthRepository {
       );
       await client.auth.updateSignedInUser(authSuccess);
       await _prefs.setString(_sessionEmailKey, normalizedEmail);
-      if (normalizedEmail == DemoCredentials.adminEmail.trim().toLowerCase()) {
-        await client.user.ensureDemoAdmin();
-      }
+      await _ensureDemoAdminIfNeeded(normalizedEmail);
       return _loadAppUser(normalizedEmail);
     } catch (error) {
       throw _mapError(error);
@@ -163,6 +161,7 @@ class ServerpodAuthRepository implements AuthRepository {
     if (email == null) return null;
 
     try {
+      await _ensureDemoAdminIfNeeded(email);
       return await _loadAppUser(email);
     } catch (_) {
       return null;
@@ -325,6 +324,15 @@ class ServerpodAuthRepository implements AuthRepository {
     if (!client.auth.isAuthenticated) {
       throw AuthException('Sign in to continue');
     }
+  }
+
+  Future<void> _ensureDemoAdminIfNeeded(String email) async {
+    if (email.trim().toLowerCase() != DemoCredentials.adminEmail.trim().toLowerCase()) {
+      return;
+    }
+    try {
+      await client.user.ensureDemoAdmin();
+    } catch (_) {}
   }
 
   Future<T> _withConnectionRetry<T>(Future<T> Function() action) async {
