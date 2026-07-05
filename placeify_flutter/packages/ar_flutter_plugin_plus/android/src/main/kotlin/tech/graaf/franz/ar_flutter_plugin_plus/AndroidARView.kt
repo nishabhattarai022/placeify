@@ -2262,6 +2262,7 @@ internal class AndroidARView(
                 // Lock drag hit-testing to the floor height established at placement.
                 referenceFloorY = hit.hitPose.ty()
                 placementInteriorPose = hit.hitPose
+                filamentRenderer.setReferenceFloorY(referenceFloorY)
                 Log.d(
                     TAG,
                     "Placement anchor: hitY=${hit.hitPose.ty()} tx=${hit.hitPose.tx()} " +
@@ -2315,6 +2316,7 @@ internal class AndroidARView(
         if (anchorsByName.isEmpty()) {
             referenceFloorY = null
             placementInteriorPose = null
+            filamentRenderer.setReferenceFloorY(null)
         }
     }
 
