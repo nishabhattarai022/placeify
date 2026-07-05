@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:placeify_flutter/core/constants/app_colors.dart';
 import 'package:placeify_flutter/core/constants/app_radii.dart';
 import 'package:placeify_flutter/core/constants/app_spacing.dart';
-import 'package:placeify_flutter/core/debug/agent_debug_log.dart';
 import 'package:placeify_flutter/core/services/haptic_service.dart';
 import 'package:placeify_flutter/core/widgets/placeify_bottom_sheet.dart';
 import 'package:placeify_flutter/core/widgets/toast_overlay.dart';
@@ -96,28 +95,10 @@ class _VendorSuspendSheetBodyState extends State<_VendorSuspendSheetBody> {
     if (!widget.parentContext.mounted) return;
 
     if (error != null) {
-      // #region agent log
-      AgentDebugLog.log(
-        'vendor_suspend_sheet.dart:_confirmSuspend:error',
-        'suspend returned error',
-        {'userId': widget.vendor.userId, 'error': error},
-        hypothesisId: 'F',
-        runId: 'post-fix',
-      );
-      // #endregion
       PlaceifyToast.show(widget.parentContext, error);
       return;
     }
 
-    // #region agent log
-    AgentDebugLog.log(
-      'vendor_suspend_sheet.dart:_confirmSuspend:success',
-      'suspend completed in UI',
-      {'userId': widget.vendor.userId},
-      hypothesisId: 'F',
-      runId: 'post-fix',
-    );
-    // #endregion
     PlaceifyToast.show(widget.parentContext, AdminStrings.vendorSuspended);
     widget.onSuspended();
   }

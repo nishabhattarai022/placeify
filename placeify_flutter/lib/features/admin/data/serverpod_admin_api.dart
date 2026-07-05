@@ -2,7 +2,6 @@ import 'package:placeify_client/placeify_client.dart';
 import 'package:serverpod_client/serverpod_client.dart';
 
 import '../../../core/config/placeify_server_client.dart';
-import '../../../core/debug/agent_debug_log.dart';
 
 class AdminApiException implements Exception {
   AdminApiException(this.message);
@@ -34,43 +33,12 @@ class ServerpodAdminApi {
   }
 
   Future<void> suspendVendor(String userId, {required String reason}) async {
-    // #region agent log
-    AgentDebugLog.log(
-      'serverpod_admin_api.dart:suspendVendor:entry',
-      'calling admin.suspendVendor',
-      {
-        'userId': userId,
-        'reasonLength': reason.length,
-      },
-      hypothesisId: 'C',
-    );
-    // #endregion
     try {
       await client.admin.suspendVendor(
         UuidValue.fromString(userId),
         reason,
       );
-      // #region agent log
-      AgentDebugLog.log(
-        'serverpod_admin_api.dart:suspendVendor:success',
-        'suspendVendor succeeded',
-        {'userId': userId},
-        hypothesisId: 'D',
-      );
-      // #endregion
     } catch (error) {
-      // #region agent log
-      AgentDebugLog.log(
-        'serverpod_admin_api.dart:suspendVendor:error',
-        'suspendVendor failed',
-        {
-          'userId': userId,
-          'errorType': error.runtimeType.toString(),
-          'error': error.toString(),
-        },
-        hypothesisId: 'D',
-      );
-      // #endregion
       throw AdminApiException(_mapError(error));
     }
   }
@@ -242,7 +210,7 @@ class ServerpodAdminApi {
       _ => error.toString(),
     };
 
-    if (raw.contains('Method not found') || raw.contains('suspendVendor')) {
+    if (raw.contains('Method not found')) {
       return 'Server is missing suspend support. Restart placeify_server after pulling the latest code.';
     }
 

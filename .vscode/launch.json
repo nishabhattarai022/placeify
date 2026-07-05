@@ -6,7 +6,21 @@
             "cwd": "${workspaceFolder}/placeify_flutter",
             "request": "launch",
             "type": "dart",
-            "program": "lib/main.dart"
+            "program": "lib/main.dart",
+            "toolArgs": [
+                "--no-dds"
+            ]
+        },
+        {
+            "name": "placeify_flutter (Android emulator)",
+            "cwd": "${workspaceFolder}/placeify_flutter",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "emulator-5554",
+            "toolArgs": [
+                "--no-dds"
+            ]
         },
         {
             "name": "placeify_flutter (iPhone release)",

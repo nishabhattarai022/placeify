@@ -46,7 +46,55 @@ abstract final class AdminVendorLifecycle {
     };
   }
 
+  static void ensureCanApprove(User user, Vendor vendor) {
+    if (user.status == UserAccountStatus.approved &&
+        user.role == UserRole.vendor) {
+      return;
+    }
+
+    if (user.status == UserAccountStatus.rejected) {
+      throw PlaceifyException(
+        message:
+            'Rejected vendor applications cannot be approved. The vendor must reapply.',
+        code: 'INVALID_VENDOR_STATUS',
+      );
+    }
+
+    if (user.status == UserAccountStatus.suspended) {
+      throw PlaceifyException(
+        message:
+            'Suspended vendors must be reinstated before approval changes.',
+        code: 'INVALID_VENDOR_STATUS',
+      );
+    }
+
+    if (user.status != UserAccountStatus.pending &&
+        !(user.role == UserRole.vendor || vendor.approvedAt != null)) {
+      throw PlaceifyException(
+        message: 'Only pending vendor applications can be approved.',
+        code: 'INVALID_VENDOR_STATUS',
+      );
+    }
+  }
+
+  static void ensureCanReject(User user) {
+    if (user.status == UserAccountStatus.rejected) {
+      return;
+    }
+
+    if (user.status != UserAccountStatus.pending) {
+      throw PlaceifyException(
+        message: 'Only pending vendor applications can be rejected.',
+        code: 'INVALID_VENDOR_STATUS',
+      );
+    }
+  }
+
   static void ensureCanSuspend(User user, Vendor vendor) {
+    if (user.status == UserAccountStatus.suspended) {
+      return;
+    }
+
     if (user.status == UserAccountStatus.rejected) {
       throw PlaceifyException(
         message: 'Rejected vendors cannot be suspended.',
@@ -66,6 +114,20 @@ abstract final class AdminVendorLifecycle {
     if (!isApprovedActiveVendor(user, vendor)) {
       throw PlaceifyException(
         message: 'Only approved vendors can be suspended.',
+        code: 'INVALID_VENDOR_STATUS',
+      );
+    }
+  }
+
+  static void ensureCanReinstate(User user) {
+    if (user.status == UserAccountStatus.approved &&
+        user.role == UserRole.vendor) {
+      return;
+    }
+
+    if (user.status != UserAccountStatus.suspended) {
+      throw PlaceifyException(
+        message: 'Only suspended vendors can be reinstated.',
         code: 'INVALID_VENDOR_STATUS',
       );
     }

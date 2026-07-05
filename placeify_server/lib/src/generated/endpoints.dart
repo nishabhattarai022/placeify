@@ -33,11 +33,11 @@ import 'package:placeify_server/src/generated/user_role.dart' as _i20;
 import 'package:placeify_server/src/generated/admin_type.dart' as _i21;
 import 'package:placeify_server/src/generated/user_account_status.dart' as _i22;
 import 'package:placeify_server/src/generated/complaint_status.dart' as _i23;
+import 'package:placeify_server/src/generated/pagination_input.dart' as _i24;
 import 'package:placeify_server/src/generated/vendor_payout_status.dart'
-    as _i24;
-import 'package:placeify_server/src/generated/request_status.dart' as _i25;
-import 'package:placeify_server/src/generated/checkout_request.dart' as _i26;
-import 'package:placeify_server/src/generated/pagination_input.dart' as _i27;
+    as _i25;
+import 'package:placeify_server/src/generated/request_status.dart' as _i26;
+import 'package:placeify_server/src/generated/checkout_request.dart' as _i27;
 import 'package:placeify_server/src/generated/payment_transaction_status.dart'
     as _i28;
 import 'package:placeify_server/src/generated/product_search_input.dart'
@@ -1033,6 +1033,31 @@ class Endpoints extends _i1.EndpointDispatch {
                 params['productId'],
               ),
         ),
+        'setProductFeatured': _i1.MethodConnector(
+          name: 'setProductFeatured',
+          params: {
+            'productId': _i1.ParameterDescription(
+              name: 'productId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'featured': _i1.ParameterDescription(
+              name: 'featured',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['admin'] as _i6.AdminEndpoint).setProductFeatured(
+                    session,
+                    params['productId'],
+                    featured: params['featured'],
+                  ),
+        ),
         'fileComplaint': _i1.MethodConnector(
           name: 'fileComplaint',
           params: {
@@ -1072,6 +1097,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<_i23.ComplaintStatus?>(),
               nullable: true,
             ),
+            'pagination': _i1.ParameterDescription(
+              name: 'pagination',
+              type: _i1.getType<_i24.PaginationInput?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -1081,6 +1111,32 @@ class Endpoints extends _i1.EndpointDispatch {
                   (endpoints['admin'] as _i6.AdminEndpoint).listComplaints(
                     session,
                     status: params['status'],
+                    pagination: params['pagination'],
+                  ),
+        ),
+        'assignComplaint': _i1.MethodConnector(
+          name: 'assignComplaint',
+          params: {
+            'complaintId': _i1.ParameterDescription(
+              name: 'complaintId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+            'internalNote': _i1.ParameterDescription(
+              name: 'internalNote',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['admin'] as _i6.AdminEndpoint).assignComplaint(
+                    session,
+                    params['complaintId'],
+                    internalNote: params['internalNote'],
                   ),
         ),
         'resolveComplaint': _i1.MethodConnector(
@@ -1100,6 +1156,31 @@ class Endpoints extends _i1.EndpointDispatch {
                   (endpoints['admin'] as _i6.AdminEndpoint).resolveComplaint(
                     session,
                     params['complaintId'],
+                  ),
+        ),
+        'reopenComplaint': _i1.MethodConnector(
+          name: 'reopenComplaint',
+          params: {
+            'complaintId': _i1.ParameterDescription(
+              name: 'complaintId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+            'internalNote': _i1.ParameterDescription(
+              name: 'internalNote',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['admin'] as _i6.AdminEndpoint).reopenComplaint(
+                    session,
+                    params['complaintId'],
+                    internalNote: params['internalNote'],
                   ),
         ),
         'getPlatformStats': _i1.MethodConnector(
@@ -1125,6 +1206,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<_i20.UserRole?>(),
               nullable: true,
             ),
+            'pagination': _i1.ParameterDescription(
+              name: 'pagination',
+              type: _i1.getType<_i24.PaginationInput?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -1134,6 +1220,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 session,
                 query: params['query'],
                 role: params['role'],
+                pagination: params['pagination'],
               ),
         ),
         'getUserDetail': _i1.MethodConnector(
@@ -1163,6 +1250,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<_i22.UserAccountStatus?>(),
               nullable: true,
             ),
+            'pagination': _i1.ParameterDescription(
+              name: 'pagination',
+              type: _i1.getType<_i24.PaginationInput?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -1172,6 +1264,7 @@ class Endpoints extends _i1.EndpointDispatch {
                   .listVendorApplications(
                     session,
                     status: params['status'],
+                    pagination: params['pagination'],
                   ),
         ),
         'getVendorApplication': _i1.MethodConnector(
@@ -1201,6 +1294,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<int>(),
               nullable: false,
             ),
+            'pagination': _i1.ParameterDescription(
+              name: 'pagination',
+              type: _i1.getType<_i24.PaginationInput?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -1209,6 +1307,7 @@ class Endpoints extends _i1.EndpointDispatch {
               ) async => (endpoints['admin'] as _i6.AdminEndpoint).getAuditLog(
                 session,
                 limit: params['limit'],
+                pagination: params['pagination'],
               ),
         ),
         'listVendorPayouts': _i1.MethodConnector(
@@ -1216,7 +1315,12 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i24.VendorPayoutStatus?>(),
+              type: _i1.getType<_i25.VendorPayoutStatus?>(),
+              nullable: true,
+            ),
+            'pagination': _i1.ParameterDescription(
+              name: 'pagination',
+              type: _i1.getType<_i24.PaginationInput?>(),
               nullable: true,
             ),
           },
@@ -1228,6 +1332,7 @@ class Endpoints extends _i1.EndpointDispatch {
                   (endpoints['admin'] as _i6.AdminEndpoint).listVendorPayouts(
                     session,
                     status: params['status'],
+                    pagination: params['pagination'],
                   ),
         ),
         'approveVendorPayout': _i1.MethodConnector(
@@ -1279,7 +1384,12 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i25.RequestStatus?>(),
+              type: _i1.getType<_i26.RequestStatus?>(),
+              nullable: true,
+            ),
+            'pagination': _i1.ParameterDescription(
+              name: 'pagination',
+              type: _i1.getType<_i24.PaginationInput?>(),
               nullable: true,
             ),
           },
@@ -1291,6 +1401,7 @@ class Endpoints extends _i1.EndpointDispatch {
                   (endpoints['admin'] as _i6.AdminEndpoint).listRefundRequests(
                     session,
                     status: params['status'],
+                    pagination: params['pagination'],
                   ),
         ),
         'approveRefundRequest': _i1.MethodConnector(
@@ -1523,7 +1634,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'request': _i1.ParameterDescription(
               name: 'request',
-              type: _i1.getType<_i26.CheckoutRequest>(),
+              type: _i1.getType<_i27.CheckoutRequest>(),
               nullable: false,
             ),
           },
@@ -1696,7 +1807,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'pagination': _i1.ParameterDescription(
               name: 'pagination',
-              type: _i1.getType<_i27.PaginationInput?>(),
+              type: _i1.getType<_i24.PaginationInput?>(),
               nullable: true,
             ),
             'status': _i1.ParameterDescription(
@@ -1973,7 +2084,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'pagination': _i1.ParameterDescription(
               name: 'pagination',
-              type: _i1.getType<_i27.PaginationInput?>(),
+              type: _i1.getType<_i24.PaginationInput?>(),
               nullable: true,
             ),
           },
@@ -3049,7 +3160,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'pagination': _i1.ParameterDescription(
               name: 'pagination',
-              type: _i1.getType<_i27.PaginationInput?>(),
+              type: _i1.getType<_i24.PaginationInput?>(),
               nullable: true,
             ),
           },

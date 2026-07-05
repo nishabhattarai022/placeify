@@ -30,6 +30,9 @@ abstract class Complaint
     required this.reason,
     this.description,
     _i2.ComplaintStatus? status,
+    this.assignedToId,
+    this.assignedTo,
+    this.internalNote,
     this.resolvedById,
     this.resolvedBy,
     this.resolvedAt,
@@ -48,6 +51,9 @@ abstract class Complaint
     required String reason,
     String? description,
     _i2.ComplaintStatus? status,
+    _i1.UuidValue? assignedToId,
+    _i5.Admin? assignedTo,
+    String? internalNote,
     _i1.UuidValue? resolvedById,
     _i5.Admin? resolvedBy,
     DateTime? resolvedAt,
@@ -81,6 +87,17 @@ abstract class Complaint
           : _i2.ComplaintStatus.fromJson(
               (jsonSerialization['status'] as String),
             ),
+      assignedToId: jsonSerialization['assignedToId'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(
+              jsonSerialization['assignedToId'],
+            ),
+      assignedTo: jsonSerialization['assignedTo'] == null
+          ? null
+          : _i6.Protocol().deserialize<_i5.Admin>(
+              jsonSerialization['assignedTo'],
+            ),
+      internalNote: jsonSerialization['internalNote'] as String?,
       resolvedById: jsonSerialization['resolvedById'] == null
           ? null
           : _i1.UuidValueJsonExtension.fromJson(
@@ -124,6 +141,14 @@ abstract class Complaint
 
   _i2.ComplaintStatus status;
 
+  _i1.UuidValue? assignedToId;
+
+  /// Admin assigned to review this complaint.
+  _i5.Admin? assignedTo;
+
+  /// Internal admin-only notes (not visible to reporters).
+  String? internalNote;
+
   _i1.UuidValue? resolvedById;
 
   /// Admin who marked this complaint resolved or rejected.
@@ -150,6 +175,9 @@ abstract class Complaint
     String? reason,
     String? description,
     _i2.ComplaintStatus? status,
+    _i1.UuidValue? assignedToId,
+    _i5.Admin? assignedTo,
+    String? internalNote,
     _i1.UuidValue? resolvedById,
     _i5.Admin? resolvedBy,
     DateTime? resolvedAt,
@@ -168,6 +196,9 @@ abstract class Complaint
       'reason': reason,
       if (description != null) 'description': description,
       'status': status.toJson(),
+      if (assignedToId != null) 'assignedToId': assignedToId?.toJson(),
+      if (assignedTo != null) 'assignedTo': assignedTo?.toJson(),
+      if (internalNote != null) 'internalNote': internalNote,
       if (resolvedById != null) 'resolvedById': resolvedById?.toJson(),
       if (resolvedBy != null) 'resolvedBy': resolvedBy?.toJson(),
       if (resolvedAt != null) 'resolvedAt': resolvedAt?.toJson(),
@@ -188,6 +219,9 @@ abstract class Complaint
       'reason': reason,
       if (description != null) 'description': description,
       'status': status.toJson(),
+      if (assignedToId != null) 'assignedToId': assignedToId?.toJson(),
+      if (assignedTo != null) 'assignedTo': assignedTo?.toJsonForProtocol(),
+      if (internalNote != null) 'internalNote': internalNote,
       if (resolvedById != null) 'resolvedById': resolvedById?.toJson(),
       if (resolvedBy != null) 'resolvedBy': resolvedBy?.toJsonForProtocol(),
       if (resolvedAt != null) 'resolvedAt': resolvedAt?.toJson(),
@@ -199,11 +233,13 @@ abstract class Complaint
   static ComplaintInclude include({
     _i3.ProductInclude? product,
     _i4.UserInclude? reportedBy,
+    _i5.AdminInclude? assignedTo,
     _i5.AdminInclude? resolvedBy,
   }) {
     return ComplaintInclude._(
       product: product,
       reportedBy: reportedBy,
+      assignedTo: assignedTo,
       resolvedBy: resolvedBy,
     );
   }
@@ -246,6 +282,9 @@ class _ComplaintImpl extends Complaint {
     required String reason,
     String? description,
     _i2.ComplaintStatus? status,
+    _i1.UuidValue? assignedToId,
+    _i5.Admin? assignedTo,
+    String? internalNote,
     _i1.UuidValue? resolvedById,
     _i5.Admin? resolvedBy,
     DateTime? resolvedAt,
@@ -260,6 +299,9 @@ class _ComplaintImpl extends Complaint {
          reason: reason,
          description: description,
          status: status,
+         assignedToId: assignedToId,
+         assignedTo: assignedTo,
+         internalNote: internalNote,
          resolvedById: resolvedById,
          resolvedBy: resolvedBy,
          resolvedAt: resolvedAt,
@@ -280,6 +322,9 @@ class _ComplaintImpl extends Complaint {
     String? reason,
     Object? description = _Undefined,
     _i2.ComplaintStatus? status,
+    Object? assignedToId = _Undefined,
+    Object? assignedTo = _Undefined,
+    Object? internalNote = _Undefined,
     Object? resolvedById = _Undefined,
     Object? resolvedBy = _Undefined,
     Object? resolvedAt = _Undefined,
@@ -297,6 +342,13 @@ class _ComplaintImpl extends Complaint {
       reason: reason ?? this.reason,
       description: description is String? ? description : this.description,
       status: status ?? this.status,
+      assignedToId: assignedToId is _i1.UuidValue?
+          ? assignedToId
+          : this.assignedToId,
+      assignedTo: assignedTo is _i5.Admin?
+          ? assignedTo
+          : this.assignedTo?.copyWith(),
+      internalNote: internalNote is String? ? internalNote : this.internalNote,
       resolvedById: resolvedById is _i1.UuidValue?
           ? resolvedById
           : this.resolvedById,
@@ -341,6 +393,19 @@ class ComplaintUpdateTable extends _i1.UpdateTable<ComplaintTable> {
     table.status,
     value,
   );
+
+  _i1.ColumnValue<_i1.UuidValue, _i1.UuidValue> assignedToId(
+    _i1.UuidValue? value,
+  ) => _i1.ColumnValue(
+    table.assignedToId,
+    value,
+  );
+
+  _i1.ColumnValue<String, String> internalNote(String? value) =>
+      _i1.ColumnValue(
+        table.internalNote,
+        value,
+      );
 
   _i1.ColumnValue<_i1.UuidValue, _i1.UuidValue> resolvedById(
     _i1.UuidValue? value,
@@ -393,6 +458,14 @@ class ComplaintTable extends _i1.Table<_i1.UuidValue?> {
       _i1.EnumSerialization.byName,
       hasDefault: true,
     );
+    assignedToId = _i1.ColumnUuid(
+      'assignedToId',
+      this,
+    );
+    internalNote = _i1.ColumnString(
+      'internalNote',
+      this,
+    );
     resolvedById = _i1.ColumnUuid(
       'resolvedById',
       this,
@@ -428,6 +501,14 @@ class ComplaintTable extends _i1.Table<_i1.UuidValue?> {
   late final _i1.ColumnString description;
 
   late final _i1.ColumnEnum<_i2.ComplaintStatus> status;
+
+  late final _i1.ColumnUuid assignedToId;
+
+  /// Admin assigned to review this complaint.
+  _i5.AdminTable? _assignedTo;
+
+  /// Internal admin-only notes (not visible to reporters).
+  late final _i1.ColumnString internalNote;
 
   late final _i1.ColumnUuid resolvedById;
 
@@ -466,6 +547,19 @@ class ComplaintTable extends _i1.Table<_i1.UuidValue?> {
     return _reportedBy!;
   }
 
+  _i5.AdminTable get assignedTo {
+    if (_assignedTo != null) return _assignedTo!;
+    _assignedTo = _i1.createRelationTable(
+      relationFieldName: 'assignedTo',
+      field: Complaint.t.assignedToId,
+      foreignField: _i5.Admin.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i5.AdminTable(tableRelation: foreignTableRelation),
+    );
+    return _assignedTo!;
+  }
+
   _i5.AdminTable get resolvedBy {
     if (_resolvedBy != null) return _resolvedBy!;
     _resolvedBy = _i1.createRelationTable(
@@ -487,6 +581,8 @@ class ComplaintTable extends _i1.Table<_i1.UuidValue?> {
     reason,
     description,
     status,
+    assignedToId,
+    internalNote,
     resolvedById,
     resolvedAt,
     createdAt,
@@ -501,6 +597,9 @@ class ComplaintTable extends _i1.Table<_i1.UuidValue?> {
     if (relationField == 'reportedBy') {
       return reportedBy;
     }
+    if (relationField == 'assignedTo') {
+      return assignedTo;
+    }
     if (relationField == 'resolvedBy') {
       return resolvedBy;
     }
@@ -512,10 +611,12 @@ class ComplaintInclude extends _i1.IncludeObject {
   ComplaintInclude._({
     _i3.ProductInclude? product,
     _i4.UserInclude? reportedBy,
+    _i5.AdminInclude? assignedTo,
     _i5.AdminInclude? resolvedBy,
   }) {
     _product = product;
     _reportedBy = reportedBy;
+    _assignedTo = assignedTo;
     _resolvedBy = resolvedBy;
   }
 
@@ -523,12 +624,15 @@ class ComplaintInclude extends _i1.IncludeObject {
 
   _i4.UserInclude? _reportedBy;
 
+  _i5.AdminInclude? _assignedTo;
+
   _i5.AdminInclude? _resolvedBy;
 
   @override
   Map<String, _i1.Include?> get includes => {
     'product': _product,
     'reportedBy': _reportedBy,
+    'assignedTo': _assignedTo,
     'resolvedBy': _resolvedBy,
   };
 
@@ -903,6 +1007,29 @@ class ComplaintAttachRowRepository {
   }
 
   /// Creates a relation between the given [Complaint] and [Admin]
+  /// by setting the [Complaint]'s foreign key `assignedToId` to refer to the [Admin].
+  Future<void> assignedTo(
+    _i1.DatabaseSession session,
+    Complaint complaint,
+    _i5.Admin assignedTo, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (complaint.id == null) {
+      throw ArgumentError.notNull('complaint.id');
+    }
+    if (assignedTo.id == null) {
+      throw ArgumentError.notNull('assignedTo.id');
+    }
+
+    var $complaint = complaint.copyWith(assignedToId: assignedTo.id);
+    await session.db.updateRow<Complaint>(
+      $complaint,
+      columns: [Complaint.t.assignedToId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between the given [Complaint] and [Admin]
   /// by setting the [Complaint]'s foreign key `resolvedById` to refer to the [Admin].
   Future<void> resolvedBy(
     _i1.DatabaseSession session,
@@ -928,6 +1055,28 @@ class ComplaintAttachRowRepository {
 
 class ComplaintDetachRowRepository {
   const ComplaintDetachRowRepository._();
+
+  /// Detaches the relation between this [Complaint] and the [Admin] set in `assignedTo`
+  /// by setting the [Complaint]'s foreign key `assignedToId` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> assignedTo(
+    _i1.DatabaseSession session,
+    Complaint complaint, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (complaint.id == null) {
+      throw ArgumentError.notNull('complaint.id');
+    }
+
+    var $complaint = complaint.copyWith(assignedToId: null);
+    await session.db.updateRow<Complaint>(
+      $complaint,
+      columns: [Complaint.t.assignedToId],
+      transaction: transaction,
+    );
+  }
 
   /// Detaches the relation between this [Complaint] and the [Admin] set in `resolvedBy`
   /// by setting the [Complaint]'s foreign key `resolvedById` to `null`.
