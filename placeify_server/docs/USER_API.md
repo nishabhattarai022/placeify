@@ -201,7 +201,7 @@ dart test
 | `test/integration/refund_endpoint_test.dart` | Refund create + list + dashboard count |
 | `test/integration/checkout_flow_endpoint_test.dart` | Cart add → checkout → order list + dashboard |
 | `test/integration/user_payment_flow_test.dart` | Checkout payment pending → vendor payment update (consumer `completePayment` is disabled) |
-| `test/integration/vendor_starter_catalog_test.dart` | Approved vendor gets starter catalog → checkout visible on dashboard |
+| `test/integration/vendor_starter_catalog_test.dart` | Vendor-listed product → consumer checkout → appears in shop orders |
 
 ---
 

@@ -1405,7 +1405,10 @@ class VendorStore {
             row.orderId.equals(orderId) & row.vendorId.equals(vendor.id!),
         transaction: transaction,
       );
-      if (existingUpdates.isEmpty) {
+      final alreadyConfirmed = existingUpdates.any(
+        (update) => update.note == 'Order confirmed by vendor.',
+      );
+      if (!alreadyConfirmed) {
         await OrderDeliveryUpdate.db.insertRow(
           session,
           OrderDeliveryUpdate(

@@ -9,9 +9,9 @@ import 'test_tools/serverpod_test_tools.dart';
 import 'test_tools/user_test_helpers.dart';
 
 void main() {
-  withServerpod('Given vendor starter catalog', (sessionBuilder, endpoints) {
+  withServerpod('Given vendor shop orders', (sessionBuilder, endpoints) {
     test(
-      'when approved vendor has no products then dashboard seeds catalog and checkout appears in shop orders',
+      'when vendor lists a product then consumer checkout appears in shop orders',
       () async {
         final vendorAuth = await createAuthenticatedUser(
           sessionBuilder,
@@ -20,12 +20,22 @@ void main() {
         );
 
         final setupSession = sessionBuilder.build();
-        await Vendor.db.insertRow(
+        final vendor = await Vendor.db.insertRow(
           setupSession,
           Vendor(
             userId: vendorAuth.profile.id!,
             shopName: 'Starter Shop',
             description: 'Awaiting first product',
+          ),
+        );
+        final product = await Product.db.insertRow(
+          setupSession,
+          Product(
+            vendorId: vendor.id!,
+            name: 'Starter Chair',
+            description: 'Vendor-listed product',
+            price: 199,
+            status: ProductStatus.active,
           ),
         );
         await setupSession.close();
@@ -41,7 +51,7 @@ void main() {
         expect(vendorProducts, isNotEmpty);
         expect(
           vendorProducts.every(
-            (product) => product.status == ProductStatus.active,
+            (row) => row.status == ProductStatus.active,
           ),
           isTrue,
         );
@@ -51,7 +61,7 @@ void main() {
           endpoints,
           name: 'Starter Buyer',
         );
-        final productId = vendorProducts.first.id!;
+        final productId = product.id!;
 
         await endpoints.cart.addToCart(
           consumerAuth.session,

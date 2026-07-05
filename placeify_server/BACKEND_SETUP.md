@@ -106,7 +106,10 @@ Verify contract after backend changes:
 
 ```bash
 cd placeify_server && ./scripts/verify-consumer-contract.sh
+cd placeify_server && ./scripts/verify-backend-readiness.sh
 ```
+
+**Frontend wiring guide:** [docs/BACKEND_FRONTEND_WIRING.md](docs/BACKEND_FRONTEND_WIRING.md)
 
 When your teammate adds UI, check the matrix first: most consumer features already have endpoints — gaps are usually **frontend wiring**, not missing backend.
 
