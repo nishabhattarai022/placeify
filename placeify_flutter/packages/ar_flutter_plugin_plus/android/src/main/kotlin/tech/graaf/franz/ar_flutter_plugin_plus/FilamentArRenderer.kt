@@ -77,6 +77,10 @@ internal class FilamentArRenderer(
     private var indirectLight: IndirectLight? = null
     private var lightIntensityMultiplier = 1.0f
     private var environmentLightScale = 1.0f
+    private var shadowCatcher: ShadowCatcherRenderer? = null
+    private var shadowsEnabled = false
+    private var referenceFloorY: Float? = null
+    private val modelWorldCenters: MutableMap<String, FloatArray> = mutableMapOf()
     var environmentalLightEstimationEnabled = false
     var depthOcclusionEnabled = false
         set(value) {
@@ -133,6 +137,11 @@ internal class FilamentArRenderer(
         isAttached = false
     }
 
+    fun setReferenceFloorY(floorY: Float?) {
+        referenceFloorY = floorY
+        mainHandler.post { recomputeShadowCatcher() }
+    }
+
     fun setLightIntensityMultiplier(multiplier: Float) {
         val clamped = if (multiplier.isFinite()) multiplier else 1.0f
         lightIntensityMultiplier = if (clamped <= 0f) 0.01f else clamped
@@ -165,7 +174,13 @@ internal class FilamentArRenderer(
             modelAssets[name] = asset
             pendingTransforms[name]?.let { transform ->
                 applyTransform(name, asset, transform)
+                modelWorldCenters[name] = floatArrayOf(
+                    transform[12],
+                    transform[13],
+                    transform[14],
+                )
             }
+            recomputeShadowCatcher()
             val correction = rootOffsetCorrections[name]
             Log.d(
                 tag,
@@ -203,7 +218,13 @@ internal class FilamentArRenderer(
             modelAssets[name] = asset
             pendingTransforms[name]?.let { transform ->
                 applyTransform(name, asset, transform)
+                modelWorldCenters[name] = floatArrayOf(
+                    transform[12],
+                    transform[13],
+                    transform[14],
+                )
             }
+            recomputeShadowCatcher()
         }
     }
 
@@ -211,8 +232,14 @@ internal class FilamentArRenderer(
         val matrixCopy = modelMatrix.clone()
         mainHandler.post {
             pendingTransforms[name] = matrixCopy
+            modelWorldCenters[name] = floatArrayOf(
+                matrixCopy[12],
+                matrixCopy[13],
+                matrixCopy[14],
+            )
             val asset = modelAssets[name] ?: return@post
             applyTransform(name, asset, matrixCopy)
+            recomputeShadowCatcher()
         }
     }
 
@@ -234,6 +261,8 @@ internal class FilamentArRenderer(
             pendingTransforms.remove(name)
             lastSentTransforms.remove(name)
             rootOffsetCorrections.remove(name)
+            modelWorldCenters.remove(name)
+            recomputeShadowCatcher()
         }
     }
 
@@ -259,6 +288,12 @@ internal class FilamentArRenderer(
             rootOffsetCorrections.clear()
             pendingTransforms.clear()
             lastSentTransforms.clear()
+            modelWorldCenters.clear()
+            referenceFloorY = null
+
+            shadowCatcher?.destroy()
+            shadowCatcher = null
+            shadowsEnabled = false
 
             resourceLoader?.destroy()
             assetLoader?.destroy()
@@ -618,6 +653,24 @@ internal class FilamentArRenderer(
         if (kotlin.math.abs(newScale - environmentLightScale) < 0.02f) return
         environmentLightScale = newScale
         applyDirectionalLightIntensities(engine)
+        updateShadowAppearance()
+    }
+
+    private fun updateShadowAppearance() {
+        val scale = environmentLightScale.coerceIn(0.35f, 2.2f)
+        // Brighter scenes get slightly stronger contact shadows; dim rooms stay soft.
+        val normalized = ((scale - 0.35f) / (2.2f - 0.35f)).coerceIn(0f, 1f)
+        val alpha = 0.24f + normalized * 0.34f
+        shadowCatcher?.setShadowAlpha(alpha)
+    }
+
+    private fun createKeyLightShadowOptions(normalizedLight: Float): LightManager.ShadowOptions {
+        return LightManager.ShadowOptions().apply {
+            mapSize = 1024
+            constantBias = 0.0005f
+            normalBias = 0.8f + (1f - normalizedLight) * 0.9f
+            shadowFar = 18f
+        }
     }
 
     private fun effectiveLightScale(): Float = lightIntensityMultiplier * environmentLightScale
@@ -644,11 +697,15 @@ internal class FilamentArRenderer(
         if (lightingConfigured) return
 
         if (lightEntity == 0) {
+            val normalizedLight = ((environmentLightScale.coerceIn(0.35f, 2.2f) - 0.35f) /
+                (2.2f - 0.35f)).coerceIn(0f, 1f)
             lightEntity = EntityManager.get().create()
             LightManager.Builder(LightManager.Type.DIRECTIONAL)
                 .direction(0.3f, -1.0f, -0.2f)
                 .color(1.0f, 1.0f, 1.0f)
                 .intensity(55_000.0f)
+                .castShadows(true)
+                .shadowOptions(createKeyLightShadowOptions(normalizedLight))
                 .build(engine, lightEntity)
             scene?.addEntity(lightEntity)
         }
@@ -659,13 +716,79 @@ internal class FilamentArRenderer(
                 .direction(-0.4f, -0.6f, 0.5f)
                 .color(0.98f, 0.98f, 1.0f)
                 .intensity(25_000.0f)
+                .castShadows(false)
                 .build(engine, fillLightEntity)
             scene?.addEntity(fillLightEntity)
         }
 
         applyDirectionalLightIntensities(engine)
-        view?.setShadowingEnabled(false)
+        updateShadowAppearance()
         lightingConfigured = true
+    }
+
+    private fun ensureShadowCatcher() {
+        val engine = engine ?: return
+        val scene = scene ?: return
+        if (shadowCatcher != null) return
+        try {
+            shadowCatcher = ShadowCatcherRenderer(engine, scene)
+            enableShadowing()
+            updateShadowAppearance()
+        } catch (e: Exception) {
+            Log.e(tag, "Shadow catcher unavailable; continuing without contact shadows", e)
+            shadowCatcher = null
+        }
+    }
+
+    private fun enableShadowing() {
+        if (shadowsEnabled) return
+        view?.setShadowingEnabled(true)
+        shadowsEnabled = true
+        Log.d(tag, "Shadow mapping enabled for contact shadows")
+    }
+
+    private fun recomputeShadowCatcher() {
+        if (modelWorldCenters.isEmpty()) {
+            shadowCatcher?.setVisible(false)
+            return
+        }
+
+        val floorY = referenceFloorY
+            ?: modelWorldCenters.values.minOfOrNull { it[1] }
+            ?: return
+
+        var minX = Float.MAX_VALUE
+        var maxX = -Float.MAX_VALUE
+        var minZ = Float.MAX_VALUE
+        var maxZ = -Float.MAX_VALUE
+        for (center in modelWorldCenters.values) {
+            minX = minOf(minX, center[0])
+            maxX = maxOf(maxX, center[0])
+            minZ = minOf(minZ, center[2])
+            maxZ = maxOf(maxZ, center[2])
+        }
+
+        val paddingM = 1.5f
+        val minExtentM = 4f
+        val widthM = maxOf(minExtentM, (maxX - minX) + paddingM * 2f)
+        val depthM = maxOf(minExtentM, (maxZ - minZ) + paddingM * 2f)
+        val centerX = (minX + maxX) * 0.5f
+        val centerZ = (minZ + maxZ) * 0.5f
+
+        ensureShadowCatcher()
+        shadowCatcher?.update(
+            centerX = centerX,
+            floorY = floorY + SHADOW_PLANE_LIFT_M,
+            centerZ = centerZ,
+            widthM = widthM,
+            depthM = depthM,
+        )
+        shadowCatcher?.setVisible(true)
+    }
+
+    companion object {
+        /** Lift above the floor plane to avoid z-fighting with the model base. */
+        private const val SHADOW_PLANE_LIFT_M = 0.002f
     }
 
     private fun neutralStudioSh(): FloatArray {
@@ -754,6 +877,8 @@ internal class FilamentArRenderer(
             if (renderableInstance == 0) continue
 
             renderableManager.setCulling(renderableInstance, false)
+            renderableManager.setCastShadows(renderableInstance, true)
+            renderableManager.setReceiveShadows(renderableInstance, false)
 
             val primitiveCount = renderableManager.getPrimitiveCount(renderableInstance)
             for (primitiveIndex in 0 until primitiveCount) {
