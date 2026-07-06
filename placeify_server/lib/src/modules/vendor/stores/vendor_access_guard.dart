@@ -29,7 +29,10 @@ class VendorAccessGuard {
   ///
   /// Does **not** mutate [User.role]. Vendor role is assigned only via admin
   /// approval ([AdminModerationStore.approveVendor]).
-  Future<Vendor> requireOwnedVendor(Session session) async {
+  Future<Vendor> requireOwnedVendor(
+    Session session, {
+    bool allowSuspended = false,
+  }) async {
     final user = await SessionService.requireUser(session);
     final vendor = await Vendor.db.findFirstRow(
       session,
@@ -50,20 +53,49 @@ class VendorAccessGuard {
     }
 
     if (user.role != UserRole.admin &&
-        user.status != UserAccountStatus.approved) {
+        user.status != UserAccountStatus.approved &&
+        !(allowSuspended && user.status == UserAccountStatus.suspended)) {
       throw PlaceifyException(
         message: 'Vendor account is pending admin approval.',
         code: 'VENDOR_NOT_APPROVED',
       );
     }
 
-    if (!user.isActive) {
+    if (!user.isActive && !allowSuspended) {
       throw PlaceifyException(
         message: 'Vendor account is deactivated.',
         code: 'ACCOUNT_INACTIVE',
       );
     }
 
+    return vendor;
+  }
+
+  Future<Vendor> requireSuspendedVendorForAppeal(Session session) async {
+    final user = await SessionService.requireUser(session);
+    if (user.role != UserRole.vendor) {
+      throw PlaceifyException(
+        message: 'Vendor profile not found.',
+        code: 'VENDOR_NOT_FOUND',
+      );
+    }
+    if (user.status != UserAccountStatus.suspended) {
+      throw PlaceifyException(
+        message: 'Only suspended vendors can submit an appeal.',
+        code: 'NOT_SUSPENDED',
+      );
+    }
+
+    final vendor = await Vendor.db.findFirstRow(
+      session,
+      where: (row) => row.userId.equals(user.id!),
+    );
+    if (vendor == null) {
+      throw PlaceifyException(
+        message: 'Shop not found.',
+        code: 'SHOP_NOT_FOUND',
+      );
+    }
     return vendor;
   }
 

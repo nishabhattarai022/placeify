@@ -132,7 +132,7 @@ final class AdminVendorActionsProvider
 }
 
 String _$adminVendorActionsHash() =>
-    r'd19dd9fb0be1c91d2ca8104b13b002df58fd637c';
+    r'0da41b435cb2f9b3c3dfe103af7164259b7a1a4b';
 
 abstract class _$AdminVendorActions extends $AsyncNotifier<void> {
   FutureOr<void> build();

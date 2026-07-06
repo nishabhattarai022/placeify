@@ -168,6 +168,41 @@ class _VendorDetailBody extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                 ],
+                if (vendor.status == VendorStatus.suspended &&
+                    vendor.appealSubmittedAt != null &&
+                    vendor.appealMessage != null) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.warmWhite,
+                      borderRadius: AppRadii.md,
+                      border: Border.all(color: AppColors.espresso, width: 1.5),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Appeal submitted ${Formatters.shortDate(vendor.appealSubmittedAt!)}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.espresso,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          vendor.appealMessage!,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 ApplicationDetailSections(
                   registration: vendor.registration,
                 ),

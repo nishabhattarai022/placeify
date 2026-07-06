@@ -36,6 +36,9 @@ abstract class VendorProfileDetail
     required this.operatingHours,
     required this.isOpen,
     required this.status,
+    this.moderationNote,
+    this.appealMessage,
+    this.appealSubmittedAt,
     required this.totalProducts,
     required this.totalOrders,
     required this.totalRevenue,
@@ -61,6 +64,9 @@ abstract class VendorProfileDetail
     required String operatingHours,
     required bool isOpen,
     required _i2.UserAccountStatus status,
+    String? moderationNote,
+    String? appealMessage,
+    DateTime? appealSubmittedAt,
     required int totalProducts,
     required int totalOrders,
     required double totalRevenue,
@@ -89,6 +95,13 @@ abstract class VendorProfileDetail
       status: _i2.UserAccountStatus.fromJson(
         (jsonSerialization['status'] as String),
       ),
+      moderationNote: jsonSerialization['moderationNote'] as String?,
+      appealMessage: jsonSerialization['appealMessage'] as String?,
+      appealSubmittedAt: jsonSerialization['appealSubmittedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['appealSubmittedAt'],
+            ),
       totalProducts: jsonSerialization['totalProducts'] as int,
       totalOrders: jsonSerialization['totalOrders'] as int,
       totalRevenue: (jsonSerialization['totalRevenue'] as num).toDouble(),
@@ -138,6 +151,12 @@ abstract class VendorProfileDetail
 
   _i2.UserAccountStatus status;
 
+  String? moderationNote;
+
+  String? appealMessage;
+
+  DateTime? appealSubmittedAt;
+
   int totalProducts;
 
   int totalOrders;
@@ -169,6 +188,9 @@ abstract class VendorProfileDetail
     String? operatingHours,
     bool? isOpen,
     _i2.UserAccountStatus? status,
+    String? moderationNote,
+    String? appealMessage,
+    DateTime? appealSubmittedAt,
     int? totalProducts,
     int? totalOrders,
     double? totalRevenue,
@@ -196,6 +218,10 @@ abstract class VendorProfileDetail
       'operatingHours': operatingHours,
       'isOpen': isOpen,
       'status': status.toJson(),
+      if (moderationNote != null) 'moderationNote': moderationNote,
+      if (appealMessage != null) 'appealMessage': appealMessage,
+      if (appealSubmittedAt != null)
+        'appealSubmittedAt': appealSubmittedAt?.toJson(),
       'totalProducts': totalProducts,
       'totalOrders': totalOrders,
       'totalRevenue': totalRevenue,
@@ -226,6 +252,10 @@ abstract class VendorProfileDetail
       'operatingHours': operatingHours,
       'isOpen': isOpen,
       'status': status.toJson(),
+      if (moderationNote != null) 'moderationNote': moderationNote,
+      if (appealMessage != null) 'appealMessage': appealMessage,
+      if (appealSubmittedAt != null)
+        'appealSubmittedAt': appealSubmittedAt?.toJson(),
       'totalProducts': totalProducts,
       'totalOrders': totalOrders,
       'totalRevenue': totalRevenue,
@@ -262,6 +292,9 @@ class _VendorProfileDetailImpl extends VendorProfileDetail {
     required String operatingHours,
     required bool isOpen,
     required _i2.UserAccountStatus status,
+    String? moderationNote,
+    String? appealMessage,
+    DateTime? appealSubmittedAt,
     required int totalProducts,
     required int totalOrders,
     required double totalRevenue,
@@ -285,6 +318,9 @@ class _VendorProfileDetailImpl extends VendorProfileDetail {
          operatingHours: operatingHours,
          isOpen: isOpen,
          status: status,
+         moderationNote: moderationNote,
+         appealMessage: appealMessage,
+         appealSubmittedAt: appealSubmittedAt,
          totalProducts: totalProducts,
          totalOrders: totalOrders,
          totalRevenue: totalRevenue,
@@ -314,6 +350,9 @@ class _VendorProfileDetailImpl extends VendorProfileDetail {
     String? operatingHours,
     bool? isOpen,
     _i2.UserAccountStatus? status,
+    Object? moderationNote = _Undefined,
+    Object? appealMessage = _Undefined,
+    Object? appealSubmittedAt = _Undefined,
     int? totalProducts,
     int? totalOrders,
     double? totalRevenue,
@@ -338,6 +377,15 @@ class _VendorProfileDetailImpl extends VendorProfileDetail {
       operatingHours: operatingHours ?? this.operatingHours,
       isOpen: isOpen ?? this.isOpen,
       status: status ?? this.status,
+      moderationNote: moderationNote is String?
+          ? moderationNote
+          : this.moderationNote,
+      appealMessage: appealMessage is String?
+          ? appealMessage
+          : this.appealMessage,
+      appealSubmittedAt: appealSubmittedAt is DateTime?
+          ? appealSubmittedAt
+          : this.appealSubmittedAt,
       totalProducts: totalProducts ?? this.totalProducts,
       totalOrders: totalOrders ?? this.totalOrders,
       totalRevenue: totalRevenue ?? this.totalRevenue,

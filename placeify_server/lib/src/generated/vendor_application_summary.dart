@@ -25,6 +25,8 @@ abstract class VendorApplicationSummary
     required this.status,
     this.moderationNote,
     this.moderatedAt,
+    this.appealMessage,
+    this.appealSubmittedAt,
   });
 
   factory VendorApplicationSummary({
@@ -36,6 +38,8 @@ abstract class VendorApplicationSummary
     required _i2.UserAccountStatus status,
     String? moderationNote,
     DateTime? moderatedAt,
+    String? appealMessage,
+    DateTime? appealSubmittedAt,
   }) = _VendorApplicationSummaryImpl;
 
   factory VendorApplicationSummary.fromJson(
@@ -60,6 +64,12 @@ abstract class VendorApplicationSummary
           : _i1.DateTimeJsonExtension.fromJson(
               jsonSerialization['moderatedAt'],
             ),
+      appealMessage: jsonSerialization['appealMessage'] as String?,
+      appealSubmittedAt: jsonSerialization['appealSubmittedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['appealSubmittedAt'],
+            ),
     );
   }
 
@@ -79,6 +89,10 @@ abstract class VendorApplicationSummary
 
   DateTime? moderatedAt;
 
+  String? appealMessage;
+
+  DateTime? appealSubmittedAt;
+
   /// Returns a shallow copy of this [VendorApplicationSummary]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -91,6 +105,8 @@ abstract class VendorApplicationSummary
     _i2.UserAccountStatus? status,
     String? moderationNote,
     DateTime? moderatedAt,
+    String? appealMessage,
+    DateTime? appealSubmittedAt,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -104,6 +120,9 @@ abstract class VendorApplicationSummary
       'status': status.toJson(),
       if (moderationNote != null) 'moderationNote': moderationNote,
       if (moderatedAt != null) 'moderatedAt': moderatedAt?.toJson(),
+      if (appealMessage != null) 'appealMessage': appealMessage,
+      if (appealSubmittedAt != null)
+        'appealSubmittedAt': appealSubmittedAt?.toJson(),
     };
   }
 
@@ -119,6 +138,9 @@ abstract class VendorApplicationSummary
       'status': status.toJson(),
       if (moderationNote != null) 'moderationNote': moderationNote,
       if (moderatedAt != null) 'moderatedAt': moderatedAt?.toJson(),
+      if (appealMessage != null) 'appealMessage': appealMessage,
+      if (appealSubmittedAt != null)
+        'appealSubmittedAt': appealSubmittedAt?.toJson(),
     };
   }
 
@@ -140,6 +162,8 @@ class _VendorApplicationSummaryImpl extends VendorApplicationSummary {
     required _i2.UserAccountStatus status,
     String? moderationNote,
     DateTime? moderatedAt,
+    String? appealMessage,
+    DateTime? appealSubmittedAt,
   }) : super._(
          vendorId: vendorId,
          userId: userId,
@@ -149,6 +173,8 @@ class _VendorApplicationSummaryImpl extends VendorApplicationSummary {
          status: status,
          moderationNote: moderationNote,
          moderatedAt: moderatedAt,
+         appealMessage: appealMessage,
+         appealSubmittedAt: appealSubmittedAt,
        );
 
   /// Returns a shallow copy of this [VendorApplicationSummary]
@@ -164,6 +190,8 @@ class _VendorApplicationSummaryImpl extends VendorApplicationSummary {
     _i2.UserAccountStatus? status,
     Object? moderationNote = _Undefined,
     Object? moderatedAt = _Undefined,
+    Object? appealMessage = _Undefined,
+    Object? appealSubmittedAt = _Undefined,
   }) {
     return VendorApplicationSummary(
       vendorId: vendorId ?? this.vendorId,
@@ -176,6 +204,12 @@ class _VendorApplicationSummaryImpl extends VendorApplicationSummary {
           ? moderationNote
           : this.moderationNote,
       moderatedAt: moderatedAt is DateTime? ? moderatedAt : this.moderatedAt,
+      appealMessage: appealMessage is String?
+          ? appealMessage
+          : this.appealMessage,
+      appealSubmittedAt: appealSubmittedAt is DateTime?
+          ? appealSubmittedAt
+          : this.appealSubmittedAt,
     );
   }
 }

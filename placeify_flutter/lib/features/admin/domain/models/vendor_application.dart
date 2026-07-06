@@ -18,6 +18,8 @@ abstract class VendorApplication with _$VendorApplication {
     required VendorStatus status,
     String? moderationNote,
     DateTime? moderatedAt,
+    String? appealMessage,
+    DateTime? appealSubmittedAt,
   }) = _VendorApplication;
 
   factory VendorApplication.fromJson(Map<String, dynamic> json) =>

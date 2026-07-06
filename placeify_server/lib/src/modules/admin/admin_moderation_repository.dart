@@ -263,6 +263,8 @@ class AdminModerationStore {
           approvedById: vendor.approvedById ?? admin.id,
           moderationNote: trimmedReason,
           moderatedAt: now,
+          appealMessage: null,
+          appealSubmittedAt: null,
           updatedAt: now,
         ),
         transaction: transaction,
@@ -380,6 +382,8 @@ class AdminModerationStore {
         vendor.copyWith(
           moderationNote: note,
           moderatedAt: now,
+          appealMessage: null,
+          appealSubmittedAt: null,
           updatedAt: now,
         ),
         transaction: transaction,

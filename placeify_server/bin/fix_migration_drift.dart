@@ -96,13 +96,8 @@ Future<void> main() async {
     }
 
     const revertedProductColumns = <String>[
-      'discountPrice',
-      'discountPercentage',
-      'isOffer',
-      'hasActiveOffer',
-      'featured',
-      'isDeleted',
-      'isActive',
+      'averageRating',
+      'reviewCount',
     ];
 
     var droppedColumns = false;
@@ -121,6 +116,18 @@ Future<void> main() async {
       await connection.execute(
         Sql('ALTER TABLE "product" DROP COLUMN IF EXISTS "$column"'),
       );
+      droppedColumns = true;
+    }
+
+    final specialOfferExists = await connection.execute(
+      Sql(
+        "SELECT 1 FROM information_schema.tables "
+        "WHERE table_schema = 'public' AND table_name = 'special_offer'",
+      ),
+    );
+    if (specialOfferExists.isNotEmpty) {
+      stderr.writeln('DROP TABLE special_offer (from reverted anubudhathoki migration)');
+      await connection.execute(Sql('DROP TABLE IF EXISTS "special_offer" CASCADE'));
       droppedColumns = true;
     }
 

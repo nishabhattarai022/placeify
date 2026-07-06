@@ -37,27 +37,45 @@ void main() {
     });
 
     test('consumer-visible product requires active status and approved vendor', () {
+      final vendorId = UuidValue.fromString('00000000-0000-0000-0000-000000000010');
       final product = Product(
-        vendorId: UuidValue.fromString('00000000-0000-0000-0000-000000000010'),
+        vendorId: vendorId,
         name: 'Chair',
         description: 'Test',
         price: 1000,
         status: ProductStatus.active,
       );
+      final userId = UuidValue.fromString('00000000-0000-0000-0000-000000000003');
+      final approvedUser = User(
+        id: userId,
+        authUserId: userId,
+        name: 'Approved Vendor',
+        role: UserRole.vendor,
+        status: UserAccountStatus.approved,
+      );
+      final openVendor = Vendor(
+        id: vendorId,
+        userId: userId,
+        shopName: 'Open Shop',
+        isOpen: true,
+      );
 
       expect(
         ProductCatalogPolicy.isConsumerVisibleProduct(
           product,
-          vendorUser: User(
-            authUserId: UuidValue.fromString(
-              '00000000-0000-0000-0000-000000000003',
-            ),
-            name: 'Approved Vendor',
-            role: UserRole.vendor,
-            status: UserAccountStatus.approved,
-          ),
+          vendorUser: approvedUser,
+          vendor: openVendor,
         ),
         isTrue,
+      );
+
+      expect(
+        ProductCatalogPolicy.isConsumerVisibleProduct(
+          product,
+          vendorUser: approvedUser,
+          vendor: openVendor.copyWith(isOpen: false),
+        ),
+        isFalse,
       );
 
       expect(

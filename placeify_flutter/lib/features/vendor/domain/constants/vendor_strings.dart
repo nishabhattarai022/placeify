@@ -23,6 +23,10 @@ abstract final class VendorStrings {
       'Support request noted. Our team will get back to you shortly.';
   static const appealSubmittedToast =
       'Appeal submitted. Our team will review your request.';
+  static const appealAlreadySubmittedToast =
+      'Your appeal is already under review. Please wait for admin reinstatement.';
+  static const appealMessageHint =
+      'Explain why you believe the suspension should be reviewed.';
 
   // Bottom sheets
   static const pendingSheetTitle = 'Application under review';
@@ -37,6 +41,7 @@ abstract final class VendorStrings {
       'This may be due to a policy violation or an unresolved account issue. '
       'Contact support or submit an appeal if you believe this was a mistake.';
   static const appealCta = 'Submit an Appeal';
+  static const appealPendingCta = 'Appeal Pending';
   static const keepEditing = 'Keep Editing';
   static const dismiss = 'Dismiss';
 
