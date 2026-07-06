@@ -632,7 +632,7 @@ internal class FilamentArRenderer(
         view!!.isPostProcessingEnabled = true
         view!!.colorGrading = ColorGrading.Builder()
             .toneMapping(ColorGrading.ToneMapping.FILMIC)
-            .exposure(1.0f)
+            .exposure(0.98f)
             .build(createdEngine)
 
         setupStudioLighting(createdEngine)
@@ -645,8 +645,7 @@ internal class FilamentArRenderer(
 
         val estimate = frame.lightEstimate
         val newScale = if (estimate.state == LightEstimate.State.VALID) {
-            // pixelIntensity ~0.5 is a typical indoor scene; scale studio lights to match.
-            (estimate.pixelIntensity / 0.5f).coerceIn(0.35f, 2.2f)
+            (estimate.pixelIntensity / 0.5f).coerceIn(0.50f, 1.25f)
         } else {
             1.0f
         }
@@ -657,9 +656,9 @@ internal class FilamentArRenderer(
     }
 
     private fun updateShadowAppearance() {
-        val scale = environmentLightScale.coerceIn(0.35f, 2.2f)
+        val scale = environmentLightScale.coerceIn(0.50f, 1.25f)
         // Brighter scenes get slightly stronger contact shadows; dim rooms stay soft.
-        val normalized = ((scale - 0.35f) / (2.2f - 0.35f)).coerceIn(0f, 1f)
+        val normalized = ((scale - 0.50f) / (1.25f - 0.50f)).coerceIn(0f, 1f)
         val alpha = 0.24f + normalized * 0.34f
         shadowCatcher?.setShadowAlpha(alpha)
     }
@@ -697,8 +696,8 @@ internal class FilamentArRenderer(
         if (lightingConfigured) return
 
         if (lightEntity == 0) {
-            val normalizedLight = ((environmentLightScale.coerceIn(0.35f, 2.2f) - 0.35f) /
-                (2.2f - 0.35f)).coerceIn(0f, 1f)
+            val normalizedLight = ((environmentLightScale.coerceIn(0.50f, 1.25f) - 0.50f) /
+                (1.25f - 0.50f)).coerceIn(0f, 1f)
             lightEntity = EntityManager.get().create()
             LightManager.Builder(LightManager.Type.DIRECTIONAL)
                 .direction(0.3f, -1.0f, -0.2f)

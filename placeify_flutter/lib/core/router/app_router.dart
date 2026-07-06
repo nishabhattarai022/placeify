@@ -49,6 +49,7 @@ import '../../data/furniture_categories.dart';
 import '../../screens/browse_screen.dart';
 import '../../screens/category_screen.dart';
 import '../../features/ar_hub/presentation/ar_powered_screen.dart';
+import '../../features/ar/presentation/room_snapshot_gallery_screen.dart';
 import '../../features/profile/presentation/profile_ar_history_screen.dart';
 import '../../features/profile/presentation/profile_home_screen.dart';
 import '../../features/profile/presentation/profile_notifications_screen.dart';
@@ -425,6 +426,14 @@ List<RouteBase> get _appRoutes => [
           pageBuilder: (context, state) => _slidePage(
             key: ValueKey<String>(state.uri.toString()),
             child: const ProfileArHistoryScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/profile/room-snapshots',
+          name: 'profileRoomSnapshots',
+          pageBuilder: (context, state) => _slidePage(
+            key: ValueKey<String>(state.uri.toString()),
+            child: const RoomSnapshotGalleryScreen(),
           ),
         ),
         GoRoute(

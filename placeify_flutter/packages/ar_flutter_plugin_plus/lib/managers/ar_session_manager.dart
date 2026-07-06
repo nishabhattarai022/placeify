@@ -1,4 +1,6 @@
 import 'dart:math' show sqrt;
+import 'dart:typed_data';
+
 import 'package:ar_flutter_plugin_plus/datatypes/config_planedetection.dart';
 import 'package:ar_flutter_plugin_plus/models/ar_anchor.dart';
 import 'package:ar_flutter_plugin_plus/models/ar_hittest_result.dart';
@@ -319,9 +321,40 @@ class ARSessionManager {
     }
   }
 
+  /// Returns raw JPEG bytes of the current AR scene, or null on failure.
+  Future<Uint8List?> captureSnapshotBytes() async {
+    try {
+      final result = await _channel.invokeMethod('snapshot');
+      return _decodeSnapshotBytes(result);
+    } catch (e) {
+      if (debug) {
+        print('Snapshot failed: $e');
+      }
+      return null;
+    }
+  }
+
+  Uint8List? _decodeSnapshotBytes(Object? result) {
+    if (result == null) return null;
+    if (result is Uint8List) return result;
+    if (result is ByteData) {
+      return result.buffer.asUint8List(
+        result.offsetInBytes,
+        result.lengthInBytes,
+      );
+    }
+    if (result is List) {
+      return Uint8List.fromList(result.cast<int>());
+    }
+    return null;
+  }
+
   /// Returns a future ImageProvider that contains a screenshot of the current AR Scene
   Future<ImageProvider> snapshot() async {
-    final result = await _channel.invokeMethod<Uint8List>('snapshot');
-    return MemoryImage(result!);
+    final result = await captureSnapshotBytes();
+    if (result == null) {
+      throw StateError('Snapshot failed');
+    }
+    return MemoryImage(result);
   }
 }

@@ -16,28 +16,30 @@ abstract final class ArFurnitureScale {
   static const nativeAndroidFactor = 1.0;
 
   /// Studio neutral lighting — aligned with model-viewer `environmentImage: neutral`.
+  /// iOS applies ×2.2 internally on [ARSessionManager.setLightIntensityMultiplier].
   static const arLightIntensityMultiplier = 1.0;
 
-  /// Android uses the same neutral rig as iOS after unified Filament rendering.
-  static const androidArLightIntensityMultiplier = 1.0;
+  /// Android Filament rig — slightly below ModelViewer neutral to account for
+  /// live camera fill light on the composited scene.
+  static const androidArLightIntensityMultiplier = 1.15;
 
   /// Tripo reference bounding size in meters.
   static const _tripoReferenceMaxDimensionM = 1.0;
 
   /// Calibrates catalog dimensions to perceived real-world size in AR.
-  static const realWorldCalibrationFactor = 1.28;
+  static const realWorldCalibrationFactor = 1.65;
 
   /// Base node scale before user pinch multiplier (uniform).
   static double baseScaleFromDimensions(ProductDimensions dimensions) {
     final heightM = dimensions.heightCm / 100.0;
     final widthM = dimensions.widthCm / 100.0;
     final depthM = dimensions.depthCm / 100.0;
-    // Height drives perceived furniture size (seat ~45 cm, chair ~85 cm).
-    final targetMeters = [
-      heightM,
-      widthM,
-      depthM,
-    ].reduce((a, b) => a > b ? a : b);
+
+    // Height is the primary perceptual cue for furniture (chair ~85 cm, table ~75 cm).
+    final targetMeters = heightM > 0.15
+        ? heightM
+        : [heightM, widthM, depthM].reduce((a, b) => a > b ? a : b);
+
     return (targetMeters / _tripoReferenceMaxDimensionM * realWorldCalibrationFactor)
         .clamp(0.55, 2.8);
   }

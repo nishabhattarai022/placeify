@@ -4,13 +4,17 @@ import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Rect
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
 import android.opengl.Matrix
 import android.util.Log
 import android.view.MotionEvent
+import android.view.PixelCopy
 import android.view.TextureView
 import android.view.View
 import android.view.ViewConfiguration
@@ -174,7 +178,7 @@ internal class AndroidARView(
     private val nonTrackingResetThreshold = 30
     private val modelIoExecutor = Executors.newFixedThreadPool(2)
     private val imageTrackingExecutor = Executors.newSingleThreadExecutor()
-    private var androidModelScaleFactor: Float = 0.33f
+    private var androidModelScaleFactor: Float = 1.0f
     // Setting defaults
     private var enableRotation = false
     private var enablePans = false
@@ -308,32 +312,7 @@ internal class AndroidARView(
                             }
                         }
                         "snapshot" -> {
-                            val width = textureView.width
-                            val height = textureView.height
-                            if (width <= 0 || height <= 0) {
-                                result.error("e", "failed to take screenshot", null)
-                                return
-                            }
-                            try {
-                                val captured = textureView.bitmap
-                                if (captured == null) {
-                                    result.error("e", "failed to take screenshot", null)
-                                    return
-                                }
-                                val bitmap = if (captured.width == width && captured.height == height) {
-                                    captured
-                                } else {
-                                    Bitmap.createScaledBitmap(captured, width, height, true).also {
-                                        if (it !== captured) captured.recycle()
-                                    }
-                                }
-                                val stream = ByteArrayOutputStream()
-                                bitmap.compress(Bitmap.CompressFormat.PNG, 90, stream)
-                                bitmap.recycle()
-                                result.success(stream.toByteArray())
-                            } catch (e: IOException) {
-                                result.error("e", e.message, e.stackTrace)
-                            }
+                            captureArSnapshot(result)
                         }
                         "dispose" -> {
                             dispose()
@@ -472,6 +451,87 @@ internal class AndroidARView(
                     }
                 }
             }
+
+    private fun captureArSnapshot(result: MethodChannel.Result) {
+        val view = textureView
+        val width = view.width
+        val height = view.height
+        if (width <= 0 || height <= 0) {
+            result.error("SNAPSHOT_FAILED", "View has invalid dimensions", null)
+            return
+        }
+        view.post {
+            val captured = view.bitmap
+            if (captured != null) {
+                sendJpegSnapshot(result, captured, width, height)
+                return@post
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                val origin = IntArray(2)
+                view.getLocationInWindow(origin)
+                val rect =
+                        Rect(
+                                origin[0],
+                                origin[1],
+                                origin[0] + width,
+                                origin[1] + height,
+                        )
+                PixelCopy.request(
+                        activity.window,
+                        rect,
+                        bitmap,
+                        { copyResult ->
+                            if (copyResult == PixelCopy.SUCCESS) {
+                                sendJpegSnapshotFromBitmap(result, bitmap)
+                            } else {
+                                bitmap.recycle()
+                                result.error(
+                                        "SNAPSHOT_FAILED",
+                                        "PixelCopy result code: $copyResult",
+                                        null,
+                                )
+                            }
+                        },
+                        Handler(Looper.getMainLooper()),
+                )
+            } else {
+                result.error("SNAPSHOT_FAILED", "Could not read AR view bitmap", null)
+            }
+        }
+    }
+
+    private fun sendJpegSnapshot(
+            result: MethodChannel.Result,
+            captured: Bitmap,
+            width: Int,
+            height: Int,
+    ) {
+        try {
+            val bitmap =
+                    if (captured.width == width && captured.height == height) {
+                        captured
+                    } else {
+                        Bitmap.createScaledBitmap(captured, width, height, true).also {
+                            if (it !== captured) captured.recycle()
+                        }
+                    }
+            sendJpegSnapshotFromBitmap(result, bitmap)
+        } catch (e: Exception) {
+            result.error("SNAPSHOT_FAILED", e.message, null)
+        }
+    }
+
+    private fun sendJpegSnapshotFromBitmap(result: MethodChannel.Result, bitmap: Bitmap) {
+        try {
+            val stream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 85, stream)
+            bitmap.recycle()
+            result.success(stream.toByteArray())
+        } catch (e: Exception) {
+            result.error("SNAPSHOT_FAILED", e.message, null)
+        }
+    }
 
     override fun getView(): View {
         return rootView
