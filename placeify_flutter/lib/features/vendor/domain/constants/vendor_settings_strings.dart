@@ -27,6 +27,8 @@ abstract final class VendorSettingsStrings {
   static const payoutAccountMasked = 'Account ·••• 4821 · NPR settlements';
   static const payoutSupportNote =
       'Payout method changes are reviewed by Placeify support.';
+  static const payoutNoBankDetails =
+      'No payout account on file. Add bank details during registration or contact support.';
 
   static const deactivateSheetTitle = 'Deactivate store?';
   static const deactivateSheetSubtitle =

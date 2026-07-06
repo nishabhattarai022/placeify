@@ -1360,6 +1360,13 @@ class EndpointVendor extends _i2.EndpointRef {
         {},
       );
 
+  _i3.Future<_i50.VendorProfileDetail> submitSuspensionAppeal(String message) =>
+      caller.callServerEndpoint<_i50.VendorProfileDetail>(
+        'vendor',
+        'submitSuspensionAppeal',
+        {'message': message},
+      );
+
   _i3.Future<_i50.VendorProfileDetail> updateMyProfile(
     _i58.VendorProfileUpdateInput input,
   ) => caller.callServerEndpoint<_i50.VendorProfileDetail>(

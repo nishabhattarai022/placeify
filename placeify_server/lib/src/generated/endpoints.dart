@@ -2365,6 +2365,25 @@ class Endpoints extends _i1.EndpointDispatch {
               ) async => (endpoints['vendor'] as _i16.VendorEndpoint)
                   .getMyProfile(session),
         ),
+        'submitSuspensionAppeal': _i1.MethodConnector(
+          name: 'submitSuspensionAppeal',
+          params: {
+            'message': _i1.ParameterDescription(
+              name: 'message',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['vendor'] as _i16.VendorEndpoint)
+                  .submitSuspensionAppeal(
+                    session,
+                    params['message'],
+                  ),
+        ),
         'updateMyProfile': _i1.MethodConnector(
           name: 'updateMyProfile',
           params: {

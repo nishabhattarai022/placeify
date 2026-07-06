@@ -117,6 +117,7 @@ vendor:
   - getMyBankDetails:
   - saveMyBankDetails:
   - getMyProfile:
+  - submitSuspensionAppeal:
   - updateMyProfile:
   - uploadShopLogo:
   - uploadShopBanner:

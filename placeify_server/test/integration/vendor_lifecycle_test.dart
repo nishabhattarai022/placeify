@@ -350,5 +350,124 @@ void main() {
         ),
       );
     });
+
+    test('approved vendor can persist store visibility via isOpen', () async {
+      final setup = sessionBuilder.build();
+
+      final applicant = await _authUser(
+        sessionBuilder,
+        setup,
+        email: 'visibility-${DateTime.now().microsecondsSinceEpoch}@example.com',
+        name: 'Visibility Vendor',
+        seedVendorDocuments: true,
+      );
+
+      final createdVendor = await vendorStore.createShop(
+        applicant.session.build(),
+        'Visibility Shop',
+        description: 'Store visibility test',
+        phone: '9800000099',
+        address: 'Kathmandu',
+        city: 'Kathmandu',
+        country: 'Nepal',
+        shopCategory: 'Furniture',
+      );
+
+      final adminSetup = sessionBuilder.build();
+      final admin = await _authUser(
+        sessionBuilder,
+        adminSetup,
+        email: 'admin-vis-${DateTime.now().microsecondsSinceEpoch}@example.com',
+        name: 'Admin Visibility',
+        role: UserRole.admin,
+      );
+
+      await moderationStore.approveVendor(
+        admin.session.build(),
+        applicant.user.id!,
+      );
+
+      final closed = await vendorStore.updateMyProfile(
+        applicant.session.build(),
+        VendorProfileUpdateInput(isOpen: false),
+      );
+      expect(closed.isOpen, isFalse);
+
+      final hiddenRow = await Vendor.db.findById(
+        applicant.session.build(),
+        createdVendor.id!,
+      );
+      expect(hiddenRow!.isOpen, isFalse);
+
+      final reopened = await vendorStore.updateMyProfile(
+        applicant.session.build(),
+        VendorProfileUpdateInput(isOpen: true),
+      );
+      expect(reopened.isOpen, isTrue);
+    });
+
+    test('closed shop hidden from consumer listApprovedShops', () async {
+      final setup = sessionBuilder.build();
+
+      final applicant = await _authUser(
+        sessionBuilder,
+        setup,
+        email: 'hidden-${DateTime.now().microsecondsSinceEpoch}@example.com',
+        name: 'Hidden Shop Vendor',
+        seedVendorDocuments: true,
+      );
+
+      final createdVendor = await vendorStore.createShop(
+        applicant.session.build(),
+        'Hidden From Customers',
+        description: 'Should disappear when store visibility is off',
+        phone: '9800000088',
+        address: 'Kathmandu',
+        city: 'Kathmandu',
+        country: 'Nepal',
+        shopCategory: 'Furniture',
+      );
+
+      final adminSetup = sessionBuilder.build();
+      final admin = await _authUser(
+        sessionBuilder,
+        adminSetup,
+        email: 'admin-hidden-${DateTime.now().microsecondsSinceEpoch}@example.com',
+        name: 'Admin Hidden',
+        role: UserRole.admin,
+      );
+
+      await moderationStore.approveVendor(
+        admin.session.build(),
+        applicant.user.id!,
+      );
+
+      final visibleListings = await vendorStore.listApprovedShops(
+        applicant.session.build(),
+      );
+      expect(
+        visibleListings.any((shop) => shop.vendorId == createdVendor.id),
+        isTrue,
+      );
+
+      await vendorStore.updateMyProfile(
+        applicant.session.build(),
+        VendorProfileUpdateInput(isOpen: false),
+      );
+
+      final hiddenListings = await vendorStore.listApprovedShops(
+        applicant.session.build(),
+      );
+      expect(
+        hiddenListings.any((shop) => shop.vendorId == createdVendor.id),
+        isFalse,
+      );
+
+      final shopProfile = await vendorStore.getShopProfile(
+        applicant.session.build(),
+        createdVendor.id!,
+      );
+      expect(shopProfile, isNull);
+    });
   });
 }
