@@ -10,6 +10,10 @@ abstract final class ArFurniturePlacement {
   /// No vertical offset — native bottom-snap aligns the model base to the plane.
   static const floorClearanceM = 0.0;
 
+  /// Extra upward offset applied only during the placement reveal animation —
+  /// the model starts slightly lifted and eases down as it grows to full size.
+  static const placementLiftM = 0.12;
+
   /// Max plausible height (meters) above the first confirmed floor plane.
   /// Rejects tables, shelves, switchboards, and other elevated horizontal planes.
   static const maxFloorDeviationM = 0.12;

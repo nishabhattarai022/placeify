@@ -123,14 +123,18 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                 }
                 break
             case "snapshot":
-                // call the SCNView Snapshot method and return the Image
-                let snapshotImage = sceneView.snapshot()
-                if let bytes = snapshotImage.pngData() {
-                    let data = FlutterStandardTypedData(bytes:bytes)
-                    result(data)
-                } else {
-                    result(nil)
+                DispatchQueue.main.async {
+                    let snapshotImage = self.sceneView.snapshot()
+                    guard let data = snapshotImage.jpegData(compressionQuality: 0.85) else {
+                        result(FlutterError(
+                            code: "SNAPSHOT_FAILED",
+                            message: "Could not encode snapshot",
+                            details: nil))
+                        return
+                    }
+                    result(FlutterStandardTypedData(bytes: data))
                 }
+                break
             case "setLightIntensityMultiplier":
                 applyLightIntensityMultiplier(arguments?["multiplier"] as? NSNumber)
                 result(nil)
