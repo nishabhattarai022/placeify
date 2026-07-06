@@ -9,6 +9,13 @@ class ArModelBuilder: NSObject {
 
     var iosModelScaleFactor: Float = 1.0
 
+    /// Shifts the loaded hierarchy so its bounding-box bottom sits at local y = 0.
+    private func snapBottomToOrigin(_ node: SCNNode) {
+        let (min, _) = node.boundingBox
+        guard min.y.isFinite else { return }
+        node.position.y -= min.y
+    }
+
     /// Ensures Tripo GLB textures and base colors render with real-world lighting.
     private func configureRenderableMaterials(on node: SCNNode) {
         if let geometry = node.geometry {
@@ -45,6 +52,7 @@ class ArModelBuilder: NSObject {
         if let transform = transformation {
             node.transform = deserializeMatrix4(transform)
         }
+        snapBottomToOrigin(node)
 
         node.castsShadow = true
         configureRenderableMaterials(on: node)
@@ -103,40 +111,17 @@ class ArModelBuilder: NSObject {
 
     // Creates a node from a given gltf2 (.gltf) model in the Flutter assets folder
     func makeNodeFromGltf(name: String, modelPath: String, transformation: Array<NSNumber>?) -> SCNNode? {
-        
-        var scene: SCNScene
-            let node: SCNNode = SCNNode()
-
         do {
             let resolvedPath = resolveFlutterAssetPath(modelPath)
+            let sceneSource: GLTFSceneSource
             if let resolvedPath = resolvedPath {
-                let sceneSource = try GLTFSceneSource(path: resolvedPath)
-                scene = try sceneSource.scene()
+                sceneSource = try GLTFSceneSource(path: resolvedPath)
             } else {
-                let sceneSource = try GLTFSceneSource(named: modelPath)
-                scene = try sceneSource.scene()
+                sceneSource = try GLTFSceneSource(named: modelPath)
             }
-
+            let scene = try sceneSource.scene()
             print("iOS ModelBuilder: Scene loaded, processing \(scene.rootNode.childNodes.count) child nodes")
-            for child in scene.rootNode.childNodes {
-                child.scale = SCNVector3(iosModelScaleFactor, iosModelScaleFactor, iosModelScaleFactor) // Compensate for the different model dimension definitions in iOS and Android (meters vs. millimeters)
-                //child.eulerAngles.z = -.pi // Compensate for the different model coordinate definitions in iOS and Android
-                //child.eulerAngles.y = -.pi // Compensate for the different model coordinate definitions in iOS and Android
-                node.addChildNode(child.flattenedClone())
-            }
-
-            node.name = name
-            if let transform = transformation {
-                node.transform = deserializeMatrix4(transform)
-                print("iOS ModelBuilder: Applied transformation to node")
-            }
-
-            // Make sure the node is visible and lit
-            node.castsShadow = true
-            node.isHidden = false
-            
-            print("iOS ModelBuilder: Node '\(name)' created successfully with \(node.childNodes.count) children")
-            return node
+            return wrapLoadedScene(name: name, scene: scene, transformation: transformation)
         } catch {
             print("iOS ModelBuilder ERROR: \(error.localizedDescription)")
             return nil
@@ -181,27 +166,10 @@ class ArModelBuilder: NSObject {
 
     // Creates a node from a given gltf2 (.gltf) model in the Flutter assets folder
     func makeNodeFromFileSystemGltf(name: String, modelPath: String, transformation: Array<NSNumber>?) -> SCNNode? {
-        
-        var scene: SCNScene
-        let node: SCNNode = SCNNode()
-
         do {
             let sceneSource = try GLTFSceneSource(path: modelPath)
-            scene = try sceneSource.scene()
-
-            for child in scene.rootNode.childNodes {
-                child.scale = SCNVector3(iosModelScaleFactor, iosModelScaleFactor, iosModelScaleFactor) // Compensate for the different model dimension definitions in iOS and Android (meters vs. millimeters)
-                //child.eulerAngles.z = -.pi // Compensate for the different model coordinate definitions in iOS and Android
-                //child.eulerAngles.y = -.pi // Compensate for the different model coordinate definitions in iOS and Android
-                node.addChildNode(child.flattenedClone())
-            }
-
-            node.name = name
-            if let transform = transformation {
-                node.transform = deserializeMatrix4(transform)
-            }
-
-            return node
+            let scene = try sceneSource.scene()
+            return wrapLoadedScene(name: name, scene: scene, transformation: transformation)
         } catch {
             print("\(error.localizedDescription)")
             return nil
@@ -224,7 +192,7 @@ class ArModelBuilder: NSObject {
     func makeNodeFromWebGlb(name: String, modelURL: String, transformation: Array<NSNumber>?) -> Future<SCNNode?, Never> {
         
         return Future {promise in
-            var node: SCNNode? = SCNNode()
+            var node: SCNNode? = nil
             
             let handler: (URL?, URLResponse?, Error?) -> Void = {(url: URL?, urlResponse: URLResponse?, error: Error?) -> Void in
                 // If response code is not 200, link was invalid, so return
@@ -245,22 +213,11 @@ class ArModelBuilder: NSObject {
                         do {
                             let sceneSource = GLTFSceneSource(url: targetURL)
                             let scene = try sceneSource.scene()
-
-                            for child in scene.rootNode.childNodes {
-                                child.scale = SCNVector3(self.iosModelScaleFactor, self.iosModelScaleFactor, self.iosModelScaleFactor) // Compensate for the different model dimension definitions in iOS and Android (meters vs. millimeters)
-                                //child.eulerAngles.z = -.pi // Compensate for the different model coordinate definitions in iOS and Android
-                                //child.eulerAngles.y = -.pi // Compensate for the different model coordinate definitions in iOS and Android
-                                node?.addChildNode(child)
-                            }
-
-                            node?.name = name
-                            if let transform = transformation {
-                                node?.transform = deserializeMatrix4(transform)
-                            }
-                            /*node?.scale = worldScale
-                            node?.position = worldPosition
-                            node?.worldOrientation = worldRotation*/
-
+                            node = self.wrapLoadedScene(
+                                name: name,
+                                scene: scene,
+                                transformation: transformation
+                            )
                         } catch {
                             print("\(error.localizedDescription)")
                             node = nil
