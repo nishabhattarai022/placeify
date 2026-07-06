@@ -48,6 +48,25 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
     private var flutterNodeNames = Set<String>()
     private static var cachedReferenceImages: [String: Set<ARReferenceImage>] = [:]
 
+    // MARK: - Floor reference & drag validation (Android parity)
+    private var referenceFloorY: Float?
+    private var placementInteriorPose: simd_float4x4?
+    private var shadowFloorNode: SCNNode?
+    private var directionalLightNode: SCNNode?
+    private var lastPanNotifiedTransform: simd_float4x4?
+
+    private let maxFloorDeviationM: Float = 0.12
+    private static let maxDragPlaneHeightBandM: Float = 0.15
+    private static let minWallClearanceFaceM: Float = 0.12
+    private static let minWallClearanceCornerM: Float = 0.04
+    private static let wallCornerDetectRangeM: Float = 0.35
+    private static let minPlaneEdgeMarginM: Float = 0.06
+    private static let maxDragJumpM: Float = 0.25
+    private static let dragSmoothFactor: Float = 0.45
+    private static let defaultShadowAlpha: CGFloat = 0.45
+    private static let transformEpsilon: Float = 1e-5
+    private static let anchorNodeWaitTimeoutSeconds: TimeInterval = 2.0
+
     init(
         frame: CGRect,
         viewIdentifier viewId: Int64,
@@ -57,9 +76,11 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         self.sceneView = ARSCNView(frame: frame)
         self.coachingView = ARCoachingOverlayView(frame: frame)
         
-        // Neutral studio lighting — matches 3D preview; skip room HDR probes.
-        self.sceneView.autoenablesDefaultLighting = true
+        // Real-time light estimation drives IBL + directional light; no static HDR multiplier.
+        self.sceneView.autoenablesDefaultLighting = false
         self.sceneView.automaticallyUpdatesLighting = false
+        
+        setupDirectionalLight()
         
         self.sessionManagerChannel = FlutterMethodChannel(name: "arsession_\(viewId)", binaryMessenger: messenger)
         self.objectManagerChannel = FlutterMethodChannel(name: "arobjects_\(viewId)", binaryMessenger: messenger)
@@ -81,10 +102,45 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         let value = CGFloat(truncating: multiplier ?? 1.0)
         let clamped = max(0.01, value)
         lightIntensityMultiplier = clamped
-        // Brighter neutral rig, similar to model-viewer exposure: 1.0 + neutral IBL.
-        sceneView.scene.lightingEnvironment.intensity = clamped * 2.2
-        sceneView.autoenablesDefaultLighting = true
+        if let frame = sceneView.session.currentFrame,
+           let estimate = frame.lightEstimate {
+            applyLightEstimate(estimate)
+        }
+        sceneView.autoenablesDefaultLighting = false
         sceneView.automaticallyUpdatesLighting = false
+    }
+
+    private func setupDirectionalLight() {
+        let lightNode = SCNNode()
+        let light = SCNLight()
+        light.type = .directional
+        light.castsShadow = true
+        light.shadowMode = .modulated
+        light.shadowColor = UIColor.black.withAlphaComponent(Self.defaultShadowAlpha)
+        light.shadowSampleCount = 16
+        light.shadowRadius = 3
+        light.intensity = 800
+        lightNode.light = light
+        lightNode.eulerAngles = SCNVector3(-Float.pi / 3, Float.pi / 4, 0)
+        sceneView.scene.rootNode.addChildNode(lightNode)
+        directionalLightNode = lightNode
+    }
+
+    private func applyLightEstimate(_ estimate: ARLightEstimate) {
+        let ambientIntensity = estimate.ambientIntensity
+        let ambientColorTemp = estimate.ambientColorTemperature
+        sceneView.scene.lightingEnvironment.intensity =
+            CGFloat(ambientIntensity / 1000.0) * lightIntensityMultiplier
+
+        if let directional = estimate as? ARDirectionalLightEstimate {
+            directionalLightNode?.light?.temperature = CGFloat(ambientColorTemp)
+            let dir = directional.primaryLightDirection
+            let lightPos = SCNVector3(-dir.x * 3, -dir.y * 3, -dir.z * 3)
+            directionalLightNode?.position = lightPos
+            directionalLightNode?.look(at: SCNVector3Zero)
+        } else {
+            directionalLightNode?.light?.temperature = CGFloat(ambientColorTemp)
+        }
     }
 
     func view() -> UIView {
@@ -238,15 +294,15 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                         if let transform = arguments!["transformation"] as? Array<NSNumber>, let name = arguments!["name"] as? String {
                             addPlaneAnchor(transform: transform, name: name)
                             result(true)
+                        } else {
+                            result(false)
                         }
-                        result(false)
-                        break
                     default:
                         result(false)
-                    
                     }
+                } else {
+                    result(false)
                 }
-                result(nil)
                 break
             case "removeAnchor":
                 if let name = arguments!["name"] as? String {
@@ -303,6 +359,9 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         // Set plane detection configuration
         self.configuration = ARWorldTrackingConfiguration()
         self.configuration.environmentTexturing = .automatic
+        if #available(iOS 13.0, *) {
+            self.configuration.wantsHDREnvironmentTextures = true
+        }
         if let planeDetectionConfig = arguments["planeDetectionConfig"] as? Int {
             switch planeDetectionConfig {
                 case 1: 
@@ -483,6 +542,9 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             } catch {
                 print(error)
             }
+        }
+        if let lightEstimate = frame.lightEstimate {
+            applyLightEstimate(lightEstimate)
         }
     }
 
@@ -730,12 +792,14 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                 }
                 if (nodeHitResults.count != 0 && panningNode != nil) {
                     panningNodeCurrentWorldLocation = panningNode!.worldPosition
+                    lastPanNotifiedTransform = nil
                     self.objectManagerChannel.invokeMethod("onPanStart", arguments: panningNode!.name) // Chaining of Array and Set is used to remove duplicates
                     return
                 }
                 if let fallbackNode = singleFlutterManagedNode(in: sceneView) {
                     panningNode = fallbackNode
                     panningNodeCurrentWorldLocation = fallbackNode.worldPosition
+                    lastPanNotifiedTransform = nil
                     self.objectManagerChannel.invokeMethod("onPanStart", arguments: fallbackNode.name)
                     return
                 }
@@ -750,22 +814,10 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             panCurrentTranslation = recognizer.translation(in: sceneView)
 
             if let panLoc = panCurrentLocation, let panNode = panningNode {
-                if let query = sceneView.raycastQuery(from: panLoc, allowing: .estimatedPlane, alignment: .any) {
-                    guard let result = self.sceneView.session.raycast(query).first else {
-                        return
-                    }
-                    let posX = result.worldTransform.columns.3.x
-                    let posY = result.worldTransform.columns.3.y
-                    let posZ = result.worldTransform.columns.3.z
-                    let worldHit = SCNVector3(posX, posY, posZ)
-                    if let anchorNode = panNode.parent, anchorNode !== sceneView.scene.rootNode {
-                        let localHit = anchorNode.convertPosition(worldHit, from: nil)
-                        panNode.position = SCNVector3(localHit.x, panNode.position.y, localHit.z)
-                    } else {
-                        panNode.worldPosition = worldHit
-                    }
+                if let targetWorld = computeDragWorldPosition(screenPoint: panLoc, panNode: panNode) {
+                    applyDragWorldPosition(targetWorld, to: panNode, smooth: true)
+                    notifyPanChangeIfTransformChanged(panNode)
                 }
-                self.objectManagerChannel.invokeMethod("onPanChange", arguments: panNode.name)
             }
         }
         // State Ended
@@ -774,6 +826,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             // kill variables
             panStartLocation = nil
             panCurrentLocation = nil
+            lastPanNotifiedTransform = nil
             self.objectManagerChannel.invokeMethod("onPanEnd", arguments: serializeLocalTransformation(node: panningNode))
             panningNode = nil
         }
@@ -857,7 +910,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                 }
             }
 
-            if let query = sceneView.raycastQuery(from: location, allowing: .estimatedPlane, alignment: .any),
+            if let query = sceneView.raycastQuery(from: location, allowing: .estimatedPlane, alignment: .horizontal),
                let raycast = sceneView.session.raycast(query).first {
                 let hitX = raycast.worldTransform.columns.3.x
                 let hitZ = raycast.worldTransform.columns.3.z
@@ -921,6 +974,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         panCurrentVelocity = nil
         panCurrentTranslation = nil
         panningNodeCurrentWorldLocation = nil
+        lastPanNotifiedTransform = nil
         if let panGestureRecognizer = panGestureRecognizer {
             panGestureRecognizer.isEnabled = false
             panGestureRecognizer.isEnabled = true
@@ -956,6 +1010,467 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         return sceneView.scene.rootNode.childNode(withName: name, recursively: true)
     }
 
+    // MARK: - Floor reference, shadow catcher, drag validation
+
+    private func scnMatrix4ToSimd(_ matrix: SCNMatrix4) -> simd_float4x4 {
+        return simd_float4x4(
+            SIMD4<Float>(matrix.m11, matrix.m12, matrix.m13, matrix.m14),
+            SIMD4<Float>(matrix.m21, matrix.m22, matrix.m23, matrix.m24),
+            SIMD4<Float>(matrix.m31, matrix.m32, matrix.m33, matrix.m34),
+            SIMD4<Float>(matrix.m41, matrix.m42, matrix.m43, matrix.m44)
+        )
+    }
+
+    private func simdMatrix4ToSimdTransform(_ node: SCNNode) -> simd_float4x4 {
+        return scnMatrix4ToSimd(node.transform)
+    }
+
+    private func transformsApproximatelyEqual(
+        _ a: simd_float4x4,
+        _ b: simd_float4x4,
+        epsilon: Float = Self.transformEpsilon
+    ) -> Bool {
+        let av = [a.columns.0, a.columns.1, a.columns.2, a.columns.3].flatMap { [$0.x, $0.y, $0.z, $0.w] }
+        let bv = [b.columns.0, b.columns.1, b.columns.2, b.columns.3].flatMap { [$0.x, $0.y, $0.z, $0.w] }
+        for i in 0..<16 {
+            if abs(av[i] - bv[i]) > epsilon { return false }
+        }
+        return true
+    }
+
+    private func setReferenceFloorFromPlacement(transform: Array<NSNumber>) {
+        let matrix = scnMatrix4ToSimd(deserializeMatrix4(transform))
+        referenceFloorY = matrix.columns.3.y
+        placementInteriorPose = matrix
+        ensureShadowFloor()
+    }
+
+    private func clearReferenceFloorIfNeeded() {
+        guard anchorCollection.isEmpty else { return }
+        referenceFloorY = nil
+        placementInteriorPose = nil
+        removeShadowFloor()
+    }
+
+    private func ensureShadowFloor() {
+        guard let floorY = referenceFloorY else { return }
+        if shadowFloorNode == nil {
+            let floor = SCNFloor()
+            floor.reflectivity = 0
+            let material = SCNMaterial()
+            material.diffuse.contents = UIColor.clear
+            material.lightingModel = .constant
+            material.writesToDepthBuffer = false
+            material.readsFromDepthBuffer = true
+            floor.materials = [material]
+
+            let floorNode = SCNNode(geometry: floor)
+            floorNode.castsShadow = false
+            floorNode.renderingOrder = -100
+            sceneView.scene.rootNode.addChildNode(floorNode)
+            shadowFloorNode = floorNode
+        }
+        shadowFloorNode?.position = SCNVector3(0, CGFloat(floorY), 0)
+    }
+
+    private func removeShadowFloor() {
+        shadowFloorNode?.removeFromParentNode()
+        shadowFloorNode = nil
+    }
+
+    private func trackedPlaneAnchors() -> [ARPlaneAnchor] {
+        guard let anchors = sceneView.session.currentFrame?.anchors else { return [] }
+        return anchors.compactMap { $0 as? ARPlaneAnchor }
+    }
+
+    private func isTrackingHorizontalPlane(_ anchor: ARPlaneAnchor) -> Bool {
+        return anchor.alignment == .horizontal && anchor.isTracked
+    }
+
+    private func worldPointToPlaneLocal(_ point: SCNVector3, planeAnchor: ARPlaneAnchor) -> simd_float4 {
+        let world = simd_float4(point.x, point.y, point.z, 1)
+        return planeAnchor.transform.inverse * world
+    }
+
+    @available(iOS 11.3, *)
+    private func boundaryVerticesArray(from geometry: ARPlaneGeometry) -> [SIMD3<Float>] {
+        let count = Int(geometry.boundaryVertexCount)
+        guard count > 0 else { return [] }
+        let pointer = geometry.boundaryVertices
+        return (0..<count).map { index in
+            let vertex = pointer[index]
+            return SIMD3<Float>(vertex.x, vertex.y, vertex.z)
+        }
+    }
+
+    private func isPointInPolygonXZ(x: Float, z: Float, vertices: [SIMD3<Float>], count: Int) -> Bool {
+        guard count >= 3 else { return false }
+        var inside = false
+        var j = count - 1
+        for i in 0..<count {
+            let xi = vertices[i].x
+            let zi = vertices[i].z
+            let xj = vertices[j].x
+            let zj = vertices[j].z
+            let intersects = ((zi > z) != (zj > z)) &&
+                (x < (xj - xi) * (z - zi) / (zj - zi + 1e-8) + xi)
+            if intersects { inside = !inside }
+            j = i
+        }
+        return inside
+    }
+
+    private func isPointInHorizontalPlaneAnchor(_ point: SCNVector3, planeAnchor: ARPlaneAnchor) -> Bool {
+        guard planeAnchor.alignment == .horizontal else { return false }
+        let local = worldPointToPlaneLocal(point, planeAnchor: planeAnchor)
+        if #available(iOS 11.3, *) {
+            let geometry = planeAnchor.geometry
+            let vertices = boundaryVerticesArray(from: geometry)
+            return isPointInPolygonXZ(
+                x: local.x,
+                z: local.z,
+                vertices: vertices,
+                count: vertices.count
+            )
+        }
+        return abs(local.x) <= planeAnchor.extent.x / 2 &&
+            abs(local.z) <= planeAnchor.extent.z / 2
+    }
+
+    private func distanceToPolygonEdge(_ point: SCNVector3, planeAnchor: ARPlaneAnchor) -> Float {
+        guard planeAnchor.alignment == .horizontal else { return Float.greatestFiniteMagnitude }
+        let local = worldPointToPlaneLocal(point, planeAnchor: planeAnchor)
+        let px = local.x
+        let pz = local.z
+
+        if #available(iOS 11.3, *) {
+            let geometry = planeAnchor.geometry
+            let vertices = boundaryVerticesArray(from: geometry)
+            let count = vertices.count
+            guard count >= 2 else { return Float.greatestFiniteMagnitude }
+            var minDist = Float.greatestFiniteMagnitude
+            for i in 0..<count {
+                let j = (i + 1) % count
+                let x1 = vertices[i].x
+                let z1 = vertices[i].z
+                let x2 = vertices[j].x
+                let z2 = vertices[j].z
+                let dist = pointToSegmentDist(px, pz, x1, z1, x2, z2)
+                if dist < minDist { minDist = dist }
+            }
+            return minDist
+        }
+
+        let halfX = planeAnchor.extent.x / 2
+        let halfZ = planeAnchor.extent.z / 2
+        let dx = max(abs(px) - halfX, 0)
+        let dz = max(abs(pz) - halfZ, 0)
+        return sqrt(dx * dx + dz * dz)
+    }
+
+    private func pointToSegmentDist(
+        _ px: Float, _ pz: Float,
+        _ x1: Float, _ z1: Float,
+        _ x2: Float, _ z2: Float
+    ) -> Float {
+        let dx = x2 - x1
+        let dz = z2 - z1
+        let lenSq = dx * dx + dz * dz
+        if lenSq < 1e-8 {
+            let ex = px - x1
+            let ez = pz - z1
+            return sqrt(ex * ex + ez * ez)
+        }
+        var t = ((px - x1) * dx + (pz - z1) * dz) / lenSq
+        t = max(0, min(1, t))
+        let cx = x1 + t * dx
+        let cz = z1 + t * dz
+        let ex = px - cx
+        let ez = pz - cz
+        return sqrt(ex * ex + ez * ez)
+    }
+
+    private func planeHeightDeltaFromReference(_ planeAnchor: ARPlaneAnchor, referenceFloorY: Float) -> Float {
+        return abs(planeAnchor.transform.columns.3.y - referenceFloorY)
+    }
+
+    private func snapWorldPositionToReferenceFloorY(_ point: SCNVector3, referenceFloorY: Float) -> SCNVector3 {
+        return SCNVector3(point.x, referenceFloorY, point.z)
+    }
+
+    private func signedDistanceToPlaneNormal(_ point: SCNVector3, planeAnchor: ARPlaneAnchor) -> Float {
+        let local = worldPointToPlaneLocal(point, planeAnchor: planeAnchor)
+        switch planeAnchor.alignment {
+        case .vertical:
+            return local.z
+        case .horizontal:
+            return local.y
+        @unknown default:
+            return Float.greatestFiniteMagnitude
+        }
+    }
+
+    private func hasTrackedVerticalWalls() -> Bool {
+        return trackedPlaneAnchors().contains {
+            $0.alignment == .vertical && $0.isTracked
+        }
+    }
+
+    private func countNearbyVerticalWalls(_ snapPoint: SCNVector3, referenceFloorY: Float) -> Int {
+        var count = 0
+        for wall in trackedPlaneAnchors() {
+            guard wall.alignment == .vertical, wall.isTracked else { continue }
+            if abs(snapPoint.y - referenceFloorY) > Self.maxDragPlaneHeightBandM { continue }
+            if abs(signedDistanceToPlaneNormal(snapPoint, planeAnchor: wall)) < Self.wallCornerDetectRangeM {
+                count += 1
+            }
+        }
+        return count
+    }
+
+    private func requiredWallClearance(_ snapPoint: SCNVector3, referenceFloorY: Float) -> Float {
+        return countNearbyVerticalWalls(snapPoint, referenceFloorY: referenceFloorY) >= 2
+            ? Self.minWallClearanceCornerM
+            : Self.minWallClearanceFaceM
+    }
+
+    private func findBestFloorPlaneForSnapPose(_ point: SCNVector3, referenceFloorY: Float) -> ARPlaneAnchor? {
+        var bestPlane: ARPlaneAnchor?
+        var bestHeightDelta = Float.greatestFiniteMagnitude
+        for plane in trackedPlaneAnchors() {
+            guard isTrackingHorizontalPlane(plane) else { continue }
+            guard isPointInHorizontalPlaneAnchor(point, planeAnchor: plane) else { continue }
+            let heightDelta = planeHeightDeltaFromReference(plane, referenceFloorY: referenceFloorY)
+            if heightDelta < bestHeightDelta {
+                bestHeightDelta = heightDelta
+                bestPlane = plane
+            }
+        }
+        return bestHeightDelta <= Self.maxDragPlaneHeightBandM ? bestPlane : nil
+    }
+
+    private func validateDragSnapPose(_ point: SCNVector3, referenceFloorY: Float) -> Bool {
+        if abs(point.y - referenceFloorY) > Self.maxDragPlaneHeightBandM { return false }
+        guard findBestFloorPlaneForSnapPose(point, referenceFloorY: referenceFloorY) != nil else {
+            return false
+        }
+
+        if !hasTrackedVerticalWalls() {
+            if let floorPlane = findBestFloorPlaneForSnapPose(point, referenceFloorY: referenceFloorY),
+               distanceToPolygonEdge(point, planeAnchor: floorPlane) <= Self.minPlaneEdgeMarginM {
+                return false
+            }
+            return true
+        }
+
+        guard let interiorPose = placementInteriorPose else { return true }
+        let interiorPoint = SCNVector3(
+            interiorPose.columns.3.x,
+            interiorPose.columns.3.y,
+            interiorPose.columns.3.z
+        )
+        let clearance = requiredWallClearance(point, referenceFloorY: referenceFloorY)
+
+        for wall in trackedPlaneAnchors() {
+            guard wall.alignment == .vertical, wall.isTracked else { continue }
+            if abs(point.y - referenceFloorY) > Self.maxDragPlaneHeightBandM { continue }
+
+            let snapDist = signedDistanceToPlaneNormal(point, planeAnchor: wall)
+            let interiorDist = signedDistanceToPlaneNormal(interiorPoint, planeAnchor: wall)
+            if snapDist * interiorDist < 0 { return false }
+            if abs(snapDist) < clearance { return false }
+        }
+        return true
+    }
+
+    private func acceptDragSnapPose(_ point: SCNVector3, referenceFloorY: Float) -> SCNVector3? {
+        let snapped = snapWorldPositionToReferenceFloorY(point, referenceFloorY: referenceFloorY)
+        return validateDragSnapPose(snapped, referenceFloorY: referenceFloorY) ? snapped : nil
+    }
+
+    private func intersectScreenRayWithHorizontalPlane(screenPoint: CGPoint, planeY: Float) -> SCNVector3? {
+        guard sceneView.bounds.height > 0 else { return nil }
+
+        let near = sceneView.unprojectPoint(SCNVector3(
+            Float(screenPoint.x),
+            Float(screenPoint.y),
+            0
+        ))
+        let far = sceneView.unprojectPoint(SCNVector3(
+            Float(screenPoint.x),
+            Float(screenPoint.y),
+            1
+        ))
+
+        let dx = far.x - near.x
+        let dy = far.y - near.y
+        let dz = far.z - near.z
+        if abs(dy) < 1e-6 { return nil }
+
+        let t = (planeY - near.y) / dy
+        if t < 0 { return nil }
+
+        return SCNVector3(near.x + dx * t, planeY, near.z + dz * t)
+    }
+
+    private func pickBestDragRaycastHit(_ results: [ARRaycastResult], referenceFloorY: Float) -> ARRaycastResult? {
+        struct Candidate {
+            let hit: ARRaycastResult
+            let planeHeightDelta: Float
+            let edgeDist: Float
+        }
+
+        let candidates: [Candidate] = results.compactMap { result in
+            guard let plane = result.anchor as? ARPlaneAnchor else { return nil }
+            guard isTrackingHorizontalPlane(plane) else { return nil }
+            let hitX = result.worldTransform.columns.3.x
+            let hitY = result.worldTransform.columns.3.y
+            let hitZ = result.worldTransform.columns.3.z
+            let hitPoint = SCNVector3(hitX, hitY, hitZ)
+            guard isPointInHorizontalPlaneAnchor(hitPoint, planeAnchor: plane) else { return nil }
+            let snapped = snapWorldPositionToReferenceFloorY(hitPoint, referenceFloorY: referenceFloorY)
+            guard isPointInHorizontalPlaneAnchor(snapped, planeAnchor: plane) else { return nil }
+            guard validateDragSnapPose(snapped, referenceFloorY: referenceFloorY) else { return nil }
+            return Candidate(
+                hit: result,
+                planeHeightDelta: planeHeightDeltaFromReference(plane, referenceFloorY: referenceFloorY),
+                edgeDist: distanceToPolygonEdge(snapped, planeAnchor: plane)
+            )
+        }
+        if candidates.isEmpty { return nil }
+
+        let inBand = candidates.filter { $0.planeHeightDelta <= Self.maxDragPlaneHeightBandM }
+        let pool = inBand.isEmpty ? [candidates.min(by: { $0.planeHeightDelta < $1.planeHeightDelta })!] : inBand
+        return pool.max(by: {
+            if $0.planeHeightDelta != $1.planeHeightDelta {
+                return $0.planeHeightDelta < $1.planeHeightDelta
+            }
+            return $0.edgeDist < $1.edgeDist
+        })?.hit
+    }
+
+    private func translationDeltaM(_ from: SCNVector3, _ to: SCNVector3) -> Float {
+        let dx = to.x - from.x
+        let dy = to.y - from.y
+        let dz = to.z - from.z
+        return sqrt(dx * dx + dy * dy + dz * dz)
+    }
+
+    private func finalizeDragWorldPosition(
+        current: SCNVector3,
+        target: SCNVector3,
+        referenceFloorY: Float
+    ) -> SCNVector3 {
+        let snapped = snapWorldPositionToReferenceFloorY(target, referenceFloorY: referenceFloorY)
+        let jumpM = translationDeltaM(current, snapped)
+        if jumpM <= Self.maxDragJumpM { return snapped }
+
+        let t = Self.maxDragJumpM / jumpM
+        let clamped = SCNVector3(
+            current.x + (snapped.x - current.x) * t,
+            referenceFloorY,
+            current.z + (snapped.z - current.z) * t
+        )
+        if validateDragSnapPose(clamped, referenceFloorY: referenceFloorY) {
+            return clamped
+        }
+        return SCNVector3(current.x, referenceFloorY, current.z)
+    }
+
+    private func computeDragWorldPosition(screenPoint: CGPoint, panNode: SCNNode) -> SCNVector3? {
+        let currentWorld = panNode.worldPosition
+
+        guard let floorY = referenceFloorY else {
+            guard let query = sceneView.raycastQuery(
+                from: screenPoint,
+                allowing: .estimatedPlane,
+                alignment: .horizontal
+            ) else { return nil }
+            guard let result = sceneView.session.raycast(query).first else { return nil }
+            return SCNVector3(
+                result.worldTransform.columns.3.x,
+                result.worldTransform.columns.3.y,
+                result.worldTransform.columns.3.z
+            )
+        }
+
+        if let rayHit = intersectScreenRayWithHorizontalPlane(screenPoint: screenPoint, planeY: floorY),
+           let accepted = acceptDragSnapPose(rayHit, referenceFloorY: floorY) {
+            return finalizeDragWorldPosition(current: currentWorld, target: accepted, referenceFloorY: floorY)
+        }
+
+        if let query = sceneView.raycastQuery(
+            from: screenPoint,
+            allowing: .estimatedPlane,
+            alignment: .horizontal
+        ) {
+            let results = sceneView.session.raycast(query)
+            if let hit = pickBestDragRaycastHit(results, referenceFloorY: floorY) {
+                let worldHit = SCNVector3(
+                    hit.worldTransform.columns.3.x,
+                    floorY,
+                    hit.worldTransform.columns.3.z
+                )
+                if let accepted = acceptDragSnapPose(worldHit, referenceFloorY: floorY) {
+                    return finalizeDragWorldPosition(
+                        current: currentWorld,
+                        target: accepted,
+                        referenceFloorY: floorY
+                    )
+                }
+            }
+        }
+
+        return nil
+    }
+
+    private func applyDragWorldPosition(_ targetWorld: SCNVector3, to panNode: SCNNode, smooth: Bool) {
+        var tx = targetWorld.x
+        var ty = targetWorld.y
+        var tz = targetWorld.z
+        if smooth {
+            let current = panNode.worldPosition
+            tx = current.x + (tx - current.x) * Self.dragSmoothFactor
+            ty = current.y + (ty - current.y) * Self.dragSmoothFactor
+            tz = current.z + (tz - current.z) * Self.dragSmoothFactor
+        }
+
+        let finalWorld = SCNVector3(tx, ty, tz)
+        if let anchorNode = panNode.parent, anchorNode !== sceneView.scene.rootNode {
+            let localHit = anchorNode.convertPosition(finalWorld, from: nil)
+            panNode.position = SCNVector3(localHit.x, panNode.position.y, localHit.z)
+        } else {
+            panNode.worldPosition = finalWorld
+        }
+    }
+
+    private func notifyPanChangeIfTransformChanged(_ node: SCNNode) {
+        let current = simdMatrix4ToSimdTransform(node)
+        if let last = lastPanNotifiedTransform,
+           transformsApproximatelyEqual(last, current) {
+            return
+        }
+        lastPanNotifiedTransform = current
+        objectManagerChannel.invokeMethod("onPanChange", arguments: node.name)
+    }
+
+    private func waitForAnchorNode(anchor: ARAnchor, timeout: TimeInterval) -> Bool {
+        if sceneView.node(for: anchor) != nil { return true }
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if sceneView.node(for: anchor) != nil { return true }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.01))
+        }
+        if sceneView.node(for: anchor) == nil {
+            sessionManagerChannel.invokeMethod(
+                "onError",
+                arguments: ["Timed out waiting for anchor node after \(timeout)s"]
+            )
+            return false
+        }
+        return true
+    }
+
     // Recursive helper function to traverse a node's parents until a node with a name starting with the specified characters is found
     func nearestParentWithNameStart(node: SCNNode?, characters: String) -> SCNNode? {
         if let nodeNamePrefix = node?.name?.prefix(characters.count) {
@@ -966,14 +1481,11 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
     }
     
     func addPlaneAnchor(transform: Array<NSNumber>, name: String){
-        let arAnchor = ARAnchor(transform: simd_float4x4(deserializeMatrix4(transform)))
+        setReferenceFloorFromPlacement(transform: transform)
+        let arAnchor = ARAnchor(transform: scnMatrix4ToSimd(deserializeMatrix4(transform)))
         anchorCollection[name] = arAnchor
         sceneView.session.add(anchor: arAnchor)
-        // Ensure root node is added to anchor before any other function can run (if this isn't done, addNode could fail because anchor does not have a root node yet).
-        // The root node is added to the anchor as soon as the async rendering loop runs once, more specifically the function "renderer(_:nodeFor:)"
-        while (sceneView.node(for: arAnchor) == nil) {
-            usleep(1) // wait 1 millionth of a second
-        }
+        _ = waitForAnchorNode(anchor: arAnchor, timeout: Self.anchorNodeWaitTimeoutSeconds)
     }
     
     func deleteAnchor(anchorName: String) {
@@ -986,6 +1498,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             sceneView.session.remove(anchor: anchor)
             // Update bookkeeping
             anchorCollection.removeValue(forKey: anchorName)
+            clearReferenceFloorIfNeeded()
         }
     }
     
