@@ -789,6 +789,9 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
     func transformNode(name: String, transform: Array<NSNumber>) {
         let node = sceneView.scene.rootNode.childNode(withName: name, recursively: true)
         node?.transform = deserializeMatrix4(transform)
+        if let node {
+            updateShadowFrustum(for: node)
+        }
     }
     
     @objc func handleTap(_ recognizer: UITapGestureRecognizer) {
@@ -909,11 +912,8 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             guard let rotateNode = rotatingNode else { return }
 
             let currentRotation = recognizer.rotation
-            var delta = Float(lastRotationRadians - currentRotation)
+            let delta = Float(currentRotation - lastRotationRadians)
             lastRotationRadians = currentRotation
-            if abs(delta) > Float.pi {
-                delta = delta > 0 ? delta - 2 * Float.pi : delta + 2 * Float.pi
-            }
 
             applyRotationDelta(to: rotateNode, deltaRadians: delta)
             self.objectManagerChannel.invokeMethod("onRotationChange", arguments: rotateNode.name)
@@ -1539,6 +1539,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         } else {
             panNode.worldPosition = finalWorld
         }
+        updateShadowFrustum(for: panNode)
     }
 
     private func notifyPanChangeIfTransformChanged(_ node: SCNNode) {
