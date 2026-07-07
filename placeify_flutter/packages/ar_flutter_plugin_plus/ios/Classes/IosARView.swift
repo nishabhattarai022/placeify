@@ -39,7 +39,6 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
     private var rotationStartLocation: CGPoint?
     private var rotatingNode: SCNNode?
     private var lastRotationRadians: CGFloat = 0
-    private var pendingRotationDelta: Float = 0
     private var panGestureRecognizer: UIPanGestureRecognizer?
     private var rotationGestureRecognizer: UIRotationGestureRecognizer?
     private var panningNode: SCNNode?
@@ -53,6 +52,9 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
     private var placementInteriorPose: simd_float4x4?
     private var shadowFloorNode: SCNNode?
     private var directionalLightNode: SCNNode?
+    private var pendingAnchorAttachments: [UUID: (SCNNode, String, (Bool) -> Void)] = [:]
+    private var depthOcclusionEnabled = false
+    private let deviceSupportsLiDARMesh: Bool
     private var lastPanNotifiedTransform: simd_float4x4?
 
     private let maxFloorDeviationM: Float = 0.12
@@ -65,7 +67,6 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
     private static let dragSmoothFactor: Float = 0.45
     private static let defaultShadowAlpha: CGFloat = 0.45
     private static let transformEpsilon: Float = 1e-5
-    private static let anchorNodeWaitTimeoutSeconds: TimeInterval = 2.0
 
     init(
         frame: CGRect,
@@ -75,17 +76,22 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
     ) {
         self.sceneView = ARSCNView(frame: frame)
         self.coachingView = ARCoachingOverlayView(frame: frame)
+        if #available(iOS 13.4, *) {
+            deviceSupportsLiDARMesh = ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh)
+        } else {
+            deviceSupportsLiDARMesh = false
+        }
         
         // Real-time light estimation drives IBL + directional light; no static HDR multiplier.
         self.sceneView.autoenablesDefaultLighting = false
-        self.sceneView.automaticallyUpdatesLighting = false
-        
-        setupDirectionalLight()
+        self.sceneView.automaticallyUpdatesLighting = true
         
         self.sessionManagerChannel = FlutterMethodChannel(name: "arsession_\(viewId)", binaryMessenger: messenger)
         self.objectManagerChannel = FlutterMethodChannel(name: "arobjects_\(viewId)", binaryMessenger: messenger)
         self.anchorManagerChannel = FlutterMethodChannel(name: "aranchors_\(viewId)", binaryMessenger: messenger)
         super.init()
+
+        setupDirectionalLight()
 
         let configuration = ARWorldTrackingConfiguration() // Create default configuration before initializeARView is called
         self.sceneView.delegate = self
@@ -107,7 +113,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             applyLightEstimate(estimate)
         }
         sceneView.autoenablesDefaultLighting = false
-        sceneView.automaticallyUpdatesLighting = false
+        sceneView.automaticallyUpdatesLighting = true
     }
 
     private func setupDirectionalLight() {
@@ -118,7 +124,10 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         light.shadowMode = .modulated
         light.shadowColor = UIColor.black.withAlphaComponent(Self.defaultShadowAlpha)
         light.shadowSampleCount = 16
-        light.shadowRadius = 3
+        light.shadowRadius = 1.0
+        light.shadowMapSize = CGSize(width: 2048, height: 2048)
+        light.automaticallyAdjustsShadowProjection = false
+        light.orthographicScale = 2
         light.intensity = 800
         lightNode.light = light
         lightNode.eulerAngles = SCNVector3(-Float.pi / 3, Float.pi / 4, 0)
@@ -204,6 +213,11 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                 }
                 result(nil)
                 break
+            case "setDepthOcclusionEnabled":
+                let enabled = arguments?["enabled"] as? Bool ?? false
+                applyDepthOcclusionEnabled(enabled)
+                result(nil)
+                break
             case "hitTestScreenCenter":
                 let center = CGPoint(x: sceneView.bounds.midX, y: sceneView.bounds.midY)
                 let planeTypes: ARHitTestResult.ResultType
@@ -214,6 +228,22 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                 }
                 let hits = sceneView.hitTest(center, types: planeTypes)
                 result(hits.map { serializeHitResult($0) })
+                break
+            case "hitTestNormalized":
+                let nx = (arguments?["x"] as? NSNumber)?.doubleValue ?? 0.5
+                let ny = (arguments?["y"] as? NSNumber)?.doubleValue ?? 0.5
+                let point = CGPoint(
+                    x: sceneView.bounds.width * CGFloat(nx),
+                    y: sceneView.bounds.height * CGFloat(ny)
+                )
+                let planeTypesNorm: ARHitTestResult.ResultType
+                if #available(iOS 11.3, *) {
+                    planeTypesNorm = [.existingPlaneUsingGeometry, .estimatedHorizontalPlane, .featurePoint]
+                } else {
+                    planeTypesNorm = [.existingPlaneUsingExtent, .featurePoint]
+                }
+                let normHits = sceneView.hitTest(point, types: planeTypesNorm)
+                result(normHits.map { serializeHitResult($0) })
                 break
             case "dispose":
                 onDispose(result)
@@ -246,6 +276,9 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             case "init":
                 if let iosScaleFactor = arguments?["iosScaleFactor"] as? NSNumber {
                     self.modelBuilder.iosModelScaleFactor = iosScaleFactor.floatValue
+                }
+                if let targetHeight = arguments?["targetHeightMeters"] as? NSNumber {
+                    self.modelBuilder.targetHeightMeters = targetHeight.floatValue
                 }
                 result(nil)
                 break
@@ -361,6 +394,18 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         self.configuration.environmentTexturing = .automatic
         if #available(iOS 13.0, *) {
             self.configuration.wantsHDREnvironmentTextures = true
+        }
+        if #available(iOS 14.0, *),
+           ARWorldTrackingConfiguration.supportsFrameSemantics(.smoothedSceneDepth) {
+            configuration.frameSemantics.insert(.smoothedSceneDepth)
+        } else if #available(iOS 13.0, *),
+                  ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) {
+            configuration.frameSemantics.insert(.sceneDepth)
+        }
+        if deviceSupportsLiDARMesh {
+            if #available(iOS 13.4, *) {
+                configuration.sceneReconstruction = .mesh
+            }
         }
         if let planeDetectionConfig = arguments["planeDetectionConfig"] as? Int {
             switch planeDetectionConfig {
@@ -491,6 +536,13 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             }
             reportPlaneDetectedIfNeeded(planeAnchor: planeAnchor)
             dismissCoachingOverlayIfNeeded()
+        } else if isPlacementAnchor(anchor) {
+            ensureShadowFloor(on: anchor, anchorNode: node)
+            if let pending = pendingAnchorAttachments.removeValue(forKey: anchor.identifier) {
+                attachFurnitureNode(pending.0, to: node)
+                flutterNodeNames.insert(pending.1)
+                pending.2(true)
+            }
         }
         
         // Handle image anchors - store the anchor node for later use
@@ -548,6 +600,42 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         }
     }
 
+    func session(_ session: ARSession, cameraDidChangeTrackingState camera: ARCamera) {
+        let stateString: String
+        var reasonString = "NONE"
+        switch camera.trackingState {
+        case .normal:
+            stateString = "TRACKING"
+        case .notAvailable:
+            stateString = "NOT_AVAILABLE"
+        case .limited(let reason):
+            stateString = "LIMITED"
+            switch reason {
+            case .initializing:
+                reasonString = "INITIALIZING"
+            case .excessiveMotion:
+                reasonString = "EXCESSIVE_MOTION"
+            case .insufficientFeatures:
+                reasonString = "INSUFFICIENT_FEATURES"
+            case .relocalizing:
+                reasonString = "RELOCALIZING"
+            @unknown default:
+                reasonString = "NONE"
+            }
+        @unknown default:
+            stateString = "NOT_AVAILABLE"
+        }
+        DispatchQueue.main.async {
+            self.sessionManagerChannel.invokeMethod(
+                "onTrackingState",
+                arguments: [
+                    "state": stateString,
+                    "reason": reasonString,
+                ]
+            )
+        }
+    }
+
     private func completeNodeAdd(name: String, promise: @escaping (Result<Bool, Never>) -> Void) {
         flutterNodeNames.insert(name)
         promise(.success(true))
@@ -568,14 +656,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                         if let anchorName = dict_anchor?["name"] as? String, let anchorType = dict_anchor?["type"] as? Int {
                             switch anchorType{
                                 case 0: //PlaneAnchor
-                                    if let anchor = self.anchorCollection[anchorName]{
-                                        // Attach node to the top-level node of the specified anchor
-                                        self.sceneView.node(for: anchor)?.addChildNode(node)
-                                        self.completeNodeAdd(name: nodeName, promise: promise)
-                                    } else {
-                                        print("iOS: Failed to find anchor: \(anchorName)")
-                                        promise(.success(false))
-                                    }
+                                    self.attachNodeToPlaneAnchor(node, anchorName: anchorName, nodeName: nodeName, promise: promise)
                                 default:
                                     print("iOS: Unknown anchor type: \(anchorType)")
                                     promise(.success(false))
@@ -602,15 +683,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                         if let anchorName = dict_anchor?["name"] as? String, let anchorType = dict_anchor?["type"] as? Int {
                             switch anchorType{
                                 case 0: //PlaneAnchor
-                                    if let anchor = self.anchorCollection[anchorName]{
-                                        // Attach node to the top-level node of the specified anchor
-                                        self.sceneView.node(for: anchor)?.addChildNode(node)
-                                        print("iOS: Node attached to plane anchor")
-                                        self.completeNodeAdd(name: nodeName, promise: promise)
-                                    } else {
-                                        print("iOS: Failed to find anchor: \(anchorName)")
-                                        promise(.success(false))
-                                    }
+                                    self.attachNodeToPlaneAnchor(node, anchorName: anchorName, nodeName: nodeName, promise: promise)
                                 default:
                                     print("iOS: Unknown anchor type: \(anchorType)")
                                     promise(.success(false))
@@ -638,13 +711,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                             if let anchorName = dict_anchor?["name"] as? String, let anchorType = dict_anchor?["type"] as? Int {
                                 switch anchorType{
                                     case 0: //PlaneAnchor
-                                        if let anchor = self.anchorCollection[anchorName]{
-                                            // Attach node to the top-level node of the specified anchor
-                                            self.sceneView.node(for: anchor)?.addChildNode(node)
-                                            self.completeNodeAdd(name: nodeName, promise: promise)
-                                        } else {
-                                            promise(.success(false))
-                                        }
+                                        self.attachNodeToPlaneAnchor(node, anchorName: anchorName, nodeName: nodeName, promise: promise)
                                     default:
                                         promise(.success(false))
                                     }
@@ -671,13 +738,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                         if let anchorName = dict_anchor?["name"] as? String, let anchorType = dict_anchor?["type"] as? Int {
                             switch anchorType{
                                 case 0: //PlaneAnchor
-                                    if let anchor = self.anchorCollection[anchorName]{
-                                        // Attach node to the top-level node of the specified anchor
-                                        self.sceneView.node(for: anchor)?.addChildNode(node)
-                                        self.completeNodeAdd(name: nodeName, promise: promise)
-                                    } else {
-                                        promise(.success(false))
-                                    }
+                                    self.attachNodeToPlaneAnchor(node, anchorName: anchorName, nodeName: nodeName, promise: promise)
                                 default:
                                     promise(.success(false))
                                 }
@@ -703,13 +764,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                         if let anchorName = dict_anchor?["name"] as? String, let anchorType = dict_anchor?["type"] as? Int {
                             switch anchorType{
                                 case 0: //PlaneAnchor
-                                    if let anchor = self.anchorCollection[anchorName]{
-                                        // Attach node to the top-level node of the specified anchor
-                                        self.sceneView.node(for: anchor)?.addChildNode(node)
-                                        self.completeNodeAdd(name: nodeName, promise: promise)
-                                    } else {
-                                        promise(.success(false))
-                                    }
+                                    self.attachNodeToPlaneAnchor(node, anchorName: anchorName, nodeName: nodeName, promise: promise)
                                 default:
                                     promise(.success(false))
                                 }
@@ -841,7 +896,6 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             cancelActivePanIfNeeded()
             rotationStartLocation = recognizer.location(in: sceneView)
             lastRotationRadians = recognizer.rotation
-            pendingRotationDelta = 0
 
             guard let startLocation = rotationStartLocation else { return }
             rotatingNode = resolveRotationNode(at: startLocation, in: sceneView)
@@ -855,7 +909,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             guard let rotateNode = rotatingNode else { return }
 
             let currentRotation = recognizer.rotation
-            var delta = Float(currentRotation - lastRotationRadians)
+            var delta = Float(lastRotationRadians - currentRotation)
             lastRotationRadians = currentRotation
             if abs(delta) > Float.pi {
                 delta = delta > 0 ? delta - 2 * Float.pi : delta + 2 * Float.pi
@@ -870,7 +924,6 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             recognizer.state == UIGestureRecognizer.State.cancelled ||
             recognizer.state == UIGestureRecognizer.State.failed {
             if let rotateNode = rotatingNode {
-                flushPendingRotation(on: rotateNode)
                 self.objectManagerChannel.invokeMethod(
                     "onRotationEnd",
                     arguments: serializeLocalTransformation(node: rotateNode)
@@ -879,12 +932,10 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             rotationStartLocation = nil
             rotatingNode = nil
             lastRotationRadians = 0
-            pendingRotationDelta = 0
         }
     }
 
     private static let rotationSensitivity: Float = 0.85
-    private static let rotationSmoothFactor: Float = 0.28
     private static let rotationDeadZoneRadians: Float = 0.004
     private static let rotationHitMaxHorizontalDistanceM: Float = 0.8
     private static let rotationScreenHitRadiusPx: CGFloat = 140
@@ -905,7 +956,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             if projected.z >= 0 && projected.z <= 1 {
                 let dx = CGFloat(projected.x) - location.x
                 let dy = CGFloat(projected.y) - location.y
-                if dx * dx + dy * dy <= rotationScreenHitRadiusPx * rotationScreenHitRadiusPx {
+                if dx * dx + dy * dy <= Self.rotationScreenHitRadiusPx * Self.rotationScreenHitRadiusPx {
                     return fallbackNode
                 }
             }
@@ -918,7 +969,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                 let dx = hitX - nodePos.x
                 let dz = hitZ - nodePos.z
                 if dx * dx + dz * dz <=
-                    rotationHitMaxHorizontalDistanceM * rotationHitMaxHorizontalDistanceM {
+                    Self.rotationHitMaxHorizontalDistanceM * Self.rotationHitMaxHorizontalDistanceM {
                     return fallbackNode
                 }
             }
@@ -928,20 +979,8 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
     }
 
     private func applyRotationDelta(to node: SCNNode, deltaRadians: Float) {
-        if abs(deltaRadians) < Self.rotationDeadZoneRadians {
-            if abs(pendingRotationDelta) >= Self.rotationDeadZoneRadians {
-                let residual = pendingRotationDelta * Self.rotationSmoothFactor
-                pendingRotationDelta -= residual
-                applyImmediateRotation(to: node, deltaRadians: residual)
-            }
-            return
-        }
-
-        pendingRotationDelta += deltaRadians * Self.rotationSensitivity
-        let applied = pendingRotationDelta * Self.rotationSmoothFactor
-        pendingRotationDelta -= applied
-        if abs(applied) < Self.rotationDeadZoneRadians { return }
-        applyImmediateRotation(to: node, deltaRadians: applied)
+        guard abs(deltaRadians) >= Self.rotationDeadZoneRadians else { return }
+        applyImmediateRotation(to: node, deltaRadians: deltaRadians * Self.rotationSensitivity)
     }
 
     private func applyImmediateRotation(to node: SCNNode, deltaRadians: Float) {
@@ -950,15 +989,6 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         } else {
             node.eulerAngles.z += deltaRadians
         }
-    }
-
-    private func flushPendingRotation(on node: SCNNode) {
-        if abs(pendingRotationDelta) < Self.rotationDeadZoneRadians {
-            pendingRotationDelta = 0
-            return
-        }
-        applyImmediateRotation(to: node, deltaRadians: pendingRotationDelta)
-        pendingRotationDelta = 0
     }
 
     private func cancelActivePanIfNeeded() {
@@ -1028,7 +1058,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
     private func transformsApproximatelyEqual(
         _ a: simd_float4x4,
         _ b: simd_float4x4,
-        epsilon: Float = Self.transformEpsilon
+        epsilon: Float = IosARView.transformEpsilon
     ) -> Bool {
         let av = [a.columns.0, a.columns.1, a.columns.2, a.columns.3].flatMap { [$0.x, $0.y, $0.z, $0.w] }
         let bv = [b.columns.0, b.columns.1, b.columns.2, b.columns.3].flatMap { [$0.x, $0.y, $0.z, $0.w] }
@@ -1042,7 +1072,6 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         let matrix = scnMatrix4ToSimd(deserializeMatrix4(transform))
         referenceFloorY = matrix.columns.3.y
         placementInteriorPose = matrix
-        ensureShadowFloor()
     }
 
     private func clearReferenceFloorIfNeeded() {
@@ -1052,25 +1081,99 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         removeShadowFloor()
     }
 
-    private func ensureShadowFloor() {
-        guard let floorY = referenceFloorY else { return }
-        if shadowFloorNode == nil {
-            let floor = SCNFloor()
-            floor.reflectivity = 0
-            let material = SCNMaterial()
-            material.diffuse.contents = UIColor.clear
-            material.lightingModel = .constant
-            material.writesToDepthBuffer = false
-            material.readsFromDepthBuffer = true
-            floor.materials = [material]
+    private func ensureShadowFloor(on anchor: ARAnchor, anchorNode: SCNNode) {
+        guard shadowFloorNode == nil else { return }
 
-            let floorNode = SCNNode(geometry: floor)
-            floorNode.castsShadow = false
-            floorNode.renderingOrder = -100
-            sceneView.scene.rootNode.addChildNode(floorNode)
-            shadowFloorNode = floorNode
+        let floor = SCNFloor()
+        floor.reflectivity = 0
+        let material = SCNMaterial()
+        material.diffuse.contents = UIColor.white
+        material.lightingModel = .constant
+        material.writesToDepthBuffer = false
+        material.readsFromDepthBuffer = true
+        material.colorBufferWriteMask = []
+        floor.materials = [material]
+
+        let floorNode = SCNNode(geometry: floor)
+        floorNode.castsShadow = false
+        floorNode.renderingOrder = -100
+        anchorNode.addChildNode(floorNode)
+        shadowFloorNode = floorNode
+    }
+
+    private func updateShadowFrustum(for node: SCNNode) {
+        let (minV, maxV) = node.boundingBox
+        let radius = max(maxV.x - minV.x, maxV.z - minV.z, maxV.y - minV.y) / 2
+        directionalLightNode?.light?.orthographicScale = CGFloat(max(radius * 3, 1.0))
+    }
+
+    private func attachFurnitureNode(_ node: SCNNode, to anchorNode: SCNNode) {
+        anchorNode.addChildNode(node)
+        updateShadowFrustum(for: node)
+    }
+
+    private func applyDepthOcclusionEnabled(_ enabled: Bool) {
+        depthOcclusionEnabled = enabled
+        let shouldOcclude = enabled && hasDepthSemanticsEnabled()
+        if #available(iOS 13.0, *) {
+            applyVirtualContentOcclusion(shouldOcclude)
         }
-        shadowFloorNode?.position = SCNVector3(0, CGFloat(floorY), 0)
+    }
+
+    @available(iOS 13.0, *)
+    private func applyVirtualContentOcclusion(_ enabled: Bool) {
+        // Property exists on ARSCNView at runtime on device builds; guard via selector for SDK variance.
+        let key = "automaticallyOccludesVirtualContent"
+        guard sceneView.responds(to: NSSelectorFromString("setAutomaticallyOccludesVirtualContent:")) else {
+            print("iOS: automaticallyOccludesVirtualContent unavailable on this SDK build")
+            return
+        }
+        sceneView.setValue(enabled, forKey: key)
+    }
+
+    private func hasDepthSemanticsEnabled() -> Bool {
+        guard let config = sceneView.session.configuration as? ARWorldTrackingConfiguration else {
+            return false
+        }
+        if #available(iOS 14.0, *) {
+            if config.frameSemantics.contains(.smoothedSceneDepth) {
+                return true
+            }
+        }
+        if #available(iOS 13.0, *) {
+            if config.frameSemantics.contains(.sceneDepth) {
+                return true
+            }
+            if config.frameSemantics.contains(.personSegmentationWithDepth) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private func isPlacementAnchor(_ anchor: ARAnchor) -> Bool {
+        return anchorCollection.values.contains { $0.identifier == anchor.identifier }
+    }
+
+    private func attachNodeToPlaneAnchor(
+        _ node: SCNNode,
+        anchorName: String,
+        nodeName: String,
+        promise: @escaping (Result<Bool, Never>) -> Void
+    ) {
+        guard let anchor = anchorCollection[anchorName] else {
+            print("iOS: Failed to find anchor: \(anchorName)")
+            promise(.success(false))
+            return
+        }
+        if let anchorNode = sceneView.node(for: anchor) {
+            attachFurnitureNode(node, to: anchorNode)
+            completeNodeAdd(name: nodeName, promise: promise)
+        } else {
+            pendingAnchorAttachments[anchor.identifier] = (node, nodeName, { success in
+                promise(.success(success))
+            })
+        }
     }
 
     private func removeShadowFloor() {
@@ -1084,7 +1187,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
     }
 
     private func isTrackingHorizontalPlane(_ anchor: ARPlaneAnchor) -> Bool {
-        return anchor.alignment == .horizontal && anchor.isTracked
+        return anchor.alignment == .horizontal
     }
 
     private func worldPointToPlaneLocal(_ point: SCNVector3, planeAnchor: ARPlaneAnchor) -> simd_float4 {
@@ -1094,13 +1197,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
 
     @available(iOS 11.3, *)
     private func boundaryVerticesArray(from geometry: ARPlaneGeometry) -> [SIMD3<Float>] {
-        let count = Int(geometry.boundaryVertexCount)
-        guard count > 0 else { return [] }
-        let pointer = geometry.boundaryVertices
-        return (0..<count).map { index in
-            let vertex = pointer[index]
-            return SIMD3<Float>(vertex.x, vertex.y, vertex.z)
-        }
+        return geometry.boundaryVertices.map { SIMD3<Float>($0.x, $0.y, $0.z) }
     }
 
     private func isPointInPolygonXZ(x: Float, z: Float, vertices: [SIMD3<Float>], count: Int) -> Bool {
@@ -1211,15 +1308,15 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
     }
 
     private func hasTrackedVerticalWalls() -> Bool {
-        return trackedPlaneAnchors().contains {
-            $0.alignment == .vertical && $0.isTracked
-        }
+        return trackedPlaneAnchors().contains(where: {
+            $0.alignment == .vertical
+        })
     }
 
     private func countNearbyVerticalWalls(_ snapPoint: SCNVector3, referenceFloorY: Float) -> Int {
         var count = 0
         for wall in trackedPlaneAnchors() {
-            guard wall.alignment == .vertical, wall.isTracked else { continue }
+            guard wall.alignment == .vertical else { continue }
             if abs(snapPoint.y - referenceFloorY) > Self.maxDragPlaneHeightBandM { continue }
             if abs(signedDistanceToPlaneNormal(snapPoint, planeAnchor: wall)) < Self.wallCornerDetectRangeM {
                 count += 1
@@ -1272,7 +1369,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         let clearance = requiredWallClearance(point, referenceFloorY: referenceFloorY)
 
         for wall in trackedPlaneAnchors() {
-            guard wall.alignment == .vertical, wall.isTracked else { continue }
+            guard wall.alignment == .vertical else { continue }
             if abs(point.y - referenceFloorY) > Self.maxDragPlaneHeightBandM { continue }
 
             let snapDist = signedDistanceToPlaneNormal(point, planeAnchor: wall)
@@ -1454,38 +1551,11 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         objectManagerChannel.invokeMethod("onPanChange", arguments: node.name)
     }
 
-    private func waitForAnchorNode(anchor: ARAnchor, timeout: TimeInterval) -> Bool {
-        if sceneView.node(for: anchor) != nil { return true }
-        let deadline = Date().addingTimeInterval(timeout)
-        while Date() < deadline {
-            if sceneView.node(for: anchor) != nil { return true }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.01))
-        }
-        if sceneView.node(for: anchor) == nil {
-            sessionManagerChannel.invokeMethod(
-                "onError",
-                arguments: ["Timed out waiting for anchor node after \(timeout)s"]
-            )
-            return false
-        }
-        return true
-    }
-
-    // Recursive helper function to traverse a node's parents until a node with a name starting with the specified characters is found
-    func nearestParentWithNameStart(node: SCNNode?, characters: String) -> SCNNode? {
-        if let nodeNamePrefix = node?.name?.prefix(characters.count) {
-            if (nodeNamePrefix == characters) { return node }
-        }
-        if let parent = node?.parent { return nearestParentWithNameStart(node: parent, characters: characters) }
-        return nil
-    }
-    
     func addPlaneAnchor(transform: Array<NSNumber>, name: String){
         setReferenceFloorFromPlacement(transform: transform)
         let arAnchor = ARAnchor(transform: scnMatrix4ToSimd(deserializeMatrix4(transform)))
         anchorCollection[name] = arAnchor
         sceneView.session.add(anchor: arAnchor)
-        _ = waitForAnchorNode(anchor: arAnchor, timeout: Self.anchorNodeWaitTimeoutSeconds)
     }
     
     func deleteAnchor(anchorName: String) {

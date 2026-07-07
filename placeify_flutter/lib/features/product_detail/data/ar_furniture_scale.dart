@@ -29,6 +29,25 @@ abstract final class ArFurnitureScale {
   /// Calibrates catalog dimensions to perceived real-world size in AR.
   static const realWorldCalibrationFactor = 1.65;
 
+  /// Target height in meters for native iOS bounding-box normalization.
+  static double targetHeightMeters(ProductDimensions dimensions) {
+    final heightM = dimensions.heightCm / 100.0;
+    final widthM = dimensions.widthCm / 100.0;
+    final depthM = dimensions.depthCm / 100.0;
+    final targetMeters = heightM > 0.15
+        ? heightM
+        : [heightM, widthM, depthM].reduce((a, b) => a > b ? a : b);
+    return targetMeters * realWorldCalibrationFactor;
+  }
+
+  /// Node scale when native iOS already normalized mesh height to catalog size.
+  static Vector3 nodeScaleForNativeNormalizedHeight({
+    double userMultiplier = defaultUserMultiplier,
+  }) {
+    final clamped = userMultiplier.clamp(minUserMultiplier, maxUserMultiplier);
+    return Vector3.all(clamped);
+  }
+
   /// Base node scale before user pinch multiplier (uniform).
   static double baseScaleFromDimensions(ProductDimensions dimensions) {
     final heightM = dimensions.heightCm / 100.0;

@@ -113,12 +113,17 @@ class ARObjectManager {
 
   /// Sets up the AR Object Manager
   /// [iosScaleFactor] and [androidScaleFactor] control native model scaling.
-  /// Defaults match current native behavior.
-  onInitialize(
-      {double iosScaleFactor = 0.4, double androidScaleFactor = 0.33}) {
+  /// [targetHeightMeters] when set on iOS normalizes GLB height to catalog size.
+  onInitialize({
+    double iosScaleFactor = 0.4,
+    double androidScaleFactor = 0.33,
+    double? targetHeightMeters,
+  }) {
     _channel.invokeMethod<void>('init', {
       'iosScaleFactor': iosScaleFactor,
       'androidScaleFactor': androidScaleFactor,
+      if (targetHeightMeters != null && targetHeightMeters > 0)
+        'targetHeightMeters': targetHeightMeters,
     });
   }
 
