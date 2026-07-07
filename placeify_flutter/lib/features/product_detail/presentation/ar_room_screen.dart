@@ -666,6 +666,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
 
     final hits = await _placementHitCandidates(session);
     final hit = ArFurniturePlacement.bestSurfaceHit(hits);
+    final cameraPose = await session.getCameraPose();
 
     // #region agent log
     _agentLog(
@@ -705,12 +706,36 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       return;
     }
 
+    if (cameraPose != null && !_isPlausibleFloorHit(hit, cameraPose)) {
+      // #region agent log
+      _agentLog(
+        'ar_room_screen.dart:_tryAutoPlace',
+        'rejected hit: implausible floor height',
+        {
+          'cameraY': cameraPose.getTranslation().y,
+          'hitY': hit.worldTransform.getTranslation().y,
+        },
+        hypothesisId: 'H2-H3',
+      );
+      // #endregion
+      _autoPlaceScheduled = false;
+      await Future<void>.delayed(ArFurnitureGestureConfig.autoPlaceRetryDelay);
+      if (mounted) unawaited(_tryAutoPlace());
+      return;
+    }
+
     _autoPlaceScheduled = false;
     await _placeOnSurface(
       objectManager: objectManager,
       anchorManager: anchorManager,
       hit: hit,
     );
+  }
+
+  bool _isPlausibleFloorHit(ARHitTestResult hit, Matrix4 cameraPose) {
+    final cameraY = cameraPose.getTranslation().y;
+    final hitY = hit.worldTransform.getTranslation().y;
+    return (cameraY - hitY) > 0.4;
   }
 
   Future<void> _onPlaneTapped(List<ARHitTestResult> hitTestResults) async {
@@ -721,10 +746,13 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     if (objectManager == null || anchorManager == null) return;
 
     final planeHits = hitTestResults
-        .where((r) => r.type == ARHitTestResultType.plane)
+        .where((r) =>
+            r.type == ARHitTestResultType.plane ||
+            r.type == ARHitTestResultType.estimatedPlane)
         .toList();
     final hit = ArFurniturePlacement.bestSurfaceHit(
       planeHits.isNotEmpty ? planeHits : hitTestResults,
+      allowEstimatedPlanes: true,
     );
     if (hit == null) {
       _showTransientHint('No surface here yet. Keep scanning the floor.');
