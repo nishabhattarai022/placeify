@@ -22,6 +22,8 @@ abstract class VendorApplicationSummary implements _i1.SerializableModel {
     required this.contactEmail,
     required this.submittedAt,
     required this.status,
+    this.moderationNote,
+    this.moderatedAt,
   });
 
   factory VendorApplicationSummary({
@@ -31,6 +33,8 @@ abstract class VendorApplicationSummary implements _i1.SerializableModel {
     required String contactEmail,
     required DateTime submittedAt,
     required _i2.UserAccountStatus status,
+    String? moderationNote,
+    DateTime? moderatedAt,
   }) = _VendorApplicationSummaryImpl;
 
   factory VendorApplicationSummary.fromJson(
@@ -49,6 +53,12 @@ abstract class VendorApplicationSummary implements _i1.SerializableModel {
       status: _i2.UserAccountStatus.fromJson(
         (jsonSerialization['status'] as String),
       ),
+      moderationNote: jsonSerialization['moderationNote'] as String?,
+      moderatedAt: jsonSerialization['moderatedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['moderatedAt'],
+            ),
     );
   }
 
@@ -64,6 +74,10 @@ abstract class VendorApplicationSummary implements _i1.SerializableModel {
 
   _i2.UserAccountStatus status;
 
+  String? moderationNote;
+
+  DateTime? moderatedAt;
+
   /// Returns a shallow copy of this [VendorApplicationSummary]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -74,6 +88,8 @@ abstract class VendorApplicationSummary implements _i1.SerializableModel {
     String? contactEmail,
     DateTime? submittedAt,
     _i2.UserAccountStatus? status,
+    String? moderationNote,
+    DateTime? moderatedAt,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -85,6 +101,8 @@ abstract class VendorApplicationSummary implements _i1.SerializableModel {
       'contactEmail': contactEmail,
       'submittedAt': submittedAt.toJson(),
       'status': status.toJson(),
+      if (moderationNote != null) 'moderationNote': moderationNote,
+      if (moderatedAt != null) 'moderatedAt': moderatedAt?.toJson(),
     };
   }
 
@@ -94,6 +112,8 @@ abstract class VendorApplicationSummary implements _i1.SerializableModel {
   }
 }
 
+class _Undefined {}
+
 class _VendorApplicationSummaryImpl extends VendorApplicationSummary {
   _VendorApplicationSummaryImpl({
     required _i1.UuidValue vendorId,
@@ -102,6 +122,8 @@ class _VendorApplicationSummaryImpl extends VendorApplicationSummary {
     required String contactEmail,
     required DateTime submittedAt,
     required _i2.UserAccountStatus status,
+    String? moderationNote,
+    DateTime? moderatedAt,
   }) : super._(
          vendorId: vendorId,
          userId: userId,
@@ -109,6 +131,8 @@ class _VendorApplicationSummaryImpl extends VendorApplicationSummary {
          contactEmail: contactEmail,
          submittedAt: submittedAt,
          status: status,
+         moderationNote: moderationNote,
+         moderatedAt: moderatedAt,
        );
 
   /// Returns a shallow copy of this [VendorApplicationSummary]
@@ -122,6 +146,8 @@ class _VendorApplicationSummaryImpl extends VendorApplicationSummary {
     String? contactEmail,
     DateTime? submittedAt,
     _i2.UserAccountStatus? status,
+    Object? moderationNote = _Undefined,
+    Object? moderatedAt = _Undefined,
   }) {
     return VendorApplicationSummary(
       vendorId: vendorId ?? this.vendorId,
@@ -130,6 +156,10 @@ class _VendorApplicationSummaryImpl extends VendorApplicationSummary {
       contactEmail: contactEmail ?? this.contactEmail,
       submittedAt: submittedAt ?? this.submittedAt,
       status: status ?? this.status,
+      moderationNote: moderationNote is String?
+          ? moderationNote
+          : this.moderationNote,
+      moderatedAt: moderatedAt is DateTime? ? moderatedAt : this.moderatedAt,
     );
   }
 }

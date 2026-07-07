@@ -6,17 +6,7 @@ part 'wishlist_provider.g.dart';
 @riverpod
 class Wishlist extends _$Wishlist {
   @override
-  Map<String, DateTime> build() {
-    final now = DateTime.now();
-    return {
-      'p6': now.subtract(const Duration(minutes: 12)),
-      'p4': now.subtract(const Duration(hours: 2)),
-      'p2': now.subtract(const Duration(hours: 5)),
-      'p5': now.subtract(const Duration(days: 1)),
-      'p1': now.subtract(const Duration(days: 2)),
-      'p3': now.subtract(const Duration(days: 3)),
-    };
-  }
+  Map<String, DateTime> build() => {};
 
   bool isLiked(String productId) => state.containsKey(productId);
 

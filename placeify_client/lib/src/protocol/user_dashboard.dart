@@ -12,7 +12,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'user.dart' as _i2;
-import 'package:placeify_client/src/protocol/protocol.dart' as _i3;
+import 'marketplace_highlights.dart' as _i3;
+import 'package:placeify_client/src/protocol/protocol.dart' as _i4;
 
 /// Aggregated profile dashboard data for the logged-in customer.
 abstract class UserDashboard implements _i1.SerializableModel {
@@ -23,6 +24,7 @@ abstract class UserDashboard implements _i1.SerializableModel {
     required this.cartItemCount,
     required this.arSessionCount,
     required this.refundCount,
+    required this.marketplace,
   });
 
   factory UserDashboard({
@@ -32,11 +34,12 @@ abstract class UserDashboard implements _i1.SerializableModel {
     required int cartItemCount,
     required int arSessionCount,
     required int refundCount,
+    required _i3.MarketplaceHighlights marketplace,
   }) = _UserDashboardImpl;
 
   factory UserDashboard.fromJson(Map<String, dynamic> jsonSerialization) {
     return UserDashboard(
-      profile: _i3.Protocol().deserialize<_i2.User>(
+      profile: _i4.Protocol().deserialize<_i2.User>(
         jsonSerialization['profile'],
       ),
       orderCount: jsonSerialization['orderCount'] as int,
@@ -44,6 +47,9 @@ abstract class UserDashboard implements _i1.SerializableModel {
       cartItemCount: jsonSerialization['cartItemCount'] as int,
       arSessionCount: jsonSerialization['arSessionCount'] as int,
       refundCount: jsonSerialization['refundCount'] as int,
+      marketplace: _i4.Protocol().deserialize<_i3.MarketplaceHighlights>(
+        jsonSerialization['marketplace'],
+      ),
     );
   }
 
@@ -59,6 +65,9 @@ abstract class UserDashboard implements _i1.SerializableModel {
 
   int refundCount;
 
+  /// Live marketplace catalog slices visible to every consumer.
+  _i3.MarketplaceHighlights marketplace;
+
   /// Returns a shallow copy of this [UserDashboard]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -69,6 +78,7 @@ abstract class UserDashboard implements _i1.SerializableModel {
     int? cartItemCount,
     int? arSessionCount,
     int? refundCount,
+    _i3.MarketplaceHighlights? marketplace,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -80,6 +90,7 @@ abstract class UserDashboard implements _i1.SerializableModel {
       'cartItemCount': cartItemCount,
       'arSessionCount': arSessionCount,
       'refundCount': refundCount,
+      'marketplace': marketplace.toJson(),
     };
   }
 
@@ -97,6 +108,7 @@ class _UserDashboardImpl extends UserDashboard {
     required int cartItemCount,
     required int arSessionCount,
     required int refundCount,
+    required _i3.MarketplaceHighlights marketplace,
   }) : super._(
          profile: profile,
          orderCount: orderCount,
@@ -104,6 +116,7 @@ class _UserDashboardImpl extends UserDashboard {
          cartItemCount: cartItemCount,
          arSessionCount: arSessionCount,
          refundCount: refundCount,
+         marketplace: marketplace,
        );
 
   /// Returns a shallow copy of this [UserDashboard]
@@ -117,6 +130,7 @@ class _UserDashboardImpl extends UserDashboard {
     int? cartItemCount,
     int? arSessionCount,
     int? refundCount,
+    _i3.MarketplaceHighlights? marketplace,
   }) {
     return UserDashboard(
       profile: profile ?? this.profile.copyWith(),
@@ -125,6 +139,7 @@ class _UserDashboardImpl extends UserDashboard {
       cartItemCount: cartItemCount ?? this.cartItemCount,
       arSessionCount: arSessionCount ?? this.arSessionCount,
       refundCount: refundCount ?? this.refundCount,
+      marketplace: marketplace ?? this.marketplace.copyWith(),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:placeify_client/placeify_client.dart' show OrderPaymentStatus;
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_radii.dart';
@@ -8,7 +9,11 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import '../../../core/widgets/shimmer_loader.dart';
 import '../../../core/widgets/toast_overlay.dart';
+import 'package:placeify_flutter/features/vendor/domain/enums/payment_status.dart';
+import 'package:placeify_flutter/features/vendor/domain/models/payment_update.dart';
+import 'package:placeify_flutter/features/vendor/domain/models/vendor_order.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_payout.dart';
+import 'providers/vendor_orders_provider.dart';
 import 'providers/vendor_payments_provider.dart';
 import 'widgets/payment_status_chip.dart';
 
@@ -18,6 +23,7 @@ class VendorPaymentsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final paymentsAsync = ref.watch(vendorPaymentsProvider);
+    final orders = ref.watch(vendorOrdersProvider).value ?? const <VendorOrder>[];
 
     return Scaffold(
       backgroundColor: AppColors.cream,
@@ -28,7 +34,9 @@ class VendorPaymentsScreen extends ConsumerWidget {
             onRetry: () => ref.invalidate(vendorPaymentsProvider),
           ),
           data: (data) {
-            if (data.payouts.isEmpty && data.totalEarned == 0) {
+            if (data.payouts.isEmpty &&
+                data.totalEarned == 0 &&
+                orders.isEmpty) {
               return const _PaymentsEmptyState();
             }
 
@@ -36,14 +44,18 @@ class VendorPaymentsScreen extends ConsumerWidget {
               color: AppColors.vendorForest,
               onRefresh: () async {
                 ref.invalidate(vendorPaymentsProvider);
-                await ref.read(vendorPaymentsProvider.future);
+                ref.invalidate(vendorOrdersProvider);
+                await Future.wait([
+                  ref.read(vendorPaymentsProvider.future),
+                  ref.read(vendorOrdersProvider.future),
+                ]);
               },
               child: ListView.builder(
                 physics: const AlwaysScrollableScrollPhysics(
                   parent: BouncingScrollPhysics(),
                 ),
                 padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
-                itemCount: data.payouts.length + 1,
+                itemCount: data.payouts.length + 2,
                 itemBuilder: (context, index) {
                   if (index == 0) {
                     return Column(
@@ -82,7 +94,11 @@ class VendorPaymentsScreen extends ConsumerWidget {
                     );
                   }
 
-                  final payout = data.payouts[index - 1];
+                  if (index == 1) {
+                    return const _OrderPaymentHistoryList();
+                  }
+
+                  final payout = data.payouts[index - 2];
                   return _PayoutRow(payout: payout);
                 },
               ),
@@ -123,6 +139,174 @@ class VendorPaymentsScreen extends ConsumerWidget {
     } else {
       PlaceifyToast.show(context, 'Payout request submitted');
     }
+  }
+}
+
+class _OrderPaymentHistoryList extends ConsumerWidget {
+  const _OrderPaymentHistoryList();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ordersAsync = ref.watch(vendorOrdersProvider);
+
+    return ordersAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.only(bottom: 12),
+        child: SizedBox(
+          height: 24,
+          width: 24,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (orders) {
+        if (orders.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return Column(
+          children: [
+            for (var i = 0; i < orders.length; i++)
+              _OrderPaymentHistoryBlock(
+                order: orders[i],
+                isLast: i == orders.length - 1,
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _OrderPaymentHistoryBlock extends ConsumerWidget {
+  const _OrderPaymentHistoryBlock({
+    required this.order,
+    required this.isLast,
+  });
+
+  final VendorOrder order;
+  final bool isLast;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final auditAsync = ref.watch(orderPaymentAuditTrailProvider(order.id));
+
+    return auditAsync.when(
+      loading: () => Padding(
+        padding: EdgeInsets.only(bottom: isLast ? 12 : 10),
+        child: const SizedBox(
+          height: 20,
+          width: 20,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (updates) {
+        if (updates.isEmpty) {
+          return _PaymentHistoryRow(
+            amount: order.totalAmount,
+            reference: 'Order #${order.orderNumber} · ${order.customerName}',
+            date: order.orderedAt,
+            status: _mapOrderPaymentStatus(order.orderPaymentStatus),
+            marginBottom: isLast ? 12 : 10,
+          );
+        }
+
+        return Column(
+          children: [
+            for (var i = 0; i < updates.length; i++)
+              _PaymentHistoryRow(
+                amount: updates[i].amount,
+                reference: _referenceForUpdate(order, updates[i]),
+                date: updates[i].updatedAt,
+                status: updates[i].status,
+                marginBottom: i == updates.length - 1
+                    ? (isLast ? 12 : 10)
+                    : 10,
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  String _referenceForUpdate(VendorOrder order, PaymentUpdate update) {
+    final orderLabel = 'Order #${order.orderNumber}';
+    if (update.note.isEmpty) return orderLabel;
+    return '$orderLabel · ${update.note}';
+  }
+
+  PaymentStatus _mapOrderPaymentStatus(OrderPaymentStatus status) {
+    return switch (status) {
+      OrderPaymentStatus.unpaid => PaymentStatus.pending,
+      OrderPaymentStatus.paymentReceived => PaymentStatus.paid,
+      OrderPaymentStatus.paymentConfirmed => PaymentStatus.paid,
+    };
+  }
+}
+
+class _PaymentHistoryRow extends StatelessWidget {
+  const _PaymentHistoryRow({
+    required this.amount,
+    required this.reference,
+    required this.date,
+    required this.status,
+    required this.marginBottom,
+  });
+
+  final double amount;
+  final String reference;
+  final DateTime date;
+  final PaymentStatus status;
+  final double marginBottom;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.only(bottom: marginBottom),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.warmWhite,
+        borderRadius: AppRadii.md,
+        border: Border.all(color: AppColors.creamDark),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  Formatters.currencyFull(amount),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.espresso,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  reference,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  Formatters.shortDate(date),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          PaymentStatusChip(status: status),
+        ],
+      ),
+    );
   }
 }
 

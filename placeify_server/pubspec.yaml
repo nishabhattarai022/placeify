@@ -24,6 +24,9 @@ dev_dependencies:
 
 serverpod:
   scripts:
+    # Repairs DB migration version drift after git restore / branch switches
+    fix_migrations: dart bin/fix_migration_drift.dart
+
     # Starts the server and applies migrations
     start: dart bin/main.dart --apply-migrations
 

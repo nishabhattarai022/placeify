@@ -44,7 +44,7 @@ class _RoomSnapshotGalleryScreenState extends State<RoomSnapshotGalleryScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          'Delete room shot?',
+          'Delete saved room?',
           style: AppFonts.dmSans(
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
@@ -100,14 +100,15 @@ class _RoomSnapshotGalleryScreenState extends State<RoomSnapshotGalleryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final countLabel =
-        _loading ? '…' : '${_snapshots.length} saved shot${_snapshots.length == 1 ? '' : 's'}';
+    final countLabel = _loading
+        ? '…'
+        : '${_snapshots.length} room${_snapshots.length == 1 ? '' : 's'}';
 
     return Scaffold(
       backgroundColor: AppColors.cream,
       body: Column(
         children: [
-          ProfileSubHero(title: 'Room Shots · $countLabel'),
+          ProfileSubHero(title: 'Saved Rooms · $countLabel'),
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
@@ -166,7 +167,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'No room shots yet',
+              'No saved rooms yet',
               style: AppFonts.dmSans(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,

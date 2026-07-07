@@ -12,6 +12,7 @@ import '../../domain/constants/order_strings.dart';
 import '../../domain/enums/consumer_order_status.dart';
 import '../../domain/models/order.dart';
 import '../providers/orders_provider.dart';
+import 'leave_review_sheet.dart';
 
 abstract final class OrderQuickActionsSheet {
   static Future<void> show(
@@ -121,10 +122,7 @@ class _OrderQuickActionsBody extends ConsumerWidget {
           icon: Icons.rate_review_outlined,
           label: OrderStrings.leaveReviewAction,
           onTap: (context, ref) {
-            PlaceifyToast.show(
-              context,
-              '${OrderStrings.leaveReviewAction} coming soon',
-            );
+            LeaveReviewSheet.show(context, ref, order: order);
           },
         ),
       );

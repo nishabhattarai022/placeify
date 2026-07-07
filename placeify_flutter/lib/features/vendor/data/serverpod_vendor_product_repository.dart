@@ -97,10 +97,13 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
             'Photo file not found. Pick it again.',
           );
         }
+        final pricing = _resolveUploadPricing(product);
         final input = VendorProductUploadInput(
           name: product.name.trim(),
           description: description,
-          price: product.price,
+          price: pricing.listPrice,
+          discountPrice: pricing.discountPrice,
+          discountPercentage: pricing.discountPercentage,
           materials: materials,
           widthCm: product.widthCm,
           depthCm: product.depthCm,
@@ -239,6 +242,42 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     }
   }
 
+  ({double listPrice, double? discountPrice, double? discountPercentage})
+      _resolveUploadPricing(VendorProduct product) {
+    final listPrice = product.originalPrice ?? product.price;
+    if (!product.isOnSale) {
+      return (
+        listPrice: listPrice,
+        discountPrice: null,
+        discountPercentage: null,
+      );
+    }
+
+    final salePrice = product.price;
+    if (salePrice > 0 && salePrice < listPrice) {
+      return (
+        listPrice: listPrice,
+        discountPrice: salePrice,
+        discountPercentage: null,
+      );
+    }
+
+    final percent = product.discountPercent;
+    if (percent > 0 && percent < 100) {
+      return (
+        listPrice: listPrice,
+        discountPrice: null,
+        discountPercentage: percent,
+      );
+    }
+
+    return (
+      listPrice: listPrice,
+      discountPrice: null,
+      discountPercentage: null,
+    );
+  }
+
   Future<VendorProductUploadInput> _buildUploadInput({
     required VendorProduct product,
     required int dbId,
@@ -246,11 +285,15 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     required String materials,
     List<String>? viewImageUrls,
   }) async {
+    final pricing = _resolveUploadPricing(product);
+
     return VendorProductUploadInput(
       productId: dbId,
       name: product.name.trim(),
       description: description,
-      price: product.price,
+      price: pricing.listPrice,
+      discountPrice: pricing.discountPrice,
+      discountPercentage: pricing.discountPercentage,
       materials: materials,
       widthCm: product.widthCm,
       depthCm: product.depthCm,

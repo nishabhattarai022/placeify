@@ -6,4 +6,8 @@ fields:
   vendorId: UuidValue?
   minPrice: double?
   maxPrice: double?
+  ### When true, only products flagged [Product.featured] by the vendor.
+  featuredOnly: bool, default=false
+  ### When true, only products with an active offer ([Product.isOffer]).
+  offersOnly: bool, default=false
   pagination: PaginationInput?

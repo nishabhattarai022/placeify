@@ -20,6 +20,7 @@ abstract class AdminPlatformStats
     implements _i1.SerializableModel, _i1.ProtocolSerialization {
   AdminPlatformStats._({
     required this.totalVendors,
+    required this.totalCustomers,
     required this.pendingCount,
     required this.totalUsers,
     required this.platformGmv,
@@ -33,6 +34,7 @@ abstract class AdminPlatformStats
 
   factory AdminPlatformStats({
     required int totalVendors,
+    required int totalCustomers,
     required int pendingCount,
     required int totalUsers,
     required double platformGmv,
@@ -47,6 +49,7 @@ abstract class AdminPlatformStats
   factory AdminPlatformStats.fromJson(Map<String, dynamic> jsonSerialization) {
     return AdminPlatformStats(
       totalVendors: jsonSerialization['totalVendors'] as int,
+      totalCustomers: jsonSerialization['totalCustomers'] as int,
       pendingCount: jsonSerialization['pendingCount'] as int,
       totalUsers: jsonSerialization['totalUsers'] as int,
       platformGmv: (jsonSerialization['platformGmv'] as num).toDouble(),
@@ -68,6 +71,8 @@ abstract class AdminPlatformStats
   }
 
   int totalVendors;
+
+  int totalCustomers;
 
   int pendingCount;
 
@@ -92,6 +97,7 @@ abstract class AdminPlatformStats
   @_i1.useResult
   AdminPlatformStats copyWith({
     int? totalVendors,
+    int? totalCustomers,
     int? pendingCount,
     int? totalUsers,
     double? platformGmv,
@@ -107,6 +113,7 @@ abstract class AdminPlatformStats
     return {
       '__className__': 'AdminPlatformStats',
       'totalVendors': totalVendors,
+      'totalCustomers': totalCustomers,
       'pendingCount': pendingCount,
       'totalUsers': totalUsers,
       'platformGmv': platformGmv,
@@ -126,6 +133,7 @@ abstract class AdminPlatformStats
     return {
       '__className__': 'AdminPlatformStats',
       'totalVendors': totalVendors,
+      'totalCustomers': totalCustomers,
       'pendingCount': pendingCount,
       'totalUsers': totalUsers,
       'platformGmv': platformGmv,
@@ -151,6 +159,7 @@ abstract class AdminPlatformStats
 class _AdminPlatformStatsImpl extends AdminPlatformStats {
   _AdminPlatformStatsImpl({
     required int totalVendors,
+    required int totalCustomers,
     required int pendingCount,
     required int totalUsers,
     required double platformGmv,
@@ -162,6 +171,7 @@ class _AdminPlatformStatsImpl extends AdminPlatformStats {
     required List<_i3.VendorApplicationSummary> recentApplications,
   }) : super._(
          totalVendors: totalVendors,
+         totalCustomers: totalCustomers,
          pendingCount: pendingCount,
          totalUsers: totalUsers,
          platformGmv: platformGmv,
@@ -179,6 +189,7 @@ class _AdminPlatformStatsImpl extends AdminPlatformStats {
   @override
   AdminPlatformStats copyWith({
     int? totalVendors,
+    int? totalCustomers,
     int? pendingCount,
     int? totalUsers,
     double? platformGmv,
@@ -191,6 +202,7 @@ class _AdminPlatformStatsImpl extends AdminPlatformStats {
   }) {
     return AdminPlatformStats(
       totalVendors: totalVendors ?? this.totalVendors,
+      totalCustomers: totalCustomers ?? this.totalCustomers,
       pendingCount: pendingCount ?? this.pendingCount,
       totalUsers: totalUsers ?? this.totalUsers,
       platformGmv: platformGmv ?? this.platformGmv,

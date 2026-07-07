@@ -80,7 +80,7 @@ final class ProfileDashboardProvider
   ProfileDashboard create() => ProfileDashboard();
 }
 
-String _$profileDashboardHash() => r'9c1cd0ad56d1b9acb8aa6e718b67ec3f6211e590';
+String _$profileDashboardHash() => r'c174bc662c4977e8404f904f744e76f81ca18069';
 
 abstract class _$ProfileDashboard extends $AsyncNotifier<UserDashboard?> {
   FutureOr<UserDashboard?> build();
@@ -124,7 +124,7 @@ final class ProfileOrdersProvider
   ProfileOrders create() => ProfileOrders();
 }
 
-String _$profileOrdersHash() => r'bc876c35d538b2c8c6217053aefa195abb43821c';
+String _$profileOrdersHash() => r'9abd1cf446d8982522e61b0fe04fd0c61a9313ea';
 
 abstract class _$ProfileOrders extends $AsyncNotifier<List<UserOrderSummary>> {
   FutureOr<List<UserOrderSummary>> build();

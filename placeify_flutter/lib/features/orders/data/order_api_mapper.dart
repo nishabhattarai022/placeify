@@ -1,5 +1,6 @@
 import 'package:placeify_client/placeify_client.dart' hide Order, OrderItem;
 
+import '../../../core/config/resolve_media_url.dart';
 import '../domain/enums/consumer_order_status.dart';
 import '../domain/enums/payment_status.dart';
 import '../domain/models/order.dart';
@@ -20,7 +21,7 @@ abstract final class OrderApiMapper {
         OrderItem(
           productId: summary.id.toString(),
           productName: summary.primaryProductName ?? 'Order item',
-          productImageUrl: '',
+          productImageUrl: summary.primaryThumbnailUrl ?? '',
           brandName: '',
           sku: summary.orderNumber,
           unitPrice: summary.totalAmount,
@@ -188,5 +189,22 @@ abstract final class OrderApiMapper {
           note: event.note,
         ),
     ];
+  }
+
+  static Future<Order> withResolvedImages(Order order) async {
+    final items = await Future.wait(
+      order.items.map((item) async {
+        final raw = item.productImageUrl.trim();
+        if (raw.isEmpty ||
+            raw.startsWith('http') ||
+            raw.startsWith('assets/')) {
+          return item;
+        }
+        final resolved = await resolveMediaUrl(raw);
+        if (resolved.isEmpty) return item;
+        return item.copyWith(productImageUrl: resolved);
+      }),
+    );
+    return order.copyWith(items: items);
   }
 }

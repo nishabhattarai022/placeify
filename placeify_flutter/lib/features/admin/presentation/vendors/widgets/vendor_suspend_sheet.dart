@@ -76,7 +76,6 @@ class _VendorSuspendSheetBodyState extends State<_VendorSuspendSheetBody> {
 
     setState(() => _isSubmitting = true);
     HapticService.medium();
-    Navigator.pop(widget.sheetContext);
 
     final reason = _selectedReason!.formatNote(otherDetail: _otherController.text);
     final error = await widget.ref
@@ -87,6 +86,12 @@ class _VendorSuspendSheetBodyState extends State<_VendorSuspendSheetBody> {
           reason: reason,
         );
 
+    if (!mounted) return;
+
+    if (widget.sheetContext.mounted) {
+      Navigator.pop(widget.sheetContext);
+    }
+
     if (!widget.parentContext.mounted) return;
 
     if (error != null) {
@@ -94,8 +99,8 @@ class _VendorSuspendSheetBodyState extends State<_VendorSuspendSheetBody> {
       return;
     }
 
-    widget.onSuspended();
     PlaceifyToast.show(widget.parentContext, AdminStrings.vendorSuspended);
+    widget.onSuspended();
   }
 
   @override

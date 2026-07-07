@@ -13,7 +13,9 @@ import 'package:placeify_flutter/features/vendor/domain/enums/delivery_stage.dar
 import 'package:placeify_flutter/features/vendor/domain/enums/order_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/delivery_update.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_order_detail_provider.dart';
+import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_orders_provider.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_profile_provider.dart';
+import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_stats_provider.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_radii.dart';
@@ -87,6 +89,8 @@ class _DeliveryUpdateScreenState extends ConsumerState<DeliveryUpdateScreen> {
 
       if (!mounted) return;
       ref.invalidate(vendorOrderDetailProvider(widget.orderId));
+      ref.invalidate(vendorOrdersProvider);
+      ref.invalidate(vendorStatsProvider);
       PlaceifyToast.show(context, 'Delivery update posted ✓');
       context.pop();
     } on VendorOrderActionException catch (e) {

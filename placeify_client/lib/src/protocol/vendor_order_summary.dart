@@ -12,17 +12,20 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'order_status.dart' as _i2;
+import 'delivery_stage.dart' as _i3;
 
 /// Order line item shown on the vendor dashboard.
 abstract class VendorOrderSummary implements _i1.SerializableModel {
   VendorOrderSummary._({
     required this.orderItemId,
+    this.productId,
     required this.orderId,
     required this.orderNumber,
     required this.productName,
     required this.quantity,
     required this.lineTotal,
     required this.status,
+    this.currentDeliveryStage,
     required this.placedAt,
     this.customerName,
     bool? isCustomizationRequest,
@@ -31,12 +34,14 @@ abstract class VendorOrderSummary implements _i1.SerializableModel {
 
   factory VendorOrderSummary({
     required int orderItemId,
+    int? productId,
     required int orderId,
     required String orderNumber,
     required String productName,
     required int quantity,
     required double lineTotal,
     required _i2.OrderStatus status,
+    _i3.DeliveryStage? currentDeliveryStage,
     required DateTime placedAt,
     String? customerName,
     bool? isCustomizationRequest,
@@ -46,12 +51,18 @@ abstract class VendorOrderSummary implements _i1.SerializableModel {
   factory VendorOrderSummary.fromJson(Map<String, dynamic> jsonSerialization) {
     return VendorOrderSummary(
       orderItemId: jsonSerialization['orderItemId'] as int,
+      productId: jsonSerialization['productId'] as int?,
       orderId: jsonSerialization['orderId'] as int,
       orderNumber: jsonSerialization['orderNumber'] as String,
       productName: jsonSerialization['productName'] as String,
       quantity: jsonSerialization['quantity'] as int,
       lineTotal: (jsonSerialization['lineTotal'] as num).toDouble(),
       status: _i2.OrderStatus.fromJson((jsonSerialization['status'] as String)),
+      currentDeliveryStage: jsonSerialization['currentDeliveryStage'] == null
+          ? null
+          : _i3.DeliveryStage.fromJson(
+              (jsonSerialization['currentDeliveryStage'] as String),
+            ),
       placedAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['placedAt'],
       ),
@@ -68,6 +79,8 @@ abstract class VendorOrderSummary implements _i1.SerializableModel {
 
   int orderItemId;
 
+  int? productId;
+
   int orderId;
 
   String orderNumber;
@@ -79,6 +92,8 @@ abstract class VendorOrderSummary implements _i1.SerializableModel {
   double lineTotal;
 
   _i2.OrderStatus status;
+
+  _i3.DeliveryStage? currentDeliveryStage;
 
   DateTime placedAt;
 
@@ -93,12 +108,14 @@ abstract class VendorOrderSummary implements _i1.SerializableModel {
   @_i1.useResult
   VendorOrderSummary copyWith({
     int? orderItemId,
+    int? productId,
     int? orderId,
     String? orderNumber,
     String? productName,
     int? quantity,
     double? lineTotal,
     _i2.OrderStatus? status,
+    _i3.DeliveryStage? currentDeliveryStage,
     DateTime? placedAt,
     String? customerName,
     bool? isCustomizationRequest,
@@ -109,12 +126,15 @@ abstract class VendorOrderSummary implements _i1.SerializableModel {
     return {
       '__className__': 'VendorOrderSummary',
       'orderItemId': orderItemId,
+      if (productId != null) 'productId': productId,
       'orderId': orderId,
       'orderNumber': orderNumber,
       'productName': productName,
       'quantity': quantity,
       'lineTotal': lineTotal,
       'status': status.toJson(),
+      if (currentDeliveryStage != null)
+        'currentDeliveryStage': currentDeliveryStage?.toJson(),
       'placedAt': placedAt.toJson(),
       if (customerName != null) 'customerName': customerName,
       'isCustomizationRequest': isCustomizationRequest,
@@ -133,24 +153,28 @@ class _Undefined {}
 class _VendorOrderSummaryImpl extends VendorOrderSummary {
   _VendorOrderSummaryImpl({
     required int orderItemId,
+    int? productId,
     required int orderId,
     required String orderNumber,
     required String productName,
     required int quantity,
     required double lineTotal,
     required _i2.OrderStatus status,
+    _i3.DeliveryStage? currentDeliveryStage,
     required DateTime placedAt,
     String? customerName,
     bool? isCustomizationRequest,
     String? requestMeta,
   }) : super._(
          orderItemId: orderItemId,
+         productId: productId,
          orderId: orderId,
          orderNumber: orderNumber,
          productName: productName,
          quantity: quantity,
          lineTotal: lineTotal,
          status: status,
+         currentDeliveryStage: currentDeliveryStage,
          placedAt: placedAt,
          customerName: customerName,
          isCustomizationRequest: isCustomizationRequest,
@@ -163,12 +187,14 @@ class _VendorOrderSummaryImpl extends VendorOrderSummary {
   @override
   VendorOrderSummary copyWith({
     int? orderItemId,
+    Object? productId = _Undefined,
     int? orderId,
     String? orderNumber,
     String? productName,
     int? quantity,
     double? lineTotal,
     _i2.OrderStatus? status,
+    Object? currentDeliveryStage = _Undefined,
     DateTime? placedAt,
     Object? customerName = _Undefined,
     bool? isCustomizationRequest,
@@ -176,12 +202,16 @@ class _VendorOrderSummaryImpl extends VendorOrderSummary {
   }) {
     return VendorOrderSummary(
       orderItemId: orderItemId ?? this.orderItemId,
+      productId: productId is int? ? productId : this.productId,
       orderId: orderId ?? this.orderId,
       orderNumber: orderNumber ?? this.orderNumber,
       productName: productName ?? this.productName,
       quantity: quantity ?? this.quantity,
       lineTotal: lineTotal ?? this.lineTotal,
       status: status ?? this.status,
+      currentDeliveryStage: currentDeliveryStage is _i3.DeliveryStage?
+          ? currentDeliveryStage
+          : this.currentDeliveryStage,
       placedAt: placedAt ?? this.placedAt,
       customerName: customerName is String? ? customerName : this.customerName,
       isCustomizationRequest:

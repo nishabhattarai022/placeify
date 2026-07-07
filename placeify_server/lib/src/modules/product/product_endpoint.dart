@@ -38,6 +38,10 @@ class ProductEndpoint extends Endpoint {
     return _service.listApprovedShops(session, query: query);
   }
 
+  Future<MarketplaceHighlights> getMarketplaceHighlights(Session session) {
+    return _service.getMarketplaceHighlights(session);
+  }
+
   /// Backward-compatible list without pagination wrapper.
   Future<List<Product>> listProducts(
     Session session, {

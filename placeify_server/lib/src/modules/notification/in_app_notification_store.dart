@@ -4,6 +4,8 @@ import '../../generated/protocol.dart';
 
 /// Persists in-app notifications and read state.
 class InAppNotificationStore {
+  static String userChannel(UuidValue userId) => 'in_app_$userId';
+
   Future<InAppNotification> create(
     Session session, {
     required UuidValue userId,
@@ -12,7 +14,7 @@ class InAppNotificationStore {
     required InAppNotificationType type,
     int? referenceId,
   }) async {
-    return InAppNotification.db.insertRow(
+    final row = await InAppNotification.db.insertRow(
       session,
       InAppNotification(
         userId: userId,
@@ -22,6 +24,23 @@ class InAppNotificationStore {
         referenceId: referenceId,
       ),
     );
+    final summary = _toSummary(row);
+    await _broadcastSummary(session, userId, summary);
+    return row;
+  }
+
+  Future<void> _broadcastSummary(
+    Session session,
+    UuidValue userId,
+    InAppNotificationSummary summary,
+  ) async {
+    final channel = userChannel(userId);
+    final useRedis = session.serverpod.redisController != null;
+    if (useRedis) {
+      await session.messages.postMessage(channel, summary, global: true);
+    } else {
+      await session.messages.postMessage(channel, summary, global: false);
+    }
   }
 
   Future<void> createAsync(

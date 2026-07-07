@@ -16,21 +16,29 @@ class CustomerInAppNotificationsState {
   final int unreadCount;
 }
 
-/// Customer order notifications backed by the server (30s polling).
-@riverpod
+/// Customer in-app notifications backed by Serverpod streaming.
+@Riverpod(keepAlive: true)
 class CustomerInAppNotifications extends _$CustomerInAppNotifications {
-  Timer? _pollTimer;
+  StreamSubscription<InAppNotificationSummary>? _subscription;
 
   @override
   Future<CustomerInAppNotificationsState> build() {
-    ref.onDispose(() => _pollTimer?.cancel());
-    _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) {
-      unawaited(refresh());
-    });
+    ref.onDispose(() => _subscription?.cancel());
+    unawaited(_attachRealtimeListener());
     return _load();
   }
 
-  Future<void> refresh() async {
+  Future<void> _attachRealtimeListener() async {
+    if (_subscription != null) return;
+    _subscription = inAppNotificationEvents.listen((_) {
+      unawaited(refresh(silent: true));
+    });
+  }
+
+  Future<void> refresh({bool silent = false}) async {
+    if (!silent) {
+      state = const AsyncLoading();
+    }
     state = await AsyncValue.guard(_load);
   }
 

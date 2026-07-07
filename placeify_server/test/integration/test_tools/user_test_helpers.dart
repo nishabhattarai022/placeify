@@ -69,6 +69,16 @@ Future<({Vendor vendor, Product product})> seedProductForUser(
     ),
   );
 
+  await User.db.updateRow(
+    session,
+    user.copyWith(
+      role: UserRole.vendor,
+      status: UserAccountStatus.approved,
+      isActive: true,
+      updatedAt: DateTime.now(),
+    ),
+  );
+
   final category = await Category.db.insertRow(
     session,
     Category(

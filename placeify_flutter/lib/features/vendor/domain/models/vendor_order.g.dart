@@ -23,22 +23,28 @@ _VendorOrder _$VendorOrderFromJson(Map<String, dynamic> json) => _VendorOrder(
         json['orderPaymentStatus'],
       ) ??
       OrderPaymentStatus.unpaid,
+  currentDeliveryStage: $enumDecodeNullable(
+    _$DeliveryStageEnumMap,
+    json['currentDeliveryStage'],
+  ),
 );
 
-Map<String, dynamic> _$VendorOrderToJson(_VendorOrder instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'orderNumber': instance.orderNumber,
-      'vendorId': instance.vendorId,
-      'productId': instance.productId,
-      'productName': instance.productName,
-      'quantity': instance.quantity,
-      'totalAmount': instance.totalAmount,
-      'status': _$OrderStatusEnumMap[instance.status]!,
-      'customerName': instance.customerName,
-      'orderedAt': instance.orderedAt.toIso8601String(),
-      'orderPaymentStatus': instance.orderPaymentStatus,
-    };
+Map<String, dynamic> _$VendorOrderToJson(
+  _VendorOrder instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'orderNumber': instance.orderNumber,
+  'vendorId': instance.vendorId,
+  'productId': instance.productId,
+  'productName': instance.productName,
+  'quantity': instance.quantity,
+  'totalAmount': instance.totalAmount,
+  'status': _$OrderStatusEnumMap[instance.status]!,
+  'customerName': instance.customerName,
+  'orderedAt': instance.orderedAt.toIso8601String(),
+  'orderPaymentStatus': instance.orderPaymentStatus,
+  'currentDeliveryStage': _$DeliveryStageEnumMap[instance.currentDeliveryStage],
+};
 
 const _$OrderStatusEnumMap = {
   OrderStatus.pending: 'pending',
@@ -54,4 +60,12 @@ const _$OrderPaymentStatusEnumMap = {
   OrderPaymentStatus.unpaid: 'unpaid',
   OrderPaymentStatus.paymentReceived: 'paymentReceived',
   OrderPaymentStatus.paymentConfirmed: 'paymentConfirmed',
+};
+
+const _$DeliveryStageEnumMap = {
+  DeliveryStage.orderPlaced: 'orderPlaced',
+  DeliveryStage.packed: 'packed',
+  DeliveryStage.shipped: 'shipped',
+  DeliveryStage.outForDelivery: 'outForDelivery',
+  DeliveryStage.delivered: 'delivered',
 };

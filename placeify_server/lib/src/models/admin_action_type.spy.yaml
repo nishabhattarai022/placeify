@@ -1,0 +1,24 @@
+### Admin moderation and finance action types for audit logging.
+enum: AdminActionType
+serialized: byName
+values:
+  - approveVendor
+  - rejectVendor
+  - suspendVendor
+  - reinstateVendor
+  - suspendUser
+  - activateUser
+  - deactivateUser
+  - updateUserStatus
+  - removeProduct
+  - restoreProduct
+  - deleteProduct
+  - flagProduct
+  - featureProduct
+  - resolveComplaint
+  - assignComplaint
+  - reopenComplaint
+  - approvePayout
+  - failPayout
+  - approveRefund
+  - rejectRefund

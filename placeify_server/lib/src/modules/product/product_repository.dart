@@ -3,9 +3,18 @@ import 'package:serverpod/serverpod.dart';
 import '../../generated/protocol.dart';
 import '../../shared/pagination_helper.dart';
 import '../../shared/placeify_exception.dart';
+import 'product_catalog_policy.dart';
+import 'product_pricing.dart';
 
 /// Product catalog queries with search, filter, and pagination.
 class CatalogRepository {
+  ProductInclude _productInclude() {
+    return Product.include(
+      vendor: Vendor.include(user: User.include()),
+      category: Category.include(),
+    );
+  }
+
   Future<List<Category>> listCategories(Session session) {
     return Category.db.find(
       session,
@@ -19,6 +28,18 @@ class CatalogRepository {
   ) async {
     final paging = PaginationHelper.resolve(input.pagination);
     final query = input.query?.trim().toLowerCase();
+    final approvedVendorIds = await ProductCatalogPolicy.approvedVendorIds(
+      session,
+    );
+
+    if (approvedVendorIds.isEmpty) {
+      return ProductPage(
+        items: [],
+        total: 0,
+        page: paging.page,
+        pageSize: paging.pageSize,
+      );
+    }
 
     int? categoryId;
     if (input.categoryName != null && input.categoryName!.trim().isNotEmpty) {
@@ -37,12 +58,24 @@ class CatalogRepository {
       }
     }
 
-    final where = _productSearchWhere(
+    if (input.vendorId != null && !approvedVendorIds.contains(input.vendorId)) {
+      return ProductPage(
+        items: [],
+        total: 0,
+        page: paging.page,
+        pageSize: paging.pageSize,
+      );
+    }
+
+    final where = ProductCatalogPolicy.consumerVisibleWhere(
+      approvedVendorIds: approvedVendorIds,
       categoryId: categoryId,
       vendorId: input.vendorId,
       minPrice: input.minPrice,
       maxPrice: input.maxPrice,
       query: query,
+      featuredOnly: input.featuredOnly ? true : null,
+      offersOnly: input.offersOnly ? true : null,
     );
 
     final total = await Product.db.count(session, where: where);
@@ -50,10 +83,7 @@ class CatalogRepository {
     final items = await Product.db.find(
       session,
       where: where,
-      include: Product.include(
-        vendor: Vendor.include(),
-        category: Category.include(),
-      ),
+      include: _productInclude(),
       orderBy: (row) => row.createdAt,
       orderDescending: true,
       limit: paging.pageSize,
@@ -68,51 +98,104 @@ class CatalogRepository {
     );
   }
 
-  Future<Product?> getProduct(Session session, int productId) {
-    return Product.db.findById(
+  Future<MarketplaceHighlights> marketplaceHighlights(Session session) async {
+    final approvedVendorIds = await ProductCatalogPolicy.approvedVendorIds(
       session,
-      productId,
-      include: Product.include(
-        vendor: Vendor.include(),
-        category: Category.include(),
+    );
+    if (approvedVendorIds.isEmpty) {
+      return MarketplaceHighlights(
+        recentProducts: [],
+        featuredProducts: [],
+        offerProducts: [],
+      );
+    }
+
+    final recentProducts = await Product.db.find(
+      session,
+      where: ProductCatalogPolicy.consumerVisibleWhere(
+        approvedVendorIds: approvedVendorIds,
       ),
+      include: _productInclude(),
+      orderBy: (row) => row.createdAt,
+      orderDescending: true,
+      limit: ProductCatalogPolicy.defaultRecentLimit,
+    );
+
+    final featuredProducts = await Product.db.find(
+      session,
+      where: ProductCatalogPolicy.consumerVisibleWhere(
+        approvedVendorIds: approvedVendorIds,
+        featuredOnly: true,
+      ),
+      include: _productInclude(),
+      orderBy: (row) => row.createdAt,
+      orderDescending: true,
+      limit: ProductCatalogPolicy.defaultFeaturedLimit,
+    );
+
+    final offerProducts = await Product.db.find(
+      session,
+      where: ProductCatalogPolicy.consumerVisibleWhere(
+        approvedVendorIds: approvedVendorIds,
+        offersOnly: true,
+      ),
+      include: _productInclude(),
+      orderBy: (row) => row.createdAt,
+      orderDescending: true,
+      limit: ProductCatalogPolicy.defaultOfferLimit * 3,
+    );
+    offerProducts.sort((a, b) {
+      final discountA = _discountFraction(a);
+      final discountB = _discountFraction(b);
+      final compare = discountB.compareTo(discountA);
+      if (compare != 0) return compare;
+      return b.createdAt.compareTo(a.createdAt);
+    });
+    final trimmedOffers = offerProducts
+        .take(ProductCatalogPolicy.defaultOfferLimit)
+        .toList(growable: false);
+
+    return MarketplaceHighlights(
+      recentProducts: recentProducts,
+      featuredProducts: featuredProducts,
+      offerProducts: trimmedOffers,
     );
   }
 
-  WhereExpressionBuilder<ProductTable> _productSearchWhere({
-    int? categoryId,
-    UuidValue? vendorId,
-    double? minPrice,
-    double? maxPrice,
-    String? query,
-  }) {
-    return (row) {
-      var expression = row.status.equals(ProductStatus.active);
-      if (categoryId != null) {
-        expression = expression & row.categoryId.equals(categoryId);
-      }
-      if (vendorId != null) {
-        expression = expression & row.vendorId.equals(vendorId);
-      }
-      if (minPrice != null) {
-        expression = expression & (row.price >= minPrice);
-      }
-      if (maxPrice != null) {
-        expression = expression & (row.price <= maxPrice);
-      }
-      if (query != null && query.isNotEmpty) {
-        final pattern = '%$query%';
-        expression = expression &
-            (row.name.ilike(pattern) | row.description.ilike(pattern));
-      }
-      return expression;
-    };
+  double _discountFraction(Product product) {
+    final listPrice = product.price;
+    if (listPrice <= 0) return 0;
+    final effective = ProductPricing.effectiveUnitPrice(product);
+    if (effective >= listPrice) return 0;
+    return (listPrice - effective) / listPrice;
+  }
+
+  Future<Product?> getProduct(Session session, int productId) async {
+    final product = await Product.db.findById(
+      session,
+      productId,
+      include: _productInclude(),
+    );
+    if (product == null) return null;
+
+    final vendorUser = product.vendor?.user;
+    if (!ProductCatalogPolicy.isConsumerVisibleProduct(
+      product,
+      vendorUser: vendorUser,
+    )) {
+      return null;
+    }
+
+    return product;
   }
 
   Future<Product> requireActiveProduct(Session session, int productId) async {
     final product = await getProduct(session, productId);
-    if (product == null || product.status != ProductStatus.active) {
-      throw PlaceifyException(message: 'Product not found.', code: 'PRODUCT_NOT_FOUND');
+    if (product == null) {
+      throw PlaceifyException(
+        message: 'Product not found.',
+        code: 'PRODUCT_NOT_FOUND',
+      );
     }
     return product;
   }

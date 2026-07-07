@@ -12,6 +12,8 @@ import '../../../core/services/haptic_service.dart';
 import '../../splash/presentation/widgets/onboarding/primary_cta_button.dart';
 import '../constants/auth_assets.dart';
 import '../constants/demo_credentials.dart';
+import '../domain/models/app_user.dart';
+import '../domain/models/app_user_extensions.dart';
 import 'widgets/auth_text_field.dart';
 import 'widgets/foggy_image_background.dart';
 
@@ -27,6 +29,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  String _resolveDestination(AppUser? user, String fallback) {
+    return user?.postLoginDestination ?? fallback;
+  }
 
   @override
   void initState() {
@@ -49,13 +55,45 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _signInWithDemo() async {
     _emailController.text = DemoCredentials.email;
     _passwordController.text = DemoCredentials.password;
-    await _submit(destination: '/home');
+    await _submitDemo(
+      destination: '/home',
+      signIn: () => ref
+          .read(currentUserProvider.notifier)
+          .signInWithDemoCredentials(),
+    );
   }
 
   Future<void> _signInWithDemoAdmin() async {
     _emailController.text = DemoCredentials.adminEmail;
     _passwordController.text = DemoCredentials.adminPassword;
-    await _submit(destination: '/admin');
+    await _submitDemo(
+      destination: '/admin',
+      signIn: () => ref
+          .read(currentUserProvider.notifier)
+          .signInWithDemoAdminCredentials(),
+    );
+  }
+
+  Future<void> _submitDemo({
+    required String destination,
+    required Future<AppUser> Function() signIn,
+  }) async {
+    if (_isSubmitting) return;
+
+    setState(() => _isSubmitting = true);
+    await HapticService.heavy();
+
+    try {
+      final user = await signIn();
+      if (!mounted) return;
+      context.go(_resolveDestination(user, destination));
+    } on AuthException catch (e) {
+      if (mounted) PlaceifyToast.show(context, e.message);
+    } catch (_) {
+      if (mounted) PlaceifyToast.show(context, 'Log in failed. Try again.');
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   Future<void> _submit({required String destination}) async {
@@ -66,12 +104,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     await HapticService.heavy();
 
     try {
-      await ref.read(currentUserProvider.notifier).signIn(
+      final user = await ref.read(currentUserProvider.notifier).signIn(
             email: _emailController.text.trim(),
             password: _passwordController.text,
           );
       if (!mounted) return;
-      context.go(destination);
+      context.go(_resolveDestination(user, destination));
     } on AuthException catch (e) {
       if (mounted) PlaceifyToast.show(context, e.message);
     } catch (_) {

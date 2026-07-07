@@ -15,6 +15,25 @@ abstract final class Vendor3dModelAccess {
   /// `hasArView` is set when the server has a `model3dUrl` for the product.
   static bool hasBuiltModel(VendorProduct product) => product.hasArView;
 
+  /// After a new product is saved without a 3D model, offer to open the builder.
+  static Future<void> promptAfterProductSaved({
+    required BuildContext context,
+    required WidgetRef ref,
+    required VendorProduct product,
+  }) {
+    if (hasBuiltModel(product)) return Future.value();
+    return requestAccess(
+      context: context,
+      ref: ref,
+      productId: product.id,
+      hasModel: false,
+      onAllowed: () {},
+      message:
+          'Your product was saved without a 3D model. Build one so customers '
+          'can preview it in AR.',
+    );
+  }
+
   /// Shows [BuildModelPromptDialog] when no model exists; otherwise runs
   /// [onAllowed] (typically opens the 3D builder).
   static Future<void> requestAccess({
@@ -23,6 +42,7 @@ abstract final class Vendor3dModelAccess {
     required String productId,
     required bool hasModel,
     required VoidCallback onAllowed,
+    String? message,
   }) async {
     if (hasModel) {
       onAllowed();
@@ -34,6 +54,7 @@ abstract final class Vendor3dModelAccess {
       barrierDismissible: false,
       builder: (dialogContext) => BuildModelPromptDialog(
         productId: productId,
+        message: message,
         onBuildNow: () {
           Navigator.pop(dialogContext);
           unawaited(openBuilder(context, ref, productId));

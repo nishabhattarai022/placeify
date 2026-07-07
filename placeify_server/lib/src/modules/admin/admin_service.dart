@@ -60,6 +60,40 @@ class AdminService {
     return _moderation.rejectVendor(session, vendorUserId);
   }
 
+  Future<VendorModerationResult> suspendVendor(
+    Session session,
+    UuidValue vendorUserId,
+    String reason,
+  ) {
+    return _moderation.suspendVendor(session, vendorUserId, reason);
+  }
+
+  Future<String> getVendorReinstateTerms(Session session) {
+    return _moderation.getReinstateTerms(session);
+  }
+
+  Future<VendorModerationResult> reactivateVendor(
+    Session session,
+    UuidValue vendorUserId, {
+    required bool termsAccepted,
+    String? termsNote,
+  }) {
+    return _moderation.reactivateVendor(
+      session,
+      vendorUserId,
+      termsAccepted: termsAccepted,
+      termsNote: termsNote,
+    );
+  }
+
+  Future<User> suspendUser(Session session, UuidValue targetUserId) {
+    return _moderation.suspendUser(session, targetUserId);
+  }
+
+  Future<User> activateUser(Session session, UuidValue targetUserId) {
+    return _moderation.activateUser(session, targetUserId);
+  }
+
   Future<User> updateUserStatus(
     Session session,
     UuidValue targetUserId,
@@ -86,8 +120,24 @@ class AdminService {
     return _moderation.removeProduct(session, productId, reason);
   }
 
+  Future<Product> deleteProduct(Session session, int productId) {
+    return _moderation.deleteProduct(session, productId);
+  }
+
+  Future<Product> restoreProduct(Session session, int productId) {
+    return _moderation.restoreProduct(session, productId);
+  }
+
   Future<Product> flagProduct(Session session, int productId) {
     return _moderation.flagProduct(session, productId);
+  }
+
+  Future<Product> setProductFeatured(
+    Session session,
+    int productId, {
+    required bool featured,
+  }) {
+    return _moderation.setProductFeatured(session, productId, featured: featured);
   }
 
   Future<Complaint> fileComplaint(
@@ -107,12 +157,41 @@ class AdminService {
   Future<List<Complaint>> listComplaints(
     Session session, {
     ComplaintStatus? status,
+    PaginationInput? pagination,
   }) {
-    return _moderation.listComplaints(session, status: status);
+    return _moderation.listComplaints(
+      session,
+      status: status,
+      pagination: pagination,
+    );
+  }
+
+  Future<Complaint> assignComplaint(
+    Session session,
+    UuidValue complaintId, {
+    String? internalNote,
+  }) {
+    return _moderation.assignComplaint(
+      session,
+      complaintId,
+      internalNote: internalNote,
+    );
   }
 
   Future<Complaint> resolveComplaint(Session session, UuidValue complaintId) {
     return _moderation.resolveComplaint(session, complaintId);
+  }
+
+  Future<Complaint> reopenComplaint(
+    Session session,
+    UuidValue complaintId, {
+    String? internalNote,
+  }) {
+    return _moderation.reopenComplaint(
+      session,
+      complaintId,
+      internalNote: internalNote,
+    );
   }
 
   Future<AdminPlatformStats> getPlatformStats(Session session) {
@@ -123,15 +202,33 @@ class AdminService {
     Session session, {
     String? query,
     UserRole? role,
+    PaginationInput? pagination,
   }) {
-    return _platform.listUsers(session, query: query, role: role);
+    return _platform.listUsers(
+      session,
+      query: query,
+      role: role,
+      pagination: pagination,
+    );
+  }
+
+  Future<PlatformUserDetail?> getUserDetail(
+    Session session,
+    UuidValue userId,
+  ) {
+    return _platform.getUserDetail(session, userId);
   }
 
   Future<List<VendorApplicationSummary>> listVendorApplications(
     Session session, {
     UserAccountStatus? status,
+    PaginationInput? pagination,
   }) {
-    return _platform.listVendorApplications(session, status: status);
+    return _platform.listVendorApplications(
+      session,
+      status: status,
+      pagination: pagination,
+    );
   }
 
   Future<VendorApplicationDetail?> getVendorApplication(
@@ -144,15 +241,25 @@ class AdminService {
   Future<List<AdminAuditLogSummary>> getAuditLog(
     Session session, {
     int limit = 50,
+    PaginationInput? pagination,
   }) {
-    return _platform.getAuditLog(session, limit: limit);
+    return _platform.getAuditLog(
+      session,
+      limit: limit,
+      pagination: pagination,
+    );
   }
 
   Future<List<AdminVendorPayoutSummary>> listVendorPayouts(
     Session session, {
     VendorPayoutStatus? status,
+    PaginationInput? pagination,
   }) {
-    return _finance.listVendorPayouts(session, status: status);
+    return _finance.listVendorPayouts(
+      session,
+      status: status,
+      pagination: pagination,
+    );
   }
 
   Future<AdminVendorPayoutSummary> approveVendorPayout(
@@ -173,8 +280,13 @@ class AdminService {
   Future<List<AdminRefundRequestSummary>> listRefundRequests(
     Session session, {
     RequestStatus? status,
+    PaginationInput? pagination,
   }) {
-    return _finance.listRefundRequests(session, status: status);
+    return _finance.listRefundRequests(
+      session,
+      status: status,
+      pagination: pagination,
+    );
   }
 
   Future<AdminRefundRequestSummary> approveRefundRequest(

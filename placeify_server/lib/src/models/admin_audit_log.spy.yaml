@@ -1,0 +1,26 @@
+### Immutable audit record for admin actions.
+class: AdminAuditLog
+table: admin_audit_log
+fields:
+  id: UuidValue?, defaultPersist=random_v7
+  actorAdmin: Admin?, relation(onDelete=SetNull)
+  actionType: AdminActionType
+  targetUserId: UuidValue?
+  targetVendorId: UuidValue?
+  targetProductId: int?
+  targetComplaintId: UuidValue?
+  targetPayoutId: int?
+  targetRefundId: int?
+  previousStatus: String?
+  newStatus: String?
+  reason: String?
+  note: String?
+  createdAt: DateTime, default=now
+
+indexes:
+  admin_audit_log_created_at:
+    fields: createdAt
+  admin_audit_log_actor_admin_id:
+    fields: actorAdminId
+  admin_audit_log_action_type:
+    fields: actionType

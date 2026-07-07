@@ -309,12 +309,59 @@ final class CategoryProductCountFamily extends $Family
   String toString() => r'categoryProductCountProvider';
 }
 
+@ProviderFor(marketplaceHighlights)
+final marketplaceHighlightsProvider = MarketplaceHighlightsProvider._();
+
+final class MarketplaceHighlightsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<MarketplaceHighlights>,
+          MarketplaceHighlights,
+          FutureOr<MarketplaceHighlights>
+        >
+    with
+        $FutureModifier<MarketplaceHighlights>,
+        $FutureProvider<MarketplaceHighlights> {
+  MarketplaceHighlightsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'marketplaceHighlightsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$marketplaceHighlightsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<MarketplaceHighlights> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<MarketplaceHighlights> create(Ref ref) {
+    return marketplaceHighlights(ref);
+  }
+}
+
+String _$marketplaceHighlightsHash() =>
+    r'26bf57dcc9bff67e93a13b153f879a9edbca16fe';
+
 @ProviderFor(catalogDiscountedProducts)
 final catalogDiscountedProductsProvider = CatalogDiscountedProductsProvider._();
 
 final class CatalogDiscountedProductsProvider
-    extends $FunctionalProvider<List<Product>, List<Product>, List<Product>>
-    with $Provider<List<Product>> {
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Product>>,
+          List<Product>,
+          FutureOr<List<Product>>
+        >
+    with $FutureModifier<List<Product>>, $FutureProvider<List<Product>> {
   CatalogDiscountedProductsProvider._()
     : super(
         from: null,
@@ -331,25 +378,18 @@ final class CatalogDiscountedProductsProvider
 
   @$internal
   @override
-  $ProviderElement<List<Product>> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $FutureProviderElement<List<Product>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
-  List<Product> create(Ref ref) {
+  FutureOr<List<Product>> create(Ref ref) {
     return catalogDiscountedProducts(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(List<Product> value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<List<Product>>(value),
-    );
   }
 }
 
 String _$catalogDiscountedProductsHash() =>
-    r'b4e796b105423be4f249dd26249c818361619d32';
+    r'1dd8c5bd8bf4868e35626b73517e968cb693c6b0';
 
 @ProviderFor(catalogNewestProducts)
 final catalogNewestProductsProvider = CatalogNewestProductsFamily._();
@@ -433,8 +473,13 @@ final class CatalogNewestProductsFamily extends $Family
 final homeFeaturedProductsProvider = HomeFeaturedProductsProvider._();
 
 final class HomeFeaturedProductsProvider
-    extends $FunctionalProvider<List<Product>, List<Product>, List<Product>>
-    with $Provider<List<Product>> {
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Product>>,
+          List<Product>,
+          FutureOr<List<Product>>
+        >
+    with $FutureModifier<List<Product>>, $FutureProvider<List<Product>> {
   HomeFeaturedProductsProvider._()
     : super(
         from: null,
@@ -451,25 +496,18 @@ final class HomeFeaturedProductsProvider
 
   @$internal
   @override
-  $ProviderElement<List<Product>> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $FutureProviderElement<List<Product>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
-  List<Product> create(Ref ref) {
+  FutureOr<List<Product>> create(Ref ref) {
     return homeFeaturedProducts(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(List<Product> value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<List<Product>>(value),
-    );
   }
 }
 
 String _$homeFeaturedProductsHash() =>
-    r'be55448a19e04c6d13d9cd0503d0173b69cd4b7d';
+    r'd183fae6e176ca0c25ca0a63bc04d6bcc9447177';
 
 @ProviderFor(productDetail)
 final productDetailProvider = ProductDetailFamily._();

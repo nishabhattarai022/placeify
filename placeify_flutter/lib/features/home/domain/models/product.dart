@@ -18,6 +18,7 @@ abstract class Product with _$Product {
     required String categoryId,
     required ProductDimensions dimensions,
     String? vendorId,
+    @Default('') String offerLabel,
   }) = _Product;
 
   const Product._();
@@ -27,6 +28,17 @@ abstract class Product with _$Product {
   double get discountPercent => isOnSale
       ? ((originalPrice! - price) / originalPrice! * 100).roundToDouble()
       : 0;
+
+  String get offerBadgeLabel {
+    final custom = offerLabel.trim();
+    if (custom.isNotEmpty) return custom;
+    if (isOnSale && discountPercent > 0) {
+      return '${discountPercent.round()}% OFF';
+    }
+    return '';
+  }
+
+  bool get showOfferBadge => offerBadgeLabel.isNotEmpty;
 }
 
 @freezed

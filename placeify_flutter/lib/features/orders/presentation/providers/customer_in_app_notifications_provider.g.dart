@@ -8,27 +8,27 @@ part of 'customer_in_app_notifications_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Customer order notifications backed by the server (30s polling).
+/// Customer in-app notifications backed by Serverpod streaming.
 
 @ProviderFor(CustomerInAppNotifications)
 final customerInAppNotificationsProvider =
     CustomerInAppNotificationsProvider._();
 
-/// Customer order notifications backed by the server (30s polling).
+/// Customer in-app notifications backed by Serverpod streaming.
 final class CustomerInAppNotificationsProvider
     extends
         $AsyncNotifierProvider<
           CustomerInAppNotifications,
           CustomerInAppNotificationsState
         > {
-  /// Customer order notifications backed by the server (30s polling).
+  /// Customer in-app notifications backed by Serverpod streaming.
   CustomerInAppNotificationsProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
         name: r'customerInAppNotificationsProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -42,9 +42,9 @@ final class CustomerInAppNotificationsProvider
 }
 
 String _$customerInAppNotificationsHash() =>
-    r'1d1443cac1c6d53b0c5963aef715578216e59df3';
+    r'b99b654c296ba22c56178a1988e07081856bd68e';
 
-/// Customer order notifications backed by the server (30s polling).
+/// Customer in-app notifications backed by Serverpod streaming.
 
 abstract class _$CustomerInAppNotifications
     extends $AsyncNotifier<CustomerInAppNotificationsState> {

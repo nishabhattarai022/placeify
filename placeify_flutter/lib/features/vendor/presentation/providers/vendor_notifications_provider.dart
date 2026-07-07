@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:placeify_client/placeify_client.dart' hide Order;
+import 'package:placeify_flutter/core/config/placeify_server_client.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/notification_type.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
@@ -63,15 +65,20 @@ class VendorNotificationsState {
 
 @riverpod
 class VendorNotifications extends _$VendorNotifications {
-  Timer? _pollTimer;
+  StreamSubscription<InAppNotificationSummary>? _subscription;
 
   @override
   Future<VendorNotificationsState> build() {
-    ref.onDispose(() => _pollTimer?.cancel());
-    _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+    ref.onDispose(() => _subscription?.cancel());
+    unawaited(_attachRealtimeListener());
+    return _load();
+  }
+
+  Future<void> _attachRealtimeListener() async {
+    if (_subscription != null) return;
+    _subscription = inAppNotificationEvents.listen((_) {
       unawaited(refresh());
     });
-    return _load();
   }
 
   Future<void> refresh() async {

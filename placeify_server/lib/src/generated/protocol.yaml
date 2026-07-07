@@ -12,6 +12,8 @@ jwtRefresh:
 user:
   - getCurrentUser:
   - updateProfile:
+  - changePassword:
+  - uploadProfileImage:
   - becomeVendor:
   - becomeConsumer:
   - getDashboard:
@@ -33,15 +35,26 @@ admin:
   - updateMyProfile:
   - approveVendor:
   - rejectVendor:
+  - suspendVendor:
+  - getVendorReinstateTerms:
+  - reactivateVendor:
+  - suspendUser:
+  - activateUser:
   - updateUserStatus:
   - deactivateUser:
   - removeProduct:
+  - deleteProduct:
+  - restoreProduct:
   - flagProduct:
+  - setProductFeatured:
   - fileComplaint:
   - listComplaints:
+  - assignComplaint:
   - resolveComplaint:
+  - reopenComplaint:
   - getPlatformStats:
   - listUsers:
+  - getUserDetail:
   - listVendorApplications:
   - getVendorApplication:
   - getAuditLog:
@@ -71,6 +84,7 @@ notification:
   - unreadInAppNotificationCount:
   - markInAppNotificationRead:
   - markAllInAppNotificationsRead:
+  - watchInAppNotifications:
 order:
   - listMyOrders:
   - getOrder:
@@ -86,6 +100,7 @@ product:
   - getProduct:
   - getShopProfile:
   - listApprovedShops:
+  - getMarketplaceHighlights:
   - listProducts:
   - getModel3dAsset:
 refund:
@@ -117,6 +132,9 @@ vendor:
   - updateProductThumbnail:
   - uploadProductImage:
   - regenerateProductModel3d:
+  - deleteProduct:
+  - restoreProduct:
+  - archiveProduct:
   - listShopOrders:
   - getShopOrder:
   - acceptShopOrder:
@@ -127,6 +145,10 @@ vendor:
   - listNotifications:
   - markNotificationRead:
   - markAllNotificationsRead:
+  - listPendingRefundRequests:
+  - approveRefundRequest:
+  - rejectRefundRequest:
+  - listShopReviews:
 wishlist:
   - listMyWishlist:
   - addToWishlist:

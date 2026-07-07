@@ -17,11 +17,11 @@ abstract final class ArFurnitureScale {
 
   /// Studio neutral lighting — aligned with model-viewer `environmentImage: neutral`.
   /// iOS applies ×2.2 internally on [ARSessionManager.setLightIntensityMultiplier].
-  static const arLightIntensityMultiplier = 1.0;
+  static const arLightIntensityMultiplier = 0.55;
 
   /// Android Filament rig — slightly below ModelViewer neutral to account for
   /// live camera fill light on the composited scene.
-  static const androidArLightIntensityMultiplier = 1.15;
+  static const androidArLightIntensityMultiplier = 0.9;
 
   /// Tripo reference bounding size in meters.
   static const _tripoReferenceMaxDimensionM = 1.0;

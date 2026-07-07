@@ -4,9 +4,10 @@ import 'package:placeify_flutter/features/home/data/mock_product_repository.dart
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radii.dart';
 import '../../../../core/services/haptic_service.dart';
-import '../../../../core/utils/formatters.dart';
 import '../../domain/models/vendor_product.dart';
 import 'vendor_list_thumbnail.dart';
+import 'vendor_product_price_line.dart';
+import 'vendor_product_sale_badge.dart';
 
 class VendorProductGridTile extends StatelessWidget {
   const VendorProductGridTile({
@@ -83,6 +84,12 @@ class VendorProductGridTile extends StatelessWidget {
                         onToggle: onToggleSelected,
                       ),
                     ),
+                  if (product.isOnSale)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: VendorProductSaleBadge(product: product),
+                    ),
                 ],
               ),
             ),
@@ -112,13 +119,10 @@ class VendorProductGridTile extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    Formatters.currencyFull(product.price),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
+                  VendorProductPriceLine(
+                    product: product,
+                    saleFontSize: 12,
+                    listFontSize: 10,
                   ),
                   const SizedBox(height: 4),
                   Text(

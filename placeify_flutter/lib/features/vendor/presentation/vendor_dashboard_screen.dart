@@ -19,8 +19,10 @@ import 'package:placeify_flutter/features/vendor/presentation/widgets/metric_car
 import 'package:placeify_flutter/features/vendor/presentation/widgets/revenue_card.dart';
 import 'package:placeify_flutter/features/vendor/presentation/widgets/top_products_chart.dart';
 import 'package:placeify_flutter/features/vendor/presentation/widgets/upload_product_button.dart';
+import 'package:placeify_flutter/features/vendor/presentation/widgets/vendor_dashboard_3d_reminders.dart';
 import 'package:placeify_flutter/features/vendor/presentation/widgets/vendor_onboarding_checklist.dart';
 import 'package:placeify_flutter/features/vendor/presentation/widgets/vendor_order_row.dart';
+import 'package:placeify_flutter/features/vendor/presentation/widgets/vendor_pending_refunds_section.dart';
 import 'package:placeify_flutter/features/vendor/presentation/widgets/vendor_reviews_section.dart';
 
 class VendorDashboardScreen extends ConsumerStatefulWidget {
@@ -63,13 +65,6 @@ class _VendorDashboardScreenState extends ConsumerState<VendorDashboardScreen> {
     return businessName.split(' ').first;
   }
 
-  String _formatViewCount(int count) {
-    if (count >= 1000) {
-      return '${(count / 1000).toStringAsFixed(1)}k';
-    }
-    return count.toString();
-  }
-
   List<VendorMetric> _metricsFor(VendorDashboardData data) {
     final stats = data.stats;
     return [
@@ -81,10 +76,9 @@ class _VendorDashboardScreenState extends ConsumerState<VendorDashboardScreen> {
         iconPath: 'assets/icons/ic_trending_up.svg',
       ),
       VendorMetric(
-        label: 'Views',
-        value: _formatViewCount(stats.viewCount),
-        trendLabel:
-            '${(stats.conversionRate * 100).toStringAsFixed(1)}% conversion',
+        label: 'Products',
+        value: stats.productCount.toString(),
+        trendLabel: stats.periodLabel,
         trendColor: AppColors.sage,
         iconPath: 'assets/icons/ic_check_circle.svg',
       ),
@@ -236,12 +230,14 @@ class _DashboardBody extends StatelessWidget {
           const SizedBox(height: 12),
           const UploadProductButton(),
           const SizedBox(height: 20),
+          const VendorDashboard3dReminders(),
+          VendorPendingRefundsSection(refunds: data.pendingRefunds),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Recent Orders', style: AppTypography.sectionTitle),
               GestureDetector(
-                onTap: () => context.go(VendorRoutes.orders),
+                onTap: () => context.go(VendorRoutes.ordersAll),
                 child: const Text('See all', style: AppTypography.seeAll),
               ),
             ],
@@ -258,7 +254,12 @@ class _DashboardBody extends StatelessWidget {
               ),
             )
           else
-            ...data.recentOrders.map((order) => VendorOrderRow(order: order)),
+            ...data.recentOrders.map(
+              (order) => VendorOrderRow(
+                order: order,
+                style: VendorOrderRowStyle.recentSummary,
+              ),
+            ),
           const SizedBox(height: 20),
           const VendorReviewsSection(),
           const SizedBox(height: 20),
