@@ -9,11 +9,13 @@ import 'package:placeify_flutter/core/constants/app_typography.dart';
 import 'package:placeify_flutter/core/services/haptic_service.dart';
 import 'package:placeify_flutter/core/utils/formatters.dart';
 import 'package:placeify_flutter/core/widgets/bottom_nav/bottom_nav_tokens.dart';
+import 'package:placeify_flutter/core/widgets/placeify_bottom_sheet.dart';
 import 'package:placeify_flutter/core/widgets/shimmer_loader.dart';
-import 'package:placeify_flutter/features/vendor/domain/constants/vendor_routes.dart';
+import 'package:placeify_flutter/core/widgets/toast_overlay.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/notification_type.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_notification.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_notifications_provider.dart';
+import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_orders_provider.dart';
 
 class VendorNotificationsScreen extends ConsumerStatefulWidget {
   const VendorNotificationsScreen({super.key});
@@ -27,6 +29,15 @@ class _VendorNotificationsScreenState
     extends ConsumerState<VendorNotificationsScreen> {
   Timer? _undoTimer;
   OverlayEntry? _undoEntry;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(ref.read(vendorOrdersProvider.notifier).refresh());
+    });
+  }
 
   @override
   void dispose() {
@@ -80,7 +91,8 @@ class _VendorNotificationsScreenState
     _undoTimer?.cancel();
     _undoEntry?.remove();
 
-    final overlay = Overlay.of(context);
+    final overlay = Overlay.maybeOf(context, rootOverlay: true);
+    if (overlay == null) return;
     late OverlayEntry entry;
 
     entry = OverlayEntry(
@@ -110,19 +122,89 @@ class _VendorNotificationsScreenState
     });
   }
 
-  void _onNotificationTap(VendorNotification notification) {
+  Future<void> _onNotificationTap(VendorNotification notification) async {
     HapticService.light();
-    ref.read(vendorNotificationsProvider.notifier).markRead(notification.id);
 
-    if (notification.type == NotificationType.order &&
-        notification.relatedId != null) {
-      context.push(VendorRoutes.orderDetail(notification.relatedId!));
+    final viewOrder = await _showNotificationDetail(notification);
+    if (!mounted) return;
+
+    if (!notification.isRead) {
+      ref.read(vendorNotificationsProvider.notifier).markRead(notification.id);
     }
+
+    if (viewOrder == true && notification.relatedId != null) {
+      if (!_canOpenVendorOrder(notification.relatedId)) {
+        PlaceifyToast.show(context, 'That order is no longer available.');
+        return;
+      }
+      try {
+        openVendorOrderFromNotification(context, notification.relatedId!);
+      } catch (_) {
+        if (!mounted) return;
+        PlaceifyToast.show(
+          context,
+          'Could not open that order. Check it from the Orders tab.',
+        );
+      }
+    }
+  }
+
+  bool _canOpenVendorOrder(String? relatedId) {
+    if (relatedId == null || relatedId.isEmpty) return false;
+    final ordersAsync = ref.read(vendorOrdersProvider);
+    return ordersAsync.maybeWhen(
+      data: (orders) => orders.any((order) => order.id == relatedId),
+      orElse: () => false,
+    );
+  }
+
+  Future<bool?> _showNotificationDetail(VendorNotification notification) {
+    final canViewOrder = _canOpenVendorOrder(notification.relatedId);
+
+    return PlaceifyBottomSheet.show<bool>(
+      context,
+      builder: (sheetContext) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            PlaceifyBottomSheetHeader(title: notification.title),
+            const SizedBox(height: 8),
+            Text(
+              notification.body,
+              style: AppTypography.metricLabel.copyWith(
+                color: AppColors.textSecondary,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              Formatters.shortDate(notification.createdAt),
+              style: AppTypography.metricLabel.copyWith(
+                color: AppColors.textMuted,
+                fontSize: 12,
+              ),
+            ),
+            if (canViewOrder) ...[
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: () => Navigator.pop(sheetContext, true),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.vendorForest,
+                ),
+                child: const Text('View order'),
+              ),
+            ],
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final notificationsAsync = ref.watch(vendorNotificationsProvider);
+    ref.watch(vendorOrdersProvider);
 
     return Scaffold(
       backgroundColor: AppColors.cream,
@@ -493,8 +575,9 @@ class _NotificationTile extends StatelessWidget {
                   ],
                 ),
               ),
-              if (notification.type == NotificationType.order &&
-                  notification.relatedId != null)
+              if (notification.relatedId != null &&
+                  (notification.type == NotificationType.order ||
+                      notification.type == NotificationType.payment))
                 const Padding(
                   padding: EdgeInsets.only(left: 4, top: 2),
                   child: Icon(
@@ -592,7 +675,9 @@ class _NotificationsEmptyState extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    hasFilters ? 'No matching notifications' : 'All caught up',
+                    hasFilters
+                        ? 'No matching notifications'
+                        : 'No notifications yet',
                     style: AppTypography.sectionTitle,
                     textAlign: TextAlign.center,
                   ),
