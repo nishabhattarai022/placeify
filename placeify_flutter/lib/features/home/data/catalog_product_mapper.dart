@@ -33,13 +33,12 @@ abstract final class CatalogProductMapper {
 
     final categoryId = product.category?.name ?? 'chairs';
     final shopName = product.vendor?.shopName ?? 'Placeify vendor';
-    final thumbnail = product.thumbnailUrl;
-    final imageUrl = thumbnail == null || thumbnail.isEmpty
-        ? 'assets/icons/ic_chair.svg'
-        : await resolveMediaUrl(thumbnail);
+    final imageUrl = await _resolvePrimaryImage(product);
 
     final dimensions = _dimensionsFromApi(product);
     final uiId = ProductIdCodec.fromDatabaseId(id);
+    final effectivePrice = effectiveUnitPrice(product);
+    final originalPrice = hasActiveOffer(product) ? product.price : null;
     final model3dUrl = product.model3dUrl?.trim();
     final has3dPreview = model3dUrl != null && model3dUrl.isNotEmpty;
     if (has3dPreview) {
@@ -52,7 +51,8 @@ abstract final class CatalogProductMapper {
       name: product.name,
       brand: shopName,
       sku: 'PF${id.toString().padLeft(5, '0')}',
-      price: product.price,
+      price: effectivePrice,
+      originalPrice: originalPrice,
       imageUrl: imageUrl.isEmpty
           ? 'assets/images/categories/chair.jpg'
           : imageUrl,
@@ -61,6 +61,7 @@ abstract final class CatalogProductMapper {
       categoryId: categoryId,
       dimensions: dimensions,
       vendorId: product.vendorId.toString(),
+      offerLabel: hasActiveOffer(product) ? _offerLabelFromApi(product) : '',
     );
   }
 
@@ -75,5 +76,45 @@ abstract final class CatalogProductMapper {
       );
     }
     return _defaultDimensions;
+  }
+
+  static double effectiveUnitPrice(api.Product product) {
+    final listPrice = product.price;
+    final discountPrice = product.discountPrice;
+    if (discountPrice != null &&
+        discountPrice > 0 &&
+        discountPrice < listPrice) {
+      return discountPrice;
+    }
+    final discountPercentage = product.discountPercentage;
+    if (discountPercentage != null &&
+        discountPercentage > 0 &&
+        discountPercentage < 100) {
+      return listPrice * (1 - discountPercentage / 100);
+    }
+    return listPrice;
+  }
+
+  static bool hasActiveOffer(api.Product product) {
+    return product.isOffer || effectiveUnitPrice(product) < product.price;
+  }
+
+  static String _offerLabelFromApi(api.Product product) {
+    return product.warranty?.trim() ?? '';
+  }
+
+  static Future<String> _resolvePrimaryImage(api.Product product) async {
+    final thumbnail = product.thumbnailUrl?.trim();
+    if (thumbnail != null && thumbnail.isNotEmpty) {
+      return resolveMediaUrl(thumbnail);
+    }
+
+    for (final viewUrl in product.viewImageUrls ?? const <String>[]) {
+      final trimmed = viewUrl.trim();
+      if (trimmed.isEmpty) continue;
+      return resolveMediaUrl(trimmed);
+    }
+
+    return '';
   }
 }

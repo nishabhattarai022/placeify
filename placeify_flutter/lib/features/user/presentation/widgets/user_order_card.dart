@@ -1,6 +1,8 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:placeify_client/placeify_client.dart';
 
+import '../../../../core/config/resolve_media_url.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../profile/presentation/widgets/orders/order_progress_tracker.dart';
 import '../../data/user_order_mappers.dart';
@@ -41,12 +43,8 @@ class UserOrderCard extends StatelessWidget {
                   color: AppColors.cream,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                alignment: Alignment.center,
-                child: const Icon(
-                  Icons.inventory_2_outlined,
-                  size: 28,
-                  color: AppColors.bark,
-                ),
+                clipBehavior: Clip.antiAlias,
+                child: _OrderThumbnailImage(url: order.primaryThumbnailUrl),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -69,6 +67,17 @@ class UserOrderCard extends StatelessWidget {
                         color: AppColors.textMuted,
                       ),
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      UserOrderMappers.paymentStatusLabel(
+                        order.orderPaymentStatus,
+                      ),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.sage,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -79,7 +88,10 @@ class UserOrderCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  UserOrderMappers.statusLabel(order.status),
+                  UserOrderMappers.statusLabel(
+                    order.status,
+                    latestStage: order.latestDeliveryStage,
+                  ),
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -129,5 +141,63 @@ class UserOrderCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _OrderThumbnailImage extends StatelessWidget {
+  const _OrderThumbnailImage({this.url});
+
+  final String? url;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String>(
+      future: _resolveUrl(),
+      builder: (context, snapshot) {
+        final resolved = snapshot.data ?? '';
+        if (resolved.isEmpty) {
+          return const Center(
+            child: Icon(
+              Icons.inventory_2_outlined,
+              size: 28,
+              color: AppColors.bark,
+            ),
+          );
+        }
+
+        if (resolved.startsWith('assets/')) {
+          return Image.asset(
+            resolved,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const Center(
+              child: Icon(
+                Icons.inventory_2_outlined,
+                size: 28,
+                color: AppColors.bark,
+              ),
+            ),
+          );
+        }
+
+        return CachedNetworkImage(
+          imageUrl: resolved,
+          fit: BoxFit.cover,
+          errorWidget: (_, __, ___) => const Center(
+            child: Icon(
+              Icons.inventory_2_outlined,
+              size: 28,
+              color: AppColors.bark,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<String> _resolveUrl() async {
+    final raw = url?.trim();
+    if (raw == null || raw.isEmpty) return '';
+    if (raw.startsWith('http') || raw.startsWith('assets/')) return raw;
+    return resolveMediaUrl(raw);
   }
 }

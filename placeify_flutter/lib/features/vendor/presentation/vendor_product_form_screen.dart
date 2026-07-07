@@ -204,19 +204,37 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
       return;
     }
 
-    final success = await ref.read(vendorProductFormProvider.notifier).submit();
+    final saved = await ref.read(vendorProductFormProvider.notifier).submit();
     if (!mounted) return;
 
-    if (success) {
+    if (saved != null) {
       HapticService.medium();
       PlaceifyToast.show(context, VendorStrings.productSaved);
-      context.pop();
+
+      if (!saved.hasArView) {
+        await Vendor3dModelAccess.promptAfterProductSaved(
+          context: context,
+          ref: ref,
+          product: saved,
+        );
+      }
+
+      if (!mounted) return;
+      _popAfterProductSave();
       return;
     }
 
     final error = ref.read(vendorProductFormProvider).submitError;
     if (error != null) {
       PlaceifyToast.show(context, error);
+    }
+  }
+
+  void _popAfterProductSave() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/vendor/products');
     }
   }
 
@@ -233,15 +251,16 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
       return;
     }
 
-    final success = await ref
+    final saved = await ref
         .read(vendorProductFormProvider.notifier)
         .submit(resetOnSuccess: false);
     if (!mounted) return;
 
-    if (success) {
+    if (saved != null) {
       HapticService.medium();
       PlaceifyToast.show(context, VendorStrings.changesSaved);
       setState(() => _isDirty = false);
+      _popAfterProductSave();
       return;
     }
 
@@ -330,42 +349,6 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     );
 
     return shouldDiscard == true;
-  }
-
-  Future<void> _onBuild3dModelTapped(String productId, bool hasModel) async {
-    HapticService.light();
-    await Vendor3dModelAccess.requestAccess(
-      context: context,
-      ref: ref,
-      productId: productId,
-      hasModel: hasModel,
-      onAllowed: () => Vendor3dModelAccess.openBuilder(context, ref, productId),
-    );
-  }
-
-  Future<void> _onArViewToggle(bool value, bool hasModel, String? productId) async {
-    if (!value) {
-      ref
-          .read(vendorProductFormProvider.notifier)
-          .update((state) => state.copyWith(hasArView: false));
-      _markDirty();
-      return;
-    }
-
-    if (productId == null) return;
-
-    await Vendor3dModelAccess.requestAccess(
-      context: context,
-      ref: ref,
-      productId: productId,
-      hasModel: hasModel,
-      onAllowed: () {
-        ref
-            .read(vendorProductFormProvider.notifier)
-            .update((state) => state.copyWith(hasArView: true));
-        _markDirty();
-      },
-    );
   }
 
   @override
@@ -905,26 +888,13 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                     },
                   ),
                 ),
-                if (isEditing && form.editingProductId != null && _isHydrated) ...[
-                  const SizedBox(height: 20),
-                  _ProductBuild3dSection(
-                    hasModel: form.hasArView,
-                    onTap: () => _onBuild3dModelTapped(
-                      form.editingProductId!,
-                      form.hasArView,
-                    ),
-                  ),
-                ],
                 _FormSwitchRow(
                   label: 'AR View Available',
                   subtitle: 'Allow customers to preview this product in AR',
                   value: form.hasArView,
                   onChanged: (value) {
-                    _onArViewToggle(
-                      value,
-                      form.hasArView,
-                      form.editingProductId,
-                    );
+                    notifier.update((state) => state.copyWith(hasArView: value));
+                    _markDirty();
                   },
                 ),
                 _FormSwitchRow(
@@ -1197,94 +1167,6 @@ class _UnitButton extends StatelessWidget {
             fontSize: 13,
             fontWeight: FontWeight.w600,
             color: selected ? Colors.white : AppColors.textSecondary,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ProductBuild3dSection extends StatelessWidget {
-  const _ProductBuild3dSection({
-    required this.hasModel,
-    required this.onTap,
-  });
-
-  final bool hasModel;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final subtitle = hasModel
-        ? '3D model is ready. Open the builder to preview or regenerate.'
-        : 'Build a 3D model so customers can preview this product in AR.';
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Material(
-        color: AppColors.warmWhite,
-        borderRadius: AppRadii.md,
-        child: InkWell(
-          onTap: () {
-            HapticService.light();
-            onTap();
-          },
-          borderRadius: AppRadii.md,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            decoration: BoxDecoration(
-              borderRadius: AppRadii.md,
-              border: Border.all(color: AppColors.creamDark, width: 1.5),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.vendorForestBg,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    hasModel
-                        ? Icons.view_in_ar_rounded
-                        : Icons.view_in_ar_outlined,
-                    color: AppColors.vendorForest,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'BUILD 3D MODEL',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.espresso,
-                          letterSpacing: 0.07 * 12,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        style: AppTypography.bodyLight.copyWith(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                          height: 1.35,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: AppColors.textMuted.withValues(alpha: 0.8),
-                ),
-              ],
-            ),
           ),
         ),
       ),

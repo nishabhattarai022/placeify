@@ -656,7 +656,10 @@ List<RouteBase> get _appRoutes => [
                   name: 'vendorOrders',
                   pageBuilder: (context, state) => _vendorTabPage(
                     state: state,
-                    child: const VendorOrdersScreen(),
+                    child: VendorOrdersScreen(
+                      showAllOrdersOnly:
+                          state.uri.queryParameters['view'] == 'all',
+                    ),
                   ),
                   routes: [
                     GoRoute(

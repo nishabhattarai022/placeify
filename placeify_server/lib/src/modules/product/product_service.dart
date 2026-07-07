@@ -59,6 +59,11 @@ class ProductService {
     return _vendorService.listApprovedShops(session, query: query);
   }
 
+  Future<MarketplaceHighlights> getMarketplaceHighlights(Session session) async {
+    await _ensureCatalog(session);
+    return _repository.marketplaceHighlights(session);
+  }
+
   /// Serves GLB bytes over the API port so phones can load 3D/AR without 8082.
   Future<ByteData?> getModel3dAsset(Session session, int productId) async {
     await _ensureCatalog(session);

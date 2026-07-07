@@ -6,6 +6,11 @@ import 'app_user.dart';
 extension AppUserX on AppUser {
   bool get isVendorMode => role == UserRole.vendor;
 
+  bool get isAdmin => role == UserRole.admin;
+
+  /// Default route after sign-in based on platform role.
+  String get postLoginDestination => isAdmin ? '/admin' : '/home';
+
   bool get isVendorAccount =>
       isVendorMode || vendorStatus != VendorStatus.none;
 

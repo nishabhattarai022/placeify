@@ -73,6 +73,7 @@ class ServerpodVendorProfileRepository {
         periodLabel: 'All time',
         averageRating: dashboard.shop.rating,
         responseRate: 0,
+        pendingRefundCount: dashboard.pendingRefundCount,
       );
     } catch (error) {
       throw VendorOrderActionException(_mapError(error));

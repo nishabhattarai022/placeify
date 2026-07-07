@@ -15,35 +15,46 @@ class HomeRecommendSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final products = ref.watch(recommendedProductsProvider);
+    final productsAsync = ref.watch(recommendedProductsProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const HomeRecommendHeader(),
         const SizedBox(height: HomeScreenTokens.sectionSpacing),
-        AnimatedSwitcher(
-          duration: _switchDuration,
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeInCubic,
-          transitionBuilder: (child, animation) {
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0, 0.08),
-                  end: Offset.zero,
-                ).animate(animation),
-                child: child,
-              ),
-            );
-          },
-          child: products.isEmpty
-              ? const _EmptyRecommendations(key: ValueKey('empty_recommendations'))
-              : _RecommendProductRow(
-                  key: const ValueKey('recommendations'),
-                  products: products,
+        productsAsync.when(
+          loading: () => const SizedBox(
+            height: 220,
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          ),
+          error: (_, __) => const _EmptyRecommendations(
+            key: ValueKey('error_recommendations'),
+          ),
+          data: (products) => AnimatedSwitcher(
+            duration: _switchDuration,
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (child, animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.08),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
                 ),
+              );
+            },
+            child: products.isEmpty
+                ? const _EmptyRecommendations(
+                    key: ValueKey('empty_recommendations'),
+                  )
+                : _RecommendProductRow(
+                    key: const ValueKey('recommendations'),
+                    products: products,
+                  ),
+          ),
         ),
       ],
     );

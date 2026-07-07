@@ -14,8 +14,13 @@ _VendorApplication _$VendorApplicationFromJson(Map<String, dynamic> json) =>
       contactEmail: json['contactEmail'] as String,
       submittedAt: DateTime.parse(json['submittedAt'] as String),
       registration: VendorRegistration.fromJson(
-          json['registration'] as Map<String, dynamic>),
+        json['registration'] as Map<String, dynamic>,
+      ),
       status: $enumDecode(_$VendorStatusEnumMap, json['status']),
+      moderationNote: json['moderationNote'] as String?,
+      moderatedAt: json['moderatedAt'] == null
+          ? null
+          : DateTime.parse(json['moderatedAt'] as String),
     );
 
 Map<String, dynamic> _$VendorApplicationToJson(_VendorApplication instance) =>
@@ -27,6 +32,8 @@ Map<String, dynamic> _$VendorApplicationToJson(_VendorApplication instance) =>
       'submittedAt': instance.submittedAt.toIso8601String(),
       'registration': instance.registration,
       'status': _$VendorStatusEnumMap[instance.status]!,
+      'moderationNote': instance.moderationNote,
+      'moderatedAt': instance.moderatedAt?.toIso8601String(),
     };
 
 const _$VendorStatusEnumMap = {

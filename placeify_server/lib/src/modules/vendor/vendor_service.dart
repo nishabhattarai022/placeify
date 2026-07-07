@@ -246,6 +246,18 @@ class VendorService {
     return _repository.regenerateProductModel3d(session, productId);
   }
 
+  Future<Product> deleteProduct(Session session, int productId) {
+    return _repository.deleteProduct(session, productId);
+  }
+
+  Future<Product> restoreProduct(Session session, int productId) {
+    return _repository.restoreProduct(session, productId);
+  }
+
+  Future<Product> archiveProduct(Session session, int productId) {
+    return _repository.archiveProduct(session, productId);
+  }
+
   Future<List<VendorShopOrder>> listShopOrders(
     Session session, {
     int limit = 50,
@@ -320,5 +332,38 @@ class VendorService {
 
   Future<void> markAllNotificationsRead(Session session) {
     return _repository.markAllNotificationsRead(session);
+  }
+
+  Future<List<RefundRequestSummary>> listPendingRefundRequests(
+    Session session,
+  ) {
+    return _repository.listPendingRefundRequests(session);
+  }
+
+  Future<RefundRequestSummary> approveRefundRequest(
+    Session session,
+    int refundId,
+  ) {
+    return _repository.approveRefundRequest(session, refundId);
+  }
+
+  Future<RefundRequestSummary> rejectRefundRequest(
+    Session session,
+    int refundId, {
+    String? reason,
+  }) {
+    return _repository.rejectRefundRequest(session, refundId, reason: reason);
+  }
+
+  Future<List<VendorReviewSummary>> listShopReviews(
+    Session session, {
+    int limit = 20,
+    int offset = 0,
+  }) {
+    return _repository.listShopReviews(
+      session,
+      limit: limit,
+      offset: offset,
+    );
   }
 }

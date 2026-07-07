@@ -5,6 +5,7 @@ import '../../constants/demo_credentials.dart';
 import '../../data/serverpod_auth_repository.dart';
 import '../../domain/models/app_user.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../../../core/config/placeify_server_client.dart';
 
 part 'auth_provider.g.dart';
 
@@ -37,9 +38,10 @@ class CurrentUser extends _$CurrentUser {
       );
     });
     if (state.hasError) throw _unwrapError(state.error!);
+    await ensurePlaceifyRealtime();
   }
 
-  Future<void> signIn({
+  Future<AppUser> signIn({
     required String email,
     required String password,
   }) async {
@@ -49,9 +51,11 @@ class CurrentUser extends _$CurrentUser {
       return repo.signIn(email: email, password: password);
     });
     if (state.hasError) throw _unwrapError(state.error!);
+    await ensurePlaceifyRealtime();
+    return _requireSignedInUser();
   }
 
-  Future<void> signInWithDemoCredentials() async {
+  Future<AppUser> signInWithDemoCredentials() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final repo = await ref.read(authRepositoryProvider.future);
@@ -64,9 +68,11 @@ class CurrentUser extends _$CurrentUser {
       );
     });
     if (state.hasError) throw _unwrapError(state.error!);
+    await ensurePlaceifyRealtime();
+    return _requireSignedInUser();
   }
 
-  Future<void> signInWithDemoAdminCredentials() async {
+  Future<AppUser> signInWithDemoAdminCredentials() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final repo = await ref.read(authRepositoryProvider.future);
@@ -79,11 +85,22 @@ class CurrentUser extends _$CurrentUser {
       );
     });
     if (state.hasError) throw _unwrapError(state.error!);
+    await ensurePlaceifyRealtime();
+    return _requireSignedInUser();
+  }
+
+  AppUser _requireSignedInUser() {
+    final user = state.requireValue;
+    if (user == null) {
+      throw AuthException('Sign in failed. Try again.');
+    }
+    return user;
   }
 
   Future<void> signOut() async {
     final repo = await ref.read(authRepositoryProvider.future);
     await repo.signOut();
+    await resetPlaceifyRealtime();
     state = const AsyncData(null);
   }
 

@@ -184,9 +184,14 @@ abstract final class OrderNotificationService {
     required UuidValue vendorId,
   }) async {
     final orderLabel = _orderLabel(order);
-    final body = status == OrderPaymentStatus.paymentConfirmed
-        ? 'Payment for order #$orderLabel has been confirmed.'
-        : 'Payment for order #$orderLabel has been received.';
+    final body = switch (status) {
+      OrderPaymentStatus.unpaid =>
+        'Payment for order #$orderLabel is pending.',
+      OrderPaymentStatus.paymentReceived =>
+        'Payment for order #$orderLabel has been received.',
+      OrderPaymentStatus.paymentConfirmed =>
+        'Payment for order #$orderLabel has been confirmed.',
+    };
 
     await _notifyCustomer(
       session,
@@ -196,22 +201,216 @@ abstract final class OrderNotificationService {
       type: InAppNotificationType.paymentUpdate,
       event: 'payment_${status.name}',
     );
+
+    // Vendor initiated the update; customer notification is sufficient.
+    // TODO(production): optional FCM push to customer devices.
+  }
+
+  static Future<void> notifyCustomerPaymentAllocation(
+    Session session, {
+    required Order order,
+    required PaymentTransactionStatus allocationStatus,
+    required String note,
+  }) async {
+    final orderLabel = _orderLabel(order);
+    final body = switch (allocationStatus) {
+      PaymentTransactionStatus.failed =>
+        'Payment for order #$orderLabel could not be processed.',
+      PaymentTransactionStatus.refunded =>
+        'Payment for order #$orderLabel has been refunded.',
+      PaymentTransactionStatus.pending =>
+        'Payment for order #$orderLabel is pending.',
+      PaymentTransactionStatus.succeeded =>
+        note.isNotEmpty ? note : 'Payment for order #$orderLabel was updated.',
+    };
+
+    await _notifyCustomer(
+      session,
+      order: order,
+      title: 'Payment update',
+      body: body,
+      type: InAppNotificationType.paymentUpdate,
+      event: 'payment_allocation_${allocationStatus.name}',
+    );
+  }
+
+  static Future<void> notifyCustomerRefundSubmitted(
+    Session session, {
+    required RefundRequest refund,
+  }) async {
+    if (!await _allowsRefundStatus(session, refund.userId)) return;
+
+    final orderLabel = refund.orderId.toString().padLeft(5, '0');
+    await _notifyCustomerByUserId(
+      session,
+      userId: refund.userId,
+      title: 'Refund request submitted',
+      body:
+          'We received your refund request for order #$orderLabel. '
+          'The vendor will review it shortly.',
+      type: InAppNotificationType.refundUpdate,
+      referenceId: refund.id,
+      event: 'refund_submitted',
+    );
+  }
+
+  static Future<void> notifyConsumersNewProduct(
+    Session session, {
+    required Product product,
+    required String vendorName,
+  }) async {
+    final title = 'New product added';
+    final body = '$vendorName added ${product.name}.';
+    final consumers = await User.db.find(
+      session,
+      where: (row) => row.role.equals(UserRole.consumer),
+      limit: 500,
+    );
+
+    for (final consumer in consumers) {
+      final userId = consumer.id;
+      if (userId == null) continue;
+      if (!await _allowsPromotions(session, userId)) continue;
+
+      await _notifications.create(
+        session,
+        userId: userId,
+        title: title,
+        message: body,
+        type: InAppNotificationType.productUpdate,
+        referenceId: product.id,
+      );
+    }
+
+    session.log(
+      'MarketplaceNotification event=new_product productId=${product.id} '
+      'recipients=${consumers.length}',
+      level: LogLevel.info,
+    );
+  }
+
+  static Future<void> notifyConsumersSpecialOffer(
+    Session session, {
+    required Product product,
+    required String vendorName,
+  }) async {
+    final title = 'Special Offer available';
+    final body = '${product.name} from $vendorName is now on sale.';
+    final consumers = await User.db.find(
+      session,
+      where: (row) => row.role.equals(UserRole.consumer),
+      limit: 500,
+    );
+
+    for (final consumer in consumers) {
+      final userId = consumer.id;
+      if (userId == null) continue;
+      if (!await _allowsPromotions(session, userId)) continue;
+
+      await _notifications.create(
+        session,
+        userId: userId,
+        title: title,
+        message: body,
+        type: InAppNotificationType.promotionUpdate,
+        referenceId: product.id,
+      );
+    }
+
+    session.log(
+      'MarketplaceNotification event=special_offer productId=${product.id} '
+      'recipients=${consumers.length}',
+      level: LogLevel.info,
+    );
+  }
+
+  static Future<void> notifyVendorRefundRequest(
+    Session session, {
+    required RefundRequest refund,
+    required UuidValue vendorId,
+    required String customerName,
+  }) async {
+    final vendorUserId = await _notifications.vendorUserId(session, vendorId);
+    if (vendorUserId == null) return;
+
+    final orderLabel = refund.orderId.toString().padLeft(5, '0');
+    await _notifications.create(
+      session,
+      userId: vendorUserId,
+      title: 'Refund request',
+      message:
+          '$customerName requested a refund for order #$orderLabel.',
+      type: InAppNotificationType.refundUpdate,
+      referenceId: refund.id,
+    );
+
+    session.log(
+      'VendorNotification event=refund_request vendorId=$vendorId '
+      'refundId=${refund.id}',
+      level: LogLevel.info,
+    );
   }
 
   static Future<void> notifyRefundDecision(
     Session session, {
     required RefundRequest refund,
     required bool approved,
+    String? reason,
   }) async {
+    final trimmedReason = reason?.trim();
+    final body = approved
+        ? 'Your refund request for order '
+            '#${refund.orderId.toString().padLeft(5, '0')} was approved. '
+            'Payment has been marked as refunded.'
+        : trimmedReason != null && trimmedReason.isNotEmpty
+            ? 'Your refund request was rejected. $trimmedReason'
+            : 'Your refund request was rejected.';
+
+    if (!await _allowsRefundStatus(session, refund.userId)) return;
+
     await _notifyCustomerByUserId(
       session,
       userId: refund.userId,
       title: approved ? 'Refund approved' : 'Refund update',
-      body: approved
-          ? 'Your refund request was approved.'
-          : 'Your refund request was reviewed.',
+      body: body,
+      type: InAppNotificationType.refundUpdate,
+      referenceId: refund.id,
       event: approved ? 'refund_approved' : 'refund_rejected',
     );
+  }
+
+  static Future<bool> _allowsPromotions(
+    Session session,
+    UuidValue userId,
+  ) async {
+    final prefs = await NotificationPreference.db.findFirstRow(
+      session,
+      where: (row) => row.userId.equals(userId),
+    );
+    return prefs?.promotions ?? false;
+  }
+
+  static Future<bool> _allowsOrderUpdates(
+    Session session,
+    UuidValue? userId,
+  ) async {
+    if (userId == null) return false;
+    final prefs = await NotificationPreference.db.findFirstRow(
+      session,
+      where: (row) => row.userId.equals(userId),
+    );
+    return prefs?.orderUpdates ?? true;
+  }
+
+  static Future<bool> _allowsRefundStatus(
+    Session session,
+    UuidValue userId,
+  ) async {
+    final prefs = await NotificationPreference.db.findFirstRow(
+      session,
+      where: (row) => row.userId.equals(userId),
+    );
+    return prefs?.refundStatus ?? true;
   }
 
   static Future<void> _notifyCustomer(
@@ -244,6 +443,8 @@ abstract final class OrderNotificationService {
   }) async {
     if (userId == null) return;
 
+    if (type != null && !await _shouldNotify(session, userId, type)) return;
+
     if (type != null) {
       await _notifications.create(
         session,
@@ -259,6 +460,26 @@ abstract final class OrderNotificationService {
       'OrderNotification event=$event userId=$userId title=$title body=$body',
       level: LogLevel.info,
     );
+  }
+
+  static Future<bool> _shouldNotify(
+    Session session,
+    UuidValue userId,
+    InAppNotificationType type,
+  ) async {
+    return switch (type) {
+      InAppNotificationType.orderPlaced ||
+      InAppNotificationType.orderAccepted ||
+      InAppNotificationType.orderCancelled ||
+      InAppNotificationType.deliveryUpdate ||
+      InAppNotificationType.paymentUpdate =>
+        _allowsOrderUpdates(session, userId),
+      InAppNotificationType.refundUpdate =>
+        _allowsRefundStatus(session, userId),
+      InAppNotificationType.productUpdate ||
+      InAppNotificationType.promotionUpdate =>
+        _allowsPromotions(session, userId),
+    };
   }
 
   static String _orderLabel(Order order) {

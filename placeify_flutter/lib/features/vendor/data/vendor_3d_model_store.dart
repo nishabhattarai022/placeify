@@ -192,9 +192,13 @@ abstract final class Vendor3dModelStore {
   }
 
   static int countNeedingModel(List<VendorProduct> products) {
+    return productsNeedingModel(products).length;
+  }
+
+  static List<VendorProduct> productsNeedingModel(List<VendorProduct> products) {
     return products
         .where((product) => !statusFor(product).isReady)
-        .length;
+        .toList(growable: false);
   }
 
   static int countReady(List<VendorProduct> products) {

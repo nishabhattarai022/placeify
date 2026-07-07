@@ -7,3 +7,5 @@ fields:
   cartItemCount: int
   arSessionCount: int
   refundCount: int
+  ### Live marketplace catalog slices visible to every consumer.
+  marketplace: MarketplaceHighlights

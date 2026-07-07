@@ -14,73 +14,47 @@ T _$identity<T>(T value) => value;
 
 /// @nodoc
 mixin _$VendorApplication {
-  String get vendorId;
-  String get userId;
-  String get businessName;
-  String get contactEmail;
-  DateTime get submittedAt;
-  VendorRegistration get registration;
-  VendorStatus get status;
 
-  /// Create a copy of VendorApplication
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @pragma('vm:prefer-inline')
-  $VendorApplicationCopyWith<VendorApplication> get copyWith =>
-      _$VendorApplicationCopyWithImpl<VendorApplication>(
-          this as VendorApplication, _$identity);
+ String get vendorId; String get userId; String get businessName; String get contactEmail; DateTime get submittedAt; VendorRegistration get registration; VendorStatus get status; String? get moderationNote; DateTime? get moderatedAt;
+/// Create a copy of VendorApplication
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$VendorApplicationCopyWith<VendorApplication> get copyWith => _$VendorApplicationCopyWithImpl<VendorApplication>(this as VendorApplication, _$identity);
 
   /// Serializes this VendorApplication to a JSON map.
   Map<String, dynamic> toJson();
 
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is VendorApplication &&
-            (identical(other.vendorId, vendorId) ||
-                other.vendorId == vendorId) &&
-            (identical(other.userId, userId) || other.userId == userId) &&
-            (identical(other.businessName, businessName) ||
-                other.businessName == businessName) &&
-            (identical(other.contactEmail, contactEmail) ||
-                other.contactEmail == contactEmail) &&
-            (identical(other.submittedAt, submittedAt) ||
-                other.submittedAt == submittedAt) &&
-            (identical(other.registration, registration) ||
-                other.registration == registration) &&
-            (identical(other.status, status) || other.status == status));
-  }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(runtimeType, vendorId, userId, businessName,
-      contactEmail, submittedAt, registration, status);
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VendorApplication&&(identical(other.vendorId, vendorId) || other.vendorId == vendorId)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.businessName, businessName) || other.businessName == businessName)&&(identical(other.contactEmail, contactEmail) || other.contactEmail == contactEmail)&&(identical(other.submittedAt, submittedAt) || other.submittedAt == submittedAt)&&(identical(other.registration, registration) || other.registration == registration)&&(identical(other.status, status) || other.status == status)&&(identical(other.moderationNote, moderationNote) || other.moderationNote == moderationNote)&&(identical(other.moderatedAt, moderatedAt) || other.moderatedAt == moderatedAt));
+}
 
-  @override
-  String toString() {
-    return 'VendorApplication(vendorId: $vendorId, userId: $userId, businessName: $businessName, contactEmail: $contactEmail, submittedAt: $submittedAt, registration: $registration, status: $status)';
-  }
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,vendorId,userId,businessName,contactEmail,submittedAt,registration,status,moderationNote,moderatedAt);
+
+@override
+String toString() {
+  return 'VendorApplication(vendorId: $vendorId, userId: $userId, businessName: $businessName, contactEmail: $contactEmail, submittedAt: $submittedAt, registration: $registration, status: $status, moderationNote: $moderationNote, moderatedAt: $moderatedAt)';
+}
+
+
 }
 
 /// @nodoc
-abstract mixin class $VendorApplicationCopyWith<$Res> {
-  factory $VendorApplicationCopyWith(
-          VendorApplication value, $Res Function(VendorApplication) _then) =
-      _$VendorApplicationCopyWithImpl;
-  @useResult
-  $Res call(
-      {String vendorId,
-      String userId,
-      String businessName,
-      String contactEmail,
-      DateTime submittedAt,
-      VendorRegistration registration,
-      VendorStatus status});
+abstract mixin class $VendorApplicationCopyWith<$Res>  {
+  factory $VendorApplicationCopyWith(VendorApplication value, $Res Function(VendorApplication) _then) = _$VendorApplicationCopyWithImpl;
+@useResult
+$Res call({
+ String vendorId, String userId, String businessName, String contactEmail, DateTime submittedAt, VendorRegistration registration, VendorStatus status, String? moderationNote, DateTime? moderatedAt
+});
 
-  $VendorRegistrationCopyWith<$Res> get registration;
+
+$VendorRegistrationCopyWith<$Res> get registration;
+
 }
-
 /// @nodoc
 class _$VendorApplicationCopyWithImpl<$Res>
     implements $VendorApplicationCopyWith<$Res> {
@@ -89,359 +63,222 @@ class _$VendorApplicationCopyWithImpl<$Res>
   final VendorApplication _self;
   final $Res Function(VendorApplication) _then;
 
-  /// Create a copy of VendorApplication
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? vendorId = null,
-    Object? userId = null,
-    Object? businessName = null,
-    Object? contactEmail = null,
-    Object? submittedAt = null,
-    Object? registration = null,
-    Object? status = null,
-  }) {
-    return _then(_self.copyWith(
-      vendorId: null == vendorId
-          ? _self.vendorId
-          : vendorId // ignore: cast_nullable_to_non_nullable
-              as String,
-      userId: null == userId
-          ? _self.userId
-          : userId // ignore: cast_nullable_to_non_nullable
-              as String,
-      businessName: null == businessName
-          ? _self.businessName
-          : businessName // ignore: cast_nullable_to_non_nullable
-              as String,
-      contactEmail: null == contactEmail
-          ? _self.contactEmail
-          : contactEmail // ignore: cast_nullable_to_non_nullable
-              as String,
-      submittedAt: null == submittedAt
-          ? _self.submittedAt
-          : submittedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      registration: null == registration
-          ? _self.registration
-          : registration // ignore: cast_nullable_to_non_nullable
-              as VendorRegistration,
-      status: null == status
-          ? _self.status
-          : status // ignore: cast_nullable_to_non_nullable
-              as VendorStatus,
-    ));
-  }
-
-  /// Create a copy of VendorApplication
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $VendorRegistrationCopyWith<$Res> get registration {
-    return $VendorRegistrationCopyWith<$Res>(_self.registration, (value) {
-      return _then(_self.copyWith(registration: value));
-    });
-  }
+/// Create a copy of VendorApplication
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? vendorId = null,Object? userId = null,Object? businessName = null,Object? contactEmail = null,Object? submittedAt = null,Object? registration = null,Object? status = null,Object? moderationNote = freezed,Object? moderatedAt = freezed,}) {
+  return _then(_self.copyWith(
+vendorId: null == vendorId ? _self.vendorId : vendorId // ignore: cast_nullable_to_non_nullable
+as String,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
+as String,businessName: null == businessName ? _self.businessName : businessName // ignore: cast_nullable_to_non_nullable
+as String,contactEmail: null == contactEmail ? _self.contactEmail : contactEmail // ignore: cast_nullable_to_non_nullable
+as String,submittedAt: null == submittedAt ? _self.submittedAt : submittedAt // ignore: cast_nullable_to_non_nullable
+as DateTime,registration: null == registration ? _self.registration : registration // ignore: cast_nullable_to_non_nullable
+as VendorRegistration,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as VendorStatus,moderationNote: freezed == moderationNote ? _self.moderationNote : moderationNote // ignore: cast_nullable_to_non_nullable
+as String?,moderatedAt: freezed == moderatedAt ? _self.moderatedAt : moderatedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
+  ));
 }
+/// Create a copy of VendorApplication
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$VendorRegistrationCopyWith<$Res> get registration {
+  
+  return $VendorRegistrationCopyWith<$Res>(_self.registration, (value) {
+    return _then(_self.copyWith(registration: value));
+  });
+}
+}
+
 
 /// Adds pattern-matching-related methods to [VendorApplication].
 extension VendorApplicationPatterns on VendorApplication {
-  /// A variant of `map` that fallback to returning `orElse`.
-  ///
-  /// It is equivalent to doing:
-  /// ```dart
-  /// switch (sealedClass) {
-  ///   case final Subclass value:
-  ///     return ...;
-  ///   case _:
-  ///     return orElse();
-  /// }
-  /// ```
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
 
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>(
-    TResult Function(_VendorApplication value)? $default, {
-    required TResult orElse(),
-  }) {
-    final _that = this;
-    switch (_that) {
-      case _VendorApplication() when $default != null:
-        return $default(_that);
-      case _:
-        return orElse();
-    }
-  }
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _VendorApplication value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _VendorApplication() when $default != null:
+return $default(_that);case _:
+  return orElse();
 
-  /// A `switch`-like method, using callbacks.
-  ///
-  /// Callbacks receives the raw object, upcasted.
-  /// It is equivalent to doing:
-  /// ```dart
-  /// switch (sealedClass) {
-  ///   case final Subclass value:
-  ///     return ...;
-  ///   case final Subclass2 value:
-  ///     return ...;
-  /// }
-  /// ```
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
 
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>(
-    TResult Function(_VendorApplication value) $default,
-  ) {
-    final _that = this;
-    switch (_that) {
-      case _VendorApplication():
-        return $default(_that);
-      case _:
-        throw StateError('Unexpected subclass');
-    }
-  }
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _VendorApplication value)  $default,){
+final _that = this;
+switch (_that) {
+case _VendorApplication():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
 
-  /// A variant of `map` that fallback to returning `null`.
-  ///
-  /// It is equivalent to doing:
-  /// ```dart
-  /// switch (sealedClass) {
-  ///   case final Subclass value:
-  ///     return ...;
-  ///   case _:
-  ///     return null;
-  /// }
-  /// ```
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
 
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>(
-    TResult? Function(_VendorApplication value)? $default,
-  ) {
-    final _that = this;
-    switch (_that) {
-      case _VendorApplication() when $default != null:
-        return $default(_that);
-      case _:
-        return null;
-    }
-  }
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _VendorApplication value)?  $default,){
+final _that = this;
+switch (_that) {
+case _VendorApplication() when $default != null:
+return $default(_that);case _:
+  return null;
 
-  /// A variant of `when` that fallback to an `orElse` callback.
-  ///
-  /// It is equivalent to doing:
-  /// ```dart
-  /// switch (sealedClass) {
-  ///   case Subclass(:final field):
-  ///     return ...;
-  ///   case _:
-  ///     return orElse();
-  /// }
-  /// ```
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
 
-  @optionalTypeArgs
-  TResult maybeWhen<TResult extends Object?>(
-    TResult Function(
-            String vendorId,
-            String userId,
-            String businessName,
-            String contactEmail,
-            DateTime submittedAt,
-            VendorRegistration registration,
-            VendorStatus status)?
-        $default, {
-    required TResult orElse(),
-  }) {
-    final _that = this;
-    switch (_that) {
-      case _VendorApplication() when $default != null:
-        return $default(
-            _that.vendorId,
-            _that.userId,
-            _that.businessName,
-            _that.contactEmail,
-            _that.submittedAt,
-            _that.registration,
-            _that.status);
-      case _:
-        return orElse();
-    }
-  }
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String vendorId,  String userId,  String businessName,  String contactEmail,  DateTime submittedAt,  VendorRegistration registration,  VendorStatus status,  String? moderationNote,  DateTime? moderatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _VendorApplication() when $default != null:
+return $default(_that.vendorId,_that.userId,_that.businessName,_that.contactEmail,_that.submittedAt,_that.registration,_that.status,_that.moderationNote,_that.moderatedAt);case _:
+  return orElse();
 
-  /// A `switch`-like method, using callbacks.
-  ///
-  /// As opposed to `map`, this offers destructuring.
-  /// It is equivalent to doing:
-  /// ```dart
-  /// switch (sealedClass) {
-  ///   case Subclass(:final field):
-  ///     return ...;
-  ///   case Subclass2(:final field2):
-  ///     return ...;
-  /// }
-  /// ```
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
 
-  @optionalTypeArgs
-  TResult when<TResult extends Object?>(
-    TResult Function(
-            String vendorId,
-            String userId,
-            String businessName,
-            String contactEmail,
-            DateTime submittedAt,
-            VendorRegistration registration,
-            VendorStatus status)
-        $default,
-  ) {
-    final _that = this;
-    switch (_that) {
-      case _VendorApplication():
-        return $default(
-            _that.vendorId,
-            _that.userId,
-            _that.businessName,
-            _that.contactEmail,
-            _that.submittedAt,
-            _that.registration,
-            _that.status);
-      case _:
-        throw StateError('Unexpected subclass');
-    }
-  }
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String vendorId,  String userId,  String businessName,  String contactEmail,  DateTime submittedAt,  VendorRegistration registration,  VendorStatus status,  String? moderationNote,  DateTime? moderatedAt)  $default,) {final _that = this;
+switch (_that) {
+case _VendorApplication():
+return $default(_that.vendorId,_that.userId,_that.businessName,_that.contactEmail,_that.submittedAt,_that.registration,_that.status,_that.moderationNote,_that.moderatedAt);case _:
+  throw StateError('Unexpected subclass');
 
-  /// A variant of `when` that fallback to returning `null`
-  ///
-  /// It is equivalent to doing:
-  /// ```dart
-  /// switch (sealedClass) {
-  ///   case Subclass(:final field):
-  ///     return ...;
-  ///   case _:
-  ///     return null;
-  /// }
-  /// ```
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
 
-  @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(
-            String vendorId,
-            String userId,
-            String businessName,
-            String contactEmail,
-            DateTime submittedAt,
-            VendorRegistration registration,
-            VendorStatus status)?
-        $default,
-  ) {
-    final _that = this;
-    switch (_that) {
-      case _VendorApplication() when $default != null:
-        return $default(
-            _that.vendorId,
-            _that.userId,
-            _that.businessName,
-            _that.contactEmail,
-            _that.submittedAt,
-            _that.registration,
-            _that.status);
-      case _:
-        return null;
-    }
-  }
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String vendorId,  String userId,  String businessName,  String contactEmail,  DateTime submittedAt,  VendorRegistration registration,  VendorStatus status,  String? moderationNote,  DateTime? moderatedAt)?  $default,) {final _that = this;
+switch (_that) {
+case _VendorApplication() when $default != null:
+return $default(_that.vendorId,_that.userId,_that.businessName,_that.contactEmail,_that.submittedAt,_that.registration,_that.status,_that.moderationNote,_that.moderatedAt);case _:
+  return null;
+
+}
+}
+
 }
 
 /// @nodoc
 @JsonSerializable()
+
 class _VendorApplication implements VendorApplication {
-  const _VendorApplication(
-      {required this.vendorId,
-      required this.userId,
-      required this.businessName,
-      required this.contactEmail,
-      required this.submittedAt,
-      required this.registration,
-      required this.status});
-  factory _VendorApplication.fromJson(Map<String, dynamic> json) =>
-      _$VendorApplicationFromJson(json);
+  const _VendorApplication({required this.vendorId, required this.userId, required this.businessName, required this.contactEmail, required this.submittedAt, required this.registration, required this.status, this.moderationNote, this.moderatedAt});
+  factory _VendorApplication.fromJson(Map<String, dynamic> json) => _$VendorApplicationFromJson(json);
 
-  @override
-  final String vendorId;
-  @override
-  final String userId;
-  @override
-  final String businessName;
-  @override
-  final String contactEmail;
-  @override
-  final DateTime submittedAt;
-  @override
-  final VendorRegistration registration;
-  @override
-  final VendorStatus status;
+@override final  String vendorId;
+@override final  String userId;
+@override final  String businessName;
+@override final  String contactEmail;
+@override final  DateTime submittedAt;
+@override final  VendorRegistration registration;
+@override final  VendorStatus status;
+@override final  String? moderationNote;
+@override final  DateTime? moderatedAt;
 
-  /// Create a copy of VendorApplication
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @pragma('vm:prefer-inline')
-  _$VendorApplicationCopyWith<_VendorApplication> get copyWith =>
-      __$VendorApplicationCopyWithImpl<_VendorApplication>(this, _$identity);
+/// Create a copy of VendorApplication
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$VendorApplicationCopyWith<_VendorApplication> get copyWith => __$VendorApplicationCopyWithImpl<_VendorApplication>(this, _$identity);
 
-  @override
-  Map<String, dynamic> toJson() {
-    return _$VendorApplicationToJson(
-      this,
-    );
-  }
+@override
+Map<String, dynamic> toJson() {
+  return _$VendorApplicationToJson(this, );
+}
 
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _VendorApplication &&
-            (identical(other.vendorId, vendorId) ||
-                other.vendorId == vendorId) &&
-            (identical(other.userId, userId) || other.userId == userId) &&
-            (identical(other.businessName, businessName) ||
-                other.businessName == businessName) &&
-            (identical(other.contactEmail, contactEmail) ||
-                other.contactEmail == contactEmail) &&
-            (identical(other.submittedAt, submittedAt) ||
-                other.submittedAt == submittedAt) &&
-            (identical(other.registration, registration) ||
-                other.registration == registration) &&
-            (identical(other.status, status) || other.status == status));
-  }
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VendorApplication&&(identical(other.vendorId, vendorId) || other.vendorId == vendorId)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.businessName, businessName) || other.businessName == businessName)&&(identical(other.contactEmail, contactEmail) || other.contactEmail == contactEmail)&&(identical(other.submittedAt, submittedAt) || other.submittedAt == submittedAt)&&(identical(other.registration, registration) || other.registration == registration)&&(identical(other.status, status) || other.status == status)&&(identical(other.moderationNote, moderationNote) || other.moderationNote == moderationNote)&&(identical(other.moderatedAt, moderatedAt) || other.moderatedAt == moderatedAt));
+}
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(runtimeType, vendorId, userId, businessName,
-      contactEmail, submittedAt, registration, status);
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,vendorId,userId,businessName,contactEmail,submittedAt,registration,status,moderationNote,moderatedAt);
 
-  @override
-  String toString() {
-    return 'VendorApplication(vendorId: $vendorId, userId: $userId, businessName: $businessName, contactEmail: $contactEmail, submittedAt: $submittedAt, registration: $registration, status: $status)';
-  }
+@override
+String toString() {
+  return 'VendorApplication(vendorId: $vendorId, userId: $userId, businessName: $businessName, contactEmail: $contactEmail, submittedAt: $submittedAt, registration: $registration, status: $status, moderationNote: $moderationNote, moderatedAt: $moderatedAt)';
+}
+
+
 }
 
 /// @nodoc
-abstract mixin class _$VendorApplicationCopyWith<$Res>
-    implements $VendorApplicationCopyWith<$Res> {
-  factory _$VendorApplicationCopyWith(
-          _VendorApplication value, $Res Function(_VendorApplication) _then) =
-      __$VendorApplicationCopyWithImpl;
-  @override
-  @useResult
-  $Res call(
-      {String vendorId,
-      String userId,
-      String businessName,
-      String contactEmail,
-      DateTime submittedAt,
-      VendorRegistration registration,
-      VendorStatus status});
+abstract mixin class _$VendorApplicationCopyWith<$Res> implements $VendorApplicationCopyWith<$Res> {
+  factory _$VendorApplicationCopyWith(_VendorApplication value, $Res Function(_VendorApplication) _then) = __$VendorApplicationCopyWithImpl;
+@override @useResult
+$Res call({
+ String vendorId, String userId, String businessName, String contactEmail, DateTime submittedAt, VendorRegistration registration, VendorStatus status, String? moderationNote, DateTime? moderatedAt
+});
 
-  @override
-  $VendorRegistrationCopyWith<$Res> get registration;
+
+@override $VendorRegistrationCopyWith<$Res> get registration;
+
 }
-
 /// @nodoc
 class __$VendorApplicationCopyWithImpl<$Res>
     implements _$VendorApplicationCopyWith<$Res> {
@@ -450,60 +287,33 @@ class __$VendorApplicationCopyWithImpl<$Res>
   final _VendorApplication _self;
   final $Res Function(_VendorApplication) _then;
 
-  /// Create a copy of VendorApplication
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $Res call({
-    Object? vendorId = null,
-    Object? userId = null,
-    Object? businessName = null,
-    Object? contactEmail = null,
-    Object? submittedAt = null,
-    Object? registration = null,
-    Object? status = null,
-  }) {
-    return _then(_VendorApplication(
-      vendorId: null == vendorId
-          ? _self.vendorId
-          : vendorId // ignore: cast_nullable_to_non_nullable
-              as String,
-      userId: null == userId
-          ? _self.userId
-          : userId // ignore: cast_nullable_to_non_nullable
-              as String,
-      businessName: null == businessName
-          ? _self.businessName
-          : businessName // ignore: cast_nullable_to_non_nullable
-              as String,
-      contactEmail: null == contactEmail
-          ? _self.contactEmail
-          : contactEmail // ignore: cast_nullable_to_non_nullable
-              as String,
-      submittedAt: null == submittedAt
-          ? _self.submittedAt
-          : submittedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      registration: null == registration
-          ? _self.registration
-          : registration // ignore: cast_nullable_to_non_nullable
-              as VendorRegistration,
-      status: null == status
-          ? _self.status
-          : status // ignore: cast_nullable_to_non_nullable
-              as VendorStatus,
-    ));
-  }
+/// Create a copy of VendorApplication
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? vendorId = null,Object? userId = null,Object? businessName = null,Object? contactEmail = null,Object? submittedAt = null,Object? registration = null,Object? status = null,Object? moderationNote = freezed,Object? moderatedAt = freezed,}) {
+  return _then(_VendorApplication(
+vendorId: null == vendorId ? _self.vendorId : vendorId // ignore: cast_nullable_to_non_nullable
+as String,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
+as String,businessName: null == businessName ? _self.businessName : businessName // ignore: cast_nullable_to_non_nullable
+as String,contactEmail: null == contactEmail ? _self.contactEmail : contactEmail // ignore: cast_nullable_to_non_nullable
+as String,submittedAt: null == submittedAt ? _self.submittedAt : submittedAt // ignore: cast_nullable_to_non_nullable
+as DateTime,registration: null == registration ? _self.registration : registration // ignore: cast_nullable_to_non_nullable
+as VendorRegistration,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as VendorStatus,moderationNote: freezed == moderationNote ? _self.moderationNote : moderationNote // ignore: cast_nullable_to_non_nullable
+as String?,moderatedAt: freezed == moderatedAt ? _self.moderatedAt : moderatedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
+  ));
+}
 
-  /// Create a copy of VendorApplication
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $VendorRegistrationCopyWith<$Res> get registration {
-    return $VendorRegistrationCopyWith<$Res>(_self.registration, (value) {
-      return _then(_self.copyWith(registration: value));
-    });
-  }
+/// Create a copy of VendorApplication
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$VendorRegistrationCopyWith<$Res> get registration {
+  
+  return $VendorRegistrationCopyWith<$Res>(_self.registration, (value) {
+    return _then(_self.copyWith(registration: value));
+  });
+}
 }
 
 // dart format on

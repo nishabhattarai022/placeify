@@ -15,15 +15,15 @@ final adminSettingsPrefsProvider = AdminSettingsPrefsProvider._();
 final class AdminSettingsPrefsProvider
     extends $NotifierProvider<AdminSettingsPrefs, AdminNotificationPrefs> {
   AdminSettingsPrefsProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'adminSettingsPrefsProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'adminSettingsPrefsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$adminSettingsPrefsHash();
@@ -51,11 +51,14 @@ abstract class _$AdminSettingsPrefs extends $Notifier<AdminNotificationPrefs> {
   void runBuild() {
     final ref =
         this.ref as $Ref<AdminNotificationPrefs, AdminNotificationPrefs>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AdminNotificationPrefs, AdminNotificationPrefs>,
-        AdminNotificationPrefs,
-        Object?,
-        Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AdminNotificationPrefs, AdminNotificationPrefs>,
+              AdminNotificationPrefs,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

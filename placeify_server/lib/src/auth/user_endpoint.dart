@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../generated/protocol.dart';
@@ -24,6 +26,22 @@ class UserEndpoint extends PlaceifyAuthenticatedEndpoint {
       phone: phone,
       address: address,
     );
+  }
+
+  Future<User> changePassword(
+    Session session,
+    String currentPassword,
+    String newPassword,
+  ) {
+    return _service.changePassword(session, currentPassword, newPassword);
+  }
+
+  Future<User> uploadProfileImage(
+    Session session,
+    ByteData fileData,
+    String fileName,
+  ) {
+    return _service.uploadProfileImage(session, fileData, fileName);
   }
 
   Future<User> becomeVendor(Session session) {

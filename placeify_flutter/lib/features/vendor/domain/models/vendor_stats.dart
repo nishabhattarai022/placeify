@@ -14,6 +14,7 @@ abstract class VendorStats with _$VendorStats {
     required String periodLabel,
     required double averageRating,
     required double responseRate,
+    @Default(0) int pendingRefundCount,
   }) = _VendorStats;
 
   factory VendorStats.fromJson(Map<String, dynamic> json) =>

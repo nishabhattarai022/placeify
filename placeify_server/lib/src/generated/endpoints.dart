@@ -27,25 +27,25 @@ import '../modules/refund/refund_endpoint.dart' as _i14;
 import '../modules/review/review_endpoint.dart' as _i15;
 import '../modules/vendor/vendor_endpoint.dart' as _i16;
 import '../modules/wishlist/wishlist_endpoint.dart' as _i17;
-import 'package:placeify_server/src/generated/order_status.dart' as _i18;
-import 'package:placeify_server/src/generated/user_role.dart' as _i19;
-import 'package:placeify_server/src/generated/admin_type.dart' as _i20;
-import 'package:placeify_server/src/generated/user_account_status.dart' as _i21;
-import 'package:placeify_server/src/generated/complaint_status.dart' as _i22;
+import 'dart:typed_data' as _i18;
+import 'package:placeify_server/src/generated/order_status.dart' as _i19;
+import 'package:placeify_server/src/generated/user_role.dart' as _i20;
+import 'package:placeify_server/src/generated/admin_type.dart' as _i21;
+import 'package:placeify_server/src/generated/user_account_status.dart' as _i22;
+import 'package:placeify_server/src/generated/complaint_status.dart' as _i23;
+import 'package:placeify_server/src/generated/pagination_input.dart' as _i24;
 import 'package:placeify_server/src/generated/vendor_payout_status.dart'
-    as _i23;
-import 'package:placeify_server/src/generated/request_status.dart' as _i24;
-import 'package:placeify_server/src/generated/checkout_request.dart' as _i25;
-import 'package:placeify_server/src/generated/pagination_input.dart' as _i26;
+    as _i25;
+import 'package:placeify_server/src/generated/request_status.dart' as _i26;
+import 'package:placeify_server/src/generated/checkout_request.dart' as _i27;
 import 'package:placeify_server/src/generated/payment_transaction_status.dart'
-    as _i27;
-import 'package:placeify_server/src/generated/product_search_input.dart'
     as _i28;
-import 'package:placeify_server/src/generated/vendor_bank_details_input.dart'
+import 'package:placeify_server/src/generated/product_search_input.dart'
     as _i29;
-import 'package:placeify_server/src/generated/vendor_profile_update_input.dart'
+import 'package:placeify_server/src/generated/vendor_bank_details_input.dart'
     as _i30;
-import 'dart:typed_data' as _i31;
+import 'package:placeify_server/src/generated/vendor_profile_update_input.dart'
+    as _i31;
 import 'package:placeify_server/src/generated/vendor_document_type.dart'
     as _i32;
 import 'package:placeify_server/src/generated/vendor_product_upload_input.dart'
@@ -406,6 +406,55 @@ class Endpoints extends _i1.EndpointDispatch {
                 address: params['address'],
               ),
         ),
+        'changePassword': _i1.MethodConnector(
+          name: 'changePassword',
+          params: {
+            'currentPassword': _i1.ParameterDescription(
+              name: 'currentPassword',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'newPassword': _i1.ParameterDescription(
+              name: 'newPassword',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['user'] as _i4.UserEndpoint).changePassword(
+                session,
+                params['currentPassword'],
+                params['newPassword'],
+              ),
+        ),
+        'uploadProfileImage': _i1.MethodConnector(
+          name: 'uploadProfileImage',
+          params: {
+            'fileData': _i1.ParameterDescription(
+              name: 'fileData',
+              type: _i1.getType<_i18.ByteData>(),
+              nullable: false,
+            ),
+            'fileName': _i1.ParameterDescription(
+              name: 'fileName',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['user'] as _i4.UserEndpoint).uploadProfileImage(
+                    session,
+                    params['fileData'],
+                    params['fileName'],
+                  ),
+        ),
         'becomeVendor': _i1.MethodConnector(
           name: 'becomeVendor',
           params: {},
@@ -462,7 +511,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i18.OrderStatus?>(),
+              type: _i1.getType<_i19.OrderStatus?>(),
               nullable: true,
             ),
           },
@@ -597,7 +646,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'allowedRoles': _i1.ParameterDescription(
               name: 'allowedRoles',
-              type: _i1.getType<Set<_i19.UserRole>>(),
+              type: _i1.getType<Set<_i20.UserRole>>(),
               nullable: false,
             ),
           },
@@ -691,7 +740,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'adminType': _i1.ParameterDescription(
               name: 'adminType',
-              type: _i1.getType<_i20.AdminType?>(),
+              type: _i1.getType<_i21.AdminType?>(),
               nullable: true,
             ),
             'isActive': _i1.ParameterDescription(
@@ -751,6 +800,108 @@ class Endpoints extends _i1.EndpointDispatch {
                 params['vendorUserId'],
               ),
         ),
+        'suspendVendor': _i1.MethodConnector(
+          name: 'suspendVendor',
+          params: {
+            'vendorUserId': _i1.ParameterDescription(
+              name: 'vendorUserId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+            'reason': _i1.ParameterDescription(
+              name: 'reason',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['admin'] as _i6.AdminEndpoint).suspendVendor(
+                    session,
+                    params['vendorUserId'],
+                    params['reason'],
+                  ),
+        ),
+        'getVendorReinstateTerms': _i1.MethodConnector(
+          name: 'getVendorReinstateTerms',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i6.AdminEndpoint)
+                  .getVendorReinstateTerms(session),
+        ),
+        'reactivateVendor': _i1.MethodConnector(
+          name: 'reactivateVendor',
+          params: {
+            'vendorUserId': _i1.ParameterDescription(
+              name: 'vendorUserId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+            'termsAccepted': _i1.ParameterDescription(
+              name: 'termsAccepted',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            ),
+            'termsNote': _i1.ParameterDescription(
+              name: 'termsNote',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['admin'] as _i6.AdminEndpoint).reactivateVendor(
+                    session,
+                    params['vendorUserId'],
+                    termsAccepted: params['termsAccepted'],
+                    termsNote: params['termsNote'],
+                  ),
+        ),
+        'suspendUser': _i1.MethodConnector(
+          name: 'suspendUser',
+          params: {
+            'targetUserId': _i1.ParameterDescription(
+              name: 'targetUserId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i6.AdminEndpoint).suspendUser(
+                session,
+                params['targetUserId'],
+              ),
+        ),
+        'activateUser': _i1.MethodConnector(
+          name: 'activateUser',
+          params: {
+            'targetUserId': _i1.ParameterDescription(
+              name: 'targetUserId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i6.AdminEndpoint).activateUser(
+                session,
+                params['targetUserId'],
+              ),
+        ),
         'updateUserStatus': _i1.MethodConnector(
           name: 'updateUserStatus',
           params: {
@@ -761,7 +912,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i21.UserAccountStatus>(),
+              type: _i1.getType<_i22.UserAccountStatus>(),
               nullable: false,
             ),
             'isActive': _i1.ParameterDescription(
@@ -826,6 +977,44 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['reason'],
                   ),
         ),
+        'deleteProduct': _i1.MethodConnector(
+          name: 'deleteProduct',
+          params: {
+            'productId': _i1.ParameterDescription(
+              name: 'productId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['admin'] as _i6.AdminEndpoint).deleteProduct(
+                    session,
+                    params['productId'],
+                  ),
+        ),
+        'restoreProduct': _i1.MethodConnector(
+          name: 'restoreProduct',
+          params: {
+            'productId': _i1.ParameterDescription(
+              name: 'productId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['admin'] as _i6.AdminEndpoint).restoreProduct(
+                    session,
+                    params['productId'],
+                  ),
+        ),
         'flagProduct': _i1.MethodConnector(
           name: 'flagProduct',
           params: {
@@ -843,6 +1032,31 @@ class Endpoints extends _i1.EndpointDispatch {
                 session,
                 params['productId'],
               ),
+        ),
+        'setProductFeatured': _i1.MethodConnector(
+          name: 'setProductFeatured',
+          params: {
+            'productId': _i1.ParameterDescription(
+              name: 'productId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'featured': _i1.ParameterDescription(
+              name: 'featured',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['admin'] as _i6.AdminEndpoint).setProductFeatured(
+                    session,
+                    params['productId'],
+                    featured: params['featured'],
+                  ),
         ),
         'fileComplaint': _i1.MethodConnector(
           name: 'fileComplaint',
@@ -880,7 +1094,12 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i22.ComplaintStatus?>(),
+              type: _i1.getType<_i23.ComplaintStatus?>(),
+              nullable: true,
+            ),
+            'pagination': _i1.ParameterDescription(
+              name: 'pagination',
+              type: _i1.getType<_i24.PaginationInput?>(),
               nullable: true,
             ),
           },
@@ -892,6 +1111,32 @@ class Endpoints extends _i1.EndpointDispatch {
                   (endpoints['admin'] as _i6.AdminEndpoint).listComplaints(
                     session,
                     status: params['status'],
+                    pagination: params['pagination'],
+                  ),
+        ),
+        'assignComplaint': _i1.MethodConnector(
+          name: 'assignComplaint',
+          params: {
+            'complaintId': _i1.ParameterDescription(
+              name: 'complaintId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+            'internalNote': _i1.ParameterDescription(
+              name: 'internalNote',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['admin'] as _i6.AdminEndpoint).assignComplaint(
+                    session,
+                    params['complaintId'],
+                    internalNote: params['internalNote'],
                   ),
         ),
         'resolveComplaint': _i1.MethodConnector(
@@ -911,6 +1156,31 @@ class Endpoints extends _i1.EndpointDispatch {
                   (endpoints['admin'] as _i6.AdminEndpoint).resolveComplaint(
                     session,
                     params['complaintId'],
+                  ),
+        ),
+        'reopenComplaint': _i1.MethodConnector(
+          name: 'reopenComplaint',
+          params: {
+            'complaintId': _i1.ParameterDescription(
+              name: 'complaintId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+            'internalNote': _i1.ParameterDescription(
+              name: 'internalNote',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['admin'] as _i6.AdminEndpoint).reopenComplaint(
+                    session,
+                    params['complaintId'],
+                    internalNote: params['internalNote'],
                   ),
         ),
         'getPlatformStats': _i1.MethodConnector(
@@ -933,7 +1203,12 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'role': _i1.ParameterDescription(
               name: 'role',
-              type: _i1.getType<_i19.UserRole?>(),
+              type: _i1.getType<_i20.UserRole?>(),
+              nullable: true,
+            ),
+            'pagination': _i1.ParameterDescription(
+              name: 'pagination',
+              type: _i1.getType<_i24.PaginationInput?>(),
               nullable: true,
             ),
           },
@@ -945,14 +1220,39 @@ class Endpoints extends _i1.EndpointDispatch {
                 session,
                 query: params['query'],
                 role: params['role'],
+                pagination: params['pagination'],
               ),
+        ),
+        'getUserDetail': _i1.MethodConnector(
+          name: 'getUserDetail',
+          params: {
+            'userId': _i1.ParameterDescription(
+              name: 'userId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['admin'] as _i6.AdminEndpoint).getUserDetail(
+                    session,
+                    params['userId'],
+                  ),
         ),
         'listVendorApplications': _i1.MethodConnector(
           name: 'listVendorApplications',
           params: {
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i21.UserAccountStatus?>(),
+              type: _i1.getType<_i22.UserAccountStatus?>(),
+              nullable: true,
+            ),
+            'pagination': _i1.ParameterDescription(
+              name: 'pagination',
+              type: _i1.getType<_i24.PaginationInput?>(),
               nullable: true,
             ),
           },
@@ -964,6 +1264,7 @@ class Endpoints extends _i1.EndpointDispatch {
                   .listVendorApplications(
                     session,
                     status: params['status'],
+                    pagination: params['pagination'],
                   ),
         ),
         'getVendorApplication': _i1.MethodConnector(
@@ -993,6 +1294,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<int>(),
               nullable: false,
             ),
+            'pagination': _i1.ParameterDescription(
+              name: 'pagination',
+              type: _i1.getType<_i24.PaginationInput?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -1001,6 +1307,7 @@ class Endpoints extends _i1.EndpointDispatch {
               ) async => (endpoints['admin'] as _i6.AdminEndpoint).getAuditLog(
                 session,
                 limit: params['limit'],
+                pagination: params['pagination'],
               ),
         ),
         'listVendorPayouts': _i1.MethodConnector(
@@ -1008,7 +1315,12 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i23.VendorPayoutStatus?>(),
+              type: _i1.getType<_i25.VendorPayoutStatus?>(),
+              nullable: true,
+            ),
+            'pagination': _i1.ParameterDescription(
+              name: 'pagination',
+              type: _i1.getType<_i24.PaginationInput?>(),
               nullable: true,
             ),
           },
@@ -1020,6 +1332,7 @@ class Endpoints extends _i1.EndpointDispatch {
                   (endpoints['admin'] as _i6.AdminEndpoint).listVendorPayouts(
                     session,
                     status: params['status'],
+                    pagination: params['pagination'],
                   ),
         ),
         'approveVendorPayout': _i1.MethodConnector(
@@ -1071,7 +1384,12 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i24.RequestStatus?>(),
+              type: _i1.getType<_i26.RequestStatus?>(),
+              nullable: true,
+            ),
+            'pagination': _i1.ParameterDescription(
+              name: 'pagination',
+              type: _i1.getType<_i24.PaginationInput?>(),
               nullable: true,
             ),
           },
@@ -1083,6 +1401,7 @@ class Endpoints extends _i1.EndpointDispatch {
                   (endpoints['admin'] as _i6.AdminEndpoint).listRefundRequests(
                     session,
                     status: params['status'],
+                    pagination: params['pagination'],
                   ),
         ),
         'approveRefundRequest': _i1.MethodConnector(
@@ -1138,7 +1457,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'allowedRoles': _i1.ParameterDescription(
               name: 'allowedRoles',
-              type: _i1.getType<Set<_i19.UserRole>>(),
+              type: _i1.getType<Set<_i20.UserRole>>(),
               nullable: false,
             ),
           },
@@ -1315,7 +1634,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'request': _i1.ParameterDescription(
               name: 'request',
-              type: _i1.getType<_i25.CheckoutRequest>(),
+              type: _i1.getType<_i27.CheckoutRequest>(),
               nullable: false,
             ),
           },
@@ -1464,6 +1783,19 @@ class Endpoints extends _i1.EndpointDispatch {
                   (endpoints['notification'] as _i10.NotificationEndpoint)
                       .markAllInAppNotificationsRead(session),
         ),
+        'watchInAppNotifications': _i1.MethodStreamConnector(
+          name: 'watchInAppNotifications',
+          params: {},
+          streamParams: {},
+          returnType: _i1.MethodStreamReturnType.streamType,
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+                Map<String, Stream> streamParams,
+              ) => (endpoints['notification'] as _i10.NotificationEndpoint)
+                  .watchInAppNotifications(session),
+        ),
       },
     );
     connectors['order'] = _i1.EndpointConnector(
@@ -1475,12 +1807,12 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'pagination': _i1.ParameterDescription(
               name: 'pagination',
-              type: _i1.getType<_i26.PaginationInput?>(),
+              type: _i1.getType<_i24.PaginationInput?>(),
               nullable: true,
             ),
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i18.OrderStatus?>(),
+              type: _i1.getType<_i19.OrderStatus?>(),
               nullable: true,
             ),
           },
@@ -1577,7 +1909,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i27.PaymentTransactionStatus>(),
+              type: _i1.getType<_i28.PaymentTransactionStatus>(),
               nullable: false,
             ),
             'note': _i1.ParameterDescription(
@@ -1629,7 +1961,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'input': _i1.ParameterDescription(
               name: 'input',
-              type: _i1.getType<_i28.ProductSearchInput>(),
+              type: _i1.getType<_i29.ProductSearchInput>(),
               nullable: false,
             ),
           },
@@ -1700,6 +2032,16 @@ class Endpoints extends _i1.EndpointDispatch {
                     query: params['query'],
                   ),
         ),
+        'getMarketplaceHighlights': _i1.MethodConnector(
+          name: 'getMarketplaceHighlights',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['product'] as _i13.ProductEndpoint)
+                  .getMarketplaceHighlights(session),
+        ),
         'listProducts': _i1.MethodConnector(
           name: 'listProducts',
           params: {
@@ -1761,7 +2103,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'pagination': _i1.ParameterDescription(
               name: 'pagination',
-              type: _i1.getType<_i26.PaginationInput?>(),
+              type: _i1.getType<_i24.PaginationInput?>(),
               nullable: true,
             ),
           },
@@ -1980,7 +2322,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'bankDetails': _i1.ParameterDescription(
               name: 'bankDetails',
-              type: _i1.getType<_i29.VendorBankDetailsInput?>(),
+              type: _i1.getType<_i30.VendorBankDetailsInput?>(),
               nullable: true,
             ),
           },
@@ -2018,7 +2360,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'input': _i1.ParameterDescription(
               name: 'input',
-              type: _i1.getType<_i29.VendorBankDetailsInput>(),
+              type: _i1.getType<_i30.VendorBankDetailsInput>(),
               nullable: false,
             ),
           },
@@ -2047,7 +2389,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'input': _i1.ParameterDescription(
               name: 'input',
-              type: _i1.getType<_i30.VendorProfileUpdateInput>(),
+              type: _i1.getType<_i31.VendorProfileUpdateInput>(),
               nullable: false,
             ),
           },
@@ -2066,7 +2408,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i31.ByteData>(),
+              type: _i1.getType<_i18.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -2091,7 +2433,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i31.ByteData>(),
+              type: _i1.getType<_i18.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -2116,7 +2458,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i31.ByteData>(),
+              type: _i1.getType<_i18.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -2146,7 +2488,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i31.ByteData>(),
+              type: _i1.getType<_i18.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -2172,7 +2514,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i31.ByteData>(),
+              type: _i1.getType<_i18.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -2197,7 +2539,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i31.ByteData>(),
+              type: _i1.getType<_i18.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -2371,7 +2713,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'imageData': _i1.ParameterDescription(
               name: 'imageData',
-              type: _i1.getType<_i31.ByteData>(),
+              type: _i1.getType<_i18.ByteData>(),
               nullable: false,
             ),
             'imageFileName': _i1.ParameterDescription(
@@ -2422,7 +2764,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i31.ByteData>(),
+              type: _i1.getType<_i18.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -2467,6 +2809,63 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['productId'],
                   ),
         ),
+        'deleteProduct': _i1.MethodConnector(
+          name: 'deleteProduct',
+          params: {
+            'productId': _i1.ParameterDescription(
+              name: 'productId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i16.VendorEndpoint).deleteProduct(
+                    session,
+                    params['productId'],
+                  ),
+        ),
+        'restoreProduct': _i1.MethodConnector(
+          name: 'restoreProduct',
+          params: {
+            'productId': _i1.ParameterDescription(
+              name: 'productId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i16.VendorEndpoint).restoreProduct(
+                    session,
+                    params['productId'],
+                  ),
+        ),
+        'archiveProduct': _i1.MethodConnector(
+          name: 'archiveProduct',
+          params: {
+            'productId': _i1.ParameterDescription(
+              name: 'productId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i16.VendorEndpoint).archiveProduct(
+                    session,
+                    params['productId'],
+                  ),
+        ),
         'listShopOrders': _i1.MethodConnector(
           name: 'listShopOrders',
           params: {
@@ -2482,7 +2881,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i18.OrderStatus?>(),
+              type: _i1.getType<_i19.OrderStatus?>(),
               nullable: true,
             ),
           },
@@ -2622,7 +3021,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'fileData': _i1.ParameterDescription(
               name: 'fileData',
-              type: _i1.getType<_i31.ByteData>(),
+              type: _i1.getType<_i18.ByteData>(),
               nullable: false,
             ),
             'fileName': _i1.ParameterDescription(
@@ -2690,6 +3089,85 @@ class Endpoints extends _i1.EndpointDispatch {
               ) async => (endpoints['vendor'] as _i16.VendorEndpoint)
                   .markAllNotificationsRead(session),
         ),
+        'listPendingRefundRequests': _i1.MethodConnector(
+          name: 'listPendingRefundRequests',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['vendor'] as _i16.VendorEndpoint)
+                  .listPendingRefundRequests(session),
+        ),
+        'approveRefundRequest': _i1.MethodConnector(
+          name: 'approveRefundRequest',
+          params: {
+            'refundId': _i1.ParameterDescription(
+              name: 'refundId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['vendor'] as _i16.VendorEndpoint)
+                  .approveRefundRequest(
+                    session,
+                    params['refundId'],
+                  ),
+        ),
+        'rejectRefundRequest': _i1.MethodConnector(
+          name: 'rejectRefundRequest',
+          params: {
+            'refundId': _i1.ParameterDescription(
+              name: 'refundId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'reason': _i1.ParameterDescription(
+              name: 'reason',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['vendor'] as _i16.VendorEndpoint)
+                  .rejectRefundRequest(
+                    session,
+                    params['refundId'],
+                    reason: params['reason'],
+                  ),
+        ),
+        'listShopReviews': _i1.MethodConnector(
+          name: 'listShopReviews',
+          params: {
+            'limit': _i1.ParameterDescription(
+              name: 'limit',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'offset': _i1.ParameterDescription(
+              name: 'offset',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i16.VendorEndpoint).listShopReviews(
+                    session,
+                    limit: params['limit'],
+                    offset: params['offset'],
+                  ),
+        ),
       },
     );
     connectors['wishlist'] = _i1.EndpointConnector(
@@ -2701,7 +3179,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'pagination': _i1.ParameterDescription(
               name: 'pagination',
-              type: _i1.getType<_i26.PaginationInput?>(),
+              type: _i1.getType<_i24.PaginationInput?>(),
               nullable: true,
             ),
           },

@@ -36,6 +36,8 @@ abstract class VendorApplicationDetail
     this.businessLicenseUrl,
     this.governmentIdUrl,
     this.taxCertificateUrl,
+    this.moderationNote,
+    this.moderatedAt,
   });
 
   factory VendorApplicationDetail({
@@ -58,6 +60,8 @@ abstract class VendorApplicationDetail
     String? businessLicenseUrl,
     String? governmentIdUrl,
     String? taxCertificateUrl,
+    String? moderationNote,
+    DateTime? moderatedAt,
   }) = _VendorApplicationDetailImpl;
 
   factory VendorApplicationDetail.fromJson(
@@ -89,6 +93,12 @@ abstract class VendorApplicationDetail
       businessLicenseUrl: jsonSerialization['businessLicenseUrl'] as String?,
       governmentIdUrl: jsonSerialization['governmentIdUrl'] as String?,
       taxCertificateUrl: jsonSerialization['taxCertificateUrl'] as String?,
+      moderationNote: jsonSerialization['moderationNote'] as String?,
+      moderatedAt: jsonSerialization['moderatedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['moderatedAt'],
+            ),
     );
   }
 
@@ -130,6 +140,10 @@ abstract class VendorApplicationDetail
 
   String? taxCertificateUrl;
 
+  String? moderationNote;
+
+  DateTime? moderatedAt;
+
   /// Returns a shallow copy of this [VendorApplicationDetail]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -153,6 +167,8 @@ abstract class VendorApplicationDetail
     String? businessLicenseUrl,
     String? governmentIdUrl,
     String? taxCertificateUrl,
+    String? moderationNote,
+    DateTime? moderatedAt,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -177,6 +193,8 @@ abstract class VendorApplicationDetail
       if (businessLicenseUrl != null) 'businessLicenseUrl': businessLicenseUrl,
       if (governmentIdUrl != null) 'governmentIdUrl': governmentIdUrl,
       if (taxCertificateUrl != null) 'taxCertificateUrl': taxCertificateUrl,
+      if (moderationNote != null) 'moderationNote': moderationNote,
+      if (moderatedAt != null) 'moderatedAt': moderatedAt?.toJson(),
     };
   }
 
@@ -203,6 +221,8 @@ abstract class VendorApplicationDetail
       if (businessLicenseUrl != null) 'businessLicenseUrl': businessLicenseUrl,
       if (governmentIdUrl != null) 'governmentIdUrl': governmentIdUrl,
       if (taxCertificateUrl != null) 'taxCertificateUrl': taxCertificateUrl,
+      if (moderationNote != null) 'moderationNote': moderationNote,
+      if (moderatedAt != null) 'moderatedAt': moderatedAt?.toJson(),
     };
   }
 
@@ -235,6 +255,8 @@ class _VendorApplicationDetailImpl extends VendorApplicationDetail {
     String? businessLicenseUrl,
     String? governmentIdUrl,
     String? taxCertificateUrl,
+    String? moderationNote,
+    DateTime? moderatedAt,
   }) : super._(
          vendorId: vendorId,
          userId: userId,
@@ -255,6 +277,8 @@ class _VendorApplicationDetailImpl extends VendorApplicationDetail {
          businessLicenseUrl: businessLicenseUrl,
          governmentIdUrl: governmentIdUrl,
          taxCertificateUrl: taxCertificateUrl,
+         moderationNote: moderationNote,
+         moderatedAt: moderatedAt,
        );
 
   /// Returns a shallow copy of this [VendorApplicationDetail]
@@ -281,6 +305,8 @@ class _VendorApplicationDetailImpl extends VendorApplicationDetail {
     Object? businessLicenseUrl = _Undefined,
     Object? governmentIdUrl = _Undefined,
     Object? taxCertificateUrl = _Undefined,
+    Object? moderationNote = _Undefined,
+    Object? moderatedAt = _Undefined,
   }) {
     return VendorApplicationDetail(
       vendorId: vendorId ?? this.vendorId,
@@ -308,6 +334,10 @@ class _VendorApplicationDetailImpl extends VendorApplicationDetail {
       taxCertificateUrl: taxCertificateUrl is String?
           ? taxCertificateUrl
           : this.taxCertificateUrl,
+      moderationNote: moderationNote is String?
+          ? moderationNote
+          : this.moderationNote,
+      moderatedAt: moderatedAt is DateTime? ? moderatedAt : this.moderatedAt,
     );
   }
 }

@@ -51,24 +51,6 @@ class _ArPoweredScreenState extends State<ArPoweredScreen> {
           children: [
             ListTile(
               leading: const Icon(
-                Icons.photo_library_outlined,
-                color: ArHubTokens.textPrimary,
-              ),
-              title: Text(
-                'Saved Room Shots',
-                style: AppFonts.dmSans(
-                  fontWeight: FontWeight.w600,
-                  color: ArHubTokens.textPrimary,
-                ),
-              ),
-              onTap: () {
-                Navigator.pop(sheetContext);
-                HapticService.light();
-                context.pushNamed('profileRoomSnapshots');
-              },
-            ),
-            ListTile(
-              leading: const Icon(
                 Icons.view_in_ar_outlined,
                 color: ArHubTokens.textPrimary,
               ),

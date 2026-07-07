@@ -17,6 +17,7 @@ import 'widgets/product_detail_cart_bar.dart';
 import 'widgets/product_detail_gallery.dart';
 import 'widgets/product_detail_header.dart';
 import 'widgets/product_detail_info_section.dart';
+import 'widgets/product_detail_price_row.dart';
 import 'widgets/product_detail_sold_by_row.dart';
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
@@ -183,6 +184,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                 const SizedBox(
                   height: ProductDetailTokens.infoCardTopGap,
                 ),
+                ProductDetailPriceRow(product: product),
                 if (vendorId != null)
                   shopAsync?.maybeWhen(
                     data: (shop) {

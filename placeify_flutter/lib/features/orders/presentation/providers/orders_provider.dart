@@ -1,41 +1,77 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:placeify_client/placeify_client.dart' hide Order;
+import 'package:placeify_flutter/core/config/placeify_server_client.dart';
 import 'package:placeify_flutter/core/widgets/toast_overlay.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify_flutter/features/cart/presentation/cart_actions.dart';
-import 'package:placeify_flutter/features/orders/data/mock_order_repository.dart';
+import 'package:placeify_flutter/features/orders/data/serverpod_order_repository.dart';
 import 'package:placeify_flutter/features/orders/domain/constants/order_strings.dart';
 import 'package:placeify_flutter/features/orders/domain/enums/consumer_order_status.dart';
 import 'package:placeify_flutter/features/orders/domain/enums/order_list_filter.dart';
 import 'package:placeify_flutter/features/orders/domain/models/order.dart';
 import 'package:placeify_flutter/features/orders/domain/repositories/order_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 part 'orders_provider.g.dart';
 
 @Riverpod(keepAlive: true)
 OrderRepository orderRepository(Ref ref) {
-  return MockOrderRepository();
+  return const ServerpodOrderRepository();
 }
 
 @riverpod
 Future<String> ordersUserId(Ref ref) async {
   final user = await ref.watch(currentUserProvider.future);
-  return user?.id ?? MockOrderRepository.demoUserId;
+  if (user?.id == null) {
+    throw StateError('Sign in to view your orders.');
+  }
+  return user!.id;
 }
 
 @riverpod
 class Orders extends _$Orders {
+  StreamSubscription<InAppNotificationSummary>? _subscription;
+
   @override
-  Future<List<Order>> build() => _load();
+  Future<List<Order>> build() {
+    ref.onDispose(() => _subscription?.cancel());
+    if (client.auth.isAuthenticated) {
+      unawaited(_attachRealtimeListener());
+    }
+    return _load();
+  }
+
+  Future<void> _attachRealtimeListener() async {
+    if (_subscription != null) return;
+    _subscription = inAppNotificationEvents.listen((notification) {
+      if (!shouldRefreshOrdersForNotification(notification)) return;
+      unawaited(refresh(silent: true));
+      final orderId = notification.referenceId?.toString();
+      if (orderId != null) {
+        ref.invalidate(orderByIdProvider(orderId));
+      }
+    });
+  }
 
   Future<void> loadOrders() => refresh();
 
-  Future<void> refresh() async {
+  Future<void> refresh({bool silent = false}) async {
+    if (!client.auth.isAuthenticated) {
+      state = const AsyncData([]);
+      return;
+    }
+    if (!silent) {
+      state = const AsyncLoading();
+    }
     state = await AsyncValue.guard(_load);
   }
 
   Future<List<Order>> _load() async {
+    if (!client.auth.isAuthenticated) return [];
     final userId = await ref.watch(ordersUserIdProvider.future);
     final repo = ref.watch(orderRepositoryProvider);
     return repo.getOrders(userId);
@@ -219,10 +255,7 @@ List<Order> returnOrders(Ref ref) {
 
 @riverpod
 Future<Order?> orderById(Ref ref, String orderId) async {
-  final orders = await ref.watch(ordersProvider.future);
-  for (final order in orders) {
-    if (order.id == orderId) return order;
-  }
+  if (!client.auth.isAuthenticated) return null;
 
   final userId = await ref.watch(ordersUserIdProvider.future);
   final repo = ref.watch(orderRepositoryProvider);

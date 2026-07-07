@@ -26,6 +26,10 @@ fields:
   ### Admin who approved this vendor shop.
   approvedBy: Admin?, relation(optional)
   approvedAt: DateTime?
+  ### Admin suspend reason or reinstate terms note.
+  moderationNote: String?
+  ### When the vendor was last suspended or reinstated by admin.
+  moderatedAt: DateTime?
   createdAt: DateTime, default=now
   updatedAt: DateTime, default=now
 

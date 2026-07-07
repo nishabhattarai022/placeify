@@ -64,19 +64,25 @@ class ServerpodAdminRepository implements AdminRepository {
 
   @override
   Future<void> suspendVendor(String userId, {String? reason}) async {
-    await _api.updateUserStatus(
+    final trimmedReason = reason?.trim();
+    await _api.suspendVendor(
       userId,
-      UserAccountStatus.suspended,
-      isActive: false,
+      reason: trimmedReason == null || trimmedReason.isEmpty
+          ? 'Suspended by admin'
+          : trimmedReason,
     );
   }
 
   @override
-  Future<void> reinstateVendor(String userId) async {
-    await _api.updateUserStatus(
+  Future<void> reinstateVendor(
+    String userId, {
+    bool termsAccepted = true,
+    String? termsNote,
+  }) async {
+    await _api.reactivateVendor(
       userId,
-      UserAccountStatus.approved,
-      isActive: true,
+      termsAccepted: termsAccepted,
+      termsNote: termsNote,
     );
   }
 

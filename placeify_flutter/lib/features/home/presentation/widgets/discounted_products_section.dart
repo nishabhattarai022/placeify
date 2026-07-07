@@ -1,23 +1,28 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/services/haptic_service.dart';
 import '../../data/discounted_products.dart';
+import '../../domain/models/product.dart';
+import '../providers/catalog_provider.dart';
 
 /// Auto-cycling premium promo card. One card on screen at all times — content
 /// (background gradient, watermark, copy, image, price tag) swaps inside it.
-class DiscountedProductsSection extends StatefulWidget {
+class DiscountedProductsSection extends ConsumerStatefulWidget {
   const DiscountedProductsSection({super.key});
 
   @override
-  State<DiscountedProductsSection> createState() =>
+  ConsumerState<DiscountedProductsSection> createState() =>
       _DiscountedProductsSectionState();
 }
 
-class _DiscountedProductsSectionState extends State<DiscountedProductsSection> {
+class _DiscountedProductsSectionState
+    extends ConsumerState<DiscountedProductsSection> {
   static const _cardHeight = 224.0;
   static const _cardRadius = 26.0;
   static const _headerSpacing = 14.0;
@@ -26,18 +31,6 @@ class _DiscountedProductsSectionState extends State<DiscountedProductsSection> {
 
   int _currentIndex = 0;
   Timer? _timer;
-  bool _ctaPressed = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _timer = Timer.periodic(_autoplayInterval, (_) {
-      if (!mounted) return;
-      setState(() {
-        _currentIndex = (_currentIndex + 1) % discountedProducts.length;
-      });
-    });
-  }
 
   @override
   void dispose() {
@@ -45,28 +38,139 @@ class _DiscountedProductsSectionState extends State<DiscountedProductsSection> {
     super.dispose();
   }
 
+  void _restartAutoplay(int length) {
+    _timer?.cancel();
+    if (length <= 1) return;
+    _timer = Timer.periodic(_autoplayInterval, (_) {
+      if (!mounted) return;
+      setState(() {
+        _currentIndex = (_currentIndex + 1) % length;
+      });
+    });
+  }
+
   void _onShopNow() {
     HapticService.light();
     context.go('/browse');
   }
 
-  void _onDotTap(int i) {
+  void _onDotTap(int i, int length) {
     if (i == _currentIndex) return;
     HapticService.selection();
     setState(() => _currentIndex = i);
-    // Reset autoplay so the user's manual selection has its full 4s window.
-    _timer?.cancel();
-    _timer = Timer.periodic(_autoplayInterval, (_) {
-      if (!mounted) return;
-      setState(() {
-        _currentIndex = (_currentIndex + 1) % discountedProducts.length;
-      });
-    });
+    _restartAutoplay(length);
   }
 
   @override
   Widget build(BuildContext context) {
-    final product = discountedProducts[_currentIndex];
+    final offersAsync = ref.watch(catalogDiscountedProductsProvider);
+
+    return offersAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (products) {
+        final offers = _mapUiProducts(products);
+        if (offers.isEmpty) return const SizedBox.shrink();
+        if (_timer == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _restartAutoplay(offers.length);
+          });
+        }
+        return _OffersCarousel(
+          offers: offers,
+          currentIndex: _currentIndex,
+          swapDuration: _swapDuration,
+          cardHeight: _cardHeight,
+          cardRadius: _cardRadius,
+          headerSpacing: _headerSpacing,
+          onShopNow: _onShopNow,
+          onDotTap: (i) => _onDotTap(i, offers.length),
+          onOffersLoaded: _restartAutoplay,
+        );
+      },
+    );
+  }
+
+  List<DiscountedProduct> _mapUiProducts(List<Product> products) {
+    const cardColors = [
+      Color(0xFFB5A99A),
+      Color(0xFFA8B5A0),
+      Color(0xFFB0AABF),
+      Color(0xFFBFAE98),
+    ];
+    final offers = <DiscountedProduct>[];
+    for (var i = 0; i < products.length; i++) {
+      final product = products[i];
+      if (!product.isOnSale) continue;
+      offers.add(
+        DiscountedProduct(
+          id: product.id,
+          name: product.name,
+          imagePath: product.imageUrl,
+          originalPrice: product.originalPrice ?? product.price,
+          discountedPrice: product.price,
+          discountPercent: product.discountPercent.round(),
+          tagline: product.brand,
+          cardColor: cardColors[i % cardColors.length],
+          offerLabel: product.offerLabel,
+        ),
+      );
+    }
+    return offers;
+  }
+}
+
+class _OffersCarousel extends StatefulWidget {
+  const _OffersCarousel({
+    required this.offers,
+    required this.currentIndex,
+    required this.swapDuration,
+    required this.cardHeight,
+    required this.cardRadius,
+    required this.headerSpacing,
+    required this.onShopNow,
+    required this.onDotTap,
+    required this.onOffersLoaded,
+  });
+
+  final List<DiscountedProduct> offers;
+  final int currentIndex;
+  final Duration swapDuration;
+  final double cardHeight;
+  final double cardRadius;
+  final double headerSpacing;
+  final VoidCallback onShopNow;
+  final void Function(int index) onDotTap;
+  final void Function(int length) onOffersLoaded;
+
+  @override
+  State<_OffersCarousel> createState() => _OffersCarouselState();
+}
+
+class _OffersCarouselState extends State<_OffersCarousel> {
+  bool _ctaPressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onOffersLoaded(widget.offers.length);
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant _OffersCarousel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.offers.length != widget.offers.length) {
+      widget.onOffersLoaded(widget.offers.length);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final offers = widget.offers;
+    final index = widget.currentIndex.clamp(0, offers.length - 1);
+    final product = offers[index];
     final darkAccent = Color.lerp(product.cardColor, Colors.black, 0.22)!;
     final cleanTagline = product.tagline.replaceFirst('— ', '');
 
@@ -87,7 +191,7 @@ class _DiscountedProductsSectionState extends State<DiscountedProductsSection> {
               ),
             ),
             Text(
-              '${_currentIndex + 1} / ${discountedProducts.length}',
+              '${index + 1} / ${offers.length}',
               style: GoogleFonts.dmSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
@@ -98,18 +202,18 @@ class _DiscountedProductsSectionState extends State<DiscountedProductsSection> {
             ),
           ],
         ),
-        const SizedBox(height: _headerSpacing),
+        SizedBox(height: widget.headerSpacing),
         SizedBox(
           width: double.infinity,
-          height: _cardHeight,
+          height: widget.cardHeight,
           child: Stack(
             children: [
               _CardBackground(
                 cardColor: product.cardColor,
                 darkAccent: darkAccent,
-                height: _cardHeight,
-                radius: _cardRadius,
-                swapDuration: _swapDuration,
+                height: widget.cardHeight,
+                radius: widget.cardRadius,
+                swapDuration: widget.swapDuration,
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 14, 16),
@@ -127,7 +231,7 @@ class _DiscountedProductsSectionState extends State<DiscountedProductsSection> {
                             setState(() => _ctaPressed = false),
                         onCtaTapCancel: () =>
                             setState(() => _ctaPressed = false),
-                        onCtaTap: _onShopNow,
+                        onCtaTap: widget.onShopNow,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -135,7 +239,7 @@ class _DiscountedProductsSectionState extends State<DiscountedProductsSection> {
                       aspectRatio: 0.92,
                       child: _ProductFrame(
                         product: product,
-                        swapDuration: _swapDuration,
+                        swapDuration: widget.swapDuration,
                       ),
                     ),
                   ],
@@ -144,7 +248,10 @@ class _DiscountedProductsSectionState extends State<DiscountedProductsSection> {
               Positioned(
                 top: 6,
                 right: 8,
-                child: _PriceTag(product: product, duration: _swapDuration),
+                child: _PriceTag(
+                  product: product,
+                  duration: widget.swapDuration,
+                ),
               ),
             ],
           ),
@@ -154,22 +261,20 @@ class _DiscountedProductsSectionState extends State<DiscountedProductsSection> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              for (var i = 0; i < discountedProducts.length; i++) ...[
+              for (var i = 0; i < offers.length; i++) ...[
                 if (i > 0) const SizedBox(width: 6),
                 GestureDetector(
                   behavior: HitTestBehavior.opaque,
-                  onTap: () => _onDotTap(i),
+                  onTap: () => widget.onDotTap(i),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 320),
                       curve: Curves.easeOutCubic,
-                      width: i == _currentIndex ? 22 : 6,
+                      width: i == index ? 22 : 6,
                       height: 6,
                       decoration: BoxDecoration(
-                        color: i == _currentIndex
-                            ? Colors.black87
-                            : Colors.black26,
+                        color: i == index ? Colors.black87 : Colors.black26,
                         borderRadius: BorderRadius.circular(999),
                       ),
                     ),
@@ -208,8 +313,6 @@ class _CardBackground extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(radius),
-        // Solid fill — matches the chair PNG's multiplied background exactly
-        // so the chair appears to have no visible rectangular frame.
         color: cardColor,
         boxShadow: [
           BoxShadow(
@@ -224,8 +327,6 @@ class _CardBackground extends StatelessWidget {
         borderRadius: BorderRadius.circular(radius),
         child: Stack(
           children: [
-            // Soft warm highlight across the upper-left to add depth without
-            // breaking the solid-color match underneath the chair.
             Positioned(
               left: -60,
               top: -30,
@@ -243,7 +344,6 @@ class _CardBackground extends StatelessWidget {
                 ),
               ),
             ),
-            // Subtle dark vignette tucked into the bottom-left for contrast.
             Positioned(
               left: -40,
               bottom: -40,
@@ -261,7 +361,6 @@ class _CardBackground extends StatelessWidget {
                 ),
               ),
             ),
-            // Subtle top-edge sheen for premium feel.
             Positioned(
               left: 0,
               right: 0,
@@ -303,7 +402,6 @@ class _TextPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Kicker pill (static across product changes).
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
@@ -315,7 +413,7 @@ class _TextPanel extends StatelessWidget {
             ),
           ),
           child: Text(
-            'LIMITED OFFER',
+            product.offerBadgeLabel.toUpperCase(),
             style: GoogleFonts.dmSans(
               fontSize: 9,
               fontWeight: FontWeight.w700,
@@ -325,7 +423,6 @@ class _TextPanel extends StatelessWidget {
             ),
           ),
         ),
-        // Animated discount + tagline.
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 420),
           switchInCurve: Curves.easeOutCubic,
@@ -385,7 +482,6 @@ class _TextPanel extends StatelessWidget {
             ],
           ),
         ),
-        // Shop Now CTA.
         GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTapDown: onCtaTapDown,
@@ -505,9 +601,6 @@ class _PriceTag extends StatelessWidget {
   }
 }
 
-/// Clean, framed product image container — rounded square with a soft cream
-/// interior, hairline border and a subtle drop shadow. Swaps between products
-/// with a calm crossfade (no motion, no scale, no jump).
 class _ProductFrame extends StatelessWidget {
   const _ProductFrame({
     required this.product,
@@ -520,6 +613,8 @@ class _ProductFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const radius = 22.0;
+    final isNetwork = product.imagePath.startsWith('http');
+
     return DecoratedBox(
       decoration: BoxDecoration(
         color: const Color(0xFFEFE9DC),
@@ -555,16 +650,25 @@ class _ProductFrame extends StatelessWidget {
           },
           child: SizedBox.expand(
             key: ValueKey<String>('frame_${product.imagePath}'),
-            child: Image.asset(
-              product.imagePath,
-              fit: BoxFit.cover,
-              alignment: Alignment.center,
-              width: double.infinity,
-              height: double.infinity,
-              errorBuilder: (_, __, ___) => const ColoredBox(
-                color: Color(0xFFEFE9DC),
-              ),
-            ),
+            child: isNetwork
+                ? CachedNetworkImage(
+                    imageUrl: product.imagePath,
+                    fit: BoxFit.cover,
+                    alignment: Alignment.center,
+                    errorWidget: (_, __, ___) => const ColoredBox(
+                      color: Color(0xFFEFE9DC),
+                    ),
+                  )
+                : Image.asset(
+                    product.imagePath,
+                    fit: BoxFit.cover,
+                    alignment: Alignment.center,
+                    width: double.infinity,
+                    height: double.infinity,
+                    errorBuilder: (_, __, ___) => const ColoredBox(
+                      color: Color(0xFFEFE9DC),
+                    ),
+                  ),
           ),
         ),
       ),

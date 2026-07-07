@@ -20,6 +20,7 @@ import '../../domain/models/order.dart';
 import '../../domain/models/order_item.dart';
 import '../providers/orders_provider.dart';
 import 'consumer_order_status_chip.dart';
+import 'leave_review_sheet.dart';
 
 class OrderCard extends ConsumerWidget {
   const OrderCard({
@@ -230,10 +231,7 @@ class OrderCard extends ConsumerWidget {
           _OrderActionButton(
             label: OrderStrings.leaveReviewAction,
             primary: false,
-            onTap: () => PlaceifyToast.show(
-              context,
-              '${OrderStrings.leaveReviewAction} coming soon',
-            ),
+            onTap: () => LeaveReviewSheet.show(context, ref, order: order),
           ),
         ],
       ConsumerOrderStatus.returnRequested ||

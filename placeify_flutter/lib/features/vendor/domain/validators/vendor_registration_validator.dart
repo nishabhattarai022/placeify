@@ -1,4 +1,6 @@
 import 'package:placeify_flutter/core/constants/country_phone_codes.dart';
+import 'package:placeify_flutter/features/vendor/domain/constants/vendor_registration_field_keys.dart'
+    show isUploadedVendorDocument;
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_registration.dart';
 
 /// Map keys for inline field error display on the vendor registration form.
@@ -129,11 +131,11 @@ abstract final class VendorRegistrationValidator {
   static Map<String, String> _validateDocuments(VendorDocuments documents) {
     final errors = <String, String>{};
 
-    if (documents.businessLicensePath == null) {
+    if (!isUploadedVendorDocument(documents.businessLicensePath)) {
       errors[VendorRegistrationFieldKeys.businessLicense] =
           'Upload your business license';
     }
-    if (documents.governmentIdPath == null) {
+    if (!isUploadedVendorDocument(documents.governmentIdPath)) {
       errors[VendorRegistrationFieldKeys.governmentId] =
           'Upload a government-issued ID';
     }

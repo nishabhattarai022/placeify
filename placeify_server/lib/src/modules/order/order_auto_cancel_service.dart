@@ -2,9 +2,8 @@ import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
-import '../notification/in_app_notification_store.dart';
-import '../notification/order_notification_service.dart';
-import 'order_lifecycle_store.dart';
+import '../marketplace/marketplace_events.dart';
+import '../order/order_lifecycle_store.dart';
 
 class OrderAutoCancelResult {
   const OrderAutoCancelResult({
@@ -18,10 +17,7 @@ class OrderAutoCancelResult {
 
 /// Cancels pending orders whose vendor response window has expired.
 class OrderAutoCancelService {
-  OrderAutoCancelService({InAppNotificationStore? notifications})
-      : _notifications = notifications ?? InAppNotificationStore();
-
-  final InAppNotificationStore _notifications;
+  OrderAutoCancelService();
 
   Future<OrderAutoCancelResult> cancelExpiredPendingOrders(
     Session session, {
@@ -66,10 +62,9 @@ class OrderAutoCancelService {
           transaction: transaction,
         );
 
-        await OrderNotificationService.notifyOrderAutoCancelled(
+        await marketplaceEventDispatcher.dispatch(
           session,
-          order: updated,
-          notifications: _notifications,
+          OrderAutoCancelledEvent(order: updated),
         );
       });
 

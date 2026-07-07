@@ -2,12 +2,14 @@
 class: VendorOrderSummary
 fields:
   orderItemId: int
+  productId: int?
   orderId: int
   orderNumber: String
   productName: String
   quantity: int
   lineTotal: double
   status: OrderStatus
+  currentDeliveryStage: DeliveryStage?
   placedAt: DateTime
   customerName: String?
   isCustomizationRequest: bool, default=false
