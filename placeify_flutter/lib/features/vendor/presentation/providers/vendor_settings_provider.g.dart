@@ -33,7 +33,7 @@ final class VendorSettingsProvider
   VendorSettings create() => VendorSettings();
 }
 
-String _$vendorSettingsHash() => r'020b8948831ebfae095181881fd89b4ef3cd2dda';
+String _$vendorSettingsHash() => r'20cc7a16a16a287b4df0bd562c282fa274aa896b';
 
 abstract class _$VendorSettings extends $AsyncNotifier<VendorSettingsState> {
   FutureOr<VendorSettingsState> build();
