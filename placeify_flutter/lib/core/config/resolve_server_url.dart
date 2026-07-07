@@ -1,12 +1,14 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-const _cachedServerUrlKey = 'placeify_server_url';
+import 'resolve_server_platform.dart';
+
+const _cachedServerUrlKey = 'placeify_server_url_v2';
 const _defaultPort = 8080;
 
 /// Clears a previously cached API base URL (e.g. after a connection failure).
@@ -48,24 +50,59 @@ Future<String> resolveServerUrl({
 
 Future<String> _resolveOnce({required bool forceRefresh}) async {
   final prefs = await SharedPreferences.getInstance();
+  final candidates = await _buildCandidates();
+  final configuredPhysical = await _configuredPhysicalApiUrl();
 
   if (!forceRefresh) {
     final cached = prefs.getString(_cachedServerUrlKey);
-    if (cached != null &&
-        _cacheMatchesPlatform(cached) &&
-        await _canReachServer(cached)) {
-      return _ensureTrailingSlash(cached);
+    if (cached != null) {
+      final normalizedCached = _ensureTrailingSlash(cached);
+      final cacheStillConfigured = candidates.contains(normalizedCached);
+      final cacheMatchesConfiguredPhysical = _hostsMatch(
+        normalizedCached,
+        configuredPhysical,
+      );
+
+      if (!cacheStillConfigured ||
+          (configuredPhysical != null && !cacheMatchesConfiguredPhysical)) {
+        await prefs.remove(_cachedServerUrlKey);
+      } else if (_cacheMatchesPlatform(cached) &&
+          await _canReachServer(cached)) {
+        return normalizedCached;
+      }
     }
   }
 
-  for (final candidate in await _buildCandidates()) {
+  for (final candidate in candidates) {
     if (await _canReachServer(candidate)) {
       await prefs.setString(_cachedServerUrlKey, candidate);
       return _ensureTrailingSlash(candidate);
     }
   }
 
-  return _ensureTrailingSlash((await _buildCandidates()).first);
+  return _ensureTrailingSlash(candidates.first);
+}
+
+Future<String?> _configuredPhysicalApiUrl() async {
+  try {
+    final data = await rootBundle.loadString('assets/config.json');
+    final config = jsonDecode(data) as Map<String, dynamic>;
+    final physicalApiUrl = config['physicalApiUrl'] as String?;
+    if (physicalApiUrl == null || physicalApiUrl.trim().isEmpty) {
+      return null;
+    }
+    return _ensureTrailingSlash(physicalApiUrl.trim());
+  } catch (_) {
+    return null;
+  }
+}
+
+bool _hostsMatch(String a, String? b) {
+  if (b == null) return true;
+  final hostA = Uri.tryParse(a)?.host;
+  final hostB = Uri.tryParse(b)?.host;
+  if (hostA == null || hostB == null) return true;
+  return hostA == hostB;
 }
 
 bool _cacheMatchesPlatform(String url) {
@@ -74,7 +111,7 @@ bool _cacheMatchesPlatform(String url) {
 
   // A desktop/simulator session may cache localhost; phones must re-probe LAN hosts.
   if (uri.host == 'localhost' || uri.host == '127.0.0.1') {
-    return !(Platform.isAndroid || Platform.isIOS);
+    return !isMobilePlatform;
   }
 
   return true;
@@ -105,11 +142,11 @@ Future<List<String>> _buildCandidates() async {
     }
   } catch (_) {}
 
-  if (Platform.isAndroid) {
+  if (isAndroid) {
     add(emulatorApiUrl, 'http://10.0.2.2:$_defaultPort');
   }
 
-  add(loopbackApiUrl, 'http://$_desktopLoopbackHost:$_defaultPort');
+  add(loopbackApiUrl, 'http://$loopbackHost:$_defaultPort');
 
   final isPhysical = await _isPhysicalMobileDevice();
   if (isPhysical) {
@@ -124,10 +161,10 @@ Future<bool> _isPhysicalMobileDevice() async {
   if (kIsWeb) return false;
   final deviceInfo = DeviceInfoPlugin();
   try {
-    if (Platform.isAndroid) {
+    if (isAndroid) {
       return (await deviceInfo.androidInfo).isPhysicalDevice;
     }
-    if (Platform.isIOS) {
+    if (isIOS) {
       return (await deviceInfo.iosInfo).isPhysicalDevice;
     }
   } catch (_) {}
@@ -135,17 +172,17 @@ Future<bool> _isPhysicalMobileDevice() async {
 }
 
 Future<bool> _canReachServer(String url) async {
-  final client = HttpClient();
-  client.connectionTimeout = const Duration(seconds: 3);
   try {
-    final request = await client.getUrl(Uri.parse(_ensureTrailingSlash(url)));
-    final response = await request.close();
-    await response.drain<void>();
+    final isPhysical = await _isPhysicalMobileDevice();
+    final timeout = isPhysical
+        ? const Duration(seconds: 8)
+        : const Duration(seconds: 3);
+    final response = await http
+        .get(Uri.parse(_ensureTrailingSlash(url)))
+        .timeout(timeout);
     return response.statusCode == 200;
   } catch (_) {
     return false;
-  } finally {
-    client.close(force: true);
   }
 }
 
@@ -156,16 +193,10 @@ String _ensureTrailingSlash(String url) {
 String _normalizeLoopback(String url) {
   if (!_isLoopbackUrl(url)) return url;
   return url
-      .replaceAll('localhost', _desktopLoopbackHost)
-      .replaceAll('127.0.0.1', _desktopLoopbackHost);
+      .replaceAll('localhost', loopbackHost)
+      .replaceAll('127.0.0.1', loopbackHost);
 }
 
 bool _isLoopbackUrl(String url) {
   return url.contains('localhost') || url.contains('127.0.0.1');
-}
-
-String get _desktopLoopbackHost {
-  if (kIsWeb) return 'localhost';
-  if (Platform.isAndroid) return '10.0.2.2';
-  return 'localhost';
 }

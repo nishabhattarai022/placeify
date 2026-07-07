@@ -102,6 +102,7 @@ product:
   - listApprovedShops:
   - getMarketplaceHighlights:
   - listProducts:
+  - getModel3dAsset:
 refund:
   - listMyRefundRequests:
   - getRefundRequest:

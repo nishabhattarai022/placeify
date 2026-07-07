@@ -1206,6 +1206,13 @@ class EndpointProduct extends _i2.EndpointRef {
       'offset': offset,
     },
   );
+
+  _i3.Future<_i7.ByteData?> getModel3dAsset(int productId) =>
+      caller.callServerEndpoint<_i7.ByteData?>(
+        'product',
+        'getModel3dAsset',
+        {'productId': productId},
+      );
 }
 
 /// Refund and return requests for authenticated customers.

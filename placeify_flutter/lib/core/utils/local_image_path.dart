@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
+import 'package:flutter/material.dart' show TargetPlatform;
 
 /// Helpers for distinguishing local file paths from remote URLs and assets.
 abstract final class LocalImagePath {
@@ -15,7 +16,9 @@ abstract final class LocalImagePath {
 
   /// Normalizes Windows-style paths for [File] on the current platform.
   static String normalize(String source) {
-    if (!Platform.isWindows) return source;
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.windows) {
+      return source;
+    }
     if (source.startsWith(r'\\')) return source;
     return source.replaceAll('/', r'\');
   }

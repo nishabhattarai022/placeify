@@ -1,9 +1,12 @@
-import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:http/http.dart' as http;
 import 'package:placeify_client/placeify_client.dart';
 
+import '../../../core/config/resolve_media_url.dart';
 import '../../../core/config/placeify_server_client.dart';
+import '../../../core/utils/local_image_reader.dart';
+import '../../../core/utils/local_image_store.dart';
 import '../../cart/data/product_id_codec.dart';
 import '../domain/models/vendor_product.dart';
 import '../domain/repositories/vendor_product_repository.dart';
@@ -85,13 +88,15 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
           materials: materials,
         );
       } else {
-        final file = File(imagePaths.first);
-        if (!await file.exists()) {
+        final imageData = await _readImageByteData(
+          imagePaths.first,
+          fileName: _resolvedFileName(imagePaths.first),
+        );
+        if (imageData == null) {
           throw VendorProductActionException(
             'Photo file not found. Pick it again.',
           );
         }
-        final imageData = ByteData.sublistView(await file.readAsBytes());
         final pricing = _resolveUploadPricing(product);
         final input = VendorProductUploadInput(
           name: product.name.trim(),
@@ -116,7 +121,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
         created = await client.vendor.uploadProduct(
           input,
           imageData,
-          _fileNameFromPath(imagePaths.first),
+          _resolvedFileName(imagePaths.first),
         );
       }
 
@@ -210,10 +215,12 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
         var imageFileName = '';
 
         if (imagePath != null) {
-          final file = File(imagePath);
-          if (await file.exists()) {
-            final bytes = await file.readAsBytes();
-            imageData = ByteData.sublistView(bytes);
+          final bytes = await _readImageByteData(
+            imagePath,
+            fileName: _fileNameFromPath(imagePath),
+          );
+          if (bytes != null) {
+            imageData = bytes;
             imageFileName = _fileNameFromPath(imagePath);
           }
         }
@@ -310,8 +317,12 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     required String description,
     required String materials,
     required List<String> imageSources,
+    bool forceReupload = false,
   }) async {
-    final multiview = await _uploadMultiviewUrlsFromSources(imageSources);
+    final multiview = await _uploadMultiviewUrlsFromSources(
+      imageSources,
+      forceReupload: forceReupload,
+    );
     final input = await _buildUploadInput(
       product: product,
       dbId: dbId,
@@ -324,9 +335,12 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     ByteData imageData = ByteData(0);
     var imageFileName = '';
     if (frontLocal != null) {
-      final file = File(frontLocal);
-      if (await file.exists()) {
-        imageData = ByteData.sublistView(await file.readAsBytes());
+      final bytes = await _readImageByteData(
+        frontLocal,
+        fileName: _fileNameFromPath(frontLocal),
+      );
+      if (bytes != null) {
+        imageData = bytes;
         imageFileName = _fileNameFromPath(frontLocal);
       }
     }
@@ -342,6 +356,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     required VendorProduct product,
     required int dbId,
     required List<String> imageSources,
+    bool forceReupload = false,
   }) async {
     final description = product.description.trim().isNotEmpty
         ? product.description.trim()
@@ -353,6 +368,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
       description: description,
       materials: materials,
       imageSources: imageSources.take(4).toList(),
+      forceReupload: forceReupload,
     );
   }
 
@@ -413,6 +429,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
           product: existing,
           dbId: dbId,
           imageSources: sources.take(4).toList(),
+          forceReupload: true,
         );
       }
 
@@ -503,7 +520,10 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
   }
 
   Future<({String thumbnailUrl, List<String> viewImageUrls})>
-      _uploadMultiviewUrlsFromSources(List<String> sources) async {
+      _uploadMultiviewUrlsFromSources(
+    List<String> sources, {
+    bool forceReupload = false,
+  }) async {
     if (sources.length < 4) {
       throw VendorProductActionException(
         'Please upload 4 photos (front, left, back, right) for 3D generation.',
@@ -514,12 +534,17 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     final thumbnailUrl = await _ensureServerImageUrl(
       slots[0],
       removeBackground: true,
+      forceReupload: forceReupload,
     );
 
     final viewImageUrls = <String>[];
     for (final source in slots.skip(1)) {
       viewImageUrls.add(
-        await _ensureServerImageUrl(source, removeBackground: false),
+        await _ensureServerImageUrl(
+          source,
+          removeBackground: false,
+          forceReupload: forceReupload,
+        ),
       );
     }
 
@@ -535,32 +560,72 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
   Future<String> _ensureServerImageUrl(
     String source, {
     required bool removeBackground,
+    bool forceReupload = false,
   }) async {
     final localPath = _normalizeLocalImagePath(source);
     if (localPath != null) {
-      final file = File(localPath);
-      if (!await file.exists()) {
+      final imageData = await _readImageByteData(
+        localPath,
+        fileName: _fileNameFromPath(localPath),
+      );
+      if (imageData == null) {
         throw VendorProductActionException(
           'Photo file not found. Pick it again.',
         );
       }
       return client.vendor.uploadProductImage(
-        ByteData.sublistView(await file.readAsBytes()),
-        _fileNameFromPath(localPath),
+        imageData,
+        _resolvedFileName(localPath),
         removeBackground: removeBackground,
       );
     }
 
     final existing = _serverPathFromSource(source);
     if (existing != null) {
-      return existing;
+      if (!forceReupload) return existing;
+      return _reuploadServerImage(existing, removeBackground: removeBackground);
     }
 
     throw VendorProductActionException('Photo file not found. Pick it again.');
   }
 
+  Future<String> _reuploadServerImage(
+    String serverPath, {
+    required bool removeBackground,
+  }) async {
+    final url = await resolveMediaUrl(serverPath);
+    if (url.isEmpty) {
+      throw VendorProductActionException('Photo file not found. Pick it again.');
+    }
+
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode != 200 || response.bodyBytes.isEmpty) {
+      throw VendorProductActionException(
+        'Could not refresh product photo from server. Re-pick the photo and try again.',
+      );
+    }
+
+    final fileName = _fileNameFromPath(serverPath);
+    return client.vendor.uploadProductImage(
+      ByteData.view(
+        response.bodyBytes.buffer,
+        response.bodyBytes.offsetInBytes,
+        response.bodyBytes.lengthInBytes,
+      ),
+      fileName.isNotEmpty ? fileName : 'product_photo.jpg',
+      removeBackground: removeBackground,
+    );
+  }
+
   String? _serverPathFromSource(String source) {
-    final trimmed = source.trim();
+    var trimmed = source.trim();
+    if (trimmed.isEmpty) return null;
+
+    final queryIndex = trimmed.indexOf('?');
+    if (queryIndex >= 0) {
+      trimmed = trimmed.substring(0, queryIndex);
+    }
+
     if (trimmed.startsWith('/uploads/')) return trimmed;
 
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
@@ -587,14 +652,31 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
   String? _normalizeLocalImagePath(String source) {
     var trimmed = source.trim();
     if (trimmed.isEmpty) return null;
+    if (trimmed.startsWith(LocalImageStore.scheme)) return trimmed;
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
       return null;
     }
     if (trimmed.startsWith('assets/')) return null;
+    if (trimmed.startsWith('blob:')) return trimmed;
     if (trimmed.startsWith('file://')) {
       trimmed = Uri.parse(trimmed).toFilePath();
     }
     return trimmed;
+  }
+
+  Future<ByteData?> _readImageByteData(
+    String source, {
+    String? fileName,
+  }) async {
+    final data = await LocalImageReader.read(source, fileName: fileName);
+    if (data == null) return null;
+    return ByteData.sublistView(data.bytes);
+  }
+
+  String _resolvedFileName(String source) {
+    final stored = LocalImageStore.readUri(source);
+    if (stored != null) return stored.fileName;
+    return _fileNameFromPath(source);
   }
 
   String _map3dError(Object error) => _mapError(

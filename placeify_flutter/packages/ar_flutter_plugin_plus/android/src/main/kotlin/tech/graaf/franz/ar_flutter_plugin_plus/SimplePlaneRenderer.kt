@@ -47,15 +47,36 @@ internal class SimplePlaneRenderer {
             GLES20.glUniformMatrix4fv(modelHandle, 1, false, modelMatrix, 0)
             GLES20.glUniformMatrix4fv(viewHandle, 1, false, viewMatrix, 0)
             GLES20.glUniformMatrix4fv(projHandle, 1, false, projectionMatrix, 0)
-            GLES20.glUniform4f(colorHandle, 0.2f, 0.7f, 1.0f, 0.35f)
-
+            // Subtle fill while scanning (≈12% opacity).
+            GLES20.glUniform4f(colorHandle, 1.0f, 1.0f, 1.0f, 0.12f)
             GLES20.glEnableVertexAttribArray(positionHandle)
             GLES20.glVertexAttribPointer(positionHandle, 3, GLES20.GL_FLOAT, false, 3 * 4, vertexBuffer)
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, 0, vertices.size / 3)
+
+            // Soft outline along the plane boundary.
+            GLES20.glLineWidth(2f)
+            GLES20.glUniform4f(colorHandle, 1.0f, 1.0f, 1.0f, 0.22f)
+            val outlineVertices = buildOutlineVertices(polygon)
+            val outlineBuffer = createFloatBuffer(outlineVertices)
+            GLES20.glVertexAttribPointer(positionHandle, 3, GLES20.GL_FLOAT, false, 3 * 4, outlineBuffer)
+            GLES20.glDrawArrays(GLES20.GL_LINE_LOOP, 0, outlineVertices.size / 3)
             GLES20.glDisableVertexAttribArray(positionHandle)
         }
 
         GLES20.glDisable(GLES20.GL_BLEND)
+    }
+
+    private fun buildOutlineVertices(polygon: FloatBuffer): FloatArray {
+        val pointCount = polygon.remaining() / 2
+        val vertices = FloatArray(pointCount * 3)
+        var idx = 0
+        while (polygon.hasRemaining()) {
+            vertices[idx++] = polygon.get()
+            vertices[idx++] = 0f
+            vertices[idx++] = polygon.get()
+        }
+        polygon.rewind()
+        return vertices
     }
 
     private fun buildTriangleFanVertices(polygon: FloatBuffer): FloatArray {

@@ -1,8 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:placeify_flutter/core/widgets/local_image_preview.dart';
+import 'package:placeify_flutter/features/vendor/domain/constants/product_photo_capture.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_form_state.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_image_item.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_product_form_provider.dart';
@@ -195,20 +195,22 @@ class ProductImagePickerGrid extends ConsumerWidget {
     try {
       if (source == ImageSource.gallery) {
         final picked = await picker.pickMultiImage(
-          imageQuality: 85,
+          imageQuality: ProductPhotoCapture.pickerQuality,
+          maxWidth: ProductPhotoCapture.maxEdge.toDouble(),
+          maxHeight: ProductPhotoCapture.maxEdge.toDouble(),
           limit: remaining,
         );
         if (picked.isEmpty) return;
-        ref.read(vendorProductFormProvider.notifier).addLocalImages(
-              picked.map((file) => file.path).toList(),
-            );
+        ref.read(vendorProductFormProvider.notifier).addPickedImages(picked);
       } else {
         final picked = await picker.pickImage(
           source: ImageSource.camera,
-          imageQuality: 85,
+          imageQuality: ProductPhotoCapture.pickerQuality,
+          maxWidth: ProductPhotoCapture.maxEdge.toDouble(),
+          maxHeight: ProductPhotoCapture.maxEdge.toDouble(),
         );
         if (picked == null) return;
-        ref.read(vendorProductFormProvider.notifier).addLocalImages([picked.path]);
+        ref.read(vendorProductFormProvider.notifier).addPickedImages([picked]);
       }
     } catch (_) {
       if (context.mounted) {
@@ -253,7 +255,11 @@ class _ImageTile extends StatelessWidget {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      _ProductImagePreview(source: item.displaySource),
+                      LocalImagePreview(
+                        source: item.displaySource,
+                        bytes: item.processedLocalBytes ?? item.localBytes,
+                        fileName: item.fileName,
+                      ),
                       if (item.isProcessingBg)
                         Container(
                           color: Colors.black.withValues(alpha: 0.35),
@@ -407,50 +413,6 @@ class _CircleIconButton extends StatelessWidget {
         ),
         alignment: Alignment.center,
         child: Icon(icon, size: 14, color: Colors.white),
-      ),
-    );
-  }
-}
-
-class _ProductImagePreview extends StatelessWidget {
-  const _ProductImagePreview({required this.source});
-
-  final String source;
-
-  bool get _isAsset => source.startsWith('assets/');
-  bool get _isLocalFile =>
-      source.startsWith('/') || source.startsWith('file://');
-
-  @override
-  Widget build(BuildContext context) {
-    if (_isAsset) {
-      return Image.asset(source, fit: BoxFit.cover);
-    }
-    if (_isLocalFile) {
-      final path = source.startsWith('file://')
-          ? source.replaceFirst('file://', '')
-          : source;
-      return Image.file(
-        File(path),
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _placeholder(),
-      );
-    }
-    return Image.network(
-      source,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => _placeholder(),
-    );
-  }
-
-  Widget _placeholder() {
-    return Container(
-      color: AppColors.cream,
-      alignment: Alignment.center,
-      child: const Icon(
-        Icons.image_outlined,
-        color: AppColors.bark,
-        size: 28,
       ),
     );
   }

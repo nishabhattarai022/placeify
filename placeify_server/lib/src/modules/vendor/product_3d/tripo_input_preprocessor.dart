@@ -31,9 +31,118 @@ class TripoInputPreprocessor {
   static const maxTripoEdge = 4096;
   static const marginRatio = 0.08;
   static const jpegQuality = 98;
-  static final _white = img.ColorRgb8(255, 255, 255);
+  static final _backgroundColor = img.ColorRgb8(200, 200, 200);
+
+  /// Max per-channel / luminance scale (±40%) to avoid overcorrecting real lighting.
+  static const minAdjustmentScale = 0.6;
+  static const maxAdjustmentScale = 1.4;
 
   final ProductImageProcessor _imageProcessor;
+
+  /// Decodes, normalizes exposure/white balance across views, then frames each image.
+  ///
+  /// [viewLabels] should align with Tripo slot order: front, left, back, right.
+  List<PreparedTripoFrame> prepareMultiviewCatalogFrames(
+    List<Uint8List> sources, {
+    Session? session,
+    List<String>? viewLabels,
+  }) {
+    if (sources.isEmpty) {
+      throw TripoInputPreprocessorException('No multiview sources provided.');
+    }
+
+    final decoded = <img.Image>[];
+    for (final bytes in sources) {
+      final image = img.decodeImage(bytes);
+      if (image == null) {
+        throw TripoInputPreprocessorException('Could not decode multiview image.');
+      }
+      decoded.add(image);
+    }
+
+    final labels = viewLabels ??
+        List<String>.generate(sources.length, (index) => 'view_$index');
+    final normalized = normalizeExposureAcrossViews(
+      decoded,
+      session: session,
+      viewLabels: labels,
+    );
+
+    final frames = <PreparedTripoFrame>[];
+    for (var i = 0; i < normalized.length; i++) {
+      frames.add(
+        _prepareFrame(normalized[i], sourceBytes: sources[i].length),
+      );
+    }
+    return frames;
+  }
+
+  /// Aligns subject luminance and white balance to the front (index 0) reference.
+  List<img.Image> normalizeExposureAcrossViews(
+    List<img.Image> views, {
+    Session? session,
+    List<String>? viewLabels,
+  }) {
+    if (views.isEmpty) return views;
+
+    final labels = viewLabels ??
+        List<String>.generate(views.length, (index) => 'view_$index');
+    final stats = views.map(_subjectColorStats).toList();
+    final reference = stats.first;
+
+    final results = <img.Image>[];
+    for (var i = 0; i < views.length; i++) {
+      final copy = img.Image.from(views[i]);
+      if (i == 0) {
+        session?.log(
+          'Tripo multiview normalize ${labels[i]}: reference '
+          '(subject L=${reference.meanLuminance.toStringAsFixed(1)}, '
+          'R=${reference.meanR.toStringAsFixed(1)}, '
+          'G=${reference.meanG.toStringAsFixed(1)}, '
+          'B=${reference.meanB.toStringAsFixed(1)})',
+          level: LogLevel.info,
+        );
+        results.add(copy);
+        continue;
+      }
+
+      final viewStats = stats[i];
+      final lumScale = _clampScale(
+        reference.meanLuminance / _safePositive(viewStats.meanLuminance),
+      );
+      final rScale = _clampScale(
+        reference.meanR / _safePositive(viewStats.meanR),
+      );
+      final gScale = _clampScale(
+        reference.meanG / _safePositive(viewStats.meanG),
+      );
+      final bScale = _clampScale(
+        reference.meanB / _safePositive(viewStats.meanB),
+      );
+
+      _applySubjectCorrection(
+        copy,
+        luminanceScale: lumScale,
+        redScale: rScale,
+        greenScale: gScale,
+        blueScale: bScale,
+      );
+
+      session?.log(
+        'Tripo multiview normalize ${labels[i]}: '
+        'luminance×${lumScale.toStringAsFixed(3)}, '
+        'R×${rScale.toStringAsFixed(3)}, '
+        'G×${gScale.toStringAsFixed(3)}, '
+        'B×${bScale.toStringAsFixed(3)} '
+        '(subject L ${viewStats.meanLuminance.toStringAsFixed(1)} → '
+        '${reference.meanLuminance.toStringAsFixed(1)})',
+        level: LogLevel.info,
+      );
+      results.add(copy);
+    }
+
+    return results;
+  }
 
   /// White-background catalog image → centered frame, resolution preserved when possible.
   PreparedTripoFrame prepareCatalogFrame(Uint8List catalogBytes) {
@@ -121,7 +230,7 @@ class TripoInputPreprocessor {
         : subject;
 
     final canvas = img.Image(width: canvasSize, height: canvasSize);
-    img.fill(canvas, color: _white);
+    img.fill(canvas, color: _backgroundColor);
     img.compositeImage(
       canvas,
       placed,
@@ -169,6 +278,91 @@ class TripoInputPreprocessor {
     if (alpha < 250) return true;
     return pixel.r < 245 || pixel.g < 245 || pixel.b < 245;
   }
+
+  _SubjectColorStats _subjectColorStats(img.Image image) {
+    var sumLuminance = 0.0;
+    var sumR = 0.0;
+    var sumG = 0.0;
+    var sumB = 0.0;
+    var count = 0;
+
+    for (var y = 0; y < image.height; y++) {
+      for (var x = 0; x < image.width; x++) {
+        final pixel = image.getPixel(x, y);
+        if (!_isSubjectPixel(pixel)) continue;
+
+        final r = pixel.r.toDouble();
+        final g = pixel.g.toDouble();
+        final b = pixel.b.toDouble();
+        sumR += r;
+        sumG += g;
+        sumB += b;
+        sumLuminance += (0.299 * r) + (0.587 * g) + (0.114 * b);
+        count++;
+      }
+    }
+
+    if (count == 0) {
+      return const _SubjectColorStats(
+        meanLuminance: 128,
+        meanR: 128,
+        meanG: 128,
+        meanB: 128,
+        pixelCount: 0,
+      );
+    }
+
+    return _SubjectColorStats(
+      meanLuminance: sumLuminance / count,
+      meanR: sumR / count,
+      meanG: sumG / count,
+      meanB: sumB / count,
+      pixelCount: count,
+    );
+  }
+
+  double _safePositive(double value) => value > 1.0 ? value : 1.0;
+
+  double _clampScale(double scale) {
+    if (!scale.isFinite || scale <= 0) return 1.0;
+    return scale.clamp(minAdjustmentScale, maxAdjustmentScale);
+  }
+
+  void _applySubjectCorrection(
+    img.Image image, {
+    required double luminanceScale,
+    required double redScale,
+    required double greenScale,
+    required double blueScale,
+  }) {
+    for (var y = 0; y < image.height; y++) {
+      for (var x = 0; x < image.width; x++) {
+        final pixel = image.getPixel(x, y);
+        if (!_isSubjectPixel(pixel)) continue;
+
+        final r = (pixel.r * luminanceScale * redScale).round().clamp(0, 255);
+        final g = (pixel.g * luminanceScale * greenScale).round().clamp(0, 255);
+        final b = (pixel.b * luminanceScale * blueScale).round().clamp(0, 255);
+        image.setPixelRgb(x, y, r, g, b);
+      }
+    }
+  }
+}
+
+final class _SubjectColorStats {
+  const _SubjectColorStats({
+    required this.meanLuminance,
+    required this.meanR,
+    required this.meanG,
+    required this.meanB,
+    required this.pixelCount,
+  });
+
+  final double meanLuminance;
+  final double meanR;
+  final double meanG;
+  final double meanB;
+  final int pixelCount;
 }
 
 final class _Bounds {

@@ -105,7 +105,7 @@ abstract final class ConsumerShopSeed {
       widthCm: 72,
       depthCm: 65,
       heightCm: 85,
-      hasArView: true,
+      hasArView: false,
       createdAt: DateTime(2026, 3, 20),
     ),
     VendorProduct(
@@ -124,7 +124,7 @@ abstract final class ConsumerShopSeed {
       widthCm: 74,
       depthCm: 70,
       heightCm: 86,
-      hasArView: true,
+      hasArView: false,
       createdAt: DateTime(2026, 4, 5),
     ),
     VendorProduct(
@@ -409,7 +409,7 @@ abstract final class ConsumerShopSeed {
       widthCm: 110,
       depthCm: 55,
       heightCm: 75,
-      hasArView: true,
+      hasArView: false,
       createdAt: DateTime(2026, 5, 6),
     ),
     VendorProduct(
@@ -428,7 +428,7 @@ abstract final class ConsumerShopSeed {
       widthCm: 160,
       depthCm: 85,
       heightCm: 78,
-      hasArView: true,
+      hasArView: false,
       createdAt: DateTime(2026, 5, 10),
     ),
     VendorProduct(

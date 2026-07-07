@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:placeify_flutter/features/home/data/mock_product_repository.dart';
 import 'package:placeify_flutter/features/profile/presentation/widgets/profile_sub_hero.dart';
 import 'package:placeify_flutter/features/vendor/data/vendor_3d_model_store.dart';
+import 'package:placeify_flutter/features/vendor/domain/constants/product_photo_capture.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_3d_builder_strings.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_product_3d_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product.dart';
@@ -163,9 +164,9 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
         source: action == _CapturePhotoAction.camera
             ? ImageSource.camera
             : ImageSource.gallery,
-        imageQuality: 85,
-        maxWidth: 1920,
-        maxHeight: 1920,
+        imageQuality: ProductPhotoCapture.pickerQuality,
+        maxWidth: ProductPhotoCapture.maxEdge.toDouble(),
+        maxHeight: ProductPhotoCapture.maxEdge.toDouble(),
         preferredCameraDevice: CameraDevice.rear,
       );
       if (picked == null || !mounted) return;

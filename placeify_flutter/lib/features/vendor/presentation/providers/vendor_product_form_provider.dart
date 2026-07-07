@@ -1,5 +1,10 @@
+import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:placeify_flutter/core/services/background_removal_service.dart';
+import 'package:placeify_flutter/core/utils/local_image_store.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
+import 'package:placeify_flutter/features/vendor/data/mock_vendor_product_repository.dart'
+    show VendorProductActionException;
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_form_state.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_image_item.dart';
@@ -100,6 +105,36 @@ class VendorProductForm extends _$VendorProductForm {
     state = state.copyWith(images: [...state.images, ...additions]);
   }
 
+  Future<void> addPickedImages(List<XFile> files) async {
+    if (files.isEmpty) return;
+
+    final remaining = VendorProductFormState.maxImages - state.images.length;
+    if (remaining <= 0) return;
+
+    final additions = <VendorProductImageItem>[];
+    for (final file in files.take(remaining)) {
+      final bytes = await file.readAsBytes();
+      final rawName = file.name.trim();
+      final fileName = rawName.isNotEmpty ? rawName : 'product.jpg';
+
+      if (kIsWeb) {
+        final uri = LocalImageStore.register(bytes, fileName);
+        additions.add(
+          VendorProductImageItem.fromLocalBytes(
+            path: uri,
+            bytes: bytes,
+            fileName: fileName,
+          ),
+        );
+      } else if (file.path.isNotEmpty) {
+        additions.add(VendorProductImageItem.fromLocalPath(file.path));
+      }
+    }
+
+    if (additions.isEmpty) return;
+    state = state.copyWith(images: [...state.images, ...additions]);
+  }
+
   void removeImage(String imageId) {
     state = state.copyWith(
       images: state.images.where((image) => image.id != imageId).toList(),
@@ -166,12 +201,17 @@ class VendorProductForm extends _$VendorProductForm {
 
     final service = BackgroundRemovalService();
     try {
-      final result = await service.removeBackground(sourcePath: image.localPath!);
+      final result = await service.removeBackground(
+        sourcePath: image.localPath!,
+        sourceBytes: image.localBytes,
+        fileName: image.fileName,
+      );
       cache.cache(imageId, result.processedPath);
       _updateImage(
         imageId,
         (item) => item.copyWith(
           processedLocalPath: result.processedPath,
+          processedLocalBytes: result.processedBytes,
           isProcessingBg: false,
         ),
       );
@@ -247,6 +287,7 @@ class VendorProductForm extends _$VendorProductForm {
     if (state.name.trim().isEmpty) return 'Enter a product name';
     if (state.sku.trim().isEmpty) return 'Enter a SKU';
     if (state.categoryId.trim().isEmpty) return 'Select a category';
+    if (state.images.isEmpty) return 'Add at least one product photo';
 
     final listPrice = state.parsedListPrice;
     if (listPrice == null || listPrice <= 0) {
@@ -266,6 +307,19 @@ class VendorProductForm extends _$VendorProductForm {
 
     final stock = int.tryParse(state.stock.trim());
     if (stock == null || stock < 0) return 'Enter a valid stock quantity';
+
+    for (final field in [
+      (state.width, 'width'),
+      (state.height, 'height'),
+      (state.depth, 'depth'),
+    ]) {
+      final value = field.$1.trim();
+      if (value.isEmpty) return 'Enter ${field.$2}';
+      final parsed = double.tryParse(value);
+      if (parsed == null || parsed <= 0) {
+        return 'Enter a valid ${field.$2} greater than zero';
+      }
+    }
 
     for (final field in [
       (state.width, 'width'),
@@ -340,13 +394,20 @@ class VendorProductForm extends _$VendorProductForm {
         state = state.copyWith(isSubmitting: false, clearSubmitError: true);
       }
       return saved;
-    } catch (_) {
+    } catch (error) {
       state = state.copyWith(
         isSubmitting: false,
-        submitError: 'Could not save product. Try again.',
+        submitError: _formatSubmitError(error),
       );
       return null;
     }
+  }
+
+  String _formatSubmitError(Object error) {
+    if (error is VendorProductActionException) return error.message;
+    final text = error.toString().replaceFirst('Exception: ', '').trim();
+    if (text.isNotEmpty && text.length <= 200) return text;
+    return 'Could not save product. Try again.';
   }
 
   VendorProduct _buildProduct(String vendorId, {VendorProduct? existing}) {

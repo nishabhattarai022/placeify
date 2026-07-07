@@ -7,7 +7,7 @@ import '../../home/domain/models/product.dart';
 /// Tripo multiview GLBs are normalized to roughly one meter on the longest axis.
 abstract final class ArFurnitureScale {
   static const minUserMultiplier = 0.5;
-  static const maxUserMultiplier = 3.0;
+  static const maxUserMultiplier = 2.0;
   static const defaultUserMultiplier = 1.0;
 
   /// Native plugin factors default to ~0.33–0.4 and shrink models; use 1.0 for
@@ -15,26 +15,33 @@ abstract final class ArFurnitureScale {
   static const nativeIosFactor = 1.0;
   static const nativeAndroidFactor = 1.0;
 
-  /// Brighter scene lighting so Tripo PBR textures read with their real colors.
-  static const arLightIntensityMultiplier = 3.5;
+  /// Studio neutral lighting — aligned with model-viewer `environmentImage: neutral`.
+  /// iOS applies ×2.2 internally on [ARSessionManager.setLightIntensityMultiplier].
+  static const arLightIntensityMultiplier = 0.55;
+
+  /// Android Filament rig — slightly below ModelViewer neutral to account for
+  /// live camera fill light on the composited scene.
+  static const androidArLightIntensityMultiplier = 0.9;
 
   /// Tripo reference bounding size in meters.
   static const _tripoReferenceMaxDimensionM = 1.0;
 
+  /// Calibrates catalog dimensions to perceived real-world size in AR.
+  static const realWorldCalibrationFactor = 1.65;
+
   /// Base node scale before user pinch multiplier (uniform).
   static double baseScaleFromDimensions(ProductDimensions dimensions) {
-    final maxCm = _maxDimensionCm(dimensions);
-    final targetMeters = maxCm / 100.0;
-    return (targetMeters / _tripoReferenceMaxDimensionM)
-        .clamp(0.35, 2.5);
-  }
+    final heightM = dimensions.heightCm / 100.0;
+    final widthM = dimensions.widthCm / 100.0;
+    final depthM = dimensions.depthCm / 100.0;
 
-  static double _maxDimensionCm(ProductDimensions dimensions) {
-    return [
-      dimensions.widthCm,
-      dimensions.depthCm,
-      dimensions.heightCm,
-    ].reduce((a, b) => a > b ? a : b);
+    // Height is the primary perceptual cue for furniture (chair ~85 cm, table ~75 cm).
+    final targetMeters = heightM > 0.15
+        ? heightM
+        : [heightM, widthM, depthM].reduce((a, b) => a > b ? a : b);
+
+    return (targetMeters / _tripoReferenceMaxDimensionM * realWorldCalibrationFactor)
+        .clamp(0.55, 2.8);
   }
 
   static Vector3 nodeScale({

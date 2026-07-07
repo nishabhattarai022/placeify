@@ -1,0 +1,20 @@
+material {
+    name : shadow_catcher,
+    shadingModel : unlit,
+    shadowMultiplier : true,
+    blending : transparent,
+    culling : none,
+    parameters : [
+        {
+            type : float,
+            name : shadowAlpha
+        }
+    ]
+}
+
+fragment {
+    void material(inout MaterialInputs material) {
+        prepareMaterial(material);
+        material.baseColor = vec4(0.0, 0.0, 0.0, materialParams.shadowAlpha);
+    }
+}
