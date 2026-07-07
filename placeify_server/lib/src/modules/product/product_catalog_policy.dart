@@ -15,9 +15,21 @@ abstract final class ProductCatalogPolicy {
         user.isActive;
   }
 
-  static bool isConsumerVisibleProduct(Product product, {User? vendorUser}) {
+  /// Approved vendor shop that consumers can browse (store visibility on).
+  static bool isConsumerVisibleShop(Vendor vendor, {User? user}) {
+    final resolvedUser = user ?? vendor.user;
+    if (!isApprovedVendorUser(resolvedUser)) return false;
+    return vendor.isOpen;
+  }
+
+  static bool isConsumerVisibleProduct(
+    Product product, {
+    User? vendorUser,
+    Vendor? vendor,
+  }) {
     if (product.isDeleted) return false;
     if (product.status != ProductStatus.active) return false;
+    if (vendor != null && !vendor.isOpen) return false;
     return isApprovedVendorUser(vendorUser);
   }
 
@@ -29,7 +41,9 @@ abstract final class ProductCatalogPolicy {
 
     return {
       for (final vendor in vendors)
-        if (vendor.id != null && isApprovedVendorUser(vendor.user)) vendor.id!,
+        if (vendor.id != null &&
+            isConsumerVisibleShop(vendor, user: vendor.user))
+          vendor.id!,
     };
   }
 

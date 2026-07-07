@@ -18,6 +18,9 @@ fields:
   operatingHours: String
   isOpen: bool
   status: UserAccountStatus
+  moderationNote: String?
+  appealMessage: String?
+  appealSubmittedAt: DateTime?
   totalProducts: int
   totalOrders: int
   totalRevenue: double

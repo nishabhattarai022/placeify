@@ -7,6 +7,7 @@ import '../../shared/session_service.dart';
 import '../checkout/checkout_order_setup.dart';
 import '../order/order_lifecycle_store.dart';
 import '../payment/payment_repository.dart';
+import '../product/product_pricing.dart';
 
 class CheckoutStore {
   CheckoutStore({PaymentStore? paymentStore})
@@ -41,7 +42,14 @@ class CheckoutStore {
 
     final totalAmount = cartItems.fold<double>(
       0,
-      (sum, item) => sum + (item.unitPrice * item.quantity),
+      (sum, item) {
+        final product = item.product;
+        if (product == null) {
+          return sum + (item.unitPrice * item.quantity);
+        }
+        final chargedUnitPrice = ProductPricing.effectiveUnitPrice(product);
+        return sum + (chargedUnitPrice * item.quantity);
+      },
     );
 
     final itemCount = cartItems.fold<int>(0, (sum, item) => sum + item.quantity);
@@ -83,6 +91,8 @@ class CheckoutStore {
           );
         }
 
+        final chargedUnitPrice = ProductPricing.effectiveUnitPrice(product);
+
         await OrderItem.db.insertRow(
           session,
           OrderItem(
@@ -90,7 +100,7 @@ class CheckoutStore {
             productId: product.id!,
             vendorId: product.vendorId,
             quantity: item.quantity,
-            unitPrice: item.unitPrice,
+            unitPrice: chargedUnitPrice,
           ),
           transaction: transaction,
         );

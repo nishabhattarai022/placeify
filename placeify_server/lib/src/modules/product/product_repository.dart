@@ -182,6 +182,7 @@ class CatalogRepository {
     if (!ProductCatalogPolicy.isConsumerVisibleProduct(
       product,
       vendorUser: vendorUser,
+      vendor: product.vendor,
     )) {
       return null;
     }

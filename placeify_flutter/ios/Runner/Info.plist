@@ -64,6 +64,12 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Placeify connects to your Placeify server on the local Wi-Fi network during development.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_dartobservatory._tcp</string>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>Placeify uses the camera to photograph products and preview furniture in your room with AR.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

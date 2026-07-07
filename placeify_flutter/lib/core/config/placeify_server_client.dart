@@ -4,6 +4,7 @@ import 'package:placeify_client/placeify_client.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import 'package:serverpod_flutter/serverpod_flutter.dart';
 
+import 'resolve_media_url.dart';
 import 'resolve_server_url.dart';
 
 /// Global Serverpod client for backend API calls.
@@ -126,6 +127,7 @@ Future<void> initializePlaceifyClient() async {
 Future<void> reconnectPlaceifyClient({bool forceRefresh = true}) async {
   if (forceRefresh) {
     await clearCachedServerUrl();
+    clearResolvedMediaApiBase();
   }
   await _createClient(forceRefresh: forceRefresh);
   if (client.auth.isAuthenticated) {
@@ -145,5 +147,13 @@ Future<void> _createClient({required bool forceRefresh}) async {
   )
     ..connectivityMonitor = FlutterConnectivityMonitor()
     ..authSessionManager = _authSessionManager;
-  await client.auth.initialize();
+  try {
+    await client.auth.initialize(
+      timeout: const Duration(seconds: 8),
+    );
+  } on TimeoutException {
+    // Server unreachable at startup; app can still launch and retry later.
+  } on ServerpodClientException {
+    // Auth validation failed due to connectivity; session stays restored locally.
+  }
 }

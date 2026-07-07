@@ -269,14 +269,6 @@ List<RouteBase> get _appRoutes => [
         child: const VendorRegistrationSuccessScreen(),
       ),
     ),
-    GoRoute(
-      path: VendorRoutes.notifications,
-      name: 'vendorNotifications',
-      pageBuilder: (context, state) => _slidePage(
-        key: ValueKey<String>(state.uri.toString()),
-        child: const VendorNotificationsScreen(),
-      ),
-    ),
     ShellRoute(
       navigatorKey: shellNavigatorKey,
       builder: (context, state, child) => MainShell(child: child),
@@ -642,6 +634,14 @@ List<RouteBase> get _appRoutes => [
                       pageBuilder: (context, state) => _slidePage(
                         key: ValueKey<String>(state.uri.toString()),
                         child: const VendorReviewsScreen(),
+                      ),
+                    ),
+                    GoRoute(
+                      path: 'notifications',
+                      name: 'vendorNotifications',
+                      pageBuilder: (context, state) => _slidePage(
+                        key: ValueKey<String>(state.uri.toString()),
+                        child: const VendorNotificationsScreen(),
                       ),
                     ),
                   ],

@@ -22,3 +22,5 @@ fields:
   taxCertificateUrl: String?
   moderationNote: String?
   moderatedAt: DateTime?
+  appealMessage: String?
+  appealSubmittedAt: DateTime?

@@ -43,6 +43,8 @@ abstract class Vendor
     this.approvedAt,
     this.moderationNote,
     this.moderatedAt,
+    this.appealMessage,
+    this.appealSubmittedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : isOpen = isOpen ?? true,
@@ -74,6 +76,8 @@ abstract class Vendor
     DateTime? approvedAt,
     String? moderationNote,
     DateTime? moderatedAt,
+    String? appealMessage,
+    DateTime? appealSubmittedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) = _VendorImpl;
@@ -122,6 +126,12 @@ abstract class Vendor
           ? null
           : _i1.DateTimeJsonExtension.fromJson(
               jsonSerialization['moderatedAt'],
+            ),
+      appealMessage: jsonSerialization['appealMessage'] as String?,
+      appealSubmittedAt: jsonSerialization['appealSubmittedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['appealSubmittedAt'],
             ),
       createdAt: jsonSerialization['createdAt'] == null
           ? null
@@ -190,6 +200,12 @@ abstract class Vendor
   /// When the vendor was last suspended or reinstated by admin.
   DateTime? moderatedAt;
 
+  /// Suspension appeal message; cleared on reinstate or new suspension.
+  String? appealMessage;
+
+  /// When the vendor submitted their current appeal.
+  DateTime? appealSubmittedAt;
+
   DateTime createdAt;
 
   DateTime updatedAt;
@@ -224,6 +240,8 @@ abstract class Vendor
     DateTime? approvedAt,
     String? moderationNote,
     DateTime? moderatedAt,
+    String? appealMessage,
+    DateTime? appealSubmittedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   });
@@ -254,6 +272,9 @@ abstract class Vendor
       if (approvedAt != null) 'approvedAt': approvedAt?.toJson(),
       if (moderationNote != null) 'moderationNote': moderationNote,
       if (moderatedAt != null) 'moderatedAt': moderatedAt?.toJson(),
+      if (appealMessage != null) 'appealMessage': appealMessage,
+      if (appealSubmittedAt != null)
+        'appealSubmittedAt': appealSubmittedAt?.toJson(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
     };
@@ -286,6 +307,9 @@ abstract class Vendor
       if (approvedAt != null) 'approvedAt': approvedAt?.toJson(),
       if (moderationNote != null) 'moderationNote': moderationNote,
       if (moderatedAt != null) 'moderatedAt': moderatedAt?.toJson(),
+      if (appealMessage != null) 'appealMessage': appealMessage,
+      if (appealSubmittedAt != null)
+        'appealSubmittedAt': appealSubmittedAt?.toJson(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
     };
@@ -354,6 +378,8 @@ class _VendorImpl extends Vendor {
     DateTime? approvedAt,
     String? moderationNote,
     DateTime? moderatedAt,
+    String? appealMessage,
+    DateTime? appealSubmittedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : super._(
@@ -380,6 +406,8 @@ class _VendorImpl extends Vendor {
          approvedAt: approvedAt,
          moderationNote: moderationNote,
          moderatedAt: moderatedAt,
+         appealMessage: appealMessage,
+         appealSubmittedAt: appealSubmittedAt,
          createdAt: createdAt,
          updatedAt: updatedAt,
        );
@@ -412,6 +440,8 @@ class _VendorImpl extends Vendor {
     Object? approvedAt = _Undefined,
     Object? moderationNote = _Undefined,
     Object? moderatedAt = _Undefined,
+    Object? appealMessage = _Undefined,
+    Object? appealSubmittedAt = _Undefined,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -453,6 +483,12 @@ class _VendorImpl extends Vendor {
           ? moderationNote
           : this.moderationNote,
       moderatedAt: moderatedAt is DateTime? ? moderatedAt : this.moderatedAt,
+      appealMessage: appealMessage is String?
+          ? appealMessage
+          : this.appealMessage,
+      appealSubmittedAt: appealSubmittedAt is DateTime?
+          ? appealSubmittedAt
+          : this.appealSubmittedAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -574,6 +610,18 @@ class VendorUpdateTable extends _i1.UpdateTable<VendorTable> {
         value,
       );
 
+  _i1.ColumnValue<String, String> appealMessage(String? value) =>
+      _i1.ColumnValue(
+        table.appealMessage,
+        value,
+      );
+
+  _i1.ColumnValue<DateTime, DateTime> appealSubmittedAt(DateTime? value) =>
+      _i1.ColumnValue(
+        table.appealSubmittedAt,
+        value,
+      );
+
   _i1.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
       _i1.ColumnValue(
         table.createdAt,
@@ -672,6 +720,14 @@ class VendorTable extends _i1.Table<_i1.UuidValue?> {
       'moderatedAt',
       this,
     );
+    appealMessage = _i1.ColumnString(
+      'appealMessage',
+      this,
+    );
+    appealSubmittedAt = _i1.ColumnDateTime(
+      'appealSubmittedAt',
+      this,
+    );
     createdAt = _i1.ColumnDateTime(
       'createdAt',
       this,
@@ -737,6 +793,12 @@ class VendorTable extends _i1.Table<_i1.UuidValue?> {
   /// When the vendor was last suspended or reinstated by admin.
   late final _i1.ColumnDateTime moderatedAt;
 
+  /// Suspension appeal message; cleared on reinstate or new suspension.
+  late final _i1.ColumnString appealMessage;
+
+  /// When the vendor submitted their current appeal.
+  late final _i1.ColumnDateTime appealSubmittedAt;
+
   late final _i1.ColumnDateTime createdAt;
 
   late final _i1.ColumnDateTime updatedAt;
@@ -790,6 +852,8 @@ class VendorTable extends _i1.Table<_i1.UuidValue?> {
     approvedAt,
     moderationNote,
     moderatedAt,
+    appealMessage,
+    appealSubmittedAt,
     createdAt,
     updatedAt,
   ];

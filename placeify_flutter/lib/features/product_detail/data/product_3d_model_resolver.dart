@@ -121,6 +121,7 @@ abstract final class Product3dModelResolver {
       final local = await Product3dModelLoader.prepareForAr(
         remoteUrl: remote,
         productId: product.id,
+        databaseProductId: dbId,
       );
       if (local != null) {
         return Product3dPreviewSource(src: _fileUri(local.absolutePath));

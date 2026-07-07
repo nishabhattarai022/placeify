@@ -32,6 +32,35 @@ abstract final class VendorPurchasePolicy {
     return vendor?.id;
   }
 
+  /// Blocks only signed-in vendors from buying products listed by their own shop.
+  static Future<void> assertCanAddProductToCartForUser(
+    Session session,
+    User user,
+    Product product,
+  ) async {
+    if (user.role != UserRole.vendor) return;
+
+    final buyerShopVendorId = await resolveBuyerShopVendorId(session, user.id!);
+    assertCanAddProductToCart(
+      productVendorId: product.vendorId,
+      buyerShopVendorId: buyerShopVendorId,
+    );
+  }
+
+  static Future<void> assertCanCheckoutForUser(
+    Session session,
+    User user,
+    Iterable<Product> products,
+  ) async {
+    if (user.role != UserRole.vendor) return;
+
+    final buyerShopVendorId = await resolveBuyerShopVendorId(session, user.id!);
+    assertCanCheckoutProducts(
+      products: products,
+      buyerShopVendorId: buyerShopVendorId,
+    );
+  }
+
   static void assertCanAddProductToCart({
     required UuidValue productVendorId,
     UuidValue? buyerShopVendorId,

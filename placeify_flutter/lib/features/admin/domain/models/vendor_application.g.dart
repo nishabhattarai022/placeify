@@ -21,6 +21,10 @@ _VendorApplication _$VendorApplicationFromJson(Map<String, dynamic> json) =>
       moderatedAt: json['moderatedAt'] == null
           ? null
           : DateTime.parse(json['moderatedAt'] as String),
+      appealMessage: json['appealMessage'] as String?,
+      appealSubmittedAt: json['appealSubmittedAt'] == null
+          ? null
+          : DateTime.parse(json['appealSubmittedAt'] as String),
     );
 
 Map<String, dynamic> _$VendorApplicationToJson(_VendorApplication instance) =>
@@ -34,6 +38,8 @@ Map<String, dynamic> _$VendorApplicationToJson(_VendorApplication instance) =>
       'status': _$VendorStatusEnumMap[instance.status]!,
       'moderationNote': instance.moderationNote,
       'moderatedAt': instance.moderatedAt?.toIso8601String(),
+      'appealMessage': instance.appealMessage,
+      'appealSubmittedAt': instance.appealSubmittedAt?.toIso8601String(),
     };
 
 const _$VendorStatusEnumMap = {

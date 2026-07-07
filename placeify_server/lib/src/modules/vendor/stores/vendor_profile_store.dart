@@ -6,6 +6,7 @@ import '../../../generated/protocol.dart';
 import '../../../shared/placeify_exception.dart';
 import '../../../shared/session_service.dart';
 import '../../notification/notification_repository.dart';
+import '../../product/product_catalog_policy.dart';
 import '../vendor_bank_details_validation.dart';
 import '../vendor_document_storage.dart';
 import '../vendor_product_image_storage.dart';
@@ -470,8 +471,47 @@ class VendorProfileStore {
   }
 
   Future<VendorProfileDetail> getMyProfile(Session session) async {
-    final vendor = await _access.requireOwnedVendor(session);
+    final vendor =
+        await _access.requireOwnedVendor(session, allowSuspended: true);
     return _loadProfileDetail(session, vendor, includeNotificationPrefs: true);
+  }
+
+  Future<VendorProfileDetail> submitSuspensionAppeal(
+    Session session,
+    String message,
+  ) async {
+    final vendor = await _access.requireSuspendedVendorForAppeal(session);
+    final trimmedMessage = message.trim();
+    if (trimmedMessage.isEmpty) {
+      throw PlaceifyException(
+        message: 'Appeal message is required.',
+        code: 'INVALID_APPEAL',
+      );
+    }
+
+    if (vendor.appealSubmittedAt != null) {
+      throw PlaceifyException(
+        message:
+            'You have already submitted an appeal. Please wait for admin review.',
+        code: 'APPEAL_ALREADY_SUBMITTED',
+      );
+    }
+
+    final now = DateTime.now();
+    final updatedVendor = await Vendor.db.updateRow(
+      session,
+      vendor.copyWith(
+        appealMessage: trimmedMessage,
+        appealSubmittedAt: now,
+        updatedAt: now,
+      ),
+    );
+
+    return _loadProfileDetail(
+      session,
+      updatedVendor,
+      includeNotificationPrefs: true,
+    );
   }
 
   Future<VendorProfileDetail?> getShopProfile(
@@ -487,9 +527,7 @@ class VendorProfileStore {
 
     final user = vendor.user;
     if (user == null ||
-        user.role != UserRole.vendor ||
-        user.status != UserAccountStatus.approved ||
-        !user.isActive) {
+        !ProductCatalogPolicy.isConsumerVisibleShop(vendor, user: user)) {
       return null;
     }
 
@@ -799,9 +837,7 @@ class VendorProfileStore {
       final user = vendor.user;
       final vendorId = vendor.id;
       if (user == null || vendorId == null) continue;
-      if (user.role != UserRole.vendor ||
-          user.status != UserAccountStatus.approved ||
-          !user.isActive) {
+      if (!ProductCatalogPolicy.isConsumerVisibleShop(vendor, user: user)) {
         continue;
       }
 
