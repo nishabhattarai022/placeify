@@ -146,6 +146,12 @@ class VendorStore {
   Future<VendorProfileDetail> getMyProfile(Session session) =>
       _profile.getMyProfile(session);
 
+  Future<VendorProfileDetail> submitSuspensionAppeal(
+    Session session,
+    String message,
+  ) =>
+      _profile.submitSuspensionAppeal(session, message);
+
   Future<VendorProfileDetail?> getShopProfile(
     Session session,
     UuidValue vendorId,

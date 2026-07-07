@@ -223,6 +223,8 @@ class AdminPlatformStore {
           status: AdminVendorLifecycle.effectiveAccountStatus(user, vendor),
           moderationNote: vendor.moderationNote,
           moderatedAt: vendor.moderatedAt,
+          appealMessage: vendor.appealMessage,
+          appealSubmittedAt: vendor.appealSubmittedAt,
         ),
       );
 
@@ -233,6 +235,11 @@ class AdminPlatformStore {
 
     if (status == UserAccountStatus.suspended) {
       applications.sort((a, b) {
+        final aHasAppeal = a.appealSubmittedAt != null;
+        final bHasAppeal = b.appealSubmittedAt != null;
+        if (aHasAppeal != bHasAppeal) {
+          return aHasAppeal ? -1 : 1;
+        }
         final aTime = a.moderatedAt ?? a.submittedAt;
         final bTime = b.moderatedAt ?? b.submittedAt;
         return bTime.compareTo(aTime);
@@ -297,6 +304,8 @@ class AdminPlatformStore {
       taxCertificateUrl: documentUrl(VendorDocumentType.taxCertificate),
       moderationNote: vendor.moderationNote,
       moderatedAt: vendor.moderatedAt,
+      appealMessage: vendor.appealMessage,
+      appealSubmittedAt: vendor.appealSubmittedAt,
     );
   }
 

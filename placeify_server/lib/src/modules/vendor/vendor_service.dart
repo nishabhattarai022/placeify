@@ -58,6 +58,13 @@ class VendorService {
     return _repository.getMyProfile(session);
   }
 
+  Future<VendorProfileDetail> submitSuspensionAppeal(
+    Session session,
+    String message,
+  ) {
+    return _repository.submitSuspensionAppeal(session, message);
+  }
+
   Future<VendorProfileDetail?> getShopProfile(
     Session session,
     UuidValue vendorId,

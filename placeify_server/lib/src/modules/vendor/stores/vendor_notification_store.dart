@@ -20,16 +20,29 @@ class VendorNotificationStore {
 
     return [
       for (final row in rows)
-        VendorNotificationSummary(
-          id: row.id.toString(),
-          type: _vendorNotificationType(row.type),
-          title: row.title,
-          body: row.message,
-          isRead: row.isRead,
-          createdAt: row.createdAt,
-          relatedId: row.referenceId?.toString(),
-        ),
+        if (_isVendorFacing(row))
+          VendorNotificationSummary(
+            id: row.id.toString(),
+            type: _vendorNotificationType(row.type),
+            title: row.title,
+            body: row.message,
+            isRead: row.isRead,
+            createdAt: row.createdAt,
+            relatedId: row.referenceId?.toString(),
+          ),
     ];
+  }
+
+  /// Excludes customer-personal inbox rows when a vendor account shares a user.
+  bool _isVendorFacing(InAppNotificationSummary row) {
+    return switch (row.type) {
+      InAppNotificationType.orderAccepted => false,
+      InAppNotificationType.deliveryUpdate => false,
+      InAppNotificationType.orderPlaced => row.title == 'New order received',
+      InAppNotificationType.orderCancelled =>
+        row.message.contains('cancelled by the customer'),
+      _ => true,
+    };
   }
 
   Future<void> markNotificationRead(Session session, int notificationId) async {

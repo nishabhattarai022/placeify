@@ -10,16 +10,16 @@ abstract final class ArFurnitureGestureConfig {
   static const panSmoothFactor = 0.32;
 
   /// Retries for auto-placement after floor detection.
-  static const maxAutoPlaceAttempts = 10;
+  static const maxAutoPlaceAttempts = 12;
 
   /// Delay between auto-placement retries.
-  static const autoPlaceRetryDelay = Duration(milliseconds: 180);
+  static const autoPlaceRetryDelay = Duration(milliseconds: 100);
 
   /// Wait for plane refinement before anchoring furniture.
-  static const planeStabilizeDelay = Duration(milliseconds: 750);
+  static const planeStabilizeDelay = Duration(milliseconds: 250);
 
   /// Hold steady tracking for this long before placement is allowed.
-  static const trackingSettleDelay = Duration(milliseconds: 500);
+  static const trackingSettleDelay = Duration(milliseconds: 200);
 
   /// Ignore micro-rotations that cause jitter on small screens.
   static const rotationDeadZoneRadians = 0.004;

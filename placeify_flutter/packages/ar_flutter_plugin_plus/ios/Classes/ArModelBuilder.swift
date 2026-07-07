@@ -8,12 +8,22 @@ import Combine
 class ArModelBuilder: NSObject {
 
     var iosModelScaleFactor: Float = 1.0
+    var targetHeightMeters: Float = 0
 
     /// Shifts the loaded hierarchy so its bounding-box bottom sits at local y = 0.
     private func snapBottomToOrigin(_ node: SCNNode) {
         let (min, _) = node.boundingBox
         guard min.y.isFinite else { return }
         node.position.y -= min.y
+    }
+
+    /// Scale loaded mesh to a catalog height (meters) using its bounding box.
+    private func normalizeScale(_ node: SCNNode, targetHeightMeters: Float) {
+        let (minV, maxV) = node.boundingBox
+        let height = maxV.y - minV.y
+        guard height > 1e-4, targetHeightMeters > 0 else { return }
+        let scale = targetHeightMeters / height
+        node.scale = SCNVector3(scale, scale, scale)
     }
 
     /// Ensures Tripo GLB textures and base colors render with real-world lighting.
@@ -32,29 +42,50 @@ class ArModelBuilder: NSObject {
         }
     }
 
+    /// SceneKit only casts shadows from nodes that actually carry geometry.
+    private func enableShadowCasting(on node: SCNNode) {
+        if node.geometry != nil {
+            node.castsShadow = true
+        }
+        for child in node.childNodes {
+            enableShadowCasting(on: child)
+        }
+    }
+
     private func wrapLoadedScene(
         name: String,
         scene: SCNScene,
         transformation: Array<NSNumber>?
     ) -> SCNNode? {
         let node = SCNNode()
+        let meshRoot = SCNNode()
+
         for child in scene.rootNode.childNodes {
-            child.scale = SCNVector3(
-                iosModelScaleFactor,
-                iosModelScaleFactor,
-                iosModelScaleFactor
-            )
             configureRenderableMaterials(on: child)
-            node.addChildNode(child)
+            meshRoot.addChildNode(child)
         }
+
+        if targetHeightMeters > 0 {
+            normalizeScale(meshRoot, targetHeightMeters: targetHeightMeters)
+        } else if iosModelScaleFactor != 1.0 {
+            for child in meshRoot.childNodes {
+                child.scale = SCNVector3(
+                    iosModelScaleFactor,
+                    iosModelScaleFactor,
+                    iosModelScaleFactor
+                )
+            }
+        }
+
+        snapBottomToOrigin(meshRoot)
+        node.addChildNode(meshRoot)
 
         node.name = name
         if let transform = transformation {
             node.transform = deserializeMatrix4(transform)
         }
-        snapBottomToOrigin(node)
 
-        node.castsShadow = true
+        enableShadowCasting(on: meshRoot)
         configureRenderableMaterials(on: node)
         return node
     }

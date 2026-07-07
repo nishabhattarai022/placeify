@@ -46,6 +46,6 @@ if config_path.exists():
 config.setdefault("apiUrl", "http://localhost:8080")
 config["physicalApiUrl"] = physical_url
 
-config_path.write_text(json.dumps(config, indent=2) + "\n")
+config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
 print(f"Updated physicalApiUrl → {physical_url}")
 PY
