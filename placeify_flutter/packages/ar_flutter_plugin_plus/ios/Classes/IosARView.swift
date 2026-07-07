@@ -52,6 +52,8 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
     private var placementInteriorPose: simd_float4x4?
     private var shadowFloorNode: SCNNode?
     private var directionalLightNode: SCNNode?
+    private var trackedFurnitureNode: SCNNode?
+    private var lastLightDirection = SCNVector3(-0.3, -0.8, -0.3)
     private var pendingAnchorAttachments: [UUID: (SCNNode, String, (Bool) -> Void)] = [:]
     private var depthOcclusionEnabled = false
     private let deviceSupportsLiDARMesh: Bool
@@ -128,11 +130,25 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         light.shadowMapSize = CGSize(width: 2048, height: 2048)
         light.automaticallyAdjustsShadowProjection = false
         light.orthographicScale = 2
+        light.zNear = 0.05
+        light.zFar = 10
         light.intensity = 800
         lightNode.light = light
         lightNode.eulerAngles = SCNVector3(-Float.pi / 3, Float.pi / 4, 0)
         sceneView.scene.rootNode.addChildNode(lightNode)
         directionalLightNode = lightNode
+    }
+
+    private func repositionDirectionalLight() {
+        guard let target = trackedFurnitureNode?.worldPosition else { return }
+        let dir = lastLightDirection
+        let distance: Float = 3
+        directionalLightNode?.position = SCNVector3(
+            target.x - dir.x * distance,
+            target.y - dir.y * distance,
+            target.z - dir.z * distance
+        )
+        directionalLightNode?.look(at: target)
     }
 
     private func applyLightEstimate(_ estimate: ARLightEstimate) {
@@ -144,9 +160,8 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         if let directional = estimate as? ARDirectionalLightEstimate {
             directionalLightNode?.light?.temperature = CGFloat(ambientColorTemp)
             let dir = directional.primaryLightDirection
-            let lightPos = SCNVector3(-dir.x * 3, -dir.y * 3, -dir.z * 3)
-            directionalLightNode?.position = lightPos
-            directionalLightNode?.look(at: SCNVector3Zero)
+            lastLightDirection = SCNVector3(dir.x, dir.y, dir.z)
+            repositionDirectionalLight()
         } else {
             directionalLightNode?.light?.temperature = CGFloat(ambientColorTemp)
         }
@@ -1102,9 +1117,11 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
     }
 
     private func updateShadowFrustum(for node: SCNNode) {
+        trackedFurnitureNode = node
         let (minV, maxV) = node.boundingBox
         let radius = max(maxV.x - minV.x, maxV.z - minV.z, maxV.y - minV.y) / 2
         directionalLightNode?.light?.orthographicScale = CGFloat(max(radius * 3, 1.0))
+        repositionDirectionalLight()
     }
 
     private func attachFurnitureNode(_ node: SCNNode, to anchorNode: SCNNode) {
