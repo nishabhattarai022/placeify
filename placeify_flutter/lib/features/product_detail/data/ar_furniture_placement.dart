@@ -28,24 +28,48 @@ abstract final class ArFurniturePlacement {
 
   /// Picks the closest detected plane hit that is plausibly the floor.
   /// Falls back to feature points only if no valid plane exists.
-  static ARHitTestResult? bestSurfaceHit(List<ARHitTestResult> hits) {
+  static ARHitTestResult? bestSurfaceHit(
+    List<ARHitTestResult> hits, {
+    bool allowEstimatedPlanes = false,
+  }) {
     if (hits.isEmpty) return null;
 
-    final planes = hits
+    final confirmedPlanes = hits
         .where((hit) => hit.type == ARHitTestResultType.plane)
         .toList()
       ..sort((a, b) => a.distance.compareTo(b.distance));
 
-    if (planes.isNotEmpty) {
-      final validPlane = _selectPlausibleFloorPlane(planes);
+    if (confirmedPlanes.isNotEmpty) {
+      final validPlane = _selectPlausibleFloorPlane(
+        confirmedPlanes,
+        commitFloorReference: true,
+      );
       if (validPlane != null) return validPlane;
+    }
+
+    final estimatedPlanes = allowEstimatedPlanes
+        ? (hits
+            .where((hit) => hit.type == ARHitTestResultType.estimatedPlane)
+            .toList()
+          ..sort((a, b) => a.distance.compareTo(b.distance)))
+        : const <ARHitTestResult>[];
+
+    if (estimatedPlanes.isNotEmpty) {
+      // Never let estimated planes establish the session's "confirmed floor".
+      // They can be used for manual placement intent, but are not trustworthy
+      // enough to anchor subsequent auto-placement decisions.
+      final validEstimated = _selectPlausibleFloorPlane(
+        estimatedPlanes,
+        commitFloorReference: false,
+      );
+      if (validEstimated != null) return validEstimated;
     }
 
     // No plane passed the floor-height check — do NOT fall back to a
     // random point hit for initial placement; that's how you end up on
     // walls or floating objects. Only fall back for points if there were
     // no planes detected at all (rare, early-session case).
-    if (planes.isEmpty) {
+    if (confirmedPlanes.isEmpty && estimatedPlanes.isEmpty) {
       final points = hits
           .where((hit) => hit.type == ARHitTestResultType.point)
           .toList()
@@ -58,13 +82,16 @@ abstract final class ArFurniturePlacement {
 
   static ARHitTestResult? _selectPlausibleFloorPlane(
     List<ARHitTestResult> sortedPlanes,
+    {required bool commitFloorReference}
   ) {
     for (final plane in sortedPlanes) {
       final y = plane.worldTransform.getTranslation().y;
 
       if (_confirmedFloorY == null) {
         // First plane accepted this session becomes the floor reference.
-        _confirmedFloorY = y;
+        if (commitFloorReference) {
+          _confirmedFloorY = y;
+        }
         return plane;
       }
 
