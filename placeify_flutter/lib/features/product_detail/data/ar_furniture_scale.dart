@@ -37,7 +37,10 @@ abstract final class ArFurnitureScale {
     final targetMeters = heightM > 0.15
         ? heightM
         : [heightM, widthM, depthM].reduce((a, b) => a > b ? a : b);
-    return targetMeters * realWorldCalibrationFactor;
+    // iOS native loader already normalizes the mesh to this height. Flutter then
+    // applies only the user multiplier, so avoid applying the calibration factor
+    // twice (which makes models feel "camera-attached" and oversized).
+    return targetMeters;
   }
 
   /// Node scale when native iOS already normalized mesh height to catalog size.
