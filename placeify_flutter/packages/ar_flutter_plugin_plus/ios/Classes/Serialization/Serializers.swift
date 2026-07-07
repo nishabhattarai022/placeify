@@ -7,6 +7,8 @@ func serializeHitResult(_ result: ARHitTestResult) -> Dictionary<String, Any> {
     var hitResult = Dictionary<String, Any>(minimumCapacity: 3)
     if (result.type == .existingPlaneUsingExtent || result.type == .existingPlaneUsingGeometry || result.type == .existingPlane) {
         hitResult["type"] = 1 // Type plane
+    } else if #available(iOS 11.3, *), result.type == .estimatedHorizontalPlane {
+        hitResult["type"] = 1 // Type plane — estimated floor counts as plane for placement
     } else if (result.type == .featurePoint) {
         hitResult["type"] = 2 // Type point
     } else {

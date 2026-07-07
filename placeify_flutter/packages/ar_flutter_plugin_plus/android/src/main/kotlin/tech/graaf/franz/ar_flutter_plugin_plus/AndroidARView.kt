@@ -253,6 +253,22 @@ internal class AndroidARView(
                                 )
                             )
                         }
+                        "hitTestNormalized" -> {
+                            val frame = currentFrame
+                            val width = textureView.width
+                            val height = textureView.height
+                            if (frame == null || width <= 0 || height <= 0) {
+                                result.success(ArrayList<HashMap<String, Any>>())
+                                return
+                            }
+                            val nx = (call.argument<Double>("x") ?: 0.5).toFloat()
+                            val ny = (call.argument<Double>("y") ?: 0.5).toFloat()
+                            result.success(
+                                serializePlaneAndPointHits(
+                                    frame.hitTest(width * nx, height * ny)
+                                )
+                            )
+                        }
                         "updateImageTrackingSettings" -> {
                             val argTrackingImagePaths: List<String>? = call.argument<List<String>>("trackingImagePaths")
                             val argContinuousImageTracking: Boolean? = call.argument<Boolean>("continuousImageTracking")

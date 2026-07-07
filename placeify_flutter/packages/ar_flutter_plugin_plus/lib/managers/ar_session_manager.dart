@@ -219,10 +219,15 @@ class ARSessionManager {
 
   /// Screen-center raycast against detected planes / feature points.
   Future<List<ARHitTestResult>> hitTestScreenCenter() async {
+    return hitTestNormalized(0.5, 0.5);
+  }
+
+  /// Raycast at normalized view coordinates (0–1). Use y≈0.68 for floor placement.
+  Future<List<ARHitTestResult>> hitTestNormalized(double x, double y) async {
     try {
       final raw = await _channel.invokeMethod<List<dynamic>>(
-        'hitTestScreenCenter',
-        {},
+        'hitTestNormalized',
+        {'x': x.clamp(0.0, 1.0), 'y': y.clamp(0.0, 1.0)},
       );
       if (raw == null || raw.isEmpty) return [];
       return raw
