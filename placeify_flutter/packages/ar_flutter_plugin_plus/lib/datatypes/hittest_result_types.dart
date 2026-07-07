@@ -3,4 +3,5 @@ enum ARHitTestResultType {
   undefined,
   plane,
   point,
+  estimatedPlane,
 }

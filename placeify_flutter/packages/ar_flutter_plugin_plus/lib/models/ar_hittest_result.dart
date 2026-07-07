@@ -71,6 +71,8 @@ class ARHitTestResultTypeConverter
         return ARHitTestResultType.plane;
       case 2:
         return ARHitTestResultType.point;
+      case 3:
+        return ARHitTestResultType.estimatedPlane;
       default:
         return ARHitTestResultType.undefined;
     }
@@ -84,6 +86,8 @@ class ARHitTestResultTypeConverter
         return 1;
       case ARHitTestResultType.point:
         return 2;
+      case ARHitTestResultType.estimatedPlane:
+        return 3;
       default:
         return 0;
     }
