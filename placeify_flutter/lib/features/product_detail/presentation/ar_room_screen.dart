@@ -398,7 +398,11 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     objectManager.onRotationStart = _onRotationStart;
     objectManager.onRotationEnd = _onRotationEnd;
 
-    _initSession();
+    unawaited(_bootstrapArSession(objectManager));
+  }
+
+  Future<void> _bootstrapArSession(ARObjectManager objectManager) async {
+    await _initSession();
     objectManager.onInitialize(
       iosScaleFactor: ArFurnitureScale.nativeIosFactor,
       androidScaleFactor: ArFurnitureScale.nativeAndroidFactor,
@@ -406,8 +410,8 @@ class _ArRoomScreenState extends State<ArRoomScreen>
           ? ArFurnitureScale.targetHeightMeters(widget.dimensions)
           : null,
     );
-
-    _loadModel();
+    if (!mounted) return;
+    await _loadModel();
   }
 
   Future<void> _initSession() async {
@@ -565,13 +569,11 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       (0.5, 0.78),
     ];
 
+    final merged = <ARHitTestResult>[];
     for (final (x, y) in probes) {
-      final hits = await session.hitTestNormalized(x, y);
-      if (ArFurniturePlacement.bestSurfaceHit(hits) != null) {
-        return hits;
-      }
+      merged.addAll(await session.hitTestNormalized(x, y));
     }
-    return session.hitTestNormalized(0.5, 0.68);
+    return merged;
   }
 
   Future<void> _loadModel() async {
@@ -665,8 +667,11 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     }
 
     final hits = await _placementHitCandidates(session);
-    final hit = ArFurniturePlacement.bestSurfaceHit(hits);
     final cameraPose = await session.getCameraPose();
+    final hit = ArFurniturePlacement.bestSurfaceHit(
+      hits,
+      cameraPose: cameraPose,
+    );
 
     // #region agent log
     _agentLog(
@@ -706,24 +711,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       return;
     }
 
-    if (cameraPose != null && !_isPlausibleFloorHit(hit, cameraPose)) {
-      // #region agent log
-      _agentLog(
-        'ar_room_screen.dart:_tryAutoPlace',
-        'rejected hit: implausible floor height',
-        {
-          'cameraY': cameraPose.getTranslation().y,
-          'hitY': hit.worldTransform.getTranslation().y,
-        },
-        hypothesisId: 'H2-H3',
-      );
-      // #endregion
-      _autoPlaceScheduled = false;
-      await Future<void>.delayed(ArFurnitureGestureConfig.autoPlaceRetryDelay);
-      if (mounted) unawaited(_tryAutoPlace());
-      return;
-    }
-
     _autoPlaceScheduled = false;
     await _placeOnSurface(
       objectManager: objectManager,
@@ -732,30 +719,24 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     );
   }
 
-  bool _isPlausibleFloorHit(ARHitTestResult hit, Matrix4 cameraPose) {
-    final cameraY = cameraPose.getTranslation().y;
-    final hitY = hit.worldTransform.getTranslation().y;
-    return (cameraY - hitY) > 0.4;
-  }
-
   Future<void> _onPlaneTapped(List<ARHitTestResult> hitTestResults) async {
     if (_isPlaced || _isPlacing || _modelLoading || _modelUri == null) return;
 
     final objectManager = _objectManager;
     final anchorManager = _anchorManager;
+    final session = _sessionManager;
     if (objectManager == null || anchorManager == null) return;
 
     final planeHits = hitTestResults
-        .where((r) =>
-            r.type == ARHitTestResultType.plane ||
-            r.type == ARHitTestResultType.estimatedPlane)
+        .where((r) => r.type == ARHitTestResultType.plane)
         .toList();
+    final cameraPose = session != null ? await session.getCameraPose() : null;
     final hit = ArFurniturePlacement.bestSurfaceHit(
       planeHits.isNotEmpty ? planeHits : hitTestResults,
-      allowEstimatedPlanes: true,
+      cameraPose: cameraPose,
     );
-    if (hit == null) {
-      _showTransientHint('No surface here yet. Keep scanning the floor.');
+    if (hit == null || hit.type != ARHitTestResultType.plane) {
+      _showTransientHint('No floor surface here yet. Keep scanning the floor.');
       return;
     }
 

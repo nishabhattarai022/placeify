@@ -61,6 +61,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
 
     private let maxFloorDeviationM: Float = 0.12
     private static let maxDragPlaneHeightBandM: Float = 0.15
+    private static let maxDragSurfaceElevationM: Float = 0.03
     private static let minWallClearanceFaceM: Float = 0.12
     private static let minWallClearanceCornerM: Float = 0.04
     private static let wallCornerDetectRangeM: Float = 0.35
@@ -123,7 +124,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         let light = SCNLight()
         light.type = .directional
         light.castsShadow = true
-        light.shadowMode = .modulated
+        light.shadowMode = .deferred
         light.shadowColor = UIColor.black.withAlphaComponent(Self.defaultShadowAlpha)
         light.shadowSampleCount = 16
         light.shadowRadius = 1.0
@@ -540,6 +541,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
     
         // Update session configuration
         self.sceneView.session.run(configuration)
+        result(nil)
     }
 
     func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
@@ -939,6 +941,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             recognizer.state == UIGestureRecognizer.State.cancelled ||
             recognizer.state == UIGestureRecognizer.State.failed {
             if let rotateNode = rotatingNode {
+                updateShadowFrustum(for: rotateNode)
                 self.objectManagerChannel.invokeMethod(
                     "onRotationEnd",
                     arguments: serializeLocalTransformation(node: rotateNode)
@@ -1402,6 +1405,19 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         return validateDragSnapPose(snapped, referenceFloorY: referenceFloorY) ? snapped : nil
     }
 
+    private func isElevationPlausible(rawHitY: Float, referenceFloorY: Float) -> Bool {
+        return abs(rawHitY - referenceFloorY) <= Self.maxDragSurfaceElevationM
+    }
+
+    private func realWorldElevation(at screenPoint: CGPoint) -> Float? {
+        guard let query = sceneView.raycastQuery(
+            from: screenPoint,
+            allowing: .estimatedPlane,
+            alignment: .horizontal
+        ) else { return nil }
+        return sceneView.session.raycast(query).first?.worldTransform.columns.3.y
+    }
+
     private func intersectScreenRayWithHorizontalPlane(screenPoint: CGPoint, planeY: Float) -> SCNVector3? {
         guard sceneView.bounds.height > 0 else { return nil }
 
@@ -1508,9 +1524,12 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             )
         }
 
-        if let rayHit = intersectScreenRayWithHorizontalPlane(screenPoint: screenPoint, planeY: floorY),
-           let accepted = acceptDragSnapPose(rayHit, referenceFloorY: floorY) {
-            return finalizeDragWorldPosition(current: currentWorld, target: accepted, referenceFloorY: floorY)
+        if let rayHit = intersectScreenRayWithHorizontalPlane(screenPoint: screenPoint, planeY: floorY) {
+            let elevationOk = realWorldElevation(at: screenPoint)
+                .map { isElevationPlausible(rawHitY: $0, referenceFloorY: floorY) } ?? true
+            if elevationOk, let accepted = acceptDragSnapPose(rayHit, referenceFloorY: floorY) {
+                return finalizeDragWorldPosition(current: currentWorld, target: accepted, referenceFloorY: floorY)
+            }
         }
 
         if let query = sceneView.raycastQuery(
@@ -1520,6 +1539,10 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         ) {
             let results = sceneView.session.raycast(query)
             if let hit = pickBestDragRaycastHit(results, referenceFloorY: floorY) {
+                let realHitY = hit.worldTransform.columns.3.y
+                guard isElevationPlausible(rawHitY: realHitY, referenceFloorY: floorY) else {
+                    return nil
+                }
                 let worldHit = SCNVector3(
                     hit.worldTransform.columns.3.x,
                     floorY,

@@ -18,6 +18,9 @@ abstract final class ArFurniturePlacement {
   /// Rejects tables, shelves, switchboards, and other elevated horizontal planes.
   static const maxFloorDeviationM = 0.12;
 
+  /// Minimum meters the camera must be above a hit for it to count as floor.
+  static const minCameraHeightAboveHitM = 0.4;
+
   /// Tracks the first accepted floor height for this AR session.
   /// Reset this externally (e.g. in ArRoomScreen) when a new session starts.
   static double? _confirmedFloorY;
@@ -26,11 +29,23 @@ abstract final class ArFurniturePlacement {
     _confirmedFloorY = null;
   }
 
+  /// True when [hit] is significantly below [cameraPose] (likely the floor).
+  static bool isPlausibleFloorHit(
+    ARHitTestResult hit,
+    Matrix4 cameraPose, {
+    double minDeltaM = minCameraHeightAboveHitM,
+  }) {
+    final cameraY = cameraPose.getTranslation().y;
+    final hitY = hit.worldTransform.getTranslation().y;
+    return (cameraY - hitY) > minDeltaM;
+  }
+
   /// Picks the closest detected plane hit that is plausibly the floor.
   /// Falls back to feature points only if no valid plane exists.
   static ARHitTestResult? bestSurfaceHit(
     List<ARHitTestResult> hits, {
     bool allowEstimatedPlanes = false,
+    Matrix4? cameraPose,
   }) {
     if (hits.isEmpty) return null;
 
@@ -43,6 +58,7 @@ abstract final class ArFurniturePlacement {
       final validPlane = _selectPlausibleFloorPlane(
         confirmedPlanes,
         commitFloorReference: true,
+        cameraPose: cameraPose,
       );
       if (validPlane != null) return validPlane;
     }
@@ -61,6 +77,7 @@ abstract final class ArFurniturePlacement {
       final validEstimated = _selectPlausibleFloorPlane(
         estimatedPlanes,
         commitFloorReference: false,
+        cameraPose: cameraPose,
       );
       if (validEstimated != null) return validEstimated;
     }
@@ -81,13 +98,17 @@ abstract final class ArFurniturePlacement {
   }
 
   static ARHitTestResult? _selectPlausibleFloorPlane(
-    List<ARHitTestResult> sortedPlanes,
-    {required bool commitFloorReference}
-  ) {
+    List<ARHitTestResult> sortedPlanes, {
+    required bool commitFloorReference,
+    Matrix4? cameraPose,
+  }) {
     for (final plane in sortedPlanes) {
       final y = plane.worldTransform.getTranslation().y;
 
       if (_confirmedFloorY == null) {
+        if (cameraPose != null && !isPlausibleFloorHit(plane, cameraPose)) {
+          continue;
+        }
         // First plane accepted this session becomes the floor reference.
         if (commitFloorReference) {
           _confirmedFloorY = y;
