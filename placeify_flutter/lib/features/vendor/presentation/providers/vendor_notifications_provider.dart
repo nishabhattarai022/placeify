@@ -1,8 +1,11 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:placeify_client/placeify_client.dart' hide Order;
 import 'package:placeify_flutter/core/config/placeify_server_client.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
+import 'package:placeify_flutter/features/vendor/domain/constants/vendor_routes.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/notification_type.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_notification.dart';
@@ -10,6 +13,35 @@ import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_p
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'vendor_notifications_provider.g.dart';
+
+/// Opens a vendor shop order from a notification, leaving the inbox route first.
+void openVendorOrderFromNotification(BuildContext context, String orderId) {
+  final destination = VendorRoutes.orderDetail(orderId);
+  final router = GoRouter.of(context);
+  if (router.canPop()) {
+    router.pop();
+  }
+  StatefulNavigationShell.maybeOf(context)?.goBranch(1, initialLocation: false);
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!context.mounted) return;
+    GoRouter.of(context).go(destination);
+  });
+}
+
+bool isVendorFacingNotification(VendorNotification notification) {
+  if (notification.title == 'Order placed' ||
+      notification.title == 'Order accepted' ||
+      notification.title == 'Order update') {
+    return false;
+  }
+  if (notification.body.contains('has been placed successfully') ||
+      notification.body.contains('has been accepted by the vendor') ||
+      notification.body.contains('has been automatically cancelled')) {
+    return false;
+  }
+  return true;
+}
 
 class VendorNotificationsState {
   const VendorNotificationsState({
@@ -33,9 +65,31 @@ class VendorNotificationsState {
       )
       .length;
 
+  int get orderUnreadCount => notifications
+      .where(
+        (notification) =>
+            !notification.isRead &&
+            notification.type == NotificationType.order &&
+            !dismissedIds.contains(notification.id) &&
+            notification.id != pendingDismiss?.id,
+      )
+      .length;
+
+  List<VendorNotification> get orderAlerts {
+    return notifications
+        .where(
+          (notification) =>
+              !notification.isRead &&
+              notification.type == NotificationType.order &&
+              !dismissedIds.contains(notification.id) &&
+              notification.id != pendingDismiss?.id,
+        )
+        .toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  }
+
   List<VendorNotification> get visible {
     return notifications
-        .where((notification) => !notification.isRead)
         .where((notification) => !dismissedIds.contains(notification.id))
         .where((notification) => notification.id != pendingDismiss?.id)
         .where(
@@ -93,7 +147,8 @@ class VendorNotifications extends _$VendorNotifications {
 
     final repo = ref.watch(vendorRepositoryProvider);
     final notifications = await repo.getNotifications(user!.vendorId!);
-    return VendorNotificationsState(notifications: notifications);
+    final vendorFacing = notifications.where(isVendorFacingNotification).toList();
+    return VendorNotificationsState(notifications: vendorFacing);
   }
 
   void toggleTypeFilter(NotificationType type) {

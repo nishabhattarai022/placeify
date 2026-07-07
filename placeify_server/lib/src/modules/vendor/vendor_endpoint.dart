@@ -67,6 +67,13 @@ class VendorEndpoint extends Endpoint {
     return _service.getMyProfile(session);
   }
 
+  Future<VendorProfileDetail> submitSuspensionAppeal(
+    Session session,
+    String message,
+  ) {
+    return _service.submitSuspensionAppeal(session, message);
+  }
+
   Future<VendorProfileDetail> updateMyProfile(
     Session session,
     VendorProfileUpdateInput input,

@@ -13,7 +13,7 @@ part of 'vendor_settings_provider.dart';
 final vendorSettingsProvider = VendorSettingsProvider._();
 
 final class VendorSettingsProvider
-    extends $NotifierProvider<VendorSettings, VendorSettingsState> {
+    extends $AsyncNotifierProvider<VendorSettings, VendorSettingsState> {
   VendorSettingsProvider._()
     : super(
         from: null,
@@ -31,29 +31,22 @@ final class VendorSettingsProvider
   @$internal
   @override
   VendorSettings create() => VendorSettings();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(VendorSettingsState value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<VendorSettingsState>(value),
-    );
-  }
 }
 
-String _$vendorSettingsHash() => r'5ab3eb68ddb4b0e4fa5716031482b3a455be79fa';
+String _$vendorSettingsHash() => r'20cc7a16a16a287b4df0bd562c282fa274aa896b';
 
-abstract class _$VendorSettings extends $Notifier<VendorSettingsState> {
-  VendorSettingsState build();
+abstract class _$VendorSettings extends $AsyncNotifier<VendorSettingsState> {
+  FutureOr<VendorSettingsState> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<VendorSettingsState, VendorSettingsState>;
+    final ref =
+        this.ref as $Ref<AsyncValue<VendorSettingsState>, VendorSettingsState>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<VendorSettingsState, VendorSettingsState>,
-              VendorSettingsState,
+              AnyNotifier<AsyncValue<VendorSettingsState>, VendorSettingsState>,
+              AsyncValue<VendorSettingsState>,
               Object?,
               Object?
             >;

@@ -10,6 +10,20 @@ import '../domain/models/vendor_stats.dart';
 import 'vendor_order_exceptions.dart';
 import 'vendor_profile_mapper.dart';
 
+typedef VendorSuspensionStatus = ({
+  String? moderationNote,
+  String? appealMessage,
+  DateTime? appealSubmittedAt,
+});
+
+typedef VendorStoreSettings = ({
+  bool isOpen,
+  NotificationPreference? notificationPreferences,
+  String? bankName,
+  String? accountHolderName,
+  String? maskedAccountNumber,
+});
+
 /// Live vendor profile, stats, and media uploads via [client.vendor].
 class ServerpodVendorProfileRepository {
   const ServerpodVendorProfileRepository();
@@ -23,6 +37,61 @@ class ServerpodVendorProfileRepository {
         return profile.copyWith(id: vendorId);
       }
       return profile;
+    } catch (error) {
+      throw VendorOrderActionException(_mapError(error));
+    }
+  }
+
+  Future<VendorSuspensionStatus> getSuspensionStatus() async {
+    try {
+      final detail = await client.vendor.getMyProfile();
+      return (
+        moderationNote: detail.moderationNote,
+        appealMessage: detail.appealMessage,
+        appealSubmittedAt: detail.appealSubmittedAt,
+      );
+    } catch (error) {
+      throw VendorOrderActionException(_mapError(error));
+    }
+  }
+
+  Future<VendorSuspensionStatus> submitSuspensionAppeal(String message) async {
+    try {
+      final detail = await client.vendor.submitSuspensionAppeal(message);
+      return (
+        moderationNote: detail.moderationNote,
+        appealMessage: detail.appealMessage,
+        appealSubmittedAt: detail.appealSubmittedAt,
+      );
+    } catch (error) {
+      throw VendorOrderActionException(_mapError(error));
+    }
+  }
+
+  Future<VendorStoreSettings> loadStoreSettings() async {
+    try {
+      final detail = await client.vendor.getMyProfile();
+      final bank = await client.vendor.getMyBankDetails();
+      return (
+        isOpen: detail.isOpen,
+        notificationPreferences: detail.notificationPreferences,
+        bankName: bank?.bankName,
+        accountHolderName: bank?.accountHolderName,
+        maskedAccountNumber: bank == null
+            ? null
+            : _maskAccountNumber(bank.accountNumber),
+      );
+    } catch (error) {
+      throw VendorOrderActionException(_mapError(error));
+    }
+  }
+
+  Future<bool> updateStoreOpen({required bool isOpen}) async {
+    try {
+      final detail = await client.vendor.updateMyProfile(
+        VendorProfileUpdateInput(isOpen: isOpen),
+      );
+      return detail.isOpen;
     } catch (error) {
       throw VendorOrderActionException(_mapError(error));
     }
@@ -129,5 +198,11 @@ class ServerpodVendorProfileRepository {
       return 'Cannot reach the server. Make sure placeify_server is running.';
     }
     return raw;
+  }
+
+  String _maskAccountNumber(String accountNumber) {
+    final trimmed = accountNumber.trim();
+    if (trimmed.length <= 4) return '••••';
+    return '•••• ${trimmed.substring(trimmed.length - 4)}';
   }
 }

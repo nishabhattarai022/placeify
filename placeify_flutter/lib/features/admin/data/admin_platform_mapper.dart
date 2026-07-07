@@ -59,6 +59,8 @@ abstract final class AdminPlatformMapper {
       status: toVendorStatus(summary.status),
       moderationNote: summary.moderationNote,
       moderatedAt: summary.moderatedAt,
+      appealMessage: summary.appealMessage,
+      appealSubmittedAt: summary.appealSubmittedAt,
     );
   }
 
@@ -99,6 +101,8 @@ abstract final class AdminPlatformMapper {
       status: toVendorStatus(detail.status),
       moderationNote: detail.moderationNote,
       moderatedAt: detail.moderatedAt,
+      appealMessage: detail.appealMessage,
+      appealSubmittedAt: detail.appealSubmittedAt,
     );
   }
 

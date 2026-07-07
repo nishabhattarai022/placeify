@@ -117,14 +117,19 @@ class _SuppliersNameMarqueeState extends State<SuppliersNameMarquee>
                   child: child,
                 );
               },
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _supplierLoop(key: _loopMeasureKey),
-                  const SizedBox(width: _chipGap),
-                  _supplierLoop(),
-                ],
-              ),
+              child: _loopWidth > 0
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _supplierLoop(),
+                        const SizedBox(width: _chipGap),
+                        _supplierLoop(),
+                      ],
+                    )
+                  : Opacity(
+                      opacity: 0,
+                      child: _supplierLoop(key: _loopMeasureKey),
+                    ),
             ),
           ),
           Positioned(

@@ -30,7 +30,7 @@ class VendorBottomNav extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final index = activeIndex.clamp(0, 4);
     final notificationBadgeCount =
-        ref.watch(vendorNotificationBadgeCountProvider);
+        ref.watch(vendorOrderNotificationBadgeCountProvider);
 
     return BottomNavBarShell(
       children: [

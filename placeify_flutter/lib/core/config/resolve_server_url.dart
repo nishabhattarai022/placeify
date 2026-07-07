@@ -85,9 +85,10 @@ Future<String> _resolveOnce({required bool forceRefresh}) async {
 
 Future<String?> _configuredPhysicalApiUrl() async {
   try {
-    final data = await rootBundle.loadString('assets/config.json');
-    final config = jsonDecode(data) as Map<String, dynamic>;
-    final physicalApiUrl = config['physicalApiUrl'] as String?;
+    final data = _decodeConfigJson(
+      await rootBundle.loadString('assets/config.json'),
+    );
+    final physicalApiUrl = data['physicalApiUrl'] as String?;
     if (physicalApiUrl == null || physicalApiUrl.trim().isEmpty) {
       return null;
     }
@@ -95,6 +96,14 @@ Future<String?> _configuredPhysicalApiUrl() async {
   } catch (_) {
     return null;
   }
+}
+
+Map<String, dynamic> _decodeConfigJson(String raw) {
+  final trimmed = raw.trim();
+  final withoutBom = trimmed.startsWith('\uFEFF')
+      ? trimmed.substring(1)
+      : trimmed;
+  return jsonDecode(withoutBom) as Map<String, dynamic>;
 }
 
 bool _hostsMatch(String a, String? b) {
@@ -132,8 +141,9 @@ Future<List<String>> _buildCandidates() async {
   }
 
   try {
-    final data = await rootBundle.loadString('assets/config.json');
-    final config = jsonDecode(data) as Map<String, dynamic>;
+    final config = _decodeConfigJson(
+      await rootBundle.loadString('assets/config.json'),
+    );
     add(physicalApiUrl, config['physicalApiUrl'] as String?);
 
     final apiUrl = config['apiUrl'] as String?;
@@ -150,7 +160,11 @@ Future<List<String>> _buildCandidates() async {
 
   final isPhysical = await _isPhysicalMobileDevice();
   if (isPhysical) {
-    return [...physicalApiUrl, ...localApiUrl, ...emulatorApiUrl, ...loopbackApiUrl];
+    // Phones cannot reach localhost/emulator hosts; probing them adds ~8s each.
+    if (physicalApiUrl.isNotEmpty) {
+      return physicalApiUrl;
+    }
+    return [...localApiUrl, ...emulatorApiUrl, ...loopbackApiUrl];
   }
 
   // Emulators/simulators: never probe a stale LAN IP first.

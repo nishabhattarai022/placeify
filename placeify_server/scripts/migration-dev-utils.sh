@@ -187,6 +187,13 @@ _column_exists() {
     | tr -d '[:space:]'
 }
 
+# Dev DB can register the latest migration before older registry entries were merged in.
+# Kept for paymentMethod repair only; anubudhathoki schema (special_offer, ratings) is
+# removed by bin/fix_migration_drift.dart after branch reverts.
+reconcile_skipped_registry_schema() {
+  return 0
+}
+
 # Some dev databases registered 20260622042659795 without applying paymentMethod ALTER.
 reconcile_payment_method_column() {
   if [[ "$(_table_exists payment_transaction)" != "t" ]]; then
@@ -207,4 +214,5 @@ reconcile_dev_migrations() {
   reconcile_orphan_placeify_migration || return 1
   reconcile_schema_ahead_of_registry || return 1
   reconcile_payment_method_column || return 1
+  reconcile_skipped_registry_schema || return 1
 }

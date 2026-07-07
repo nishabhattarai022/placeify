@@ -108,6 +108,17 @@ class _AdminVendorRowState extends State<AdminVendorRow> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
+                  if (vendor.appealSubmittedAt != null) ...[
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Appeal pending review',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.espresso,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
