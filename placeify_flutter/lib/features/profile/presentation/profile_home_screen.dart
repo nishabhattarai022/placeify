@@ -74,7 +74,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
       case 1:
         context.go('/bookmarks');
       case 2:
-        context.pushNamed('profileAugmentedReality');
+        context.pushNamed('profileRoomSnapshots');
       case 3:
         context.pushNamed('profileRefund');
     }
@@ -86,6 +86,8 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
         context.pushNamed('profileOrders');
       case ProfileMenuRoute.wishlist:
         context.go('/bookmarks');
+      case ProfileMenuRoute.savedRooms:
+        context.pushNamed('profileRoomSnapshots');
       case ProfileMenuRoute.augmentedReality:
         context.pushNamed('profileAugmentedReality');
       case ProfileMenuRoute.refund:
@@ -175,7 +177,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
                         for (var i = 0;
                             i < ProfileMenuItems.accountOverview.length;
                             i++) ...[
-                          if (i == 3)
+                          if (i == 4)
                             const Divider(
                               height: 16,
                               color: AppColors.creamDark,

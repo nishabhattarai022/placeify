@@ -2073,6 +2073,25 @@ class Endpoints extends _i1.EndpointDispatch {
                     offset: params['offset'],
                   ),
         ),
+        'getModel3dAsset': _i1.MethodConnector(
+          name: 'getModel3dAsset',
+          params: {
+            'productId': _i1.ParameterDescription(
+              name: 'productId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['product'] as _i13.ProductEndpoint)
+                  .getModel3dAsset(
+                    session,
+                    params['productId'],
+                  ),
+        ),
       },
     );
     connectors['refund'] = _i1.EndpointConnector(

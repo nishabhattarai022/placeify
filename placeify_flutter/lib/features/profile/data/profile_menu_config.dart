@@ -21,6 +21,7 @@ abstract final class ProfileMenuConfig {
 enum ProfileMenuRoute {
   orders,
   wishlist,
+  savedRooms,
   augmentedReality,
   refund,
   notifications,
@@ -64,6 +65,14 @@ abstract final class ProfileMenuItems {
       iconColor: AppColors.coral,
       backgroundColor: AppColors.coralBg,
       route: ProfileMenuRoute.wishlist,
+    ),
+    ProfileMenuItemData(
+      title: 'Saved Rooms',
+      subtitle: 'Snapshots from your AR sessions',
+      icon: Icons.photo_library_outlined,
+      iconColor: AppColors.sage,
+      backgroundColor: AppColors.sageBg,
+      route: ProfileMenuRoute.savedRooms,
     ),
     ProfileMenuItemData(
       title: 'Augmented Reality',

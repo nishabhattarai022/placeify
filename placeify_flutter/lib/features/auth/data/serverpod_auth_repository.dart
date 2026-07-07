@@ -480,9 +480,11 @@ class ServerpodAuthRepository implements AuthRepository {
 
     if (Platform.isAndroid || Platform.isIOS) {
       return '$base\n\n'
-          'On a physical phone, set your Mac Wi‑Fi IP in '
-          'placeify_flutter/assets/config.json → physicalApiUrl, '
-          'then rebuild the app. Mac and phone must be on the same Wi‑Fi.';
+          'On a physical phone, set your PC Wi‑Fi IP in '
+          'placeify_flutter/assets/config.json → physicalApiUrl '
+          '(or run placeify_flutter/scripts/sync_network_config.ps1), '
+          'then rebuild the app. PC and phone must be on the same Wi‑Fi. '
+          'On Windows, allow inbound TCP port 8080 in the firewall.';
     }
 
     return base;

@@ -4,6 +4,7 @@ import 'package:model_viewer_plus/model_viewer_plus.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/widgets/toast_overlay.dart';
 import '../../../home/domain/models/product.dart';
+import '../../data/product_3d_model_resolver.dart';
 import '../ar_room_screen.dart';
 import '../product_detail_tokens.dart';
 
@@ -35,9 +36,20 @@ class _Product3dPreviewState extends State<Product3dPreview> {
     HapticService.medium();
 
     try {
+      final remoteUrl = Product3dModelResolver.modelUrlFor(widget.productId) ??
+          (widget.modelSrc.startsWith('http') ? widget.modelSrc : null);
+      if (remoteUrl == null || remoteUrl.isEmpty) {
+        if (!mounted) return;
+        PlaceifyToast.show(
+          context,
+          '3D model is not available for AR yet.',
+        );
+        return;
+      }
+
       final result = await ArRoomLauncher.open(
         context: context,
-        remoteModelUrl: widget.modelSrc,
+        remoteModelUrl: remoteUrl,
         productId: widget.productId,
         productName: widget.productName,
         dimensions: widget.dimensions,
@@ -82,6 +94,9 @@ class _Product3dPreviewState extends State<Product3dPreview> {
               cameraControls: true,
               disableZoom: false,
               interactionPrompt: InteractionPrompt.auto,
+              exposure: 0.75,
+              shadowIntensity: 0.6,
+              environmentImage: 'neutral',
             ),
           ),
           Padding(

@@ -1,5 +1,7 @@
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify_flutter/features/home/presentation/providers/catalog_provider.dart';
+import 'package:placeify_flutter/features/product_detail/data/product_3d_model_loader.dart';
+import 'package:placeify_flutter/features/product_detail/data/product_3d_model_resolver.dart';
 import 'package:placeify_flutter/features/vendor/data/mock_vendor_product_repository.dart'
     show VendorProductActionException;
 import 'package:placeify_flutter/features/vendor/data/serverpod_vendor_product_repository.dart';
@@ -16,6 +18,8 @@ part 'vendor_products_provider.g.dart';
 class VendorProductsSaving extends _$VendorProductsSaving {
   @override
   bool build() => false;
+
+  void setSaving(bool value) => state = value;
 }
 
 @riverpod
@@ -38,14 +42,14 @@ class VendorProducts extends _$VendorProducts {
   }
 
   Future<void> _setSaving(bool value) async {
-    ref.read(vendorProductsSavingProvider.notifier).state = value;
+    ref.read(vendorProductsSavingProvider.notifier).setSaving(value);
   }
 
   Future<({VendorProduct? product, String? error})> createProduct(
     VendorProduct product,
   ) async {
-    await _setSaving(true);
     try {
+      await _setSaving(true);
       final user = await ref.read(currentUserProvider.future);
       final vendorId = user?.vendorId;
       if (vendorId == null) {
@@ -57,7 +61,11 @@ class VendorProducts extends _$VendorProducts {
 
       final products = state.value ?? [];
       state = AsyncData([created, ...products]);
-      await publishProductToCustomerCatalog(ref, created);
+      try {
+        await publishProductToCustomerCatalog(ref, created);
+      } catch (_) {
+        // Upload succeeded; catalog sync can retry on refresh.
+      }
       return (product: created, error: null);
     } on VendorProductActionException catch (e) {
       return (product: null, error: e.message);
@@ -89,8 +97,8 @@ class VendorProducts extends _$VendorProducts {
       ]);
     }
 
-    await _setSaving(true);
     try {
+      await _setSaving(true);
       final user = await ref.read(currentUserProvider.future);
       final vendorId = user?.vendorId;
       if (vendorId == null) {
@@ -108,7 +116,11 @@ class VendorProducts extends _$VendorProducts {
       } else {
         await refresh();
       }
-      await publishProductToCustomerCatalog(ref, updated);
+      try {
+        await publishProductToCustomerCatalog(ref, updated);
+      } catch (_) {
+        // Update succeeded; catalog sync can retry on refresh.
+      }
       return (product: updated, error: null);
     } on VendorProductActionException catch (e) {
       state = previous;
@@ -128,8 +140,8 @@ class VendorProducts extends _$VendorProducts {
     String productId, {
     List<String>? imageSources,
   }) async {
-    await _setSaving(true);
     try {
+      await _setSaving(true);
       final user = await ref.read(currentUserProvider.future);
       final vendorId = user?.vendorId;
       if (vendorId == null) {
@@ -142,6 +154,9 @@ class VendorProducts extends _$VendorProducts {
         productId,
         imageSources: imageSources,
       );
+
+      await Product3dModelLoader.invalidateCache(productId);
+      Product3dModelResolver.clearModelUrl(productId);
 
       final products = state.value;
       if (products != null) {
@@ -208,8 +223,8 @@ class VendorProducts extends _$VendorProducts {
       products.where((product) => !ids.contains(product.id)).toList(),
     );
 
-    await _setSaving(true);
     try {
+      await _setSaving(true);
       final user = await ref.read(currentUserProvider.future);
       final vendorId = user?.vendorId;
       if (vendorId == null) {

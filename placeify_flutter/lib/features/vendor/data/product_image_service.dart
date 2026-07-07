@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../domain/constants/product_photo_capture.dart';
 import '../domain/models/picked_product_image.dart';
 
 export '../domain/models/picked_product_image.dart';
@@ -99,9 +100,9 @@ class ProductImageService {
   }) async {
     final file = await _picker.pickImage(
       source: source,
-      maxWidth: 1920,
-      maxHeight: 1920,
-      imageQuality: 85,
+      maxWidth: ProductPhotoCapture.maxEdge.toDouble(),
+      maxHeight: ProductPhotoCapture.maxEdge.toDouble(),
+      imageQuality: ProductPhotoCapture.pickerQuality,
       preferredCameraDevice: preferredCameraDevice ?? CameraDevice.rear,
     );
     if (file == null) return null;

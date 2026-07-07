@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:serverpod/serverpod.dart';
 
 import '../../generated/protocol.dart';
@@ -58,5 +60,9 @@ class ProductEndpoint extends Endpoint {
       ),
     );
     return page.items;
+  }
+
+  Future<ByteData?> getModel3dAsset(Session session, int productId) {
+    return _service.getModel3dAsset(session, productId);
   }
 }

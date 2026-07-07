@@ -30,13 +30,13 @@ class ProductDetailGallery extends StatefulWidget {
 
 class _ProductDetailGalleryState extends State<ProductDetailGallery> {
   ProductDetailViewMode _viewMode = ProductDetailViewMode.photos;
-  late Future<String?> _preview3dSrcFuture;
+  late Future<Product3dPreviewSource?> _preview3dSrcFuture;
 
   @override
   void initState() {
     super.initState();
     _preview3dSrcFuture =
-        Product3dModelResolver.ensureSrcForProduct(widget.product);
+        Product3dModelResolver.ensurePreviewSourceForProduct(widget.product);
   }
 
   @override
@@ -44,7 +44,7 @@ class _ProductDetailGalleryState extends State<ProductDetailGallery> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.product.id != widget.product.id) {
       _preview3dSrcFuture =
-          Product3dModelResolver.ensureSrcForProduct(widget.product);
+          Product3dModelResolver.ensurePreviewSourceForProduct(widget.product);
     }
   }
 
@@ -123,7 +123,7 @@ class _ProductDetailGalleryState extends State<ProductDetailGallery> {
                       ? ClipRRect(
                           key: const ValueKey<String>('preview-3d'),
                           borderRadius: BorderRadius.circular(20),
-                          child: FutureBuilder<String?>(
+                          child: FutureBuilder<Product3dPreviewSource?>(
                             future: _preview3dSrcFuture,
                             builder: (context, snapshot) {
                               if (snapshot.connectionState ==
@@ -132,15 +132,23 @@ class _ProductDetailGalleryState extends State<ProductDetailGallery> {
                                   child: CircularProgressIndicator(),
                                 );
                               }
-                              final src = snapshot.data;
-                              if (src == null || src.isEmpty) {
+                              final preview = snapshot.data;
+                              final message = preview?.unavailableMessage;
+                              final src = preview?.src;
+                              if (message != null ||
+                                  src == null ||
+                                  src.isEmpty) {
                                 return Center(
-                                  child: Text(
-                                    '3D preview is not available for this item yet.',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: ProductDetailTokens.textSecondary,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(24),
+                                    child: Text(
+                                      message ??
+                                          '3D preview is not available for this item yet.',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: ProductDetailTokens.textSecondary,
+                                      ),
                                     ),
                                   ),
                                 );

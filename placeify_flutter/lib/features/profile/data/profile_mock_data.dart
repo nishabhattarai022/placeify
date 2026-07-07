@@ -59,7 +59,7 @@ abstract final class ProfileMockData {
   static const stats = [
     ProfileStat(value: '12', label: 'Orders'),
     ProfileStat(value: '8', label: 'Wishlist'),
-    ProfileStat(value: '24', label: 'AR Tries'),
+    ProfileStat(value: '—', label: 'Saved Rooms'),
     ProfileStat(value: '2', label: 'Refunds'),
   ];
 
