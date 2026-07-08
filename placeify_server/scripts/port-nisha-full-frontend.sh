@@ -9,7 +9,7 @@ cd "$ROOT"
 
 # Prefer local Nishabhattarai — remote backend/Nishabhattarai can lag behind her latest UI.
 REF="${PLACEIFY_UI_REF:-Nishabhattarai}"
-PRESERVE_DIR="${ROOT}/.sync-preserve-$(date +%Y%m%d%H%M%S)"
+PRESERVE_DIR="${PRESERVE_DIR:-/tmp/placeify-preserve-$$}"
 
 if [[ "$REF" == */* ]]; then
   echo "==> Fetch $REF"
