@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/services/haptic_service.dart';
-import '../../../../core/widgets/toast_overlay.dart';
+import '../../../ar/presentation/providers/ar_pending_selection_provider.dart';
 import '../../../ar/presentation/providers/ar_saved_products_provider.dart';
 import '../../domain/models/product.dart';
 
@@ -46,23 +46,24 @@ class _ArSaveButtonState extends ConsumerState<ArSaveButton>
 
   @override
   Widget build(BuildContext context) {
-    final isSaved =
-        ref.watch(arSavedProductsProvider).containsKey(widget.product.id);
+    final pending = ref.watch(arPendingSelectionProvider);
+    final saved = ref.watch(arSavedProductsProvider);
+    final isPending = pending.contains(widget.product.id);
+    final isSaved = saved.containsKey(widget.product.id);
+    final isHighlighted = isPending || isSaved;
 
     return Semantics(
       button: true,
-      label: isSaved ? 'Remove from My AR' : 'Save to My AR',
+      label: isPending
+          ? 'Remove from AR selection'
+          : isSaved
+              ? 'Add to AR selection again'
+              : 'Add to AR selection',
       child: GestureDetector(
         onTap: () {
           HapticService.medium();
-          ref.read(arSavedProductsProvider.notifier).toggle(widget.product.id);
-          final nowSaved =
-              ref.read(arSavedProductsProvider).containsKey(widget.product.id);
+          ref.read(arPendingSelectionProvider.notifier).toggle(widget.product.id);
           _popController.forward(from: 0);
-          PlaceifyToast.show(
-            context,
-            nowSaved ? 'Added to My AR' : 'Removed from My AR',
-          );
         },
         child: ScaleTransition(
           scale: _popScale,
@@ -71,8 +72,18 @@ class _ArSaveButtonState extends ConsumerState<ArSaveButton>
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: AppColors.warmWhite,
+              color: isPending
+                  ? AppColors.accent.withValues(alpha: 0.14)
+                  : AppColors.warmWhite,
               shape: BoxShape.circle,
+              border: isHighlighted
+                  ? Border.all(
+                      color: AppColors.accent.withValues(
+                        alpha: isPending ? 0.9 : 0.45,
+                      ),
+                      width: 1.5,
+                    )
+                  : null,
               boxShadow: [
                 BoxShadow(
                   color: AppColors.espresso.withValues(alpha: 0.08),
@@ -83,9 +94,9 @@ class _ArSaveButtonState extends ConsumerState<ArSaveButton>
             ),
             child: Center(
               child: Icon(
-                isSaved ? Icons.view_in_ar : Icons.view_in_ar_outlined,
+                isHighlighted ? Icons.view_in_ar : Icons.view_in_ar_outlined,
                 size: 18,
-                color: isSaved ? AppColors.accent : AppColors.textMuted,
+                color: isHighlighted ? AppColors.accent : AppColors.textMuted,
               ),
             ),
           ),

@@ -11,7 +11,7 @@ import 'package:placeify/core/services/haptic_service.dart';
 import 'package:placeify/core/theme/app_fonts.dart';
 import 'package:placeify/features/ar/domain/constants/ar_strings.dart';
 import 'package:placeify/features/ar/presentation/providers/ar_saved_products_provider.dart';
-import 'package:placeify/features/ar/presentation/widgets/ar_product_masonry_grid.dart';
+import 'package:placeify/features/ar/presentation/widgets/ar_products_by_category_sliver.dart';
 import 'package:placeify/features/home/domain/models/product.dart';
 import 'package:placeify/features/home/presentation/providers/category_provider.dart';
 
@@ -211,7 +211,7 @@ class _MyArScreenState extends ConsumerState<MyArScreen> {
               child: _MyArSearchEmptyState(onClear: _clearSearch),
             )
           else
-            ArProductMasonryGrid(entries: entries),
+            ArProductsByCategorySliver(entries: entries),
         ],
       ),
     );

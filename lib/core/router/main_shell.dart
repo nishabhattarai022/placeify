@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:placeify/features/admin/domain/constants/admin_routes.dart';
+import 'package:placeify/features/ar/presentation/widgets/ar_selection_done_bar.dart';
 import 'package:placeify/features/shops/domain/constants/shop_routes.dart';
 import 'package:placeify/features/vendor/domain/constants/vendor_routes.dart';
 
 import '../widgets/placeify_bottom_nav.dart';
 
-class MainShell extends StatelessWidget {
+class MainShell extends ConsumerWidget {
   const MainShell({required this.child, super.key});
 
   final Widget child;
@@ -77,7 +79,7 @@ class MainShell extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final location = GoRouterState.of(context).uri.path;
     final showConsumerNav = _showConsumerNav(location);
     final showVendorNav = _showVendorNav(location);
@@ -86,7 +88,13 @@ class MainShell extends StatelessWidget {
     return Scaffold(
       extendBody: true,
       backgroundColor: Colors.transparent,
-      body: child,
+      body: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          child,
+          ArSelectionDoneBar(showAboveNav: showConsumerNav),
+        ],
+      ),
       bottomNavigationBar: showConsumerNav
           ? SafeArea(
               top: false,

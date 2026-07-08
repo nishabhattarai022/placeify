@@ -18,4 +18,14 @@ class ArSavedProducts extends _$ArSavedProducts {
         ..[productId] = DateTime.now();
     }
   }
+
+  void addAll(Iterable<String> productIds) {
+    if (productIds.isEmpty) return;
+    final now = DateTime.now();
+    final next = Map<String, DateTime>.from(state);
+    for (final id in productIds) {
+      next[id] = now;
+    }
+    state = next;
+  }
 }
