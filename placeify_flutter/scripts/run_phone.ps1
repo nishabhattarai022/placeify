@@ -7,7 +7,7 @@ $ErrorActionPreference = "Stop"
 $ScriptDir = $PSScriptRoot
 $FlutterDir = Split-Path -Parent $ScriptDir
 
-& "$ScriptDir\sync_network_config.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -File "$ScriptDir\sync_network_config.ps1"
 
 $config = Get-Content "$FlutterDir\assets\config.json" -Raw | ConvertFrom-Json
 $serverUrl = "$($config.physicalApiUrl)/"
