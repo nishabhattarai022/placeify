@@ -22,48 +22,49 @@ part 'checkout_order_provider.g.dart';
 final _cartRepository = ServerpodCartRepository();
 
 /// Places an order from checkout — separate from [Cart] to avoid provider cycles.
-@riverpod
+@Riverpod(keepAlive: true)
 class CheckoutOrderAction extends _$CheckoutOrderAction {
   @override
   bool build() => false;
 
   Future<CheckoutFlowResult> confirm({required CartTotals totals}) async {
-    await client.auth.initialize();
-
-    final paymentOption = ref.read(selectedPaymentMethodProvider);
-    final localItems = ref.read(cartProvider);
-    final user = ref.read(currentUserProvider).value;
-    final hasAuth = client.auth.isAuthenticated;
-
-    debugPrint('CHECKOUT DEBUG user: $user');
-    debugPrint('CHECKOUT DEBUG token: ${hasAuth ? "exists" : "missing"}');
-    debugPrint('CHECKOUT DEBUG cartItems: $localItems');
-    debugPrint('CHECKOUT DEBUG cartItems length: ${localItems.length}');
-    debugPrint('CHECKOUT DEBUG selectedPayment: $paymentOption');
-    debugPrint('CHECKOUT DEBUG serverUrl: $serverUrl');
-
-    if (!hasAuth || user == null) {
-      return const CheckoutFlowFailure('Sign in to checkout');
-    }
-
-    if (paymentOption == null) {
-      return const CheckoutFlowFailure(
-        'Please select a payment method to continue.',
-      );
-    }
-
-    if (localItems.isEmpty) {
-      return const CheckoutFlowFailure(
-        'Your cart is empty. Add products from Browse, then try again.',
-      );
-    }
-
     try {
-      final serverItems =
-          await ref.read(cartProvider.notifier).resolveServerCartForCheckout();
+      final paymentOption = ref.read(selectedPaymentMethodProvider);
+      final localItems = ref.read(cartProvider);
+      final user = ref.read(currentUserProvider).value;
+      final cartNotifier = ref.read(cartProvider.notifier);
+      final catalog = ref.read(catalogIndexProvider).value ?? {};
 
-      debugPrint('CHECKOUT DEBUG serverCart length: ${serverItems.length}');
-      debugPrint('CHECKOUT DEBUG serverCart items: $serverItems');
+      await client.auth.initialize();
+      final hasAuth = client.auth.isAuthenticated;
+
+      debugPrint('CONFIRM_ORDER_DEBUG selectedPayment: $paymentOption');
+      debugPrint('CONFIRM_ORDER_DEBUG user: $user');
+      debugPrint(
+        'CONFIRM_ORDER_DEBUG token: ${hasAuth ? "exists" : "missing"}',
+      );
+      debugPrint('CONFIRM_ORDER_DEBUG cartItems: $localItems');
+      debugPrint('CONFIRM_ORDER_DEBUG serverUrl: $serverUrl');
+
+      if (!hasAuth || user == null) {
+        return const CheckoutFlowFailure('Sign in to checkout');
+      }
+
+      if (paymentOption == null) {
+        return const CheckoutFlowFailure(
+          'Please select a payment method to continue.',
+        );
+      }
+
+      if (localItems.isEmpty) {
+        return const CheckoutFlowFailure(
+          'Your cart is empty. Add products from Browse, then try again.',
+        );
+      }
+
+      final serverItems = await cartNotifier.resolveServerCartForCheckout();
+
+      debugPrint('CONFIRM_ORDER_DEBUG serverCartItems: $serverItems');
 
       if (serverItems.isEmpty) {
         return const CheckoutFlowFailure(
@@ -72,7 +73,6 @@ class CheckoutOrderAction extends _$CheckoutOrderAction {
         );
       }
 
-      final catalog = ref.read(catalogIndexProvider).value ?? {};
       for (final item in serverItems) {
         final product =
             catalog[item.productId] ??
@@ -96,9 +96,9 @@ class CheckoutOrderAction extends _$CheckoutOrderAction {
         paymentStatus: paymentOption.paymentStatusLabel,
       );
 
-      debugPrint('CHECKOUT DEBUG payload: ${payload.toJson()}');
+      debugPrint('CONFIRM_ORDER_DEBUG payload: ${payload.toJson()}');
       debugPrint(
-        'CHECKOUT DEBUG request body={shippingAddress: $shippingAddress, '
+        'CONFIRM_ORDER_DEBUG requestBody={shippingAddress: $shippingAddress, '
         'paymentMethod: ${paymentOption.apiMethod.name}}',
       );
 
@@ -107,9 +107,14 @@ class CheckoutOrderAction extends _$CheckoutOrderAction {
         paymentMethod: paymentOption.apiMethod,
       );
 
-      ref.read(cartProvider.notifier).replaceItems(const []);
-      ref.invalidate(profileDashboardProvider);
-      ref.invalidate(ordersProvider);
+      debugPrint('CONFIRM_ORDER_DEBUG responseStatus: success');
+      debugPrint('CONFIRM_ORDER_DEBUG responseData: $result');
+
+      if (ref.mounted) {
+        cartNotifier.replaceItems(const []);
+        ref.invalidate(profileDashboardProvider);
+        ref.invalidate(ordersProvider);
+      }
 
       final orderId = result.order.id;
       if (orderId == null) {
@@ -122,20 +127,22 @@ class CheckoutOrderAction extends _$CheckoutOrderAction {
       }
 
       debugPrint(
-        'CHECKOUT DEBUG response success orderId=$orderId '
+        'CONFIRM_ORDER_DEBUG responseSuccess orderId=$orderId '
         'itemCount=${result.itemCount}',
       );
 
       return CheckoutFlowSuccess(
         orderId: orderId,
-        message: 'Order #$orderId placed successfully',
+        message: 'Order confirmed successfully',
         payload: payload.toJson(),
       );
     } catch (error, stackTrace) {
-      debugPrint('CHECKOUT DEBUG caught error: $error');
-      debugPrint('CHECKOUT DEBUG stackTrace: $stackTrace');
+      debugPrint('CONFIRM_ORDER_DEBUG caughtError: $error');
+      debugPrint('CONFIRM_ORDER_DEBUG stackTrace: $stackTrace');
       try {
-        await ref.read(cartProvider.notifier).refresh();
+        if (ref.mounted) {
+          await ref.read(cartProvider.notifier).refresh();
+        }
       } catch (refreshError, refreshStack) {
         debugPrint('[checkout] cart refresh after failure: $refreshError');
         debugPrint('$refreshStack');

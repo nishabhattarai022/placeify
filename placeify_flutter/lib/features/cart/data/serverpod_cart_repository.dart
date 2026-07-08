@@ -49,26 +49,28 @@ class ServerpodCartRepository {
     );
 
     // Temporary checkout diagnostics — remove after verifying connectivity.
-    debugPrint('[checkout] serverUrl=$serverUrl');
-    debugPrint('[checkout] endpoint=checkout.checkout method=POST');
+    debugPrint('CONFIRM_ORDER_DEBUG checkoutUrl: ${serverUrl}checkout/checkout');
+    debugPrint('CONFIRM_ORDER_DEBUG requestMethod: POST');
     debugPrint(
-      '[checkout] authenticated=${client.auth.isAuthenticated}',
+      'CONFIRM_ORDER_DEBUG authenticated: ${client.auth.isAuthenticated}',
     );
     debugPrint(
-      '[checkout] payload={shippingAddress: $shippingAddress, '
+      'CONFIRM_ORDER_DEBUG payload={shippingAddress: $shippingAddress, '
       'paymentMethod: ${paymentMethod.name}}',
     );
 
     try {
       final result = await client.checkout.checkout(request);
       debugPrint(
-        '[checkout] response success orderId=${result.order.id} '
+        'CONFIRM_ORDER_DEBUG status: success '
+        'orderId=${result.order.id} '
         'itemCount=${result.itemCount}',
       );
+      debugPrint('CONFIRM_ORDER_DEBUG data: $result');
       return result;
     } catch (error, stackTrace) {
-      debugPrint('[checkout] error=$error');
-      debugPrint('[checkout] stackTrace=$stackTrace');
+      debugPrint('CONFIRM_ORDER_DEBUG error: $error');
+      debugPrint('CONFIRM_ORDER_DEBUG stackTrace: $stackTrace');
       rethrow;
     }
   }
