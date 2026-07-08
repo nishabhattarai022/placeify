@@ -42,7 +42,7 @@ final class VendorProductsSavingProvider
 }
 
 String _$vendorProductsSavingHash() =>
-    r'a30580437f004949cf9aa30ad4afb0955571f9b4';
+    r'1d977cbe5cc4e623cd072effb82103f07ddebfc1';
 
 abstract class _$VendorProductsSaving extends $Notifier<bool> {
   bool build();
@@ -86,7 +86,7 @@ final class VendorProductsProvider
   VendorProducts create() => VendorProducts();
 }
 
-String _$vendorProductsHash() => r'a481d7d2751644127ec9b666401f8b57c43a4a8a';
+String _$vendorProductsHash() => r'6decb7b68c00e6eed046fa058a785663ff6b3072';
 
 abstract class _$VendorProducts extends $AsyncNotifier<List<VendorProduct>> {
   FutureOr<List<VendorProduct>> build();

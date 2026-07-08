@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:ar_flutter_plugin_plus/ar_flutter_plugin_plus.dart';
@@ -114,44 +113,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   late final AnimationController _placementRevealController;
 
   double? _lastAppliedRevealT;
-
-  // #region agent log
-  void _agentLog(
-    String location,
-    String message,
-    Map<String, dynamic> data, {
-    required String hypothesisId,
-  }) {
-    final payload = jsonEncode({
-      'sessionId': 'c092fc',
-      'hypothesisId': hypothesisId,
-      'location': location,
-      'message': message,
-      'data': data,
-      'timestamp': DateTime.now().millisecondsSinceEpoch,
-      'runId': 'pre-fix',
-    });
-    debugPrint('AGENT_NDJSON:$payload');
-    unawaited(() async {
-      for (final host in const ['127.0.0.1', '192.168.1.112']) {
-        try {
-          final client = HttpClient();
-          final request = await client.postUrl(
-            Uri.parse(
-              'http://$host:7719/ingest/de5a92ac-2b16-4b3f-8f80-d2c85552e64b',
-            ),
-          );
-          request.headers.set('Content-Type', 'application/json');
-          request.headers.set('X-Debug-Session-Id', 'c092fc');
-          request.write(payload);
-          await request.close();
-          client.close(force: true);
-          break;
-        } catch (_) {}
-      }
-    }());
-  }
-  // #endregion
 
   @override
   void initState() {
@@ -457,10 +418,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   }
 
   Future<void> _onCaptureTap() async {
-    debugPrint(
-      'AR capture tap: placed=$_isPlaced capturing=$_isCapturing '
-      'snapshotService=$_snapshotService',
-    );
     if (_isCapturing || !_isPlaced) return;
 
     setState(() => _isCapturing = true);
@@ -499,14 +456,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
 
   void _onTrackingStateChanged(String state, String reason) {
     if (!mounted) return;
-    // #region agent log
-    _agentLog(
-      'ar_room_screen.dart:_onTrackingStateChanged',
-      'tracking state update',
-      {'state': state, 'reason': reason},
-      hypothesisId: 'H1',
-    );
-    // #endregion
     _cameraTrackingState = state;
     if (state == 'TRACKING') {
       _trackingSince ??= DateTime.now();
@@ -524,18 +473,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
 
   void _onPlaneDetected() {
     if (!mounted || _modelLoading || _isPlaneDetected) return;
-    // #region agent log
-    _agentLog(
-      'ar_room_screen.dart:_onPlaneDetected',
-      'plane detected',
-      {
-        'modelLoading': _modelLoading,
-        'modelUri': _modelUri != null,
-        'trackingState': _cameraTrackingState,
-      },
-      hypothesisId: 'H4',
-    );
-    // #endregion
     _planeDetectedAt = DateTime.now();
     setState(() => _isPlaneDetected = true);
     unawaited(_sessionManager?.setShowPlanes(false));
@@ -609,17 +546,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       _modelUri = localModel.arNodeUri;
       _modelLoading = false;
     });
-    // #region agent log
-    _agentLog(
-      'ar_room_screen.dart:_loadModel',
-      'model loaded',
-      {
-        'modelUri': localModel.arNodeUri,
-        'planeDetected': _isPlaneDetected,
-      },
-      hypothesisId: 'H4',
-    );
-    // #endregion
 
     await _sessionManager?.setLightIntensityMultiplier(_arLightIntensity);
     if (_isPlaneDetected) {
@@ -632,18 +558,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       return;
     }
     if (!_isTrackingReady) {
-      // #region agent log
-      _agentLog(
-        'ar_room_screen.dart:_tryAutoPlace',
-        'blocked: tracking not ready',
-        {
-          'trackingState': _cameraTrackingState,
-          'trackingSince': _trackingSince?.toIso8601String(),
-          'attempts': _autoPlaceAttempts,
-        },
-        hypothesisId: 'H1',
-      );
-      // #endregion
       await Future<void>.delayed(ArFurnitureGestureConfig.autoPlaceRetryDelay);
       if (mounted) unawaited(_tryAutoPlace());
       return;
@@ -668,38 +582,12 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     final hit = ArFurniturePlacement.bestSurfaceHit(hits);
     final cameraPose = await session.getCameraPose();
 
-    // #region agent log
-    _agentLog(
-      'ar_room_screen.dart:_tryAutoPlace',
-      'hit test result',
-      {
-        'attempt': _autoPlaceAttempts,
-        'hitCount': hits.length,
-        'hitTypes': hits.map((h) => h.type.name).toList(),
-        'bestHitType': hit?.type.name,
-        'bestHitDistance': hit?.distance,
-      },
-      hypothesisId: 'H2-H3',
-    );
-    // #endregion
-
     if (!mounted) {
       _autoPlaceScheduled = false;
       return;
     }
 
     if (hit == null || hit.type != ARHitTestResultType.plane) {
-      // #region agent log
-      _agentLog(
-        'ar_room_screen.dart:_tryAutoPlace',
-        'rejected hit for auto-place',
-        {
-          'hitNull': hit == null,
-          'hitType': hit?.type.name,
-        },
-        hypothesisId: 'H3',
-      );
-      // #endregion
       _autoPlaceScheduled = false;
       await Future<void>.delayed(ArFurnitureGestureConfig.autoPlaceRetryDelay);
       if (mounted) unawaited(_tryAutoPlace());
@@ -707,17 +595,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     }
 
     if (cameraPose != null && !_isPlausibleFloorHit(hit, cameraPose)) {
-      // #region agent log
-      _agentLog(
-        'ar_room_screen.dart:_tryAutoPlace',
-        'rejected hit: implausible floor height',
-        {
-          'cameraY': cameraPose.getTranslation().y,
-          'hitY': hit.worldTransform.getTranslation().y,
-        },
-        hypothesisId: 'H2-H3',
-      );
-      // #endregion
       _autoPlaceScheduled = false;
       await Future<void>.delayed(ArFurnitureGestureConfig.autoPlaceRetryDelay);
       if (mounted) unawaited(_tryAutoPlace());
@@ -797,14 +674,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       final anchorTransform = ArFurniturePlacement.anchorTransformForHit(hit);
       final anchor = ARPlaneAnchor(transformation: anchorTransform);
       final didAddAnchor = await anchorManager.addAnchor(anchor);
-      // #region agent log
-      _agentLog(
-        'ar_room_screen.dart:_placeOnSurface',
-        'anchor add result',
-        {'didAddAnchor': didAddAnchor == true},
-        hypothesisId: 'H5',
-      );
-      // #endregion
       if (didAddAnchor != true) {
         _showTransientHint('Could not anchor to this surface. Try again.');
         return;
@@ -812,17 +681,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
 
       final node = _buildFurnitureNode(modelUri);
       final didAddNode = await objectManager.addNode(node, planeAnchor: anchor);
-      // #region agent log
-      _agentLog(
-        'ar_room_screen.dart:_placeOnSurface',
-        'node add result',
-        {
-          'didAddNode': didAddNode == true,
-          'modelUri': modelUri,
-        },
-        hypothesisId: 'H5',
-      );
-      // #endregion
       if (didAddNode != true) {
         await anchorManager.removeAnchor(anchor);
         _showTransientHint('Could not place the model. Try again.');
@@ -838,17 +696,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
         _placedScaleMultiplier = _userScaleMultiplier;
         _placedRotationY = _smoothedRotationY;
       });
-      // #region agent log
-      _agentLog(
-        'ar_room_screen.dart:_placeOnSurface',
-        'placement succeeded',
-        {
-          'anchorY': anchorTransform.getTranslation().y,
-          'nodeLocalY': hit.worldTransform.getTranslation().y,
-        },
-        hypothesisId: 'H-float',
-      );
-      // #endregion
       _isPlacementRevealActive = true;
       _lastAppliedRevealT = null;
       _placementRevealController.forward(from: 0);

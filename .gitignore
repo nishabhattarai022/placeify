@@ -9,5 +9,11 @@ pubspec_overrides.yaml
 # Accidental browser-save asset folders
 **/*_files/
 
+# Temporary integration backups (UI overlay scripts)
+.sync-preserve-*/
+
+# IDE / CI folders (optional locally; use run_phone.sh / flutter run instead)
+.vscode/
+
 # Large local-only splash videos (app uses placeify_showcase.mp4)
 placeify_flutter/assets/video/*uhd*.mp4
