@@ -9,6 +9,7 @@ import '../../core/services/haptic_service.dart';
 import '../../core/utils/formatters.dart';
 import '../../features/home/data/product_reviews_repository.dart';
 import '../../features/home/domain/models/product.dart';
+import '../../features/home/presentation/widgets/ar_save_button.dart';
 import '../../features/home/presentation/widgets/product_rating_row.dart';
 
 /// Editorial full-width product row for category listing screens.
@@ -47,38 +48,46 @@ class CategoryProductListTile extends StatelessWidget {
                   child: _HeroImage(product: product, isAsset: _isAsset),
                 ),
               ),
-              if (onRemoveFromWishlist != null)
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticService.light();
-                      onRemoveFromWishlist!();
-                    },
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.12),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
+              Positioned(
+                top: 10,
+                right: 10,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (onRemoveFromWishlist != null) ...[
+                      GestureDetector(
+                        onTap: () {
+                          HapticService.light();
+                          onRemoveFromWishlist!();
+                        },
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.12),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                        ],
+                          alignment: Alignment.center,
+                          child: const Icon(
+                            Icons.star_rounded,
+                            size: 18,
+                            color: AppColors.rust,
+                          ),
+                        ),
                       ),
-                      alignment: Alignment.center,
-                      child: const Icon(
-                        Icons.star_rounded,
-                        size: 18,
-                        color: AppColors.rust,
-                      ),
-                    ),
-                  ),
+                      const SizedBox(height: 6),
+                    ],
+                    ArSaveButton(product: product),
+                  ],
                 ),
+              ),
             ],
           ),
           const SizedBox(height: 12),

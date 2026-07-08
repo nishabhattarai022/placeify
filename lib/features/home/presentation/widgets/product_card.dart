@@ -16,6 +16,7 @@ import '../../../cart/presentation/cart_actions.dart';
 import '../../domain/models/product.dart';
 import '../../data/product_reviews_repository.dart';
 import 'product_rating_row.dart';
+import 'ar_save_button.dart';
 import 'wishlist_star_button.dart';
 
 /// Home grid product tile — fills grid cell without overflow.
@@ -157,7 +158,14 @@ class _ProductImagePanel extends StatelessWidget {
           Positioned(
             top: 8,
             right: 8,
-            child: WishlistStarButton(product: product),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                WishlistStarButton(product: product),
+                const SizedBox(height: 6),
+                ArSaveButton(product: product),
+              ],
+            ),
           ),
         ],
       ),
