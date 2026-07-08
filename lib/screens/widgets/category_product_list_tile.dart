@@ -11,6 +11,7 @@ import '../../features/home/data/product_reviews_repository.dart';
 import '../../features/home/domain/models/product.dart';
 import '../../features/home/presentation/widgets/ar_save_button.dart';
 import '../../features/home/presentation/widgets/product_rating_row.dart';
+import '../../features/home/presentation/widgets/wishlist_star_button.dart';
 
 /// Editorial full-width product row for category listing screens.
 class CategoryProductListTile extends StatelessWidget {
@@ -50,19 +51,16 @@ class CategoryProductListTile extends StatelessWidget {
               ),
               Positioned(
                 top: 10,
-                right: 10,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (onRemoveFromWishlist != null) ...[
-                      GestureDetector(
+                left: 10,
+                child: onRemoveFromWishlist != null
+                    ? GestureDetector(
                         onTap: () {
                           HapticService.light();
                           onRemoveFromWishlist!();
                         },
                         child: Container(
-                          width: 32,
-                          height: 32,
+                          width: 34,
+                          height: 34,
                           decoration: BoxDecoration(
                             color: Colors.white,
                             shape: BoxShape.circle,
@@ -81,12 +79,13 @@ class CategoryProductListTile extends StatelessWidget {
                             color: AppColors.rust,
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                    ],
-                    ArSaveButton(product: product),
-                  ],
-                ),
+                      )
+                    : WishlistStarButton(product: product),
+              ),
+              Positioned(
+                top: 10,
+                right: 10,
+                child: ArSaveButton(product: product),
               ),
             ],
           ),

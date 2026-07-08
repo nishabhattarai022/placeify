@@ -114,31 +114,10 @@ class _ProductImagePanel extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(10, 12, 10, 8),
             child: _ProductCardImage(product: product),
           ),
-          if (product.hasArView)
-            Positioned(
-              top: 10,
-              left: 10,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.accent,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Text(
-                  'AR',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.warmWhite,
-                    letterSpacing: 0.6,
-                  ),
-                ),
-              ),
-            ),
           if (product.isOnSale)
             Positioned(
-              top: 10,
-              left: product.hasArView ? 44 : 10,
+              bottom: 8,
+              left: 8,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
@@ -157,15 +136,13 @@ class _ProductImagePanel extends StatelessWidget {
             ),
           Positioned(
             top: 8,
+            left: 8,
+            child: WishlistStarButton(product: product),
+          ),
+          Positioned(
+            top: 8,
             right: 8,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                WishlistStarButton(product: product),
-                const SizedBox(height: 6),
-                ArSaveButton(product: product),
-              ],
-            ),
+            child: ArSaveButton(product: product),
           ),
         ],
       ),
