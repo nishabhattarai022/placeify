@@ -49,6 +49,7 @@ import '../../features/home/presentation/bookmarks_screen.dart';
 import '../../data/furniture_categories.dart';
 import '../../screens/browse_screen.dart';
 import '../../screens/category_screen.dart';
+import '../../screens/my_ar_screen.dart';
 import '../../features/ar_hub/presentation/ar_powered_screen.dart';
 import '../../features/profile/presentation/profile_ar_history_screen.dart';
 import '../../features/profile/presentation/profile_home_screen.dart';
@@ -268,6 +269,14 @@ List<RouteBase> get _appRoutes => [
           ],
         ),
         GoRoute(
+          path: '/my-ar',
+          name: 'myAr',
+          pageBuilder: (context, state) => _slidePage(
+            key: const ValueKey<String>('my-ar'),
+            child: const MyArScreen(),
+          ),
+        ),
+        GoRoute(
           path: '/browse/chairs',
           redirect: (_, __) => '/browse',
         ),
@@ -338,7 +347,9 @@ List<RouteBase> get _appRoutes => [
           name: 'profileAugmentedReality',
           pageBuilder: (context, state) => _slidePage(
             key: ValueKey<String>(state.uri.toString()),
-            child: const ArPoweredScreen(),
+            child: ArPoweredScreen(
+              productId: state.uri.queryParameters['productId'],
+            ),
           ),
         ),
         GoRoute(

@@ -1,23 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/services/haptic_service.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../core/widgets/toast_overlay.dart';
+import '../../home/presentation/providers/category_provider.dart';
 import 'ar_hub_tokens.dart';
 import 'widgets/ar_compact_cta_button.dart';
 import 'widgets/ar_feature_showcase.dart';
 import 'widgets/ar_powered_app_bar.dart';
 
-class ArPoweredScreen extends StatefulWidget {
-  const ArPoweredScreen({super.key});
+class ArPoweredScreen extends ConsumerStatefulWidget {
+  const ArPoweredScreen({this.productId, super.key});
+
+  final String? productId;
 
   @override
-  State<ArPoweredScreen> createState() => _ArPoweredScreenState();
+  ConsumerState<ArPoweredScreen> createState() => _ArPoweredScreenState();
 }
 
-class _ArPoweredScreenState extends State<ArPoweredScreen> {
+class _ArPoweredScreenState extends ConsumerState<ArPoweredScreen> {
   static final _headlineStyle = AppFonts.dmSans(
     fontSize: 22,
     fontWeight: FontWeight.w700,
@@ -80,6 +84,20 @@ class _ArPoweredScreenState extends State<ArPoweredScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final productId = widget.productId;
+    final product =
+        productId != null ? ref.watch(productByIdProvider(productId)) : null;
+
+    final headlineLine1 = product != null
+        ? 'Viewing ${product.name}'
+        : ArHubTokens.headlineLine1;
+    final headlineLine2 =
+        product != null ? 'in your room' : ArHubTokens.headlineLine2;
+    final body = product != null
+        ? 'Place and preview this piece in AR. '
+            'Adjust scale and position before you buy.'
+        : ArHubTokens.body;
+
     return Scaffold(
       backgroundColor: ArHubTokens.background,
       body: Column(
@@ -98,12 +116,12 @@ class _ArPoweredScreenState extends State<ArPoweredScreen> {
                   child: Column(
                     children: [
                       Text(
-                        ArHubTokens.headlineLine1,
+                        headlineLine1,
                         textAlign: TextAlign.center,
                         style: _headlineStyle,
                       ),
                       Text(
-                        ArHubTokens.headlineLine2,
+                        headlineLine2,
                         textAlign: TextAlign.center,
                         style: _headlineStyle,
                       ),
@@ -111,7 +129,7 @@ class _ArPoweredScreenState extends State<ArPoweredScreen> {
                       ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 320),
                         child: Text(
-                          ArHubTokens.body,
+                          body,
                           textAlign: TextAlign.center,
                           style: AppFonts.dmSans(
                             fontSize: 13,
