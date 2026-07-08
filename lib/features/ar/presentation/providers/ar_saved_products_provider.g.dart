@@ -23,7 +23,7 @@ final class ArSavedProductsProvider
           argument: null,
           retry: null,
           name: r'arSavedProductsProvider',
-          isAutoDispose: true,
+          isAutoDispose: false,
           dependencies: null,
           $allTransitiveDependencies: null,
         );

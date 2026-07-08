@@ -3,7 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'ar_saved_products_provider.g.dart';
 
 /// Product id → time saved (newest first when listed).
-@riverpod
+@Riverpod(keepAlive: true)
 class ArSavedProducts extends _$ArSavedProducts {
   @override
   Map<String, DateTime> build() => {};
