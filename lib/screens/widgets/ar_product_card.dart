@@ -63,24 +63,30 @@ class _ArProductCardState extends State<ArProductCard> {
           scale: _pressed ? 0.97 : 1.0,
           duration: const Duration(milliseconds: 100),
           curve: Curves.easeOutCubic,
-          child: DecoratedBox(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutCubic,
             decoration: BoxDecoration(
-              color: AppColors.warmWhite,
-              borderRadius: BorderRadius.circular(_kCardRadius),
+              borderRadius: BorderRadius.circular(_kCardRadius + 2),
               border: widget.selectionMode && widget.isSelected
-                  ? Border.all(color: AppColors.accent, width: 2)
+                  ? Border.all(color: AppColors.accent, width: 2.5)
                   : null,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                ),
-              ],
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(_kCardRadius),
-              child: Column(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: AppColors.warmWhite,
+                borderRadius: BorderRadius.circular(_kCardRadius),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(_kCardRadius),
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   AspectRatio(
@@ -198,6 +204,7 @@ class _ArProductCardState extends State<ArProductCard> {
                   ),
                 ],
               ),
+            ),
             ),
           ),
         ),
