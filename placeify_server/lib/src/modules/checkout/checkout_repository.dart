@@ -130,30 +130,54 @@ class CheckoutStore {
       return created;
     });
 
-    await CheckoutOrderSetup.notifyVendorsOfNewOrder(
-      session,
-      order.id!,
-      vendorIds,
-    );
+    try {
+      await CheckoutOrderSetup.notifyVendorsOfNewOrder(
+        session,
+        order.id!,
+        vendorIds,
+      );
+    } catch (error, stackTrace) {
+      session.log(
+        'ORDER_ROUTE_DEBUG postCheckout delivery setup failed '
+        'orderId=${order.id} error=$error\n$stackTrace',
+        level: LogLevel.error,
+      );
+    }
 
     final customerName = user.name?.trim().isNotEmpty == true
         ? user.name!.trim()
         : 'Customer';
 
     for (final vendorId in vendorIds) {
-      await OrderNotificationService.notifyVendorNewOrder(
-        session,
-        order: order,
-        vendorId: vendorId,
-        customerName: customerName,
-        itemCount: itemCount,
-      );
+      try {
+        await OrderNotificationService.notifyVendorNewOrder(
+          session,
+          order: order,
+          vendorId: vendorId,
+          customerName: customerName,
+          itemCount: itemCount,
+        );
+      } catch (error, stackTrace) {
+        session.log(
+          'ORDER_ROUTE_DEBUG vendor notification failed '
+          'orderId=${order.id} vendorId=$vendorId error=$error\n$stackTrace',
+          level: LogLevel.error,
+        );
+      }
     }
 
-    await OrderNotificationService.notifyCustomerOrderPlaced(
-      session,
-      order: order,
-    );
+    try {
+      await OrderNotificationService.notifyCustomerOrderPlaced(
+        session,
+        order: order,
+      );
+    } catch (error, stackTrace) {
+      session.log(
+        'ORDER_ROUTE_DEBUG customer notification failed '
+        'orderId=${order.id} error=$error\n$stackTrace',
+        level: LogLevel.error,
+      );
+    }
 
     return CheckoutResult(order: order, itemCount: itemCount);
   }
