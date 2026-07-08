@@ -1,5 +1,6 @@
 import 'package:placeify_client/placeify_client.dart' hide Order, OrderItem;
 
+import '../../../core/utils/payment_method_labels.dart';
 import '../domain/enums/consumer_order_status.dart';
 import '../domain/enums/payment_status.dart';
 import '../domain/models/order.dart';
@@ -99,12 +100,7 @@ abstract final class OrderApiMapper {
   }
 
   static String paymentMethodLabel(PaymentMethod method) {
-    return switch (method) {
-      PaymentMethod.cod => 'Cash on delivery',
-      PaymentMethod.mockOnline => 'Card (mock online)',
-      PaymentMethod.esewa => 'eSewa',
-      PaymentMethod.khalti => 'Khalti',
-    };
+    return PaymentMethodLabels.label(method);
   }
 
   static ConsumerOrderStatus mapStatus(

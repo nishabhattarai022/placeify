@@ -259,7 +259,12 @@ List<Order> returnOrders(Ref ref) {
 Future<Order?> orderById(Ref ref, String orderId) async {
   final orders = await ref.watch(ordersProvider.future);
   for (final order in orders) {
-    if (order.id == orderId) return order;
+    if (order.id == orderId) {
+      if (order.paymentMethod.trim().isNotEmpty) {
+        return order;
+      }
+      break;
+    }
   }
 
   final userId = await ref.watch(ordersUserIdProvider.future);
