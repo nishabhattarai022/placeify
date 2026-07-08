@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/widgets/placeify_bottom_sheet.dart';
+import '../../../../core/widgets/placeify_dialog.dart';
 import '../../../../core/widgets/toast_overlay.dart';
 import '../../domain/enums/payment_status.dart';
 import '../providers/vendor_payments_provider.dart';
@@ -80,24 +81,14 @@ class _PaymentUpdateSheetBodyState extends State<_PaymentUpdateSheetBody> {
     FocusScope.of(context).unfocus();
 
     if (_selected == PaymentStatus.refunded) {
-      final confirmed = await showDialog<bool>(
-        context: widget.sheetContext,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Confirm refund?'),
-          content: const Text(
+      final confirmed = await PlaceifyDialog.showConfirm(
+        widget.sheetContext,
+        title: 'Confirm refund?',
+        message:
             'Refunding marks this payment as reversed. This action is recorded in the audit trail.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Confirm refund'),
-            ),
-          ],
-        ),
+        confirmLabel: 'Confirm refund',
+        confirmColor: AppColors.vendorForest,
+        isDestructive: true,
       );
       if (confirmed != true || !mounted) return;
     }

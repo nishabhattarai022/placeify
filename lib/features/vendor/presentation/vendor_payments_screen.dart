@@ -6,6 +6,7 @@ import '../../../core/constants/app_radii.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/bottom_nav/bottom_nav_tokens.dart';
+import '../../../core/widgets/placeify_dialog.dart';
 import '../../../core/widgets/shimmer_loader.dart';
 import '../../../core/widgets/toast_overlay.dart';
 import 'package:placeify/features/vendor/domain/models/vendor_payout.dart';
@@ -111,24 +112,13 @@ class VendorPaymentsScreen extends ConsumerWidget {
   }
 
   Future<void> _requestPayout(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Request payout?'),
-        content: const Text(
+    final confirmed = await PlaceifyDialog.showConfirm(
+      context,
+      title: 'Request payout?',
+      message:
           'Your pending balance will be queued for transfer within 2–3 business days.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Confirm'),
-          ),
-        ],
-      ),
+      confirmLabel: 'Confirm',
+      confirmColor: AppColors.vendorForest,
     );
 
     if (confirmed != true || !context.mounted) return;

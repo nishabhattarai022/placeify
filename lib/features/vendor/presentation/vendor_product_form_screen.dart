@@ -19,6 +19,7 @@ import '../../../core/services/haptic_service.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/percent_input_formatter.dart';
 import '../../../core/widgets/animated_scale_tap.dart';
+import '../../../core/widgets/placeify_action_row.dart';
 import '../../../core/widgets/placeify_bottom_sheet.dart';
 import '../../../core/widgets/toast_overlay.dart';
 
@@ -266,62 +267,18 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                   'Your unsaved edits will be lost if you leave this screen.',
             ),
             const SizedBox(height: AppSpacing.xl),
-            Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticService.light();
-                      Navigator.pop(sheetContext, false);
-                    },
-                    child: Container(
-                      height: 48,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: AppColors.cream,
-                        borderRadius: AppRadii.pill,
-                        border: Border.all(
-                          color: AppColors.creamDark,
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Text(
-                        'Keep Editing',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticService.medium();
-                      Navigator.pop(sheetContext, true);
-                    },
-                    child: Container(
-                      height: 48,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: AppColors.rust,
-                        borderRadius: AppRadii.pill,
-                      ),
-                      child: Text(
-                        'Discard',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.warmWhite,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+            PlaceifyActionRow(
+              cancelLabel: 'Keep Editing',
+              confirmLabel: 'Discard',
+              confirmColor: AppColors.rust,
+              onCancel: () {
+                HapticService.light();
+                Navigator.pop(sheetContext, false);
+              },
+              onConfirm: () {
+                HapticService.medium();
+                Navigator.pop(sheetContext, true);
+              },
             ),
           ],
         );
@@ -996,41 +953,21 @@ class _CategoryPicker extends StatelessWidget {
     return InkWell(
       onTap: () async {
         HapticService.light();
-        final selected = await showModalBottomSheet<String>(
-          context: context,
-          backgroundColor: AppColors.warmWhite,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
+        final selected = await PlaceifyBottomSheet.show<String>(
+          context,
           builder: (sheetContext) {
-            return SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Select category',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.espresso,
-                        ),
-                      ),
-                    ),
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const PlaceifyBottomSheetHeader(title: 'Select category'),
+                for (final category in MockProductRepository.categories)
+                  PlaceifySelectTile(
+                    label: category.label,
+                    selected: categoryId == category.id,
+                    onTap: () => Navigator.pop(sheetContext, category.id),
                   ),
-                  for (final category in MockProductRepository.categories)
-                    ListTile(
-                      title: Text(category.label),
-                      trailing: categoryId == category.id
-                          ? const Icon(Icons.check, color: AppColors.accent)
-                          : null,
-                      onTap: () => Navigator.pop(sheetContext, category.id),
-                    ),
-                ],
-              ),
+              ],
             );
           },
         );
