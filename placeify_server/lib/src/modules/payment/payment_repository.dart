@@ -54,6 +54,7 @@ class PaymentStore {
       PaymentMethod.mockOnline => 'mock',
       PaymentMethod.esewa => 'esewa',
       PaymentMethod.khalti => 'khalti',
+      PaymentMethod.bankTransfer => 'bank_transfer',
     };
   }
 

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:placeify_client/placeify_client.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
@@ -42,12 +43,34 @@ class ServerpodCartRepository {
     PaymentMethod paymentMethod = PaymentMethod.mockOnline,
   }) async {
     _requireAuthenticated();
-    return client.checkout.checkout(
-      CheckoutRequest(
-        shippingAddress: shippingAddress,
-        paymentMethod: paymentMethod,
-      ),
+    final request = CheckoutRequest(
+      shippingAddress: shippingAddress,
+      paymentMethod: paymentMethod,
     );
+
+    // Temporary checkout diagnostics — remove after verifying connectivity.
+    debugPrint('[checkout] serverUrl=$serverUrl');
+    debugPrint('[checkout] endpoint=checkout.checkout method=POST');
+    debugPrint(
+      '[checkout] authenticated=${client.auth.isAuthenticated}',
+    );
+    debugPrint(
+      '[checkout] payload={shippingAddress: $shippingAddress, '
+      'paymentMethod: ${paymentMethod.name}}',
+    );
+
+    try {
+      final result = await client.checkout.checkout(request);
+      debugPrint(
+        '[checkout] response success orderId=${result.order.id} '
+        'itemCount=${result.itemCount}',
+      );
+      return result;
+    } catch (error, stackTrace) {
+      debugPrint('[checkout] error=$error');
+      debugPrint('[checkout] stackTrace=$stackTrace');
+      rethrow;
+    }
   }
 
   int _requireDatabaseId(String productId) {

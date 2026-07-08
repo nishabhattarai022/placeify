@@ -17,7 +17,8 @@ enum PaymentMethod implements _i1.SerializableModel {
   cod,
   mockOnline,
   esewa,
-  khalti;
+  khalti,
+  bankTransfer;
 
   static PaymentMethod fromJson(String name) {
     switch (name) {
@@ -29,6 +30,8 @@ enum PaymentMethod implements _i1.SerializableModel {
         return PaymentMethod.esewa;
       case 'khalti':
         return PaymentMethod.khalti;
+      case 'bankTransfer':
+        return PaymentMethod.bankTransfer;
       default:
         return PaymentMethod.mockOnline;
     }

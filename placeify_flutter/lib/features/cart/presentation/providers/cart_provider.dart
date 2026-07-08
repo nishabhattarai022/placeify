@@ -1,14 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:placeify_client/placeify_client.dart' hide Order;
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 import '../../../../core/config/placeify_server_client.dart';
 import '../../../../core/utils/vendor_purchase_policy.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../home/presentation/providers/catalog_provider.dart';
-import '../../../home/presentation/providers/category_provider.dart';
-import '../../../orders/presentation/providers/orders_provider.dart';
-import '../../../profile/presentation/providers/profile_dashboard_provider.dart';
 import '../../data/cart_api_errors.dart';
 import '../../data/product_id_codec.dart';
 import '../../data/serverpod_cart_repository.dart';
@@ -16,25 +13,12 @@ import '../../domain/cart_line_item.dart';
 
 part 'cart_provider.g.dart';
 
-class CartTotals {
-  const CartTotals({
-    required this.subtotal,
-    required this.discount,
-    required this.total,
-  });
-
-  final double subtotal;
-  final double discount;
-  final double total;
-}
-
 final _cartRepository = ServerpodCartRepository();
 
 @Riverpod(keepAlive: true)
 class Cart extends _$Cart {
   @override
   List<CartLineItem> build() {
-    ref.watch(catalogIndexProvider);
     ref.listen(currentUserProvider, (previous, next) {
       final wasLoggedIn = previous?.value != null;
       next.whenData((user) {
@@ -178,59 +162,54 @@ class Cart extends _$Cart {
     }
   }
 
-  Future<String> checkout({
-    PaymentMethod paymentMethod = PaymentMethod.cod,
-  }) async {
+  /// Syncs local cart state without triggering checkout-side provider reads.
+  void replaceItems(List<CartLineItem> items) => state = items;
+
+  /// Ensures server cart has items before checkout (pushes local items when needed).
+  Future<List<CartLineItem>> resolveServerCartForCheckout() async {
+    await client.auth.initialize();
     if (!client.auth.isAuthenticated) {
-      return 'Sign in to checkout';
+      throw StateError('Sign in to sync your cart with the server.');
     }
 
-    try {
-      final serverItems = await _cartRepository.fetchItems();
-      if (serverItems.isEmpty) {
-        state = const [];
-        return CartApiErrors.message(
-          StateError('CART_EMPTY'),
-          fallback:
-              'Your cart is empty on the server. Sign in, add products from Browse, then try again.',
-        );
-      }
+    final localItems = [...state];
+    var serverItems = await _fetchServerCartOrRetry();
 
-      state = serverItems;
+    debugPrint(
+      '[cart] resolveServerCart local=${localItems.length} '
+      'server=${serverItems.length}',
+    );
 
-      final user = ref.read(currentUserProvider).value;
-      final catalog = ref.read(catalogIndexProvider).value ?? {};
-      for (final item in serverItems) {
-        final product = catalog[item.productId];
-        if (!VendorPurchasePolicy.canPurchase(
-          user: user,
-          productVendorId: product?.vendorId,
-        )) {
-          return VendorPurchasePolicy.checkoutBlockedMessage;
+    if (serverItems.isEmpty && localItems.isNotEmpty) {
+      for (final item in localItems) {
+        final normalizedId = ProductIdCodec.normalizeUiProductId(item.productId);
+        try {
+          await _cartRepository.addProduct(
+            normalizedId,
+            quantity: item.quantity,
+          );
+        } catch (error) {
+          debugPrint(
+            '[cart] checkout sync failed productId=$normalizedId: $error',
+          );
         }
       }
+      serverItems = await _fetchServerCartOrRetry();
+      if (serverItems.isNotEmpty) {
+        state = serverItems;
+      }
+    }
 
-      final profile = await client.user.getCurrentUser();
-      final savedAddress = profile?.address?.trim();
-      final shippingAddress = savedAddress != null && savedAddress.isNotEmpty
-          ? savedAddress
-          : 'Kathmandu, Nepal';
+    return serverItems;
+  }
 
-      final result = await _cartRepository.checkout(
-        shippingAddress,
-        paymentMethod: paymentMethod,
-      );
-
-      state = const [];
-      ref.invalidate(profileDashboardProvider);
-      ref.invalidate(ordersProvider);
-      return 'Order #${result.order.id} placed successfully';
+  Future<List<CartLineItem>> _fetchServerCartOrRetry() async {
+    try {
+      return await _cartRepository.fetchItems();
     } catch (error) {
-      await _refreshFromServer();
-      return CartApiErrors.message(
-        error,
-        fallback: 'Checkout failed. Add items while signed in and try again.',
-      );
+      debugPrint('[cart] fetchItems failed, retrying after auth init: $error');
+      await client.auth.initialize();
+      return _cartRepository.fetchItems();
     }
   }
 
@@ -272,24 +251,3 @@ class CartEditMode extends _$CartEditMode {
   void toggle() => state = !state;
 }
 
-@riverpod
-CartTotals cartTotals(Ref ref) {
-  final items = ref.watch(cartProvider);
-
-  var subtotal = 0.0;
-  for (final item in items) {
-    final product = ref.watch(productByIdProvider(item.productId));
-    if (product == null) continue;
-    subtotal += product.price * item.quantity;
-  }
-
-  return CartTotals(
-    subtotal: _roundMoney(subtotal),
-    discount: 0,
-    total: _roundMoney(subtotal),
-  );
-}
-
-double _roundMoney(double value) {
-  return (value * 100).roundToDouble() / 100;
-}

@@ -14,6 +14,12 @@ class CheckoutEndpoint extends Endpoint {
     Session session,
     CheckoutRequest request,
   ) {
+    // Temporary checkout diagnostics — remove after verifying connectivity.
+    print(
+      '[checkout] request authUser=${session.authenticated?.userIdentifier} '
+      'paymentMethod=${request.paymentMethod} '
+      'shippingAddress=${request.shippingAddress}',
+    );
     return _service.checkout(session, request);
   }
 }

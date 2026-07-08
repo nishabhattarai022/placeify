@@ -36,6 +36,10 @@ class CheckoutStore {
       include: CartItem.include(product: Product.include()),
     );
 
+    print(
+      '[checkout] cart itemCount=${cartItems.length} cartId=${cart.id}',
+    );
+
     if (cartItems.isEmpty) {
       throw PlaceifyException(message: 'Your cart is empty.', code: 'CART_EMPTY');
     }

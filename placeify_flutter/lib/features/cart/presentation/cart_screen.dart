@@ -8,6 +8,7 @@ import '../../home/presentation/providers/category_provider.dart';
 import 'cart_actions.dart';
 import 'cart_tokens.dart';
 import 'providers/cart_provider.dart';
+import 'providers/cart_totals_provider.dart';
 import 'widgets/cart_header.dart';
 import 'widgets/cart_line_card.dart';
 import 'widgets/cart_order_summary.dart';
@@ -104,7 +105,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
               bottom: 0,
               child: CartOrderSummary(
                 totals: totals,
-                onCheckout: () => checkoutCart(ref, context),
+                onCheckout: () => navigateToCheckout(ref, context),
               ),
             ),
           ],
