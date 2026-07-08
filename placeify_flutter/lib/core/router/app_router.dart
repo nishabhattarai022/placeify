@@ -14,12 +14,14 @@ import 'package:placeify_flutter/features/admin/presentation/vendor_approvals/ve
 import 'package:placeify_flutter/features/admin/presentation/vendors/admin_vendor_detail_screen.dart';
 import 'package:placeify_flutter/features/admin/presentation/vendors/admin_vendors_screen.dart';
 import 'package:placeify_flutter/features/admin/presentation/widgets/admin_tab_scaffold.dart';
+import 'package:placeify_flutter/features/admin/domain/enums/user_role.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify_flutter/core/widgets/toast_overlay.dart';
 import 'package:placeify_flutter/features/vendor/presentation/guards/vendor_auth_guard.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../constants/app_durations.dart';
 import '../../features/home/presentation/home_screen.dart';
+import '../../features/auth/presentation/admin_login_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
@@ -62,6 +64,7 @@ import '../../features/profile/presentation/profile_settings_screen.dart';
 import '../../features/profile/presentation/profile_wishlist_screen.dart';
 import '../../features/product_detail/presentation/product_detail_screen.dart';
 import '../../features/cart/presentation/cart_screen.dart';
+import '../../features/cart/presentation/checkout_payment_screen.dart';
 import 'main_shell.dart';
 
 part 'app_router.g.dart';
@@ -115,15 +118,27 @@ GoRouter appRouter(Ref ref) {
       final userAsync = ref.read(currentUserProvider);
       if (userAsync.isLoading) return null;
 
+      final user = userAsync.value;
+      final location = state.matchedLocation;
+
+      // If already authenticated, skip auth/onboarding routes.
+      if (user != null &&
+          (location == '/splash' ||
+              location == '/login' ||
+              location == '/login/admin' ||
+              location == '/register')) {
+        return user.role == UserRole.admin ? AdminRoutes.dashboard : '/home';
+      }
+
       final adminRedirect = AdminAuthGuard.evaluate(
-        location: state.matchedLocation,
-        user: userAsync.value,
+        location: location,
+        user: user,
       );
       if (adminRedirect != null) return adminRedirect;
 
       final redirect = VendorAuthGuard.evaluate(
-        location: state.matchedLocation,
-        user: userAsync.value,
+        location: location,
+        user: user,
       );
       if (redirect?.toastMessage != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -166,6 +181,16 @@ List<RouteBase> get _appRoutes => [
     pageBuilder: (context, state) => CustomTransitionPage(
       key: state.pageKey,
       child: const LoginScreen(),
+      transitionsBuilder: _fadeTransition,
+      transitionDuration: AppDurations.slow,
+    ),
+  ),
+  GoRoute(
+    path: '/login/admin',
+    name: 'adminLogin',
+    pageBuilder: (context, state) => CustomTransitionPage(
+      key: state.pageKey,
+      child: const AdminLoginScreen(),
       transitionsBuilder: _fadeTransition,
       transitionDuration: AppDurations.slow,
     ),
@@ -392,6 +417,16 @@ List<RouteBase> get _appRoutes => [
           key: ValueKey<String>(state.uri.toString()),
           child: const CartScreen(),
         ),
+        routes: [
+          GoRoute(
+            path: 'checkout',
+            name: 'cartCheckout',
+            pageBuilder: (context, state) => _slidePage(
+              key: ValueKey<String>(state.uri.toString()),
+              child: const CheckoutPaymentScreen(),
+            ),
+          ),
+        ],
       ),
       GoRoute(
         path: '/products',

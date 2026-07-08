@@ -245,21 +245,6 @@ class MockAuthRepository implements AuthRepository {
       changed = true;
     }
 
-    final adminEmail = DemoCredentials.adminEmail.toLowerCase();
-    if (!updated.any((u) => u.email == adminEmail)) {
-      updated = [
-        _StoredUser(
-          id: 'demo-admin',
-          fullName: DemoCredentials.adminFullName,
-          email: adminEmail,
-          password: DemoCredentials.adminPassword,
-          role: UserRole.admin,
-        ),
-        ...updated,
-      ];
-      changed = true;
-    }
-
     if (changed) {
       await _saveUsers(updated);
     }

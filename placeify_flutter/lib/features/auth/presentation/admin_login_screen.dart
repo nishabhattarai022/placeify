@@ -4,26 +4,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/widgets/toast_overlay.dart';
-import '../../admin/domain/enums/user_role.dart';
-import '../domain/repositories/auth_repository.dart';
-import 'providers/auth_provider.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/services/haptic_service.dart';
+import '../../../core/widgets/toast_overlay.dart';
+import '../../admin/domain/enums/user_role.dart';
 import '../../splash/presentation/widgets/onboarding/primary_cta_button.dart';
 import '../constants/auth_assets.dart';
-import '../constants/demo_credentials.dart';
+import '../domain/repositories/auth_repository.dart';
+import 'providers/auth_provider.dart';
 import 'widgets/auth_text_field.dart';
 import 'widgets/foggy_image_background.dart';
 
-class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+/// Empty admin credential form — no autofill, no hardcoded credentials.
+class AdminLoginScreen extends ConsumerStatefulWidget {
+  const AdminLoginScreen({super.key});
 
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<AdminLoginScreen> createState() => _AdminLoginScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
   bool _isSubmitting = false;
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
@@ -47,13 +47,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _signInWithDemo() async {
-    _emailController.text = DemoCredentials.email;
-    _passwordController.text = DemoCredentials.password;
-    await _submit(destination: '/home');
-  }
-
-  Future<void> _submit({required String destination}) async {
+  Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_isSubmitting) return;
 
@@ -66,10 +60,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             password: _passwordController.text,
           );
       if (!mounted) return;
+
       final user = ref.read(currentUserProvider).value;
-      final targetRoute =
-          user?.role == UserRole.admin ? '/admin' : destination;
-      context.go(targetRoute);
+      if (user?.role == UserRole.admin) {
+        context.go('/admin');
+      } else {
+        context.go('/home');
+      }
     } on AuthException catch (e) {
       if (mounted) PlaceifyToast.show(context, e.message);
     } catch (_) {
@@ -124,7 +121,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       if (context.canPop()) {
                         context.pop();
                       } else {
-                        context.go('/splash');
+                        context.go('/login');
                       }
                     },
                     icon: Icon(
@@ -159,9 +156,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 height: 1.05,
                               ),
                               children: const [
-                                TextSpan(text: 'Welcome '),
+                                TextSpan(text: 'Admin '),
                                 TextSpan(
-                                  text: 'Back',
+                                  text: 'Login',
                                   style: TextStyle(
                                     fontStyle: FontStyle.italic,
                                   ),
@@ -171,7 +168,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const SizedBox(height: 10),
                           Text(
-                            'Log in to continue exploring furniture in AR and connecting with vendors.',
+                            'Sign in with your admin credentials to manage the platform.',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w300,
@@ -184,7 +181,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           SizedBox(height: topPadding > 0 ? 36 : 40),
                           AuthTextField(
                             label: 'Email',
-                            hint: DemoCredentials.email,
+                            hint: 'Admin email',
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
@@ -199,119 +196,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             textInputAction: TextInputAction.done,
                             validator: _passwordValidator,
                           ),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: _isSubmitting
-                                  ? null
-                                  : () {
-                                      HapticService.light();
-                                      context.push('/login/forgot-password');
-                                    },
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                  vertical: 2,
-                                ),
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: const Text(
-                                'Forgot password?',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.onboardingAmber,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            DemoCredentials.hint,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              color: AppColors.onboardingTextBody.withValues(
-                                alpha: 0.75,
-                              ),
-                            ),
-                          ),
                           const SizedBox(height: 32),
                           PrimaryCtaButton(
                             label: _isSubmitting ? 'Logging in...' : 'Log In',
-                            onTap: () => _submit(destination: '/home'),
-                          ),
-                          const SizedBox(height: 12),
-                          Center(
-                            child: TextButton(
-                              onPressed: _isSubmitting
-                                  ? null
-                                  : () {
-                                      HapticService.light();
-                                      _signInWithDemo();
-                                    },
-                              child: const Text(
-                                'Use demo account',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.onboardingAmber,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Center(
-                            child: TextButton(
-                              onPressed: _isSubmitting
-                                  ? null
-                                  : () {
-                                      HapticService.light();
-                                      context.push('/login/admin');
-                                    },
-                              child: Text(
-                                'Admin Login',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.onboardingTextBody.withValues(
-                                    alpha: 0.65,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Center(
-                            child: TextButton(
-                              onPressed: () {
-                                HapticService.light();
-                                context.push('/register');
-                              },
-                              child: RichText(
-                                text: TextSpan(
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w400,
-                                    color: AppColors.onboardingTextBody
-                                        .withValues(alpha: 0.85),
-                                  ),
-                                  children: const [
-                                    TextSpan(
-                                      text: "Don't have an account? ",
-                                    ),
-                                    TextSpan(
-                                      text: 'Create one',
-                                      style: TextStyle(
-                                        color: AppColors.onboardingAmber,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
+                            onTap: _submit,
                           ),
                         ],
                       ),

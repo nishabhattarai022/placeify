@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:placeify_client/placeify_client.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -97,12 +96,6 @@ class ServerpodAuthRepository implements AuthRepository {
     }
   }
 
-  /// Development-only: ensures the demo admin account exists before sign-in.
-  Future<void> prepareDemoAdminAccount() async {
-    if (!kDebugMode) return;
-    await _withConnectionRetry(_provisionDemoAdminQuietly);
-  }
-
   @override
   Future<AppUser> signIn({
     required String email,
@@ -126,33 +119,9 @@ class ServerpodAuthRepository implements AuthRepository {
       );
       await client.auth.updateSignedInUser(authSuccess);
       await _prefs.setString(_sessionEmailKey, normalizedEmail);
-      await _syncDemoAdminRoleAfterSignIn(normalizedEmail);
       return _loadAppUser(normalizedEmail);
     } catch (error) {
       throw _mapError(error);
-    }
-  }
-
-  Future<void> _provisionDemoAdminQuietly() async {
-    try {
-      await client.devAuth.provisionDemoAdmin();
-    } catch (_) {
-      // Older servers may not expose devAuth yet.
-    }
-  }
-
-  /// Dev-only role sync for the configured demo admin email after a valid login.
-  Future<void> _syncDemoAdminRoleAfterSignIn(String normalizedEmail) async {
-    if (!kDebugMode) return;
-    if (normalizedEmail != DemoCredentials.adminEmail.trim().toLowerCase()) {
-      return;
-    }
-
-    await _provisionDemoAdminQuietly();
-    try {
-      await client.user.ensureDemoAdmin();
-    } catch (_) {
-      // ensureDemoAdmin is dev-only on the server as well.
     }
   }
 
