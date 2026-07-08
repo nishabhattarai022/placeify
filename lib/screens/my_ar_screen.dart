@@ -2,18 +2,22 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import 'package:placeify/core/constants/app_colors.dart';
 import 'package:placeify/core/services/haptic_service.dart';
 import 'package:placeify/core/theme/app_fonts.dart';
+import 'package:placeify/core/widgets/placeify_bottom_sheet.dart';
+import 'package:placeify/data/furniture_categories.dart';
 import 'package:placeify/features/ar/domain/constants/ar_strings.dart';
 import 'package:placeify/features/ar/presentation/providers/ar_saved_products_provider.dart';
 import 'package:placeify/features/ar/presentation/widgets/ar_products_by_category_sliver.dart';
+import 'package:placeify/features/ar/presentation/widgets/my_ar_toolbar.dart';
+import 'package:placeify/features/ar/presentation/widgets/my_ar_try_in_room_bar.dart';
 import 'package:placeify/features/home/domain/models/product.dart';
 import 'package:placeify/features/home/presentation/providers/category_provider.dart';
+
+enum _MyArSort { recent, category, name }
 
 class MyArScreen extends ConsumerStatefulWidget {
   const MyArScreen({super.key});
@@ -27,6 +31,9 @@ class _MyArScreenState extends ConsumerState<MyArScreen> {
   String _searchInput = '';
   String _debouncedQuery = '';
   Timer? _debounce;
+  bool _selectionMode = false;
+  final Set<String> _selectedIds = {};
+  _MyArSort _sort = _MyArSort.recent;
 
   @override
   void dispose() {
@@ -49,6 +56,85 @@ class _MyArScreenState extends ConsumerState<MyArScreen> {
     _onSearchChanged('');
   }
 
+  void _toggleSelectionMode() {
+    setState(() {
+      _selectionMode = !_selectionMode;
+      if (!_selectionMode) _selectedIds.clear();
+    });
+  }
+
+  void _onProductTap(Product product) {
+    if (_selectionMode) {
+      setState(() {
+        if (_selectedIds.contains(product.id)) {
+          _selectedIds.remove(product.id);
+        } else {
+          _selectedIds.add(product.id);
+        }
+      });
+      return;
+    }
+
+    HapticService.light();
+    context.push('/profile/augmented-reality?productId=${product.id}');
+  }
+
+  void _openTryInRoom() {
+    if (_selectedIds.isEmpty) return;
+    final ids = _selectedIds.join(',');
+    final first = _selectedIds.first;
+    setState(() {
+      _selectionMode = false;
+      _selectedIds.clear();
+    });
+    context.push(
+      '/profile/augmented-reality?productIds=$ids&active=$first',
+    );
+  }
+
+  void _openSortSheet() {
+    HapticService.light();
+    PlaceifyBottomSheet.show<void>(
+      context,
+      builder: (sheetContext) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const PlaceifyBottomSheetHeader(
+              title: 'Sort by',
+              subtitle: 'Organize your saved AR items',
+            ),
+            const SizedBox(height: 16),
+            PlaceifySelectTile(
+              label: 'Recently saved',
+              selected: _sort == _MyArSort.recent,
+              onTap: () => _applySort(sheetContext, _MyArSort.recent),
+            ),
+            PlaceifySelectTile(
+              label: 'Category',
+              selected: _sort == _MyArSort.category,
+              onTap: () => _applySort(sheetContext, _MyArSort.category),
+            ),
+            PlaceifySelectTile(
+              label: 'Name A–Z',
+              selected: _sort == _MyArSort.name,
+              onTap: () => _applySort(sheetContext, _MyArSort.name),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _applySort(BuildContext sheetContext, _MyArSort sort) {
+    if (_sort != sort) {
+      HapticService.selection();
+      setState(() => _sort = sort);
+    }
+    Navigator.pop(sheetContext);
+  }
+
   List<({Product product, DateTime savedAt})> _resolveEntries(
     Map<String, DateTime> saved,
   ) {
@@ -69,8 +155,29 @@ class _MyArScreenState extends ConsumerState<MyArScreen> {
       entries.add((product: product, savedAt: entry.value));
     }
 
-    entries.sort((a, b) => b.savedAt.compareTo(a.savedAt));
+    switch (_sort) {
+      case _MyArSort.recent:
+        entries.sort((a, b) => b.savedAt.compareTo(a.savedAt));
+      case _MyArSort.category:
+        entries.sort((a, b) {
+          final catA = _categoryName(a.product.categoryId);
+          final catB = _categoryName(b.product.categoryId);
+          final cmp = catA.compareTo(catB);
+          return cmp != 0 ? cmp : a.product.name.compareTo(b.product.name);
+        });
+      case _MyArSort.name:
+        entries.sort(
+          (a, b) => a.product.name.toLowerCase().compareTo(
+                b.product.name.toLowerCase(),
+              ),
+        );
+    }
+
     return entries;
+  }
+
+  String _categoryName(String categoryId) {
+    return furnitureCategoryById(categoryId)?.name ?? categoryId;
   }
 
   @override
@@ -92,59 +199,53 @@ class _MyArScreenState extends ConsumerState<MyArScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF9F8F4),
       resizeToAvoidBottomInset: false,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(20, topInset + 28, 20, 20),
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Column(
+      body: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(20, topInset + 28, 20, 20),
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.only(right: 52),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              ArStrings.eyebrow,
-                              style: AppFonts.dmSans(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                letterSpacing: 1.35,
-                                color: const Color(0xFF8A8A8A),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              ArStrings.titleLine1,
-                              style: AppFonts.dmSerifDisplay(
-                                fontSize: 48,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.black,
-                                height: 1.0,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            Text(
-                              isSearching
-                                  ? ArStrings.searchResults(entries.length)
-                                  : ArStrings.savedCount(entries.length),
-                              style: AppFonts.dmSans(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                                color: const Color(0xFF8A8A8A),
-                                height: 1.3,
-                              ),
-                            ),
-                          ],
+                      Text(
+                        ArStrings.eyebrow,
+                        style: AppFonts.dmSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 1.35,
+                          color: const Color(0xFF8A8A8A),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 10),
+                      Text(
+                        ArStrings.titleLine1,
+                        style: AppFonts.dmSerifDisplay(
+                          fontSize: 48,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.black,
+                          height: 1.0,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        _selectionMode && _selectedIds.isNotEmpty
+                            ? ArStrings.selectedCount(_selectedIds.length)
+                            : isSearching
+                                ? ArStrings.searchResults(entries.length)
+                                : ArStrings.savedCount(entries.length),
+                        style: AppFonts.dmSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: const Color(0xFF8A8A8A),
+                          height: 1.3,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
                       Container(
                         height: 48,
                         decoration: BoxDecoration(
@@ -189,29 +290,45 @@ class _MyArScreenState extends ConsumerState<MyArScreen> {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      MyArToolbar(
+                        selectionMode: _selectionMode,
+                        onFilterTap: _openSortSheet,
+                        onSelectTap: _toggleSelectionMode,
+                      ),
+                      if (_selectionMode) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          ArStrings.selectHint,
+                          style: AppFonts.dmSans(
+                            fontSize: 13,
+                            color: AppColors.charcoal.withValues(alpha: 0.55),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: _MyArCartButton(
-                      onTap: () {
-                        HapticService.light();
-                        context.push('/cart');
-                      },
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+              if (entries.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: _MyArSearchEmptyState(onClear: _clearSearch),
+                )
+              else
+                ArProductsByCategorySliver(
+                  entries: entries,
+                  selectionMode: _selectionMode,
+                  selectedIds: _selectedIds,
+                  onProductTap: _onProductTap,
+                ),
+            ],
           ),
-          if (entries.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: _MyArSearchEmptyState(onClear: _clearSearch),
-            )
-          else
-            ArProductsByCategorySliver(entries: entries),
+          if (_selectionMode && _selectedIds.isNotEmpty)
+            MyArTryInRoomBar(
+              selectedCount: _selectedIds.length,
+              onTap: _openTryInRoom,
+            ),
         ],
       ),
     );
@@ -273,56 +390,56 @@ class _MyArEmptyState extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                      Icon(
-                        Icons.view_in_ar_outlined,
-                        size: 48,
-                        color: AppColors.charcoal.withValues(alpha: 0.35),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        ArStrings.emptyTitle,
-                        style: AppFonts.dmSans(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.charcoal,
+                        Icon(
+                          Icons.view_in_ar_outlined,
+                          size: 48,
+                          color: AppColors.charcoal.withValues(alpha: 0.35),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        ArStrings.emptySubtitle,
-                        textAlign: TextAlign.center,
-                        style: AppFonts.dmSans(
-                          fontSize: 14,
-                          color: AppColors.charcoal.withValues(alpha: 0.55),
-                          height: 1.45,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      FilledButton(
-                        onPressed: onBrowse,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.charcoal,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 14,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                        ),
-                        child: Text(
-                          ArStrings.emptyCta,
+                        const SizedBox(height: 16),
+                        Text(
+                          ArStrings.emptyTitle,
                           style: AppFonts.dmSans(
-                            fontWeight: FontWeight.w600,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.charcoal,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 8),
+                        Text(
+                          ArStrings.emptySubtitle,
+                          textAlign: TextAlign.center,
+                          style: AppFonts.dmSans(
+                            fontSize: 14,
+                            color: AppColors.charcoal.withValues(alpha: 0.55),
+                            height: 1.45,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        FilledButton(
+                          onPressed: onBrowse,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.charcoal,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 14,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                          ),
+                          child: Text(
+                            ArStrings.emptyCta,
+                            style: AppFonts.dmSans(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
             ],
           ),
         ),
@@ -378,42 +495,6 @@ class _MyArSearchEmptyState extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _MyArCartButton extends StatelessWidget {
-  const _MyArCartButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  static const double _size = 44;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: _size,
-        height: _size,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: Colors.black.withValues(alpha: 0.08),
-          ),
-        ),
-        alignment: Alignment.center,
-        child: SvgPicture.asset(
-          'assets/icons/ic_cart.svg',
-          width: 20,
-          height: 20,
-          colorFilter: const ColorFilter.mode(
-            Color(0xFF1A1A1A),
-            BlendMode.srcIn,
-          ),
-        ),
       ),
     );
   }

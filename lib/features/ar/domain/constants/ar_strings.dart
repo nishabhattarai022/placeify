@@ -19,4 +19,8 @@ abstract final class ArStrings {
 
   static const doneSingle = 'Done';
   static String doneMultiple(int count) => 'Done · $count items';
+
+  static const selectHint = 'Tap items to select one or more for AR preview.';
+  static String selectedCount(int count) =>
+      count == 1 ? '1 item selected' : '$count items selected';
 }

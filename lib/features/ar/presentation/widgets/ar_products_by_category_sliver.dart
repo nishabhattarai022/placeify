@@ -9,10 +9,16 @@ import 'package:placeify/screens/widgets/ar_product_card.dart';
 class ArProductsByCategorySliver extends StatelessWidget {
   const ArProductsByCategorySliver({
     required this.entries,
+    required this.onProductTap,
+    this.selectionMode = false,
+    this.selectedIds = const {},
     super.key,
   });
 
   final List<({Product product, DateTime savedAt})> entries;
+  final void Function(Product product) onProductTap;
+  final bool selectionMode;
+  final Set<String> selectedIds;
 
   @override
   Widget build(BuildContext context) {
@@ -25,8 +31,6 @@ class ArProductsByCategorySliver extends StatelessWidget {
     for (final category in furnitureCategories) {
       final items = grouped[category.id];
       if (items == null || items.isEmpty) continue;
-
-      items.sort((a, b) => b.savedAt.compareTo(a.savedAt));
 
       sections.add(
         SliverToBoxAdapter(
@@ -61,6 +65,9 @@ class ArProductsByCategorySliver extends StatelessWidget {
                 return ArProductCard(
                   product: entry.product,
                   savedAt: entry.savedAt,
+                  selectionMode: selectionMode,
+                  isSelected: selectedIds.contains(entry.product.id),
+                  onTap: () => onProductTap(entry.product),
                 );
               },
               childCount: items.length,
@@ -70,13 +77,11 @@ class ArProductsByCategorySliver extends StatelessWidget {
       );
     }
 
-    // Any products with unknown category ids.
     final knownIds = furnitureCategories.map((c) => c.id).toSet();
     final otherItems = entries
         .where((e) => !knownIds.contains(e.product.categoryId))
         .toList();
     if (otherItems.isNotEmpty) {
-      otherItems.sort((a, b) => b.savedAt.compareTo(a.savedAt));
       sections.add(
         const SliverToBoxAdapter(
           child: Padding(
@@ -108,6 +113,9 @@ class ArProductsByCategorySliver extends StatelessWidget {
                 return ArProductCard(
                   product: entry.product,
                   savedAt: entry.savedAt,
+                  selectionMode: selectionMode,
+                  isSelected: selectedIds.contains(entry.product.id),
+                  onTap: () => onProductTap(entry.product),
                 );
               },
               childCount: otherItems.length,
@@ -123,7 +131,9 @@ class ArProductsByCategorySliver extends StatelessWidget {
 
     return SliverMainAxisGroup(slivers: [
       ...sections,
-      const SliverToBoxAdapter(child: SizedBox(height: 100)),
+      SliverToBoxAdapter(
+        child: SizedBox(height: selectionMode ? 160 : 100),
+      ),
     ]);
   }
 }

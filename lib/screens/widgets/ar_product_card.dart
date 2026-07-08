@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:go_router/go_router.dart';
 
 import 'package:placeify/core/constants/app_colors.dart';
 import 'package:placeify/core/services/haptic_service.dart';
@@ -19,11 +18,17 @@ class ArProductCard extends StatefulWidget {
   const ArProductCard({
     required this.product,
     required this.savedAt,
+    required this.onTap,
+    this.selectionMode = false,
+    this.isSelected = false,
     super.key,
   });
 
   final Product product;
   final DateTime savedAt;
+  final VoidCallback onTap;
+  final bool selectionMode;
+  final bool isSelected;
 
   @override
   State<ArProductCard> createState() => _ArProductCardState();
@@ -37,13 +42,6 @@ class _ArProductCardState extends State<ArProductCard> {
     return category?.name ?? widget.product.brand;
   }
 
-  void _openArViewer() {
-    HapticService.light();
-    context.push(
-      '/profile/augmented-reality?productId=${widget.product.id}',
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final product = widget.product;
@@ -51,12 +49,14 @@ class _ArProductCardState extends State<ArProductCard> {
     return Semantics(
       label: '${product.name}, $_categoryLabel, saved for AR',
       button: true,
+      selected: widget.isSelected,
       excludeSemantics: true,
       child: GestureDetector(
         onTapDown: (_) => setState(() => _pressed = true),
         onTapUp: (_) {
           setState(() => _pressed = false);
-          _openArViewer();
+          HapticService.light();
+          widget.onTap();
         },
         onTapCancel: () => setState(() => _pressed = false),
         child: AnimatedScale(
@@ -67,6 +67,9 @@ class _ArProductCardState extends State<ArProductCard> {
             decoration: BoxDecoration(
               color: AppColors.warmWhite,
               borderRadius: BorderRadius.circular(_kCardRadius),
+              border: widget.selectionMode && widget.isSelected
+                  ? Border.all(color: AppColors.accent, width: 2)
+                  : null,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.06),
@@ -82,24 +85,66 @@ class _ArProductCardState extends State<ArProductCard> {
                 children: [
                   AspectRatio(
                     aspectRatio: 4 / 3,
-                    child: ColoredBox(
-                      color: const Color(0xFFF3EFE8),
-                      child: PlaceifyImage(
-                        source: product.imageUrl,
-                        fit: product.imageUrl.startsWith('assets/')
-                            ? BoxFit.contain
-                            : BoxFit.cover,
-                        error: Center(
-                          child: SvgPicture.asset(
-                            product.svgIconPath,
-                            width: 44,
-                            colorFilter: const ColorFilter.mode(
-                              AppColors.bark,
-                              BlendMode.srcIn,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        ColoredBox(
+                          color: const Color(0xFFF3EFE8),
+                          child: PlaceifyImage(
+                            source: product.imageUrl,
+                            fit: product.imageUrl.startsWith('assets/')
+                                ? BoxFit.contain
+                                : BoxFit.cover,
+                            error: Center(
+                              child: SvgPicture.asset(
+                                product.svgIconPath,
+                                width: 44,
+                                colorFilter: const ColorFilter.mode(
+                                  AppColors.bark,
+                                  BlendMode.srcIn,
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                        if (widget.selectionMode)
+                          Positioned(
+                            top: 10,
+                            right: 10,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              width: 26,
+                              height: 26,
+                              decoration: BoxDecoration(
+                                color: widget.isSelected
+                                    ? AppColors.accent
+                                    : Colors.white,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: widget.isSelected
+                                      ? AppColors.accent
+                                      : Colors.black26,
+                                  width: 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color:
+                                        Colors.black.withValues(alpha: 0.10),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: widget.isSelected
+                                  ? const Icon(
+                                      Icons.check_rounded,
+                                      size: 16,
+                                      color: Colors.white,
+                                    )
+                                  : null,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                   Padding(

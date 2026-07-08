@@ -347,12 +347,25 @@ List<RouteBase> get _appRoutes => [
         GoRoute(
           path: '/profile/augmented-reality',
           name: 'profileAugmentedReality',
-          pageBuilder: (context, state) => _slidePage(
-            key: ValueKey<String>(state.uri.toString()),
-            child: ArPoweredScreen(
-              productId: state.uri.queryParameters['productId'],
-            ),
-          ),
+          pageBuilder: (context, state) {
+            final productIdsParam = state.uri.queryParameters['productIds'];
+            final productIds = productIdsParam == null
+                ? const <String>[]
+                : productIdsParam
+                    .split(',')
+                    .map((id) => id.trim())
+                    .where((id) => id.isNotEmpty)
+                    .toList();
+
+            return _slidePage(
+              key: ValueKey<String>(state.uri.toString()),
+              child: ArPoweredScreen(
+                productId: state.uri.queryParameters['productId'],
+                productIds: productIds,
+                initialActiveId: state.uri.queryParameters['active'],
+              ),
+            );
+          },
         ),
         GoRoute(
           path: '/profile/ar-history',

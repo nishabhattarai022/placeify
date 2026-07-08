@@ -8,10 +8,16 @@ import 'package:placeify/screens/widgets/ar_product_card.dart';
 class ArProductMasonryGrid extends StatelessWidget {
   const ArProductMasonryGrid({
     required this.entries,
+    required this.onProductTap,
+    this.selectionMode = false,
+    this.selectedIds = const {},
     super.key,
   });
 
   final List<({Product product, DateTime savedAt})> entries;
+  final void Function(Product product) onProductTap;
+  final bool selectionMode;
+  final Set<String> selectedIds;
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +38,9 @@ class ArProductMasonryGrid extends StatelessWidget {
               index: index,
               product: entry.product,
               savedAt: entry.savedAt,
+              selectionMode: selectionMode,
+              isSelected: selectedIds.contains(entry.product.id),
+              onTap: () => onProductTap(entry.product),
             ),
           );
         },
@@ -46,11 +55,17 @@ class _AnimatedArCard extends StatefulWidget {
     required this.index,
     required this.product,
     required this.savedAt,
+    required this.onTap,
+    this.selectionMode = false,
+    this.isSelected = false,
   });
 
   final int index;
   final Product product;
   final DateTime savedAt;
+  final VoidCallback onTap;
+  final bool selectionMode;
+  final bool isSelected;
 
   @override
   State<_AnimatedArCard> createState() => _AnimatedArCardState();
@@ -112,6 +127,9 @@ class _AnimatedArCardState extends State<_AnimatedArCard>
       child: ArProductCard(
         product: widget.product,
         savedAt: widget.savedAt,
+        selectionMode: widget.selectionMode,
+        isSelected: widget.isSelected,
+        onTap: widget.onTap,
       ),
     );
   }
