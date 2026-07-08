@@ -119,11 +119,11 @@ class _BrowseScreenState extends State<BrowseScreen> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: DarkPillButton(
-                        icon: Icons.view_in_ar_outlined,
-                        label: 'My AR',
+                        icon: Icons.storefront_outlined,
+                        label: 'Select store',
                         onTap: () {
                           HapticService.light();
-                          context.push('/my-ar');
+                          context.push('/shops');
                         },
                       ),
                     ),

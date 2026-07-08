@@ -271,9 +271,11 @@ List<RouteBase> get _appRoutes => [
         GoRoute(
           path: '/my-ar',
           name: 'myAr',
-          pageBuilder: (context, state) => _slidePage(
-            key: const ValueKey<String>('my-ar'),
+          pageBuilder: (context, state) => CustomTransitionPage(
+            key: state.pageKey,
             child: const MyArScreen(),
+            transitionsBuilder: _fadeTransition,
+            transitionDuration: AppDurations.slow,
           ),
         ),
         GoRoute(

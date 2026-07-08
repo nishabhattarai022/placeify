@@ -81,7 +81,12 @@ class _MyArScreenState extends ConsumerState<MyArScreen> {
     final isSearching = _searchInput.trim().isNotEmpty;
 
     if (saved.isEmpty) {
-      return _MyArEmptyState(onBack: () => context.pop());
+      return _MyArEmptyState(
+        onBrowse: () {
+          HapticService.light();
+          context.go('/browse');
+        },
+      );
     }
 
     return Scaffold(
@@ -92,27 +97,13 @@ class _MyArScreenState extends ConsumerState<MyArScreen> {
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(20, topInset + 12, 20, 20),
+              padding: EdgeInsets.fromLTRB(20, topInset + 28, 20, 20),
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      IconButton(
-                        onPressed: () => context.pop(),
-                        icon: const Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          size: 20,
-                          color: Colors.black87,
-                        ),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(
-                          minWidth: 40,
-                          minHeight: 40,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
                       Padding(
                         padding: const EdgeInsets.only(right: 52),
                         child: Column(
@@ -228,35 +219,60 @@ class _MyArScreenState extends ConsumerState<MyArScreen> {
 }
 
 class _MyArEmptyState extends StatelessWidget {
-  const _MyArEmptyState({required this.onBack});
+  const _MyArEmptyState({required this.onBrowse});
 
-  final VoidCallback onBack;
+  final VoidCallback onBrowse;
 
   @override
   Widget build(BuildContext context) {
+    final topInset = MediaQuery.paddingOf(context).top;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF9F8F4),
       body: SafeArea(
-        child: Column(
-          children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: IconButton(
-                onPressed: onBack,
-                icon: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  size: 20,
-                  color: Colors.black87,
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(20, topInset + 28, 20, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                ArStrings.eyebrow,
+                style: AppFonts.dmSans(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 1.35,
+                  color: const Color(0xFF8A8A8A),
                 ),
               ),
-            ),
-            Expanded(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
+              const SizedBox(height: 10),
+              Text(
+                ArStrings.titleLine1,
+                style: AppFonts.dmSerifDisplay(
+                  fontSize: 48,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.black,
+                  height: 1.0,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                ArStrings.savedCount(0),
+                style: AppFonts.dmSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: const Color(0xFF8A8A8A),
+                  height: 1.3,
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                       Icon(
                         Icons.view_in_ar_outlined,
                         size: 48,
@@ -283,10 +299,7 @@ class _MyArEmptyState extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
                       FilledButton(
-                        onPressed: () {
-                          HapticService.light();
-                          onBack();
-                        },
+                        onPressed: onBrowse,
                         style: FilledButton.styleFrom(
                           backgroundColor: AppColors.charcoal,
                           foregroundColor: Colors.white,
@@ -310,7 +323,8 @@ class _MyArEmptyState extends StatelessWidget {
                 ),
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
