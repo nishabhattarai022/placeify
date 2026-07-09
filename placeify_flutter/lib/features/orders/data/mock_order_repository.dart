@@ -145,9 +145,7 @@ class MockOrderRepository implements OrderRepository {
     throw StateError('Seed product $id not found');
   }
 
-  static List<OrderItem> _items(
-    List<({String id, int qty, String? color})> specs,
-  ) {
+  static List<OrderItem> _items(List<({String id, int qty, String? color})> specs) {
     return specs
         .map(
           (spec) => orderItemFromProduct(
@@ -239,43 +237,43 @@ class MockOrderRepository implements OrderRepository {
   }) {
     return switch (status) {
       ConsumerOrderStatus.cancelled => [
-        OrderStatusUpdate(
-          status: ConsumerOrderStatus.placed,
-          timestamp: placedAt,
-          note: _stageNotes[0],
-        ),
-        OrderStatusUpdate(
-          status: ConsumerOrderStatus.confirmed,
-          timestamp: placedAt.add(const Duration(hours: 3)),
-          note: _stageNotes[1],
-        ),
-        OrderStatusUpdate(
-          status: ConsumerOrderStatus.cancelled,
-          timestamp: placedAt.add(const Duration(days: 1, hours: 4)),
-          note: cancellationReason ?? 'Order cancelled',
-        ),
-      ],
+          OrderStatusUpdate(
+            status: ConsumerOrderStatus.placed,
+            timestamp: placedAt,
+            note: _stageNotes[0],
+          ),
+          OrderStatusUpdate(
+            status: ConsumerOrderStatus.confirmed,
+            timestamp: placedAt.add(const Duration(hours: 3)),
+            note: _stageNotes[1],
+          ),
+          OrderStatusUpdate(
+            status: ConsumerOrderStatus.cancelled,
+            timestamp: placedAt.add(const Duration(days: 1, hours: 4)),
+            note: cancellationReason ?? 'Order cancelled',
+          ),
+        ],
       ConsumerOrderStatus.returnRequested => [
-        ..._linearHistory(placedAt, ConsumerOrderStatus.delivered),
-        OrderStatusUpdate(
-          status: ConsumerOrderStatus.returnRequested,
-          timestamp: placedAt.add(const Duration(days: 12)),
-          note: returnReason ?? 'Return requested by customer',
-        ),
-      ],
+          ..._linearHistory(placedAt, ConsumerOrderStatus.delivered),
+          OrderStatusUpdate(
+            status: ConsumerOrderStatus.returnRequested,
+            timestamp: placedAt.add(const Duration(days: 12)),
+            note: returnReason ?? 'Return requested by customer',
+          ),
+        ],
       ConsumerOrderStatus.returned => [
-        ..._linearHistory(placedAt, ConsumerOrderStatus.delivered),
-        OrderStatusUpdate(
-          status: ConsumerOrderStatus.returnRequested,
-          timestamp: placedAt.add(const Duration(days: 12)),
-          note: returnReason ?? 'Return requested by customer',
-        ),
-        OrderStatusUpdate(
-          status: ConsumerOrderStatus.returned,
-          timestamp: placedAt.add(const Duration(days: 16)),
-          note: 'Return completed and refund processed',
-        ),
-      ],
+          ..._linearHistory(placedAt, ConsumerOrderStatus.delivered),
+          OrderStatusUpdate(
+            status: ConsumerOrderStatus.returnRequested,
+            timestamp: placedAt.add(const Duration(days: 12)),
+            note: returnReason ?? 'Return requested by customer',
+          ),
+          OrderStatusUpdate(
+            status: ConsumerOrderStatus.returned,
+            timestamp: placedAt.add(const Duration(days: 16)),
+            note: 'Return completed and refund processed',
+          ),
+        ],
       _ => _linearHistory(placedAt, status),
     };
   }
@@ -284,7 +282,8 @@ class MockOrderRepository implements OrderRepository {
     return switch (status) {
       ConsumerOrderStatus.dispatched ||
       ConsumerOrderStatus.inTransit ||
-      ConsumerOrderStatus.outForDelivery => 'TRK-NP-7849231',
+      ConsumerOrderStatus.outForDelivery =>
+        'TRK-NP-7849231',
       _ => null,
     };
   }
@@ -312,7 +311,8 @@ class MockOrderRepository implements OrderRepository {
       cancellationReason: cancellationReason,
       returnReason: returnReason,
     );
-    final tracking = trackingOverride ?? _trackingNumber(status);
+    final tracking =
+        trackingOverride ?? _trackingNumber(status);
 
     return Order(
       id: id,
@@ -585,32 +585,25 @@ class MockOrderRepository implements OrderRepository {
 
     assert(orders.length == 12);
     assert(
-      orders.where((o) => o.status == ConsumerOrderStatus.inTransit).length ==
-          1,
+      orders.where((o) => o.status == ConsumerOrderStatus.inTransit).length == 1,
     );
     assert(
-      orders
-              .where((o) => o.status == ConsumerOrderStatus.outForDelivery)
-              .length ==
+      orders.where((o) => o.status == ConsumerOrderStatus.outForDelivery).length ==
           2,
     );
     assert(orders.where((o) => o.isDelivered).length == 5);
     assert(
-      orders.where((o) => o.status == ConsumerOrderStatus.cancelled).length ==
-          1,
+      orders.where((o) => o.status == ConsumerOrderStatus.cancelled).length == 1,
     );
     assert(
-      orders
-              .where((o) => o.status == ConsumerOrderStatus.returnRequested)
-              .length ==
+      orders.where((o) => o.status == ConsumerOrderStatus.returnRequested).length ==
           1,
     );
     assert(
       orders.where((o) => o.status == ConsumerOrderStatus.placed).length == 1,
     );
     assert(
-      orders.where((o) => o.status == ConsumerOrderStatus.confirmed).length ==
-          1,
+      orders.where((o) => o.status == ConsumerOrderStatus.confirmed).length == 1,
     );
 
     return orders;

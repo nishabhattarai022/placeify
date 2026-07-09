@@ -115,10 +115,8 @@ abstract final class VendorProfileValidator {
   }
 
   static void _validateTags(List<String> tags, Map<String, String> errors) {
-    final nonEmptyTags = tags
-        .map((tag) => tag.trim())
-        .where((tag) => tag.isNotEmpty)
-        .toList();
+    final nonEmptyTags =
+        tags.map((tag) => tag.trim()).where((tag) => tag.isNotEmpty).toList();
     if (nonEmptyTags.length < tagsMinCount) {
       errors[VendorProfileFieldKeys.tags] = VendorProfileStrings.tagsRequired;
       return;

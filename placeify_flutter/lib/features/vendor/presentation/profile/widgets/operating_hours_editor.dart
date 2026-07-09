@@ -21,12 +21,12 @@ class OperatingHoursEditor extends StatelessWidget {
   final ValueChanged<List<VendorOperatingDay>>? onChanged;
 
   List<VendorOperatingDay> get _orderedSchedule => [
-    for (final key in vendorWeekDayKeys)
-      schedule.firstWhere(
-        (day) => day.dayKey == key,
-        orElse: () => VendorOperatingDay(dayKey: key, isClosed: true),
-      ),
-  ];
+        for (final key in vendorWeekDayKeys)
+          schedule.firstWhere(
+            (day) => day.dayKey == key,
+            orElse: () => VendorOperatingDay(dayKey: key, isClosed: true),
+          ),
+      ];
 
   void _copyToAllDays() {
     if (schedule.isEmpty) return;
@@ -93,10 +93,8 @@ class OperatingHoursEditor extends StatelessWidget {
               for (var i = 0; i < ordered.length; i++) ...[
                 _ScheduleEditRow(
                   day: ordered[i],
-                  error:
-                      fieldErrors[VendorProfileFieldKeys.schedule(
-                        ordered[i].dayKey,
-                      )],
+                  error: fieldErrors[
+                      VendorProfileFieldKeys.schedule(ordered[i].dayKey)],
                   onChanged: (updated) {
                     onChanged?.call([
                       for (final item in ordered)
@@ -326,9 +324,7 @@ class _TimeButton extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
         decoration: BoxDecoration(
-          color: enabled
-              ? Colors.white
-              : AppColors.creamDark.withValues(alpha: 0.35),
+          color: enabled ? Colors.white : AppColors.creamDark.withValues(alpha: 0.35),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: enabled ? AppColors.creamDark : Colors.transparent,

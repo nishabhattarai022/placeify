@@ -32,10 +32,7 @@ class ArHistoryCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 alignment: Alignment.center,
-                child: Text(
-                  session.thumbEmoji,
-                  style: const TextStyle(fontSize: 22),
-                ),
+                child: Text(session.thumbEmoji, style: const TextStyle(fontSize: 22)),
               ),
               const SizedBox(width: 12),
               Expanded(

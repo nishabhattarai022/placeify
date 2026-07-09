@@ -1,6 +1,7 @@
+import 'package:placeify_flutter/data/furniture_categories.dart';
 import 'package:placeify_flutter/features/shops/data/mock_consumer_shop_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../data/mock_product_repository.dart';
+
 import '../../domain/models/category.dart';
 import '../../domain/models/product.dart';
 import 'catalog_provider.dart';
@@ -16,14 +17,24 @@ class SelectedCategory extends _$SelectedCategory {
 }
 
 @riverpod
-List<ProductCategory> categories(Ref ref) => MockProductRepository.categories;
+List<ProductCategory> categories(Ref ref) {
+  ref.watch(catalogIndexProvider);
+  return [
+    for (final category in furnitureCategories)
+      ProductCategory(
+        id: category.id,
+        label: category.name,
+        svgIconAssetPath: category.svgIconAssetPath,
+        isActive: category.id == 'chairs',
+      ),
+  ];
+}
 
 @riverpod
 List<Product> filteredProducts(Ref ref) {
   final categoryId = ref.watch(selectedCategoryProvider);
-  return MockProductRepository.products
-      .where((p) => p.categoryId == categoryId)
-      .toList();
+  ref.watch(catalogIndexProvider);
+  return ref.watch(browseCategoryProductsProvider(categoryId));
 }
 
 @riverpod
@@ -31,14 +42,11 @@ Product? productById(Ref ref, String id) {
   final fromCatalog = ref.watch(catalogIndexProvider).value?[id];
   if (fromCatalog != null) return fromCatalog;
 
-  final product = MockProductRepository.resolveProductById(id);
-  if (product != null) return product;
-
   return MockConsumerShopRepository.productByIdSync(id);
 }
 
 String categoryTitle(String categoryId) {
-  return MockProductRepository.categories
-      .firstWhere((c) => c.id == categoryId)
-      .label;
+  final category = furnitureCategoryById(categoryId);
+  if (category != null) return category.name;
+  return categoryId;
 }

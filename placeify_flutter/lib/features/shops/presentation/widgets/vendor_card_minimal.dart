@@ -114,8 +114,9 @@ class _ShopImagePreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl =
-        shop.bannerUrl ?? shop.logoUrl ?? ShopListingImages.defaultBanner;
+    final imageUrl = shop.bannerUrl ??
+        shop.logoUrl ??
+        ShopListingImages.defaultBanner;
 
     return ShopListingImage(
       imageUrl: imageUrl,

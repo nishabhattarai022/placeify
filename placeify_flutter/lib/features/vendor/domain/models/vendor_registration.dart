@@ -47,9 +47,9 @@ abstract class VendorCategoryInfo with _$VendorCategoryInfo {
     final raw = json['categories'];
     final categories = raw is List
         ? raw
-              .map((e) => e.toString().trim())
-              .where((name) => name.isNotEmpty)
-              .toList()
+            .map((e) => e.toString().trim())
+            .where((name) => name.isNotEmpty)
+            .toList()
         : <String>[];
     if (categories.isEmpty) {
       final legacy = json['category'] as String? ?? '';
@@ -64,9 +64,9 @@ abstract class VendorCategoryInfo with _$VendorCategoryInfo {
   }
 
   Map<String, dynamic> toJson() => {
-    'categories': categories,
-    'description': description,
-  };
+        'categories': categories,
+        'description': description,
+      };
 }
 
 extension VendorCategoryInfoX on VendorCategoryInfo {

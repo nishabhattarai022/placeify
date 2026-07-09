@@ -1,4 +1,5 @@
 import 'package:placeify_flutter/core/constants/app_colors.dart';
+import 'package:placeify_flutter/features/admin/data/config/admin_seed_data.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/delivery_stage.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/notification_type.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/order_status.dart';
@@ -17,6 +18,23 @@ import 'package:placeify_flutter/features/vendor/domain/models/vendor_stats.dart
 /// Seed data for mock vendor repositories and legacy dashboard widgets.
 abstract final class VendorMockConfig {
   static const demoVendorId = 'demo-vendor';
+
+  /// Consumer shop listings — no vendor-portal demo orders or inventory.
+  static const _shopOnlyVendorIds = {
+    AdminSeedData.approvedVendorId,
+    ...AdminSeedData.catalogShopVendorIds,
+  };
+
+  /// Whether this vendor ID should see the shared demo portal dataset.
+  static bool usesDemoPortalData(String vendorId) {
+    if (vendorId == demoVendorId) return true;
+    if (_shopOnlyVendorIds.contains(vendorId)) return false;
+    return true;
+  }
+
+  static VendorOrder _withVendorId(VendorOrder order, String vendorId) {
+    return order.vendorId == vendorId ? order : order.copyWith(vendorId: vendorId);
+  }
 
   static const revenue = 8400.0;
 
@@ -41,6 +59,8 @@ abstract final class VendorMockConfig {
     TopProductStat(
       name: 'Harmony Chair',
       iconPath: 'assets/icons/ic_sofa.svg',
+      imageUrl:
+          'assets/images/splash/Tola_Lounge_Chair_Venice_Vegan_Suede_Sage_1_0.jpg',
       revenue: 'NPR 4.2k',
       progressFraction: 0.78,
       barColor: AppColors.accent,
@@ -48,6 +68,7 @@ abstract final class VendorMockConfig {
     TopProductStat(
       name: 'Brixon Chair',
       iconPath: 'assets/icons/ic_sofa.svg',
+      imageUrl: 'assets/images/splash/pexels-suhailat-35160826.jpg',
       revenue: 'NPR 2.8k',
       progressFraction: 0.52,
       barColor: AppColors.sage,
@@ -55,6 +76,7 @@ abstract final class VendorMockConfig {
     TopProductStat(
       name: 'Astra Chair',
       iconPath: 'assets/icons/ic_chair.svg',
+      imageUrl: 'assets/images/splash/462222_1_800.jpg',
       revenue: 'NPR 2.1k',
       progressFraction: 0.38,
       barColor: AppColors.bark,
@@ -97,7 +119,7 @@ abstract final class VendorMockConfig {
     responseRate: 0.67,
   );
 
-  static final products = [
+  static List<VendorProduct> _buildDefaultProducts() => [
     VendorProduct(
       id: 'p1',
       vendorId: demoVendorId,
@@ -105,7 +127,9 @@ abstract final class VendorMockConfig {
       sku: 'HH-CHR-001',
       price: 12500,
       stock: 18,
-      imageUrls: const [],
+      imageUrls: const [
+        'assets/images/splash/Tola_Lounge_Chair_Venice_Vegan_Suede_Sage_1_0.jpg',
+      ],
       categoryId: 'chairs',
       createdAt: DateTime(2025, 12, 10),
       warrantyNote: '2-year limited warranty',
@@ -118,7 +142,9 @@ abstract final class VendorMockConfig {
       sku: 'HH-CHR-002',
       price: 9800,
       stock: 12,
-      imageUrls: const [],
+      imageUrls: const [
+        'assets/images/splash/pexels-suhailat-35160826.jpg',
+      ],
       categoryId: 'chairs',
       createdAt: DateTime(2026, 1, 5),
     ),
@@ -129,7 +155,9 @@ abstract final class VendorMockConfig {
       sku: 'HH-CHR-003',
       price: 11200,
       stock: 9,
-      imageUrls: const [],
+      imageUrls: const [
+        'assets/images/splash/462222_1_800.jpg',
+      ],
       categoryId: 'chairs',
       createdAt: DateTime(2026, 2, 20),
     ),
@@ -140,7 +168,9 @@ abstract final class VendorMockConfig {
       sku: 'HH-TBL-001',
       price: 28500,
       stock: 6,
-      imageUrls: const [],
+      imageUrls: const [
+        'assets/images/splash/pexels-blackcurrant-great-2016663774-35378675.jpg',
+      ],
       categoryId: 'tables',
       createdAt: DateTime(2026, 3, 8),
     ),
@@ -151,7 +181,9 @@ abstract final class VendorMockConfig {
       sku: 'HH-SOF-001',
       price: 42000,
       stock: 4,
-      imageUrls: const [],
+      imageUrls: const [
+        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400',
+      ],
       categoryId: 'sofas',
       isActive: false,
       createdAt: DateTime(2026, 3, 22),
@@ -163,7 +195,9 @@ abstract final class VendorMockConfig {
       sku: 'HH-LGT-001',
       price: 4500,
       stock: 22,
-      imageUrls: const [],
+      imageUrls: const [
+        'assets/images/home/explore_hero.jpg',
+      ],
       categoryId: 'lights',
       createdAt: DateTime(2026, 4, 2),
     ),
@@ -174,7 +208,9 @@ abstract final class VendorMockConfig {
       sku: 'HH-BED-001',
       price: 56000,
       stock: 3,
-      imageUrls: const [],
+      imageUrls: const [
+        'assets/images/splash/3d-room-decor-with-furniture-minimalist-beige-tones.jpg',
+      ],
       categoryId: 'beds',
       createdAt: DateTime(2026, 4, 18),
     ),
@@ -185,14 +221,33 @@ abstract final class VendorMockConfig {
       sku: 'HH-DEC-001',
       price: 3200,
       stock: 15,
-      imageUrls: const [],
+      imageUrls: const [
+        'assets/images/splash/pexels-suhailat-35160826.jpg',
+      ],
       categoryId: 'decor',
       isActive: false,
       createdAt: DateTime(2026, 5, 1),
     ),
   ];
 
-  static final orders = [
+  static final List<VendorProduct> products = _buildDefaultProducts();
+
+  /// Restores the demo catalog after local data wipes or bulk deletes.
+  static void ensureDefaultCatalog() {
+    if (products.isEmpty) {
+      products.addAll(_buildDefaultProducts());
+    }
+  }
+
+  static final orders = _buildDefaultOrders();
+
+  /// Restores demo orders after local data wipes or status changes.
+  static void ensureDefaultOrders() {
+    if (orders.isNotEmpty) return;
+    orders.addAll(_buildDefaultOrders());
+  }
+
+  static List<VendorOrder> _buildDefaultOrders() => [
     VendorOrder(
       id: 'vo1',
       orderNumber: '4821',
@@ -498,8 +553,7 @@ abstract final class VendorMockConfig {
       id: 'n10',
       type: NotificationType.system,
       title: 'Profile verification complete',
-      body:
-          'Your vendor profile has been verified. You can now receive orders.',
+      body: 'Your vendor profile has been verified. You can now receive orders.',
       isRead: true,
       createdAt: DateTime(2026, 4, 20, 10, 0),
     ),
@@ -561,7 +615,7 @@ abstract final class VendorMockConfig {
   }
 
   static VendorStats statsFor(String vendorId) {
-    if (!isKnownVendor(vendorId)) {
+    if (!usesDemoPortalData(vendorId)) {
       return const VendorStats(
         revenue: 0,
         orderCount: 0,
@@ -577,14 +631,21 @@ abstract final class VendorMockConfig {
   }
 
   static List<VendorOrder> ordersFor(String vendorId, {int limit = 20}) {
-    if (!isKnownVendor(vendorId)) return [];
-    return orders.take(limit).toList();
+    if (!usesDemoPortalData(vendorId)) return [];
+    ensureDefaultOrders();
+    return orders
+        .take(limit)
+        .map((order) => _withVendorId(order, vendorId))
+        .toList();
   }
 
   static VendorOrder? orderById(String vendorId, String orderId) {
-    if (!isKnownVendor(vendorId)) return null;
+    if (!usesDemoPortalData(vendorId)) return null;
+    ensureDefaultOrders();
     for (final order in orders) {
-      if (order.id == orderId) return order;
+      if (order.id == orderId) {
+        return _withVendorId(order, vendorId);
+      }
     }
     return null;
   }
@@ -599,7 +660,9 @@ abstract final class VendorMockConfig {
   }
 
   static List<DeliveryUpdate> deliveryUpdatesFor(String orderId) {
-    return deliveryUpdates.where((update) => update.orderId == orderId).toList()
+    return deliveryUpdates
+        .where((update) => update.orderId == orderId)
+        .toList()
       ..sort((a, b) => a.updatedAt.compareTo(b.updatedAt));
   }
 
@@ -638,7 +701,7 @@ abstract final class VendorMockConfig {
     String? note,
     String? photoProofPath,
   }) {
-    if (!isKnownVendor(vendorId)) return null;
+    if (!usesDemoPortalData(vendorId)) return null;
 
     final order = orderById(vendorId, orderId);
     if (order == null) return null;
@@ -673,29 +736,30 @@ abstract final class VendorMockConfig {
   }
 
   static List<VendorNotification> notificationsFor(String vendorId) {
-    if (!isKnownVendor(vendorId)) return [];
+    if (!usesDemoPortalData(vendorId)) return [];
     return notifications;
   }
 
   static List<VendorPayout> payoutsFor(String vendorId) {
-    if (!isKnownVendor(vendorId)) return [];
+    if (!usesDemoPortalData(vendorId)) return [];
     return payouts;
   }
 
   static List<VendorProduct> productsFor(String vendorId) {
-    if (!isKnownVendor(vendorId)) return [];
+    if (!usesDemoPortalData(vendorId)) return [];
+    ensureDefaultCatalog();
     return products;
   }
 
   static List<double> revenueSeriesFor(String vendorId) {
-    if (!isKnownVendor(vendorId)) {
+    if (!usesDemoPortalData(vendorId)) {
       return List<double>.filled(revenueSeries.length, 0);
     }
     return revenueSeries;
   }
 
   static List<TopProductStat> topProductsFor(String vendorId) {
-    if (!isKnownVendor(vendorId)) return [];
+    if (!usesDemoPortalData(vendorId)) return [];
     return topProducts;
   }
 
@@ -704,6 +768,12 @@ abstract final class VendorMockConfig {
       if (product.id == productId) return product;
     }
     return null;
+  }
+
+  static String? productImageFor(String productId) {
+    final product = productById(productId);
+    if (product == null || product.imageUrls.isEmpty) return null;
+    return product.imageUrls.first;
   }
 
   static int deleteProducts(List<String> productIds) {

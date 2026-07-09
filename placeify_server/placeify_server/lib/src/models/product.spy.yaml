@@ -1,0 +1,40 @@
+ ### Furniture product listed by a vendor in the marketplace.
+class: Product
+table: product
+fields:
+  vendor: Vendor?, relation(onDelete=Cascade)
+  category: Category?, relation(optional)
+  name: String
+  description: String
+  price: double
+  materials: String?
+  widthCm: double?
+  depthCm: double?
+  heightCm: double?
+  weightKg: double?
+  assemblyNote: String?
+  careInstructions: String?
+  warranty: String?
+  model3dUrl: String?
+  thumbnailUrl: String?
+  ### Extra product photos for multiview 3D generation (left, back, right, etc.).
+  viewImageUrls: List<String>?
+  ### Aggregated from product reviews (updated when reviews are submitted).
+  averageRating: double, default=0
+  reviewCount: int, default=0
+  status: ProductStatus, default=active
+  ### Why the product was removed from the catalog.
+  removedReason: String?
+  ### Admin who removed or flagged the product.
+  removedBy: Admin?, relation(optional)
+  removedAt: DateTime?
+  createdAt: DateTime, default=now
+  updatedAt: DateTime, default=now
+
+indexes:
+  product_vendor_id:
+    fields: vendorId
+  product_status:
+    fields: status
+  product_category_id:
+    fields: categoryId

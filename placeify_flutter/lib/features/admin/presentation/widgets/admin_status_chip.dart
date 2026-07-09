@@ -14,31 +14,31 @@ class AdminStatusChip extends StatelessWidget {
   final VendorStatus status;
 
   String get _label => switch (status) {
-    VendorStatus.pending => 'Pending',
-    VendorStatus.approved => 'Approved',
-    VendorStatus.suspended => 'Suspended',
-    VendorStatus.none => 'Declined',
-  };
+        VendorStatus.pending => 'Pending',
+        VendorStatus.approved => 'Approved',
+        VendorStatus.suspended => 'Suspended',
+        VendorStatus.none => 'Declined',
+      };
 
   @override
   Widget build(BuildContext context) {
     final (bg, fg) = switch (status) {
       VendorStatus.pending => (
-        AppColors.accent.withValues(alpha: 0.14),
-        AppColors.accent,
-      ),
+          AppColors.accent.withValues(alpha: 0.14),
+          AppColors.accent,
+        ),
       VendorStatus.approved => (
-        AppColors.sage.withValues(alpha: 0.14),
-        AppColors.sage,
-      ),
+          AppColors.sage.withValues(alpha: 0.14),
+          AppColors.sage,
+        ),
       VendorStatus.suspended => (
-        AppColors.coral.withValues(alpha: 0.14),
-        AppColors.coral,
-      ),
+          AppColors.coral.withValues(alpha: 0.14),
+          AppColors.coral,
+        ),
       VendorStatus.none => (
-        AppColors.coral.withValues(alpha: 0.14),
-        AppColors.coral,
-      ),
+          AppColors.coral.withValues(alpha: 0.14),
+          AppColors.coral,
+        ),
     };
 
     return Container(

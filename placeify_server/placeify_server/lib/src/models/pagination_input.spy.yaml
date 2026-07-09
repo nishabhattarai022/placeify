@@ -1,0 +1,5 @@
+### Pagination parameters for list endpoints.
+class: PaginationInput
+fields:
+  page: int, default=1
+  pageSize: int, default=20

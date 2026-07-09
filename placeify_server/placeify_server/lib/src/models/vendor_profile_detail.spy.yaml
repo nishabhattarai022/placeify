@@ -1,0 +1,25 @@
+### Full vendor shop profile returned to the Flutter vendor profile screen.
+class: VendorProfileDetail
+fields:
+  id: UuidValue
+  businessName: String
+  email: String
+  phone: String
+  address: String
+  city: String
+  country: String
+  category: String
+  logoUrl: String?
+  bio: String
+  bannerUrl: String?
+  coverUrl: String?
+  instagramHandle: String
+  facebookHandle: String
+  operatingHours: String
+  isOpen: bool
+  status: UserAccountStatus
+  totalProducts: int
+  totalOrders: int
+  totalRevenue: double
+  notificationPreferences: NotificationPreference?
+  createdAt: DateTime

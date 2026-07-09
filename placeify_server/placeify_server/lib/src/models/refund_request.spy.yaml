@@ -1,0 +1,19 @@
+### Customer refund or return request linked to an order.
+class: RefundRequest
+table: refund_request
+fields:
+  user: User?, relation(onDelete=Cascade)
+  order: Order?, relation(onDelete=Cascade)
+  reason: String
+  status: RequestStatus, default=pending
+  refundAmount: double
+  createdAt: DateTime, default=now
+  updatedAt: DateTime, default=now
+
+indexes:
+  refund_request_user_id:
+    fields: userId
+  refund_request_order_id:
+    fields: orderId
+  refund_request_status:
+    fields: status

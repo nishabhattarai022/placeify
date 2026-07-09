@@ -8,7 +8,6 @@ import '../../../cart/data/product_id_codec.dart';
 import '../../../vendor/domain/models/vendor_product.dart';
 import '../../data/catalog_category_utils.dart';
 import '../../data/catalog_product_mapper.dart';
-import '../../data/mock_product_repository.dart';
 import '../../data/serverpod_product_repository.dart';
 import '../../data/vendor_product_catalog_mapper.dart';
 import '../../domain/models/product.dart';
@@ -41,16 +40,30 @@ class CatalogIndex extends _$CatalogIndex {
 
   Future<Map<String, Product>> _loadIndex() async {
     final repo = ref.read(catalogRepositoryProvider);
+    final categoryNamesById = await _loadCategoryNamesById(repo);
     final page = await repo.search(
       pagination: PaginationInput(page: 1, pageSize: 200),
     );
 
     final index = <String, Product>{};
     for (final item in page.items) {
-      final ui = await CatalogProductMapper.toUiProduct(item);
+      final ui = await CatalogProductMapper.toUiProduct(
+        item,
+        categoryNamesById: categoryNamesById,
+      );
       index[ui.id] = ui;
     }
     return index;
+  }
+
+  Future<Map<int, String>> _loadCategoryNamesById(
+    ServerpodProductRepository repo,
+  ) async {
+    final categories = await repo.listCategories();
+    return {
+      for (final category in categories)
+        if (category.id != null) category.id!: category.name,
+    };
   }
 
   Future<void> upsertVendorProduct(VendorProduct vendorProduct) async {
@@ -92,12 +105,16 @@ class CatalogIndex extends _$CatalogIndex {
     if (missing.isEmpty) return;
 
     final repo = ref.read(catalogRepositoryProvider);
+    final categoryNamesById = await _loadCategoryNamesById(repo);
     final additions = <String, Product>{};
 
     for (final id in missing) {
       final apiProduct = await repo.getByUiId(id);
       if (apiProduct == null) continue;
-      final ui = await CatalogProductMapper.toUiProduct(apiProduct);
+      final ui = await CatalogProductMapper.toUiProduct(
+        apiProduct,
+        categoryNamesById: categoryNamesById,
+      );
       additions[ui.id] = ui;
     }
 
@@ -176,44 +193,74 @@ Future<Product?> productDetail(Ref ref, String id) async {
   final cached = ref.watch(catalogIndexProvider).value?[id];
   if (cached != null) return cached;
 
-  final apiProduct = await ref.read(catalogRepositoryProvider).getByUiId(id);
+  final repo = ref.read(catalogRepositoryProvider);
+  final apiProduct = await repo.getByUiId(id);
   if (apiProduct == null) return null;
 
-  return CatalogProductMapper.toUiProduct(apiProduct);
+  final categoryNamesById = {
+    for (final category in await repo.listCategories())
+      if (category.id != null) category.id!: category.name,
+  };
+  return CatalogProductMapper.toUiProduct(
+    apiProduct,
+    categoryNamesById: categoryNamesById,
+  );
 }
 
 /// Room → furniture category ids for home recommendations.
-const _roomCategoryIds = <String, List<String>>{
-  'living': ['sofas', 'chairs', 'tables'],
-  'dining': ['tables', 'chairs'],
-  'office': ['desks', 'chairs'],
-  'bedroom': ['beds', 'storage'],
-  'bathroom': ['storage', 'lighting'],
-  'study': ['desks', 'chairs', 'storage'],
-};
+@riverpod
+List<Product> roomCatalogProducts(Ref ref, String roomId) {
+  ref.watch(catalogIndexProvider);
+  final products = ref.watch(catalogProductsProvider);
+  final categoryIds = CatalogCategoryUtils.furnitureCategoryIdsForRoom(roomId);
+  if (categoryIds.isEmpty) return products;
+
+  return products
+      .where(
+        (product) => categoryIds.any(
+          (categoryId) => CatalogCategoryUtils.matchesUiCategory(
+            product.categoryId,
+            categoryId,
+          ),
+        ),
+      )
+      .toList();
+}
 
 @riverpod
 List<Product> homeRecommendedProducts(Ref ref, String roomId) {
   ref.watch(catalogIndexProvider);
-  final products = ref.watch(catalogProductsProvider);
-  if (products.isEmpty) return const [];
-
-  final categoryIds = _roomCategoryIds[roomId];
-  if (categoryIds != null) {
-    final roomMatches = products
-        .where(
-          (product) => categoryIds.any(
-            (categoryId) => CatalogCategoryUtils.matchesUiCategory(
-              product.categoryId,
-              categoryId,
-            ),
-          ),
-        )
-        .take(2)
-        .toList();
-    if (roomMatches.isNotEmpty) return roomMatches;
+  final roomProducts = ref.watch(roomCatalogProductsProvider(roomId));
+  if (roomProducts.isEmpty) {
+    return ref.watch(catalogProductsProvider).take(2).toList();
   }
-  return products.take(2).toList();
+
+  final categoryIds = CatalogCategoryUtils.furnitureCategoryIdsForRoom(roomId);
+  final picked = <Product>[];
+
+  for (final categoryId in categoryIds) {
+    if (picked.length >= 2) break;
+    for (final product in roomProducts) {
+      if (picked.length >= 2) break;
+      if (picked.any((item) => item.id == product.id)) continue;
+      if (CatalogCategoryUtils.matchesUiCategory(
+        product.categoryId,
+        categoryId,
+      )) {
+        picked.add(product);
+        break;
+      }
+    }
+  }
+
+  if (picked.length >= 2) return picked;
+
+  for (final product in roomProducts) {
+    if (picked.length >= 2) break;
+    if (picked.any((item) => item.id == product.id)) continue;
+    picked.add(product);
+  }
+  return picked;
 }
 
 @riverpod
@@ -230,6 +277,7 @@ void invalidateCustomerCatalog(Ref ref) {
   ref.invalidate(catalogNewestProductsProvider);
   ref.invalidate(productDetailProvider);
   ref.invalidate(homeRecommendedProductsProvider);
+  ref.invalidate(roomCatalogProductsProvider);
   ref.invalidate(roomCategoryProductsProvider);
   ref.invalidate(recommendedProductsProvider);
   ref.invalidate(catalogProductCountProvider);

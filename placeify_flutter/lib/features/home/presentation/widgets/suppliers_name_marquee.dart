@@ -23,7 +23,7 @@ class SuppliersNameMarquee extends StatefulWidget {
 
 class _SuppliersNameMarqueeState extends State<SuppliersNameMarquee>
     with SingleTickerProviderStateMixin {
-  static const double _marqueeHeight = 80;
+  static const double _marqueeHeight = 88;
   static const double _fadeWidth = 40;
   static const double _chipGap = 12;
 
@@ -101,68 +101,80 @@ class _SuppliersNameMarqueeState extends State<SuppliersNameMarquee>
 
     final fadeColor = HomeScreenTokens.homeBg;
 
-    return SizedBox(
-      height: _marqueeHeight,
-      child: Stack(
-        children: [
-          ClipRect(
-            child: AnimatedBuilder(
-              animation: _controller,
-              builder: (context, child) {
-                final offset = _loopWidth > 0
-                    ? -_controller.value * _loopWidth
-                    : 0.0;
-                return Transform.translate(
-                  offset: Offset(offset, 0),
-                  child: child,
-                );
-              },
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _supplierLoop(key: _loopMeasureKey),
-                  const SizedBox(width: _chipGap),
-                  _supplierLoop(),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            left: 0,
-            top: 0,
-            bottom: 0,
-            child: IgnorePointer(
-              child: Container(
-                width: _fadeWidth,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [fadeColor, fadeColor.withValues(alpha: 0)],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final viewportWidth = constraints.maxWidth;
+
+        return SizedBox(
+          height: _marqueeHeight,
+          width: viewportWidth,
+          child: Stack(
+            clipBehavior: Clip.hardEdge,
+            children: [
+              ClipRect(
+                child: OverflowBox(
+                  maxWidth: double.infinity,
+                  alignment: Alignment.centerLeft,
+                  child: AnimatedBuilder(
+                    animation: _controller,
+                    builder: (context, child) {
+                      final offset = _loopWidth > 0
+                          ? -_controller.value * _loopWidth
+                          : 0.0;
+                      return Transform.translate(
+                        offset: Offset(offset, 0),
+                        child: child,
+                      );
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _supplierLoop(key: _loopMeasureKey),
+                        const SizedBox(width: _chipGap),
+                        _supplierLoop(),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
-          Positioned(
-            right: 0,
-            top: 0,
-            bottom: 0,
-            child: IgnorePointer(
-              child: Container(
-                width: _fadeWidth,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.centerRight,
-                    end: Alignment.centerLeft,
-                    colors: [fadeColor, fadeColor.withValues(alpha: 0)],
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                child: IgnorePointer(
+                  child: Container(
+                    width: _fadeWidth,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [fadeColor, fadeColor.withValues(alpha: 0)],
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+              Positioned(
+                right: 0,
+                top: 0,
+                bottom: 0,
+                child: IgnorePointer(
+                  child: Container(
+                    width: _fadeWidth,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.centerRight,
+                        end: Alignment.centerLeft,
+                        colors: [fadeColor, fadeColor.withValues(alpha: 0)],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -197,20 +209,26 @@ class _SupplierNameChip extends StatelessWidget {
           children: [
             Text(
               supplier.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.dmSans(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
                 color: Colors.black87,
                 letterSpacing: -0.2,
+                height: 1.2,
               ),
             ),
             const SizedBox(height: 2),
             Text(
               '${supplier.locality} · ${supplier.capability}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.dmSans(
                 fontSize: 11,
                 fontWeight: FontWeight.w400,
                 color: Colors.black45,
+                height: 1.2,
               ),
             ),
           ],

@@ -40,8 +40,7 @@ class _VendorCardFullState extends State<VendorCardFull> {
     final tileWidth = (w / (w > 600 ? 3 : 2)).toInt();
 
     return Semantics(
-      label:
-          '${shop.businessName}, ${shop.locality}, '
+      label: '${shop.businessName}, ${shop.locality}, '
           '${shop.productCount} ${ShopStrings.productCountLabel}',
       button: true,
       excludeSemantics: true,
@@ -138,7 +137,8 @@ class _BannerSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bannerUrl = shop.bannerUrl ?? ShopListingImages.defaultBanner;
+    final bannerUrl =
+        shop.bannerUrl ?? ShopListingImages.defaultBanner;
     final logoUrl = shop.logoUrl ?? ShopListingImages.defaultLogo;
 
     return Stack(

@@ -31,7 +31,8 @@ abstract final class SplashAssets {
       'assets/images/splash/Tola_Lounge_Chair_Venice_Vegan_Suede_Sage_1_0.jpg';
   static const String vendorSlide =
       'assets/images/splash/pexels-suhailat-35160826.jpg';
-  static const String interiorDetail = 'assets/images/splash/462222_1_800.jpg';
+  static const String interiorDetail =
+      'assets/images/splash/462222_1_800.jpg';
 }
 
 const List<OnboardingSlide> kOnboardingSlides = [

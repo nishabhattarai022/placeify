@@ -12,18 +12,15 @@ abstract final class ProfileMenuConfig {
   static const double sheetTopRadius = 28;
   static const double avatarSize = 100;
   static const double headerOverlap = 0;
-
-  static const int wishlistCount = 8;
-  static const int arTriesCount = 24;
 }
 
 enum ProfileMenuRoute {
   orders,
   wishlist,
-  augmentedReality,
   refund,
   notifications,
   password,
+  editProfile,
   vendor,
   signOut,
 }
@@ -58,19 +55,11 @@ abstract final class ProfileMenuItems {
   static const List<ProfileMenuItemData> accountOverview = [
     ProfileMenuItemData(
       title: 'Wishlist',
-      subtitle: '8 saved items',
+      subtitle: 'View saved items',
       icon: Icons.star_border_rounded,
       iconColor: AppColors.coral,
       backgroundColor: AppColors.coralBg,
       route: ProfileMenuRoute.wishlist,
-    ),
-    ProfileMenuItemData(
-      title: 'Augmented Reality',
-      subtitle: 'Preview furniture in your space',
-      icon: Icons.view_in_ar_outlined,
-      iconColor: AppColors.lavender,
-      backgroundColor: AppColors.lavenderBg,
-      route: ProfileMenuRoute.augmentedReality,
     ),
     ProfileMenuItemData(
       title: 'Refund & Returns',
@@ -90,11 +79,19 @@ abstract final class ProfileMenuItems {
     ),
     ProfileMenuItemData(
       title: 'Change Password',
-      subtitle: 'Last changed 3 months ago',
+      subtitle: 'Update your account password',
       icon: Icons.lock_outline_rounded,
       iconColor: AppColors.coral,
       backgroundColor: AppColors.coralBg,
       route: ProfileMenuRoute.password,
+    ),
+    ProfileMenuItemData(
+      title: 'Edit Profile',
+      subtitle: 'Name, email, phone & bio',
+      icon: Icons.person_outline_rounded,
+      iconColor: AppColors.sage,
+      backgroundColor: AppColors.sageBg,
+      route: ProfileMenuRoute.editProfile,
     ),
   ];
 
@@ -111,39 +108,39 @@ abstract final class ProfileMenuItems {
   static ProfileMenuItemData vendorTile(VendorStatus status) {
     return switch (status) {
       VendorStatus.none => const ProfileMenuItemData(
-        title: VendorStrings.becomeVendorTitle,
-        subtitle: VendorStrings.becomeVendorSubtitle,
-        icon: Icons.store_outlined,
-        iconColor: AppColors.vendorForest,
-        backgroundColor: AppColors.vendorForestBg,
-        route: ProfileMenuRoute.vendor,
-      ),
+          title: VendorStrings.becomeVendorTitle,
+          subtitle: VendorStrings.becomeVendorSubtitle,
+          icon: Icons.store_outlined,
+          iconColor: AppColors.vendorForest,
+          backgroundColor: AppColors.vendorForestBg,
+          route: ProfileMenuRoute.vendor,
+        ),
       VendorStatus.pending => const ProfileMenuItemData(
-        title: VendorStrings.applicationPendingTitle,
-        subtitle: VendorStrings.applicationPendingSubtitle,
-        icon: Icons.hourglass_top_outlined,
-        iconColor: AppColors.vendorForest,
-        backgroundColor: AppColors.vendorForestBg,
-        route: ProfileMenuRoute.vendor,
-      ),
+          title: VendorStrings.applicationPendingTitle,
+          subtitle: VendorStrings.applicationPendingSubtitle,
+          icon: Icons.hourglass_top_outlined,
+          iconColor: AppColors.vendorForest,
+          backgroundColor: AppColors.vendorForestBg,
+          route: ProfileMenuRoute.vendor,
+        ),
       VendorStatus.approved => const ProfileMenuItemData(
-        title: VendorStrings.vendorDashboardTitle,
-        subtitle: VendorStrings.vendorDashboardSubtitle,
-        icon: Icons.dashboard_outlined,
-        iconColor: AppColors.vendorForest,
-        backgroundColor: AppColors.vendorForestBg,
-        route: ProfileMenuRoute.vendor,
-        badge: VendorStrings.activeBadge,
-        badgeBackgroundColor: AppColors.sage,
-      ),
+          title: VendorStrings.vendorDashboardTitle,
+          subtitle: VendorStrings.vendorDashboardSubtitle,
+          icon: Icons.dashboard_outlined,
+          iconColor: AppColors.vendorForest,
+          backgroundColor: AppColors.vendorForestBg,
+          route: ProfileMenuRoute.vendor,
+          badge: VendorStrings.activeBadge,
+          badgeBackgroundColor: AppColors.sage,
+        ),
       VendorStatus.suspended => const ProfileMenuItemData(
-        title: VendorStrings.storeSuspendedTitle,
-        subtitle: VendorStrings.storeSuspendedSubtitle,
-        icon: Icons.block_outlined,
-        iconColor: AppColors.textMuted,
-        backgroundColor: AppColors.creamDark,
-        route: ProfileMenuRoute.vendor,
-      ),
+          title: VendorStrings.storeSuspendedTitle,
+          subtitle: VendorStrings.storeSuspendedSubtitle,
+          icon: Icons.block_outlined,
+          iconColor: AppColors.textMuted,
+          backgroundColor: AppColors.creamDark,
+          route: ProfileMenuRoute.vendor,
+        ),
     };
   }
 }

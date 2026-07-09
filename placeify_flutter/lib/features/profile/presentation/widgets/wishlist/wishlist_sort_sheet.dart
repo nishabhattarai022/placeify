@@ -47,9 +47,8 @@ abstract final class WishlistSortSheet {
               _WishlistSortSectionHeader(
                 label: _sortGroups[i].sectionLabel,
               ),
-              for (final option in WishlistSort.values.where(
-                (sort) => sort.group == _sortGroups[i],
-              ))
+              for (final option in WishlistSort.values
+                  .where((sort) => sort.group == _sortGroups[i]))
                 PlaceifySelectTile(
                   label: option.tileLabel,
                   icon: option.icon,

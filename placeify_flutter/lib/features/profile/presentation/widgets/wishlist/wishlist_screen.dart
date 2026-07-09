@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../home/data/mock_product_repository.dart';
 import '../../../../home/presentation/providers/wishlist_provider.dart';
-import '../../../../home/presentation/providers/wishlist_count.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/services/haptic_service.dart';
@@ -27,20 +27,23 @@ class WishlistScreen extends ConsumerStatefulWidget {
 class _WishlistScreenState extends ConsumerState<WishlistScreen> {
   String _searchQuery = '';
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      ref.read(wishlistProvider.notifier).refresh();
-      reconcileWishlistWithDashboard(ref);
-    });
-  }
-
   int _visibleProductCount() {
-    final saved = ref.watch(wishlistProvider);
-    if (saved.isNotEmpty) return saved.length;
-    return readWishlistCount(ref);
+    final wishlist = ref.read(wishlistProvider);
+    final savedAt = wishlist.savedAt;
+    final byId = {
+      for (final p in MockProductRepository.products) p.id: p,
+    };
+    final products = wishlist.products.isNotEmpty
+        ? wishlist.products
+        : [
+            for (final id in savedAt.keys)
+              if (byId.containsKey(id)) byId[id]!,
+          ];
+
+    final query = _searchQuery.trim().toLowerCase();
+    if (query.isEmpty) return products.length;
+
+    return products.where((p) => p.name.toLowerCase().contains(query)).length;
   }
 
   @override
@@ -122,3 +125,4 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
     );
   }
 }
+

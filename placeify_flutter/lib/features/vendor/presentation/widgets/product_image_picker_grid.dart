@@ -111,18 +111,17 @@ class ProductImagePickerGrid extends ConsumerWidget {
                               key: ValueKey(images[i].id),
                               index: i,
                               item: images[i],
-                              onRemove: () =>
-                                  notifier.removeImage(images[i].id),
+                              onRemove: () => notifier.removeImage(images[i].id),
                               onSetPrimary: i == 0
                                   ? null
                                   : () =>
-                                        notifier.setPrimaryImage(images[i].id),
+                                      notifier.setPrimaryImage(images[i].id),
                               onRemoveBg: images[i].isLocal
                                   ? () => BackgroundRemovalSheet.show(
-                                      context,
-                                      ref,
-                                      item: images[i],
-                                    )
+                                        context,
+                                        ref,
+                                        item: images[i],
+                                      )
                                   : null,
                             ),
                         ],
@@ -200,9 +199,7 @@ class ProductImagePickerGrid extends ConsumerWidget {
           limit: remaining,
         );
         if (picked.isEmpty) return;
-        ref
-            .read(vendorProductFormProvider.notifier)
-            .addLocalImages(
+        ref.read(vendorProductFormProvider.notifier).addLocalImages(
               picked.map((file) => file.path).toList(),
             );
       } else {
@@ -211,16 +208,11 @@ class ProductImagePickerGrid extends ConsumerWidget {
           imageQuality: 85,
         );
         if (picked == null) return;
-        ref.read(vendorProductFormProvider.notifier).addLocalImages([
-          picked.path,
-        ]);
+        ref.read(vendorProductFormProvider.notifier).addLocalImages([picked.path]);
       }
     } catch (_) {
       if (context.mounted) {
-        PlaceifyToast.show(
-          context,
-          'Could not access photos. Check permissions.',
-        );
+        PlaceifyToast.show(context, 'Could not access photos. Check permissions.');
       }
     }
   }

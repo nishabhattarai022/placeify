@@ -18,9 +18,10 @@ abstract final class CategoryShowcaseConfig {
 
   static String subtitle(String categoryId) {
     return switch (categoryId) {
-      'chairs' => 'Repurposed Materials, Unique Style,\nSustainable Comfort.',
+      'chairs' =>
+          'Repurposed Materials, Unique Style,\nSustainable Comfort.',
       _ =>
-        'Curated pieces for modern living.\nThoughtful design, lasting quality.',
+          'Curated pieces for modern living.\nThoughtful design, lasting quality.',
     };
   }
 
@@ -28,5 +29,6 @@ abstract final class CategoryShowcaseConfig {
   static List<String> chairProductIds() => ['p1', 'p5', 'p6', 'p3'];
 
   static const showroomTitle = 'Showroom';
-  static const showroomAddress = '9810 Irvine Center Dr,\nIrvine, CA 92618';
+  static const showroomAddress =
+      '9810 Irvine Center Dr,\nIrvine, CA 92618';
 }

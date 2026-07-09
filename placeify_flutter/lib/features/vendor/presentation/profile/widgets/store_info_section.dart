@@ -145,9 +145,8 @@ class StoreInfoSection extends StatelessWidget {
                 checkmarkColor: AppColors.vendorForest,
                 labelStyle: TextStyle(
                   fontSize: 13,
-                  fontWeight: selected.contains(name)
-                      ? FontWeight.w600
-                      : FontWeight.w400,
+                  fontWeight:
+                      selected.contains(name) ? FontWeight.w600 : FontWeight.w400,
                   color: AppColors.espresso,
                 ),
                 side: BorderSide(
@@ -181,9 +180,7 @@ class StoreInfoSection extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.vendorForestBg,
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: AppColors.vendorForest.withValues(alpha: 0.25),
-              ),
+              border: Border.all(color: AppColors.vendorForest.withValues(alpha: 0.25)),
             ),
             child: Text(
               tag,
@@ -336,10 +333,7 @@ class _ContactRow extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: AppColors.textMuted,
-                ),
+                style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
               ),
               const SizedBox(height: 2),
               Text(

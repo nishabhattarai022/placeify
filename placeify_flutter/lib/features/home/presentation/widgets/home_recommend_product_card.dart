@@ -1,13 +1,16 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/services/haptic_service.dart';
-import '../../../cart/presentation/cart_actions.dart';
+import '../../../../core/widgets/placeify_image.dart';
+import '../../../../core/widgets/toast_overlay.dart';
+import '../../../cart/presentation/providers/cart_provider.dart';
 import '../data/home_categories_config.dart';
+import '../../data/product_reviews_repository.dart';
 import '../theme/home_screen_tokens.dart';
+import 'product_rating_row.dart';
 
 const String _kCartSvg = '''
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -44,12 +47,21 @@ class _HomeRecommendProductCardState
   }
 
   void _onAddToCart() {
-    addToCart(ref, context, widget.product.productId, openCart: false);
+    HapticService.medium();
+    ref.read(cartProvider.notifier).addProduct(widget.product.productId);
+    PlaceifyToast.show(
+      context,
+      '${widget.product.displayName} added to cart',
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final product = widget.product;
+    final reviewSummary = ProductReviewsRepository.forProductId(
+      product.productId,
+      productName: product.displayName,
+    );
     final reservedBottomRight =
         HomeScreenTokens.cartCornerOuter - HomeScreenTokens.cardPadding + 2;
 
@@ -76,9 +88,8 @@ class _HomeRecommendProductCardState
                   color: _elevated
                       ? HomeScreenTokens.cardBgHover
                       : HomeScreenTokens.cardBg,
-                  borderRadius: BorderRadius.circular(
-                    HomeScreenTokens.cardRadius,
-                  ),
+                  borderRadius:
+                      BorderRadius.circular(HomeScreenTokens.cardRadius),
                   boxShadow: _elevated
                       ? [
                           BoxShadow(
@@ -101,7 +112,21 @@ class _HomeRecommendProductCardState
                       child: SizedBox(
                         height: HomeScreenTokens.cardImageHeight,
                         width: double.infinity,
-                        child: _RecommendProductImage(imagePath: product.imageAsset),
+                        child: PlaceifyImage(
+                          key: ValueKey(
+                            '${product.id}_${product.imageAsset}',
+                          ),
+                          source: product.imageAsset,
+                          fit: BoxFit.cover,
+                          error: ColoredBox(
+                            color: HomeScreenTokens.cardBg,
+                            child: Icon(
+                              Icons.chair_outlined,
+                              size: 56,
+                              color: Colors.black.withValues(alpha: 0.2),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -136,6 +161,17 @@ class _HomeRecommendProductCardState
                         ),
                       ),
                     ),
+                    const SizedBox(height: 4),
+                    Padding(
+                      padding: EdgeInsets.only(
+                        left: 4,
+                        right: reservedBottomRight,
+                      ),
+                      child: ProductRatingRow(
+                        summary: reviewSummary,
+                        compact: true,
+                      ),
+                    ),
                     const SizedBox(height: 6),
                   ],
                 ),
@@ -153,53 +189,6 @@ class _HomeRecommendProductCardState
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _RecommendProductImage extends StatelessWidget {
-  const _RecommendProductImage({required this.imagePath});
-
-  final String imagePath;
-
-  @override
-  Widget build(BuildContext context) {
-    if (imagePath.startsWith('assets/')) {
-      return Image.asset(
-        imagePath,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _placeholder(),
-      );
-    }
-
-    return CachedNetworkImage(
-      imageUrl: imagePath,
-      fit: BoxFit.cover,
-      placeholder: (_, __) => ColoredBox(
-        color: HomeScreenTokens.cardBg,
-        child: Center(
-          child: SizedBox(
-            width: 22,
-            height: 22,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Colors.black.withValues(alpha: 0.25),
-            ),
-          ),
-        ),
-      ),
-      errorWidget: (_, __, ___) => _placeholder(),
-    );
-  }
-
-  Widget _placeholder() {
-    return ColoredBox(
-      color: HomeScreenTokens.cardBg,
-      child: Icon(
-        Icons.chair_outlined,
-        size: 56,
-        color: Colors.black.withValues(alpha: 0.2),
       ),
     );
   }
@@ -251,9 +240,12 @@ class _CartCorner extends StatelessWidget {
             decoration: BoxDecoration(
               color: HomeScreenTokens.cardBg,
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(HomeScreenTokens.cartButtonRadius),
-                topRight: Radius.circular(HomeScreenTokens.cartButtonRadius),
-                bottomLeft: Radius.circular(HomeScreenTokens.cartButtonRadius),
+                topLeft:
+                    Radius.circular(HomeScreenTokens.cartButtonRadius),
+                topRight:
+                    Radius.circular(HomeScreenTokens.cartButtonRadius),
+                bottomLeft:
+                    Radius.circular(HomeScreenTokens.cartButtonRadius),
                 bottomRight: Radius.circular(
                   HomeScreenTokens.cardRadius -
                       HomeScreenTokens.cartButtonCornerInset,

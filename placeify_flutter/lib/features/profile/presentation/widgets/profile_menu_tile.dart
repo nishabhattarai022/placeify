@@ -66,10 +66,7 @@ class ProfileMenuTile extends StatelessWidget {
               ),
               if (item.badge != null) ...[
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: item.badgeBackgroundColor,
                     borderRadius: BorderRadius.circular(999),

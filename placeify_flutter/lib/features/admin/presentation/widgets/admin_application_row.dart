@@ -27,8 +27,7 @@ class _AdminApplicationRowState extends State<AdminApplicationRow> {
   @override
   Widget build(BuildContext context) {
     final application = widget.application;
-    final isNew =
-        DateTime.now().difference(application.submittedAt).inHours < 24;
+    final isNew = DateTime.now().difference(application.submittedAt).inHours < 24;
     final applicant = application.registration.business.contactName;
     final category = application.registration.category.categoriesLabel;
     final meta =

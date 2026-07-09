@@ -80,14 +80,10 @@ class _BusinessInfoStepState extends ConsumerState<BusinessInfoStep> {
           child: ProfileTextInput(
             controller: _businessName,
             hint: VendorFormStrings.businessNameHint,
-            hasError: fieldErrors.containsKey(
-              VendorRegistrationFieldKeys.businessName,
-            ),
+            hasError: fieldErrors
+                .containsKey(VendorRegistrationFieldKeys.businessName),
             onChanged: (v) => _sync(
-              ref
-                  .read(vendorRegistrationProvider)
-                  .form
-                  .business
+              ref.read(vendorRegistrationProvider).form.business
                   .copyWith(businessName: v),
               clearErrorFor: VendorRegistrationFieldKeys.businessName,
             ),
@@ -99,14 +95,10 @@ class _BusinessInfoStepState extends ConsumerState<BusinessInfoStep> {
           child: ProfileTextInput(
             controller: _contactName,
             hint: VendorFormStrings.contactNameHint,
-            hasError: fieldErrors.containsKey(
-              VendorRegistrationFieldKeys.contactName,
-            ),
+            hasError: fieldErrors
+                .containsKey(VendorRegistrationFieldKeys.contactName),
             onChanged: (v) => _sync(
-              ref
-                  .read(vendorRegistrationProvider)
-                  .form
-                  .business
+              ref.read(vendorRegistrationProvider).form.business
                   .copyWith(contactName: v),
               clearErrorFor: VendorRegistrationFieldKeys.contactName,
             ),
@@ -119,14 +111,9 @@ class _BusinessInfoStepState extends ConsumerState<BusinessInfoStep> {
             controller: _email,
             hint: 'vendor@example.com',
             keyboardType: TextInputType.emailAddress,
-            hasError: fieldErrors.containsKey(
-              VendorRegistrationFieldKeys.email,
-            ),
+            hasError: fieldErrors.containsKey(VendorRegistrationFieldKeys.email),
             onChanged: (v) => _sync(
-              ref
-                  .read(vendorRegistrationProvider)
-                  .form
-                  .business
+              ref.read(vendorRegistrationProvider).form.business
                   .copyWith(email: v),
               clearErrorFor: VendorRegistrationFieldKeys.email,
             ),
@@ -136,19 +123,10 @@ class _BusinessInfoStepState extends ConsumerState<BusinessInfoStep> {
           label: 'Phone',
           error: fieldErrors[VendorRegistrationFieldKeys.phone],
           child: PhoneInputField(
-            initialPhone: ref
-                .watch(vendorRegistrationProvider)
-                .form
-                .business
-                .phone,
-            hasError: fieldErrors.containsKey(
-              VendorRegistrationFieldKeys.phone,
-            ),
+            initialPhone: ref.watch(vendorRegistrationProvider).form.business.phone,
+            hasError: fieldErrors.containsKey(VendorRegistrationFieldKeys.phone),
             onChanged: (full) => _sync(
-              ref
-                  .read(vendorRegistrationProvider)
-                  .form
-                  .business
+              ref.read(vendorRegistrationProvider).form.business
                   .copyWith(phone: full),
               clearErrorFor: VendorRegistrationFieldKeys.phone,
             ),
@@ -165,14 +143,9 @@ class _BusinessInfoStepState extends ConsumerState<BusinessInfoStep> {
               FilteringTextInputFormatter.digitsOnly,
               LengthLimitingTextInputFormatter(9),
             ],
-            hasError: fieldErrors.containsKey(
-              VendorRegistrationFieldKeys.taxId,
-            ),
+            hasError: fieldErrors.containsKey(VendorRegistrationFieldKeys.taxId),
             onChanged: (v) => _sync(
-              ref
-                  .read(vendorRegistrationProvider)
-                  .form
-                  .business
+              ref.read(vendorRegistrationProvider).form.business
                   .copyWith(taxId: v),
               clearErrorFor: VendorRegistrationFieldKeys.taxId,
             ),

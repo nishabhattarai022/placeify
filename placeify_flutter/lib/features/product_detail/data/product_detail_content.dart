@@ -1,7 +1,4 @@
-import 'package:placeify_flutter/features/admin/data/config/admin_seed_data.dart';
-import 'package:placeify_flutter/features/shops/data/consumer_shop_seed.dart';
 import 'package:placeify_flutter/features/shops/data/vendor_product_mapper.dart';
-import 'package:placeify_flutter/features/vendor/data/config/vendor_mock_config.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product.dart';
 
 import '../../home/domain/models/product.dart';
@@ -126,15 +123,12 @@ abstract final class ProductDetailContentRepository {
     List<ProductSpec> defaultSpecs,
   ) {
     final vendorProduct = _vendorProductForShopProduct(product);
-    final description =
-        vendorProduct != null && vendorProduct.description.trim().isNotEmpty
+    final description = vendorProduct != null &&
+            vendorProduct.description.trim().isNotEmpty
         ? vendorProduct.description
         : 'The ${product.name} combines thoughtful craftsmanship with everyday '
-              'comfort, making it a versatile piece for modern living spaces.';
-    final galleryImages =
-        vendorProduct != null && vendorProduct.imageUrls.isNotEmpty
-        ? vendorProduct.imageUrls
-        : _galleryFor(product);
+            'comfort, making it a versatile piece for modern living spaces.';
+    final galleryImages = _galleryImagesFor(product, vendorProduct);
 
     return ProductDetailContent(
       description: description,
@@ -156,23 +150,20 @@ abstract final class ProductDetailContentRepository {
   }
 
   static VendorProduct? _vendorProductForShopProduct(Product product) {
-    final vendorId = product.vendorId;
-    if (vendorId == null) return null;
+    return VendorProductMapper.resolveVendorProduct(product.id);
+  }
 
-    final prefix = 'shop-$vendorId-';
-    if (!product.id.startsWith(prefix)) return null;
-    final productId = product.id.substring(prefix.length);
+  static List<String> _galleryImagesFor(
+    Product product,
+    VendorProduct? vendorProduct,
+  ) {
+    final vendorImages = vendorProduct?.imageUrls
+            .where((url) => url.trim().isNotEmpty)
+            .toList() ??
+        const <String>[];
+    if (vendorImages.isNotEmpty) return vendorImages;
 
-    if (VendorMockConfig.isKnownVendor(vendorId)) {
-      return VendorMockConfig.productById(productId);
-    }
-    if (vendorId == AdminSeedData.approvedVendorId ||
-        ConsumerShopSeed.hasSeedProducts(vendorId)) {
-      for (final seedProduct in ConsumerShopSeed.productsFor(vendorId)) {
-        if (seedProduct.id == productId) return seedProduct;
-      }
-    }
-    return null;
+    return _galleryFor(product);
   }
 
   static List<String> _galleryFor(Product product) {

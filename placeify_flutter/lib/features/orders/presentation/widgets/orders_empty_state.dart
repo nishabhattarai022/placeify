@@ -15,12 +15,12 @@ class OrdersEmptyState extends StatelessWidget {
   final OrderListFilter filter;
 
   IconData get _icon => switch (filter) {
-    OrderListFilter.all => Icons.shopping_bag_outlined,
-    OrderListFilter.active => Icons.local_shipping_outlined,
-    OrderListFilter.delivered => Icons.check_circle_outline_rounded,
-    OrderListFilter.cancelled => Icons.cancel_outlined,
-    OrderListFilter.returns => Icons.assignment_return_outlined,
-  };
+        OrderListFilter.all => Icons.shopping_bag_outlined,
+        OrderListFilter.active => Icons.local_shipping_outlined,
+        OrderListFilter.delivered => Icons.check_circle_outline_rounded,
+        OrderListFilter.cancelled => Icons.cancel_outlined,
+        OrderListFilter.returns => Icons.assignment_return_outlined,
+      };
 
   bool get _showBrowseCta => filter == OrderListFilter.all;
 

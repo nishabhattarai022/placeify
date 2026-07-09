@@ -46,14 +46,16 @@ class MockVendorPaymentRepository implements VendorPaymentRepository {
   @override
   Future<double> getTotalEarned(String vendorId) async {
     await Future<void>.delayed(const Duration(milliseconds: 100));
-    if (!VendorMockConfig.isKnownVendor(vendorId)) return 0;
+    if (!VendorMockConfig.usesDemoPortalData(vendorId)) return 0;
     return VendorMockConfig.stats.revenue;
   }
 
   @override
   Future<List<PaymentUpdate>> getPaymentUpdates(String orderId) async {
     await Future<void>.delayed(const Duration(milliseconds: 120));
-    return _paymentUpdates.where((u) => u.orderId == orderId).toList()
+    return _paymentUpdates
+        .where((u) => u.orderId == orderId)
+        .toList()
       ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
   }
 

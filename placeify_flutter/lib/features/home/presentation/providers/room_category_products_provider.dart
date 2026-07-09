@@ -1,7 +1,6 @@
-import 'package:placeify_client/placeify_client.dart' hide Product;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../data/catalog_product_mapper.dart';
+import '../../data/catalog_category_utils.dart';
 import '../../domain/models/product.dart';
 import 'catalog_provider.dart';
 
@@ -12,15 +11,24 @@ Future<List<Product>> roomCategoryProducts(Ref ref, String category) async {
   final trimmed = category.trim();
   if (trimmed.isEmpty) return const [];
 
-  final repo = ref.watch(catalogRepositoryProvider);
-  final page = await repo.search(
-    categoryName: trimmed,
-    pagination: PaginationInput(page: 1, pageSize: 100),
-  );
+  await ref.watch(catalogIndexProvider.future);
 
-  final products = <Product>[];
-  for (final item in page.items) {
-    products.add(await CatalogProductMapper.toUiProduct(item));
+  final roomId = CatalogCategoryUtils.roomIdForLabel(trimmed);
+  if (roomId != null) {
+    return ref.watch(roomCatalogProductsProvider(roomId));
   }
-  return products;
+
+  final furnitureCategory = CatalogCategoryUtils.furnitureCategoryForQuery(trimmed);
+  if (furnitureCategory != null) {
+    return ref.watch(browseCategoryProductsProvider(furnitureCategory.id));
+  }
+
+  final normalized = trimmed.toLowerCase();
+  if (CatalogCategoryUtils.nishaBrowseCategoryIds.contains(normalized) ||
+      normalized == 'lights') {
+    final uiId = normalized == 'lights' ? 'lighting' : normalized;
+    return ref.watch(browseCategoryProductsProvider(uiId));
+  }
+
+  return const [];
 }

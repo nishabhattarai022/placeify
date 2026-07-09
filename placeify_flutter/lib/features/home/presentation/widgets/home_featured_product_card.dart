@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/widgets/animated_scale_tap.dart';
+import '../../../../core/widgets/placeify_image.dart';
 import '../data/home_categories_config.dart';
+import '../../data/product_reviews_repository.dart';
+import 'product_rating_row.dart';
 
 class HomeFeaturedProductCard extends StatelessWidget {
   const HomeFeaturedProductCard({required this.product, super.key});
@@ -13,6 +16,11 @@ class HomeFeaturedProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final reviewSummary = ProductReviewsRepository.forProductId(
+      product.productId,
+      productName: product.displayName,
+    );
+
     return AnimatedScaleTap(
       pressScale: 0.98,
       onTap: () => context.push('/product/${product.productId}'),
@@ -34,14 +42,17 @@ class HomeFeaturedProductCard extends StatelessWidget {
               child: Center(
                 child: Padding(
                   padding: const EdgeInsets.all(12),
-                  child: Image.asset(
-                    product.imageAsset,
+                  child: SizedBox(
                     height: 100,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => Icon(
-                      Icons.chair_outlined,
-                      size: 56,
-                      color: AppColors.textMuted.withValues(alpha: 0.5),
+                    child: PlaceifyImage(
+                      key: ValueKey('${product.id}_${product.imageAsset}'),
+                      source: product.imageAsset,
+                      fit: BoxFit.contain,
+                      error: Icon(
+                        Icons.chair_outlined,
+                        size: 56,
+                        color: AppColors.textMuted.withValues(alpha: 0.5),
+                      ),
                     ),
                   ),
                 ),
@@ -68,6 +79,8 @@ class HomeFeaturedProductCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 6),
+                  ProductRatingRow(summary: reviewSummary, compact: true),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -96,9 +109,7 @@ class HomeFeaturedProductCard extends StatelessWidget {
                           child: Icon(
                             Icons.open_in_new,
                             size: 18,
-                            color: AppColors.textSecondary.withValues(
-                              alpha: 0.8,
-                            ),
+                            color: AppColors.textSecondary.withValues(alpha: 0.8),
                           ),
                         ),
                       ),

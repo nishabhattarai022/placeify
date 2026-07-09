@@ -26,9 +26,8 @@ class VendorApplicationDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final applicationAsync = ref.watch(
-      vendorApplicationDetailProvider(applicationId),
-    );
+    final applicationAsync =
+        ref.watch(vendorApplicationDetailProvider(applicationId));
 
     return Scaffold(
       backgroundColor: AppColors.cream,

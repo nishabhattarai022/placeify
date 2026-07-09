@@ -4,6 +4,7 @@ import '../../../core/config/resolve_media_url.dart';
 import '../../cart/data/product_id_codec.dart';
 import '../../product_detail/data/product_3d_model_resolver.dart';
 import '../domain/models/product.dart';
+import 'catalog_image_resolver.dart';
 
 abstract final class CatalogProductMapper {
   static const _defaultDimensions = ProductDimensions(
@@ -25,18 +26,20 @@ abstract final class CatalogProductMapper {
     'decor': 'assets/icons/ic_plant.svg',
   };
 
-  static Future<Product> toUiProduct(api.Product product) async {
+  static Future<Product> toUiProduct(
+    api.Product product, {
+    Map<int, String>? categoryNamesById,
+  }) async {
     final id = product.id;
     if (id == null) {
       throw StateError('Catalog product is missing a database id.');
     }
 
-    final categoryId = product.category?.name ?? 'chairs';
+    final categoryId = _resolveCategoryId(product, categoryNamesById);
     final shopName = product.vendor?.shopName ?? 'Placeify vendor';
-    final thumbnail = product.thumbnailUrl;
-    final imageUrl = thumbnail == null || thumbnail.isEmpty
-        ? 'assets/icons/ic_chair.svg'
-        : await resolveMediaUrl(thumbnail);
+    // Prefer API thumbnail; when missing, resolver uses name or
+    // category+productId seed so catalog cards don't share one category image.
+    final imageUrl = await CatalogImageResolver.resolveFromApiProduct(product);
 
     final dimensions = _dimensionsFromApi(product);
     final uiId = ProductIdCodec.fromDatabaseId(id);
@@ -53,15 +56,33 @@ abstract final class CatalogProductMapper {
       brand: shopName,
       sku: 'PF${id.toString().padLeft(5, '0')}',
       price: product.price,
-      imageUrl: imageUrl.isEmpty
-          ? 'assets/images/categories/chair.jpg'
-          : imageUrl,
+      imageUrl: imageUrl,
       svgIconPath: _categoryIcons[categoryId] ?? 'assets/icons/ic_chair.svg',
       hasArView: has3dPreview,
       categoryId: categoryId,
       dimensions: dimensions,
       vendorId: product.vendorId.toString(),
     );
+  }
+
+  static String _resolveCategoryId(
+    api.Product product,
+    Map<int, String>? categoryNamesById,
+  ) {
+    final fromRelation = product.category?.name?.trim();
+    if (fromRelation != null && fromRelation.isNotEmpty) {
+      return fromRelation.toLowerCase();
+    }
+
+    final categoryDbId = product.categoryId;
+    if (categoryDbId != null && categoryNamesById != null) {
+      final fromMap = categoryNamesById[categoryDbId]?.trim();
+      if (fromMap != null && fromMap.isNotEmpty) {
+        return fromMap.toLowerCase();
+      }
+    }
+
+    return '';
   }
 
   static ProductDimensions _dimensionsFromApi(api.Product product) {

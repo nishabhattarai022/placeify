@@ -22,28 +22,27 @@ abstract final class VendorAuthGuard {
     if (_isRegistrationRoute(location)) {
       return switch (status) {
         VendorStatus.approved => const VendorAuthRedirect(
-          location: VendorRoutes.dashboard,
-        ),
-        VendorStatus.pending ||
-        VendorStatus.suspended => const VendorAuthRedirect(
-          location: VendorRoutes.profileFallback,
-        ),
+            location: VendorRoutes.dashboard,
+          ),
+        VendorStatus.pending || VendorStatus.suspended => const VendorAuthRedirect(
+            location: VendorRoutes.profileFallback,
+          ),
         VendorStatus.none => null,
       };
     }
 
     return switch (status) {
       VendorStatus.none => const VendorAuthRedirect(
-        location: VendorRoutes.register,
-      ),
+          location: VendorRoutes.register,
+        ),
       VendorStatus.pending => const VendorAuthRedirect(
-        location: VendorRoutes.profileFallback,
-        toastMessage: VendorStrings.guardPendingToast,
-      ),
+          location: VendorRoutes.profileFallback,
+          toastMessage: VendorStrings.guardPendingToast,
+        ),
       VendorStatus.suspended => const VendorAuthRedirect(
-        location: VendorRoutes.profileFallback,
-        toastMessage: VendorStrings.guardSuspendedToast,
-      ),
+          location: VendorRoutes.profileFallback,
+          toastMessage: VendorStrings.guardSuspendedToast,
+        ),
       VendorStatus.approved => null,
     };
   }

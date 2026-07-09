@@ -7,19 +7,21 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/placeify_bottom_nav.dart';
 import '../../../core/widgets/toast_overlay.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
+import '../../home/presentation/providers/wishlist_count.dart';
+import '../../home/presentation/providers/wishlist_provider.dart';
+import '../../orders/presentation/providers/orders_provider.dart';
 import '../../vendor/domain/constants/vendor_routes.dart';
 import '../../vendor/domain/enums/vendor_status.dart';
 import '../../vendor/presentation/widgets/vendor_status_gate_sheets.dart';
-import '../data/profile_menu_config.dart';
 import '../data/password_last_changed.dart';
+import '../data/profile_debug_log.dart';
+import '../data/profile_menu_config.dart';
 import '../data/refund_menu_subtitle.dart';
-import '../../home/presentation/providers/wishlist_provider.dart';
-import '../../home/presentation/providers/wishlist_count.dart';
+import 'providers/profile_dashboard_provider.dart';
+import 'providers/profile_refunds_provider.dart';
 import 'widgets/profile_hero.dart';
 import 'widgets/profile_menu_tile.dart';
 import 'widgets/profile_orders_tile.dart';
-import 'providers/profile_dashboard_provider.dart';
-import 'providers/profile_refunds_provider.dart';
 
 class ProfileHomeScreen extends ConsumerStatefulWidget {
   const ProfileHomeScreen({super.key});
@@ -32,18 +34,36 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(currentUserProvider.notifier).refresh();
-      ref.read(profileDashboardProvider.notifier).refresh();
-      ref.read(wishlistProvider.notifier).refresh();
-      ref.read(profileRefundsProvider.notifier).refresh();
-      _loadPasswordChangedAt();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshAccountData());
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
       ),
+    );
+  }
+
+  Future<void> _refreshAccountData() async {
+    await ref.read(currentUserProvider.notifier).refresh();
+    await Future.wait([
+      ref.read(profileDashboardProvider.notifier).refresh(),
+      ref.read(wishlistProvider.notifier).refresh(),
+      ref.read(profileRefundsProvider.notifier).refresh(),
+      ref.read(ordersProvider.notifier).refresh(),
+    ]);
+    await _loadPasswordChangedAt();
+    if (!mounted) return;
+    _logAccountOverview();
+  }
+
+  void _logAccountOverview() {
+    final dashboard = ref.read(profileDashboardProvider);
+    ProfileDebugLog.accountOverview(
+      user: ref.read(currentUserProvider).value,
+      dashboard: dashboard.value,
+      dashboardError: dashboard.hasError ? dashboard.error : null,
+      ordersListLength: ref.read(ordersProvider).value?.length,
+      wishlistLocalCount: ref.read(wishlistProvider).length,
     );
   }
 
@@ -58,19 +78,6 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: const Icon(Icons.person_outline),
-              title: const Text(
-                'Edit Profile',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                context.pushNamed('profileEdit');
-              },
-            ),
             ListTile(
               leading: const Icon(Icons.settings_outlined),
               title: const Text(
@@ -97,8 +104,6 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
       case 1:
         context.go('/bookmarks');
       case 2:
-        context.pushNamed('profileAugmentedReality');
-      case 3:
         context.pushNamed('profileRefund');
     }
   }
@@ -109,14 +114,14 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
         context.pushNamed('profileOrders');
       case ProfileMenuRoute.wishlist:
         context.go('/bookmarks');
-      case ProfileMenuRoute.augmentedReality:
-        context.pushNamed('profileAugmentedReality');
       case ProfileMenuRoute.refund:
         context.pushNamed('profileRefund');
       case ProfileMenuRoute.notifications:
         context.pushNamed('profileNotifications');
       case ProfileMenuRoute.password:
         context.pushNamed('profilePassword');
+      case ProfileMenuRoute.editProfile:
+        context.pushNamed('profileEdit');
       case ProfileMenuRoute.vendor:
         break;
       case ProfileMenuRoute.signOut:
@@ -200,8 +205,10 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
   Widget build(BuildContext context) {
     ref.watch(wishlistProvider);
     ref.watch(profileRefundsProvider);
+    ref.watch(profileDashboardProvider);
     ref.listen(profileDashboardProvider, (previous, next) {
       reconcileWishlistWithDashboard(ref);
+      next.whenData((_) => _logAccountOverview());
     });
 
     final bottomInset = MediaQuery.paddingOf(context).bottom;
@@ -253,12 +260,10 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
                         ProfileOrdersTile(
                           onTap: () => _onMenuTap(ProfileMenuRoute.orders),
                         ),
-                        for (
-                          var i = 0;
-                          i < ProfileMenuItems.accountOverview.length;
-                          i++
-                        ) ...[
-                          if (i == 3)
+                        for (var i = 0;
+                            i < ProfileMenuItems.accountOverview.length;
+                            i++) ...[
+                          if (i == 2)
                             const Divider(
                               height: 16,
                               color: AppColors.creamDark,

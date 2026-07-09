@@ -1,0 +1,7 @@
+### Payload for creating or updating vendor payout bank details.
+class: VendorBankDetailsInput
+fields:
+  accountHolderName: String
+  bankName: String
+  accountNumber: String
+  branchCode: String

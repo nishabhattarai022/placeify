@@ -1,10 +1,8 @@
-import '../../../data/furniture_categories.dart';
 import '../domain/models/category.dart';
 import '../domain/models/product.dart';
 import '../domain/repositories/product_repository.dart';
 
 abstract final class MockProductRepository implements ProductRepository {
-  static final Map<String, Product> _browseCatalogById = {};
   static const List<ProductCategory> categories = [
     ProductCategory(
       id: 'chairs',
@@ -38,60 +36,6 @@ abstract final class MockProductRepository implements ProductRepository {
       svgIconAssetPath: 'assets/icons/ic_plant.svg',
     ),
   ];
-
-  /// Full browse category list sized to match [FurnitureCategory.itemCount].
-  static List<Product> productsForBrowseCategory(String categoryId) {
-    final target = furnitureCategoryById(categoryId)?.itemCount ?? 0;
-    final base = products
-        .where((p) => p.categoryId == categoryId)
-        .toList(growable: false);
-    if (base.isEmpty || target <= 0) return base;
-    if (base.length >= target) {
-      final slice = base.take(target).toList(growable: false);
-      _cacheBrowseProducts(slice);
-      return slice;
-    }
-
-    final expanded = <Product>[];
-    for (var i = 0; i < target; i++) {
-      final template = base[i % base.length];
-      final cycle = i ~/ base.length;
-      final id = cycle == 0 ? template.id : '${template.id}-v${i + 1}';
-      final name = cycle == 0 ? template.name : '${template.name} ${i + 1}';
-      final priceOffset = (i % 7) * 11;
-      expanded.add(
-        template.copyWith(
-          id: id,
-          name: name,
-          price: template.price + priceOffset,
-          sku: '${template.sku}-${(i + 1).toString().padLeft(2, '0')}',
-        ),
-      );
-    }
-    _cacheBrowseProducts(expanded);
-    return expanded;
-  }
-
-  static void _cacheBrowseProducts(List<Product> list) {
-    for (final product in list) {
-      _browseCatalogById[product.id] = product;
-    }
-  }
-
-  static Product? resolveProductById(String id) {
-    final cached = _browseCatalogById[id];
-    if (cached != null) return cached;
-
-    try {
-      return products.firstWhere((p) => p.id == id);
-    } catch (_) {
-      final baseId = RegExp(r'^(p\d+)').firstMatch(id)?.group(1);
-      if (baseId != null && baseId != id) {
-        return resolveProductById(baseId);
-      }
-      return null;
-    }
-  }
 
   static final List<Product> products = [
     Product(
@@ -134,7 +78,8 @@ abstract final class MockProductRepository implements ProductRepository {
       brand: 'Zenspace',
       sku: 'MS03712',
       price: 94,
-      imageUrl: 'assets/images/splash/Diane_Sofa_Venice_Vegan_Suede_Sage_1.jpg',
+      imageUrl:
+          'assets/images/splash/Diane_Sofa_Venice_Vegan_Suede_Sage_1.jpg',
       svgIconPath: 'assets/icons/ic_chair.svg',
       hasArView: false,
       categoryId: 'chairs',
@@ -218,7 +163,7 @@ abstract final class MockProductRepository implements ProductRepository {
       brand: 'Forma',
       sku: 'SD22002',
       price: 280,
-      imageUrl: 'assets/images/splash/462222_1_800.jpg',
+      imageUrl: 'assets/images/splash/3d-room-decor-with-furniture-minimalist-beige-tones.jpg',
       svgIconPath: 'assets/icons/ic_table.svg',
       hasArView: true,
       categoryId: 'desks',
@@ -235,7 +180,7 @@ abstract final class MockProductRepository implements ProductRepository {
       sku: 'CB33001',
       price: 890,
       imageUrl:
-          'assets/images/splash/3d-room-decor-with-furniture-minimalist-beige-tones.jpg',
+          'assets/images/home/explore_hero.jpg',
       svgIconPath: 'assets/icons/ic_bed.svg',
       hasArView: false,
       categoryId: 'beds',
@@ -251,7 +196,7 @@ abstract final class MockProductRepository implements ProductRepository {
       brand: 'Restwell',
       sku: 'LB33002',
       price: 720,
-      imageUrl: 'assets/images/splash/462222_1_800.jpg',
+      imageUrl: 'assets/images/categories/chair.jpg',
       svgIconPath: 'assets/icons/ic_bed.svg',
       hasArView: true,
       categoryId: 'beds',
@@ -268,7 +213,7 @@ abstract final class MockProductRepository implements ProductRepository {
       sku: 'RT44001',
       price: 450,
       imageUrl:
-          'assets/images/splash/3d-room-decor-with-furniture-minimalist-beige-tones.jpg',
+          'assets/images/categories/sofa.jpg',
       svgIconPath: 'assets/icons/ic_table.svg',
       hasArView: true,
       categoryId: 'tables',
@@ -284,7 +229,7 @@ abstract final class MockProductRepository implements ProductRepository {
       brand: 'Gather',
       sku: 'OC44002',
       price: 380,
-      imageUrl: 'assets/images/home/explore_hero.jpg',
+      imageUrl: 'assets/images/categories/desk.jpg',
       svgIconPath: 'assets/icons/ic_table.svg',
       hasArView: false,
       categoryId: 'tables',
@@ -300,7 +245,7 @@ abstract final class MockProductRepository implements ProductRepository {
       brand: 'Stow',
       sku: 'MS55001',
       price: 240,
-      imageUrl: 'assets/images/splash/pexels-suhailat-35160826.jpg',
+      imageUrl: 'assets/images/categories/bed.jpg',
       svgIconPath: 'assets/icons/ic_plant.svg',
       hasArView: false,
       categoryId: 'storage',
@@ -317,7 +262,7 @@ abstract final class MockProductRepository implements ProductRepository {
       sku: 'CU55002',
       price: 310,
       imageUrl:
-          'assets/images/splash/Tola_Lounge_Chair_Venice_Vegan_Suede_Sage_1_0.jpg',
+          'assets/images/categories/table.jpg',
       svgIconPath: 'assets/icons/ic_plant.svg',
       hasArView: true,
       categoryId: 'storage',
@@ -333,7 +278,7 @@ abstract final class MockProductRepository implements ProductRepository {
       brand: 'Lumen',
       sku: 'FL66001',
       price: 180,
-      imageUrl: 'assets/images/home/explore_hero.jpg',
+      imageUrl: 'assets/images/categories/storage.jpg',
       svgIconPath: 'assets/icons/ic_lamp.svg',
       hasArView: false,
       categoryId: 'lighting',
@@ -349,7 +294,8 @@ abstract final class MockProductRepository implements ProductRepository {
       brand: 'Lumen',
       sku: 'PL66002',
       price: 120,
-      imageUrl: 'assets/images/splash/Diane_Sofa_Venice_Vegan_Suede_Sage_1.jpg',
+      imageUrl:
+          'assets/images/categories/lighting.jpg',
       svgIconPath: 'assets/icons/ic_lamp.svg',
       hasArView: false,
       categoryId: 'lighting',
@@ -365,7 +311,7 @@ abstract final class MockProductRepository implements ProductRepository {
       brand: 'OpenAir',
       sku: 'PL77001',
       price: 520,
-      imageUrl: 'assets/images/splash/pexels-suhailat-35160826.jpg',
+      imageUrl: 'assets/images/categories/outdoor.jpg',
       svgIconPath: 'assets/icons/ic_chair.svg',
       hasArView: true,
       categoryId: 'outdoor',
@@ -382,7 +328,7 @@ abstract final class MockProductRepository implements ProductRepository {
       sku: 'GS77002',
       price: 680,
       imageUrl:
-          'assets/images/splash/3d-room-decor-with-furniture-minimalist-beige-tones.jpg',
+          'assets/images/home/offer_chair_1.png',
       svgIconPath: 'assets/icons/ic_table.svg',
       hasArView: false,
       categoryId: 'outdoor',
@@ -401,5 +347,15 @@ abstract final class MockProductRepository implements ProductRepository {
   List<Product> getProducts() => products;
 
   @override
-  Product? getProductById(String id) => resolveProductById(id);
+  Product? getProductById(String id) {
+    try {
+      return products.firstWhere((p) => p.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Exposed for tests: images assigned to mock products must be unique.
+  static List<String> mockProductImageUrls() =>
+      products.map((p) => p.imageUrl).toList(growable: false);
 }

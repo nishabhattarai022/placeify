@@ -1,0 +1,18 @@
+### Partial update payload for the logged-in vendor shop profile.
+class: VendorProfileUpdateInput
+fields:
+  businessName: String?
+  email: String?
+  phone: String?
+  address: String?
+  city: String?
+  country: String?
+  category: String?
+  bio: String?
+  logoUrl: String?
+  bannerUrl: String?
+  coverUrl: String?
+  instagramHandle: String?
+  facebookHandle: String?
+  operatingHours: String?
+  isOpen: bool?

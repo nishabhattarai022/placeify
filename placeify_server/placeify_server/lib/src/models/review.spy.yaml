@@ -1,0 +1,17 @@
+### Product rating and review from a customer after purchase.
+class: Review
+table: review
+fields:
+  user: User?, relation(onDelete=Cascade)
+  product: Product?, relation(onDelete=Cascade)
+  order: Order?, relation(onDelete=Cascade)
+  rating: int
+  comment: String?
+  createdAt: DateTime, default=now
+
+indexes:
+  review_user_product_order:
+    fields: userId, productId, orderId
+    unique: true
+  review_product_id:
+    fields: productId

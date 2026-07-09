@@ -58,9 +58,7 @@ class VendorOrderFilterTabs extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                  color: selected
-                      ? AppColors.espresso
-                      : AppColors.textSecondary,
+                  color: selected ? AppColors.espresso : AppColors.textSecondary,
                 ),
               ),
             ),

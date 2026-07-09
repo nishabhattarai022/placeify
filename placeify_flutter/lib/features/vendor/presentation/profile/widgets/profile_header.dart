@@ -181,23 +181,23 @@ class _LogoCircle extends StatelessWidget {
         child: isLoading
             ? const ShimmerLoader()
             : imagePath == null
-            ? ColoredBox(
-                color: AppColors.cream,
-                child: Icon(
-                  Icons.storefront_outlined,
-                  color: AppColors.textMuted.withValues(alpha: 0.7),
-                  size: 36,
-                ),
-              )
-            : isLocal
-            ? Image.file(File(imagePath!), fit: BoxFit.cover)
-            : Image.network(
-                imagePath!,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const Icon(
-                  Icons.broken_image_outlined,
-                ),
-              ),
+                ? ColoredBox(
+                    color: AppColors.cream,
+                    child: Icon(
+                      Icons.storefront_outlined,
+                      color: AppColors.textMuted.withValues(alpha: 0.7),
+                      size: 36,
+                    ),
+                  )
+                : isLocal
+                    ? Image.file(File(imagePath!), fit: BoxFit.cover)
+                    : Image.network(
+                        imagePath!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.broken_image_outlined,
+                        ),
+                      ),
       ),
     );
 

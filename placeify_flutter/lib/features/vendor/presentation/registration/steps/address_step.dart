@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../profile/presentation/widgets/shared/profile_form_field.dart';
@@ -85,14 +86,9 @@ class _AddressStepState extends ConsumerState<AddressStep> {
           child: ProfileTextInput(
             controller: _street,
             hint: VendorFormStrings.streetHint,
-            hasError: fieldErrors.containsKey(
-              VendorRegistrationFieldKeys.street,
-            ),
+            hasError: fieldErrors.containsKey(VendorRegistrationFieldKeys.street),
             onChanged: (v) => _sync(
-              ref
-                  .read(vendorRegistrationProvider)
-                  .form
-                  .address
+              ref.read(vendorRegistrationProvider).form.address
                   .copyWith(street: v),
               clearErrorFor: VendorRegistrationFieldKeys.street,
             ),
@@ -106,11 +102,7 @@ class _AddressStepState extends ConsumerState<AddressStep> {
             hint: VendorFormStrings.cityHint,
             hasError: fieldErrors.containsKey(VendorRegistrationFieldKeys.city),
             onChanged: (v) => _sync(
-              ref
-                  .read(vendorRegistrationProvider)
-                  .form
-                  .address
-                  .copyWith(city: v),
+              ref.read(vendorRegistrationProvider).form.address.copyWith(city: v),
               clearErrorFor: VendorRegistrationFieldKeys.city,
             ),
           ),
@@ -121,14 +113,9 @@ class _AddressStepState extends ConsumerState<AddressStep> {
           child: ProfileTextInput(
             controller: _state,
             hint: VendorFormStrings.stateHint,
-            hasError: fieldErrors.containsKey(
-              VendorRegistrationFieldKeys.state,
-            ),
+            hasError: fieldErrors.containsKey(VendorRegistrationFieldKeys.state),
             onChanged: (v) => _sync(
-              ref
-                  .read(vendorRegistrationProvider)
-                  .form
-                  .address
+              ref.read(vendorRegistrationProvider).form.address
                   .copyWith(state: v),
               clearErrorFor: VendorRegistrationFieldKeys.state,
             ),
@@ -140,14 +127,15 @@ class _AddressStepState extends ConsumerState<AddressStep> {
           child: ProfileTextInput(
             controller: _postalCode,
             hint: VendorFormStrings.postalCodeHint,
-            hasError: fieldErrors.containsKey(
-              VendorRegistrationFieldKeys.postalCode,
-            ),
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(5),
+            ],
+            hasError:
+                fieldErrors.containsKey(VendorRegistrationFieldKeys.postalCode),
             onChanged: (v) => _sync(
-              ref
-                  .read(vendorRegistrationProvider)
-                  .form
-                  .address
+              ref.read(vendorRegistrationProvider).form.address
                   .copyWith(postalCode: v),
               clearErrorFor: VendorRegistrationFieldKeys.postalCode,
             ),
@@ -159,14 +147,10 @@ class _AddressStepState extends ConsumerState<AddressStep> {
           child: ProfileTextInput(
             controller: _country,
             hint: VendorFormStrings.countryHint,
-            hasError: fieldErrors.containsKey(
-              VendorRegistrationFieldKeys.country,
-            ),
+            hasError:
+                fieldErrors.containsKey(VendorRegistrationFieldKeys.country),
             onChanged: (v) => _sync(
-              ref
-                  .read(vendorRegistrationProvider)
-                  .form
-                  .address
+              ref.read(vendorRegistrationProvider).form.address
                   .copyWith(country: v),
               clearErrorFor: VendorRegistrationFieldKeys.country,
             ),

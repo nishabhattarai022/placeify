@@ -20,10 +20,9 @@ class ProductDetailGallery extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final safeIndex = selectedIndex.clamp(0, images.length - 1);
-    final heroHeight =
-        MediaQuery.sizeOf(context).height *
+    final heroHeight = MediaQuery.sizeOf(context).height *
         ProductDetailTokens.heroHeightFactor;
-    final thumbs = images.take(5).toList();
+    final thumbs = images.take(ProductDetailTokens.maxGalleryThumbs).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -201,8 +200,7 @@ class _ThumbPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height:
-          ProductDetailTokens.thumbSelectedHeight +
+      height: ProductDetailTokens.thumbSelectedHeight +
           ProductDetailTokens.thumbPillPaddingV * 2,
       padding: const EdgeInsets.symmetric(
         horizontal: ProductDetailTokens.thumbPillPaddingH,
@@ -210,9 +208,8 @@ class _ThumbPill extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: ProductDetailTokens.thumbPillBg,
-        borderRadius: BorderRadius.circular(
-          ProductDetailTokens.thumbPillRadius,
-        ),
+        borderRadius:
+            BorderRadius.circular(ProductDetailTokens.thumbPillRadius),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

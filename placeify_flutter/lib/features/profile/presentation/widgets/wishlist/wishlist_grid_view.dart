@@ -1,18 +1,15 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../home/data/mock_product_repository.dart';
 import '../../../../home/presentation/providers/wishlist_provider.dart';
-import '../../../../home/presentation/providers/wishlist_count.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/services/haptic_service.dart';
 import '../../../../../core/widgets/animated_scale_tap.dart';
 import '../../../../../core/widgets/placeify_bottom_nav.dart';
-import '../../../../../core/widgets/toast_overlay.dart';
 import '../../../../../screens/widgets/category_product_list_tile.dart';
 import 'wishlist_sort.dart';
 import 'wishlist_sort_provider.dart';
@@ -31,11 +28,21 @@ class WishlistGridView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final snapshot = ref.watch(wishlistProvider);
+    final wishlist = ref.watch(wishlistProvider);
+    final savedAt = wishlist.savedAt;
     final sort = ref.watch(wishlistSortProvider);
+    final byId = {
+      for (final p in MockProductRepository.products) p.id: p,
+    };
+    final resolvedProducts = wishlist.products.isNotEmpty
+        ? wishlist.products
+        : [
+            for (final id in savedAt.keys)
+              if (byId.containsKey(id)) byId[id]!,
+          ];
     final sortedProducts = sortWishlistProducts(
-      products: snapshot.products,
-      savedAt: snapshot.savedAt,
+      products: resolvedProducts,
+      savedAt: savedAt,
       sort: sort,
     );
 
@@ -43,35 +50,14 @@ class WishlistGridView extends ConsumerWidget {
     final products = query.isEmpty
         ? sortedProducts
         : sortedProducts
-              .where((p) => p.name.toLowerCase().contains(query))
-              .toList();
+            .where((p) => p.name.toLowerCase().contains(query))
+            .toList();
 
-    if (snapshot.isEmpty) {
-      final expectedCount = readWishlistCount(ref);
-      if (expectedCount > 0) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          unawaited(ref.read(wishlistProvider.notifier).refresh());
-        });
-        return const Center(
-          child: Padding(
-            padding: EdgeInsets.all(32),
-            child: CircularProgressIndicator(color: AppColors.rust),
-          ),
-        );
-      }
+    if (savedAt.isEmpty) {
       return const _WishlistEmptyState();
     }
 
     if (products.isEmpty) {
-      if (query.isEmpty) {
-        return const Center(
-          child: Padding(
-            padding: EdgeInsets.all(32),
-            child: CircularProgressIndicator(color: AppColors.rust),
-          ),
-        );
-      }
-
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -90,7 +76,7 @@ class WishlistGridView extends ConsumerWidget {
 
     final bottom = showBottomPadding
         ? BottomNavTokens.scrollBottomPadding +
-              MediaQuery.paddingOf(context).bottom
+            MediaQuery.paddingOf(context).bottom
         : 32.0;
 
     return Column(
@@ -114,22 +100,13 @@ class WishlistGridView extends ConsumerWidget {
                 bottom,
               ),
               itemCount: products.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 32),
+              separatorBuilder: (_, __) => const SizedBox(height: 32),
               itemBuilder: (context, index) {
                 final product = products[index];
                 return CategoryProductListTile(
                   product: product,
-                  onRemoveFromWishlist: () async {
-                    final result = await ref
-                        .read(wishlistProvider.notifier)
-                        .toggle(product.id);
-                    if (!context.mounted) return;
-                    final error = result.errorMessage;
-                    if (error != null) {
-                      PlaceifyToast.show(context, error);
-                      return;
-                    }
-                    PlaceifyToast.show(context, result.successMessage!);
+                  onRemoveFromWishlist: () {
+                    ref.read(wishlistProvider.notifier).toggle(product.id);
                   },
                 );
               },

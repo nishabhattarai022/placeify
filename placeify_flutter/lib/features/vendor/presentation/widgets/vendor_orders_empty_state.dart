@@ -33,32 +33,33 @@ class VendorOrdersEmptyState extends StatelessWidget {
 
     return switch (tab) {
       VendorOrderTab.pending => _TabEmptyState(
-        icon: Icons.hourglass_empty_rounded,
-        title: 'No pending orders',
-        subtitle: 'New orders awaiting your confirmation will appear here.',
-      ),
+          icon: Icons.hourglass_empty_rounded,
+          title: 'No pending orders',
+          subtitle:
+              'New orders awaiting your confirmation will appear here.',
+        ),
       VendorOrderTab.active => _TabEmptyState(
-        icon: Icons.local_shipping_outlined,
-        title: 'No active orders',
-        subtitle: 'Accepted, processing, and shipped orders show up here.',
-        actionLabel: 'Check pending',
-        onAction: onSwitchTab == null
-            ? null
-            : () {
-                HapticService.light();
-                onSwitchTab!(VendorOrderTab.pending);
-              },
-      ),
+          icon: Icons.local_shipping_outlined,
+          title: 'No active orders',
+          subtitle: 'Accepted, processing, and shipped orders show up here.',
+          actionLabel: 'Check pending',
+          onAction: onSwitchTab == null
+              ? null
+              : () {
+                  HapticService.light();
+                  onSwitchTab!(VendorOrderTab.pending);
+                },
+        ),
       VendorOrderTab.completed => _TabEmptyState(
-        icon: Icons.check_circle_outline_rounded,
-        title: 'No completed orders',
-        subtitle: 'Delivered orders will be listed here once fulfilled.',
-      ),
+          icon: Icons.check_circle_outline_rounded,
+          title: 'No completed orders',
+          subtitle: 'Delivered orders will be listed here once fulfilled.',
+        ),
       VendorOrderTab.cancelled => _TabEmptyState(
-        icon: Icons.cancel_outlined,
-        title: 'No cancelled orders',
-        subtitle: 'Rejected or cancelled orders will appear here.',
-      ),
+          icon: Icons.cancel_outlined,
+          title: 'No cancelled orders',
+          subtitle: 'Rejected or cancelled orders will appear here.',
+        ),
     };
   }
 }

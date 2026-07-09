@@ -9,8 +9,10 @@ import '../../../../core/services/haptic_service.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../cart/data/cart_display_config.dart';
 import '../../../cart/presentation/cart_actions.dart';
+import '../../data/product_reviews_repository.dart';
 import '../../domain/models/product.dart';
 import '../chairs_catalog_tokens.dart';
+import '../widgets/product_rating_row.dart';
 import 'chairs_catalog_cart_button.dart';
 
 /// Right-column compact product card (full-width image, footer price + cart).
@@ -26,15 +28,15 @@ class ChairsCatalogCompactCard extends ConsumerWidget {
     final unitPrice = CartDisplayConfig.priceFor(product.id, product.price);
     final onSale = product.isOnSale;
     final original = product.originalPrice;
+    final reviewSummary = ProductReviewsRepository.forProduct(product);
 
     return GestureDetector(
       onTap: () => context.push('/product/${product.id}'),
       child: Container(
         decoration: BoxDecoration(
           color: ChairsCatalogTokens.imageWell,
-          borderRadius: BorderRadius.circular(
-            ChairsCatalogTokens.compactCardRadius,
-          ),
+          borderRadius:
+              BorderRadius.circular(ChairsCatalogTokens.compactCardRadius),
           boxShadow: ChairsCatalogTokens.cardShadow,
         ),
         clipBehavior: Clip.antiAlias,
@@ -47,6 +49,7 @@ class ChairsCatalogCompactCard extends ConsumerWidget {
                 color: AppColors.cream,
                 child: _isAsset
                     ? Image.asset(
+                        key: ValueKey('${product.id}_${product.imageUrl}'),
                         product.imageUrl,
                         fit: BoxFit.cover,
                         width: double.infinity,
@@ -62,6 +65,7 @@ class ChairsCatalogCompactCard extends ConsumerWidget {
                         ),
                       )
                     : CachedNetworkImage(
+                        key: ValueKey('${product.id}_${product.imageUrl}'),
                         imageUrl: product.imageUrl,
                         fit: BoxFit.cover,
                         width: double.infinity,
@@ -92,6 +96,12 @@ class ChairsCatalogCompactCard extends ConsumerWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: ChairsCatalogTokens.compactNameStyle,
+                        ),
+                        const SizedBox(height: 4),
+                        ProductRatingRow(
+                          summary: reviewSummary,
+                          compact: true,
+                          starSize: 12,
                         ),
                         const SizedBox(height: 4),
                         if (onSale && original != null) ...[

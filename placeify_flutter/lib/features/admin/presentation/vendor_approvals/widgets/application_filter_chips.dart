@@ -23,10 +23,10 @@ class ApplicationFilterChips extends StatelessWidget {
   static const _filters = VendorApplicationListFilter.values;
 
   int _countFor(VendorApplicationListFilter filter) => switch (filter) {
-    VendorApplicationListFilter.pending => pendingCount,
-    VendorApplicationListFilter.approved => approvedCount,
-    VendorApplicationListFilter.declined => declinedCount,
-  };
+        VendorApplicationListFilter.pending => pendingCount,
+        VendorApplicationListFilter.approved => approvedCount,
+        VendorApplicationListFilter.declined => declinedCount,
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -97,9 +97,8 @@ class _ApplicationFilterChip extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: isSelected
-                    ? AppColors.warmWhite
-                    : AppColors.textSecondary,
+                color:
+                    isSelected ? AppColors.warmWhite : AppColors.textSecondary,
               ),
             ),
             if (count > 0) ...[
@@ -117,9 +116,7 @@ class _ApplicationFilterChip extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: isSelected
-                        ? AppColors.warmWhite
-                        : AppColors.adminSlate,
+                    color: isSelected ? AppColors.warmWhite : AppColors.adminSlate,
                   ),
                 ),
               ),

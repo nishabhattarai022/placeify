@@ -1,0 +1,35 @@
+### VendorProfile — vendor-specific data linked 1:1 to a User account.
+class: Vendor
+table: vendor
+fields:
+  id: UuidValue?, defaultPersist=random_v7
+  user: User?, relation(onDelete=Cascade)
+  shopName: String
+  description: String?
+  businessAddress: String?
+  city: String?
+  country: String?
+  ### Vendor business type (e.g. furniture, decor) — not product Category.
+  ### Multiple categories are stored as a JSON array string for backward compatibility.
+  shopCategory: String?
+  ### Shop contact email from vendor registration or profile edits.
+  contactEmail: String?
+  logoUrl: String?
+  bannerUrl: String?
+  coverUrl: String?
+  ### Manual store open/closed toggle (independent of weekly schedule).
+  isOpen: bool, default=true
+  instagramHandle: String?
+  facebookHandle: String?
+  operatingHours: String?
+  rating: double, default=0
+  ### Admin who approved this vendor shop.
+  approvedBy: Admin?, relation(optional)
+  approvedAt: DateTime?
+  createdAt: DateTime, default=now
+  updatedAt: DateTime, default=now
+
+indexes:
+  vendor_user_id:
+    fields: userId
+    unique: true

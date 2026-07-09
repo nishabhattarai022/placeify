@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:placeify_flutter/features/admin/data/admin_local_users.dart';
 import 'package:placeify_flutter/features/admin/data/config/admin_seed_data.dart';
 import 'package:placeify_flutter/features/admin/domain/enums/audit_action.dart';
 import 'package:placeify_flutter/features/admin/domain/enums/user_role.dart';
@@ -35,7 +34,7 @@ class MockAdminRepository implements AdminRepository {
   Future<AdminStats> getStats() async {
     await AdminSeedData.ensureSeeded(_prefs);
 
-    final users = await AdminLocalUsers.load(_authRepository, _prefs);
+    final users = await _authRepository.getAllUsers();
     final applications = await _vendorApplicationRepository.listApplications();
     final declined = await _vendorApplicationRepository.listApplications(
       filter: VendorApplicationListFilter.declined,
@@ -43,22 +42,19 @@ class MockAdminRepository implements AdminRepository {
     final auditLog = _loadAuditLog()
       ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
-    final approvedCount = users
-        .where((u) => u.vendorStatus == VendorStatus.approved)
-        .length;
+    final approvedCount =
+        users.where((u) => u.vendorStatus == VendorStatus.approved).length;
 
     return AdminStats(
       totalVendors: approvedCount,
-      pendingCount: users
-          .where((u) => u.vendorStatus == VendorStatus.pending)
-          .length,
+      pendingCount:
+          users.where((u) => u.vendorStatus == VendorStatus.pending).length,
       totalUsers: users.length,
       platformGmv: _mockPlatformGmv,
       approvedCount: approvedCount,
       declinedCount: declined.length,
-      suspendedCount: users
-          .where((u) => u.vendorStatus == VendorStatus.suspended)
-          .length,
+      suspendedCount:
+          users.where((u) => u.vendorStatus == VendorStatus.suspended).length,
       recentActivity: auditLog.take(10).toList(),
       signupSeries: _signupSeriesFor(users),
       recentApplications: applications.take(5).toList(),
@@ -86,7 +82,7 @@ class MockAdminRepository implements AdminRepository {
   Future<List<PlatformUser>> listUsers({String? query, UserRole? role}) async {
     await AdminSeedData.ensureSeeded(_prefs);
 
-    final users = await AdminLocalUsers.load(_authRepository, _prefs);
+    final users = await _authRepository.getAllUsers();
     final normalizedQuery = query?.trim().toLowerCase();
 
     var platformUsers = users.map(_toPlatformUser).toList()
@@ -145,7 +141,7 @@ class MockAdminRepository implements AdminRepository {
     final user = await _findUser(userId);
     if (user?.vendorId == null) return;
 
-    await _updateVendorStatusForUser(
+    await _authRepository.updateVendorStatusForUser(
       userId: userId,
       status: VendorStatus.suspended,
       vendorId: user!.vendorId,
@@ -163,7 +159,7 @@ class MockAdminRepository implements AdminRepository {
     final user = await _findUser(userId);
     if (user?.vendorId == null) return;
 
-    await _updateVendorStatusForUser(
+    await _authRepository.updateVendorStatusForUser(
       userId: userId,
       status: VendorStatus.approved,
       vendorId: user!.vendorId,
@@ -188,7 +184,7 @@ class MockAdminRepository implements AdminRepository {
   }
 
   Future<AppUser?> _findUser(String userId) async {
-    final users = await AdminLocalUsers.load(_authRepository, _prefs);
+    final users = await _authRepository.getAllUsers();
     return users.where((u) => u.id == userId).firstOrNull;
   }
 
@@ -219,22 +215,6 @@ class MockAdminRepository implements AdminRepository {
       AdminSeedData.notificationsKey,
       jsonEncode(notifications.map((n) => n.toJson()).toList()),
     );
-  }
-
-  Future<void> _updateVendorStatusForUser({
-    required String userId,
-    required VendorStatus status,
-    String? vendorId,
-  }) async {
-    try {
-      await _authRepository.updateVendorStatusForUser(
-        userId: userId,
-        status: status,
-        vendorId: vendorId,
-      );
-    } on UnsupportedError {
-      // Serverpod auth delegates moderation to admin APIs.
-    }
   }
 
   Future<void> _appendAuditLog({

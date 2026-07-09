@@ -1,0 +1,13 @@
+### Aggregated platform metrics for the admin dashboard.
+class: AdminPlatformStats
+fields:
+  totalVendors: int
+  pendingCount: int
+  totalUsers: int
+  platformGmv: double
+  approvedCount: int
+  declinedCount: int
+  suspendedCount: int
+  recentActivity: List<AdminAuditLogSummary>
+  signupSeries: List<double>
+  recentApplications: List<VendorApplicationSummary>

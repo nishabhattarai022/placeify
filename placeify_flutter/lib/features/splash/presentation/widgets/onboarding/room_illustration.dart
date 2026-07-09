@@ -25,14 +25,13 @@ class RoomPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final floorPaint = Paint()
-      ..shader =
-          const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF0A1F1A), Color(0xFF061410)],
-          ).createShader(
-            Rect.fromLTWH(0, size.height * 0.5, size.width, size.height * 0.5),
-          );
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0xFF0A1F1A), Color(0xFF061410)],
+      ).createShader(
+        Rect.fromLTWH(0, size.height * 0.5, size.width, size.height * 0.5),
+      );
     canvas.drawRect(
       Rect.fromLTWH(0, size.height * 0.5, size.width, size.height * 0.5),
       floorPaint,
@@ -59,19 +58,18 @@ class RoomPainter extends CustomPainter {
     }
 
     final glowPaint = Paint()
-      ..shader =
-          RadialGradient(
-            colors: [
-              AppColors.onboardingAmber.withValues(alpha: 0.12),
-              Colors.transparent,
-            ],
-          ).createShader(
-            Rect.fromCenter(
-              center: Offset(size.width * 0.5, size.height * 0.7),
-              width: 200,
-              height: 60,
-            ),
-          );
+      ..shader = RadialGradient(
+        colors: [
+          AppColors.onboardingAmber.withValues(alpha: 0.12),
+          Colors.transparent,
+        ],
+      ).createShader(
+        Rect.fromCenter(
+          center: Offset(size.width * 0.5, size.height * 0.7),
+          width: 200,
+          height: 60,
+        ),
+      );
     canvas.drawOval(
       Rect.fromCenter(
         center: Offset(size.width * 0.5, size.height * 0.72),

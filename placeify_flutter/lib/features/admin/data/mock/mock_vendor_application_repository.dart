@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:placeify_flutter/features/admin/data/admin_local_users.dart';
 import 'package:placeify_flutter/features/admin/data/config/admin_seed_data.dart';
 import 'package:placeify_flutter/features/admin/domain/enums/application_decision.dart';
 import 'package:placeify_flutter/features/admin/domain/enums/vendor_application_list_filter.dart';
@@ -33,7 +32,7 @@ class MockVendorApplicationRepository implements VendorApplicationRepository {
       return _listDeclinedApplications();
     }
 
-    final users = await AdminLocalUsers.load(_authRepository, _prefs);
+    final users = await _authRepository.getAllUsers();
     final registrations = _loadRegistrations();
     final applications = <VendorApplication>[];
 
@@ -72,9 +71,8 @@ class MockVendorApplicationRepository implements VendorApplicationRepository {
     final regData = _loadRegistrations()[vendorId];
     if (regData == null) return null;
 
-    final users = await AdminLocalUsers.load(_authRepository, _prefs);
-    final user =
-        users.where((u) => u.vendorId == vendorId).firstOrNull ??
+    final users = await _authRepository.getAllUsers();
+    final user = users.where((u) => u.vendorId == vendorId).firstOrNull ??
         _findUserForRegistration(users, regData);
     if (user == null) return null;
 
@@ -115,7 +113,7 @@ class MockVendorApplicationRepository implements VendorApplicationRepository {
   }
 
   Future<List<VendorApplication>> _listDeclinedApplications() async {
-    final users = await AdminLocalUsers.load(_authRepository, _prefs);
+    final users = await _authRepository.getAllUsers();
     final registrations = _loadRegistrations();
     final declinedUserIds = _loadAuditLog()
         .where((entry) {
@@ -168,9 +166,7 @@ class MockVendorApplicationRepository implements VendorApplicationRepository {
     VendorStatus? status,
   }) {
     final registration = VendorRegistration.fromJson(
-      Map<String, dynamic>.from(regData)
-        ..remove('vendorId')
-        ..remove('submittedAt'),
+      Map<String, dynamic>.from(regData)..remove('vendorId')..remove('submittedAt'),
     );
     final submittedRaw = regData['submittedAt'] as String?;
     final submittedAt = submittedRaw != null

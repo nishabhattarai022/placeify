@@ -37,8 +37,8 @@ class NotchedPillClipper extends CustomClipper<Path> {
     final bottomJoin = Offset(cx + bottomDx, size.height);
 
     final startAngle = math.atan2(topJoin.dy - cy, topJoin.dx - cx);
-    final sweepAngle =
-        math.atan2(bottomJoin.dy - cy, bottomJoin.dx - cx) - startAngle;
+    final sweepAngle = math.atan2(bottomJoin.dy - cy, bottomJoin.dx - cx) -
+        startAngle;
 
     return Path()
       ..moveTo(topJoin.dx, topJoin.dy)

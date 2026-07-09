@@ -1,0 +1,10 @@
+### Consumer checkout payment option.
+enum: PaymentMethod
+serialized: byName
+default: mockOnline
+values:
+  - cod
+  - mockOnline
+  - esewa
+  - khalti
+  - bankTransfer

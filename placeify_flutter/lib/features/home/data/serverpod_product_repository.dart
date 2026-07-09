@@ -32,4 +32,8 @@ class ServerpodProductRepository {
   Future<List<SpecialOfferSummary>> listSpecialOffers({int limit = 12}) {
     return client.product.listSpecialOffers(limit: limit);
   }
+
+  Future<List<Category>> listCategories() {
+    return client.product.listCategories();
+  }
 }

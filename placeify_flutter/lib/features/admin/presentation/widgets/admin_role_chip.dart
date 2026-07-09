@@ -14,26 +14,26 @@ class AdminRoleChip extends StatelessWidget {
   final UserRole role;
 
   String get _label => switch (role) {
-    UserRole.customer => 'Customer',
-    UserRole.vendor => 'Vendor',
-    UserRole.admin => 'Admin',
-  };
+        UserRole.customer => 'Customer',
+        UserRole.vendor => 'Vendor',
+        UserRole.admin => 'Admin',
+      };
 
   @override
   Widget build(BuildContext context) {
     final (bg, fg) = switch (role) {
       UserRole.customer => (
-        AppColors.creamDark,
-        AppColors.textMuted,
-      ),
+          AppColors.creamDark,
+          AppColors.textMuted,
+        ),
       UserRole.vendor => (
-        AppColors.sage.withValues(alpha: 0.14),
-        AppColors.sage,
-      ),
+          AppColors.sage.withValues(alpha: 0.14),
+          AppColors.sage,
+        ),
       UserRole.admin => (
-        AppColors.adminSlateBg,
-        AppColors.adminSlate,
-      ),
+          AppColors.adminSlateBg,
+          AppColors.adminSlate,
+        ),
     };
 
     return Container(

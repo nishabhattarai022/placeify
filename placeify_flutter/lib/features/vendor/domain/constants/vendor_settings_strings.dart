@@ -14,6 +14,10 @@ abstract final class VendorSettingsStrings {
   static const changePasswordTitle = 'Change password';
   static const changePasswordSubtitle = 'Update your login credentials';
 
+  static const signOutTitle = 'Sign out';
+  static const signOutSubtitle = 'Return to the welcome screen';
+  static const signedOut = 'Signed out';
+
   static const deactivateStoreTitle = 'Deactivate store';
   static const deactivateStoreSubtitle =
       'Temporarily hide your store from Placeify';
@@ -36,20 +40,20 @@ abstract final class VendorSettingsStrings {
       'Deactivation scheduled · 24h cooldown started';
 
   static String notificationTitle(String typeName) => switch (typeName) {
-    'order' => 'Order alerts',
-    'payment' => 'Payment alerts',
-    'product' => 'Product alerts',
-    'system' => 'System updates',
-    _ => typeName,
-  };
+        'order' => 'Order alerts',
+        'payment' => 'Payment alerts',
+        'product' => 'Product alerts',
+        'system' => 'System updates',
+        _ => typeName,
+      };
 
   static String notificationSubtitle(String typeName) => switch (typeName) {
-    'order' => 'New orders and status changes',
-    'payment' => 'Payouts and payment updates',
-    'product' => 'Low stock and listing issues',
-    'system' => 'Policy and platform announcements',
-    _ => '',
-  };
+        'order' => 'New orders and status changes',
+        'payment' => 'Payouts and payment updates',
+        'product' => 'Low stock and listing issues',
+        'system' => 'Policy and platform announcements',
+        _ => '',
+      };
 
   static String cooldownLabel(Duration? remaining) {
     if (remaining == null) return 'Ready to deactivate';

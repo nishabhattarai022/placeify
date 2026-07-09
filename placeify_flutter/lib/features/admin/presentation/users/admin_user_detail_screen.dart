@@ -30,8 +30,7 @@ class AdminUserDetailScreen extends ConsumerWidget {
           Expanded(
             child: userAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) =>
-                  const Center(child: Text('Could not load user')),
+              error: (_, __) => const Center(child: Text('Could not load user')),
               data: (user) {
                 if (user == null) {
                   return const Center(child: Text('User not found'));
@@ -50,19 +49,14 @@ class AdminUserDetailScreen extends ConsumerWidget {
                       decoration: BoxDecoration(
                         color: AppColors.warmWhite,
                         borderRadius: AppRadii.md,
-                        border: Border.all(
-                          color: AppColors.creamDark,
-                          width: 1.5,
-                        ),
+                        border: Border.all(color: AppColors.creamDark, width: 1.5),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             user.name,
-                            style: AppTypography.sectionTitle.copyWith(
-                              fontSize: 20,
-                            ),
+                            style: AppTypography.sectionTitle.copyWith(fontSize: 20),
                           ),
                           const SizedBox(height: 8),
                           Text(

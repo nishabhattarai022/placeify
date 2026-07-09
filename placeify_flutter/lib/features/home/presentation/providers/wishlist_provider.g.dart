@@ -41,7 +41,7 @@ final class WishlistProvider
   }
 }
 
-String _$wishlistHash() => r'0020b58290b51339f0abf2eec3dd210b257631c5';
+String _$wishlistHash() => r'6e045169dd05172fe2b5f6925ef3f8fe483f1759';
 
 abstract class _$Wishlist extends $Notifier<WishlistSnapshot> {
   WishlistSnapshot build();

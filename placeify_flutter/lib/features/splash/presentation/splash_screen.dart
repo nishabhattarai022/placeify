@@ -170,35 +170,35 @@ class _SplashScreenState extends State<SplashScreen>
                 scaleAnim: _logoScale,
               )
             : _showGetStarted
-            ? GetStartedView(
-                key: const ValueKey('getStarted'),
-                onCreateAccount: () {
-                  HapticService.heavy();
-                  context.push('/register');
-                },
-                onLogin: () {
-                  HapticService.light();
-                  context.push('/login');
-                },
-              )
-            : OnboardingView(
-                key: const ValueKey('onboarding'),
-                pageController: _pageController,
-                currentPage: _currentPage,
-                slides: kOnboardingSlides,
-                onPageChanged: _onPageChanged,
-                onNext: _nextSlide,
-                tagOpacity: _tagOpacity,
-                tagSlide: _tagSlide,
-                headlineOpacity: _headlineOpacity,
-                headlineSlide: _headlineSlide,
-                bodyOpacity: _bodyOpacity,
-                bodySlide: _bodySlide,
-                dotsOpacity: _dotsOpacity,
-                ctaOpacity: _ctaOpacity,
-                ctaSlide: _ctaSlide,
-                arrowBob: _arrowBob,
-              ),
+                ? GetStartedView(
+                    key: const ValueKey('getStarted'),
+                    onCreateAccount: () {
+                      HapticService.heavy();
+                      context.push('/register');
+                    },
+                    onLogin: () {
+                      HapticService.light();
+                      context.push('/login');
+                    },
+                  )
+                : OnboardingView(
+                    key: const ValueKey('onboarding'),
+                    pageController: _pageController,
+                    currentPage: _currentPage,
+                    slides: kOnboardingSlides,
+                    onPageChanged: _onPageChanged,
+                    onNext: _nextSlide,
+                    tagOpacity: _tagOpacity,
+                    tagSlide: _tagSlide,
+                    headlineOpacity: _headlineOpacity,
+                    headlineSlide: _headlineSlide,
+                    bodyOpacity: _bodyOpacity,
+                    bodySlide: _bodySlide,
+                    dotsOpacity: _dotsOpacity,
+                    ctaOpacity: _ctaOpacity,
+                    ctaSlide: _ctaSlide,
+                    arrowBob: _arrowBob,
+                  ),
       ),
     );
   }

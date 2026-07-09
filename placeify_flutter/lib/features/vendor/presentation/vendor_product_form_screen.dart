@@ -35,8 +35,7 @@ class VendorProductFormScreen extends ConsumerStatefulWidget {
       _VendorProductFormScreenState();
 }
 
-class _VendorProductFormScreenState
-    extends ConsumerState<VendorProductFormScreen> {
+class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScreen> {
   bool _isDirty = false;
   bool _isHydrated = false;
 
@@ -337,10 +336,7 @@ class _VendorProductFormScreenState
     final form = ref.watch(vendorProductFormProvider);
     final notifier = ref.read(vendorProductFormProvider.notifier);
 
-    ref.listen<VendorProductFormState>(vendorProductFormProvider, (
-      previous,
-      next,
-    ) {
+    ref.listen<VendorProductFormState>(vendorProductFormProvider, (previous, next) {
       if (previous?.dimensionUnit != next.dimensionUnit ||
           previous?.editingProductId != next.editingProductId) {
         _syncControllersFromState(next);
@@ -357,9 +353,8 @@ class _VendorProductFormScreenState
     );
 
     final isEditing = form.isEditing;
-    final unitLabel = form.dimensionUnit == VendorProductDimensionUnit.cm
-        ? 'cm'
-        : 'in';
+    final unitLabel =
+        form.dimensionUnit == VendorProductDimensionUnit.cm ? 'cm' : 'in';
     final saveLabel = isEditing
         ? (_isDirty ? VendorStrings.saveChanges : VendorStrings.noChangesLabel)
         : VendorStrings.uploadProduct;
@@ -423,501 +418,474 @@ class _VendorProductFormScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Product details',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.espresso,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      isEditing
-                          ? 'Update pricing, inventory, and listing details.'
-                          : 'Add a new product to your store catalog.',
-                      style: AppTypography.bodyLight.copyWith(
-                        color: AppColors.textSecondary,
-                        height: 1.45,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    const ProductImagePickerGrid(),
-                    const SizedBox(height: 20),
-                    ProfileFormField(
-                      label: 'Product Name',
-                      child: ProfileTextInput(
-                        fieldKey: _nameKey,
-                        controller: _name,
-                        hint: 'e.g. Harmony Chair',
-                        validator: (value) =>
-                            value == null || value.trim().isEmpty
+                const Text(
+                  'Product details',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.espresso,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  isEditing
+                      ? 'Update pricing, inventory, and listing details.'
+                      : 'Add a new product to your store catalog.',
+                  style: AppTypography.bodyLight.copyWith(
+                    color: AppColors.textSecondary,
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const ProductImagePickerGrid(),
+                const SizedBox(height: 20),
+                ProfileFormField(
+                  label: 'Product Name',
+                  child: ProfileTextInput(
+                    fieldKey: _nameKey,
+                    controller: _name,
+                    hint: 'e.g. Harmony Chair',
+                    validator: (value) =>
+                        value == null || value.trim().isEmpty
                             ? 'Enter a product name'
                             : null,
-                        onChanged: (value) {
-                          notifier.update(
-                            (state) => state.copyWith(name: value),
-                          );
-                          _markDirty();
-                        },
-                      ),
-                    ),
-                    ProfileFormField(
-                      label: 'Description',
-                      child: ProfileTextInput(
-                        controller: _description,
-                        hint: 'Describe materials, comfort, and key features',
-                        maxLines: 4,
-                        onChanged: (value) {
-                          notifier.update(
-                            (state) => state.copyWith(description: value),
-                          );
-                          _markDirty();
-                        },
-                      ),
-                    ),
-                    ProfileFormField(
-                      label: 'Brand',
-                      child: ProfileTextInput(
-                        controller: _brand,
-                        hint: 'e.g. Oak & Linen Co.',
-                        onChanged: (value) {
-                          notifier.update(
-                            (state) => state.copyWith(brand: value),
-                          );
-                          _markDirty();
-                        },
-                      ),
-                    ),
-                    ProfileFormField(
-                      label: 'SKU',
-                      child: ProfileTextInput(
-                        fieldKey: _skuKey,
-                        controller: _sku,
-                        hint: 'HH-CHR-001',
-                        validator: (value) =>
-                            value == null || value.trim().isEmpty
-                            ? 'Enter a SKU'
-                            : null,
-                        onChanged: (value) {
-                          notifier.update(
-                            (state) => state.copyWith(sku: value),
-                          );
-                          _markDirty();
-                        },
-                      ),
-                    ),
-                    ProfileFormField(
-                      label: 'Category',
-                      child: FormField<String>(
-                        key: _categoryKey,
-                        validator: (_) =>
-                            ref
-                                .read(vendorProductFormProvider)
-                                .categoryId
-                                .isEmpty
-                            ? 'Select a category'
-                            : null,
-                        builder: (field) => Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _CategoryPicker(
-                              categoryId: form.categoryId,
-                              hasError: field.hasError,
-                              onChanged: (categoryId) {
-                                field.didChange(categoryId);
-                                notifier.update(
-                                  (state) =>
-                                      state.copyWith(categoryId: categoryId),
-                                );
-                                _markDirty();
-                              },
-                            ),
-                            if (field.hasError)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 6, left: 4),
-                                child: Text(
-                                  field.errorText!,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.red,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    ProfileFormField(
-                      label: 'Materials',
-                      child: ProfileTextInput(
-                        controller: _materials,
-                        hint: 'e.g. Solid oak, linen upholstery',
-                        onChanged: (value) {
-                          notifier.update(
-                            (state) => state.copyWith(materials: value),
-                          );
-                          _markDirty();
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Warranty & shipping',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.espresso,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Shown on the product page when customers expand details.',
-                      style: AppTypography.bodyLight.copyWith(
-                        color: AppColors.textSecondary,
-                        height: 1.45,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    ProfileFormField(
-                      label: 'Warranty',
-                      child: ProfileTextInput(
-                        controller: _warrantyNote,
-                        hint: 'e.g. 2-year limited warranty',
-                        onChanged: (value) {
-                          notifier.update(
-                            (state) => state.copyWith(warrantyNote: value),
-                          );
-                          _markDirty();
-                        },
-                      ),
-                    ),
-                    ProfileFormField(
-                      label: 'Shipping',
-                      child: ProfileTextInput(
-                        controller: _shippingNote,
-                        hint: 'e.g. Ships in 5–7 business days',
-                        onChanged: (value) {
-                          notifier.update(
-                            (state) => state.copyWith(shippingNote: value),
-                          );
-                          _markDirty();
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Pricing',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.espresso,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    ProfileFormField(
-                      label: 'List Price (NPR)',
-                      child: ProfileTextInput(
-                        fieldKey: _listPriceKey,
-                        controller: _listPrice,
-                        hint: '12500',
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                        ],
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Enter a list price';
-                          }
-                          final parsed = double.tryParse(value.trim());
-                          if (parsed == null || parsed <= 0) {
-                            return 'Enter a valid list price';
-                          }
-                          return null;
-                        },
-                        onChanged: (value) {
-                          notifier.update(
-                            (state) => state.copyWith(listPrice: value),
-                          );
-                          _markDirty();
-                        },
-                      ),
-                    ),
-                    ProfileFormField(
-                      label: 'Discount %',
-                      child: ProfileTextInput(
-                        controller: _discountPercent,
-                        hint: '0',
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        inputFormatters: const [
-                          PercentInputFormatter(min: 0, max: 100),
-                        ],
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return null;
-                          }
-                          final parsed = double.tryParse(value.trim());
-                          if (parsed == null || parsed < 0 || parsed > 100) {
-                            return 'Discount must be between 0 and 100';
-                          }
-                          return null;
-                        },
-                        onChanged: (value) {
-                          notifier.update(
-                            (state) => state.copyWith(discountPercent: value),
-                          );
-                          _markDirty();
-                        },
-                      ),
-                    ),
-                    ProfileFormField(
-                      label: 'Offer Label',
-                      child: ProfileTextInput(
-                        controller: _offerLabel,
-                        hint: 'e.g. Summer Sale, Limited Offer',
-                        onChanged: (value) {
-                          notifier.update(
-                            (state) => state.copyWith(offerLabel: value),
-                          );
-                          _markDirty();
-                        },
-                      ),
-                    ),
-                    ListenableBuilder(
-                      listenable: Listenable.merge([
-                        _listPrice,
-                        _discountPercent,
-                      ]),
-                      builder: (context, _) {
-                        final salePrice = ref
-                            .read(vendorProductFormProvider)
-                            .computedSalePrice;
-                        return Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.warmWhite,
-                            borderRadius: AppRadii.md,
-                            border: Border.all(
-                              color: AppColors.creamDark,
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              const Expanded(
-                                child: Text(
-                                  'SALE PRICE',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.espresso,
-                                    letterSpacing: 0.07 * 12,
-                                  ),
-                                ),
-                              ),
-                              Text(
-                                Formatters.currencyFull(salePrice),
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.accent,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 18),
-                    Row(
+                    onChanged: (value) {
+                      notifier.update((state) => state.copyWith(name: value));
+                      _markDirty();
+                    },
+                  ),
+                ),
+                ProfileFormField(
+                  label: 'Description',
+                  child: ProfileTextInput(
+                    controller: _description,
+                    hint: 'Describe materials, comfort, and key features',
+                    maxLines: 4,
+                    onChanged: (value) {
+                      notifier.update(
+                        (state) => state.copyWith(description: value),
+                      );
+                      _markDirty();
+                    },
+                  ),
+                ),
+                ProfileFormField(
+                  label: 'Brand',
+                  child: ProfileTextInput(
+                    controller: _brand,
+                    hint: 'e.g. Oak & Linen Co.',
+                    onChanged: (value) {
+                      notifier.update((state) => state.copyWith(brand: value));
+                      _markDirty();
+                    },
+                  ),
+                ),
+                ProfileFormField(
+                  label: 'SKU',
+                  child: ProfileTextInput(
+                    fieldKey: _skuKey,
+                    controller: _sku,
+                    hint: 'HH-CHR-001',
+                    validator: (value) =>
+                        value == null || value.trim().isEmpty ? 'Enter a SKU' : null,
+                    onChanged: (value) {
+                      notifier.update((state) => state.copyWith(sku: value));
+                      _markDirty();
+                    },
+                  ),
+                ),
+                ProfileFormField(
+                  label: 'Category',
+                  child: FormField<String>(
+                    key: _categoryKey,
+                    validator: (_) => ref.read(vendorProductFormProvider).categoryId.isEmpty
+                        ? 'Select a category'
+                        : null,
+                    builder: (field) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Expanded(
-                          child: Text(
-                            'Dimensions',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.espresso,
-                            ),
-                          ),
-                        ),
-                        _DimensionUnitToggle(
-                          unit: form.dimensionUnit,
-                          onChanged: () {
-                            notifier.toggleDimensionUnit();
+                        _CategoryPicker(
+                          categoryId: form.categoryId,
+                          hasError: field.hasError,
+                          onChanged: (categoryId) {
+                            field.didChange(categoryId);
+                            notifier.update(
+                              (state) => state.copyWith(categoryId: categoryId),
+                            );
                             _markDirty();
                           },
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ProfileFormField(
-                            label: 'Width ($unitLabel)',
-                            child: ProfileTextInput(
-                              controller: _width,
-                              hint: '0',
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
-                              inputFormatters: [
-                                FilteringTextInputFormatter.allow(
-                                  RegExp(r'[0-9.]'),
-                                ),
-                              ],
-                              onChanged: (value) {
-                                notifier.update(
-                                  (state) => state.copyWith(width: value),
-                                );
-                                _markDirty();
-                              },
+                        if (field.hasError)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6, left: 4),
+                            child: Text(
+                              field.errorText!,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.red,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: ProfileFormField(
-                            label: 'Height ($unitLabel)',
-                            child: ProfileTextInput(
-                              controller: _height,
-                              hint: '0',
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
-                              inputFormatters: [
-                                FilteringTextInputFormatter.allow(
-                                  RegExp(r'[0-9.]'),
-                                ),
-                              ],
-                              onChanged: (value) {
-                                notifier.update(
-                                  (state) => state.copyWith(height: value),
-                                );
-                                _markDirty();
-                              },
-                            ),
-                          ),
-                        ),
                       ],
                     ),
-                    ProfileFormField(
-                      label: 'Depth ($unitLabel)',
-                      child: ProfileTextInput(
-                        controller: _depth,
-                        hint: '0',
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                        ],
-                        onChanged: (value) {
-                          notifier.update(
-                            (state) => state.copyWith(depth: value),
-                          );
-                          _markDirty();
-                        },
-                      ),
+                  ),
+                ),
+                ProfileFormField(
+                  label: 'Materials',
+                  child: ProfileTextInput(
+                    controller: _materials,
+                    hint: 'e.g. Solid oak, linen upholstery',
+                    onChanged: (value) {
+                      notifier.update(
+                        (state) => state.copyWith(materials: value),
+                      );
+                      _markDirty();
+                    },
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Warranty & shipping',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.espresso,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Shown on the product page when customers expand details.',
+                  style: AppTypography.bodyLight.copyWith(
+                    color: AppColors.textSecondary,
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                ProfileFormField(
+                  label: 'Warranty',
+                  child: ProfileTextInput(
+                    controller: _warrantyNote,
+                    hint: 'e.g. 2-year limited warranty',
+                    onChanged: (value) {
+                      notifier.update(
+                        (state) => state.copyWith(warrantyNote: value),
+                      );
+                      _markDirty();
+                    },
+                  ),
+                ),
+                ProfileFormField(
+                  label: 'Shipping',
+                  child: ProfileTextInput(
+                    controller: _shippingNote,
+                    hint: 'e.g. Ships in 5–7 business days',
+                    onChanged: (value) {
+                      notifier.update(
+                        (state) => state.copyWith(shippingNote: value),
+                      );
+                      _markDirty();
+                    },
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Pricing',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.espresso,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                ProfileFormField(
+                  label: 'List Price (NPR)',
+                  child: ProfileTextInput(
+                    fieldKey: _listPriceKey,
+                    controller: _listPrice,
+                    hint: '12500',
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
                     ),
-                    ProfileFormField(
-                      label: 'Weight (kg)',
-                      child: ProfileTextInput(
-                        controller: _weight,
-                        hint: '0',
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                        ],
-                        onChanged: (value) {
-                          notifier.update(
-                            (state) => state.copyWith(weight: value),
-                          );
-                          _markDirty();
-                        },
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                    ],
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Enter a list price';
+                      }
+                      final parsed = double.tryParse(value.trim());
+                      if (parsed == null || parsed <= 0) {
+                        return 'Enter a valid list price';
+                      }
+                      return null;
+                    },
+                    onChanged: (value) {
+                      notifier.update(
+                        (state) => state.copyWith(listPrice: value),
+                      );
+                      _markDirty();
+                    },
+                  ),
+                ),
+                if (isEditing) ...[
+                  ProfileFormField(
+                    label: 'Discount %',
+                    child: ProfileTextInput(
+                      controller: _discountPercent,
+                      hint: '0',
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
                       ),
-                    ),
-                    ProfileFormField(
-                      label: 'Stock Quantity',
-                      child: ProfileTextInput(
-                        fieldKey: _stockKey,
-                        controller: _stock,
-                        hint: '0',
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Enter a stock quantity';
-                          }
-                          final parsed = int.tryParse(value.trim());
-                          if (parsed == null || parsed < 0) {
-                            return 'Enter a valid stock quantity';
-                          }
+                      inputFormatters: const [
+                        PercentInputFormatter(min: 0, max: 100),
+                      ],
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
                           return null;
-                        },
-                        onChanged: (value) {
-                          notifier.update(
-                            (state) => state.copyWith(stock: value),
-                          );
-                          _markDirty();
-                        },
-                      ),
-                    ),
-                    ProfileFormField(
-                      label: 'Low Stock Threshold',
-                      child: ProfileTextInput(
-                        controller: _lowStockThreshold,
-                        hint: '5',
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        onChanged: (value) {
-                          notifier.update(
-                            (state) => state.copyWith(lowStockThreshold: value),
-                          );
-                          _markDirty();
-                        },
-                      ),
-                    ),
-                    _FormSwitchRow(
-                      label: 'AR View Available',
-                      subtitle: 'Allow customers to preview this product in AR',
-                      value: form.hasArView,
+                        }
+                        final parsed = double.tryParse(value.trim());
+                        if (parsed == null || parsed < 0 || parsed > 100) {
+                          return 'Discount must be between 0 and 100';
+                        }
+                        return null;
+                      },
                       onChanged: (value) {
                         notifier.update(
-                          (state) => state.copyWith(hasArView: value),
+                          (state) => state.copyWith(discountPercent: value),
                         );
                         _markDirty();
                       },
                     ),
-                    _FormSwitchRow(
-                      label: 'Visible in Store',
-                      subtitle:
-                          'Hidden products stay in your catalog but are not listed',
-                      value: form.isActive,
+                  ),
+                  ProfileFormField(
+                    label: 'Offer Label',
+                    child: ProfileTextInput(
+                      controller: _offerLabel,
+                      hint: 'e.g. Summer Sale, Limited Offer',
                       onChanged: (value) {
                         notifier.update(
-                          (state) => state.copyWith(isActive: value),
+                          (state) => state.copyWith(offerLabel: value),
                         );
                         _markDirty();
                       },
                     ),
+                  ),
+                  ListenableBuilder(
+                    listenable: Listenable.merge([
+                      _listPrice,
+                      _discountPercent,
+                    ]),
+                    builder: (context, _) {
+                      final salePrice =
+                          ref.read(vendorProductFormProvider).computedSalePrice;
+                      return Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.warmWhite,
+                          borderRadius: AppRadii.md,
+                          border: Border.all(
+                            color: AppColors.creamDark,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                'SALE PRICE',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.espresso,
+                                  letterSpacing: 0.07 * 12,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              Formatters.currencyFull(salePrice),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.accent,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Dimensions',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.espresso,
+                        ),
+                      ),
+                    ),
+                    _DimensionUnitToggle(
+                      unit: form.dimensionUnit,
+                      onChanged: () {
+                        notifier.toggleDimensionUnit();
+                        _markDirty();
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ProfileFormField(
+                        label: 'Width ($unitLabel)',
+                        child: ProfileTextInput(
+                          controller: _width,
+                          hint: '0',
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[0-9.]'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            notifier.update(
+                              (state) => state.copyWith(width: value),
+                            );
+                            _markDirty();
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ProfileFormField(
+                        label: 'Height ($unitLabel)',
+                        child: ProfileTextInput(
+                          controller: _height,
+                          hint: '0',
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[0-9.]'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            notifier.update(
+                              (state) => state.copyWith(height: value),
+                            );
+                            _markDirty();
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                ProfileFormField(
+                  label: 'Depth ($unitLabel)',
+                  child: ProfileTextInput(
+                    controller: _depth,
+                    hint: '0',
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                    ],
+                    onChanged: (value) {
+                      notifier.update((state) => state.copyWith(depth: value));
+                      _markDirty();
+                    },
+                  ),
+                ),
+                ProfileFormField(
+                  label: 'Weight (kg)',
+                  child: ProfileTextInput(
+                    controller: _weight,
+                    hint: '0',
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                    ],
+                    onChanged: (value) {
+                      notifier.update(
+                        (state) => state.copyWith(weight: value),
+                      );
+                      _markDirty();
+                    },
+                  ),
+                ),
+                ProfileFormField(
+                  label: 'Stock Quantity',
+                  child: ProfileTextInput(
+                    fieldKey: _stockKey,
+                    controller: _stock,
+                    hint: '0',
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Enter a stock quantity';
+                      }
+                      final parsed = int.tryParse(value.trim());
+                      if (parsed == null || parsed < 0) {
+                        return 'Enter a valid stock quantity';
+                      }
+                      return null;
+                    },
+                    onChanged: (value) {
+                      notifier.update((state) => state.copyWith(stock: value));
+                      _markDirty();
+                    },
+                  ),
+                ),
+                ProfileFormField(
+                  label: 'Low Stock Threshold',
+                  child: ProfileTextInput(
+                    controller: _lowStockThreshold,
+                    hint: '5',
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    onChanged: (value) {
+                      notifier.update(
+                        (state) => state.copyWith(lowStockThreshold: value),
+                      );
+                      _markDirty();
+                    },
+                  ),
+                ),
+                _FormSwitchRow(
+                  label: 'AR View Available',
+                  subtitle: 'Allow customers to preview this product in AR',
+                  value: form.hasArView,
+                  onChanged: (value) {
+                    notifier.update((state) => state.copyWith(hasArView: value));
+                    _markDirty();
+                  },
+                ),
+                _FormSwitchRow(
+                  label: 'Visible in Store',
+                  subtitle: 'Hidden products stay in your catalog but are not listed',
+                  value: form.isActive,
+                  onChanged: (value) {
+                    notifier.update((state) => state.copyWith(isActive: value));
+                    _markDirty();
+                  },
+                ),
                   ],
                 ),
               ),

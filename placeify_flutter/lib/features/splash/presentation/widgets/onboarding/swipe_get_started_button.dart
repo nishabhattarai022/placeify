@@ -72,7 +72,7 @@ class _SwipeGetStartedButtonState extends State<SwipeGetStartedButton>
 
     final shouldComplete =
         _dragX >= _maxDrag * SwipeGetStartedButton._completeThreshold ||
-        (details.primaryVelocity != null && details.primaryVelocity! > 800);
+            (details.primaryVelocity != null && details.primaryVelocity! > 800);
 
     if (shouldComplete) {
       _finish();
@@ -86,6 +86,8 @@ class _SwipeGetStartedButtonState extends State<SwipeGetStartedButton>
     setState(() => _completed = true);
     HapticService.heavy();
     await _snapTo(_maxDrag);
+    if (!mounted) return;
+    await Future<void>.delayed(const Duration(milliseconds: 450));
     if (!mounted) return;
     widget.onComplete();
   }
@@ -142,6 +144,19 @@ class _SwipeGetStartedButtonState extends State<SwipeGetStartedButton>
                 child: Stack(
                   clipBehavior: Clip.hardEdge,
                   children: [
+                    if (_completed)
+                      const Align(
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Complete!',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                      ),
                     if (showHints)
                       ClipPath(
                         clipper: _SwipeWipeClipper(revealFromX: revealFromX),
@@ -180,7 +195,10 @@ class _SwipeGetStartedButtonState extends State<SwipeGetStartedButton>
                     Positioned(
                       left: thumbLeft,
                       top: SwipeGetStartedButton._trackPadding,
-                      child: _SwipeThumb(size: thumbSize),
+                      child: _SwipeThumb(
+                        size: thumbSize,
+                        completed: _completed,
+                      ),
                     ),
                   ],
                 ),
@@ -214,9 +232,13 @@ class _SwipeWipeClipper extends CustomClipper<Path> {
 }
 
 class _SwipeThumb extends StatelessWidget {
-  const _SwipeThumb({required this.size});
+  const _SwipeThumb({
+    required this.size,
+    this.completed = false,
+  });
 
   final double size;
+  final bool completed;
 
   @override
   Widget build(BuildContext context) {
@@ -235,11 +257,13 @@ class _SwipeThumb extends StatelessWidget {
         ],
       ),
       alignment: Alignment.center,
-      child: Icon(
-        Icons.chevron_right_rounded,
-        size: size * 0.48,
-        color: AppColors.onboardingAmber,
-      ),
+      child: completed
+          ? null
+          : Icon(
+              Icons.chevron_right_rounded,
+              size: size * 0.48,
+              color: AppColors.onboardingAmber,
+            ),
     );
   }
 }

@@ -1,0 +1,8 @@
+enum: DeliveryStage
+serialized: byName
+values:
+  - orderPlaced
+  - packed
+  - shipped
+  - outForDelivery
+  - delivered

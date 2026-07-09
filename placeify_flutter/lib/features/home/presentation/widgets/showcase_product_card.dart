@@ -8,7 +8,9 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../cart/presentation/cart_actions.dart';
+import '../../data/product_reviews_repository.dart';
 import '../../domain/models/product.dart';
+import '../widgets/product_rating_row.dart';
 
 /// Product tile for the category showcase masonry grid (mock layout).
 class ShowcaseProductCard extends ConsumerWidget {
@@ -25,6 +27,8 @@ class ShowcaseProductCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final reviewSummary = ProductReviewsRepository.forProduct(product);
+
     return GestureDetector(
       onTap: () => context.push('/product/${product.id}'),
       child: Container(
@@ -55,6 +59,8 @@ class ShowcaseProductCard extends ConsumerWidget {
                 color: Color(0xFF9E9E9E),
               ),
             ),
+            const SizedBox(height: 6),
+            ProductRatingRow(summary: reviewSummary, compact: true),
             const SizedBox(height: 8),
             Expanded(
               child: Center(
@@ -94,15 +100,16 @@ class _ProductImage extends StatelessWidget {
   Widget build(BuildContext context) {
     if (isAsset) {
       return Image.asset(
+        key: ValueKey('${product.id}_${product.imageUrl}'),
         product.imageUrl,
         fit: BoxFit.contain,
         height: 120,
-        errorBuilder: (_, __, ___) =>
-            _FallbackIcon(svgPath: product.svgIconPath),
+        errorBuilder: (_, __, ___) => _FallbackIcon(svgPath: product.svgIconPath),
       );
     }
 
     return CachedNetworkImage(
+      key: ValueKey('${product.id}_${product.imageUrl}'),
       imageUrl: product.imageUrl,
       fit: BoxFit.contain,
       height: 120,

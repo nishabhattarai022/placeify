@@ -14,8 +14,7 @@ import 'package:placeify_flutter/core/widgets/shimmer_loader.dart';
 import 'package:placeify_flutter/features/admin/domain/constants/admin_routes.dart';
 import 'package:placeify_flutter/features/admin/domain/constants/admin_strings.dart';
 import 'package:placeify_flutter/features/admin/domain/models/admin_audit_log_entry.dart';
-import 'package:placeify_flutter/features/admin/domain/models/admin_stats.dart'
-    as models;
+import 'package:placeify_flutter/features/admin/domain/models/admin_stats.dart' as models;
 import 'package:placeify_flutter/features/admin/presentation/providers/admin_audit_log_provider.dart';
 import 'package:placeify_flutter/features/admin/presentation/providers/admin_notification_badge_provider.dart';
 import 'package:placeify_flutter/features/admin/presentation/providers/admin_notifications_provider.dart';
@@ -126,17 +125,17 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               child: showShimmer
                   ? const _DashboardShimmer()
                   : statsAsync.hasError && stats == null
-                  ? _DashboardError(onRetry: _onRefresh)
-                  : stats == null
-                  ? const _DashboardShimmer()
-                  : RefreshIndicator(
-                      color: AppColors.adminSlate,
-                      onRefresh: _onRefresh,
-                      child: _DashboardBody(
-                        stats: stats,
-                        scrollController: _scrollController,
-                      ),
-                    ),
+                      ? _DashboardError(onRetry: _onRefresh)
+                      : stats == null
+                          ? const _DashboardShimmer()
+                          : RefreshIndicator(
+                              color: AppColors.adminSlate,
+                              onRefresh: _onRefresh,
+                              child: _DashboardBody(
+                                stats: stats,
+                                scrollController: _scrollController,
+                              ),
+                            ),
             ),
           ],
         ),

@@ -29,6 +29,8 @@ abstract final class VendorRegistrationFieldKeys {
 /// Pure-Dart validation for the multi-step vendor registration flow.
 abstract final class VendorRegistrationValidator {
   static final _emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+  static final _lettersOnlyRegex = RegExp(r'^[a-zA-Z\s]+$');
+  static final _accountNumberRegex = RegExp(r'^\d{16}$');
 
   /// Returns a map of field keys to user-facing error messages.
   /// Empty when the step is valid.
@@ -95,7 +97,8 @@ abstract final class VendorRegistrationValidator {
     final errors = <String, String>{};
 
     if (address.street.trim().isEmpty) {
-      errors[VendorRegistrationFieldKeys.street] = 'Street address is required';
+      errors[VendorRegistrationFieldKeys.street] =
+          'Street address is required';
     }
     if (address.city.trim().isEmpty) {
       errors[VendorRegistrationFieldKeys.city] = 'City is required';
@@ -104,9 +107,13 @@ abstract final class VendorRegistrationValidator {
       errors[VendorRegistrationFieldKeys.state] =
           'State / province is required';
     }
-    if (address.postalCode.trim().isEmpty) {
+    final postalCode = address.postalCode.trim();
+    if (postalCode.isEmpty) {
       errors[VendorRegistrationFieldKeys.postalCode] =
           'Postal code is required';
+    } else if (postalCode.length != 5 || !RegExp(r'^\d{5}$').hasMatch(postalCode)) {
+      errors[VendorRegistrationFieldKeys.postalCode] =
+          'Postal code must be exactly 5 digits';
     }
     if (address.country.trim().isEmpty) {
       errors[VendorRegistrationFieldKeys.country] = 'Country is required';
@@ -143,16 +150,29 @@ abstract final class VendorRegistrationValidator {
   static Map<String, String> _validateBank(VendorBankDetails bank) {
     final errors = <String, String>{};
 
-    if (bank.accountHolderName.trim().isEmpty) {
+    final accountHolderName = bank.accountHolderName.trim();
+    if (accountHolderName.isEmpty) {
       errors[VendorRegistrationFieldKeys.accountHolderName] =
           'Account holder name is required';
+    } else if (!_lettersOnlyRegex.hasMatch(accountHolderName)) {
+      errors[VendorRegistrationFieldKeys.accountHolderName] =
+          'Use letters only';
     }
-    if (bank.bankName.trim().isEmpty) {
+
+    final bankName = bank.bankName.trim();
+    if (bankName.isEmpty) {
       errors[VendorRegistrationFieldKeys.bankName] = 'Bank name is required';
+    } else if (!_lettersOnlyRegex.hasMatch(bankName)) {
+      errors[VendorRegistrationFieldKeys.bankName] = 'Use letters only';
     }
-    if (bank.accountNumber.trim().length < 6) {
+
+    final accountNumber = bank.accountNumber.trim();
+    if (accountNumber.isEmpty) {
       errors[VendorRegistrationFieldKeys.accountNumber] =
-          'Enter a valid account number (at least 6 digits)';
+          'Account number is required';
+    } else if (!_accountNumberRegex.hasMatch(accountNumber)) {
+      errors[VendorRegistrationFieldKeys.accountNumber] =
+          'Account number must be exactly 16 digits';
     }
     if (bank.routingNumber.trim().length < 6) {
       errors[VendorRegistrationFieldKeys.routingNumber] =

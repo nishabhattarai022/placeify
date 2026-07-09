@@ -1,32 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/services/haptic_service.dart';
-import '../data/home_categories_config.dart';
-import '../providers/home_room_provider.dart';
 import '../theme/home_screen_tokens.dart';
 
 /// "Recommend for you" row with trailing arrow.
-class HomeRecommendHeader extends ConsumerStatefulWidget {
+class HomeRecommendHeader extends StatefulWidget {
   const HomeRecommendHeader({super.key});
 
   @override
-  ConsumerState<HomeRecommendHeader> createState() =>
-      _HomeRecommendHeaderState();
+  State<HomeRecommendHeader> createState() => _HomeRecommendHeaderState();
 }
 
-class _HomeRecommendHeaderState extends ConsumerState<HomeRecommendHeader> {
+class _HomeRecommendHeaderState extends State<HomeRecommendHeader> {
   bool _arrowHovered = false;
   bool _arrowPressed = false;
 
   void _onArrowTap() {
     HapticService.light();
-    final roomId = ref.read(selectedRoomProvider);
-    final category = HomeCategoriesConfig.apiCategoryForRoom(roomId);
-    context.push('/products?category=${Uri.encodeQueryComponent(category)}');
+    context.go('/browse');
   }
 
   @override
@@ -57,9 +51,7 @@ class _HomeRecommendHeaderState extends ConsumerState<HomeRecommendHeader> {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: arrowActive
-                    ? Colors.black.withValues(
-                        alpha: _arrowPressed ? 0.08 : 0.05,
-                      )
+                    ? Colors.black.withValues(alpha: _arrowPressed ? 0.08 : 0.05)
                     : Colors.transparent,
                 shape: BoxShape.circle,
               ),

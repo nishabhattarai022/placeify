@@ -17,6 +17,7 @@ abstract final class ProductDetailTokens {
   static const double heroPaddingTop = 0;
   static const double heroPaddingBottom = 8;
   static const double heroHeightFactor = 0.46;
+  static const int maxGalleryThumbs = 8;
 
   static const double headerSize = 44;
   static const double headerHorizontalPadding = 20;

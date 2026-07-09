@@ -1,0 +1,18 @@
+### Full customer order with line items and delivery timeline.
+class: UserOrderDetail
+fields:
+  id: int
+  orderNumber: String
+  status: OrderStatus
+  totalAmount: double
+  placedAt: DateTime
+  shippingAddress: String
+  itemCount: int
+  primaryProductName: String?
+  latestDeliveryStage: DeliveryStage?
+  latestDeliveryNote: String?
+  items: List<UserOrderLineItem>
+  deliveryUpdates: List<UserOrderDeliveryEvent>
+  orderPaymentStatus: OrderPaymentStatus
+  payment: UserOrderPaymentSummary
+  paymentUpdates: List<UserOrderPaymentEvent>

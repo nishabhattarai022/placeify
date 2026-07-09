@@ -47,20 +47,20 @@ abstract final class Vendor3dCaptureAngles {
   static const all = [front, side, top, detail];
 
   static String labelFor(String angle) => switch (angle) {
-    front => 'Front',
-    side => 'Side',
-    top => 'Top',
-    detail => 'Detail',
-    _ => 'Angle',
-  };
+        front => 'Front',
+        side => 'Side',
+        top => 'Top',
+        detail => 'Detail',
+        _ => 'Angle',
+      };
 
   static String hintFor(String angle) => switch (angle) {
-    front => 'Full front view',
-    side => '45° or profile view',
-    top => 'Overhead angle',
-    detail => 'Texture / joinery',
-    _ => 'Reference photo',
-  };
+        front => 'Full front view',
+        side => '45° or profile view',
+        top => 'Overhead angle',
+        detail => 'Texture / joinery',
+        _ => 'Reference photo',
+      };
 }
 
 abstract final class Vendor3dModelStore {
@@ -71,8 +71,7 @@ abstract final class Vendor3dModelStore {
     return _records[product.id]?.status ?? VendorProduct3dStatus.none;
   }
 
-  static Vendor3dModelRecord? recordFor(String productId) =>
-      _records[productId];
+  static Vendor3dModelRecord? recordFor(String productId) => _records[productId];
 
   static Vendor3dModelRecord ensureDraft(String productId) {
     final existing = _records[productId];
@@ -144,7 +143,9 @@ abstract final class Vendor3dModelStore {
   }
 
   static int countNeedingModel(List<VendorProduct> products) {
-    return products.where((product) => !statusFor(product).isReady).length;
+    return products
+        .where((product) => !statusFor(product).isReady)
+        .length;
   }
 
   static int countReady(List<VendorProduct> products) {

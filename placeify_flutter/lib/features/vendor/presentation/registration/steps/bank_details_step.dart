@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../profile/presentation/widgets/shared/profile_form_field.dart';
@@ -16,6 +17,9 @@ class BankDetailsStep extends ConsumerStatefulWidget {
 }
 
 class _BankDetailsStepState extends ConsumerState<BankDetailsStep> {
+  static final _lettersOnlyInput =
+      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]'));
+
   late final TextEditingController _accountHolder;
   late final TextEditingController _bankName;
   late final TextEditingController _accountNumber;
@@ -78,14 +82,11 @@ class _BankDetailsStepState extends ConsumerState<BankDetailsStep> {
           child: ProfileTextInput(
             controller: _accountHolder,
             hint: 'Name on the account',
-            hasError: fieldErrors.containsKey(
-              VendorRegistrationFieldKeys.accountHolderName,
-            ),
+            inputFormatters: [_lettersOnlyInput],
+            hasError: fieldErrors
+                .containsKey(VendorRegistrationFieldKeys.accountHolderName),
             onChanged: (v) => _sync(
-              ref
-                  .read(vendorRegistrationProvider)
-                  .form
-                  .bank
+              ref.read(vendorRegistrationProvider).form.bank
                   .copyWith(accountHolderName: v),
               clearErrorFor: VendorRegistrationFieldKeys.accountHolderName,
             ),
@@ -97,14 +98,11 @@ class _BankDetailsStepState extends ConsumerState<BankDetailsStep> {
           child: ProfileTextInput(
             controller: _bankName,
             hint: VendorFormStrings.bankNameHint,
-            hasError: fieldErrors.containsKey(
-              VendorRegistrationFieldKeys.bankName,
-            ),
+            inputFormatters: [_lettersOnlyInput],
+            hasError:
+                fieldErrors.containsKey(VendorRegistrationFieldKeys.bankName),
             onChanged: (v) => _sync(
-              ref
-                  .read(vendorRegistrationProvider)
-                  .form
-                  .bank
+              ref.read(vendorRegistrationProvider).form.bank
                   .copyWith(bankName: v),
               clearErrorFor: VendorRegistrationFieldKeys.bankName,
             ),
@@ -115,16 +113,16 @@ class _BankDetailsStepState extends ConsumerState<BankDetailsStep> {
           error: fieldErrors[VendorRegistrationFieldKeys.accountNumber],
           child: ProfileTextInput(
             controller: _accountNumber,
-            hint: '••••••••••',
+            hint: '1234567890123456',
             keyboardType: TextInputType.number,
-            hasError: fieldErrors.containsKey(
-              VendorRegistrationFieldKeys.accountNumber,
-            ),
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(16),
+            ],
+            hasError: fieldErrors
+                .containsKey(VendorRegistrationFieldKeys.accountNumber),
             onChanged: (v) => _sync(
-              ref
-                  .read(vendorRegistrationProvider)
-                  .form
-                  .bank
+              ref.read(vendorRegistrationProvider).form.bank
                   .copyWith(accountNumber: v),
               clearErrorFor: VendorRegistrationFieldKeys.accountNumber,
             ),
@@ -136,14 +134,10 @@ class _BankDetailsStepState extends ConsumerState<BankDetailsStep> {
           child: ProfileTextInput(
             controller: _routingNumber,
             hint: VendorFormStrings.branchSwiftHint,
-            hasError: fieldErrors.containsKey(
-              VendorRegistrationFieldKeys.routingNumber,
-            ),
+            hasError: fieldErrors
+                .containsKey(VendorRegistrationFieldKeys.routingNumber),
             onChanged: (v) => _sync(
-              ref
-                  .read(vendorRegistrationProvider)
-                  .form
-                  .bank
+              ref.read(vendorRegistrationProvider).form.bank
                   .copyWith(routingNumber: v),
               clearErrorFor: VendorRegistrationFieldKeys.routingNumber,
             ),

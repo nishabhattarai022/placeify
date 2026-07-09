@@ -1,0 +1,145 @@
+devAuth:
+  - provisionDemoAdmin:
+emailIdp:
+  - login:
+  - startRegistration:
+  - verifyRegistrationCode:
+  - finishRegistration:
+  - startPasswordReset:
+  - verifyPasswordResetCode:
+  - finishPasswordReset:
+  - hasAccount:
+jwtRefresh:
+  - refreshAccessToken:
+user:
+  - getCurrentUser:
+  - updateProfile:
+  - changePassword:
+  - uploadProfileImage:
+  - becomeVendor:
+  - becomeConsumer:
+  - getDashboard:
+  - getMyOrderCounts:
+  - ensureDemoAdmin:
+  - listMyOrders:
+  - getMyOrder:
+  - cancelMyOrder:
+  - getMyOrderPayment:
+  - completePayment:
+  - listMyArSessions:
+  - requirePlaceifyUser:
+  - requireRole:
+greeting:
+  - hello:
+admin:
+  - hasAdminProfile:
+  - getMyAdmin:
+  - getMyProfile:
+  - updateMyProfile:
+  - bootstrapFirstAdmin:
+  - promoteToAdmin:
+  - approveVendor:
+  - rejectVendor:
+  - updateUserStatus:
+  - deactivateUser:
+  - removeProduct:
+  - flagProduct:
+  - fileComplaint:
+  - listComplaints:
+  - resolveComplaint:
+  - getPlatformStats:
+  - listUsers:
+  - listVendorApplications:
+  - getVendorApplication:
+  - getAuditLog:
+  - listVendorPayouts:
+  - approveVendorPayout:
+  - failVendorPayout:
+  - listRefundRequests:
+  - approveRefundRequest:
+  - rejectRefundRequest:
+  - requirePlaceifyUser:
+  - requireRole:
+ar:
+  - recordSession:
+  - listMySessions:
+cart:
+  - getCartItems:
+  - addToCart:
+  - updateCartItemQuantity:
+  - removeFromCart:
+  - clearCart:
+checkout:
+  - checkout:
+customization:
+  - createRequest:
+  - listMyRequests:
+notification:
+  - getPreferences:
+  - updatePreferences:
+  - listInAppNotifications:
+  - unreadInAppNotificationCount:
+  - markInAppNotificationRead:
+  - markAllInAppNotificationsRead:
+order:
+  - listMyOrders:
+  - getOrder:
+  - listDeliveryUpdates:
+payment:
+  - getOverview:
+  - listPaymentUpdates:
+  - updateOrderPaymentStatus:
+  - requestPayout:
+product:
+  - listCategories:
+  - searchProducts:
+  - getProduct:
+  - getShopProfile:
+  - listApprovedShops:
+  - listProducts:
+  - listSpecialOffers:
+refund:
+  - listMyRefundRequests:
+  - getRefundRequest:
+  - createRefundRequest:
+review:
+  - submitReview:
+  - listProductReviews:
+vendor:
+  - getMyShop:
+  - getDashboard:
+  - hasShop:
+  - createShop:
+  - getMyBankDetails:
+  - saveMyBankDetails:
+  - getMyProfile:
+  - updateMyProfile:
+  - uploadShopLogo:
+  - uploadShopBanner:
+  - uploadShopCover:
+  - uploadDocument:
+  - uploadLogo:
+  - uploadBanner:
+  - updateShop:
+  - listMyProducts:
+  - createProduct:
+  - uploadProduct:
+  - updateProductThumbnail:
+  - uploadProductImage:
+  - regenerateProductModel3d:
+  - listShopOrders:
+  - getShopOrder:
+  - acceptShopOrder:
+  - rejectShopOrder:
+  - listDeliveryUpdates:
+  - submitDeliveryUpdate:
+  - uploadDeliveryProof:
+  - listNotifications:
+  - markNotificationRead:
+  - markAllNotificationsRead:
+wishlist:
+  - listMyWishlist:
+  - addToWishlist:
+  - removeFromWishlist:
+  - toggleWishlist:
+  - isWishlisted:

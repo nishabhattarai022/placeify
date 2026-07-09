@@ -84,7 +84,7 @@ final class CatalogIndexProvider
   CatalogIndex create() => CatalogIndex();
 }
 
-String _$catalogIndexHash() => r'798cf6443bb6f5a365c55872663ebf051c06bbde';
+String _$catalogIndexHash() => r'bf175807d964efe1e7e19a3b023e373b24abaf8d';
 
 /// All active marketplace products (seed + vendor listings).
 
@@ -651,7 +651,7 @@ final class ProductDetailProvider
   }
 }
 
-String _$productDetailHash() => r'db68fa4bafa619270b08eb3aee766b9fd27ee896';
+String _$productDetailHash() => r'07ccfd32796156d8141f6fcfb1d6e26005aa6c0a';
 
 final class ProductDetailFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<Product?>, String> {
@@ -669,6 +669,93 @@ final class ProductDetailFamily extends $Family
 
   @override
   String toString() => r'productDetailProvider';
+}
+
+/// Room → furniture category ids for home recommendations.
+
+@ProviderFor(roomCatalogProducts)
+final roomCatalogProductsProvider = RoomCatalogProductsFamily._();
+
+/// Room → furniture category ids for home recommendations.
+
+final class RoomCatalogProductsProvider
+    extends $FunctionalProvider<List<Product>, List<Product>, List<Product>>
+    with $Provider<List<Product>> {
+  /// Room → furniture category ids for home recommendations.
+  RoomCatalogProductsProvider._({
+    required RoomCatalogProductsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'roomCatalogProductsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$roomCatalogProductsHash();
+
+  @override
+  String toString() {
+    return r'roomCatalogProductsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<List<Product>> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  List<Product> create(Ref ref) {
+    final argument = this.argument as String;
+    return roomCatalogProducts(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<Product> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<Product>>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is RoomCatalogProductsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$roomCatalogProductsHash() =>
+    r'43f5309cb02538702fc35a170b9ca67dc1d1b403';
+
+/// Room → furniture category ids for home recommendations.
+
+final class RoomCatalogProductsFamily extends $Family
+    with $FunctionalFamilyOverride<List<Product>, String> {
+  RoomCatalogProductsFamily._()
+    : super(
+        retry: null,
+        name: r'roomCatalogProductsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Room → furniture category ids for home recommendations.
+
+  RoomCatalogProductsProvider call(String roomId) =>
+      RoomCatalogProductsProvider._(argument: roomId, from: this);
+
+  @override
+  String toString() => r'roomCatalogProductsProvider';
 }
 
 @ProviderFor(homeRecommendedProducts)
@@ -730,7 +817,7 @@ final class HomeRecommendedProductsProvider
 }
 
 String _$homeRecommendedProductsHash() =>
-    r'bf10eab6afdaee89c6c69879a9b24dc87d0cb543';
+    r'742800ecf9b2a6780d818fa926f23343d2a022c8';
 
 final class HomeRecommendedProductsFamily extends $Family
     with $FunctionalFamilyOverride<List<Product>, String> {

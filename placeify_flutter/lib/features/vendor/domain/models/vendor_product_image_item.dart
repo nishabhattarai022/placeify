@@ -9,9 +9,9 @@ class VendorProductImageItem {
     this.isProcessingBg = false,
     this.bgRemovalError,
   }) : assert(
-         localPath != null || remoteUrl != null,
-         'An image item needs a local path or remote URL.',
-       );
+          localPath != null || remoteUrl != null,
+          'An image item needs a local path or remote URL.',
+        );
 
   static int _idCounter = 0;
 
@@ -65,9 +65,8 @@ class VendorProductImageItem {
           ? null
           : (processedLocalPath ?? this.processedLocalPath),
       isProcessingBg: isProcessingBg ?? this.isProcessingBg,
-      bgRemovalError: clearBgError
-          ? null
-          : (bgRemovalError ?? this.bgRemovalError),
+      bgRemovalError:
+          clearBgError ? null : (bgRemovalError ?? this.bgRemovalError),
     );
   }
 }

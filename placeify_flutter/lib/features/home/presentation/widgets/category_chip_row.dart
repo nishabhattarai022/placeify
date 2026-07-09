@@ -22,18 +22,14 @@ class CategoryChipRow extends ConsumerWidget {
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.screenPadding,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
         itemCount: categories.length,
         itemBuilder: (context, index) {
           final category = categories[index];
           final isActive = category.id == selected;
 
           return Padding(
-            padding: EdgeInsets.only(
-              right: index < categories.length - 1 ? 14 : 0,
-            ),
+            padding: EdgeInsets.only(right: index < categories.length - 1 ? 14 : 0),
             child: GestureDetector(
               onTap: () async {
                 await HapticService.selection();
@@ -52,11 +48,7 @@ class CategoryChipRow extends ConsumerWidget {
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeOutCubic,
-                    transform: Matrix4.translationValues(
-                      0,
-                      isActive ? -3 : 0,
-                      0,
-                    ),
+                    transform: Matrix4.translationValues(0, isActive ? -3 : 0, 0),
                     width: 66,
                     height: 66,
                     decoration: BoxDecoration(

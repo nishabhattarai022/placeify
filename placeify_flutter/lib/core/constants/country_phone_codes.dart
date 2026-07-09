@@ -170,8 +170,7 @@ abstract final class CountryPhoneCodes {
     }
 
     if (parsed.country.isoCode == nepal.isoCode) {
-      final isNepalMobile =
-          parsed.local.length == 10 &&
+      final isNepalMobile = parsed.local.length == 10 &&
           (parsed.local.startsWith('97') || parsed.local.startsWith('98'));
       if (!isNepalMobile) {
         return 'Enter a valid Nepal mobile number (10 digits starting with 97 or 98)';

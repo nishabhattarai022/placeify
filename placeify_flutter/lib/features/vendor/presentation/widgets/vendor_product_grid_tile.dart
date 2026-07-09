@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:placeify_flutter/features/home/data/mock_product_repository.dart';
 
 import '../../../../core/constants/app_colors.dart';
@@ -7,7 +6,7 @@ import '../../../../core/constants/app_radii.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../domain/models/vendor_product.dart';
-import 'vendor_product_status_chip.dart';
+import 'vendor_list_thumbnail.dart';
 
 class VendorProductGridTile extends StatelessWidget {
   const VendorProductGridTile({
@@ -59,22 +58,19 @@ class VendorProductGridTile extends StatelessWidget {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        color: AppColors.cream,
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(12),
-                        ),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(12),
                       ),
-                      child: Center(
-                        child: SvgPicture.asset(
-                          iconPath,
-                          width: 36,
-                          colorFilter: const ColorFilter.mode(
-                            AppColors.bark,
-                            BlendMode.srcIn,
-                          ),
-                        ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return VendorListThumbnail(
+                            label: product.name,
+                            imageUrl: product.primaryImageUrl,
+                            fallbackIconPath: iconPath,
+                            size: constraints.maxWidth,
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -107,6 +103,16 @@ class VendorProductGridTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
+                    product.sku,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
                     Formatters.currencyFull(product.price),
                     style: const TextStyle(
                       fontSize: 12,
@@ -114,29 +120,15 @@ class VendorProductGridTile extends StatelessWidget {
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          product.isLowStock
-                              ? 'Low stock · ${product.stock} left'
-                              : '${product.stock} in stock',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: product.isLowStock
-                                ? FontWeight.w600
-                                : FontWeight.normal,
-                            color: product.isLowStock
-                                ? AppColors.coral
-                                : AppColors.textMuted,
-                          ),
-                        ),
-                      ),
-                      VendorProductStatusChip(isActive: product.isActive),
-                    ],
+                  const SizedBox(height: 4),
+                  Text(
+                    '${product.stock} in stock',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textMuted,
+                    ),
                   ),
                 ],
               ),

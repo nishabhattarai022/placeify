@@ -12,7 +12,7 @@ import '../../../../core/theme/app_fonts.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/animated_scale_tap.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
-import '../widgets/order_review_sheet.dart';
+import '../../../../core/widgets/toast_overlay.dart';
 import '../../../home/presentation/chairs_catalog_tokens.dart';
 import '../../domain/constants/order_strings.dart';
 import '../../domain/enums/consumer_order_status.dart';
@@ -51,9 +51,8 @@ class OrderCard extends ConsumerWidget {
         child: Container(
           decoration: BoxDecoration(
             color: ChairsCatalogTokens.imageWell,
-            borderRadius: BorderRadius.circular(
-              ChairsCatalogTokens.wideCardRadius,
-            ),
+            borderRadius:
+                BorderRadius.circular(ChairsCatalogTokens.wideCardRadius),
             boxShadow: ChairsCatalogTokens.cardShadow,
           ),
           clipBehavior: Clip.antiAlias,
@@ -212,37 +211,43 @@ class OrderCard extends ConsumerWidget {
       ConsumerOrderStatus.inTransit ||
       ConsumerOrderStatus.outForDelivery ||
       ConsumerOrderStatus.dispatched ||
-      ConsumerOrderStatus.packed when order.hasTracking => [
-        _OrderActionButton(
-          label: OrderStrings.trackAction,
-          primary: true,
-          onTap: () => _openTracking(context),
-        ),
-      ],
-      ConsumerOrderStatus.delivered => [
-        _OrderActionButton(
-          label: OrderStrings.reorderAction,
-          primary: true,
-          onTap: () => ref
-              .read(ordersProvider.notifier)
-              .reorder(order.id, context: context),
-        ),
-        _OrderActionButton(
-          label: OrderStrings.leaveReviewAction,
-          primary: false,
-          onTap: () => showOrderReviewSheet(context, ref, order: order),
-        ),
-      ],
-      ConsumerOrderStatus.returnRequested || ConsumerOrderStatus.returned => [
-        _OrderActionButton(
-          label: OrderStrings.viewReturnAction,
-          primary: true,
-          onTap: () => context.pushNamed(
-            'profileOrderDetail',
-            pathParameters: {'orderId': order.id},
+      ConsumerOrderStatus.packed when order.hasTracking =>
+        [
+          _OrderActionButton(
+            label: OrderStrings.trackAction,
+            primary: true,
+            onTap: () => _openTracking(context),
           ),
-        ),
-      ],
+        ],
+      ConsumerOrderStatus.delivered => [
+          _OrderActionButton(
+            label: OrderStrings.reorderAction,
+            primary: true,
+            onTap: () => ref
+                .read(ordersProvider.notifier)
+                .reorder(order.id, context: context),
+          ),
+          _OrderActionButton(
+            label: OrderStrings.leaveReviewAction,
+            primary: false,
+            onTap: () => PlaceifyToast.show(
+              context,
+              '${OrderStrings.leaveReviewAction} coming soon',
+            ),
+          ),
+        ],
+      ConsumerOrderStatus.returnRequested ||
+      ConsumerOrderStatus.returned =>
+        [
+          _OrderActionButton(
+            label: OrderStrings.viewReturnAction,
+            primary: true,
+            onTap: () => context.pushNamed(
+              'profileOrderDetail',
+              pathParameters: {'orderId': order.id},
+            ),
+          ),
+        ],
       _ => const <Widget>[],
     };
   }

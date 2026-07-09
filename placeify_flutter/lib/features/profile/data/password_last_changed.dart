@@ -20,7 +20,7 @@ Future<void> savePasswordChangedAt(String email, DateTime changedAt) async {
 }
 
 String passwordLastChangedSubtitle(DateTime? changedAt) {
-  if (changedAt == null) return 'Last changed 3 months ago';
+  if (changedAt == null) return 'Update your account password';
   return 'Last changed ${RelativeTime.format(changedAt)}';
 }
 

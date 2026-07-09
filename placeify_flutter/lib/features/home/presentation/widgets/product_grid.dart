@@ -41,7 +41,10 @@ class ProductGrid extends ConsumerWidget {
               ),
             );
           },
-          child: ProductCard(product: products[index]),
+          child: ProductCard(
+            key: ValueKey(products[index].id),
+            product: products[index],
+          ),
         );
       },
     );

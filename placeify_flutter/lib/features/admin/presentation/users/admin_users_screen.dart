@@ -39,9 +39,8 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final usersAsync = ref.watch(
-      adminUsersListProvider(_searchQuery, _roleFilter),
-    );
+    final usersAsync =
+        ref.watch(adminUsersListProvider(_searchQuery, _roleFilter));
 
     usersAsync.whenData((_) {
       if (!_hasLoaded) {

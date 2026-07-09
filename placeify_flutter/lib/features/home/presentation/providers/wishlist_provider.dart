@@ -64,6 +64,12 @@ class Wishlist extends _$Wishlist {
       final nextSavedAt = <String, DateTime>{};
       final nextProducts = <Product>[];
 
+      final categoryNamesById = {
+        for (final category
+            in await ref.read(catalogRepositoryProvider).listCategories())
+          if (category.id != null) category.id!: category.name,
+      };
+
       for (final item in page.items) {
         final dbProductId = item.product?.id ?? item.productId;
         final uiId = ProductIdCodec.fromDatabaseId(dbProductId);
@@ -73,13 +79,20 @@ class Wishlist extends _$Wishlist {
         final apiProduct = item.product;
         if (apiProduct?.id != null) {
           try {
-            uiProduct = await CatalogProductMapper.toUiProduct(apiProduct!);
+            uiProduct = await CatalogProductMapper.toUiProduct(
+              apiProduct!,
+              categoryNamesById: categoryNamesById,
+            );
           } catch (_) {
             // Fall through to direct fetch below.
           }
         }
 
-        uiProduct ??= await _fetchUiProduct(productRepo, uiId);
+        uiProduct ??= await _fetchUiProduct(
+          productRepo,
+          uiId,
+          categoryNamesById: categoryNamesById,
+        );
         if (uiProduct == null) continue;
 
         nextProducts.add(uiProduct);
@@ -105,12 +118,16 @@ class Wishlist extends _$Wishlist {
 
   Future<Product?> _fetchUiProduct(
     ServerpodProductRepository repo,
-    String uiId,
-  ) async {
+    String uiId, {
+    required Map<int, String> categoryNamesById,
+  }) async {
     try {
       final apiProduct = await repo.getByUiId(uiId);
       if (apiProduct == null) return null;
-      return CatalogProductMapper.toUiProduct(apiProduct);
+      return CatalogProductMapper.toUiProduct(
+        apiProduct,
+        categoryNamesById: categoryNamesById,
+      );
     } catch (_) {
       return null;
     }

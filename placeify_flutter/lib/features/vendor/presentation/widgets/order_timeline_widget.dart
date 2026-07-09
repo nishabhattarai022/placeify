@@ -130,20 +130,20 @@ class _TimelineStep extends StatelessWidget {
   Widget build(BuildContext context) {
     final (dotColor, lineColor, titleColor) = switch (state) {
       _TimelineStepState.completed => (
-        AppColors.teal,
-        AppColors.teal,
-        AppColors.textPrimary,
-      ),
+          AppColors.teal,
+          AppColors.teal,
+          AppColors.textPrimary,
+        ),
       _TimelineStepState.active => (
-        AppColors.accent,
-        AppColors.creamDark,
-        AppColors.textPrimary,
-      ),
+          AppColors.accent,
+          AppColors.creamDark,
+          AppColors.textPrimary,
+        ),
       _TimelineStepState.pending => (
-        AppColors.creamDark,
-        AppColors.creamDark,
-        AppColors.textMuted,
-      ),
+          AppColors.creamDark,
+          AppColors.creamDark,
+          AppColors.textMuted,
+        ),
     };
 
     return IntrinsicHeight(

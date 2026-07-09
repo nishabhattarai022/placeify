@@ -67,9 +67,7 @@ class ReviewSubmitStep extends ConsumerWidget {
           rows: [
             _ReviewRow(
               'Business License',
-              form.documents.businessLicensePath != null
-                  ? 'Uploaded'
-                  : 'Missing',
+              form.documents.businessLicensePath != null ? 'Uploaded' : 'Missing',
             ),
             _ReviewRow(
               'Government ID',
@@ -77,9 +75,7 @@ class ReviewSubmitStep extends ConsumerWidget {
             ),
             _ReviewRow(
               'Tax Certificate',
-              form.documents.taxCertificatePath != null
-                  ? 'Uploaded'
-                  : 'Not provided',
+              form.documents.taxCertificatePath != null ? 'Uploaded' : 'Not provided',
             ),
           ],
         ),
@@ -103,17 +99,11 @@ class ReviewSubmitStep extends ConsumerWidget {
             decoration: BoxDecoration(
               color: AppColors.coralBg,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.coral.withValues(alpha: 0.35),
-              ),
+              border: Border.all(color: AppColors.coral.withValues(alpha: 0.35)),
             ),
             child: Row(
               children: [
-                const Icon(
-                  Icons.error_outline,
-                  color: AppColors.coral,
-                  size: 20,
-                ),
+                const Icon(Icons.error_outline, color: AppColors.coral, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(

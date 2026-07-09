@@ -57,9 +57,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     await HapticService.heavy();
 
     try {
-      await ref
-          .read(currentUserProvider.notifier)
-          .registerAccount(
+      await ref.read(currentUserProvider.notifier).registerAccount(
             fullName: _nameController.text,
             email: _emailController.text,
             password: _passwordController.text,

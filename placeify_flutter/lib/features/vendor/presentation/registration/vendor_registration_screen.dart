@@ -173,9 +173,7 @@ class _VendorRegistrationScreenState
                       ),
                     )
                   : ProfileSubmitButton(
-                      label: uiState.isReviewStep
-                          ? 'Submit Application'
-                          : 'Continue',
+                      label: uiState.isReviewStep ? 'Submit Application' : 'Continue',
                       onPressed: _onPrimaryAction,
                     ),
             ),

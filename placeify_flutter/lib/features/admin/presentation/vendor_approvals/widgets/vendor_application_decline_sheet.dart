@@ -185,7 +185,9 @@ class _VendorApplicationDeclineSheetBodyState
                 borderRadius: AppRadii.pill,
               ),
               child: Text(
-                _isSubmitting ? 'Declining…' : AdminStrings.confirmDecline,
+                _isSubmitting
+                    ? 'Declining…'
+                    : AdminStrings.confirmDecline,
                 style: GoogleFonts.dmSans(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,

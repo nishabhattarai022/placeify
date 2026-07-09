@@ -4,7 +4,9 @@ import '../../../vendor/domain/enums/vendor_status.dart';
 import '../../constants/demo_credentials.dart';
 import '../../data/serverpod_auth_repository.dart';
 import '../../domain/models/app_user.dart';
+import '../../domain/models/consumer_profile_details.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../../profile/data/serverpod_consumer_profile_repository.dart';
 
 part 'auth_provider.g.dart';
 
@@ -115,6 +117,61 @@ class CurrentUser extends _$CurrentUser {
       status: status,
       vendorId: vendorId,
     );
+  }
+
+  Future<void> resetPassword({
+    required String email,
+    required String newPassword,
+  }) async {
+    if (newPassword.length < 8) {
+      throw AuthException('Password must be at least 8 characters');
+    }
+    throw AuthException(
+      'Password reset is not available yet. Sign in with your current password '
+      'or register a new account.',
+    );
+  }
+
+  Future<ConsumerProfileDetails?> loadConsumerProfile() async {
+    final appUser = state.value;
+    if (appUser == null) return null;
+
+    const repo = ServerpodConsumerProfileRepository();
+    try {
+      final profile = await repo.getCurrentProfile();
+      if (profile == null) return null;
+
+      final email = profile.email?.trim().isNotEmpty == true
+          ? profile.email!.trim()
+          : appUser.email;
+      final localPart = email.split('@').first;
+      final username = localPart.replaceAll(RegExp(r'[^a-z0-9_]'), '');
+
+      return ConsumerProfileDetails(
+        fullName: profile.name,
+        email: email,
+        username: username,
+        phone: profile.phone ?? '',
+        bio: '',
+        city: profile.address ?? '',
+      );
+    } on ConsumerProfileException catch (error) {
+      throw AuthException(error.message);
+    }
+  }
+
+  Future<void> updateConsumerProfile(ConsumerProfileDetails details) async {
+    const repo = ServerpodConsumerProfileRepository();
+    try {
+      await repo.updateProfile(
+        name: details.fullName,
+        phone: details.phone.trim().isEmpty ? null : details.phone.trim(),
+        address: details.city.trim().isEmpty ? null : details.city.trim(),
+      );
+      await refresh();
+    } on ConsumerProfileException catch (error) {
+      throw AuthException(error.message);
+    }
   }
 }
 

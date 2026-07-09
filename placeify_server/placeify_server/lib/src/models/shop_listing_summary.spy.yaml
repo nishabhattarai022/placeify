@@ -1,0 +1,11 @@
+### Public shop card shown in consumer shop discovery.
+class: ShopListingSummary
+fields:
+  vendorId: UuidValue
+  businessName: String
+  locality: String
+  tags: List<String>
+  logoUrl: String?
+  bannerUrl: String?
+  productCount: int
+  averageRating: double

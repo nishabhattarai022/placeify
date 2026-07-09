@@ -54,7 +54,7 @@ Future<String> _resolveOnce({required bool forceRefresh}) async {
   if (!forceRefresh) {
     final cached = prefs.getString(_cachedServerUrlKey);
     if (cached != null &&
-        _cacheMatchesPlatform(cached) &&
+        await _cacheMatchesPlatform(cached) &&
         await _canReachServer(cached)) {
       return _ensureTrailingSlash(cached);
     }
@@ -70,13 +70,18 @@ Future<String> _resolveOnce({required bool forceRefresh}) async {
   return _ensureTrailingSlash((await _buildCandidates()).first);
 }
 
-bool _cacheMatchesPlatform(String url) {
+Future<bool> _cacheMatchesPlatform(String url) async {
   final uri = Uri.tryParse(url);
   if (uri == null) return false;
 
   // A desktop/simulator session may cache localhost; phones must re-probe LAN hosts.
   if (uri.host == 'localhost' || uri.host == '127.0.0.1') {
     return !(Platform.isAndroid || Platform.isIOS);
+  }
+
+  // Android emulators must use 10.0.2.2 — discard a phone LAN IP from cache.
+  if (Platform.isAndroid && !await _isPhysicalMobileDevice()) {
+    return uri.host == '10.0.2.2';
   }
 
   return true;
@@ -100,6 +105,7 @@ Future<List<String>> _buildCandidates() async {
     final data = await rootBundle.loadString('assets/config.json');
     final config = jsonDecode(data) as Map<String, dynamic>;
     add(physicalApiUrl, config['physicalApiUrl'] as String?);
+    add(emulatorApiUrl, config['androidEmulatorApiUrl'] as String?);
 
     final apiUrl = config['apiUrl'] as String?;
     if (apiUrl != null && apiUrl.trim().isNotEmpty) {
@@ -153,7 +159,9 @@ Future<bool> _canReachServer(String url) async {
     final request = await client.getUrl(Uri.parse(_ensureTrailingSlash(url)));
     final response = await request.close();
     await response.drain<void>();
-    return response.statusCode == 200;
+    // API/web root may return 405 Method Not Allowed for GET "/".
+    // Any HTTP response means the host:port is reachable.
+    return response.statusCode > 0;
   } catch (_) {
     return false;
   } finally {

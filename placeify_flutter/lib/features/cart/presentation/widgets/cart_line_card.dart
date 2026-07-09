@@ -167,7 +167,9 @@ class _DeleteStripState extends State<_DeleteStrip> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 140),
         curve: Curves.easeOutCubic,
-        color: _pressed ? const Color(0xFFE5BAB3) : CartTokens.deleteBg,
+        color: _pressed
+            ? const Color(0xFFE5BAB3)
+            : CartTokens.deleteBg,
         alignment: Alignment.center,
         child: AnimatedScale(
           scale: _pressed ? 0.9 : 1,

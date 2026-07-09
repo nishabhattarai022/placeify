@@ -23,4 +23,20 @@ abstract final class ProfileDashboardMapper {
     ),
     ProfileStat(value: '${dashboard.refundCount}', label: 'Refunds'),
   ];
+
+  /// Nisha profile header: Orders, Wishlist, Refunds (3 cells).
+  static List<ProfileStat> headerStats(UserDashboard dashboard) => [
+    ProfileStat(
+      value: '${dashboard.orderCounts.activeOrders}',
+      label: 'Orders',
+    ),
+    ProfileStat(value: '${dashboard.wishlistCount}', label: 'Wishlist'),
+    ProfileStat(value: '${dashboard.refundCount}', label: 'Refunds'),
+  ];
+
+  static const emptyHeaderStats = [
+    ProfileStat(value: '0', label: 'Orders'),
+    ProfileStat(value: '0', label: 'Wishlist'),
+    ProfileStat(value: '0', label: 'Refunds'),
+  ];
 }

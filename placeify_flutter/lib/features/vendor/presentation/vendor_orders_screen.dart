@@ -48,7 +48,8 @@ class _VendorOrdersScreenState extends ConsumerState<VendorOrdersScreen> {
           order.orderNumber.toLowerCase().contains(query) ||
           order.productName.toLowerCase().contains(query) ||
           order.id.toLowerCase().contains(query);
-    }).toList()..sort((a, b) => b.orderedAt.compareTo(a.orderedAt));
+    }).toList()
+      ..sort((a, b) => b.orderedAt.compareTo(a.orderedAt));
   }
 
   bool _matchesTab(VendorOrder order, VendorOrderTab tab) {

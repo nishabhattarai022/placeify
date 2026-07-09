@@ -92,11 +92,11 @@ class _OrderReasonSheetBodyState extends ConsumerState<_OrderReasonSheetBody> {
 
     final error = widget.isCancel
         ? await ref
-              .read(ordersProvider.notifier)
-              .cancelOrder(widget.order.id, reason)
+            .read(ordersProvider.notifier)
+            .cancelOrder(widget.order.id, reason)
         : await ref
-              .read(ordersProvider.notifier)
-              .requestReturn(widget.order.id, reason);
+            .read(ordersProvider.notifier)
+            .requestReturn(widget.order.id, reason);
 
     if (!widget.parentContext.mounted) return;
 
@@ -107,7 +107,9 @@ class _OrderReasonSheetBodyState extends ConsumerState<_OrderReasonSheetBody> {
 
     PlaceifyToast.show(
       widget.parentContext,
-      widget.isCancel ? OrderStrings.cancelSuccess : OrderStrings.returnSuccess,
+      widget.isCancel
+          ? OrderStrings.cancelSuccess
+          : OrderStrings.returnSuccess,
     );
   }
 
@@ -157,8 +159,8 @@ class _OrderReasonSheetBodyState extends ConsumerState<_OrderReasonSheetBody> {
               label: _isSubmitting
                   ? 'Submitting…'
                   : widget.isCancel
-                  ? OrderStrings.confirmCancel
-                  : OrderStrings.confirmReturn,
+                      ? OrderStrings.confirmCancel
+                      : OrderStrings.confirmReturn,
               onPressed: canSubmit ? _submit : () {},
             ),
             const SizedBox(height: AppSpacing.sm),

@@ -45,7 +45,7 @@ final class CheckoutOrderActionProvider
 }
 
 String _$checkoutOrderActionHash() =>
-    r'51a97871fb5b16fb0064c3b990cbc4682ab11c21';
+    r'b5a465fb8c5d738b56c2508406c10653dc17da94';
 
 /// Places an order from checkout — separate from [Cart] to avoid provider cycles.
 

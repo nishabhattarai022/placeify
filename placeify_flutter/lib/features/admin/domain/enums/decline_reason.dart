@@ -8,11 +8,11 @@ enum DeclineReason {
 
 extension DeclineReasonLabels on DeclineReason {
   String get label => switch (this) {
-    DeclineReason.incompleteDocuments => 'Incomplete documents',
-    DeclineReason.invalidBusinessInfo => 'Invalid business info',
-    DeclineReason.duplicateApplication => 'Duplicate application',
-    DeclineReason.other => 'Other',
-  };
+        DeclineReason.incompleteDocuments => 'Incomplete documents',
+        DeclineReason.invalidBusinessInfo => 'Invalid business info',
+        DeclineReason.duplicateApplication => 'Duplicate application',
+        DeclineReason.other => 'Other',
+      };
 
   String formatNote({String? otherDetail}) {
     if (this == DeclineReason.other) {

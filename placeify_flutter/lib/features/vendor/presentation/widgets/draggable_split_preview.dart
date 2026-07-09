@@ -50,8 +50,8 @@ class _DraggableSplitPreviewState extends State<DraggableSplitPreview> {
                     child: GestureDetector(
                       onHorizontalDragUpdate: (details) {
                         setState(() {
-                          _splitFraction =
-                              ((_splitFraction * width) + details.delta.dx) /
+                          _splitFraction = ((_splitFraction * width) +
+                                  details.delta.dx) /
                               width;
                           _splitFraction = _splitFraction.clamp(0.08, 0.92);
                         });

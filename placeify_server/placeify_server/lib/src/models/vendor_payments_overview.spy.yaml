@@ -1,0 +1,6 @@
+### Aggregated vendor payment balances for the payments dashboard.
+class: VendorPaymentsOverview
+fields:
+  payouts: List<VendorPayoutSummary>
+  pendingBalance: double
+  totalEarned: double

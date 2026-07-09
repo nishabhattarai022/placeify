@@ -9,8 +9,10 @@ import '../../../../core/services/haptic_service.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../cart/data/cart_display_config.dart';
 import '../../../cart/presentation/cart_actions.dart';
+import '../../data/product_reviews_repository.dart';
 import '../../domain/models/product.dart';
 import '../chairs_catalog_tokens.dart';
+import '../widgets/product_rating_row.dart';
 import 'chairs_catalog_cart_button.dart';
 
 /// Left-column wide product card (name, SKU, white image well, NPR pricing).
@@ -26,6 +28,7 @@ class ChairsCatalogWideCard extends ConsumerWidget {
     final unitPrice = CartDisplayConfig.priceFor(product.id, product.price);
     final onSale = product.isOnSale;
     final original = product.originalPrice;
+    final reviewSummary = ProductReviewsRepository.forProduct(product);
 
     return GestureDetector(
       onTap: () => context.push('/product/${product.id}'),
@@ -34,9 +37,7 @@ class ChairsCatalogWideCard extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
         decoration: BoxDecoration(
           color: ChairsCatalogTokens.imageWell,
-          borderRadius: BorderRadius.circular(
-            ChairsCatalogTokens.wideCardRadius,
-          ),
+          borderRadius: BorderRadius.circular(ChairsCatalogTokens.wideCardRadius),
           boxShadow: ChairsCatalogTokens.cardShadow,
         ),
         child: Column(
@@ -45,6 +46,8 @@ class ChairsCatalogWideCard extends ConsumerWidget {
             Text(product.name, style: ChairsCatalogTokens.wideNameStyle),
             const SizedBox(height: 4),
             Text(product.sku, style: ChairsCatalogTokens.wideSkuStyle),
+            const SizedBox(height: 6),
+            ProductRatingRow(summary: reviewSummary, compact: true),
             const SizedBox(height: 10),
             Expanded(
               child: Container(
@@ -58,18 +61,17 @@ class ChairsCatalogWideCard extends ConsumerWidget {
                 ),
                 alignment: Alignment.center,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   child: _isAsset
                       ? Image.asset(
+                          key: ValueKey('${product.id}_${product.imageUrl}'),
                           product.imageUrl,
                           fit: BoxFit.contain,
                           errorBuilder: (_, __, ___) =>
                               _FallbackIcon(svgPath: product.svgIconPath),
                         )
                       : CachedNetworkImage(
+                          key: ValueKey('${product.id}_${product.imageUrl}'),
                           imageUrl: product.imageUrl,
                           fit: BoxFit.contain,
                           errorWidget: (_, __, ___) =>

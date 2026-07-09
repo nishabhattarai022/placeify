@@ -20,16 +20,16 @@ class ProfileStatsStrip extends ConsumerWidget {
     final dashboardAsync = ref.watch(profileDashboardProvider);
     final stats = dashboardAsync.maybeWhen(
       data: (dashboard) => dashboard != null
-          ? ProfileDashboardMapper.stats(dashboard)
-          : ProfileDashboardMapper.emptyStats,
-      orElse: () => ProfileDashboardMapper.emptyStats,
+          ? ProfileDashboardMapper.headerStats(dashboard)
+          : ProfileDashboardMapper.emptyHeaderStats,
+      orElse: () => ProfileDashboardMapper.emptyHeaderStats,
     );
+
     final wishlistCount = readWishlistCount(ref);
     final displayStats = [
       stats[0],
       ProfileStat(value: '$wishlistCount', label: 'Wishlist'),
       stats[2],
-      stats[3],
     ];
 
     return Padding(

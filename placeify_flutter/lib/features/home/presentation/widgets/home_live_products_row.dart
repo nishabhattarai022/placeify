@@ -32,7 +32,12 @@ class HomeLiveProductsRow extends ConsumerWidget {
           children: [
             for (var i = 0; i < featured.length; i++) ...[
               if (i > 0) const SizedBox(width: HomeScreenTokens.productGap),
-              Expanded(child: _CatalogProductCard(product: featured[i])),
+              Expanded(
+                child: _CatalogProductCard(
+                  key: ValueKey(featured[i].id),
+                  product: featured[i],
+                ),
+              ),
             ],
           ],
         );
@@ -42,7 +47,7 @@ class HomeLiveProductsRow extends ConsumerWidget {
 }
 
 class _CatalogProductCard extends StatelessWidget {
-  const _CatalogProductCard({required this.product});
+  const _CatalogProductCard({required this.product, super.key});
 
   final Product product;
 
@@ -73,11 +78,13 @@ class _CatalogProductCard extends StatelessWidget {
                 width: double.infinity,
                 child: isAsset
                     ? Image.asset(
+                        key: ValueKey('${product.id}_${product.imageUrl}'),
                         product.imageUrl,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => _placeholder(),
                       )
                     : CachedNetworkImage(
+                        key: ValueKey('${product.id}_${product.imageUrl}'),
                         imageUrl: product.imageUrl,
                         fit: BoxFit.cover,
                         placeholder: (_, __) => _placeholder(),

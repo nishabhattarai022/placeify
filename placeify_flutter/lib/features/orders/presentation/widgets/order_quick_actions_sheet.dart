@@ -8,7 +8,6 @@ import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/widgets/placeify_bottom_sheet.dart';
 import '../../../../core/widgets/toast_overlay.dart';
-import 'order_review_sheet.dart';
 import '../../domain/constants/order_strings.dart';
 import '../../domain/enums/consumer_order_status.dart';
 import '../../domain/models/order.dart';
@@ -110,9 +109,7 @@ class _OrderQuickActionsBody extends ConsumerWidget {
           icon: Icons.refresh_rounded,
           label: OrderStrings.reorderAction,
           onTap: (context, ref) {
-            ref
-                .read(ordersProvider.notifier)
-                .reorder(
+            ref.read(ordersProvider.notifier).reorder(
                   order.id,
                   context: context,
                 );
@@ -124,7 +121,10 @@ class _OrderQuickActionsBody extends ConsumerWidget {
           icon: Icons.rate_review_outlined,
           label: OrderStrings.leaveReviewAction,
           onTap: (context, ref) {
-            showOrderReviewSheet(context, ref, order: order);
+            PlaceifyToast.show(
+              context,
+              '${OrderStrings.leaveReviewAction} coming soon',
+            );
           },
         ),
       );

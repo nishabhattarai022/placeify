@@ -179,10 +179,7 @@ class ProfileDropdown extends StatelessWidget {
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
-          icon: const Icon(
-            Icons.keyboard_arrow_down,
-            color: AppColors.espresso,
-          ),
+          icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.espresso),
           style: const TextStyle(
             fontSize: 14,
             color: AppColors.espresso,

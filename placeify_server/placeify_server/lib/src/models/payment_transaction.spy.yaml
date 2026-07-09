@@ -1,0 +1,27 @@
+### Customer payment record for a placed order.
+class: PaymentTransaction
+table: payment_transaction
+fields:
+  order: Order?, relation(onDelete=Cascade)
+  user: User?, relation(onDelete=Cascade)
+  provider: String
+  providerTransactionId: String
+  paymentMethod: PaymentMethod, default=mockOnline
+  amount: double
+  currency: String, default="NPR"
+  status: PaymentTransactionStatus, default=pending
+  note: String?
+  createdAt: DateTime, default=now
+  updatedAt: DateTime, default=now
+
+indexes:
+  payment_transaction_order_id:
+    fields: orderId
+    unique: true
+  payment_transaction_user_id:
+    fields: userId
+  payment_transaction_status:
+    fields: status
+  payment_transaction_provider_tx:
+    fields: providerTransactionId
+    unique: true

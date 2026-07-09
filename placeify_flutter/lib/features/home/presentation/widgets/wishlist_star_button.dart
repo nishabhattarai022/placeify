@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/widgets/toast_overlay.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/models/product.dart';
 import '../providers/wishlist_provider.dart';
 
@@ -34,10 +32,8 @@ class _WishlistStarButtonState extends ConsumerState<WishlistStarButton>
     _popScale = TweenSequence<double>([
       TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.45), weight: 180),
       TweenSequenceItem(
-        tween: Tween(
-          begin: 1.45,
-          end: 1.0,
-        ).chain(CurveTween(curve: Curves.elasticOut)),
+        tween: Tween(begin: 1.45, end: 1.0)
+            .chain(CurveTween(curve: Curves.elasticOut)),
         weight: 280,
       ),
     ]).animate(_popController);
@@ -51,37 +47,28 @@ class _WishlistStarButtonState extends ConsumerState<WishlistStarButton>
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(wishlistProvider);
-    final isSaved = ref
-        .read(wishlistProvider.notifier)
-        .isLiked(widget.product.id);
+    final wishlist = ref.watch(wishlistProvider);
+    final isSaved = wishlist.savedAt.containsKey(widget.product.id);
 
     return Semantics(
       button: true,
       label: isSaved ? 'Remove from wishlist' : 'Save to wishlist',
       child: GestureDetector(
         onTap: () async {
-          if (ref.read(currentUserProvider).value == null) {
-            PlaceifyToast.show(
-              context,
-              'Sign in to save items to your wishlist',
-            );
-            context.push('/login');
-            return;
-          }
-
           HapticService.medium();
-          final result = await ref
-              .read(wishlistProvider.notifier)
-              .toggle(widget.product.id);
+          final result =
+              await ref.read(wishlistProvider.notifier).toggle(widget.product.id);
           if (!context.mounted) return;
-          final error = result.errorMessage;
-          if (error != null) {
-            PlaceifyToast.show(context, error);
+          _popController.forward(from: 0);
+          final errorMessage = result.errorMessage;
+          if (errorMessage != null) {
+            PlaceifyToast.show(context, errorMessage);
             return;
           }
-          _popController.forward(from: 0);
-          PlaceifyToast.show(context, result.successMessage!);
+          final successMessage = result.successMessage;
+          if (successMessage != null) {
+            PlaceifyToast.show(context, successMessage);
+          }
         },
         child: ScaleTransition(
           scale: _popScale,
