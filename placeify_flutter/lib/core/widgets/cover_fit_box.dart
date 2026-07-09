@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'placeify_asset_fallback.dart';
-
 /// Center-crops [child] to fill the viewport without distorting aspect ratio.
 ///
 /// Prefer this over `FittedBox` + `VideoPlayer` or `width`/`height: infinity`
@@ -86,8 +84,7 @@ class CoverAssetImage extends StatelessWidget {
         fit: BoxFit.cover,
         alignment: alignment,
         filterQuality: filterQuality,
-        errorBuilder:
-            errorBuilder ?? (_, __, ___) => const PlaceifyAssetFallback(),
+        errorBuilder: errorBuilder,
       ),
     );
   }

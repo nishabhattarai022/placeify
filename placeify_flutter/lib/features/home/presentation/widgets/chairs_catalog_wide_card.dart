@@ -9,8 +9,10 @@ import '../../../../core/services/haptic_service.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../cart/data/cart_display_config.dart';
 import '../../../cart/presentation/cart_actions.dart';
+import '../../data/product_reviews_repository.dart';
 import '../../domain/models/product.dart';
 import '../chairs_catalog_tokens.dart';
+import '../widgets/product_rating_row.dart';
 import 'chairs_catalog_cart_button.dart';
 
 /// Left-column wide product card (name, SKU, white image well, NPR pricing).
@@ -26,6 +28,7 @@ class ChairsCatalogWideCard extends ConsumerWidget {
     final unitPrice = CartDisplayConfig.priceFor(product.id, product.price);
     final onSale = product.isOnSale;
     final original = product.originalPrice;
+    final reviewSummary = ProductReviewsRepository.forProduct(product);
 
     return GestureDetector(
       onTap: () => context.push('/product/${product.id}'),
@@ -43,6 +46,8 @@ class ChairsCatalogWideCard extends ConsumerWidget {
             Text(product.name, style: ChairsCatalogTokens.wideNameStyle),
             const SizedBox(height: 4),
             Text(product.sku, style: ChairsCatalogTokens.wideSkuStyle),
+            const SizedBox(height: 6),
+            ProductRatingRow(summary: reviewSummary, compact: true),
             const SizedBox(height: 10),
             Expanded(
               child: Container(

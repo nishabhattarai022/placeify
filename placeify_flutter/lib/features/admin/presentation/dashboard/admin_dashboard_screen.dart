@@ -237,6 +237,21 @@ class _DashboardBody extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _QuickLinkTile(
+                  icon: Icons.inventory_2_outlined,
+                  label: AdminStrings.productsLink,
+                  onTap: () {
+                    HapticService.light();
+                    context.push(AdminRoutes.products);
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _QuickLinkTile(
                   icon: Icons.notifications_outlined,
                   label: AdminStrings.notificationsLink,
                   onTap: () {
@@ -245,6 +260,7 @@ class _DashboardBody extends StatelessWidget {
                   },
                 ),
               ),
+              const Expanded(child: SizedBox()),
             ],
           ),
           const SizedBox(height: 20),

@@ -80,9 +80,19 @@ class MockConsumerShopRepository implements ConsumerShopRepository {
   /// Synchronous lookup for [productByIdProvider] and cart resolution.
   static Product? productByIdSync(String id) {
     if (!VendorProductMapper.isShopProductId(id)) return null;
+
+    final vendorProduct = VendorProductMapper.resolveVendorProduct(id);
+    if (vendorProduct != null) {
+      final product = VendorProductMapper.toConsumerProduct(vendorProduct);
+      _productIndex[product.id] = product;
+      return product;
+    }
+
     _ensureProductIndex();
     return _productIndex[id];
   }
+
+  static void refreshProductIndex() => _productIndex.clear();
 
   static void _ensureProductIndex() {
     if (_productIndex.isNotEmpty) return;

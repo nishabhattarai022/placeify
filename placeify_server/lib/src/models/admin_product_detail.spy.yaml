@@ -1,0 +1,25 @@
+### Full admin view of a vendor product with vendor and complaint context.
+class: AdminProductDetail
+fields:
+  productId: int
+  productName: String
+  description: String
+  price: double
+  discountPrice: double?
+  categoryName: String?
+  thumbnailUrl: String?
+  viewImageUrls: List<String>?
+  status: ProductStatus
+  isDeleted: bool
+  removedReason: String?
+  removedAt: DateTime?
+  removedByAdminName: String?
+  createdAt: DateTime
+  updatedAt: DateTime
+  vendorId: UuidValue
+  shopName: String
+  ownerName: String
+  vendorEmail: String
+  complaintCount: int, default=0
+  latestComplaintAt: DateTime?
+  complaints: List<AdminProductComplaintSummary>

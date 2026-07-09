@@ -75,8 +75,34 @@ class CatalogRepository {
       maxPrice: input.maxPrice,
       query: query,
       featuredOnly: input.featuredOnly ? true : null,
-      offersOnly: input.offersOnly ? true : null,
     );
+
+    if (input.offersOnly) {
+      final candidates = await Product.db.find(
+        session,
+        where: where,
+        include: _productInclude(),
+        orderBy: (row) => row.createdAt,
+        orderDescending: true,
+        limit: 500,
+      );
+      final offers = candidates.where(ProductPricing.hasActiveOffer).toList()
+        ..sort((a, b) {
+          final compare = _discountFraction(b).compareTo(_discountFraction(a));
+          if (compare != 0) return compare;
+          return b.createdAt.compareTo(a.createdAt);
+        });
+      final pageItems = offers
+          .skip(paging.offset)
+          .take(paging.pageSize)
+          .toList(growable: false);
+      return ProductPage(
+        items: pageItems,
+        total: offers.length,
+        page: paging.page,
+        pageSize: paging.pageSize,
+      );
+    }
 
     final total = await Product.db.count(session, where: where);
 
@@ -133,24 +159,26 @@ class CatalogRepository {
       limit: ProductCatalogPolicy.defaultFeaturedLimit,
     );
 
-    final offerProducts = await Product.db.find(
+    final offerCandidates = await Product.db.find(
       session,
       where: ProductCatalogPolicy.consumerVisibleWhere(
         approvedVendorIds: approvedVendorIds,
-        offersOnly: true,
       ),
       include: _productInclude(),
       orderBy: (row) => row.createdAt,
       orderDescending: true,
-      limit: ProductCatalogPolicy.defaultOfferLimit * 3,
+      limit: ProductCatalogPolicy.defaultRecentLimit * 2,
     );
-    offerProducts.sort((a, b) {
-      final discountA = _discountFraction(a);
-      final discountB = _discountFraction(b);
-      final compare = discountB.compareTo(discountA);
-      if (compare != 0) return compare;
-      return b.createdAt.compareTo(a.createdAt);
-    });
+    final offerProducts = offerCandidates
+        .where(ProductPricing.hasActiveOffer)
+        .toList()
+      ..sort((a, b) {
+        final discountA = _discountFraction(a);
+        final discountB = _discountFraction(b);
+        final compare = discountB.compareTo(discountA);
+        if (compare != 0) return compare;
+        return b.createdAt.compareTo(a.createdAt);
+      });
     final trimmedOffers = offerProducts
         .take(ProductCatalogPolicy.defaultOfferLimit)
         .toList(growable: false);

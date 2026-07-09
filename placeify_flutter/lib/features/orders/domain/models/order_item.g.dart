@@ -7,21 +7,20 @@ part of 'order_item.dart';
 // **************************************************************************
 
 _OrderItem _$OrderItemFromJson(Map<String, dynamic> json) => _OrderItem(
-  productId: json['productId'] as String,
-  productName: json['productName'] as String,
-  productImageUrl: json['productImageUrl'] as String,
-  brandName: json['brandName'] as String,
-  sku: json['sku'] as String,
-  unitPrice: (json['unitPrice'] as num).toDouble(),
-  discountedPrice: (json['discountedPrice'] as num?)?.toDouble(),
-  quantity: (json['quantity'] as num).toInt(),
-  selectedColor: json['selectedColor'] as String?,
-  dimensions:
-      (json['dimensions'] as Map<String, dynamic>?)?.map(
-        (k, e) => MapEntry(k, e as String),
-      ) ??
-      const {},
-);
+      productId: json['productId'] as String,
+      productName: json['productName'] as String,
+      productImageUrl: json['productImageUrl'] as String,
+      brandName: json['brandName'] as String,
+      sku: json['sku'] as String,
+      unitPrice: (json['unitPrice'] as num).toDouble(),
+      discountedPrice: (json['discountedPrice'] as num?)?.toDouble(),
+      quantity: (json['quantity'] as num).toInt(),
+      selectedColor: json['selectedColor'] as String?,
+      dimensions: (json['dimensions'] as Map<String, dynamic>?)?.map(
+            (k, e) => MapEntry(k, e as String),
+          ) ??
+          const {},
+    );
 
 Map<String, dynamic> _$OrderItemToJson(_OrderItem instance) =>
     <String, dynamic>{

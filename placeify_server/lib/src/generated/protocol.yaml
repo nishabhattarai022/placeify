@@ -64,6 +64,9 @@ admin:
   - listRefundRequests:
   - approveRefundRequest:
   - rejectRefundRequest:
+  - listProducts:
+  - listReportedProducts:
+  - getProductDetails:
   - requirePlaceifyUser:
   - requireRole:
 ar:

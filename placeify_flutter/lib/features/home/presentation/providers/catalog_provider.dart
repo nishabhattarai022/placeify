@@ -7,6 +7,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../cart/data/product_id_codec.dart';
 import '../../../vendor/domain/models/vendor_product.dart';
 import '../../../profile/presentation/providers/profile_dashboard_provider.dart';
+import '../../data/catalog_category_utils.dart';
 import '../../data/catalog_product_mapper.dart';
 import '../../data/serverpod_product_repository.dart';
 import '../../data/vendor_product_catalog_mapper.dart';
@@ -118,7 +119,12 @@ List<Product> catalogProductsByCategory(Ref ref, String categoryId) {
   ref.watch(catalogIndexProvider);
   return ref
       .watch(catalogProductsProvider)
-      .where((product) => product.categoryId == categoryId)
+      .where(
+        (product) => CatalogCategoryUtils.matchesUiCategory(
+          product.categoryId,
+          categoryId,
+        ),
+      )
       .toList();
 }
 

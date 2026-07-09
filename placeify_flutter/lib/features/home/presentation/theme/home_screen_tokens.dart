@@ -21,6 +21,10 @@ abstract final class HomeScreenTokens {
   static const double heroTitleTopGap = 12;
   static const double heroDiscoverAlign = 0.92;
 
+  /// Approved-vendor shortcut on the explore hero (top-left).
+  static const double vendorDashboardButtonSize = 40;
+  static const double vendorDashboardIconSize = 20;
+
   static const double cardRadius = 22;
   static const double cardPadding = 10;
   static const double cardImageHeight = 178;

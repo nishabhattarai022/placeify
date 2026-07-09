@@ -1,10 +1,13 @@
 import 'package:placeify_client/placeify_client.dart' as api;
+import 'package:placeify_flutter/features/admin/domain/enums/admin_product_visibility_filter.dart';
 import 'package:placeify_flutter/features/admin/domain/enums/application_decision.dart';
 import 'package:placeify_flutter/features/admin/domain/enums/audit_action.dart';
 import 'package:placeify_flutter/features/admin/domain/enums/user_role.dart'
     as admin;
 import 'package:placeify_flutter/features/admin/domain/enums/vendor_application_list_filter.dart';
 import 'package:placeify_flutter/features/admin/domain/models/admin_audit_log_entry.dart';
+import 'package:placeify_flutter/features/admin/domain/models/admin_product_complaint_summary.dart';
+import 'package:placeify_flutter/features/admin/domain/models/admin_product_summary.dart';
 import 'package:placeify_flutter/features/admin/domain/models/admin_stats.dart';
 import 'package:placeify_flutter/features/admin/domain/models/platform_user.dart';
 import 'package:placeify_flutter/features/admin/domain/models/vendor_application.dart';
@@ -163,5 +166,75 @@ abstract final class AdminPlatformMapper {
       VendorApplicationListFilter.declined => api.UserAccountStatus.rejected,
       null => null,
     };
+  }
+
+  static api.AdminProductVisibilityFilter toApiProductVisibility(
+    AdminProductVisibilityFilter filter,
+  ) {
+    return switch (filter) {
+      AdminProductVisibilityFilter.all => api.AdminProductVisibilityFilter.all,
+      AdminProductVisibilityFilter.active =>
+        api.AdminProductVisibilityFilter.active,
+      AdminProductVisibilityFilter.removed =>
+        api.AdminProductVisibilityFilter.removed,
+    };
+  }
+
+  static AdminProductSummary toAdminProductSummary(api.AdminProductSummary product) {
+    return AdminProductSummary(
+      productId: product.productId,
+      productName: product.productName,
+      description: product.description,
+      price: product.price,
+      categoryName: product.categoryName,
+      thumbnailUrl: product.thumbnailUrl,
+      status: product.status.name,
+      isDeleted: product.isDeleted,
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt,
+      vendorId: product.vendorId.toString(),
+      shopName: product.shopName,
+      ownerName: product.ownerName,
+      vendorEmail: product.vendorEmail,
+      complaintCount: product.complaintCount,
+      latestComplaintAt: product.latestComplaintAt,
+    );
+  }
+
+  static AdminProductDetail toAdminProductDetail(api.AdminProductDetail product) {
+    return AdminProductDetail(
+      productId: product.productId,
+      productName: product.productName,
+      description: product.description,
+      price: product.price,
+      categoryName: product.categoryName,
+      thumbnailUrl: product.thumbnailUrl,
+      status: product.status.name,
+      isDeleted: product.isDeleted,
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt,
+      vendorId: product.vendorId.toString(),
+      shopName: product.shopName,
+      ownerName: product.ownerName,
+      vendorEmail: product.vendorEmail,
+      complaintCount: product.complaintCount,
+      latestComplaintAt: product.latestComplaintAt,
+      discountPrice: product.discountPrice,
+      viewImageUrls: product.viewImageUrls ?? const [],
+      removedReason: product.removedReason,
+      removedAt: product.removedAt,
+      removedByAdminName: product.removedByAdminName,
+      complaints: product.complaints
+          .map(
+            (complaint) => AdminProductComplaintSummary(
+              complaintId: complaint.complaintId.toString(),
+              reason: complaint.reason,
+              description: complaint.description,
+              status: complaint.status.name,
+              createdAt: complaint.createdAt,
+            ),
+          )
+          .toList(),
+    );
   }
 }

@@ -29,7 +29,6 @@ abstract final class OrderApiMapper {
         ),
       ],
       statusHistory: const [],
-      paymentUpdates: const [],
       placedAt: summary.placedAt,
       paymentStatus: mapOrderPaymentStatus(summary.orderPaymentStatus),
       paymentMethod: '',
@@ -68,7 +67,6 @@ abstract final class OrderApiMapper {
       status: mapStatus(detail.status, latestStage: detail.latestDeliveryStage),
       items: items,
       statusHistory: _historyFromDetail(detail),
-      paymentUpdates: _paymentHistoryFromDetail(detail),
       placedAt: detail.placedAt,
       deliveredAt: detail.status == OrderStatus.delivered
           ? _deliveredAt(detail)
@@ -94,8 +92,8 @@ abstract final class OrderApiMapper {
   static PaymentStatus mapOrderPaymentStatus(OrderPaymentStatus status) {
     return switch (status) {
       OrderPaymentStatus.unpaid => PaymentStatus.pending,
-      OrderPaymentStatus.paymentReceived => PaymentStatus.received,
-      OrderPaymentStatus.paymentConfirmed => PaymentStatus.confirmed,
+      OrderPaymentStatus.paymentReceived => PaymentStatus.paid,
+      OrderPaymentStatus.paymentConfirmed => PaymentStatus.paid,
     };
   }
 

@@ -77,8 +77,7 @@ const _$ConsumerOrderStatusEnumMap = {
 
 const _$PaymentStatusEnumMap = {
   PaymentStatus.pending: 'pending',
-  PaymentStatus.received: 'received',
-  PaymentStatus.confirmed: 'confirmed',
+  PaymentStatus.paid: 'paid',
   PaymentStatus.failed: 'failed',
   PaymentStatus.refunded: 'refunded',
 };

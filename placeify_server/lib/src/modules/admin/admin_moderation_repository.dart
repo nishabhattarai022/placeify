@@ -637,6 +637,13 @@ class AdminModerationStore {
       );
     }
 
+    if (product.status == ProductStatus.removed && product.removedById != null) {
+      throw PlaceifyException(
+        message: 'Product is already removed.',
+        code: 'PRODUCT_ALREADY_REMOVED',
+      );
+    }
+
     final previousStatus = product.status.name;
     final now = DateTime.now();
 
@@ -658,6 +665,7 @@ class AdminModerationStore {
         actorAdminId: admin.id!,
         actionType: AdminActionType.removeProduct,
         targetProductId: productId,
+        targetVendorId: product.vendorId,
         previousStatus: previousStatus,
         newStatus: ProductStatus.removed.name,
         reason: trimmedReason,
@@ -710,6 +718,15 @@ class AdminModerationStore {
       throw PlaceifyException(message: 'Product not found.', code: 'PRODUCT_NOT_FOUND');
     }
 
+    if (!product.isDeleted &&
+        product.status == ProductStatus.active &&
+        product.removedReason == null) {
+      throw PlaceifyException(
+        message: 'Product is already active.',
+        code: 'PRODUCT_ALREADY_ACTIVE',
+      );
+    }
+
     final previousStatus = product.status.name;
     final now = DateTime.now();
 
@@ -720,6 +737,9 @@ class AdminModerationStore {
           isDeleted: false,
           deletedAt: null,
           status: ProductStatus.active,
+          removedReason: null,
+          removedById: null,
+          removedAt: null,
           updatedAt: now,
         ),
         transaction: transaction,
@@ -730,6 +750,7 @@ class AdminModerationStore {
         actorAdminId: admin.id!,
         actionType: AdminActionType.restoreProduct,
         targetProductId: productId,
+        targetVendorId: product.vendorId,
         previousStatus: previousStatus,
         newStatus: ProductStatus.active.name,
         transaction: transaction,

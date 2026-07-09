@@ -2,15 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:placeify_client/placeify_client.dart';
-import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
-import '../../../core/config/placeify_server_client.dart';
 import '../../../core/services/haptic_service.dart';
-import '../../../core/widgets/toast_overlay.dart';
-import '../../home/presentation/providers/catalog_provider.dart';
 import '../../home/presentation/providers/category_provider.dart';
-import '../../profile/presentation/providers/profile_dashboard_provider.dart';
+import 'cart_actions.dart';
 import 'cart_tokens.dart';
 import 'providers/cart_provider.dart';
 import 'widgets/cart_header.dart';
@@ -25,31 +20,6 @@ class CartScreen extends ConsumerStatefulWidget {
 }
 
 class _CartScreenState extends ConsumerState<CartScreen> {
-  PaymentMethod _paymentMethod = PaymentMethod.cod;
-
-  Future<void> _checkout() async {
-    if (!client.auth.isAuthenticated) {
-      if (!mounted) return;
-      PlaceifyToast.show(context, 'Sign in to checkout');
-      context.push('/login');
-      return;
-    }
-
-    final message = await ref
-        .read(cartProvider.notifier)
-        .checkout(paymentMethod: _paymentMethod);
-    if (!mounted) return;
-
-    PlaceifyToast.show(context, message);
-
-    if (message.contains('placed successfully')) {
-      ref.invalidate(profileOrdersProvider);
-      await ref.read(profileDashboardProvider.notifier).refresh();
-      if (!mounted) return;
-      context.push('/profile/orders');
-    }
-  }
-
   @override
   void initState() {
     super.initState();
@@ -108,9 +78,6 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                               productByIdProvider(item.productId),
                             );
                             if (product == null) {
-                              ref
-                                  .read(catalogIndexProvider.notifier)
-                                  .ensureProducts([item.productId]);
                               return const SizedBox.shrink();
                             }
                             final cart = ref.read(cartProvider.notifier);
@@ -139,11 +106,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
               bottom: 0,
               child: CartOrderSummary(
                 totals: totals,
-                selectedPaymentMethod: _paymentMethod,
-                onPaymentMethodChanged: (method) {
-                  setState(() => _paymentMethod = method);
-                },
-                onCheckout: _checkout,
+                onCheckout: () => checkoutCart(ref, context),
               ),
             ),
           ],

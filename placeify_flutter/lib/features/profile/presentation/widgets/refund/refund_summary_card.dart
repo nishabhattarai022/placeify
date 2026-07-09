@@ -1,21 +1,29 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/constants/app_colors.dart';
-import '../../../../../core/services/haptic_service.dart';
+import '../../../../../core/theme/app_fonts.dart';
 import '../../../../../core/widgets/toast_overlay.dart';
+import '../../../domain/constants/refund_strings.dart';
+import '../../../../home/presentation/chairs_catalog_tokens.dart';
+import 'refund_action_button.dart';
 
 class RefundSummaryCard extends StatelessWidget {
-  const RefundSummaryCard({super.key});
+  const RefundSummaryCard({
+    required this.activeRequestCount,
+    super.key,
+  });
+
+  final int activeRequestCount;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: const EdgeInsets.only(bottom: 20),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.warmWhite,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.creamDark, width: 1.5),
+        color: ChairsCatalogTokens.imageWell,
+        borderRadius: BorderRadius.circular(ChairsCatalogTokens.wideCardRadius),
+        boxShadow: ChairsCatalogTokens.cardShadow,
       ),
       child: Column(
         children: [
@@ -26,29 +34,31 @@ class RefundSummaryCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Total Pending Refund',
-                      style: TextStyle(
+                    Text(
+                      RefundStrings.totalPendingLabel,
+                      style: AppFonts.dmSans(
                         fontSize: 12,
+                        fontWeight: FontWeight.w500,
                         color: AppColors.textMuted,
                       ),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
+                    Text(
                       'NPR 45.00',
-                      style: TextStyle(
-                        fontFamily: 'Fraunces',
+                      style: AppFonts.dmSans(
                         fontSize: 34,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.espresso,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
                         height: 1.1,
+                        letterSpacing: -0.5,
                       ),
                     ),
                     Text(
-                      'Across 2 active requests',
-                      style: TextStyle(
+                      RefundStrings.activeRequestsCount(activeRequestCount),
+                      style: AppFonts.dmSans(
                         fontSize: 12,
-                        color: AppColors.textMuted.withValues(alpha: 0.9),
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.textMuted,
                       ),
                     ),
                   ],
@@ -57,111 +67,64 @@ class RefundSummaryCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text(
-                    'Wallet Credit',
-                    style: TextStyle(
+                  Text(
+                    RefundStrings.walletCreditLabel,
+                    style: AppFonts.dmSans(
                       fontSize: 12,
+                      fontWeight: FontWeight.w500,
                       color: AppColors.textMuted,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'NPR 20.00',
-                    style: TextStyle(
-                      fontFamily: 'Fraunces',
+                    style: AppFonts.dmSans(
                       fontSize: 22,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.teal,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.3,
                     ),
                   ),
                   Text(
-                    'Ready to use',
-                    style: TextStyle(
+                    RefundStrings.walletReadyLabel,
+                    style: AppFonts.dmSans(
                       fontSize: 12,
-                      color: AppColors.textMuted.withValues(alpha: 0.9),
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textMuted,
                     ),
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
-                child: _RefundActionBtn(
-                  label: 'To Card',
+                child: RefundActionButton(
+                  label: RefundStrings.toCard,
                   icon: Icons.credit_card_outlined,
-                  primary: true,
                   onTap: () => PlaceifyToast.show(
                     context,
-                    'Refund to original payment',
+                    RefundStrings.refundToCardToast,
                   ),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: _RefundActionBtn(
-                  label: 'To Wallet',
+                child: RefundActionButton(
+                  label: RefundStrings.toWallet,
                   icon: Icons.account_balance_wallet_outlined,
                   primary: false,
-                  onTap: () => PlaceifyToast.show(context, 'Added to wallet!'),
+                  onTap: () => PlaceifyToast.show(
+                    context,
+                    RefundStrings.addedToWalletToast,
+                  ),
                 ),
               ),
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _RefundActionBtn extends StatelessWidget {
-  const _RefundActionBtn({
-    required this.label,
-    required this.icon,
-    required this.primary,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final bool primary;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        HapticService.light();
-        onTap();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: primary ? AppColors.espresso : AppColors.cream,
-          borderRadius: BorderRadius.circular(999),
-          border: primary ? null : Border.all(color: AppColors.sand, width: 1.5),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: primary ? Colors.white : AppColors.espresso,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: primary ? Colors.white : AppColors.espresso,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

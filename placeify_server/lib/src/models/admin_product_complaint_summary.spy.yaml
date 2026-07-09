@@ -1,0 +1,8 @@
+### Complaint row embedded in admin product detail.
+class: AdminProductComplaintSummary
+fields:
+  complaintId: UuidValue
+  reason: String
+  description: String?
+  status: ComplaintStatus
+  createdAt: DateTime

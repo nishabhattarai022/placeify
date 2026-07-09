@@ -5,6 +5,8 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/widgets/animated_scale_tap.dart';
 import '../data/home_categories_config.dart';
+import '../../data/product_reviews_repository.dart';
+import 'product_rating_row.dart';
 
 class HomeFeaturedProductCard extends StatelessWidget {
   const HomeFeaturedProductCard({required this.product, super.key});
@@ -13,6 +15,11 @@ class HomeFeaturedProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final reviewSummary = ProductReviewsRepository.forProductId(
+      product.productId,
+      productName: product.displayName,
+    );
+
     return AnimatedScaleTap(
       pressScale: 0.98,
       onTap: () => context.push('/product/${product.productId}'),
@@ -68,6 +75,8 @@ class HomeFeaturedProductCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 6),
+                  ProductRatingRow(summary: reviewSummary, compact: true),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
