@@ -246,14 +246,10 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     super.dispose();
   }
 
-  Vector3 get _nodeScale => Platform.isIOS
-      ? ArFurnitureScale.nodeScaleForNativeNormalizedHeight(
-          userMultiplier: _userScaleMultiplier,
-        )
-      : ArFurnitureScale.nodeScale(
-          dimensions: widget.dimensions,
-          userMultiplier: _userScaleMultiplier,
-        );
+  Vector3 get _nodeScale =>
+      ArFurnitureScale.nodeScaleForNativeNormalizedHeight(
+        userMultiplier: _userScaleMultiplier,
+      );
 
   double get _arLightIntensity => Platform.isAndroid
       ? ArFurnitureScale.androidArLightIntensityMultiplier
@@ -406,9 +402,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     objectManager.onInitialize(
       iosScaleFactor: ArFurnitureScale.nativeIosFactor,
       androidScaleFactor: ArFurnitureScale.nativeAndroidFactor,
-      targetHeightMeters: Platform.isIOS
-          ? ArFurnitureScale.targetHeightMeters(widget.dimensions)
-          : null,
+      targetHeightMeters: ArFurnitureScale.targetHeightMeters(widget.dimensions),
     );
     if (!mounted) return;
     await _loadModel();

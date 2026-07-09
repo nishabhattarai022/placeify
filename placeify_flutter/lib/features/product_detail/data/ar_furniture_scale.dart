@@ -26,8 +26,9 @@ abstract final class ArFurnitureScale {
   /// Tripo reference bounding size in meters.
   static const _tripoReferenceMaxDimensionM = 1.0;
 
-  /// Calibrates catalog dimensions to perceived real-world size in AR.
-  static const realWorldCalibrationFactor = 1.65;
+  /// Calibrates catalog dimensions for legacy preview paths without native
+  /// height normalization (e.g. ModelViewer on web).
+  static const realWorldCalibrationFactor = 1.0;
 
   /// Target height in meters for native iOS bounding-box normalization.
   static double targetHeightMeters(ProductDimensions dimensions) {

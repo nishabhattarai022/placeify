@@ -80,6 +80,8 @@ internal class FilamentArRenderer(
     private var shadowCatcher: ShadowCatcherRenderer? = null
     private var shadowsEnabled = false
     private var referenceFloorY: Float? = null
+  /** When > 0, GLB height is normalized to this catalog size (meters), matching iOS. */
+    private var targetHeightMeters: Float = 0f
     private val modelWorldCenters: MutableMap<String, FloatArray> = mutableMapOf()
     var environmentalLightEstimationEnabled = false
     var depthOcclusionEnabled = false
@@ -140,6 +142,14 @@ internal class FilamentArRenderer(
     fun setReferenceFloorY(floorY: Float?) {
         referenceFloorY = floorY
         mainHandler.post { recomputeShadowCatcher() }
+    }
+
+    fun setTargetHeightMeters(heightMeters: Float) {
+        targetHeightMeters = if (heightMeters.isFinite() && heightMeters > 0f) {
+            heightMeters
+        } else {
+            0f
+        }
     }
 
     fun setLightIntensityMultiplier(multiplier: Float) {
@@ -809,20 +819,29 @@ internal class FilamentArRenderer(
         val center = box.center
         val halfExtent = box.halfExtent
         val minY = center[1] - halfExtent[1]
+        val height = halfExtent[1] * 2f
 
         val correction = FloatArray(16)
         GlMatrix.setIdentityM(correction, 0)
+
+        var uniformScale = 1f
+        if (targetHeightMeters > 1e-4f && height > 1e-4f) {
+            uniformScale = targetHeightMeters / height
+            GlMatrix.scaleM(correction, 0, uniformScale, uniformScale, uniformScale)
+        }
+
         val floorSinkM = 0.002f
-        if (kotlin.math.abs(minY) >= 1e-4f) {
-            GlMatrix.translateM(correction, 0, 0f, -minY - floorSinkM, 0f)
+        val scaledMinY = minY * uniformScale
+        if (kotlin.math.abs(scaledMinY) >= 1e-4f) {
+            GlMatrix.translateM(correction, 0, 0f, -scaledMinY - floorSinkM, 0f)
         } else {
             GlMatrix.translateM(correction, 0, 0f, -floorSinkM, 0f)
         }
         rootOffsetCorrections[name] = correction
         Log.d(
             tag,
-            "snapModelBottomToOrigin $name: minY=$minY correctionY=${correction[13]} " +
-                "halfExtentY=${halfExtent[1]}",
+            "snapModelBottomToOrigin $name: height=$height targetHeight=$targetHeightMeters " +
+                "uniformScale=$uniformScale minY=$minY correctionY=${correction[13]}",
         )
     }
 

@@ -104,7 +104,7 @@ internal class AndroidARView(
         /** Matches [ArFurnitureGestureConfig.rotationSensitivity] on Flutter. */
         private const val ROTATION_SENSITIVITY = 0.85f
         /** Matches [ArFurnitureGestureConfig.rotationSmoothFactor] on Flutter. */
-        private const val ROTATION_SMOOTH_FACTOR = 0.28f
+        private const val ROTATION_SMOOTH_FACTOR = 0.52f
         /** Matches [ArFurnitureGestureConfig.rotationDeadZoneRadians] on Flutter. */
         private const val ROTATION_DEAD_ZONE_RADIANS = 0.004f
         /** Max horizontal world distance from hit to node center for twist start. */
@@ -347,6 +347,10 @@ internal class AndroidARView(
                             val scaleFactor = call.argument<Double>("androidScaleFactor")
                             if (scaleFactor != null) {
                                 androidModelScaleFactor = scaleFactor.toFloat()
+                            }
+                            val targetHeight = call.argument<Double>("targetHeightMeters")
+                            if (targetHeight != null && targetHeight > 0) {
+                                filamentRenderer.setTargetHeightMeters(targetHeight.toFloat())
                             }
                         }
                         "addNode" -> {
@@ -1972,20 +1976,25 @@ internal class AndroidARView(
     }
 
     private fun applyRotationDelta(node: SimpleNode, deltaRadians: Float) {
-        if (kotlin.math.abs(deltaRadians) < ROTATION_DEAD_ZONE_RADIANS) {
-            if (kotlin.math.abs(pendingRotationDelta) >= ROTATION_DEAD_ZONE_RADIANS) {
-                val residual = pendingRotationDelta * ROTATION_SMOOTH_FACTOR
-                pendingRotationDelta -= residual
-                rotateNode(node, -residual)
-            }
-            return
-        }
-
+        if (kotlin.math.abs(deltaRadians) < ROTATION_DEAD_ZONE_RADIANS) return
         pendingRotationDelta += deltaRadians * ROTATION_SENSITIVITY
-        val applied = pendingRotationDelta * ROTATION_SMOOTH_FACTOR
-        pendingRotationDelta -= applied
-        if (kotlin.math.abs(applied) < ROTATION_DEAD_ZONE_RADIANS) return
-        rotateNode(node, -applied)
+        stepRotationSmoothing(node)
+    }
+
+    private fun stepActiveRotationSmoothing() {
+        if (!isRotating) return
+        val nodeName = activeGestureNodeName ?: return
+        val node = nodesByName[nodeName] ?: return
+        stepRotationSmoothing(node)
+    }
+
+  /** Applies pending twist each frame so rotation stays smooth between touch events. */
+    private fun stepRotationSmoothing(node: SimpleNode) {
+        if (kotlin.math.abs(pendingRotationDelta) < ROTATION_DEAD_ZONE_RADIANS) return
+        val step = pendingRotationDelta * ROTATION_SMOOTH_FACTOR
+        pendingRotationDelta -= step
+        if (kotlin.math.abs(step) < ROTATION_DEAD_ZONE_RADIANS) return
+        rotateNode(node, -step)
     }
 
     private fun flushPendingRotation(node: SimpleNode) {
@@ -2752,6 +2761,7 @@ internal class AndroidARView(
 
         logAnchorDriftDiagnostics()
         resyncFrozenAnchorsToLivePose()
+        stepActiveRotationSmoothing()
         updateModelTransforms()
     }
 

@@ -4,7 +4,7 @@ abstract final class ArFurnitureGestureConfig {
   static const rotationSensitivity = 0.85;
 
   /// Interpolation factor when easing rotation between frames (0–1).
-  static const rotationSmoothFactor = 0.28;
+  static const rotationSmoothFactor = 0.52;
 
   /// Smoothing for anchored drag moves on Android (0–1).
   static const panSmoothFactor = 0.32;
