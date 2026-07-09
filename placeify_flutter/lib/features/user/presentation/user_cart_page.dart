@@ -160,10 +160,6 @@ class _UserCartPageState extends ConsumerState<UserCartPage> {
                 ),
                 child: CartOrderSummary(
                   totals: totals,
-                  selectedPaymentMethod: _paymentMethod,
-                  onPaymentMethodChanged: (method) {
-                    setState(() => _paymentMethod = method);
-                  },
                   onCheckout: _checkout,
                 ),
               ),

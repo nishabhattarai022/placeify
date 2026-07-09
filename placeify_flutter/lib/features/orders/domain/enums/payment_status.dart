@@ -4,8 +4,7 @@ import 'package:json_annotation/json_annotation.dart';
 @JsonEnum()
 enum PaymentStatus {
   pending,
-  received,
-  confirmed,
+  paid,
   failed,
   refunded,
 }
@@ -13,8 +12,7 @@ enum PaymentStatus {
 extension PaymentStatusX on PaymentStatus {
   String get label => switch (this) {
         PaymentStatus.pending => 'Pending',
-        PaymentStatus.received => 'Payment received',
-        PaymentStatus.confirmed => 'Payment confirmed',
+        PaymentStatus.paid => 'Paid',
         PaymentStatus.failed => 'Failed',
         PaymentStatus.refunded => 'Refunded',
       };

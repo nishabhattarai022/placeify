@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/constants/app_radii.dart';
+import '../../../../../core/constants/app_typography.dart';
+import '../../../../../core/theme/app_fonts.dart';
 import '../../../data/profile_mock_data.dart';
+import '../../../../home/presentation/chairs_catalog_tokens.dart';
 
 class RefundListItem extends StatelessWidget {
   const RefundListItem({required this.refund, super.key});
@@ -12,19 +16,17 @@ class RefundListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final statusLabel =
         refund.status == RefundStatus.refunded ? 'Refunded' : 'Under Review';
-    final statusBg = refund.status == RefundStatus.refunded
-        ? AppColors.tealBg
-        : AppColors.accentBg;
-    final statusFg =
-        refund.status == RefundStatus.refunded ? AppColors.teal : AppColors.accent;
+    final (statusBg, statusFg) = refund.status == RefundStatus.refunded
+        ? (AppColors.sageBg, AppColors.sage)
+        : (const Color(0x141A1A1A), AppColors.textPrimary);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.warmWhite,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.creamDark, width: 1.5),
+        color: ChairsCatalogTokens.imageWell,
+        borderRadius: BorderRadius.circular(ChairsCatalogTokens.compactCardRadius),
+        boxShadow: ChairsCatalogTokens.cardShadow,
       ),
       child: Row(
         children: [
@@ -32,8 +34,8 @@ class RefundListItem extends StatelessWidget {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: AppColors.cream,
-              borderRadius: BorderRadius.circular(12),
+              color: AppColors.cartQtyPill,
+              borderRadius: AppRadii.md,
             ),
             alignment: Alignment.center,
             child: Text(refund.thumbEmoji, style: const TextStyle(fontSize: 24)),
@@ -45,33 +47,36 @@ class RefundListItem extends StatelessWidget {
               children: [
                 Text(
                   refund.productName,
-                  style: const TextStyle(
+                  style: AppFonts.dmSans(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.espresso,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   refund.reason,
-                  style: const TextStyle(
-                    fontSize: 12,
+                  style: AppFonts.dmSerifDisplay(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    fontStyle: FontStyle.italic,
                     color: AppColors.textMuted,
+                    height: 1.35,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: statusBg,
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: AppRadii.pill,
                   ),
                   child: Text(
                     statusLabel,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
+                    style: AppTypography.statusPill.copyWith(
                       color: statusFg,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -80,10 +85,11 @@ class RefundListItem extends StatelessWidget {
           ),
           Text(
             refund.amountLabel,
-            style: TextStyle(
+            style: AppFonts.dmSans(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: refund.isCompleted ? AppColors.espresso : AppColors.teal,
+              color: AppColors.textPrimary,
+              letterSpacing: -0.2,
             ),
           ),
         ],

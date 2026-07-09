@@ -26,7 +26,17 @@ abstract final class AdminStrings {
   static const last7Days = 'Last 7 days';
   static const quickLinks = 'Quick Links';
   static const usersLink = 'Users';
+  static const productsLink = 'Products';
   static const notificationsLink = 'Notifications';
+  static const productsTitle = 'Products';
+  static const productDetailTitle = 'Product Detail';
+  static const productsSearchHint = 'Search products, vendors, or shops';
+  static const productsLoadError = 'Could not load products';
+  static const productsEmpty = 'No vendor products found';
+  static const removeProductTitle = 'Remove product';
+  static const removeProductReasonLabel = 'Reason for removal';
+  static const productRemoved = 'Product removed';
+  static const productRestored = 'Product restored';
   static const recentApplications = 'Recent Applications';
   static const seeAll = 'See all';
   static const noApplicationsYet = 'No vendor applications yet';

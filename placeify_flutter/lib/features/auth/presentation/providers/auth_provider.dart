@@ -4,6 +4,7 @@ import '../../../vendor/domain/enums/vendor_status.dart';
 import '../../constants/demo_credentials.dart';
 import '../../data/serverpod_auth_repository.dart';
 import '../../domain/models/app_user.dart';
+import '../../domain/models/consumer_profile_details.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../../core/config/placeify_server_client.dart';
 
@@ -134,6 +135,28 @@ class CurrentUser extends _$CurrentUser {
       return repo.getCurrentUser();
     });
     if (state.hasError) throw _unwrapError(state.error!);
+  }
+
+  Future<void> updateConsumerProfile(ConsumerProfileDetails profile) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final repo = await ref.read(authRepositoryProvider.future);
+      return repo.updateConsumerProfile(profile);
+    });
+    if (state.hasError) throw _unwrapError(state.error!);
+  }
+
+  Future<ConsumerProfileDetails?> loadConsumerProfile() async {
+    final repo = await ref.read(authRepositoryProvider.future);
+    return repo.getConsumerProfile();
+  }
+
+  Future<void> resetPassword({
+    required String email,
+    required String newPassword,
+  }) async {
+    final repo = await ref.read(authRepositoryProvider.future);
+    await repo.resetPassword(email: email, newPassword: newPassword);
   }
 
   Future<void> updateVendorStatusForUser({

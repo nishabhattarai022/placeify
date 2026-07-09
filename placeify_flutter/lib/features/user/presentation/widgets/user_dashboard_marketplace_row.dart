@@ -12,27 +12,40 @@ class UserDashboardMarketplaceRow extends StatelessWidget {
   const UserDashboardMarketplaceRow({
     required this.title,
     required this.products,
+    this.maxProducts = 4,
     super.key,
   });
 
   final String title;
   final List<Product> products;
+  final int maxProducts;
 
   @override
   Widget build(BuildContext context) {
     if (products.isEmpty) return const SizedBox.shrink();
+
+    final visible = products.take(maxProducts).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title, style: AppTypography.sectionTitle.copyWith(fontSize: 18)),
         const SizedBox(height: 12),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        Column(
           children: [
-            for (var i = 0; i < products.length && i < 2; i++) ...[
-              if (i > 0) const SizedBox(width: 12),
-              Expanded(child: _ProductCard(product: products[i])),
+            for (var i = 0; i < visible.length; i += 2) ...[
+              if (i > 0) const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: _ProductCard(product: visible[i])),
+                  if (i + 1 < visible.length) ...[
+                    const SizedBox(width: 12),
+                    Expanded(child: _ProductCard(product: visible[i + 1])),
+                  ] else
+                    const Expanded(child: SizedBox.shrink()),
+                ],
+              ),
             ],
           ],
         ),

@@ -14,7 +14,7 @@ class ConsumerBottomNav extends StatelessWidget {
   final int activeIndex;
 
   static void _goHome(BuildContext context) => context.go('/home');
-  static void _goShops(BuildContext context) => context.go('/shops');
+  static void _goMyAr(BuildContext context) => context.go('/my-ar');
   static void _goBrowse(BuildContext context) => context.go('/browse');
   static void _goBookmarks(BuildContext context) => context.go('/bookmarks');
   static void _goProfile(BuildContext context) => context.go('/profile');
@@ -36,12 +36,12 @@ class ConsumerBottomNav extends StatelessWidget {
         ),
         const BottomNavItemGap(),
         BottomNavIconButton(
-          icon: Icons.storefront_outlined,
+          icon: Icons.view_in_ar_outlined,
           isSelected: index == 1,
-          semanticLabel: 'Shops',
+          semanticLabel: 'My AR',
           onTap: () {
             HapticService.light();
-            _goShops(context);
+            _goMyAr(context);
           },
         ),
         const BottomNavItemGap(),

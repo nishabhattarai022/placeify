@@ -37,24 +37,26 @@ import 'package:placeify_server/src/generated/pagination_input.dart' as _i24;
 import 'package:placeify_server/src/generated/vendor_payout_status.dart'
     as _i25;
 import 'package:placeify_server/src/generated/request_status.dart' as _i26;
-import 'package:placeify_server/src/generated/checkout_request.dart' as _i27;
+import 'package:placeify_server/src/generated/admin_product_list_input.dart'
+    as _i27;
+import 'package:placeify_server/src/generated/checkout_request.dart' as _i28;
 import 'package:placeify_server/src/generated/payment_transaction_status.dart'
-    as _i28;
-import 'package:placeify_server/src/generated/product_search_input.dart'
     as _i29;
-import 'package:placeify_server/src/generated/vendor_bank_details_input.dart'
+import 'package:placeify_server/src/generated/product_search_input.dart'
     as _i30;
-import 'package:placeify_server/src/generated/vendor_profile_update_input.dart'
+import 'package:placeify_server/src/generated/vendor_bank_details_input.dart'
     as _i31;
-import 'package:placeify_server/src/generated/vendor_document_type.dart'
+import 'package:placeify_server/src/generated/vendor_profile_update_input.dart'
     as _i32;
-import 'package:placeify_server/src/generated/vendor_product_upload_input.dart'
+import 'package:placeify_server/src/generated/vendor_document_type.dart'
     as _i33;
-import 'package:placeify_server/src/generated/delivery_stage.dart' as _i34;
+import 'package:placeify_server/src/generated/vendor_product_upload_input.dart'
+    as _i34;
+import 'package:placeify_server/src/generated/delivery_stage.dart' as _i35;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
-    as _i35;
-import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _i36;
+import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+    as _i37;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -1442,6 +1444,62 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['refundId'],
                   ),
         ),
+        'listProducts': _i1.MethodConnector(
+          name: 'listProducts',
+          params: {
+            'input': _i1.ParameterDescription(
+              name: 'input',
+              type: _i1.getType<_i27.AdminProductListInput>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i6.AdminEndpoint).listProducts(
+                session,
+                params['input'],
+              ),
+        ),
+        'listReportedProducts': _i1.MethodConnector(
+          name: 'listReportedProducts',
+          params: {
+            'input': _i1.ParameterDescription(
+              name: 'input',
+              type: _i1.getType<_i27.AdminProductListInput?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i6.AdminEndpoint)
+                  .listReportedProducts(
+                    session,
+                    input: params['input'],
+                  ),
+        ),
+        'getProductDetails': _i1.MethodConnector(
+          name: 'getProductDetails',
+          params: {
+            'productId': _i1.ParameterDescription(
+              name: 'productId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['admin'] as _i6.AdminEndpoint).getProductDetails(
+                    session,
+                    params['productId'],
+                  ),
+        ),
         'requirePlaceifyUser': _i1.MethodConnector(
           name: 'requirePlaceifyUser',
           params: {},
@@ -1634,7 +1692,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'request': _i1.ParameterDescription(
               name: 'request',
-              type: _i1.getType<_i27.CheckoutRequest>(),
+              type: _i1.getType<_i28.CheckoutRequest>(),
               nullable: false,
             ),
           },
@@ -1909,7 +1967,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i28.PaymentTransactionStatus>(),
+              type: _i1.getType<_i29.PaymentTransactionStatus>(),
               nullable: false,
             ),
             'note': _i1.ParameterDescription(
@@ -1961,7 +2019,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'input': _i1.ParameterDescription(
               name: 'input',
-              type: _i1.getType<_i29.ProductSearchInput>(),
+              type: _i1.getType<_i30.ProductSearchInput>(),
               nullable: false,
             ),
           },
@@ -2322,7 +2380,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'bankDetails': _i1.ParameterDescription(
               name: 'bankDetails',
-              type: _i1.getType<_i30.VendorBankDetailsInput?>(),
+              type: _i1.getType<_i31.VendorBankDetailsInput?>(),
               nullable: true,
             ),
           },
@@ -2360,7 +2418,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'input': _i1.ParameterDescription(
               name: 'input',
-              type: _i1.getType<_i30.VendorBankDetailsInput>(),
+              type: _i1.getType<_i31.VendorBankDetailsInput>(),
               nullable: false,
             ),
           },
@@ -2408,7 +2466,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'input': _i1.ParameterDescription(
               name: 'input',
-              type: _i1.getType<_i31.VendorProfileUpdateInput>(),
+              type: _i1.getType<_i32.VendorProfileUpdateInput>(),
               nullable: false,
             ),
           },
@@ -2502,7 +2560,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'documentType': _i1.ParameterDescription(
               name: 'documentType',
-              type: _i1.getType<_i32.VendorDocumentType>(),
+              type: _i1.getType<_i33.VendorDocumentType>(),
               nullable: false,
             ),
             'fileData': _i1.ParameterDescription(
@@ -2727,7 +2785,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'input': _i1.ParameterDescription(
               name: 'input',
-              type: _i1.getType<_i33.VendorProductUploadInput>(),
+              type: _i1.getType<_i34.VendorProductUploadInput>(),
               nullable: false,
             ),
             'imageData': _i1.ParameterDescription(
@@ -3008,7 +3066,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'stage': _i1.ParameterDescription(
               name: 'stage',
-              type: _i1.getType<_i34.DeliveryStage>(),
+              type: _i1.getType<_i35.DeliveryStage>(),
               nullable: false,
             ),
             'note': _i1.ParameterDescription(
@@ -3290,9 +3348,9 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
-    modules['serverpod_auth_core'] = _i35.Endpoints()
+    modules['serverpod_auth_core'] = _i36.Endpoints()
       ..initializeEndpoints(server);
-    modules['serverpod_auth_idp'] = _i36.Endpoints()
+    modules['serverpod_auth_idp'] = _i37.Endpoints()
       ..initializeEndpoints(server);
   }
 }

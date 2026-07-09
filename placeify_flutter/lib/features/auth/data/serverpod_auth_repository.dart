@@ -9,6 +9,7 @@ import '../../admin/domain/enums/user_role.dart' as ui_role;
 import '../../vendor/domain/enums/vendor_status.dart';
 import '../constants/demo_credentials.dart';
 import '../domain/models/app_user.dart';
+import '../domain/models/consumer_profile_details.dart';
 import '../domain/repositories/auth_repository.dart';
 
 /// Serverpod email/JWT auth backed by the Placeify backend.
@@ -208,6 +209,74 @@ class ServerpodAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<ConsumerProfileDetails?> getConsumerProfile() async {
+    if (!client.auth.isAuthenticated) return null;
+
+    try {
+      final profile = await client.user.getCurrentUser();
+      if (profile == null) return null;
+
+      final email = profile.email ?? _prefs.getString(_sessionEmailKey) ?? '';
+      return ConsumerProfileDetails(
+        fullName: profile.name,
+        email: email,
+        phone: profile.phone ?? '',
+        city: profile.address ?? '',
+      );
+    } catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
+  Future<AppUser> updateConsumerProfile(ConsumerProfileDetails profile) async {
+    _requireAuthenticated();
+
+    try {
+      await client.user.updateProfile(
+        profile.fullName.trim(),
+        phone: profile.phone.trim().isEmpty ? null : profile.phone.trim(),
+        address: profile.city.trim().isEmpty ? null : profile.city.trim(),
+      );
+
+      final email = _prefs.getString(_sessionEmailKey) ?? profile.email;
+      return _loadAppUser(email);
+    } catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String email,
+    required String newPassword,
+  }) async {
+    final normalizedEmail = email.trim().toLowerCase();
+    if (normalizedEmail.isEmpty) {
+      throw AuthException('Enter your email');
+    }
+    if (newPassword.length < 8) {
+      throw AuthException('Password must be at least 8 characters');
+    }
+
+    try {
+      final requestId = await client.emailIdp.startPasswordReset(
+        email: normalizedEmail,
+      );
+      final finishToken = await client.emailIdp.verifyPasswordResetCode(
+        passwordResetRequestId: requestId,
+        verificationCode: _devVerificationCode,
+      );
+      await client.emailIdp.finishPasswordReset(
+        finishPasswordResetToken: finishToken,
+        newPassword: newPassword,
+      );
+    } catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
   Future<void> signOut() async {
     await client.auth.signOutDevice();
     await _prefs.remove(_sessionEmailKey);
@@ -327,12 +396,15 @@ class ServerpodAuthRepository implements AuthRepository {
   }
 
   Future<void> _ensureDemoAdminIfNeeded(String email) async {
-    if (email.trim().toLowerCase() != DemoCredentials.adminEmail.trim().toLowerCase()) {
+    if (email.trim().toLowerCase() !=
+        DemoCredentials.adminEmail.trim().toLowerCase()) {
       return;
     }
     try {
       await client.user.ensureDemoAdmin();
-    } catch (_) {}
+    } catch (_) {
+      // Promotion may already be applied; profile reload below still runs.
+    }
   }
 
   Future<T> _withConnectionRetry<T>(Future<T> Function() action) async {
