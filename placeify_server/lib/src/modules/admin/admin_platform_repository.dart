@@ -398,4 +398,241 @@ class AdminPlatformStore {
       country: country,
     );
   }
+
+  /// All vendor-uploaded products for admin catalog screens.
+  Future<List<AdminProductSummary>> listProducts(
+    Session session,
+    AdminProductListInput input,
+  ) async {
+    await _requireAdmin(session);
+    final paging = PaginationHelper.resolve(input.pagination);
+    final matchingVendorIds = await _matchingVendorIdsForProductQuery(
+      session,
+      input.query,
+    );
+    if (input.query != null &&
+        input.query!.trim().isNotEmpty &&
+        matchingVendorIds != null &&
+        matchingVendorIds.isEmpty) {
+      return const [];
+    }
+
+    final products = await Product.db.find(
+      session,
+      where: (row) {
+        var expression = row.id.notEquals(0);
+        switch (input.visibility) {
+          case AdminProductVisibilityFilter.active:
+            expression =
+                expression & row.isDeleted.equals(false) & row.status.equals(ProductStatus.active);
+          case AdminProductVisibilityFilter.removed:
+            expression = expression &
+                (row.isDeleted.equals(true) | row.status.equals(ProductStatus.removed));
+          case AdminProductVisibilityFilter.all:
+            break;
+        }
+        if (input.categoryId != null) {
+          expression = expression & row.categoryId.equals(input.categoryId!);
+        }
+        if (input.vendorId != null) {
+          expression = expression & row.vendorId.equals(input.vendorId!);
+        }
+        final trimmedQuery = input.query?.trim();
+        if (trimmedQuery != null && trimmedQuery.isNotEmpty) {
+          final pattern = '%$trimmedQuery%';
+          var searchExpression = row.name.ilike(pattern);
+          if (matchingVendorIds != null && matchingVendorIds.isNotEmpty) {
+            searchExpression =
+                searchExpression | row.vendorId.inSet(matchingVendorIds);
+          }
+          expression = expression & searchExpression;
+        }
+        return expression;
+      },
+      include: Product.include(
+        vendor: Vendor.include(user: User.include()),
+        category: Category.include(),
+      ),
+      orderBy: (row) => row.createdAt,
+      orderDescending: input.sortNewest,
+      limit: paging.pageSize,
+      offset: paging.offset,
+    );
+
+    var summaries = await _mapProductSummaries(session, products);
+    if (input.reportedOnly) {
+      summaries = summaries.where((item) => item.complaintCount > 0).toList();
+    }
+    return summaries;
+  }
+
+  /// Products that have at least one complaint filed against them.
+  Future<List<AdminProductSummary>> listReportedProducts(
+    Session session, {
+    AdminProductListInput? input,
+  }) {
+    return listProducts(
+      session,
+      (input ?? AdminProductListInput()).copyWith(reportedOnly: true),
+    );
+  }
+
+  Future<AdminProductDetail?> getProductDetails(
+    Session session,
+    int productId,
+  ) async {
+    await _requireAdmin(session);
+    final product = await Product.db.findById(
+      session,
+      productId,
+      include: Product.include(
+        vendor: Vendor.include(user: User.include()),
+        category: Category.include(),
+        removedBy: Admin.include(),
+      ),
+    );
+    if (product == null) return null;
+
+    final complaints = await Complaint.db.find(
+      session,
+      where: (row) => row.productId.equals(productId),
+      orderBy: (row) => row.createdAt,
+      orderDescending: true,
+    );
+
+    final complaintSummaries = complaints
+        .where((complaint) => complaint.id != null)
+        .map(
+          (complaint) => AdminProductComplaintSummary(
+            complaintId: complaint.id!,
+            reason: complaint.reason,
+            description: complaint.description,
+            status: complaint.status,
+            createdAt: complaint.createdAt,
+          ),
+        )
+        .toList();
+
+    final vendor = product.vendor;
+    final owner = vendor?.user;
+    final latestComplaintAt =
+        complaintSummaries.isEmpty ? null : complaintSummaries.first.createdAt;
+
+    return AdminProductDetail(
+      productId: product.id!,
+      productName: product.name,
+      description: product.description,
+      price: product.price,
+      discountPrice: product.discountPrice,
+      categoryName: product.category?.name,
+      thumbnailUrl: product.thumbnailUrl,
+      viewImageUrls: product.viewImageUrls,
+      status: product.status,
+      isDeleted: product.isDeleted,
+      removedReason: product.removedReason,
+      removedAt: product.removedAt,
+      removedByAdminName: product.removedBy?.fullName,
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt,
+      vendorId: product.vendorId,
+      shopName: vendor?.shopName ?? 'Unknown shop',
+      ownerName: owner?.name ?? 'Unknown owner',
+      vendorEmail: vendor?.contactEmail ?? owner?.email ?? '',
+      complaintCount: complaintSummaries.length,
+      latestComplaintAt: latestComplaintAt,
+      complaints: complaintSummaries,
+    );
+  }
+
+  Future<Set<UuidValue>?> _matchingVendorIdsForProductQuery(
+    Session session,
+    String? query,
+  ) async {
+    final trimmedQuery = query?.trim();
+    if (trimmedQuery == null || trimmedQuery.isEmpty) return null;
+
+    final pattern = '%$trimmedQuery%';
+    final vendors = await Vendor.db.find(
+      session,
+      include: Vendor.include(user: User.include()),
+      where: (row) {
+        final shopMatch = row.shopName.ilike(pattern);
+        final emailMatch = row.contactEmail.ilike(pattern);
+        return shopMatch | emailMatch;
+      },
+    );
+
+    final vendorIds = vendors
+        .where((vendor) => vendor.id != null)
+        .map((vendor) => vendor.id!)
+        .toSet();
+
+    final users = await User.db.find(
+      session,
+      where: (row) => row.name.ilike(pattern) | row.email.ilike(pattern),
+    );
+    if (users.isNotEmpty) {
+      final userIds = users.map((user) => user.id!).toSet();
+      final vendorsByUser = await Vendor.db.find(
+        session,
+        where: (row) => row.userId.inSet(userIds),
+      );
+      vendorIds.addAll(
+        vendorsByUser
+            .where((vendor) => vendor.id != null)
+            .map((vendor) => vendor.id!),
+      );
+    }
+
+    return vendorIds;
+  }
+
+  Future<List<AdminProductSummary>> _mapProductSummaries(
+    Session session,
+    List<Product> products,
+  ) async {
+    if (products.isEmpty) return const [];
+
+    final productIds = products.map((product) => product.id!).toSet();
+    final complaints = await Complaint.db.find(
+      session,
+      where: (row) => row.productId.inSet(productIds),
+    );
+
+    final complaintStats = <int, ({int count, DateTime? latest})>{};
+    for (final complaint in complaints) {
+      final productId = complaint.productId;
+      final current = complaintStats[productId];
+      final latest = current?.latest;
+      final createdAt = complaint.createdAt;
+      complaintStats[productId] = (
+        count: (current?.count ?? 0) + 1,
+        latest: latest == null || createdAt.isAfter(latest) ? createdAt : latest,
+      );
+    }
+
+    return products.map((product) {
+      final vendor = product.vendor;
+      final owner = vendor?.user;
+      final stats = complaintStats[product.id!];
+      return AdminProductSummary(
+        productId: product.id!,
+        productName: product.name,
+        description: product.description,
+        price: product.price,
+        categoryName: product.category?.name,
+        thumbnailUrl: product.thumbnailUrl,
+        status: product.status,
+        isDeleted: product.isDeleted,
+        createdAt: product.createdAt,
+        updatedAt: product.updatedAt,
+        vendorId: product.vendorId,
+        shopName: vendor?.shopName ?? 'Unknown shop',
+        ownerName: owner?.name ?? 'Unknown owner',
+        vendorEmail: vendor?.contactEmail ?? owner?.email ?? '',
+        complaintCount: stats?.count ?? 0,
+        latestComplaintAt: stats?.latest,
+      );
+    }).toList();
+  }
 }

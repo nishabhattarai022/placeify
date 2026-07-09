@@ -26,6 +26,7 @@ enum ProfileMenuRoute {
   refund,
   notifications,
   password,
+  editProfile,
   vendor,
   signOut,
 }
@@ -105,6 +106,14 @@ abstract final class ProfileMenuItems {
       iconColor: AppColors.coral,
       backgroundColor: AppColors.coralBg,
       route: ProfileMenuRoute.password,
+    ),
+    ProfileMenuItemData(
+      title: 'Edit Profile',
+      subtitle: 'Name, email, phone & bio',
+      icon: Icons.person_outline_rounded,
+      iconColor: AppColors.sage,
+      backgroundColor: AppColors.sageBg,
+      route: ProfileMenuRoute.editProfile,
     ),
   ];
 

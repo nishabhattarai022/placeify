@@ -123,6 +123,14 @@ class ServerpodAdminApi {
     }
   }
 
+  Future<Product> restoreProduct(int productId) async {
+    try {
+      return await client.admin.restoreProduct(productId);
+    } catch (error) {
+      throw AdminApiException(_mapError(error));
+    }
+  }
+
   Future<Product> flagProduct(int productId) async {
     try {
       return await client.admin.flagProduct(productId);

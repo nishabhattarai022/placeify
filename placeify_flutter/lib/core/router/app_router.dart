@@ -4,6 +4,8 @@ import 'package:placeify_flutter/features/admin/domain/constants/admin_routes.da
 import 'package:placeify_flutter/features/admin/presentation/dashboard/admin_dashboard_screen.dart';
 import 'package:placeify_flutter/features/admin/presentation/guards/admin_auth_guard.dart';
 import 'package:placeify_flutter/features/admin/presentation/notifications/admin_notifications_screen.dart';
+import 'package:placeify_flutter/features/admin/presentation/products/admin_product_detail_screen.dart';
+import 'package:placeify_flutter/features/admin/presentation/products/admin_products_screen.dart';
 import 'package:placeify_flutter/features/admin/presentation/settings/admin_audit_log_screen.dart';
 import 'package:placeify_flutter/features/admin/presentation/settings/admin_settings_screen.dart';
 import 'package:placeify_flutter/features/admin/presentation/shell/admin_shell.dart';
@@ -15,12 +17,14 @@ import 'package:placeify_flutter/features/admin/presentation/vendors/admin_vendo
 import 'package:placeify_flutter/features/admin/presentation/vendors/admin_vendors_screen.dart';
 import 'package:placeify_flutter/features/admin/presentation/widgets/admin_tab_scaffold.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
+import 'package:placeify_flutter/features/auth/domain/models/app_user_extensions.dart';
 import 'package:placeify_flutter/core/widgets/toast_overlay.dart';
 import 'package:placeify_flutter/features/vendor/presentation/guards/vendor_auth_guard.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../constants/app_durations.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
+import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/vendor/presentation/registration/vendor_registration_screen.dart';
@@ -48,14 +52,16 @@ import '../../features/home/presentation/bookmarks_screen.dart';
 import '../../data/furniture_categories.dart';
 import '../../screens/browse_screen.dart';
 import '../../screens/category_screen.dart';
-import '../../features/ar_hub/presentation/ar_powered_screen.dart';
+import '../../screens/my_ar_screen.dart';
 import '../../features/ar/presentation/room_snapshot_gallery_screen.dart';
+import '../../features/ar_hub/presentation/ar_powered_screen.dart';
 import '../../features/profile/presentation/profile_ar_history_screen.dart';
 import '../../features/profile/presentation/profile_home_screen.dart';
 import '../../features/profile/presentation/profile_notifications_screen.dart';
 import '../../features/orders/presentation/my_orders_screen.dart';
 import '../../features/orders/presentation/order_detail_screen.dart';
 import '../../features/orders/presentation/order_tracking_screen.dart';
+import '../../features/profile/presentation/profile_edit_screen.dart';
 import '../../features/profile/presentation/profile_password_screen.dart';
 import '../../features/profile/presentation/profile_refund_screen.dart';
 import '../../features/profile/presentation/profile_settings_screen.dart';
@@ -112,11 +118,29 @@ GoRouter appRouter(Ref ref) {
       final userAsync = ref.read(currentUserProvider);
       if (userAsync.isLoading) return null;
 
+      final user = userAsync.value;
+      final location = state.matchedLocation;
+      if (user != null && user.isAdmin) {
+        if (location == '/login' || location.startsWith('/user')) {
+          return AdminRoutes.dashboard;
+        }
+      }
+
       final adminRedirect = AdminAuthGuard.evaluate(
         location: state.matchedLocation,
         user: userAsync.value,
       );
-      if (adminRedirect != null) return adminRedirect.location;
+      if (adminRedirect != null) {
+        if (adminRedirect.toastMessage != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final ctx = rootNavigatorKey.currentContext;
+            if (ctx != null) {
+              PlaceifyToast.show(ctx, adminRedirect.toastMessage!);
+            }
+          });
+        }
+        return adminRedirect.location;
+      }
 
       final redirect = VendorAuthGuard.evaluate(
         location: state.matchedLocation,
@@ -166,90 +190,16 @@ List<RouteBase> get _appRoutes => [
         transitionsBuilder: _fadeTransition,
         transitionDuration: AppDurations.slow,
       ),
-    ),
-    ShellRoute(
-      builder: (context, state, child) => UserDashboardShell(child: child),
       routes: [
         GoRoute(
-          path: '/user',
-          redirect: (context, state) {
-            if (state.uri.path == '/user') return '/user/dashboard';
-            return null;
-          },
-          routes: [
-            GoRoute(
-              path: 'dashboard',
-              name: 'userDashboard',
-              pageBuilder: (context, state) => _fadePage(
-                key: state.pageKey,
-                child: const UserDashboardScreen(),
-              ),
-            ),
-            GoRoute(
-              path: 'orders',
-              name: 'userOrders',
-              pageBuilder: (context, state) => _fadePage(
-                key: state.pageKey,
-                child: const UserOrdersPage(),
-              ),
-            ),
-            GoRoute(
-              path: 'cart',
-              name: 'userCart',
-              pageBuilder: (context, state) => _fadePage(
-                key: state.pageKey,
-                child: const UserCartPage(),
-              ),
-            ),
-            GoRoute(
-              path: 'wishlist',
-              name: 'userWishlist',
-              pageBuilder: (context, state) => _fadePage(
-                key: state.pageKey,
-                child: const UserWishlistPage(),
-              ),
-            ),
-            GoRoute(
-              path: 'refund',
-              name: 'userRefund',
-              pageBuilder: (context, state) => _fadePage(
-                key: state.pageKey,
-                child: const UserRefundPage(),
-              ),
-            ),
-            GoRoute(
-              path: 'notifications',
-              name: 'userNotifications',
-              pageBuilder: (context, state) => _fadePage(
-                key: state.pageKey,
-                child: const UserNotificationsPage(),
-              ),
-            ),
-            GoRoute(
-              path: 'account',
-              name: 'userAccount',
-              pageBuilder: (context, state) => _fadePage(
-                key: state.pageKey,
-                child: const UserAccountPage(),
-              ),
-            ),
-            GoRoute(
-              path: 'settings',
-              name: 'userSettings',
-              pageBuilder: (context, state) => _fadePage(
-                key: state.pageKey,
-                child: const UserSettingsPage(),
-              ),
-            ),
-            GoRoute(
-              path: 'try-me',
-              name: 'userTryMe',
-              pageBuilder: (context, state) => _fadePage(
-                key: state.pageKey,
-                child: const UserTryMePage(),
-              ),
-            ),
-          ],
+          path: 'forgot-password',
+          name: 'forgotPassword',
+          pageBuilder: (context, state) => CustomTransitionPage(
+            key: state.pageKey,
+            child: const ForgotPasswordScreen(),
+            transitionsBuilder: _fadeTransition,
+            transitionDuration: AppDurations.slow,
+          ),
         ),
       ],
     ),
@@ -268,6 +218,110 @@ List<RouteBase> get _appRoutes => [
         key: ValueKey<String>(state.uri.toString()),
         child: const VendorRegistrationSuccessScreen(),
       ),
+    ),
+    ShellRoute(
+      builder: (context, state, child) => UserDashboardShell(child: child),
+      routes: [
+        GoRoute(
+          path: '/user',
+          redirect: (context, state) {
+            if (state.uri.path == '/user') return '/user/dashboard';
+            return null;
+          },
+          routes: [
+            GoRoute(
+              path: 'dashboard',
+              name: 'userDashboard',
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const UserDashboardScreen(),
+                transitionsBuilder: _fadeTransition,
+                transitionDuration: AppDurations.slow,
+              ),
+            ),
+            GoRoute(
+              path: 'orders',
+              name: 'userOrders',
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const UserOrdersPage(),
+                transitionsBuilder: _fadeTransition,
+                transitionDuration: AppDurations.slow,
+              ),
+            ),
+            GoRoute(
+              path: 'cart',
+              name: 'userCart',
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const UserCartPage(),
+                transitionsBuilder: _fadeTransition,
+                transitionDuration: AppDurations.slow,
+              ),
+            ),
+            GoRoute(
+              path: 'wishlist',
+              name: 'userWishlist',
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const UserWishlistPage(),
+                transitionsBuilder: _fadeTransition,
+                transitionDuration: AppDurations.slow,
+              ),
+            ),
+            GoRoute(
+              path: 'refund',
+              name: 'userRefund',
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const UserRefundPage(),
+                transitionsBuilder: _fadeTransition,
+                transitionDuration: AppDurations.slow,
+              ),
+            ),
+            GoRoute(
+              path: 'notifications',
+              name: 'userNotifications',
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const UserNotificationsPage(),
+                transitionsBuilder: _fadeTransition,
+                transitionDuration: AppDurations.slow,
+              ),
+            ),
+            GoRoute(
+              path: 'account',
+              name: 'userAccount',
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const UserAccountPage(),
+                transitionsBuilder: _fadeTransition,
+                transitionDuration: AppDurations.slow,
+              ),
+            ),
+            GoRoute(
+              path: 'settings',
+              name: 'userSettings',
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const UserSettingsPage(),
+                transitionsBuilder: _fadeTransition,
+                transitionDuration: AppDurations.slow,
+              ),
+            ),
+            GoRoute(
+              path: 'try-me',
+              name: 'userTryMe',
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const UserTryMePage(),
+                transitionsBuilder: _fadeTransition,
+                transitionDuration: AppDurations.slow,
+              ),
+            ),
+          ],
+        ),
+      ],
     ),
     ShellRoute(
       navigatorKey: shellNavigatorKey,
@@ -339,6 +393,16 @@ List<RouteBase> get _appRoutes => [
           ],
         ),
         GoRoute(
+          path: '/my-ar',
+          name: 'myAr',
+          pageBuilder: (context, state) => CustomTransitionPage(
+            key: state.pageKey,
+            child: const MyArScreen(),
+            transitionsBuilder: _fadeTransition,
+            transitionDuration: AppDurations.slow,
+          ),
+        ),
+        GoRoute(
           path: '/browse/chairs',
           redirect: (_, __) => '/browse',
         ),
@@ -405,12 +469,35 @@ List<RouteBase> get _appRoutes => [
           ),
         ),
         GoRoute(
-          path: '/profile/augmented-reality',
-          name: 'profileAugmentedReality',
+          path: '/profile/room-snapshots',
+          name: 'profileRoomSnapshots',
           pageBuilder: (context, state) => _slidePage(
             key: ValueKey<String>(state.uri.toString()),
-            child: const ArPoweredScreen(),
+            child: const RoomSnapshotGalleryScreen(),
           ),
+        ),
+        GoRoute(
+          path: '/profile/augmented-reality',
+          name: 'profileAugmentedReality',
+          pageBuilder: (context, state) {
+            final productIdsParam = state.uri.queryParameters['productIds'];
+            final productIds = productIdsParam == null
+                ? const <String>[]
+                : productIdsParam
+                    .split(',')
+                    .map((id) => id.trim())
+                    .where((id) => id.isNotEmpty)
+                    .toList();
+
+            return _slidePage(
+              key: ValueKey<String>(state.uri.toString()),
+              child: ArPoweredScreen(
+                productId: state.uri.queryParameters['productId'],
+                productIds: productIds,
+                initialActiveId: state.uri.queryParameters['active'],
+              ),
+            );
+          },
         ),
         GoRoute(
           path: '/profile/ar-history',
@@ -418,14 +505,6 @@ List<RouteBase> get _appRoutes => [
           pageBuilder: (context, state) => _slidePage(
             key: ValueKey<String>(state.uri.toString()),
             child: const ProfileArHistoryScreen(),
-          ),
-        ),
-        GoRoute(
-          path: '/profile/room-snapshots',
-          name: 'profileRoomSnapshots',
-          pageBuilder: (context, state) => _slidePage(
-            key: ValueKey<String>(state.uri.toString()),
-            child: const RoomSnapshotGalleryScreen(),
           ),
         ),
         GoRoute(
@@ -450,6 +529,14 @@ List<RouteBase> get _appRoutes => [
           pageBuilder: (context, state) => _slidePage(
             key: ValueKey<String>(state.uri.toString()),
             child: const ProfilePasswordScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/profile/edit',
+          name: 'profileEdit',
+          pageBuilder: (context, state) => _slidePage(
+            key: ValueKey<String>(state.uri.toString()),
+            child: const ProfileEditScreen(),
           ),
         ),
         GoRoute(
@@ -584,6 +671,26 @@ List<RouteBase> get _appRoutes => [
                 key: ValueKey<String>(state.uri.toString()),
                 child: AdminUserDetailScreen(
                   userId: state.pathParameters['userId']!,
+                ),
+              ),
+            ),
+          ],
+        ),
+        GoRoute(
+          path: AdminRoutes.products,
+          name: 'adminProducts',
+          pageBuilder: (context, state) => _slidePage(
+            key: ValueKey<String>(state.uri.toString()),
+            child: const AdminProductsScreen(),
+          ),
+          routes: [
+            GoRoute(
+              path: ':productId',
+              name: 'adminProductDetail',
+              pageBuilder: (context, state) => _slidePage(
+                key: ValueKey<String>(state.uri.toString()),
+                child: AdminProductDetailScreen(
+                  productId: int.parse(state.pathParameters['productId']!),
                 ),
               ),
             ),
@@ -811,18 +918,6 @@ CustomTransitionPage<void> _adminTabPage({
   return CustomTransitionPage<void>(
     key: state.pageKey,
     child: AdminTabScaffold(child: child),
-    transitionsBuilder: _fadeTransition,
-    transitionDuration: AppDurations.slow,
-  );
-}
-
-CustomTransitionPage<void> _fadePage({
-  required LocalKey key,
-  required Widget child,
-}) {
-  return CustomTransitionPage<void>(
-    key: key,
-    child: child,
     transitionsBuilder: _fadeTransition,
     transitionDuration: AppDurations.slow,
   );

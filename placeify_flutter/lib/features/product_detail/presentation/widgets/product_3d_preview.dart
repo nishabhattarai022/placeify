@@ -7,6 +7,7 @@ import '../../../home/domain/models/product.dart';
 import '../../data/product_3d_model_resolver.dart';
 import '../ar_room_screen.dart';
 import '../product_detail_tokens.dart';
+import 'ar_product_tray.dart';
 
 /// Interactive glTF / GLB viewer with in-app AR room preview.
 class Product3dPreview extends StatefulWidget {
@@ -15,6 +16,7 @@ class Product3dPreview extends StatefulWidget {
     required this.modelSrc,
     required this.productName,
     required this.dimensions,
+    this.availableProducts = const [],
     super.key,
   });
 
@@ -22,6 +24,7 @@ class Product3dPreview extends StatefulWidget {
   final String modelSrc;
   final String productName;
   final ProductDimensions dimensions;
+  final List<ArAddableProduct> availableProducts;
 
   @override
   State<Product3dPreview> createState() => _Product3dPreviewState();
@@ -53,6 +56,7 @@ class _Product3dPreviewState extends State<Product3dPreview> {
         productId: widget.productId,
         productName: widget.productName,
         dimensions: widget.dimensions,
+        availableProducts: widget.availableProducts,
       );
 
       if (!mounted) return;

@@ -71,7 +71,7 @@ abstract final class MarketplaceHighlightsMapper {
           swatches: _defaultSwatches,
         ),
       );
-      if (mapped.length >= 2) break;
+      if (mapped.length >= 4) break;
     }
     return mapped;
   }

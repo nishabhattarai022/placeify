@@ -94,7 +94,6 @@ PRESERVE_PATHS=(
   "placeify_flutter/assets/config.json"
   "placeify_flutter/pubspec.yaml"
   "placeify_flutter/scripts"
-  ".vscode"
 )
 
 if [[ ! -d "$NISHABH_WORKTREE/lib" ]]; then

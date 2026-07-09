@@ -9,6 +9,7 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/config/placeify_server_client.dart';
 import '../../home/domain/models/product.dart';
+import '../../home/presentation/providers/catalog_provider.dart';
 import '../../orders/presentation/providers/customer_in_app_notifications_provider.dart';
 import '../../orders/presentation/providers/orders_provider.dart';
 import '../../profile/presentation/providers/profile_dashboard_provider.dart';
@@ -21,6 +22,9 @@ import 'widgets/user_dashboard_recent_orders.dart';
 import 'widgets/user_overview_card.dart';
 
 /// Dashboard overview backed by [client.user.getDashboard].
+const _dashboardRecentProductLimit = 4;
+const _dashboardOfferProductLimit = 4;
+
 class UserDashboardScreen extends ConsumerStatefulWidget {
   const UserDashboardScreen({super.key});
 
@@ -93,7 +97,7 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen> {
             List<Product> offers,
             List<Product> featured,
           })>(
-            future: _loadMarketplaceProducts(dashboard),
+            future: _loadMarketplaceProducts(dashboard, ref),
             builder: (context, snapshot) {
               final recent = snapshot.data?.recent ?? const [];
               final offers = snapshot.data?.offers ?? const [];
@@ -127,13 +131,22 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen> {
     List<Product> recent,
     List<Product> offers,
     List<Product> featured,
-  })> _loadMarketplaceProducts(UserDashboard dashboard) async {
-    final recent = await UserDashboardMarketplaceMapper.toUiProducts(
-      dashboard.marketplace.recentProducts,
-    );
-    final offers = await UserDashboardMarketplaceMapper.toUiProducts(
+  })> _loadMarketplaceProducts(
+    UserDashboard dashboard,
+    WidgetRef ref,
+  ) async {
+    final apiRecent = dashboard.marketplace.recentProducts
+        .take(_dashboardRecentProductLimit)
+        .toList();
+    final recent = await UserDashboardMarketplaceMapper.toUiProducts(apiRecent);
+    var offers = await UserDashboardMarketplaceMapper.toOfferProducts(
       dashboard.marketplace.offerProducts,
+      limit: _dashboardOfferProductLimit,
     );
+    if (offers.isEmpty) {
+      final fallback = await ref.read(catalogDiscountedProductsProvider.future);
+      offers = fallback.take(_dashboardOfferProductLimit).toList();
+    }
     final featured = await UserDashboardMarketplaceMapper.toUiProducts(
       dashboard.marketplace.featuredProducts,
     );
@@ -271,6 +284,7 @@ class _DashboardContent extends StatelessWidget {
             UserDashboardMarketplaceRow(
               title: 'Special Offers',
               products: offerProducts,
+              maxProducts: _dashboardOfferProductLimit,
             ),
           ],
           if (featuredProducts.isNotEmpty) ...[

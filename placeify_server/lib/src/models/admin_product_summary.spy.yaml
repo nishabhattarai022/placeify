@@ -1,0 +1,19 @@
+### Vendor product row for admin catalog screens.
+class: AdminProductSummary
+fields:
+  productId: int
+  productName: String
+  description: String
+  price: double
+  categoryName: String?
+  thumbnailUrl: String?
+  status: ProductStatus
+  isDeleted: bool
+  createdAt: DateTime
+  updatedAt: DateTime
+  vendorId: UuidValue
+  shopName: String
+  ownerName: String
+  vendorEmail: String
+  complaintCount: int, default=0
+  latestComplaintAt: DateTime?

@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/demo_credentials.dart';
 import '../domain/models/app_user.dart';
+import '../domain/models/consumer_profile_details.dart';
 import '../domain/repositories/auth_repository.dart';
 
 /// Local mock backend: stores registered users and the active session.
@@ -171,6 +172,37 @@ class MockAuthRepository implements AuthRepository {
     };
     users[index] = updated;
     await _saveUsers(users);
+  }
+
+  @override
+  Future<ConsumerProfileDetails?> getConsumerProfile() async {
+    final user = await getCurrentUser();
+    if (user == null) return null;
+    return ConsumerProfileDetails(
+      fullName: user.fullName,
+      email: user.email,
+      phone: '',
+      city: '',
+    );
+  }
+
+  @override
+  Future<AppUser> updateConsumerProfile(ConsumerProfileDetails profile) async {
+    final user = await getCurrentUser();
+    if (user == null) {
+      throw AuthException('Sign in to update your profile');
+    }
+    return user;
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String email,
+    required String newPassword,
+  }) async {
+    if (newPassword.length < 8) {
+      throw AuthException('Password must be at least 8 characters');
+    }
   }
 
   Future<List<_StoredUser>> _loadUsers() async {

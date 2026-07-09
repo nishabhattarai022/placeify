@@ -146,10 +146,6 @@ abstract final class ProfileMockData {
       subtitle: 'Updates on your return requests',
     ),
     NotificationPref(
-      title: 'AR Reminders',
-      subtitle: "Items you tried in AR but didn't buy",
-    ),
-    NotificationPref(
       title: 'Price Drop Alerts',
       subtitle: 'Wishlist items on sale',
       enabled: false,

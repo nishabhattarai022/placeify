@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/placeify_bottom_nav.dart';
+import '../../../core/widgets/placeify_bottom_sheet.dart';
 import '../../../core/widgets/toast_overlay.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import '../../vendor/domain/constants/vendor_routes.dart';
@@ -38,32 +39,35 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
   }
 
   void _showMoreMenu() {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
-        child: Column(
+    PlaceifyBottomSheet.show<void>(
+      context,
+      builder: (sheetContext) {
+        return Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const PlaceifyBottomSheetHeader(title: 'More'),
             ListTile(
-              leading: const Icon(Icons.settings_outlined),
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(
+                Icons.settings_outlined,
+                color: AppColors.textSecondary,
+              ),
               title: const Text(
                 'Settings',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
                 ),
               ),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(sheetContext);
                 context.pushNamed('profileSettings');
               },
             ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -96,6 +100,8 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
         context.pushNamed('profileNotifications');
       case ProfileMenuRoute.password:
         context.pushNamed('profilePassword');
+      case ProfileMenuRoute.editProfile:
+        context.pushNamed('profileEdit');
       case ProfileMenuRoute.vendor:
         break;
       case ProfileMenuRoute.signOut:
@@ -177,7 +183,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
                         for (var i = 0;
                             i < ProfileMenuItems.accountOverview.length;
                             i++) ...[
-                          if (i == 4)
+                          if (i == 2)
                             const Divider(
                               height: 16,
                               color: AppColors.creamDark,

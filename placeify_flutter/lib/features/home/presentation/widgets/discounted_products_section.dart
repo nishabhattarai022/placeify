@@ -112,7 +112,6 @@ class _DiscountedProductsSectionState
           discountPercent: product.discountPercent.round(),
           tagline: product.brand,
           cardColor: cardColors[i % cardColors.length],
-          offerLabel: product.offerLabel,
         ),
       );
     }
@@ -413,7 +412,7 @@ class _TextPanel extends StatelessWidget {
             ),
           ),
           child: Text(
-            product.offerBadgeLabel.toUpperCase(),
+            '${product.discountPercent.round()}% OFF',
             style: GoogleFonts.dmSans(
               fontSize: 9,
               fontWeight: FontWeight.w700,

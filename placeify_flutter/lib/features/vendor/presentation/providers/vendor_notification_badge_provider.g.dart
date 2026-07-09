@@ -103,4 +103,4 @@ final class VendorOrderNotificationBadgeCountProvider
 }
 
 String _$vendorOrderNotificationBadgeCountHash() =>
-    r'5ea976060be494b26c4002e5f57dbddb9b1e8300';
+    r'bc8855f4cf7d4977e909b1dc953e60589f5a2e73';

@@ -4,9 +4,12 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/services/haptic_service.dart';
-import '../../../cart/presentation/cart_actions.dart';
+import '../../../../core/widgets/toast_overlay.dart';
+import '../../../cart/presentation/providers/cart_provider.dart';
 import '../data/home_categories_config.dart';
+import '../../data/product_reviews_repository.dart';
 import '../theme/home_screen_tokens.dart';
+import 'product_rating_row.dart';
 
 const String _kCartSvg = '''
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -43,12 +46,21 @@ class _HomeRecommendProductCardState
   }
 
   void _onAddToCart() {
-    addToCart(ref, context, widget.product.productId, openCart: false);
+    HapticService.medium();
+    ref.read(cartProvider.notifier).addProduct(widget.product.productId);
+    PlaceifyToast.show(
+      context,
+      '${widget.product.displayName} added to cart',
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final product = widget.product;
+    final reviewSummary = ProductReviewsRepository.forProductId(
+      product.productId,
+      productName: product.displayName,
+    );
     final reservedBottomRight =
         HomeScreenTokens.cartCornerOuter - HomeScreenTokens.cardPadding + 2;
 
@@ -143,6 +155,17 @@ class _HomeRecommendProductCardState
                             style: HomeScreenTokens.productName(),
                           ),
                         ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Padding(
+                      padding: EdgeInsets.only(
+                        left: 4,
+                        right: reservedBottomRight,
+                      ),
+                      child: ProductRatingRow(
+                        summary: reviewSummary,
+                        compact: true,
                       ),
                     ),
                     const SizedBox(height: 6),

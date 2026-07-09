@@ -15,25 +15,21 @@ final sharedPreferencesProvider = SharedPreferencesProvider._();
 
 /// Overridden in [main] after [SharedPreferences.getInstance].
 
-final class SharedPreferencesProvider
-    extends
-        $FunctionalProvider<
-          SharedPreferences,
-          SharedPreferences,
-          SharedPreferences
-        >
-    with $Provider<SharedPreferences> {
+final class SharedPreferencesProvider extends $FunctionalProvider<
+    SharedPreferences,
+    SharedPreferences,
+    SharedPreferences> with $Provider<SharedPreferences> {
   /// Overridden in [main] after [SharedPreferences.getInstance].
   SharedPreferencesProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'sharedPreferencesProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'sharedPreferencesProvider',
+          isAutoDispose: false,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
 
   @override
   String debugGetCreateSourceHash() => _$sharedPreferencesHash();
@@ -41,8 +37,8 @@ final class SharedPreferencesProvider
   @$internal
   @override
   $ProviderElement<SharedPreferences> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
+          $ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
   SharedPreferences create(Ref ref) {

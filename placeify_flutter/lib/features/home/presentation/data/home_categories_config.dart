@@ -67,6 +67,26 @@ abstract final class HomeCategoriesConfig {
       ],
     ),
     fromProduct(
+      _product('p1'),
+      id: 'rec-living-accent',
+      roomIds: ['living'],
+      swatches: [
+        Color(0xFF7A8C6E),
+        Color(0xFFD4C4A8),
+        Color(0xFF3D3D3D),
+      ],
+    ),
+    fromProduct(
+      _product('p3'),
+      id: 'rec-living-side',
+      roomIds: ['living'],
+      swatches: [
+        Color(0xFF6B4F3A),
+        Color(0xFFC9A96E),
+        Color(0xFF2C2C2C),
+      ],
+    ),
+    fromProduct(
       _product('p11'),
       id: 'rec-dining-table',
       roomIds: ['dining'],

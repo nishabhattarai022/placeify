@@ -61,7 +61,6 @@ abstract final class CatalogProductMapper {
       categoryId: categoryId,
       dimensions: dimensions,
       vendorId: product.vendorId.toString(),
-      offerLabel: hasActiveOffer(product) ? _offerLabelFromApi(product) : '',
     );
   }
 

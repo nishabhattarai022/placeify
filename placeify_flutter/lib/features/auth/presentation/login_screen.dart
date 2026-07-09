@@ -5,15 +5,14 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/toast_overlay.dart';
-import '../domain/repositories/auth_repository.dart';
+import 'package:placeify_flutter/features/auth/domain/models/app_user_extensions.dart';
+import 'package:placeify_flutter/features/auth/domain/repositories/auth_repository.dart';
 import 'providers/auth_provider.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../splash/presentation/widgets/onboarding/primary_cta_button.dart';
 import '../constants/auth_assets.dart';
 import '../constants/demo_credentials.dart';
-import '../domain/models/app_user.dart';
-import '../domain/models/app_user_extensions.dart';
 import 'widgets/auth_text_field.dart';
 import 'widgets/foggy_image_background.dart';
 
@@ -29,10 +28,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-
-  String _resolveDestination(AppUser? user, String fallback) {
-    return user?.postLoginDestination ?? fallback;
-  }
 
   @override
   void initState() {
@@ -55,38 +50,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _signInWithDemo() async {
     _emailController.text = DemoCredentials.email;
     _passwordController.text = DemoCredentials.password;
-    await _submitDemo(
-      destination: '/home',
-      signIn: () => ref
-          .read(currentUserProvider.notifier)
-          .signInWithDemoCredentials(),
-    );
+    await _submit();
   }
 
   Future<void> _signInWithDemoAdmin() async {
     _emailController.text = DemoCredentials.adminEmail;
     _passwordController.text = DemoCredentials.adminPassword;
-    await _submitDemo(
-      destination: '/admin',
-      signIn: () => ref
-          .read(currentUserProvider.notifier)
-          .signInWithDemoAdminCredentials(),
-    );
-  }
-
-  Future<void> _submitDemo({
-    required String destination,
-    required Future<AppUser> Function() signIn,
-  }) async {
     if (_isSubmitting) return;
 
     setState(() => _isSubmitting = true);
     await HapticService.heavy();
 
     try {
-      final user = await signIn();
+      final user =
+          await ref.read(currentUserProvider.notifier).signInWithDemoAdminCredentials();
       if (!mounted) return;
-      context.go(_resolveDestination(user, destination));
+      context.go(user.postLoginDestination);
     } on AuthException catch (e) {
       if (mounted) PlaceifyToast.show(context, e.message);
     } catch (_) {
@@ -96,7 +75,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  Future<void> _submit({required String destination}) async {
+  Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_isSubmitting) return;
 
@@ -109,7 +88,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             password: _passwordController.text,
           );
       if (!mounted) return;
-      context.go(_resolveDestination(user, destination));
+      context.go(user.postLoginDestination);
     } on AuthException catch (e) {
       if (mounted) PlaceifyToast.show(context, e.message);
     } catch (_) {
@@ -239,6 +218,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             textInputAction: TextInputAction.done,
                             validator: _passwordValidator,
                           ),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: _isSubmitting
+                                  ? null
+                                  : () {
+                                      HapticService.light();
+                                      context.push('/login/forgot-password');
+                                    },
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 2,
+                                ),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: const Text(
+                                'Forgot password?',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.onboardingAmber,
+                                ),
+                              ),
+                            ),
+                          ),
                           const SizedBox(height: 12),
                           Text(
                             DemoCredentials.hint,
@@ -253,7 +259,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           const SizedBox(height: 32),
                           PrimaryCtaButton(
                             label: _isSubmitting ? 'Logging in...' : 'Log In',
-                            onTap: () => _submit(destination: '/home'),
+                            onTap: _submit,
                           ),
                           const SizedBox(height: 12),
                           Center(

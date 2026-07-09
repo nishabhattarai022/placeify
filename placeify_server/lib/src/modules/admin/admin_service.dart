@@ -302,4 +302,25 @@ class AdminService {
   ) {
     return _finance.rejectRefundRequest(session, refundId);
   }
+
+  Future<List<AdminProductSummary>> listProducts(
+    Session session,
+    AdminProductListInput input,
+  ) {
+    return _platform.listProducts(session, input);
+  }
+
+  Future<List<AdminProductSummary>> listReportedProducts(
+    Session session, {
+    AdminProductListInput? input,
+  }) {
+    return _platform.listReportedProducts(session, input: input);
+  }
+
+  Future<AdminProductDetail?> getProductDetails(
+    Session session,
+    int productId,
+  ) {
+    return _platform.getProductDetails(session, productId);
+  }
 }

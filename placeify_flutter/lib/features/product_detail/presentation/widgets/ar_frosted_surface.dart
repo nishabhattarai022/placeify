@@ -72,31 +72,35 @@ class ArFrostedSurface extends StatelessWidget {
 class ArGlassIconButton extends StatelessWidget {
   const ArGlassIconButton({
     required this.icon,
-    required this.onPressed,
+    this.onPressed,
     this.tooltip,
     super.key,
   });
 
   final IconData icon;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
+    final enabled = onPressed != null;
     final button = Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onPressed,
         borderRadius: BorderRadius.circular(ArRoomUiTokens.iconButtonRadius),
-        child: ArFrostedSurface(
-          borderRadius: BorderRadius.circular(ArRoomUiTokens.iconButtonRadius),
-          child: SizedBox(
-            width: ArRoomUiTokens.iconButtonSize,
-            height: ArRoomUiTokens.iconButtonSize,
-            child: Icon(
-              icon,
-              size: 22,
-              color: ArRoomUiTokens.overlayTextPrimary,
+        child: Opacity(
+          opacity: enabled ? 1 : 0.45,
+          child: ArFrostedSurface(
+            borderRadius: BorderRadius.circular(ArRoomUiTokens.iconButtonRadius),
+            child: SizedBox(
+              width: ArRoomUiTokens.iconButtonSize,
+              height: ArRoomUiTokens.iconButtonSize,
+              child: Icon(
+                icon,
+                size: 22,
+                color: ArRoomUiTokens.overlayTextPrimary,
+              ),
             ),
           ),
         ),

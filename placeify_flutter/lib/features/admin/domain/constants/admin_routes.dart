@@ -4,6 +4,7 @@ abstract final class AdminRoutes {
   static const approvals = '/admin/approvals';
   static const vendors = '/admin/vendors';
   static const users = '/admin/users';
+  static const products = '/admin/products';
   static const notifications = '/admin/notifications';
   static const settings = '/admin/settings';
   static const auditLog = '/admin/audit-log';
@@ -14,6 +15,8 @@ abstract final class AdminRoutes {
   static String vendorDetail(String vendorId) => '$vendors/$vendorId';
 
   static String userDetail(String userId) => '$users/$userId';
+
+  static String productDetail(int productId) => '$products/$productId';
 
   /// Tab roots that show the admin bottom navigation bar.
   static const tabRoots = {

@@ -55,6 +55,13 @@ WIRING_FILES=(
   placeify_flutter/lib/features/home/presentation/providers/home_room_provider.dart
   placeify_flutter/lib/features/home/presentation/providers/home_room_provider.g.dart
   placeify_flutter/lib/screens/category_screen.dart
+  placeify_flutter/lib/screens/browse_screen.dart
+  placeify_flutter/lib/core/router/app_router.dart
+  placeify_flutter/lib/features/auth/presentation/login_screen.dart
+  placeify_server/lib/src/modules/admin/admin_endpoint.dart
+  placeify_server/lib/src/modules/admin/admin_service.dart
+  placeify_server/lib/src/modules/admin/admin_platform_repository.dart
+  placeify_server/lib/src/modules/admin/admin_moderation_repository.dart
   placeify_flutter/lib/features/orders/data/order_api_mapper.dart
   placeify_flutter/lib/features/orders/presentation/providers/orders_provider.dart
   placeify_flutter/lib/features/orders/presentation/providers/orders_provider.g.dart

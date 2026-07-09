@@ -5,6 +5,7 @@ import '../../../home/domain/models/product.dart';
 import '../../data/product_3d_model_resolver.dart';
 import '../product_detail_tokens.dart';
 import 'product_3d_preview.dart';
+import 'ar_product_tray.dart';
 import 'product_detail_image.dart';
 
 enum ProductDetailViewMode { photos, preview3d }
@@ -16,6 +17,7 @@ class ProductDetailGallery extends StatefulWidget {
     required this.images,
     required this.selectedIndex,
     required this.onSelected,
+    this.availableProducts = const [],
     super.key,
   });
 
@@ -23,6 +25,7 @@ class ProductDetailGallery extends StatefulWidget {
   final List<String> images;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
+  final List<ArAddableProduct> availableProducts;
 
   @override
   State<ProductDetailGallery> createState() => _ProductDetailGalleryState();
@@ -158,6 +161,7 @@ class _ProductDetailGalleryState extends State<ProductDetailGallery> {
                                 modelSrc: src,
                                 productName: widget.product.name,
                                 dimensions: widget.product.dimensions,
+                                availableProducts: widget.availableProducts,
                               );
                             },
                           ),

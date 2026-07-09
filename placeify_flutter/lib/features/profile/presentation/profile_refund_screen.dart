@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_radii.dart';
+import '../../../core/constants/app_spacing.dart';
+import '../../../core/theme/app_fonts.dart';
 import '../../../core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import '../../../core/widgets/toast_overlay.dart';
 import '../data/profile_mock_data.dart';
-import 'widgets/profile_sub_hero.dart';
+import '../domain/constants/refund_strings.dart';
+import 'widgets/profile_list_screen_header.dart';
+import 'widgets/refund/refund_action_button.dart';
 import 'widgets/refund/refund_list_item.dart';
+import 'widgets/refund/refund_section_title.dart';
 import 'widgets/refund/refund_summary_card.dart';
-import 'widgets/shared/profile_form_field.dart';
-import 'widgets/shared/profile_submit_button.dart';
 
 class ProfileRefundScreen extends StatefulWidget {
   const ProfileRefundScreen({super.key});
@@ -31,116 +36,199 @@ class _ProfileRefundScreenState extends State<ProfileRefundScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final activeCount = ProfileMockData.activeRefunds.length;
+
     return Scaffold(
       backgroundColor: AppColors.cream,
-      body: Column(
-        children: [
-          const ProfileSubHero(title: 'Refund & Returns'),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(
-                18,
-                20,
-                18,
-                BottomNavTokens.scrollBottomPadding,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ProfileListScreenHeader(
+              title: RefundStrings.title,
+              subtitle: RefundStrings.italicLine,
+              count: activeCount,
+            ),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.screenPadding,
+                  12,
+                  AppSpacing.screenPadding,
+                  BottomNavTokens.scrollBottomPadding + bottomInset,
+                ),
+                children: [
+                  RefundSummaryCard(activeRequestCount: activeCount),
+                  const RefundSectionTitle(RefundStrings.activeRequests),
+                  for (final refund in ProfileMockData.activeRefunds)
+                    RefundListItem(refund: refund),
+                  const SizedBox(height: 8),
+                  const RefundSectionTitle(RefundStrings.completed),
+                  for (final refund in ProfileMockData.completedRefunds)
+                    RefundListItem(refund: refund),
+                  const SizedBox(height: 8),
+                  const RefundSectionTitle(RefundStrings.requestNewRefund),
+                  _RefundFormField(
+                    label: 'Select Order',
+                    child: _RefundDropdown(
+                      value: _order,
+                      items: ProfileMockData.refundOrderOptions,
+                      onChanged: (value) =>
+                          setState(() => _order = value ?? _order),
+                    ),
+                  ),
+                  _RefundFormField(
+                    label: 'Reason for Return',
+                    child: _RefundDropdown(
+                      value: _reason,
+                      items: ProfileMockData.refundReasonOptions,
+                      onChanged: (value) =>
+                          setState(() => _reason = value ?? _reason),
+                    ),
+                  ),
+                  _RefundFormField(
+                    label: 'Additional Details',
+                    child: TextField(
+                      controller: _detailsController,
+                      maxLines: 4,
+                      style: AppFonts.dmSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.textPrimary,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Describe the issue in detail...',
+                        hintStyle: AppFonts.dmSans(
+                          fontSize: 14,
+                          color: Colors.black.withValues(alpha: 0.35),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: AppRadii.md,
+                          borderSide: BorderSide(
+                            color: Colors.black.withValues(alpha: 0.08),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: AppRadii.md,
+                          borderSide: BorderSide(
+                            color: Colors.black.withValues(alpha: 0.08),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: AppRadii.md,
+                          borderSide: const BorderSide(
+                            color: Colors.black,
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: RefundActionButton(
+                      label: RefundStrings.submitRequest,
+                      onTap: () => PlaceifyToast.show(
+                        context,
+                        RefundStrings.requestSubmittedToast,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              children: [
-                const RefundSummaryCard(),
-                const _SectionTitle('Active Requests'),
-                for (final r in ProfileMockData.activeRefunds)
-                  RefundListItem(refund: r),
-                const SizedBox(height: 8),
-                const _SectionTitle('Completed'),
-                for (final r in ProfileMockData.completedRefunds)
-                  RefundListItem(refund: r),
-                const SizedBox(height: 8),
-                const _SectionTitle('Request New Refund'),
-                ProfileFormField(
-                  label: 'Select Order',
-                  child: ProfileDropdown(
-                    value: _order,
-                    items: ProfileMockData.refundOrderOptions,
-                    onChanged: (v) => setState(() => _order = v ?? _order),
-                  ),
-                ),
-                ProfileFormField(
-                  label: 'Reason for Return',
-                  child: ProfileDropdown(
-                    value: _reason,
-                    items: ProfileMockData.refundReasonOptions,
-                    onChanged: (v) => setState(() => _reason = v ?? _reason),
-                  ),
-                ),
-                ProfileFormField(
-                  label: 'Additional Details',
-                  child: TextField(
-                    controller: _detailsController,
-                    maxLines: 4,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: AppColors.espresso,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Describe the issue in detail...',
-                      hintStyle: const TextStyle(
-                        color: AppColors.textMuted,
-                      ),
-                      filled: true,
-                      fillColor: AppColors.cream,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: const BorderSide(
-                          color: AppColors.creamDark,
-                          width: 1.5,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: const BorderSide(
-                          color: AppColors.creamDark,
-                          width: 1.5,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: const BorderSide(
-                          color: AppColors.accent,
-                          width: 1.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                ProfileSubmitButton(
-                  label: 'Submit Refund Request',
-                  onPressed: () =>
-                      PlaceifyToast.show(context, 'Refund request submitted ✓'),
-                ),
-              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RefundFormField extends StatelessWidget {
+  const _RefundFormField({
+    required this.label,
+    required this.child,
+  });
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: AppFonts.dmSans(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+              letterSpacing: -0.1,
             ),
           ),
+          const SizedBox(height: 8),
+          child,
         ],
       ),
     );
   }
 }
 
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.text);
+class _RefundDropdown extends StatelessWidget {
+  const _RefundDropdown({
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
 
-  final String text;
+  final String value;
+  final List<String> items;
+  final ValueChanged<String?> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontFamily: 'Fraunces',
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: AppColors.espresso,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: AppRadii.md,
+        border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          isExpanded: true,
+          value: value,
+          icon: Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: Colors.black.withValues(alpha: 0.55),
+          ),
+          items: items
+              .map(
+                (item) => DropdownMenuItem(
+                  value: item,
+                  child: Text(
+                    item,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+          onChanged: onChanged,
         ),
       ),
     );

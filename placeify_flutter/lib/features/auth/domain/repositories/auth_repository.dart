@@ -1,6 +1,7 @@
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 
 import '../models/app_user.dart';
+import '../models/consumer_profile_details.dart';
 
 /// Auth API contract (mock implementation persists locally until a real API exists).
 abstract interface class AuthRepository {
@@ -37,6 +38,15 @@ abstract interface class AuthRepository {
     required String userId,
     required VendorStatus status,
     String? vendorId,
+  });
+
+  Future<ConsumerProfileDetails?> getConsumerProfile();
+
+  Future<AppUser> updateConsumerProfile(ConsumerProfileDetails profile);
+
+  Future<void> resetPassword({
+    required String email,
+    required String newPassword,
   });
 }
 

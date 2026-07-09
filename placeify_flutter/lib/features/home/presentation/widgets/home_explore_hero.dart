@@ -1,16 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/services/haptic_service.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../vendor/domain/constants/vendor_routes.dart';
+import '../../../vendor/domain/enums/vendor_status.dart';
 import '../theme/home_screen_tokens.dart';
 
 /// Hero with full-bleed image, overlaid title/subtitle, linen fade, and Discover More CTA.
-class HomeExploreHero extends StatelessWidget {
+class HomeExploreHero extends ConsumerWidget {
   const HomeExploreHero({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final vendorStatus =
+        ref.watch(currentUserProvider).value?.vendorStatus ?? VendorStatus.none;
+    final showVendorDashboard = vendorStatus == VendorStatus.approved;
+    final topInset =
+        MediaQuery.paddingOf(context).top + HomeScreenTokens.heroTitleTopGap;
+
     return SizedBox(
       height: HomeScreenTokens.heroHeight,
       width: double.infinity,
@@ -38,8 +48,7 @@ class HomeExploreHero extends StatelessWidget {
           ),
           Padding(
             padding: EdgeInsets.only(
-              top: MediaQuery.paddingOf(context).top +
-                  HomeScreenTokens.heroTitleTopGap,
+              top: topInset,
               left: HomeScreenTokens.screenPadding,
               right: HomeScreenTokens.screenPadding,
             ),
@@ -49,6 +58,12 @@ class HomeExploreHero extends StatelessWidget {
               style: HomeScreenTokens.exploreTitle(),
             ),
           ),
+          if (showVendorDashboard)
+            Positioned(
+              top: topInset,
+              left: HomeScreenTokens.screenPadding,
+              child: const _VendorDashboardButton(),
+            ),
           Align(
             alignment: const Alignment(
               0,
@@ -62,6 +77,41 @@ class HomeExploreHero extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _VendorDashboardButton extends StatelessWidget {
+  const _VendorDashboardButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Open vendor dashboard',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticService.light();
+            context.go(VendorRoutes.dashboard);
+          },
+          customBorder: const CircleBorder(),
+          child: Ink(
+            width: HomeScreenTokens.vendorDashboardButtonSize,
+            height: HomeScreenTokens.vendorDashboardButtonSize,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.dashboard_outlined,
+              size: HomeScreenTokens.vendorDashboardIconSize,
+              color: Colors.black,
+            ),
+          ),
+        ),
       ),
     );
   }
