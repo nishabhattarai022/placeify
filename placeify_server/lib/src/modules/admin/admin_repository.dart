@@ -52,6 +52,8 @@ class AdminStore {
     String? phoneNumber,
     AdminType? adminType,
     bool? isActive,
+    bool? newApplicationAlerts,
+    bool? systemAlerts,
   }) async {
     final user = await SessionService.requireRole(session, {UserRole.admin});
     if (fullName.trim().isEmpty) {
@@ -72,6 +74,8 @@ class AdminStore {
           phoneNumber: phoneNumber?.trim() ?? user.phone,
           adminType: adminType ?? AdminType.moderator,
           isActive: isActive ?? true,
+          newApplicationAlerts: newApplicationAlerts ?? true,
+          systemAlerts: systemAlerts ?? true,
           updatedAt: now,
         ),
       );
@@ -85,7 +89,26 @@ class AdminStore {
         phoneNumber: phoneNumber?.trim() ?? existing.phoneNumber,
         adminType: adminType ?? existing.adminType,
         isActive: isActive ?? existing.isActive,
+        newApplicationAlerts:
+            newApplicationAlerts ?? existing.newApplicationAlerts,
+        systemAlerts: systemAlerts ?? existing.systemAlerts,
         updatedAt: now,
+      ),
+    );
+  }
+
+  Future<Admin> updateNotificationPreferences(
+    Session session, {
+    required bool newApplicationAlerts,
+    required bool systemAlerts,
+  }) async {
+    final profile = await requireAdminProfile(session);
+    return Admin.db.updateRow(
+      session,
+      profile.copyWith(
+        newApplicationAlerts: newApplicationAlerts,
+        systemAlerts: systemAlerts,
+        updatedAt: DateTime.now(),
       ),
     );
   }

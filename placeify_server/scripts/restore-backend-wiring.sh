@@ -40,6 +40,11 @@ WIRING_FILES=(
   placeify_flutter/lib/features/profile/presentation/widgets/wishlist/wishlist_screen.dart
   placeify_flutter/lib/features/home/presentation/widgets/wishlist_star_button.dart
   placeify_flutter/lib/features/product_detail/presentation/widgets/product_detail_header.dart
+  placeify_flutter/lib/features/product_detail/presentation/product_detail_screen.dart
+  placeify_flutter/lib/features/product_detail/presentation/widgets/product_detail_gallery.dart
+  placeify_flutter/lib/features/product_detail/presentation/widgets/product_3d_preview.dart
+  placeify_flutter/lib/features/product_detail/data/product_3d_model_loader.dart
+  placeify_flutter/lib/features/product_detail/data/product_3d_model_resolver.dart
   placeify_server/lib/src/modules/user/user_repository.dart
   placeify_server/lib/src/modules/product/catalog_seed.dart
   placeify_server/docs/CONSUMER_API_CONTRACT.md

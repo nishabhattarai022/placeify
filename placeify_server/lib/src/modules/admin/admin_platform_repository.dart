@@ -71,14 +71,12 @@ class AdminPlatformStore {
         ? 0.0
         : (gmvResult.first.toColumnMap()['gmv'] as num?)?.toDouble() ?? 0.0;
 
-    final signupSeries = await _signupSeriesFromDb(session);
-
     final recentApplications = await listVendorApplications(
       session,
       status: UserAccountStatus.pending,
       pagination: PaginationInput(page: 1, pageSize: 5),
     );
-    final recentActivity = await getAuditLog(session, limit: 10);
+    final recentActivity = await getAuditLog(session, limit: 4);
 
     return AdminPlatformStats(
       totalVendors: approvedCount,
@@ -90,7 +88,7 @@ class AdminPlatformStore {
       declinedCount: declinedCount,
       suspendedCount: suspendedCount,
       recentActivity: recentActivity,
-      signupSeries: signupSeries,
+      signupSeries: const [],
       recentApplications: recentApplications,
     );
   }
@@ -333,31 +331,80 @@ class AdminPlatformStore {
         .toList(growable: false);
   }
 
-  Future<List<double>> _signupSeriesFromDb(Session session) async {
-    final now = DateTime.now();
-    final counts = List<int>.filled(7, 0);
+  static const _adminNotificationTypes = {
+    InAppNotificationType.vendorApplication,
+    InAppNotificationType.vendorFlagged,
+    InAppNotificationType.systemAlert,
+  };
 
-    for (var dayOffset = 0; dayOffset < 7; dayOffset++) {
-      final dayStart = DateTime(now.year, now.month, now.day)
-          .subtract(Duration(days: 6 - dayOffset));
-      final dayEnd = dayStart.add(const Duration(days: 1));
+  Future<List<InAppNotificationSummary>> listAdminNotifications(
+    Session session, {
+    int limit = 50,
+  }) async {
+    final profile = await _adminStore.requireAdminProfile(session);
+    final userId = profile.userId;
 
-      final result = await session.db.unsafeQuery(
-        'SELECT COUNT(*) AS count FROM "user" '
-        'WHERE "createdAt" >= @start AND "createdAt" < @end',
-        parameters: QueryParameters.named({
-          'start': dayStart,
-          'end': dayEnd,
-        }),
-      );
-      counts[dayOffset] = result.isEmpty
-          ? 0
-          : (result.first.toColumnMap()['count'] as num?)?.toInt() ?? 0;
+    final rows = await InAppNotification.db.find(
+      session,
+      where: (row) => row.userId.equals(userId),
+      orderBy: (row) => row.createdAt,
+      orderDescending: true,
+      limit: limit.clamp(1, 100),
+    );
+
+    return [
+      for (final row in rows)
+        if (_adminNotificationTypes.contains(row.type) &&
+            _prefAllows(profile, row.type))
+          InAppNotificationSummary(
+            id: row.id!,
+            title: row.title,
+            message: row.message,
+            type: row.type,
+            referenceId: row.referenceId,
+            referenceKey: row.referenceKey,
+            isRead: row.isRead,
+            createdAt: row.createdAt,
+          ),
+    ];
+  }
+
+  bool _prefAllows(Admin profile, InAppNotificationType type) {
+    return switch (type) {
+      InAppNotificationType.vendorApplication => profile.newApplicationAlerts,
+      InAppNotificationType.systemAlert ||
+      InAppNotificationType.vendorFlagged =>
+        profile.systemAlerts,
+      _ => true,
+    };
+  }
+
+  Future<void> markAdminNotificationRead(
+    Session session,
+    int notificationId,
+  ) async {
+    final profile = await _adminStore.requireAdminProfile(session);
+    final row = await InAppNotification.db.findFirstRow(
+      session,
+      where: (notification) =>
+          notification.id.equals(notificationId) &
+          notification.userId.equals(profile.userId),
+    );
+    if (row == null || row.isRead) return;
+    await InAppNotification.db.updateRow(session, row.copyWith(isRead: true));
+  }
+
+  Future<void> markAllAdminNotificationsRead(Session session) async {
+    final profile = await _adminStore.requireAdminProfile(session);
+    final unread = await InAppNotification.db.find(
+      session,
+      where: (row) =>
+          row.userId.equals(profile.userId) & row.isRead.equals(false),
+    );
+    for (final row in unread) {
+      if (!_adminNotificationTypes.contains(row.type)) continue;
+      await InAppNotification.db.updateRow(session, row.copyWith(isRead: true));
     }
-
-    final max = counts.reduce((a, b) => a > b ? a : b);
-    if (max == 0) return List<double>.filled(7, 0.15);
-    return counts.map((count) => count / max).toList();
   }
 
   ({String street, String city, String state, String postalCode, String country})

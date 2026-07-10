@@ -38,6 +38,33 @@ class AdminEndpoint extends PlaceifyAuthenticatedEndpoint {
     );
   }
 
+  Future<Admin> updateNotificationPreferences(
+    Session session, {
+    required bool newApplicationAlerts,
+    required bool systemAlerts,
+  }) {
+    return _service.updateNotificationPreferences(
+      session,
+      newApplicationAlerts: newApplicationAlerts,
+      systemAlerts: systemAlerts,
+    );
+  }
+
+  Future<List<InAppNotificationSummary>> listNotifications(
+    Session session, {
+    int limit = 50,
+  }) {
+    return _service.listNotifications(session, limit: limit);
+  }
+
+  Future<void> markNotificationRead(Session session, int notificationId) {
+    return _service.markNotificationRead(session, notificationId);
+  }
+
+  Future<void> markAllNotificationsRead(Session session) {
+    return _service.markAllNotificationsRead(session);
+  }
+
   Future<Vendor> approveVendor(Session session, UuidValue vendorUserId) {
     return _service.approveVendor(session, vendorUserId);
   }

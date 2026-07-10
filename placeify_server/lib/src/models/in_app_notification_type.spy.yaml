@@ -9,3 +9,6 @@ values:
   - productUpdate
   - promotionUpdate
   - refundUpdate
+  - vendorApplication
+  - vendorFlagged
+  - systemAlert

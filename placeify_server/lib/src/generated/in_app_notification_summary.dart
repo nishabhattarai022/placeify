@@ -22,6 +22,7 @@ abstract class InAppNotificationSummary
     required this.message,
     required this.type,
     this.referenceId,
+    this.referenceKey,
     required this.isRead,
     required this.createdAt,
   });
@@ -32,6 +33,7 @@ abstract class InAppNotificationSummary
     required String message,
     required _i2.InAppNotificationType type,
     int? referenceId,
+    String? referenceKey,
     required bool isRead,
     required DateTime createdAt,
   }) = _InAppNotificationSummaryImpl;
@@ -47,6 +49,7 @@ abstract class InAppNotificationSummary
         (jsonSerialization['type'] as String),
       ),
       referenceId: jsonSerialization['referenceId'] as int?,
+      referenceKey: jsonSerialization['referenceKey'] as String?,
       isRead: _i1.BoolJsonExtension.fromJson(jsonSerialization['isRead']),
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
@@ -64,6 +67,8 @@ abstract class InAppNotificationSummary
 
   int? referenceId;
 
+  String? referenceKey;
+
   bool isRead;
 
   DateTime createdAt;
@@ -77,6 +82,7 @@ abstract class InAppNotificationSummary
     String? message,
     _i2.InAppNotificationType? type,
     int? referenceId,
+    String? referenceKey,
     bool? isRead,
     DateTime? createdAt,
   });
@@ -89,6 +95,7 @@ abstract class InAppNotificationSummary
       'message': message,
       'type': type.toJson(),
       if (referenceId != null) 'referenceId': referenceId,
+      if (referenceKey != null) 'referenceKey': referenceKey,
       'isRead': isRead,
       'createdAt': createdAt.toJson(),
     };
@@ -103,6 +110,7 @@ abstract class InAppNotificationSummary
       'message': message,
       'type': type.toJson(),
       if (referenceId != null) 'referenceId': referenceId,
+      if (referenceKey != null) 'referenceKey': referenceKey,
       'isRead': isRead,
       'createdAt': createdAt.toJson(),
     };
@@ -123,6 +131,7 @@ class _InAppNotificationSummaryImpl extends InAppNotificationSummary {
     required String message,
     required _i2.InAppNotificationType type,
     int? referenceId,
+    String? referenceKey,
     required bool isRead,
     required DateTime createdAt,
   }) : super._(
@@ -131,6 +140,7 @@ class _InAppNotificationSummaryImpl extends InAppNotificationSummary {
          message: message,
          type: type,
          referenceId: referenceId,
+         referenceKey: referenceKey,
          isRead: isRead,
          createdAt: createdAt,
        );
@@ -145,6 +155,7 @@ class _InAppNotificationSummaryImpl extends InAppNotificationSummary {
     String? message,
     _i2.InAppNotificationType? type,
     Object? referenceId = _Undefined,
+    Object? referenceKey = _Undefined,
     bool? isRead,
     DateTime? createdAt,
   }) {
@@ -154,6 +165,7 @@ class _InAppNotificationSummaryImpl extends InAppNotificationSummary {
       message: message ?? this.message,
       type: type ?? this.type,
       referenceId: referenceId is int? ? referenceId : this.referenceId,
+      referenceKey: referenceKey is String? ? referenceKey : this.referenceKey,
       isRead: isRead ?? this.isRead,
       createdAt: createdAt ?? this.createdAt,
     );

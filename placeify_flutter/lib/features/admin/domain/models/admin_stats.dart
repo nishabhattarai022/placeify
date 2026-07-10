@@ -17,7 +17,6 @@ abstract class AdminStats with _$AdminStats {
     required int declinedCount,
     required int suspendedCount,
     @Default(<AdminAuditLogEntry>[]) List<AdminAuditLogEntry> recentActivity,
-    @Default(<double>[]) List<double> signupSeries,
     @Default(<VendorApplication>[]) List<VendorApplication> recentApplications,
   }) = _AdminStats;
 

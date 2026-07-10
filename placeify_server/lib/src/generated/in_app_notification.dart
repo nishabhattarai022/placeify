@@ -27,6 +27,7 @@ abstract class InAppNotification
     required this.message,
     required this.type,
     this.referenceId,
+    this.referenceKey,
     bool? isRead,
     DateTime? createdAt,
   }) : isRead = isRead ?? false,
@@ -40,6 +41,7 @@ abstract class InAppNotification
     required String message,
     required _i3.InAppNotificationType type,
     int? referenceId,
+    String? referenceKey,
     bool? isRead,
     DateTime? createdAt,
   }) = _InAppNotificationImpl;
@@ -57,6 +59,7 @@ abstract class InAppNotification
         (jsonSerialization['type'] as String),
       ),
       referenceId: jsonSerialization['referenceId'] as int?,
+      referenceKey: jsonSerialization['referenceKey'] as String?,
       isRead: jsonSerialization['isRead'] == null
           ? null
           : _i1.BoolJsonExtension.fromJson(jsonSerialization['isRead']),
@@ -85,6 +88,8 @@ abstract class InAppNotification
 
   int? referenceId;
 
+  String? referenceKey;
+
   bool isRead;
 
   DateTime createdAt;
@@ -103,6 +108,7 @@ abstract class InAppNotification
     String? message,
     _i3.InAppNotificationType? type,
     int? referenceId,
+    String? referenceKey,
     bool? isRead,
     DateTime? createdAt,
   });
@@ -117,6 +123,7 @@ abstract class InAppNotification
       'message': message,
       'type': type.toJson(),
       if (referenceId != null) 'referenceId': referenceId,
+      if (referenceKey != null) 'referenceKey': referenceKey,
       'isRead': isRead,
       'createdAt': createdAt.toJson(),
     };
@@ -133,6 +140,7 @@ abstract class InAppNotification
       'message': message,
       'type': type.toJson(),
       if (referenceId != null) 'referenceId': referenceId,
+      if (referenceKey != null) 'referenceKey': referenceKey,
       'isRead': isRead,
       'createdAt': createdAt.toJson(),
     };
@@ -179,6 +187,7 @@ class _InAppNotificationImpl extends InAppNotification {
     required String message,
     required _i3.InAppNotificationType type,
     int? referenceId,
+    String? referenceKey,
     bool? isRead,
     DateTime? createdAt,
   }) : super._(
@@ -189,6 +198,7 @@ class _InAppNotificationImpl extends InAppNotification {
          message: message,
          type: type,
          referenceId: referenceId,
+         referenceKey: referenceKey,
          isRead: isRead,
          createdAt: createdAt,
        );
@@ -205,6 +215,7 @@ class _InAppNotificationImpl extends InAppNotification {
     String? message,
     _i3.InAppNotificationType? type,
     Object? referenceId = _Undefined,
+    Object? referenceKey = _Undefined,
     bool? isRead,
     DateTime? createdAt,
   }) {
@@ -216,6 +227,7 @@ class _InAppNotificationImpl extends InAppNotification {
       message: message ?? this.message,
       type: type ?? this.type,
       referenceId: referenceId is int? ? referenceId : this.referenceId,
+      referenceKey: referenceKey is String? ? referenceKey : this.referenceKey,
       isRead: isRead ?? this.isRead,
       createdAt: createdAt ?? this.createdAt,
     );
@@ -254,6 +266,12 @@ class InAppNotificationUpdateTable
     value,
   );
 
+  _i1.ColumnValue<String, String> referenceKey(String? value) =>
+      _i1.ColumnValue(
+        table.referenceKey,
+        value,
+      );
+
   _i1.ColumnValue<bool, bool> isRead(bool value) => _i1.ColumnValue(
     table.isRead,
     value,
@@ -291,6 +309,10 @@ class InAppNotificationTable extends _i1.Table<int?> {
       'referenceId',
       this,
     );
+    referenceKey = _i1.ColumnString(
+      'referenceKey',
+      this,
+    );
     isRead = _i1.ColumnBool(
       'isRead',
       this,
@@ -317,6 +339,8 @@ class InAppNotificationTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt referenceId;
 
+  late final _i1.ColumnString referenceKey;
+
   late final _i1.ColumnBool isRead;
 
   late final _i1.ColumnDateTime createdAt;
@@ -342,6 +366,7 @@ class InAppNotificationTable extends _i1.Table<int?> {
     message,
     type,
     referenceId,
+    referenceKey,
     isRead,
     createdAt,
   ];

@@ -52,6 +52,33 @@ class AdminService {
     );
   }
 
+  Future<Admin> updateNotificationPreferences(
+    Session session, {
+    required bool newApplicationAlerts,
+    required bool systemAlerts,
+  }) {
+    return _repository.updateNotificationPreferences(
+      session,
+      newApplicationAlerts: newApplicationAlerts,
+      systemAlerts: systemAlerts,
+    );
+  }
+
+  Future<List<InAppNotificationSummary>> listNotifications(
+    Session session, {
+    int limit = 50,
+  }) {
+    return _platform.listAdminNotifications(session, limit: limit);
+  }
+
+  Future<void> markNotificationRead(Session session, int notificationId) {
+    return _platform.markAdminNotificationRead(session, notificationId);
+  }
+
+  Future<void> markAllNotificationsRead(Session session) {
+    return _platform.markAllAdminNotificationsRead(session);
+  }
+
   Future<Vendor> approveVendor(Session session, UuidValue vendorUserId) {
     return _moderation.approveVendor(session, vendorUserId);
   }

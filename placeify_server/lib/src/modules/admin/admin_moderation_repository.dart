@@ -790,6 +790,17 @@ class AdminModerationStore {
         transaction: transaction,
       );
 
+      try {
+        await _notifications.notifyActiveAdmins(
+          session,
+          title: 'Product flagged',
+          message: '"${product.name}" was flagged for review.',
+          type: InAppNotificationType.vendorFlagged,
+          referenceId: productId,
+          referenceKey: product.vendorId.uuid,
+        );
+      } catch (_) {}
+
       return updated;
     });
   }

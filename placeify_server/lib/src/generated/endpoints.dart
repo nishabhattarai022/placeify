@@ -765,6 +765,79 @@ class Endpoints extends _i1.EndpointDispatch {
                     isActive: params['isActive'],
                   ),
         ),
+        'updateNotificationPreferences': _i1.MethodConnector(
+          name: 'updateNotificationPreferences',
+          params: {
+            'newApplicationAlerts': _i1.ParameterDescription(
+              name: 'newApplicationAlerts',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            ),
+            'systemAlerts': _i1.ParameterDescription(
+              name: 'systemAlerts',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i6.AdminEndpoint)
+                  .updateNotificationPreferences(
+                    session,
+                    newApplicationAlerts: params['newApplicationAlerts'],
+                    systemAlerts: params['systemAlerts'],
+                  ),
+        ),
+        'listNotifications': _i1.MethodConnector(
+          name: 'listNotifications',
+          params: {
+            'limit': _i1.ParameterDescription(
+              name: 'limit',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['admin'] as _i6.AdminEndpoint).listNotifications(
+                    session,
+                    limit: params['limit'],
+                  ),
+        ),
+        'markNotificationRead': _i1.MethodConnector(
+          name: 'markNotificationRead',
+          params: {
+            'notificationId': _i1.ParameterDescription(
+              name: 'notificationId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i6.AdminEndpoint)
+                  .markNotificationRead(
+                    session,
+                    params['notificationId'],
+                  ),
+        ),
+        'markAllNotificationsRead': _i1.MethodConnector(
+          name: 'markAllNotificationsRead',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i6.AdminEndpoint)
+                  .markAllNotificationsRead(session),
+        ),
         'approveVendor': _i1.MethodConnector(
           name: 'approveVendor',
           params: {

@@ -25,6 +25,7 @@ abstract class InAppNotification implements _i1.SerializableModel {
     required this.message,
     required this.type,
     this.referenceId,
+    this.referenceKey,
     bool? isRead,
     DateTime? createdAt,
   }) : isRead = isRead ?? false,
@@ -38,6 +39,7 @@ abstract class InAppNotification implements _i1.SerializableModel {
     required String message,
     required _i3.InAppNotificationType type,
     int? referenceId,
+    String? referenceKey,
     bool? isRead,
     DateTime? createdAt,
   }) = _InAppNotificationImpl;
@@ -55,6 +57,7 @@ abstract class InAppNotification implements _i1.SerializableModel {
         (jsonSerialization['type'] as String),
       ),
       referenceId: jsonSerialization['referenceId'] as int?,
+      referenceKey: jsonSerialization['referenceKey'] as String?,
       isRead: jsonSerialization['isRead'] == null
           ? null
           : _i1.BoolJsonExtension.fromJson(jsonSerialization['isRead']),
@@ -81,6 +84,8 @@ abstract class InAppNotification implements _i1.SerializableModel {
 
   int? referenceId;
 
+  String? referenceKey;
+
   bool isRead;
 
   DateTime createdAt;
@@ -96,6 +101,7 @@ abstract class InAppNotification implements _i1.SerializableModel {
     String? message,
     _i3.InAppNotificationType? type,
     int? referenceId,
+    String? referenceKey,
     bool? isRead,
     DateTime? createdAt,
   });
@@ -110,6 +116,7 @@ abstract class InAppNotification implements _i1.SerializableModel {
       'message': message,
       'type': type.toJson(),
       if (referenceId != null) 'referenceId': referenceId,
+      if (referenceKey != null) 'referenceKey': referenceKey,
       'isRead': isRead,
       'createdAt': createdAt.toJson(),
     };
@@ -132,6 +139,7 @@ class _InAppNotificationImpl extends InAppNotification {
     required String message,
     required _i3.InAppNotificationType type,
     int? referenceId,
+    String? referenceKey,
     bool? isRead,
     DateTime? createdAt,
   }) : super._(
@@ -142,6 +150,7 @@ class _InAppNotificationImpl extends InAppNotification {
          message: message,
          type: type,
          referenceId: referenceId,
+         referenceKey: referenceKey,
          isRead: isRead,
          createdAt: createdAt,
        );
@@ -158,6 +167,7 @@ class _InAppNotificationImpl extends InAppNotification {
     String? message,
     _i3.InAppNotificationType? type,
     Object? referenceId = _Undefined,
+    Object? referenceKey = _Undefined,
     bool? isRead,
     DateTime? createdAt,
   }) {
@@ -169,6 +179,7 @@ class _InAppNotificationImpl extends InAppNotification {
       message: message ?? this.message,
       type: type ?? this.type,
       referenceId: referenceId is int? ? referenceId : this.referenceId,
+      referenceKey: referenceKey is String? ? referenceKey : this.referenceKey,
       isRead: isRead ?? this.isRead,
       createdAt: createdAt ?? this.createdAt,
     );

@@ -33,6 +33,10 @@ admin:
   - getMyAdmin:
   - getMyProfile:
   - updateMyProfile:
+  - updateNotificationPreferences:
+  - listNotifications:
+  - markNotificationRead:
+  - markAllNotificationsRead:
   - approveVendor:
   - rejectVendor:
   - suspendVendor:

@@ -55,27 +55,9 @@ class MockAdminRepository implements AdminRepository {
       declinedCount: declined.length,
       suspendedCount:
           users.where((u) => u.vendorStatus == VendorStatus.suspended).length,
-      recentActivity: auditLog.take(10).toList(),
-      signupSeries: _signupSeriesFor(users),
+      recentActivity: auditLog.take(4).toList(),
       recentApplications: applications.take(5).toList(),
     );
-  }
-
-  List<double> _signupSeriesFor(List<AppUser> users) {
-    final now = DateTime.now();
-    final counts = List<int>.filled(7, 0);
-
-    for (final user in users) {
-      final created = AdminSeedData.createdAtFor(user.id);
-      final dayDiff = now.difference(created).inDays;
-      if (dayDiff >= 0 && dayDiff < 7) {
-        counts[6 - dayDiff]++;
-      }
-    }
-
-    final max = counts.reduce((a, b) => a > b ? a : b);
-    if (max == 0) return List<double>.filled(7, 0.15);
-    return counts.map((c) => c / max).toList();
   }
 
   @override

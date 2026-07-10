@@ -479,6 +479,10 @@ abstract final class OrderNotificationService {
       InAppNotificationType.productUpdate ||
       InAppNotificationType.promotionUpdate =>
         _allowsPromotions(session, userId),
+      InAppNotificationType.vendorApplication ||
+      InAppNotificationType.vendorFlagged ||
+      InAppNotificationType.systemAlert =>
+        Future.value(true),
     };
   }
 

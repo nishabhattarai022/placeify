@@ -4,15 +4,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../cart/presentation/providers/cart_provider.dart';
+import '../../home/domain/models/product.dart';
 import '../../home/presentation/providers/category_provider.dart';
 import '../../../core/services/haptic_service.dart';
+import '../../../core/widgets/toast_overlay.dart';
+import '../data/product_3d_model_resolver.dart';
 import '../data/product_detail_content.dart';
+import 'ar_room_screen.dart';
 import 'product_detail_tokens.dart';
 import 'package:placeify_flutter/features/shops/presentation/providers/consumer_shop_provider.dart';
 import 'widgets/product_detail_cart_bar.dart';
 import 'widgets/product_detail_gallery.dart';
 import 'widgets/product_detail_header.dart';
 import 'widgets/product_detail_info_section.dart';
+import 'widgets/product_detail_price_row.dart';
 import 'widgets/product_detail_sold_by_row.dart';
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
@@ -80,6 +85,51 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
     super.dispose();
   }
 
+  Future<void> _openArRoom(BuildContext context, Product product) async {
+    final preview = await Product3dModelResolver.ensurePreviewSourceForProduct(
+      product,
+    );
+    if (!context.mounted) return;
+    if (preview?.unavailableMessage != null ||
+        preview?.src == null ||
+        preview!.src.isEmpty) {
+      PlaceifyToast.show(
+        context,
+        preview?.unavailableMessage ??
+            '3D model is not available for this product yet.',
+      );
+      return;
+    }
+
+    final remoteUrl = await Product3dModelResolver.ensureSrcForProduct(product);
+    if (!context.mounted) return;
+    if (remoteUrl == null || remoteUrl.isEmpty) {
+      PlaceifyToast.show(
+        context,
+        '3D model is not available for this product yet.',
+      );
+      return;
+    }
+
+    final result = await ArRoomLauncher.open(
+      context: context,
+      remoteModelUrl: remoteUrl,
+      productId: product.id,
+      productName: product.name,
+      dimensions: product.dimensions,
+    );
+
+    if (!context.mounted) return;
+    switch (result) {
+      case ArRoomOpenResult.permissionDenied:
+        PlaceifyToast.show(context, 'Camera permission is required for AR.');
+      case ArRoomOpenResult.modelDownloadFailed:
+        PlaceifyToast.show(context, 'Could not load the 3D model.');
+      case ArRoomOpenResult.opened:
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final product = ref.watch(productByIdProvider(widget.productId));
@@ -123,6 +173,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                   child: FadeTransition(
                     opacity: _galleryOpacity,
                     child: ProductDetailGallery(
+                      product: product,
                       images: content.galleryImages,
                       selectedIndex: _selectedImageIndex,
                       onSelected: (i) =>
@@ -133,6 +184,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                 const SizedBox(
                   height: ProductDetailTokens.infoCardTopGap,
                 ),
+                ProductDetailPriceRow(product: product),
                 if (vendorId != null)
                   shopAsync?.maybeWhen(
                     data: (shop) {
@@ -197,9 +249,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
               child: FadeTransition(
                 opacity: _cartBarOpacity,
                 child: ProductDetailCartBar(
-                  onTryInMyRoom: () {
-                    context.push('/profile/augmented-reality');
-                  },
+                  onTryInMyRoom: () => _openArRoom(context, product),
                   onAddToCart: () {
                     ref
                         .read(cartProvider.notifier)
