@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/services/haptic_service.dart';
-import '../../data/profile_dashboard_mapper.dart';
 import '../../data/profile_mock_data.dart';
-import '../providers/profile_dashboard_provider.dart';
-import '../../../home/presentation/providers/wishlist_count.dart';
 
-class ProfileStatsStrip extends ConsumerWidget {
+class ProfileStatsStrip extends StatelessWidget {
   const ProfileStatsStrip({
     required this.onStatTap,
     super.key,
@@ -16,22 +12,7 @@ class ProfileStatsStrip extends ConsumerWidget {
   final void Function(int index) onStatTap;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final dashboardAsync = ref.watch(profileDashboardProvider);
-    final stats = dashboardAsync.maybeWhen(
-      data: (dashboard) => dashboard != null
-          ? ProfileDashboardMapper.headerStats(dashboard)
-          : ProfileDashboardMapper.emptyHeaderStats,
-      orElse: () => ProfileDashboardMapper.emptyHeaderStats,
-    );
-
-    final wishlistCount = readWishlistCount(ref);
-    final displayStats = [
-      stats[0],
-      ProfileStat(value: '$wishlistCount', label: 'Wishlist'),
-      stats[2],
-    ];
-
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(22, 20, 22, 0),
       child: Container(
@@ -43,7 +24,7 @@ class ProfileStatsStrip extends ConsumerWidget {
         child: IntrinsicHeight(
           child: Row(
             children: [
-              for (var i = 0; i < displayStats.length; i++) ...[
+              for (var i = 0; i < ProfileMockData.stats.length; i++) ...[
                 if (i > 0)
                   VerticalDivider(
                     width: 1,
@@ -52,7 +33,7 @@ class ProfileStatsStrip extends ConsumerWidget {
                   ),
                 Expanded(
                   child: _StatCell(
-                    stat: displayStats[i],
+                    stat: ProfileMockData.stats[i],
                     onTap: () {
                       HapticService.light();
                       onStatTap(i);

@@ -2,27 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/services/haptic_service.dart';
-import '../../../../../core/utils/formatters.dart';
 import '../../../../../core/widgets/toast_overlay.dart';
 
 class RefundSummaryCard extends StatelessWidget {
-  const RefundSummaryCard({
-    required this.pendingTotal,
-    required this.activeRequestCount,
-    required this.walletCredit,
-    super.key,
-  });
-
-  final double pendingTotal;
-  final int activeRequestCount;
-  final double walletCredit;
+  const RefundSummaryCard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final activeLabel = activeRequestCount == 1
-        ? 'Across 1 active request'
-        : 'Across $activeRequestCount active requests';
-
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(18),
@@ -48,9 +34,9 @@ class RefundSummaryCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    Text(
-                      Formatters.currencyDecimal(pendingTotal),
-                      style: const TextStyle(
+                    const Text(
+                      'NPR 45.00',
+                      style: TextStyle(
                         fontFamily: 'Fraunces',
                         fontSize: 34,
                         fontWeight: FontWeight.w400,
@@ -59,7 +45,7 @@ class RefundSummaryCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      activeLabel,
+                      'Across 2 active requests',
                       style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textMuted.withValues(alpha: 0.9),
@@ -79,9 +65,9 @@ class RefundSummaryCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    Formatters.currencyDecimal(walletCredit),
-                    style: const TextStyle(
+                  const Text(
+                    'NPR 20.00',
+                    style: TextStyle(
                       fontFamily: 'Fraunces',
                       fontSize: 22,
                       fontWeight: FontWeight.w600,
@@ -89,7 +75,7 @@ class RefundSummaryCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    walletCredit > 0 ? 'Ready to use' : 'No credit yet',
+                    'Ready to use',
                     style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textMuted.withValues(alpha: 0.9),
@@ -155,9 +141,7 @@ class _RefundActionBtn extends StatelessWidget {
         decoration: BoxDecoration(
           color: primary ? AppColors.espresso : AppColors.cream,
           borderRadius: BorderRadius.circular(999),
-          border: primary
-              ? null
-              : Border.all(color: AppColors.sand, width: 1.5),
+          border: primary ? null : Border.all(color: AppColors.sand, width: 1.5),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

@@ -9,6 +9,7 @@ import 'package:placeify_flutter/core/constants/app_typography.dart';
 import 'package:placeify_flutter/core/services/haptic_service.dart';
 import 'package:placeify_flutter/core/utils/formatters.dart';
 import 'package:placeify_flutter/core/widgets/bottom_nav/bottom_nav_tokens.dart';
+import 'package:placeify_flutter/core/widgets/placeify_dialog.dart';
 import 'package:placeify_flutter/core/widgets/shimmer_loader.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_routes.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/notification_type.dart';
@@ -40,27 +41,13 @@ class _VendorNotificationsScreenState
   }
 
   Future<void> _confirmMarkAllRead() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Mark all as read?'),
-        content: const Text(
+    final confirmed = await PlaceifyDialog.showConfirm(
+      context,
+      title: 'Mark all as read?',
+      message:
           'All notifications will be marked as read. This cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.vendorForest,
-            ),
-            child: const Text('Mark all read'),
-          ),
-        ],
-      ),
+      confirmLabel: 'Mark all read',
+      confirmColor: AppColors.vendorForest,
     );
 
     if (confirmed != true || !mounted) return;

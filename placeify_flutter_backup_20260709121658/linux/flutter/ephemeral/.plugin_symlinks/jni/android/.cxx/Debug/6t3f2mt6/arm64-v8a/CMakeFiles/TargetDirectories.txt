@@ -1,0 +1,3 @@
+/Users/anubudhathoki/.pub-cache/hosted/pub.dev/jni-1.0.0/android/.cxx/Debug/6t3f2mt6/arm64-v8a/CMakeFiles/jni.dir
+/Users/anubudhathoki/.pub-cache/hosted/pub.dev/jni-1.0.0/android/.cxx/Debug/6t3f2mt6/arm64-v8a/CMakeFiles/edit_cache.dir
+/Users/anubudhathoki/.pub-cache/hosted/pub.dev/jni-1.0.0/android/.cxx/Debug/6t3f2mt6/arm64-v8a/CMakeFiles/rebuild_cache.dir

@@ -64,14 +64,12 @@ class ChairsCatalogWideCard extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   child: _isAsset
                       ? Image.asset(
-                          key: ValueKey('${product.id}_${product.imageUrl}'),
                           product.imageUrl,
                           fit: BoxFit.contain,
                           errorBuilder: (_, __, ___) =>
                               _FallbackIcon(svgPath: product.svgIconPath),
                         )
                       : CachedNetworkImage(
-                          key: ValueKey('${product.id}_${product.imageUrl}'),
                           imageUrl: product.imageUrl,
                           fit: BoxFit.contain,
                           errorWidget: (_, __, ___) =>

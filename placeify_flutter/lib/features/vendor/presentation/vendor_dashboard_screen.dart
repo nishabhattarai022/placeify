@@ -365,28 +365,28 @@ class _DashboardBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        HapticService.light();
-        if (context.canPop()) {
-          context.pop();
-        } else {
-          context.go(VendorRoutes.profileFallback);
-        }
-      },
-      child: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          color: AppColors.warmWhite,
-          shape: BoxShape.circle,
-          border: Border.all(color: AppColors.creamDark, width: 1.5),
-        ),
-        alignment: Alignment.center,
-        child: const Icon(
-          Icons.arrow_back,
-          size: 22,
-          color: AppColors.vendorForest,
+    return Semantics(
+      button: true,
+      label: 'Back to home',
+      child: GestureDetector(
+        onTap: () {
+          HapticService.light();
+          context.go('/home');
+        },
+        child: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: AppColors.warmWhite,
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.creamDark, width: 1.5),
+          ),
+          alignment: Alignment.center,
+          child: const Icon(
+            Icons.arrow_back,
+            size: 22,
+            color: AppColors.vendorForest,
+          ),
         ),
       ),
     );

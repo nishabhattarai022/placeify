@@ -49,7 +49,6 @@ class ChairsCatalogCompactCard extends ConsumerWidget {
                 color: AppColors.cream,
                 child: _isAsset
                     ? Image.asset(
-                        key: ValueKey('${product.id}_${product.imageUrl}'),
                         product.imageUrl,
                         fit: BoxFit.cover,
                         width: double.infinity,
@@ -65,7 +64,6 @@ class ChairsCatalogCompactCard extends ConsumerWidget {
                         ),
                       )
                     : CachedNetworkImage(
-                        key: ValueKey('${product.id}_${product.imageUrl}'),
                         imageUrl: product.imageUrl,
                         fit: BoxFit.cover,
                         width: double.infinity,

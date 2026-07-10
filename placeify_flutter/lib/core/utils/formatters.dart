@@ -48,7 +48,15 @@ abstract final class Formatters {
   }
 
   static String longDate(DateTime date) {
-    return '${_months[date.month - 1]} ${date.day}, ${date.year}';
+    const weekdays = [
+      'Monday', 'Tuesday', 'Wednesday', 'Thursday',
+      'Friday', 'Saturday', 'Sunday',
+    ];
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
+    ];
+    return '${weekdays[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
   static String orderMeta(String orderNumber, DateTime date) {

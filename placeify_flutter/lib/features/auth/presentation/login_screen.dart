@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/toast_overlay.dart';
-import '../../admin/domain/enums/user_role.dart';
 import '../domain/repositories/auth_repository.dart';
 import 'providers/auth_provider.dart';
 import '../../../core/constants/app_spacing.dart';
@@ -53,6 +52,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     await _submit(destination: '/home');
   }
 
+  Future<void> _signInWithDemoAdmin() async {
+    _emailController.text = DemoCredentials.adminEmail;
+    _passwordController.text = DemoCredentials.adminPassword;
+    await _submit(destination: '/admin');
+  }
+
   Future<void> _submit({required String destination}) async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_isSubmitting) return;
@@ -66,10 +71,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             password: _passwordController.text,
           );
       if (!mounted) return;
-      final user = ref.read(currentUserProvider).value;
-      final targetRoute =
-          user?.role == UserRole.admin ? '/admin' : destination;
-      context.go(targetRoute);
+      context.go(destination);
     } on AuthException catch (e) {
       if (mounted) PlaceifyToast.show(context, e.message);
     } catch (_) {
@@ -268,10 +270,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   ? null
                                   : () {
                                       HapticService.light();
-                                      context.push('/login/admin');
+                                      _signInWithDemoAdmin();
                                     },
                               child: Text(
-                                'Admin Login',
+                                'Demo Admin Access',
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,

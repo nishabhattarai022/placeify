@@ -4,13 +4,6 @@ import 'package:placeify_flutter/features/home/domain/models/product.dart';
 
 /// Room filters and recommended products for the home screen.
 abstract final class HomeCategoriesConfig {
-  /// Room filter labels for the home category chip row.
-  static const List<RoomCategory> rooms = [
-    RoomCategory(id: 'living', name: 'Living Room'),
-    RoomCategory(id: 'dining', name: 'Dining Room'),
-    RoomCategory(id: 'office', name: 'Office Room'),
-  ];
-
   /// SVG quick-browse row (black pill + icon circles).
   static const List<RoomCategory> quickBrowseRooms = [
     RoomCategory(
@@ -39,6 +32,9 @@ abstract final class HomeCategoriesConfig {
       iconAsset: 'assets/icons/ic_study_room.svg',
     ),
   ];
+
+  static const _fallbackAsset =
+      'assets/images/splash/Tola_Lounge_Chair_Venice_Vegan_Suede_Sage_1_0.jpg';
 
   static const _defaultSwatches = [
     Color(0xFF8B5A3C),
@@ -143,7 +139,9 @@ abstract final class HomeCategoriesConfig {
         productId: product.id,
         displayName: product.name,
         displayPrice: 'NPR ${product.price.toInt()}',
-        imageAsset: product.imageUrl,
+        imageAsset: product.imageUrl.startsWith('http')
+            ? _fallbackAsset
+            : product.imageUrl,
         roomIds: roomIds,
         swatches: swatches ?? _defaultSwatches,
       );
@@ -151,23 +149,6 @@ abstract final class HomeCategoriesConfig {
   static List<RecommendProduct> forRoom(String roomId) => recommended
       .where((p) => p.roomIds.contains(roomId))
       .toList();
-
-  /// API category label sent to the backend for a room chip id.
-  static String apiCategoryForRoom(String roomId) {
-    return rooms
-        .firstWhere(
-          (room) => room.id == roomId,
-          orElse: () => rooms.first,
-        )
-        .name;
-  }
-
-  static RoomCategory roomById(String roomId) {
-    return rooms.firstWhere(
-      (room) => room.id == roomId,
-      orElse: () => rooms.first,
-    );
-  }
 }
 
 class RoomCategory {

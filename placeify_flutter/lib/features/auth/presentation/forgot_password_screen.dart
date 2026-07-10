@@ -26,6 +26,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   bool _isSubmitting = false;
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmController = TextEditingController();
 
   @override
   void initState() {
@@ -41,31 +43,28 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   @override
   void dispose() {
     _emailController.dispose();
+    _passwordController.dispose();
+    _confirmController.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_isSubmitting) return;
-
     setState(() => _isSubmitting = true);
     await HapticService.heavy();
-
     try {
       await ref.read(currentUserProvider.notifier).requestPasswordReset(
             email: _emailController.text.trim(),
           );
       if (!mounted) return;
-      PlaceifyToast.show(
-        context,
-        'If an account exists for that email, a reset link has been sent.',
-      );
-      context.go('/login');
+      PlaceifyToast.show(context, "Check your email for a reset link");
+      context.go("/login");
     } on AuthException catch (e) {
       if (mounted) PlaceifyToast.show(context, e.message);
     } catch (_) {
       if (mounted) {
-        PlaceifyToast.show(context, 'Could not reset password. Try again.');
+        PlaceifyToast.show(context, "Could not send reset email. Try again.");
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -83,6 +82,24 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     final email = value!.trim();
     if (!email.contains('@') || !email.contains('.')) {
       return 'Enter a valid email';
+    }
+    return null;
+  }
+
+  String? _passwordValidator(String? value) {
+    final required = _required(value, 'Enter a new password');
+    if (required != null) return required;
+    if (value!.length < 8) {
+      return 'Use at least 8 characters';
+    }
+    return null;
+  }
+
+  String? _confirmValidator(String? value) {
+    final required = _required(value, 'Confirm your new password');
+    if (required != null) return required;
+    if (value != _passwordController.text) {
+      return 'Passwords do not match';
     }
     return null;
   }
@@ -158,7 +175,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                           ),
                           const SizedBox(height: 10),
                           Text(
-                            'Enter the email for your account. We will send you a secure link to reset your password.',
+                            'Enter the email for your account and choose a new password.',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w300,
@@ -177,11 +194,29 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                             textInputAction: TextInputAction.next,
                             validator: _emailValidator,
                           ),
+                          const SizedBox(height: 18),
+                          AuthTextField(
+                            label: 'New password',
+                            hint: 'At least 8 characters',
+                            controller: _passwordController,
+                            showVisibilityToggle: true,
+                            textInputAction: TextInputAction.next,
+                            validator: _passwordValidator,
+                          ),
+                          const SizedBox(height: 18),
+                          AuthTextField(
+                            label: 'Confirm new password',
+                            hint: 'Repeat new password',
+                            controller: _confirmController,
+                            showVisibilityToggle: true,
+                            textInputAction: TextInputAction.done,
+                            validator: _confirmValidator,
+                          ),
                           const SizedBox(height: 32),
                           PrimaryCtaButton(
                             label: _isSubmitting
-                                ? 'Sending...'
-                                : 'Send Reset Link',
+                                ? 'Updating...'
+                                : 'Update Password',
                             onTap: _submit,
                           ),
                           const SizedBox(height: 16),

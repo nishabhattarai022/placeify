@@ -16,6 +16,7 @@ import '../../../cart/presentation/cart_actions.dart';
 import '../../domain/models/product.dart';
 import '../../data/product_reviews_repository.dart';
 import 'product_rating_row.dart';
+import 'ar_save_button.dart';
 import 'wishlist_star_button.dart';
 
 /// Home grid product tile — fills grid cell without overflow.
@@ -113,31 +114,10 @@ class _ProductImagePanel extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(10, 12, 10, 8),
             child: _ProductCardImage(product: product),
           ),
-          if (product.hasArView)
-            Positioned(
-              top: 10,
-              left: 10,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.accent,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Text(
-                  'AR',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.warmWhite,
-                    letterSpacing: 0.6,
-                  ),
-                ),
-              ),
-            ),
           if (product.isOnSale)
             Positioned(
-              top: 10,
-              left: product.hasArView ? 44 : 10,
+              bottom: 8,
+              left: 8,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
@@ -156,8 +136,13 @@ class _ProductImagePanel extends StatelessWidget {
             ),
           Positioned(
             top: 8,
-            right: 8,
+            left: 8,
             child: WishlistStarButton(product: product),
+          ),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: ArSaveButton(product: product),
           ),
         ],
       ),
@@ -304,7 +289,6 @@ class _ProductCardImage extends StatelessWidget {
 
     if (product.imageUrl.startsWith('assets/')) {
       return Image.asset(
-        key: ValueKey('${product.id}_${product.imageUrl}'),
         product.imageUrl,
         fit: fit,
         alignment: Alignment.center,
@@ -315,7 +299,6 @@ class _ProductCardImage extends StatelessWidget {
     }
 
     return CachedNetworkImage(
-      key: ValueKey('${product.id}_${product.imageUrl}'),
       imageUrl: product.imageUrl,
       fit: fit,
       placeholder: (_, __) => const ShimmerLoader(),

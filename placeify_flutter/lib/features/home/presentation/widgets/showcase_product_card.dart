@@ -100,7 +100,6 @@ class _ProductImage extends StatelessWidget {
   Widget build(BuildContext context) {
     if (isAsset) {
       return Image.asset(
-        key: ValueKey('${product.id}_${product.imageUrl}'),
         product.imageUrl,
         fit: BoxFit.contain,
         height: 120,
@@ -109,7 +108,6 @@ class _ProductImage extends StatelessWidget {
     }
 
     return CachedNetworkImage(
-      key: ValueKey('${product.id}_${product.imageUrl}'),
       imageUrl: product.imageUrl,
       fit: BoxFit.contain,
       height: 120,

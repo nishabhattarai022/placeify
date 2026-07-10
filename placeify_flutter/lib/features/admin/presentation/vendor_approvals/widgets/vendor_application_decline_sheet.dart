@@ -6,6 +6,7 @@ import 'package:placeify_flutter/core/constants/app_radii.dart';
 import 'package:placeify_flutter/core/constants/app_spacing.dart';
 import 'package:placeify_flutter/core/services/haptic_service.dart';
 import 'package:placeify_flutter/core/widgets/placeify_bottom_sheet.dart';
+import 'package:placeify_flutter/core/widgets/placeify_pill_button.dart';
 import 'package:placeify_flutter/core/widgets/toast_overlay.dart';
 import 'package:placeify_flutter/features/admin/domain/constants/admin_strings.dart';
 import 'package:placeify_flutter/features/admin/domain/enums/decline_reason.dart';
@@ -173,29 +174,12 @@ class _VendorApplicationDeclineSheetBodyState
           ),
         ],
         const SizedBox(height: AppSpacing.xl),
-        SizedBox(
-          width: double.infinity,
-          child: GestureDetector(
-            onTap: _canSubmit && !_isSubmitting ? _confirmDecline : null,
-            child: Container(
-              height: 48,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: _canSubmit ? AppColors.rust : AppColors.creamDark,
-                borderRadius: AppRadii.pill,
-              ),
-              child: Text(
-                _isSubmitting
-                    ? 'Declining…'
-                    : AdminStrings.confirmDecline,
-                style: GoogleFonts.dmSans(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: _canSubmit ? AppColors.warmWhite : AppColors.textMuted,
-                ),
-              ),
-            ),
-          ),
+        PlaceifyPillButton(
+          label: _isSubmitting ? 'Declining…' : AdminStrings.confirmDecline,
+          color: AppColors.rust,
+          enabled: _canSubmit,
+          isLoading: _isSubmitting,
+          onTap: _canSubmit && !_isSubmitting ? _confirmDecline : null,
         ),
       ],
     );

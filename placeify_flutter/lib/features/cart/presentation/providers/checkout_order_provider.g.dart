@@ -23,7 +23,7 @@ final class CheckoutOrderActionProvider
         argument: null,
         retry: null,
         name: r'checkoutOrderActionProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -45,7 +45,7 @@ final class CheckoutOrderActionProvider
 }
 
 String _$checkoutOrderActionHash() =>
-    r'b5a465fb8c5d738b56c2508406c10653dc17da94';
+    r'b55efadc5c1443b0fc35245bf52cb450598868af';
 
 /// Places an order from checkout — separate from [Cart] to avoid provider cycles.
 

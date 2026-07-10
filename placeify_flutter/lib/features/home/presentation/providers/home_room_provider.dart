@@ -1,25 +1,13 @@
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
-
 import 'package:placeify_flutter/features/home/presentation/data/home_categories_config.dart';
-import 'package:placeify_flutter/features/home/presentation/providers/catalog_provider.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'home_room_provider.g.dart';
 
 final selectedRoomProvider = StateProvider<String>((ref) => 'living');
 
 @riverpod
-Future<List<RecommendProduct>> recommendedProducts(Ref ref) async {
+List<RecommendProduct> recommendedProducts(Ref ref) {
   final roomId = ref.watch(selectedRoomProvider);
-  await ref.watch(catalogIndexProvider.future);
-  final products = ref.watch(homeRecommendedProductsProvider(roomId));
-
-  return [
-    for (final product in products.take(2))
-      HomeCategoriesConfig.fromProduct(
-        product,
-        id: 'rec-$roomId-${product.id}',
-        roomIds: [roomId],
-      ),
-  ];
+  return HomeCategoriesConfig.forRoom(roomId);
 }

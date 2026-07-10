@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_radii.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/services/haptic_service.dart';
+import '../../../../core/widgets/placeify_action_row.dart';
 import '../../../../core/widgets/placeify_bottom_sheet.dart';
 import '../../../../core/widgets/toast_overlay.dart';
 import '../../domain/constants/vendor_strings.dart';
@@ -77,56 +76,14 @@ class _VendorStatusGateSheetBody extends StatelessWidget {
           subtitle: body,
         ),
         const SizedBox(height: AppSpacing.xl),
-        Row(
-          children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  HapticService.light();
-                  Navigator.pop(sheetContext);
-                },
-                child: Container(
-                  height: 48,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppColors.cream,
-                    borderRadius: AppRadii.pill,
-                    border: Border.all(color: AppColors.creamDark, width: 1.5),
-                  ),
-                  child: Text(
-                    VendorStrings.dismiss,
-                    style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: GestureDetector(
-                onTap: _onActionTap,
-                child: Container(
-                  height: 48,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppColors.espresso,
-                    borderRadius: AppRadii.pill,
-                  ),
-                  child: Text(
-                    actionLabel,
-                    style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.warmWhite,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+        PlaceifyActionRow(
+          cancelLabel: VendorStrings.dismiss,
+          confirmLabel: actionLabel,
+          onCancel: () {
+            HapticService.light();
+            Navigator.pop(sheetContext);
+          },
+          onConfirm: _onActionTap,
         ),
       ],
     );

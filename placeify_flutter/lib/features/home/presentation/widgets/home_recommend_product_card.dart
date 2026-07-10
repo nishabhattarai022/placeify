@@ -4,7 +4,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/services/haptic_service.dart';
-import '../../../../core/widgets/placeify_image.dart';
 import '../../../../core/widgets/toast_overlay.dart';
 import '../../../cart/presentation/providers/cart_provider.dart';
 import '../data/home_categories_config.dart';
@@ -112,13 +111,10 @@ class _HomeRecommendProductCardState
                       child: SizedBox(
                         height: HomeScreenTokens.cardImageHeight,
                         width: double.infinity,
-                        child: PlaceifyImage(
-                          key: ValueKey(
-                            '${product.id}_${product.imageAsset}',
-                          ),
-                          source: product.imageAsset,
+                        child: Image.asset(
+                          product.imageAsset,
                           fit: BoxFit.cover,
-                          error: ColoredBox(
+                          errorBuilder: (_, __, ___) => ColoredBox(
                             color: HomeScreenTokens.cardBg,
                             child: Icon(
                               Icons.chair_outlined,

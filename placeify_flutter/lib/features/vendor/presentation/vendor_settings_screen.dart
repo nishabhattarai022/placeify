@@ -5,6 +5,7 @@ import 'package:placeify_flutter/features/auth/presentation/providers/auth_provi
 import 'package:placeify_flutter/core/constants/app_colors.dart';
 import 'package:placeify_flutter/core/services/haptic_service.dart';
 import 'package:placeify_flutter/core/widgets/bottom_nav/bottom_nav_tokens.dart';
+import 'package:placeify_flutter/core/widgets/placeify_action_row.dart';
 import 'package:placeify_flutter/core/widgets/placeify_bottom_sheet.dart';
 import 'package:placeify_flutter/core/widgets/toast_overlay.dart';
 import 'package:placeify_flutter/features/profile/presentation/widgets/profile_sub_hero.dart';
@@ -167,16 +168,11 @@ class VendorSettingsScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 20),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.coral,
-                foregroundColor: Colors.white,
-                minimumSize: const Size.fromHeight(48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              onPressed: () async {
+            PlaceifyStackedActions(
+              confirmLabel: VendorSettingsStrings.deactivateSheetConfirm,
+              cancelLabel: 'Cancel',
+              confirmColor: AppColors.coral,
+              onConfirm: () async {
                 await ref
                     .read(vendorSettingsProvider.notifier)
                     .requestDeactivateStore();
@@ -188,12 +184,7 @@ class VendorSettingsScreen extends ConsumerWidget {
                   VendorSettingsStrings.deactivateScheduledToast,
                 );
               },
-              child: const Text(VendorSettingsStrings.deactivateSheetConfirm),
-            ),
-            const SizedBox(height: 10),
-            TextButton(
-              onPressed: () => Navigator.pop(sheetContext),
-              child: const Text('Cancel'),
+              onCancel: () => Navigator.pop(sheetContext),
             ),
           ],
         );

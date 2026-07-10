@@ -32,6 +32,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   bool _loading = true;
   bool _saving = false;
   String? _nameError;
+  String? _emailError;
 
   @override
   void initState() {
@@ -75,14 +76,26 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   bool _validate() {
     var valid = true;
     String? nameError;
+    String? emailError;
 
     if (_nameController.text.trim().isEmpty) {
       nameError = 'Name is required';
       valid = false;
     }
 
+    final email = _emailController.text.trim();
+    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+    if (email.isEmpty) {
+      emailError = 'Email is required';
+      valid = false;
+    } else if (!emailRegex.hasMatch(email)) {
+      emailError = 'Enter a valid email address';
+      valid = false;
+    }
+
     setState(() {
       _nameError = nameError;
+      _emailError = emailError;
     });
     return valid;
   }
@@ -203,11 +216,17 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                                 ),
                                 ProfileFormField(
                                   label: 'Email',
+                                  error: _emailError,
                                   child: ProfileTextInput(
                                     controller: _emailController,
                                     hint: 'you@example.com',
                                     keyboardType: TextInputType.emailAddress,
-                                    readOnly: true,
+                                    hasError: _emailError != null,
+                                    onChanged: (_) {
+                                      if (_emailError != null) {
+                                        setState(() => _emailError = null);
+                                      }
+                                    },
                                   ),
                                 ),
                                 ProfileFormField(

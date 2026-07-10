@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/services/haptic_service.dart';
 import '../core/theme/app_fonts.dart';
 import '../data/furniture_categories.dart';
+import 'widgets/dark_pill_button.dart';
 
 FurnitureCategory _cat(String id) {
   return furnitureCategories.firstWhere((c) => c.id == id);
@@ -114,7 +115,19 @@ class _BrowseScreenState extends State<BrowseScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: DarkPillButton(
+                        icon: Icons.storefront_outlined,
+                        label: 'Select store',
+                        onTap: () {
+                          HapticService.light();
+                          context.push('/shops');
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     Container(
                       height: 48,
                       decoration: BoxDecoration(
