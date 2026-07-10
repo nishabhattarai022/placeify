@@ -22,8 +22,10 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../constants/app_durations.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/auth/presentation/admin_login_screen.dart';
+import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
+import '../../features/auth/presentation/reset_password_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/vendor/presentation/registration/vendor_registration_screen.dart';
 import '../../features/vendor/presentation/registration/vendor_registration_success_screen.dart';
@@ -105,7 +107,7 @@ GoRouter appRouter(Ref ref) {
   // the router resets navigation to initialLocation and breaks login.
   final refreshListenable = ValueNotifier<int>(0);
   ref.onDispose(refreshListenable.dispose);
-  ref.listen(currentUserProvider, (_, __) {
+  ref.listen(currentUserProvider, (_, _) {
     refreshListenable.value++;
   });
 
@@ -124,8 +126,11 @@ GoRouter appRouter(Ref ref) {
       // If already authenticated, skip auth/onboarding routes.
       if (user != null &&
           (location == '/splash' ||
+              location == '/' ||
               location == '/login' ||
+              location == '/login/forgot-password' ||
               location == '/login/admin' ||
+              location == '/reset-password' ||
               location == '/register')) {
         return user.role == UserRole.admin ? AdminRoutes.dashboard : '/home';
       }
@@ -155,6 +160,10 @@ GoRouter appRouter(Ref ref) {
 }
 
 List<RouteBase> get _appRoutes => [
+  GoRoute(
+    path: '/',
+    redirect: (_, _) => '/splash',
+  ),
   GoRoute(
     path: '/splash',
     name: 'splash',
@@ -191,6 +200,28 @@ List<RouteBase> get _appRoutes => [
     pageBuilder: (context, state) => CustomTransitionPage(
       key: state.pageKey,
       child: const AdminLoginScreen(),
+      transitionsBuilder: _fadeTransition,
+      transitionDuration: AppDurations.slow,
+    ),
+  ),
+  GoRoute(
+    path: '/login/forgot-password',
+    name: 'forgotPassword',
+    pageBuilder: (context, state) => CustomTransitionPage(
+      key: state.pageKey,
+      child: const ForgotPasswordScreen(),
+      transitionsBuilder: _fadeTransition,
+      transitionDuration: AppDurations.slow,
+    ),
+  ),
+  GoRoute(
+    path: '/reset-password',
+    name: 'resetPassword',
+    pageBuilder: (context, state) => CustomTransitionPage(
+      key: state.pageKey,
+      child: ResetPasswordScreen(
+        token: state.uri.queryParameters['token'] ?? '',
+      ),
       transitionsBuilder: _fadeTransition,
       transitionDuration: AppDurations.slow,
     ),
@@ -290,7 +321,7 @@ List<RouteBase> get _appRoutes => [
       ),
       GoRoute(
         path: '/browse/chairs',
-        redirect: (_, __) => '/browse',
+        redirect: (_, _) => '/browse',
       ),
       GoRoute(
         path: '/bookmarks',

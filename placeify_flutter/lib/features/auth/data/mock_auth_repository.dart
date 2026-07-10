@@ -131,6 +131,28 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> requestPasswordReset({
+    required String email,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    // Mock implementation intentionally mirrors the generic backend response.
+  }
+
+  @override
+  Future<void> confirmPasswordReset({
+    required String token,
+    required String newPassword,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    if (token.trim().isEmpty) {
+      throw AuthException('Reset token is missing. Open the reset link again.');
+    }
+    if (newPassword.length < 8) {
+      throw AuthException('Password must be at least 8 characters');
+    }
+  }
+
+  @override
   Future<AppUser> becomeVendor() async {
     final email = _prefs.getString(_sessionEmailKey);
     if (email == null) {

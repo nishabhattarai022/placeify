@@ -27,6 +27,89 @@ abstract final class EmailService {
     final htmlBody = _buildHtmlBody(purpose: purpose, code: code);
     final textBody = _buildTextBody(purpose: purpose, code: code);
 
+    await _sendEmail(
+      session,
+      to: to,
+      subject: subject,
+      textBody: textBody,
+      htmlBody: htmlBody,
+      consoleLogBody: true,
+      consoleSummary: '$purpose email sent to $to',
+      devFallbackSummary: '[EmailService] DEV fallback — $purpose code for $to: $code',
+    );
+  }
+
+  static Future<void> sendPasswordResetLinkEmail(
+    Session session, {
+    required String to,
+    required String resetUrl,
+  }) async {
+    final subject = 'Reset your Placeify password';
+    final textBody = _buildPasswordResetLinkTextBody(resetUrl: resetUrl);
+    final htmlBody = _buildPasswordResetLinkHtmlBody(resetUrl: resetUrl);
+
+    await _sendEmail(
+      session,
+      to: to,
+      subject: subject,
+      textBody: textBody,
+      htmlBody: htmlBody,
+      consoleLogBody: false,
+      consoleSummary: 'Password reset link email sent to $to',
+      devFallbackSummary:
+          '[EmailService] DEV fallback — password reset link email simulated for $to',
+    );
+  }
+
+  static Future<void> sendPasswordChangedConfirmationEmail(
+    Session session, {
+    required String to,
+  }) async {
+    const subject = 'Your Placeify password was changed';
+    const textBody = '''
+Your Placeify password was changed successfully.
+
+If you made this change, no further action is needed.
+If you did not make this change, contact support immediately.
+
+— Placeify
+''';
+    const htmlBody = '''
+<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; color: #333;">
+  <h2>Your Placeify password was changed</h2>
+  <p>Your password was changed successfully.</p>
+  <p>If you made this change, no further action is needed.</p>
+  <p style="color: #666; font-size: 14px;">If you did not make this change, contact support immediately.</p>
+  <p style="color: #999; font-size: 12px;">— Placeify</p>
+</body>
+</html>
+''';
+
+    await _sendEmail(
+      session,
+      to: to,
+      subject: subject,
+      textBody: textBody,
+      htmlBody: htmlBody,
+      consoleLogBody: true,
+      consoleSummary: 'Password changed confirmation email sent to $to',
+      devFallbackSummary:
+          '[EmailService] DEV fallback — password changed confirmation simulated for $to',
+    );
+  }
+
+  static Future<void> _sendEmail(
+    Session session, {
+    required String to,
+    required String subject,
+    required String textBody,
+    required String htmlBody,
+    required bool consoleLogBody,
+    required String consoleSummary,
+    required String devFallbackSummary,
+  }) async {
     try {
       await _deliver(
         session,
@@ -34,6 +117,8 @@ abstract final class EmailService {
         subject: subject,
         textBody: textBody,
         htmlBody: htmlBody,
+        consoleLogBody: consoleLogBody,
+        consoleSummary: consoleSummary,
       );
     } on EmailDeliveryException {
       rethrow;
@@ -49,7 +134,7 @@ abstract final class EmailService {
         );
       }
       session.log(
-        '[EmailService] DEV fallback — $purpose code for $to: $code',
+        devFallbackSummary,
         level: LogLevel.warning,
       );
     }
@@ -61,16 +146,18 @@ abstract final class EmailService {
     required String subject,
     required String textBody,
     required String htmlBody,
+    required bool consoleLogBody,
+    required String consoleSummary,
   }) async {
     final provider = _password(session, 'emailProvider')?.trim().toLowerCase() ??
         (_isProductionLike(session) ? 'resend' : 'console');
 
     switch (provider) {
       case 'console':
-        session.log(
-          '[EmailService] $subject → $to\n$textBody',
-          level: LogLevel.info,
-        );
+        final message = consoleLogBody
+            ? '[EmailService] $subject → $to\n$textBody'
+            : '[EmailService] $consoleSummary';
+        session.log(message, level: LogLevel.info);
         return;
       case 'resend':
         await _sendViaResend(
@@ -220,6 +307,35 @@ This code expires soon. If you did not request this, you can ignore this email.
   <p>Your verification code is:</p>
   <p style="font-size: 28px; font-weight: bold; letter-spacing: 4px;">$code</p>
   <p style="color: #666; font-size: 14px;">This code expires soon. If you did not request this, ignore this email.</p>
+  <p style="color: #999; font-size: 12px;">— Placeify</p>
+</body>
+</html>
+''';
+  }
+
+  static String _buildPasswordResetLinkTextBody({required String resetUrl}) {
+    return '''
+Reset your Placeify password
+
+Open the link below to choose a new password:
+$resetUrl
+
+This link expires in 30 minutes. If you did not request this, you can ignore this email.
+
+— Placeify
+''';
+  }
+
+  static String _buildPasswordResetLinkHtmlBody({required String resetUrl}) {
+    final escapedUrl = _escapeHtml(resetUrl);
+    return '''
+<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; color: #333;">
+  <h2>Reset your Placeify password</h2>
+  <p>Open the link below to choose a new password:</p>
+  <p><a href="$escapedUrl">$escapedUrl</a></p>
+  <p style="color: #666; font-size: 14px;">This link expires in 30 minutes. If you did not request this, ignore this email.</p>
   <p style="color: #999; font-size: 12px;">— Placeify</p>
 </body>
 </html>

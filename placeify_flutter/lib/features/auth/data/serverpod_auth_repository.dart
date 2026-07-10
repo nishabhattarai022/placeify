@@ -1,10 +1,13 @@
 import 'dart:io';
+import 'dart:convert';
 
+import 'package:http/http.dart' as http;
 import 'package:placeify_client/placeify_client.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/config/placeify_server_client.dart';
+import '../../../core/config/resolve_server_url.dart';
 import '../../admin/domain/enums/user_role.dart' as ui_role;
 import '../../vendor/domain/enums/vendor_status.dart';
 import '../constants/demo_credentials.dart';
@@ -133,7 +136,17 @@ class ServerpodAuthRepository implements AuthRepository {
     }
 
     final email = _prefs.getString(_sessionEmailKey);
-    if (email == null) return null;
+    if (email == null) {
+      try {
+        final profile = await client.user.getCurrentUser();
+        final resolved = profile?.email?.trim().toLowerCase();
+        if (resolved == null || resolved.isEmpty) return null;
+        await _prefs.setString(_sessionEmailKey, resolved);
+        return _loadAppUser(resolved);
+      } catch (_) {
+        return null;
+      }
+    }
 
     try {
       return await _loadAppUser(email);
@@ -215,6 +228,31 @@ class ServerpodAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> requestPasswordReset({
+    required String email,
+  }) async {
+    final normalizedEmail = email.trim().toLowerCase();
+    await _postAuthJson(
+      '/auth/forgot-password',
+      body: {'email': normalizedEmail},
+    );
+  }
+
+  @override
+  Future<void> confirmPasswordReset({
+    required String token,
+    required String newPassword,
+  }) async {
+    await _postAuthJson(
+      '/auth/reset-password',
+      body: {
+        'token': token.trim(),
+        'newPassword': newPassword,
+      },
+    );
+  }
+
+  @override
   Future<AppUser> becomeVendor() async {
     _requireAuthenticated();
     try {
@@ -249,6 +287,12 @@ class ServerpodAuthRepository implements AuthRepository {
     if (profile == null) {
       throw AuthException('User profile not found');
     }
+    final resolvedEmail = profile.email?.trim().toLowerCase().isNotEmpty == true
+        ? profile.email!.trim().toLowerCase()
+        : email;
+    if (resolvedEmail != email) {
+      await _prefs.setString(_sessionEmailKey, resolvedEmail);
+    }
     final hasVendorShop = await _loadHasVendorShop();
     final vendorId = hasVendorShop ? await _loadVendorId() : null;
     final vendorStatus = _vendorStatusFromServer(
@@ -258,7 +302,7 @@ class ServerpodAuthRepository implements AuthRepository {
 
     return _toAppUser(
       profile,
-      email,
+      resolvedEmail,
       hasVendorShop: hasVendorShop,
       vendorStatus: vendorStatus,
       vendorId: vendorId,
@@ -495,5 +539,38 @@ class ServerpodAuthRepository implements AuthRepository {
     }
 
     return base;
+  }
+
+  Future<void> _postAuthJson(
+    String path, {
+    required Map<String, Object?> body,
+  }) async {
+    try {
+      final baseUrl = await resolveServerUrl(forceRefresh: true);
+      final uri = Uri.parse(baseUrl).resolve(path);
+      final response = await http.post(
+        uri,
+        headers: const {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+
+      final payload = response.body.isEmpty
+          ? const <String, dynamic>{}
+          : jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return;
+      }
+
+      final message = payload['message']?.toString();
+      if (message != null && message.trim().isNotEmpty) {
+        throw AuthException(message);
+      }
+      throw AuthException('Request failed. Please try again.');
+    } on AuthException {
+      rethrow;
+    } catch (error) {
+      throw _mapError(error);
+    }
   }
 }

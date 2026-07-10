@@ -119,16 +119,40 @@ class CurrentUser extends _$CurrentUser {
     );
   }
 
+  Future<void> requestPasswordReset({
+    required String email,
+  }) async {
+    final normalizedEmail = email.trim();
+    if (normalizedEmail.isEmpty) {
+      throw AuthException('Enter your email');
+    }
+
+    final repo = await ref.read(authRepositoryProvider.future);
+    await repo.requestPasswordReset(email: normalizedEmail);
+  }
+
   Future<void> resetPassword({
+    required String token,
     required String email,
     required String newPassword,
   }) async {
-    if (newPassword.length < 8) {
+    if (token.trim().isEmpty) {
+      throw AuthException('Reset token is missing. Open the reset link again.');
+    }
+    if (email.trim().isEmpty) {
+      throw AuthException('Enter your email');
+    }
+    final password = newPassword.trim();
+    final hasLetter = RegExp(r'[A-Za-z]').hasMatch(password);
+    final hasNumber = RegExp(r'\d').hasMatch(password);
+    if (password.length < 8 || !hasLetter || !hasNumber) {
       throw AuthException('Password must be at least 8 characters');
     }
-    throw AuthException(
-      'Password reset is not available yet. Sign in with your current password '
-      'or register a new account.',
+
+    final repo = await ref.read(authRepositoryProvider.future);
+    await repo.confirmPasswordReset(
+      token: token,
+      newPassword: newPassword,
     );
   }
 

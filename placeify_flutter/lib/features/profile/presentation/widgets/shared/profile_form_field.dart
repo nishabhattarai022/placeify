@@ -55,6 +55,7 @@ class ProfileTextInput extends StatelessWidget {
     this.controller,
     this.hint,
     this.obscureText = false,
+    this.readOnly = false,
     this.onChanged,
     this.onEditingComplete,
     this.suffix,
@@ -70,6 +71,7 @@ class ProfileTextInput extends StatelessWidget {
   final TextEditingController? controller;
   final String? hint;
   final bool obscureText;
+  final bool readOnly;
   final ValueChanged<String>? onChanged;
   final VoidCallback? onEditingComplete;
   final Widget? suffix;
@@ -129,6 +131,7 @@ class ProfileTextInput extends StatelessWidget {
         key: fieldKey,
         controller: controller,
         obscureText: obscureText,
+        readOnly: readOnly,
         onChanged: onChanged,
         onEditingComplete: onEditingComplete,
         keyboardType: keyboardType,
@@ -143,6 +146,7 @@ class ProfileTextInput extends StatelessWidget {
     return TextField(
       controller: controller,
       obscureText: obscureText,
+      readOnly: readOnly,
       onChanged: onChanged,
       onEditingComplete: onEditingComplete,
       keyboardType: keyboardType,

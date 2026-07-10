@@ -14,18 +14,26 @@ import 'providers/auth_provider.dart';
 import 'widgets/auth_text_field.dart';
 import 'widgets/foggy_image_background.dart';
 
-class ForgotPasswordScreen extends ConsumerStatefulWidget {
-  const ForgotPasswordScreen({super.key});
+class ResetPasswordScreen extends ConsumerStatefulWidget {
+  const ResetPasswordScreen({
+    required this.token,
+    super.key,
+  });
+
+  final String token;
 
   @override
-  ConsumerState<ForgotPasswordScreen> createState() =>
-      _ForgotPasswordScreenState();
+  ConsumerState<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
 }
 
-class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
+class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   bool _isSubmitting = false;
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmController = TextEditingController();
+
+  bool get _hasToken => widget.token.trim().isNotEmpty;
 
   @override
   void initState() {
@@ -41,10 +49,16 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   @override
   void dispose() {
     _emailController.dispose();
+    _passwordController.dispose();
+    _confirmController.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
+    if (!_hasToken) {
+      PlaceifyToast.show(context, 'Reset link is invalid. Request a new one.');
+      return;
+    }
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_isSubmitting) return;
 
@@ -52,14 +66,13 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     await HapticService.heavy();
 
     try {
-      await ref.read(currentUserProvider.notifier).requestPasswordReset(
+      await ref.read(currentUserProvider.notifier).resetPassword(
+            token: widget.token,
             email: _emailController.text.trim(),
+            newPassword: _passwordController.text,
           );
       if (!mounted) return;
-      PlaceifyToast.show(
-        context,
-        'If an account exists for that email, a reset link has been sent.',
-      );
+      PlaceifyToast.show(context, 'Password updated. You can log in now.');
       context.go('/login');
     } on AuthException catch (e) {
       if (mounted) PlaceifyToast.show(context, e.message);
@@ -87,6 +100,29 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     return null;
   }
 
+  String? _passwordValidator(String? value) {
+    final required = _required(value, 'Enter a new password');
+    if (required != null) return required;
+    final password = value!.trim();
+    if (password.length < 8) {
+      return 'Use at least 8 characters';
+    }
+    if (!RegExp(r'[A-Za-z]').hasMatch(password) ||
+        !RegExp(r'\d').hasMatch(password)) {
+      return 'Use at least 1 letter and 1 number';
+    }
+    return null;
+  }
+
+  String? _confirmValidator(String? value) {
+    final required = _required(value, 'Confirm your new password');
+    if (required != null) return required;
+    if (value != _passwordController.text) {
+      return 'Passwords do not match';
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
@@ -107,18 +143,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 Padding(
                   padding: const EdgeInsets.only(left: 8, top: 4),
                   child: IconButton(
-                    onPressed: () {
-                      if (context.canPop()) {
-                        context.pop();
-                      } else {
-                        context.go('/login');
-                      }
-                    },
+                    onPressed: () => context.go('/login'),
                     icon: Icon(
                       Icons.arrow_back_rounded,
-                      color: AppColors.onboardingTextHead.withValues(
-                        alpha: 0.9,
-                      ),
+                      color: AppColors.onboardingTextHead.withValues(alpha: 0.9),
                     ),
                   ),
                 ),
@@ -146,19 +174,19 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                 height: 1.08,
                               ),
                               children: const [
-                                TextSpan(text: 'Forgot '),
+                                TextSpan(text: 'Reset '),
                                 TextSpan(
-                                  text: 'Password?',
-                                  style: TextStyle(
-                                    fontStyle: FontStyle.italic,
-                                  ),
+                                  text: 'Password',
+                                  style: TextStyle(fontStyle: FontStyle.italic),
                                 ),
                               ],
                             ),
                           ),
                           const SizedBox(height: 10),
                           Text(
-                            'Enter the email for your account. We will send you a secure link to reset your password.',
+                            _hasToken
+                                ? 'Enter your email and choose a new password.'
+                                : 'This reset link is invalid or incomplete. Request a new password reset email.',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w300,
@@ -177,11 +205,29 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                             textInputAction: TextInputAction.next,
                             validator: _emailValidator,
                           ),
+                          const SizedBox(height: 18),
+                          AuthTextField(
+                            label: 'New password',
+                            hint: 'At least 8 characters',
+                            controller: _passwordController,
+                            showVisibilityToggle: true,
+                            textInputAction: TextInputAction.next,
+                            validator: _passwordValidator,
+                          ),
+                          const SizedBox(height: 18),
+                          AuthTextField(
+                            label: 'Confirm new password',
+                            hint: 'Repeat new password',
+                            controller: _confirmController,
+                            showVisibilityToggle: true,
+                            textInputAction: TextInputAction.done,
+                            validator: _confirmValidator,
+                          ),
                           const SizedBox(height: 32),
                           PrimaryCtaButton(
                             label: _isSubmitting
-                                ? 'Sending...'
-                                : 'Send Reset Link',
+                                ? 'Updating...'
+                                : 'Update Password',
                             onTap: _submit,
                           ),
                           const SizedBox(height: 16),
@@ -191,10 +237,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                   ? null
                                   : () {
                                       HapticService.light();
-                                      context.go('/login');
+                                      context.go('/login/forgot-password');
                                     },
                               child: const Text(
-                                'Back to log in',
+                                'Request a new reset email',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
