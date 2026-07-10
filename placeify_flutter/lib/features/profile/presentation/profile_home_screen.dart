@@ -5,13 +5,20 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/placeify_bottom_nav.dart';
-import '../../../core/widgets/placeify_bottom_sheet.dart';
 import '../../../core/widgets/toast_overlay.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
+import '../../home/presentation/providers/wishlist_count.dart';
+import '../../home/presentation/providers/wishlist_provider.dart';
+import '../../orders/presentation/providers/orders_provider.dart';
 import '../../vendor/domain/constants/vendor_routes.dart';
 import '../../vendor/domain/enums/vendor_status.dart';
 import '../../vendor/presentation/widgets/vendor_status_gate_sheets.dart';
+import '../data/password_last_changed.dart';
+import '../data/profile_debug_log.dart';
 import '../data/profile_menu_config.dart';
+import '../data/refund_menu_subtitle.dart';
+import 'providers/profile_dashboard_provider.dart';
+import 'providers/profile_refunds_provider.dart';
 import 'widgets/profile_hero.dart';
 import 'widgets/profile_menu_tile.dart';
 import 'widgets/profile_orders_tile.dart';
@@ -27,9 +34,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(currentUserProvider.notifier).refresh();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshAccountData());
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -38,36 +43,57 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
     );
   }
 
+  Future<void> _refreshAccountData() async {
+    await ref.read(currentUserProvider.notifier).refresh();
+    await Future.wait([
+      ref.read(profileDashboardProvider.notifier).refresh(),
+      ref.read(wishlistProvider.notifier).refresh(),
+      ref.read(profileRefundsProvider.notifier).refresh(),
+      ref.read(ordersProvider.notifier).refresh(),
+    ]);
+    await _loadPasswordChangedAt();
+    if (!mounted) return;
+    _logAccountOverview();
+  }
+
+  void _logAccountOverview() {
+    final dashboard = ref.read(profileDashboardProvider);
+    ProfileDebugLog.accountOverview(
+      user: ref.read(currentUserProvider).value,
+      dashboard: dashboard.value,
+      dashboardError: dashboard.hasError ? dashboard.error : null,
+      ordersListLength: ref.read(ordersProvider).value?.length,
+      wishlistLocalCount: ref.read(wishlistProvider).length,
+    );
+  }
+
   void _showMoreMenu() {
-    PlaceifyBottomSheet.show<void>(
-      context,
-      builder: (sheetContext) {
-        return Column(
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const PlaceifyBottomSheetHeader(title: 'More'),
             ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(
-                Icons.settings_outlined,
-                color: AppColors.textSecondary,
-              ),
+              leading: const Icon(Icons.settings_outlined),
               title: const Text(
                 'Settings',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
                 ),
               ),
               onTap: () {
-                Navigator.pop(sheetContext);
+                Navigator.pop(context);
                 context.pushNamed('profileSettings');
               },
             ),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -123,8 +149,68 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
     context.go('/splash');
   }
 
+  Future<void> _loadPasswordChangedAt() async {
+    final email = ref.read(currentUserProvider).value?.email;
+    if (email == null) return;
+
+    final changedAt = await loadPasswordChangedAt(email);
+    if (!mounted || changedAt == null) return;
+    ref.read(passwordChangedAtProvider.notifier).state = changedAt;
+  }
+
+  ProfileMenuItemData _overviewMenuItem(ProfileMenuItemData item) {
+    if (item.route == ProfileMenuRoute.wishlist) {
+      final count = readWishlistCount(ref);
+      final subtitle = count == 0
+          ? 'No saved items'
+          : '$count saved item${count == 1 ? '' : 's'}';
+
+      return ProfileMenuItemData(
+        title: item.title,
+        subtitle: subtitle,
+        icon: item.icon,
+        iconColor: item.iconColor,
+        backgroundColor: item.backgroundColor,
+        route: item.route,
+      );
+    }
+
+    if (item.route == ProfileMenuRoute.password) {
+      final changedAt = ref.watch(passwordChangedAtProvider);
+      return ProfileMenuItemData(
+        title: item.title,
+        subtitle: passwordLastChangedSubtitle(changedAt),
+        icon: item.icon,
+        iconColor: item.iconColor,
+        backgroundColor: item.backgroundColor,
+        route: item.route,
+      );
+    }
+
+    if (item.route == ProfileMenuRoute.refund) {
+      return ProfileMenuItemData(
+        title: item.title,
+        subtitle: readRefundMenuSubtitle(ref, fallback: item.subtitle),
+        icon: item.icon,
+        iconColor: item.iconColor,
+        backgroundColor: item.backgroundColor,
+        route: item.route,
+      );
+    }
+
+    return item;
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.watch(wishlistProvider);
+    ref.watch(profileRefundsProvider);
+    ref.watch(profileDashboardProvider);
+    ref.listen(profileDashboardProvider, (previous, next) {
+      reconcileWishlistWithDashboard(ref);
+      next.whenData((_) => _logAccountOverview());
+    });
+
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final userAsync = ref.watch(currentUserProvider);
     final vendorStatus = userAsync.value?.vendorStatus ?? VendorStatus.none;
@@ -183,7 +269,9 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
                               color: AppColors.creamDark,
                             ),
                           ProfileMenuTile(
-                            item: ProfileMenuItems.accountOverview[i],
+                            item: _overviewMenuItem(
+                              ProfileMenuItems.accountOverview[i],
+                            ),
                             onTap: () => _onMenuTap(
                               ProfileMenuItems.accountOverview[i].route,
                             ),

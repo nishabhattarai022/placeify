@@ -4,10 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/home_categories_config.dart';
 import '../providers/home_room_provider.dart';
 import '../theme/home_screen_tokens.dart';
+import 'home_category_filter_chips.dart';
 import 'home_recommend_header.dart';
 import 'home_recommend_product_card.dart';
 
-/// "Recommend for you" section: header and animated product row.
+/// "Recommend for you" section: header, room chips, and animated product row.
 class HomeRecommendSection extends ConsumerWidget {
   const HomeRecommendSection({super.key});
 
@@ -15,12 +16,15 @@ class HomeRecommendSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final products = ref.watch(recommendedProductsProvider);
+    final roomId = ref.watch(selectedRoomProvider);
+    final productsAsync = ref.watch(recommendedProductsProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const HomeRecommendHeader(),
+        const SizedBox(height: HomeScreenTokens.sectionSpacing),
+        const HomeCategoryFilterChips(),
         const SizedBox(height: HomeScreenTokens.sectionSpacing),
         AnimatedSwitcher(
           duration: _switchDuration,
@@ -38,52 +42,60 @@ class HomeRecommendSection extends ConsumerWidget {
               ),
             );
           },
-          child: products.isEmpty
-              ? const _EmptyRecommendations(key: ValueKey('empty_recommendations'))
-              : _RecommendProductGrid(
-                  key: const ValueKey('recommendations'),
-                  products: products,
-                ),
+          child: productsAsync.when(
+            loading: () => _LoadingRecommendations(key: ValueKey('loading_$roomId')),
+            error: (_, __) => _EmptyRecommendations(key: ValueKey('error_$roomId')),
+            data: (products) => products.isEmpty
+                ? _EmptyRecommendations(key: ValueKey('empty_$roomId'))
+                : _RecommendProductRow(
+                    key: ValueKey(roomId),
+                    products: products,
+                  ),
+          ),
         ),
       ],
     );
   }
 }
 
-class _RecommendProductGrid extends StatelessWidget {
-  const _RecommendProductGrid({required this.products, super.key});
+class _RecommendProductRow extends StatelessWidget {
+  const _RecommendProductRow({required this.products, super.key});
 
   final List<RecommendProduct> products;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (var i = 0; i < products.length; i += 2) ...[
-          if (i > 0) const SizedBox(height: HomeScreenTokens.productGap),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: HomeRecommendProductCard(
-                  key: ValueKey(products[i].id),
-                  product: products[i],
-                ),
-              ),
-              if (i + 1 < products.length) ...[
-                const SizedBox(width: HomeScreenTokens.productGap),
-                Expanded(
-                  child: HomeRecommendProductCard(
-                    key: ValueKey(products[i + 1].id),
-                    product: products[i + 1],
-                  ),
-                ),
-              ] else
-                const Expanded(child: SizedBox.shrink()),
-            ],
+        for (var i = 0; i < products.length; i++) ...[
+          if (i > 0) const SizedBox(width: HomeScreenTokens.productGap),
+          Expanded(
+            child: HomeRecommendProductCard(
+              key: ValueKey(products[i].id),
+              product: products[i],
+            ),
           ),
         ],
       ],
+    );
+  }
+}
+
+class _LoadingRecommendations extends StatelessWidget {
+  const _LoadingRecommendations({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 48),
+      child: Center(
+        child: SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(strokeWidth: 2.5),
+        ),
+      ),
     );
   }
 }

@@ -15,11 +15,13 @@ final recommendedProductsProvider = RecommendedProductsProvider._();
 final class RecommendedProductsProvider
     extends
         $FunctionalProvider<
+          AsyncValue<List<RecommendProduct>>,
           List<RecommendProduct>,
-          List<RecommendProduct>,
-          List<RecommendProduct>
+          FutureOr<List<RecommendProduct>>
         >
-    with $Provider<List<RecommendProduct>> {
+    with
+        $FutureModifier<List<RecommendProduct>>,
+        $FutureProvider<List<RecommendProduct>> {
   RecommendedProductsProvider._()
     : super(
         from: null,
@@ -36,23 +38,15 @@ final class RecommendedProductsProvider
 
   @$internal
   @override
-  $ProviderElement<List<RecommendProduct>> $createElement(
+  $FutureProviderElement<List<RecommendProduct>> $createElement(
     $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
+  ) => $FutureProviderElement(pointer);
 
   @override
-  List<RecommendProduct> create(Ref ref) {
+  FutureOr<List<RecommendProduct>> create(Ref ref) {
     return recommendedProducts(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(List<RecommendProduct> value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<List<RecommendProduct>>(value),
-    );
   }
 }
 
 String _$recommendedProductsHash() =>
-    r'6cb20aa8025d3a8ee2c29e6829183136ce1c12f0';
+    r'9b3608d1b68a05bd00c9cacfd37e0066cb60f01c';

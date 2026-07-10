@@ -18,7 +18,8 @@ class ProductDetailHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isSaved = ref.watch(wishlistProvider).containsKey(product.id);
+    final isSaved =
+        ref.watch(wishlistProvider).savedAt.containsKey(product.id);
 
     return Padding(
       padding: const EdgeInsets.symmetric(

@@ -28,14 +28,17 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
   String _searchQuery = '';
 
   int _visibleProductCount() {
-    final savedAt = ref.read(wishlistProvider);
+    final wishlist = ref.read(wishlistProvider);
+    final savedAt = wishlist.savedAt;
     final byId = {
       for (final p in MockProductRepository.products) p.id: p,
     };
-    final products = [
-      for (final id in savedAt.keys)
-        if (byId.containsKey(id)) byId[id]!,
-    ];
+    final products = wishlist.products.isNotEmpty
+        ? wishlist.products
+        : [
+            for (final id in savedAt.keys)
+              if (byId.containsKey(id)) byId[id]!,
+          ];
 
     final query = _searchQuery.trim().toLowerCase();
     if (query.isEmpty) return products.length;
