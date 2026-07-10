@@ -1,13 +1,15 @@
 import 'package:serverpod/serverpod.dart';
 
+import '../auth/auth_email_resolver.dart';
 import '../generated/protocol.dart';
 import '../modules/user/user_repository.dart';
-import 'placeify_exception.dart';
 
 /// Resolves authenticated Placeify users and their carts.
 abstract final class SessionService {
   /// Returns the Placeify profile for the signed-in auth user, creating one if
   /// missing (e.g. accounts registered before [onAfterAccountCreated] ran).
+  ///
+  /// Always syncs [User.email] from the auth email account when available.
   static Future<User> requireUser(Session session) async {
     final auth = session.authenticated;
     if (auth == null) {
@@ -36,9 +38,24 @@ abstract final class SessionService {
   ) async {
     final store = UserProfileStore();
     final existing = await store.findByAuthUserId(session, authUserId);
-    if (existing != null) return existing;
+    if (existing != null) {
+      return AuthEmailResolver.syncProfileEmail(session, existing);
+    }
 
-    return store.upsertProfile(session, authUserId, 'User');
+    final authEmail = await AuthEmailResolver.findAuthEmail(
+      session,
+      authUserId,
+    );
+    final displayName = (authEmail != null && authEmail.contains('@'))
+        ? authEmail.split('@').first
+        : 'User';
+
+    return store.upsertProfile(
+      session,
+      authUserId,
+      displayName,
+      email: authEmail,
+    );
   }
 
   static Future<Cart> requireCart(Session session) async {

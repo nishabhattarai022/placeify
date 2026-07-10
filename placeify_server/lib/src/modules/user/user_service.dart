@@ -4,8 +4,8 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
 
+import '../../auth/auth_email_resolver.dart';
 import '../../generated/protocol.dart';
-import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
 import 'order_count_store.dart';
 import 'user_order_store.dart';
@@ -18,9 +18,9 @@ class UserService {
     UserProfileStore? repository,
     UserOrderStore? orderStore,
     UserPaymentStore? paymentStore,
-  })  : _repository = repository ?? UserProfileStore(),
-        _orderStore = orderStore ?? UserOrderStore(),
-        _paymentStore = paymentStore ?? UserPaymentStore();
+  }) : _repository = repository ?? UserProfileStore(),
+       _orderStore = orderStore ?? UserOrderStore(),
+       _paymentStore = paymentStore ?? UserPaymentStore();
 
   final UserProfileStore _repository;
   final UserOrderStore _orderStore;
@@ -37,7 +37,7 @@ class UserService {
   ) async {
     final user = await SessionService.requireUser(session);
     final emailIdp = AuthServices.instance.emailIdp;
-    final email = await _resolveAuthEmail(session, user);
+    final email = await AuthEmailResolver.requireAuthEmail(session, user);
 
     if (newPassword == currentPassword) {
       throw PlaceifyException(
@@ -85,34 +85,15 @@ class UserService {
     );
   }
 
-  Future<String> _resolveAuthEmail(Session session, User user) async {
-    final fromProfile = user.email?.trim().toLowerCase();
-    if (fromProfile != null && fromProfile.isNotEmpty) {
-      return fromProfile;
-    }
-
-    final account = await EmailAccount.db.findFirstRow(
-      session,
-      where: (row) => row.authUserId.equals(user.authUserId),
-    );
-    if (account == null) {
-      throw PlaceifyException(
-        message: 'Email account not found.',
-        code: 'EMAIL_NOT_FOUND',
-      );
-    }
-
-    return account.email;
-  }
-
   Future<User> updateProfile(
     Session session,
     String name, {
     String? phone,
     String? address,
   }) async {
-    final authUserId =
-        UuidValue.fromString(session.authenticated!.userIdentifier);
+    final authUserId = UuidValue.fromString(
+      session.authenticated!.userIdentifier,
+    );
     return _repository.upsertProfile(
       session,
       authUserId,
@@ -153,7 +134,9 @@ class UserService {
       where: (row) => row.userId.equals(user.id!),
     );
     if (shop == null) {
-      throw PlaceifyException(message: 'Complete vendor registration before switching to vendor mode.',
+      throw PlaceifyException(
+        message:
+            'Complete vendor registration before switching to vendor mode.',
         code: 'SHOP_NOT_FOUND',
       );
     }
@@ -321,7 +304,7 @@ class UserService {
 
     const demoAdminEmail = 'admin@placeify.com';
     final user = await SessionService.requireUser(session);
-    final email = await _resolveAuthEmail(session, user);
+    final email = await AuthEmailResolver.requireAuthEmail(session, user);
     if (email != demoAdminEmail) {
       throw PlaceifyException(
         message: 'Demo admin access is limited to $demoAdminEmail.',

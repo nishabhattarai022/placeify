@@ -231,17 +231,22 @@ List<Product> roomCatalogProducts(Ref ref, String roomId) {
 List<Product> homeRecommendedProducts(Ref ref, String roomId) {
   ref.watch(catalogIndexProvider);
   final roomProducts = ref.watch(roomCatalogProductsProvider(roomId));
+  final limit = switch (roomId) {
+    'living' => 4,
+    'dining' || 'office' => 2,
+    _ => 4,
+  };
   if (roomProducts.isEmpty) {
-    return ref.watch(catalogProductsProvider).take(2).toList();
+    return ref.watch(catalogProductsProvider).take(limit).toList();
   }
 
   final categoryIds = CatalogCategoryUtils.furnitureCategoryIdsForRoom(roomId);
   final picked = <Product>[];
 
   for (final categoryId in categoryIds) {
-    if (picked.length >= 2) break;
+    if (picked.length >= limit) break;
     for (final product in roomProducts) {
-      if (picked.length >= 2) break;
+      if (picked.length >= limit) break;
       if (picked.any((item) => item.id == product.id)) continue;
       if (CatalogCategoryUtils.matchesUiCategory(
         product.categoryId,
@@ -253,10 +258,10 @@ List<Product> homeRecommendedProducts(Ref ref, String roomId) {
     }
   }
 
-  if (picked.length >= 2) return picked;
+  if (picked.length >= limit) return picked;
 
   for (final product in roomProducts) {
-    if (picked.length >= 2) break;
+    if (picked.length >= limit) break;
     if (picked.any((item) => item.id == product.id)) continue;
     picked.add(product);
   }

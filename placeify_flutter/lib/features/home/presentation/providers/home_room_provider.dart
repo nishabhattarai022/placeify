@@ -15,7 +15,7 @@ Future<List<RecommendProduct>> recommendedProducts(Ref ref) async {
   final products = ref.watch(homeRecommendedProductsProvider(roomId));
 
   return [
-    for (final product in products.take(2))
+    for (final product in products)
       HomeCategoriesConfig.fromProduct(
         product,
         id: 'rec-$roomId-${product.id}',

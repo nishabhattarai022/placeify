@@ -156,6 +156,35 @@ class CurrentUser extends _$CurrentUser {
     );
   }
 
+  Future<DateTime> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final current = currentPassword.trim();
+    final next = newPassword.trim();
+    if (current.isEmpty || next.isEmpty) {
+      throw AuthException('Please fill all fields');
+    }
+    final hasLetter = RegExp(r'[A-Za-z]').hasMatch(next);
+    final hasNumber = RegExp(r'\d').hasMatch(next);
+    if (next.length < 8 || !hasLetter || !hasNumber) {
+      throw AuthException(
+        'Password must be at least 8 characters with letters and numbers',
+      );
+    }
+    if (next == current) {
+      throw AuthException(
+        'New password must be different from your current password.',
+      );
+    }
+
+    final repo = await ref.read(authRepositoryProvider.future);
+    return repo.changePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+    );
+  }
+
   Future<ConsumerProfileDetails?> loadConsumerProfile() async {
     final appUser = state.value;
     if (appUser == null) return null;

@@ -10,20 +10,34 @@ Future<void> onAfterAccountCreated(
   required UuidValue emailAccountId,
   required Transaction? transaction,
 }) async {
+  final normalizedEmail = email.trim().toLowerCase();
   final existing = await User.db.findFirstRow(
     session,
     where: (user) => user.authUserId.equals(authUserId),
     transaction: transaction,
   );
-  if (existing != null) return;
+  if (existing != null) {
+    final current = existing.email?.trim().toLowerCase() ?? '';
+    if (current != normalizedEmail) {
+      await User.db.updateRow(
+        session,
+        existing.copyWith(
+          email: normalizedEmail,
+          updatedAt: DateTime.now(),
+        ),
+        transaction: transaction,
+      );
+    }
+    return;
+  }
 
-  final name = email.split('@').first;
+  final name = normalizedEmail.split('@').first;
   await User.db.insertRow(
     session,
     User(
       authUserId: authUserId,
       name: name,
-      email: email.trim().toLowerCase(),
+      email: normalizedEmail,
       role: UserRole.consumer,
       status: UserAccountStatus.approved,
     ),

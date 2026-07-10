@@ -51,6 +51,7 @@ import '../../features/home/presentation/bookmarks_screen.dart';
 import '../../data/furniture_categories.dart';
 import '../../screens/browse_screen.dart';
 import '../../screens/category_screen.dart';
+import '../../screens/my_ar_screen.dart';
 import '../../screens/room_products_screen.dart';
 import '../../features/ar_hub/presentation/ar_powered_screen.dart';
 import '../../features/profile/presentation/profile_ar_history_screen.dart';
@@ -318,6 +319,16 @@ List<RouteBase> get _appRoutes => [
             },
           ),
         ],
+      ),
+      GoRoute(
+        path: '/my-ar',
+        name: 'myAr',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const MyArScreen(),
+          transitionsBuilder: _fadeTransition,
+          transitionDuration: AppDurations.slow,
+        ),
       ),
       GoRoute(
         path: '/browse/chairs',

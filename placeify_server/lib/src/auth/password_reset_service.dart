@@ -8,6 +8,7 @@ import 'package:serverpod_auth_idp_server/providers/email.dart';
 
 import '../email/email_service.dart';
 import '../generated/protocol.dart';
+import 'auth_email_resolver.dart';
 import 'password_reset_rate_limiter.dart';
 
 class PasswordResetService {
@@ -125,7 +126,16 @@ class PasswordResetService {
     }
 
     final user = resetToken.user!;
-    final authEmail = await _resolveAuthEmail(session, user);
+    late final String authEmail;
+    try {
+      authEmail = await AuthEmailResolver.requireAuthEmail(session, user);
+    } on PlaceifyException {
+      throw const PasswordResetHttpException(
+        statusCode: 400,
+        message: invalidResetTokenMessage,
+        code: 'PASSWORD_RESET_INVALID',
+      );
+    }
 
     await session.db.transaction((transaction) async {
       final current = await PasswordResetToken.db.findFirstRow(
@@ -190,27 +200,6 @@ class PasswordResetService {
     return normalized;
   }
 
-  Future<String> _resolveAuthEmail(Session session, User user) async {
-    final fromProfile = user.email?.trim().toLowerCase();
-    if (fromProfile != null && fromProfile.isNotEmpty) {
-      return fromProfile;
-    }
-
-    final account = await EmailAccount.db.findFirstRow(
-      session,
-      where: (row) => row.authUserId.equals(user.authUserId),
-    );
-    if (account == null) {
-      throw const PasswordResetHttpException(
-        statusCode: 400,
-        message: invalidResetTokenMessage,
-        code: 'PASSWORD_RESET_INVALID',
-      );
-    }
-
-    return account.email.trim().toLowerCase();
-  }
-
   String _buildResetUrl(Session session, String rawToken) {
     final configured = session.passwords['frontendUrl']?.trim();
     final envUrl = const String.fromEnvironment('FRONTEND_URL');
@@ -222,10 +211,12 @@ class PasswordResetService {
     final query = Map<String, String>.from(uri.queryParameters)
       ..['token'] = rawToken;
 
-    return uri.replace(
-      path: _joinPath(uri.path, 'reset-password'),
-      queryParameters: query,
-    ).toString();
+    return uri
+        .replace(
+          path: _joinPath(uri.path, 'reset-password'),
+          queryParameters: query,
+        )
+        .toString();
   }
 
   String _joinPath(String basePath, String suffix) {

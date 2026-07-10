@@ -17,7 +17,7 @@ abstract final class CatalogCategoryUtils {
 
   /// Room → furniture category ids for home recommendations and room listings.
   static const roomCategoryIds = <String, List<String>>{
-    'living': ['sofas', 'chairs', 'tables'],
+    'living': ['sofas', 'lighting', 'chairs'],
     'dining': ['tables', 'chairs'],
     'office': ['desks', 'chairs'],
     'bedroom': ['beds', 'storage'],
