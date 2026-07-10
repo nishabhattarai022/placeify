@@ -5,6 +5,7 @@ import 'package:serverpod/serverpod.dart' hide Order;
 import '../../../generated/protocol.dart';
 import '../../../shared/placeify_exception.dart';
 import '../../../shared/session_service.dart';
+import '../../notification/in_app_notification_store.dart';
 import '../../notification/notification_repository.dart';
 import '../../product/product_catalog_policy.dart';
 import '../vendor_bank_details_validation.dart';
@@ -284,6 +285,17 @@ class VendorProfileStore {
     if (bankDetails != null) {
       await _upsertBankDetails(session, vendor.id!, bankDetails);
     }
+
+    try {
+      await InAppNotificationStore().notifyActiveAdmins(
+        session,
+        title: 'New vendor application',
+        message: '$trimmedName submitted a vendor application for review.',
+        type: InAppNotificationType.vendorApplication,
+        referenceKey: vendor.id!.uuid,
+      );
+    } catch (_) {}
+
     return vendor;
   }
 

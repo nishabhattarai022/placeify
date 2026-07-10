@@ -29,11 +29,15 @@ abstract class Admin
     this.phoneNumber,
     _i2.AdminType? adminType,
     bool? isActive,
+    bool? newApplicationAlerts,
+    bool? systemAlerts,
     this.lastLoginAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : adminType = adminType ?? _i2.AdminType.moderator,
        isActive = isActive ?? true,
+       newApplicationAlerts = newApplicationAlerts ?? true,
+       systemAlerts = systemAlerts ?? true,
        createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
 
@@ -46,6 +50,8 @@ abstract class Admin
     String? phoneNumber,
     _i2.AdminType? adminType,
     bool? isActive,
+    bool? newApplicationAlerts,
+    bool? systemAlerts,
     DateTime? lastLoginAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -69,6 +75,14 @@ abstract class Admin
       isActive: jsonSerialization['isActive'] == null
           ? null
           : _i1.BoolJsonExtension.fromJson(jsonSerialization['isActive']),
+      newApplicationAlerts: jsonSerialization['newApplicationAlerts'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(
+              jsonSerialization['newApplicationAlerts'],
+            ),
+      systemAlerts: jsonSerialization['systemAlerts'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['systemAlerts']),
       lastLoginAt: jsonSerialization['lastLoginAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(
@@ -104,6 +118,10 @@ abstract class Admin
 
   bool isActive;
 
+  bool newApplicationAlerts;
+
+  bool systemAlerts;
+
   DateTime? lastLoginAt;
 
   DateTime createdAt;
@@ -125,6 +143,8 @@ abstract class Admin
     String? phoneNumber,
     _i2.AdminType? adminType,
     bool? isActive,
+    bool? newApplicationAlerts,
+    bool? systemAlerts,
     DateTime? lastLoginAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -141,6 +161,8 @@ abstract class Admin
       if (phoneNumber != null) 'phoneNumber': phoneNumber,
       'adminType': adminType.toJson(),
       'isActive': isActive,
+      'newApplicationAlerts': newApplicationAlerts,
+      'systemAlerts': systemAlerts,
       if (lastLoginAt != null) 'lastLoginAt': lastLoginAt?.toJson(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
@@ -159,6 +181,8 @@ abstract class Admin
       if (phoneNumber != null) 'phoneNumber': phoneNumber,
       'adminType': adminType.toJson(),
       'isActive': isActive,
+      'newApplicationAlerts': newApplicationAlerts,
+      'systemAlerts': systemAlerts,
       if (lastLoginAt != null) 'lastLoginAt': lastLoginAt?.toJson(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
@@ -207,6 +231,8 @@ class _AdminImpl extends Admin {
     String? phoneNumber,
     _i2.AdminType? adminType,
     bool? isActive,
+    bool? newApplicationAlerts,
+    bool? systemAlerts,
     DateTime? lastLoginAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -219,6 +245,8 @@ class _AdminImpl extends Admin {
          phoneNumber: phoneNumber,
          adminType: adminType,
          isActive: isActive,
+         newApplicationAlerts: newApplicationAlerts,
+         systemAlerts: systemAlerts,
          lastLoginAt: lastLoginAt,
          createdAt: createdAt,
          updatedAt: updatedAt,
@@ -237,6 +265,8 @@ class _AdminImpl extends Admin {
     Object? phoneNumber = _Undefined,
     _i2.AdminType? adminType,
     bool? isActive,
+    bool? newApplicationAlerts,
+    bool? systemAlerts,
     Object? lastLoginAt = _Undefined,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -250,6 +280,8 @@ class _AdminImpl extends Admin {
       phoneNumber: phoneNumber is String? ? phoneNumber : this.phoneNumber,
       adminType: adminType ?? this.adminType,
       isActive: isActive ?? this.isActive,
+      newApplicationAlerts: newApplicationAlerts ?? this.newApplicationAlerts,
+      systemAlerts: systemAlerts ?? this.systemAlerts,
       lastLoginAt: lastLoginAt is DateTime? ? lastLoginAt : this.lastLoginAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -290,6 +322,17 @@ class AdminUpdateTable extends _i1.UpdateTable<AdminTable> {
 
   _i1.ColumnValue<bool, bool> isActive(bool value) => _i1.ColumnValue(
     table.isActive,
+    value,
+  );
+
+  _i1.ColumnValue<bool, bool> newApplicationAlerts(bool value) =>
+      _i1.ColumnValue(
+        table.newApplicationAlerts,
+        value,
+      );
+
+  _i1.ColumnValue<bool, bool> systemAlerts(bool value) => _i1.ColumnValue(
+    table.systemAlerts,
     value,
   );
 
@@ -342,6 +385,16 @@ class AdminTable extends _i1.Table<_i1.UuidValue?> {
       this,
       hasDefault: true,
     );
+    newApplicationAlerts = _i1.ColumnBool(
+      'newApplicationAlerts',
+      this,
+      hasDefault: true,
+    );
+    systemAlerts = _i1.ColumnBool(
+      'systemAlerts',
+      this,
+      hasDefault: true,
+    );
     lastLoginAt = _i1.ColumnDateTime(
       'lastLoginAt',
       this,
@@ -374,6 +427,10 @@ class AdminTable extends _i1.Table<_i1.UuidValue?> {
 
   late final _i1.ColumnBool isActive;
 
+  late final _i1.ColumnBool newApplicationAlerts;
+
+  late final _i1.ColumnBool systemAlerts;
+
   late final _i1.ColumnDateTime lastLoginAt;
 
   late final _i1.ColumnDateTime createdAt;
@@ -402,6 +459,8 @@ class AdminTable extends _i1.Table<_i1.UuidValue?> {
     phoneNumber,
     adminType,
     isActive,
+    newApplicationAlerts,
+    systemAlerts,
     lastLoginAt,
     createdAt,
     updatedAt,

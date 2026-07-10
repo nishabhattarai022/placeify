@@ -2,7 +2,6 @@ import 'package:placeify_client/placeify_client.dart' as api;
 import 'package:serverpod_client/serverpod_client.dart';
 
 import '../../../core/config/placeify_server_client.dart';
-import '../domain/enums/admin_product_visibility_filter.dart';
 import '../domain/models/admin_product_summary.dart' as domain;
 import '../domain/repositories/admin_product_repository.dart';
 import 'admin_platform_mapper.dart';
@@ -32,8 +31,9 @@ class ServerpodAdminProductRepository implements AdminProductRepository {
           pagination: api.PaginationInput(page: 1, pageSize: 100),
         ),
       );
-      var summaries =
-          products.map(AdminPlatformMapper.toAdminProductSummary).toList();
+      var summaries = await Future.wait(
+        products.map(AdminPlatformMapper.toAdminProductSummary),
+      );
       final category = query.categoryName?.trim();
       if (category != null && category.isNotEmpty) {
         summaries = summaries

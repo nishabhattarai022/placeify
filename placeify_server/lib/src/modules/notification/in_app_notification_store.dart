@@ -13,6 +13,7 @@ class InAppNotificationStore {
     required String message,
     required InAppNotificationType type,
     int? referenceId,
+    String? referenceKey,
   }) async {
     final row = await InAppNotification.db.insertRow(
       session,
@@ -22,6 +23,7 @@ class InAppNotificationStore {
         message: message,
         type: type,
         referenceId: referenceId,
+        referenceKey: referenceKey,
       ),
     );
     final summary = _toSummary(row);
@@ -50,6 +52,7 @@ class InAppNotificationStore {
     required String message,
     required InAppNotificationType type,
     int? referenceId,
+    String? referenceKey,
   }) async {
     await create(
       session,
@@ -58,7 +61,44 @@ class InAppNotificationStore {
       message: message,
       type: type,
       referenceId: referenceId,
+      referenceKey: referenceKey,
     );
+  }
+
+  /// Fan-out an admin-facing alert to every active admin who opted in.
+  Future<void> notifyActiveAdmins(
+    Session session, {
+    required String title,
+    required String message,
+    required InAppNotificationType type,
+    int? referenceId,
+    String? referenceKey,
+  }) async {
+    final admins = await Admin.db.find(
+      session,
+      where: (row) => row.isActive.equals(true),
+    );
+
+    for (final admin in admins) {
+      final allow = switch (type) {
+        InAppNotificationType.vendorApplication => admin.newApplicationAlerts,
+        InAppNotificationType.systemAlert ||
+        InAppNotificationType.vendorFlagged =>
+          admin.systemAlerts,
+        _ => true,
+      };
+      if (!allow) continue;
+
+      await create(
+        session,
+        userId: admin.userId,
+        title: title,
+        message: message,
+        type: type,
+        referenceId: referenceId,
+        referenceKey: referenceKey,
+      );
+    }
   }
 
   Future<List<InAppNotificationSummary>> listForUser(
@@ -134,6 +174,7 @@ class InAppNotificationStore {
       message: row.message,
       type: row.type,
       referenceId: row.referenceId,
+      referenceKey: row.referenceKey,
       isRead: row.isRead,
       createdAt: row.createdAt,
     );

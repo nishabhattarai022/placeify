@@ -133,6 +133,14 @@ class AdminNotificationsScreen extends ConsumerWidget {
                                 notification.linkedVendorId!,
                               ),
                             );
+                          } else if (notification.type ==
+                                  AdminNotificationType.vendorFlagged &&
+                              notification.linkedVendorId != null) {
+                            context.push(
+                              AdminRoutes.vendorDetail(
+                                notification.linkedVendorId!,
+                              ),
+                            );
                           }
                         },
                       );

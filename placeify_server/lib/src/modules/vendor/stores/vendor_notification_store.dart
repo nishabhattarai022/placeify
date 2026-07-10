@@ -65,6 +65,10 @@ class VendorNotificationStore {
       InAppNotificationType.productUpdate => VendorNotificationType.product,
       InAppNotificationType.promotionUpdate => VendorNotificationType.product,
       InAppNotificationType.refundUpdate => VendorNotificationType.payment,
+      InAppNotificationType.vendorApplication ||
+      InAppNotificationType.vendorFlagged ||
+      InAppNotificationType.systemAlert =>
+        VendorNotificationType.product,
     };
   }
 }

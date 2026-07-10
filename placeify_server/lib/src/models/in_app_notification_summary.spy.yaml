@@ -6,5 +6,6 @@ fields:
   message: String
   type: InAppNotificationType
   referenceId: int?
+  referenceKey: String?
   isRead: bool
   createdAt: DateTime

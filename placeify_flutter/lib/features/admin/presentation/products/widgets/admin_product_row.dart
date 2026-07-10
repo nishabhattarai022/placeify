@@ -6,6 +6,7 @@ import 'package:placeify_flutter/core/services/haptic_service.dart';
 import 'package:placeify_flutter/core/utils/formatters.dart';
 import 'package:placeify_flutter/features/admin/domain/constants/admin_routes.dart';
 import 'package:placeify_flutter/features/admin/domain/models/admin_product_summary.dart';
+import 'package:placeify_flutter/features/vendor/presentation/widgets/vendor_list_thumbnail.dart';
 
 class AdminProductRow extends StatelessWidget {
   const AdminProductRow({
@@ -38,9 +39,10 @@ class AdminProductRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            _ProductThumb(
-              thumbnailUrl: product.thumbnailUrl,
+            VendorListThumbnail(
               label: product.productName,
+              imageUrl: product.thumbnailUrl,
+              size: 52,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -118,47 +120,6 @@ class AdminProductRow extends StatelessWidget {
               ],
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ProductThumb extends StatelessWidget {
-  const _ProductThumb({required this.thumbnailUrl, required this.label});
-
-  final String? thumbnailUrl;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final url = thumbnailUrl?.trim();
-    return ClipRRect(
-      borderRadius: AppRadii.sm,
-      child: Container(
-        width: 52,
-        height: 52,
-        color: AppColors.creamDark,
-        child: url != null && url.isNotEmpty
-            ? Image.network(
-                url,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _fallback(label),
-              )
-            : _fallback(label),
-      ),
-    );
-  }
-
-  Widget _fallback(String label) {
-    final initial = label.isNotEmpty ? label[0].toUpperCase() : '?';
-    return Center(
-      child: Text(
-        initial,
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-          color: AppColors.adminSlate,
         ),
       ),
     );

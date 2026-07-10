@@ -54,13 +54,66 @@ class ServerpodAdminRepository implements AdminRepository {
   }
 
   @override
-  Future<List<AdminNotification>> getNotifications() async => const [];
+  Future<List<AdminNotification>> getNotifications() async {
+    try {
+      final items = await client.admin.listNotifications(limit: 50);
+      return items.map(AdminPlatformMapper.toAdminNotification).toList();
+    } catch (error) {
+      throw AdminApiException(_mapError(error));
+    }
+  }
 
   @override
-  Future<void> markNotificationRead(String notificationId) async {}
+  Future<void> markNotificationRead(String notificationId) async {
+    try {
+      final id = int.tryParse(notificationId);
+      if (id == null) return;
+      await client.admin.markNotificationRead(id);
+    } catch (error) {
+      throw AdminApiException(_mapError(error));
+    }
+  }
 
   @override
-  Future<void> markAllNotificationsRead() async {}
+  Future<void> markAllNotificationsRead() async {
+    try {
+      await client.admin.markAllNotificationsRead();
+    } catch (error) {
+      throw AdminApiException(_mapError(error));
+    }
+  }
+
+  Future<({bool newApplicationAlerts, bool systemAlerts})>
+      getNotificationPreferences() async {
+    try {
+      final profile = await client.admin.getMyProfile();
+      return (
+        newApplicationAlerts: profile.newApplicationAlerts,
+        systemAlerts: profile.systemAlerts,
+      );
+    } catch (error) {
+      throw AdminApiException(_mapError(error));
+    }
+  }
+
+  Future<({bool newApplicationAlerts, bool systemAlerts})>
+      updateNotificationPreferences({
+    required bool newApplicationAlerts,
+    required bool systemAlerts,
+  }) async {
+    try {
+      final profile = await client.admin.updateNotificationPreferences(
+        newApplicationAlerts: newApplicationAlerts,
+        systemAlerts: systemAlerts,
+      );
+      return (
+        newApplicationAlerts: profile.newApplicationAlerts,
+        systemAlerts: profile.systemAlerts,
+      );
+    } catch (error) {
+      throw AdminApiException(_mapError(error));
+    }
+  }
 
   @override
   Future<void> suspendVendor(String userId, {String? reason}) async {

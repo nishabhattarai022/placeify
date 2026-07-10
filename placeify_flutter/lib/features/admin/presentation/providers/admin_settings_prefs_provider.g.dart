@@ -42,7 +42,7 @@ final class AdminSettingsPrefsProvider
 }
 
 String _$adminSettingsPrefsHash() =>
-    r'45eaa9e9af6caa9cb7f744abb8a360af15514c80';
+    r'61285947f0309c73b368a428f454b97c4c841c9d';
 
 abstract class _$AdminSettingsPrefs extends $Notifier<AdminNotificationPrefs> {
   AdminNotificationPrefs build();

@@ -8,12 +8,11 @@ import 'package:placeify_flutter/core/constants/app_spacing.dart';
 import 'package:placeify_flutter/core/constants/app_typography.dart';
 import 'package:placeify_flutter/core/services/haptic_service.dart';
 import 'package:placeify_flutter/core/utils/formatters.dart';
-import 'package:placeify_flutter/core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import 'package:placeify_flutter/core/widgets/placeify_bottom_sheet.dart';
+import 'package:placeify_flutter/core/widgets/placeify_image.dart';
 import 'package:placeify_flutter/core/widgets/toast_overlay.dart';
 import 'package:placeify_flutter/features/admin/domain/constants/admin_routes.dart';
 import 'package:placeify_flutter/features/admin/domain/constants/admin_strings.dart';
-import 'package:placeify_flutter/features/admin/domain/models/admin_product_complaint_summary.dart';
 import 'package:placeify_flutter/features/admin/domain/models/admin_product_summary.dart';
 import 'package:placeify_flutter/features/admin/presentation/providers/admin_products_provider.dart';
 
@@ -206,11 +205,13 @@ class AdminProductDetailScreen extends ConsumerWidget {
                         product.thumbnailUrl!.trim().isNotEmpty)
                       ClipRRect(
                         borderRadius: AppRadii.md,
-                        child: Image.network(
-                          product.thumbnailUrl!,
+                        child: SizedBox(
                           height: 220,
                           width: double.infinity,
-                          fit: BoxFit.cover,
+                          child: PlaceifyImage(
+                            source: product.thumbnailUrl!,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                     const SizedBox(height: 16),
