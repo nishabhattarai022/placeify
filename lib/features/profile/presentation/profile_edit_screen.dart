@@ -3,16 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_radii.dart';
+import '../../../core/constants/app_spacing.dart';
+import '../../../core/theme/app_fonts.dart';
 import '../../../core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import '../../../core/widgets/phone_input_field.dart';
 import '../../../core/widgets/toast_overlay.dart';
 import '../../auth/domain/models/consumer_profile_details.dart';
 import '../../auth/domain/repositories/auth_repository.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
+import '../../home/presentation/chairs_catalog_tokens.dart';
 import '../data/profile_menu_config.dart';
-import 'widgets/profile_sub_hero.dart';
-import 'widgets/shared/profile_form_field.dart';
-import 'widgets/shared/profile_submit_button.dart';
+import '../domain/constants/edit_profile_strings.dart';
+import 'widgets/profile_list_screen_header.dart';
+import 'widgets/shared/profile_action_button.dart';
 
 class ProfileEditScreen extends ConsumerStatefulWidget {
   const ProfileEditScreen({super.key});
@@ -79,17 +83,17 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     String? emailError;
 
     if (_nameController.text.trim().isEmpty) {
-      nameError = 'Name is required';
+      nameError = EditProfileStrings.nameRequired;
       valid = false;
     }
 
     final email = _emailController.text.trim();
     final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
     if (email.isEmpty) {
-      emailError = 'Email is required';
+      emailError = EditProfileStrings.emailRequired;
       valid = false;
     } else if (!emailRegex.hasMatch(email)) {
-      emailError = 'Enter a valid email address';
+      emailError = EditProfileStrings.emailInvalid;
       valid = false;
     }
 
@@ -101,7 +105,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   }
 
   Future<void> _save() async {
-    if (!_validate()) return;
+    if (!_validate() || _saving) return;
 
     setState(() => _saving = true);
     try {
@@ -114,10 +118,12 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         city: _cityController.text.trim(),
       );
 
-      await ref.read(currentUserProvider.notifier).updateConsumerProfile(profile);
+      await ref
+          .read(currentUserProvider.notifier)
+          .updateConsumerProfile(profile);
       if (!mounted) return;
 
-      PlaceifyToast.show(context, 'Profile updated successfully');
+      PlaceifyToast.show(context, EditProfileStrings.updatedToast);
       Future.delayed(const Duration(milliseconds: 900), () {
         if (mounted) context.pop();
       });
@@ -126,7 +132,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       PlaceifyToast.show(context, e.message);
     } catch (_) {
       if (!mounted) return;
-      PlaceifyToast.show(context, 'Could not update profile. Try again.');
+      PlaceifyToast.show(context, EditProfileStrings.updateFailed);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -135,120 +141,135 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider).value;
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
     final initial = user != null && user.fullName.isNotEmpty
         ? user.fullName.trim()[0].toUpperCase()
         : '?';
 
     return Scaffold(
       backgroundColor: AppColors.cream,
-      body: Column(
-        children: [
-          const ProfileSubHero(title: 'Edit Profile'),
-          Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : user == null
-                    ? const _SignedOutState()
-                    : ListView(
-                        padding: const EdgeInsets.fromLTRB(
-                          18,
-                          20,
-                          18,
-                          BottomNavTokens.scrollBottomPadding,
-                        ),
-                        children: [
-                          _ProfilePhotoHeader(
-                            initial: initial,
-                            onChangePhoto: () => PlaceifyToast.show(
-                              context,
-                              'Photo upload coming soon',
-                            ),
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const ProfileListScreenHeader(
+              title: EditProfileStrings.title,
+              subtitle: EditProfileStrings.italicLine,
+            ),
+            Expanded(
+              child: _loading
+                  ? const Center(
+                      child: CircularProgressIndicator(color: Colors.black),
+                    )
+                  : user == null
+                      ? const _SignedOutState()
+                      : ListView(
+                          padding: EdgeInsets.fromLTRB(
+                            AppSpacing.screenPadding,
+                            12,
+                            AppSpacing.screenPadding,
+                            BottomNavTokens.scrollBottomPadding + bottomInset,
                           ),
-                          const SizedBox(height: 20),
-                          Container(
-                            padding: const EdgeInsets.all(18),
-                            decoration: BoxDecoration(
-                              color: AppColors.warmWhite,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: AppColors.creamDark,
-                                width: 1.5,
+                          children: [
+                            _ProfilePhotoHeader(
+                              initial: initial,
+                              onChangePhoto: () => PlaceifyToast.show(
+                                context,
+                                EditProfileStrings.photoComingSoon,
                               ),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                ProfileFormField(
-                                  label: 'Full Name',
-                                  error: _nameError,
-                                  child: ProfileTextInput(
-                                    controller: _nameController,
-                                    hint: 'Your full name',
-                                    hasError: _nameError != null,
-                                    onChanged: (_) {
-                                      if (_nameError != null) {
-                                        setState(() => _nameError = null);
-                                      }
-                                    },
-                                  ),
+                            const SizedBox(height: 20),
+                            Container(
+                              padding: const EdgeInsets.all(18),
+                              decoration: BoxDecoration(
+                                color: ChairsCatalogTokens.imageWell,
+                                borderRadius: BorderRadius.circular(
+                                  ChairsCatalogTokens.wideCardRadius,
                                 ),
-                                ProfileFormField(
-                                  label: 'Username',
-                                  child: ProfileTextInput(
-                                    controller: _usernameController,
-                                    hint: 'placeify_user',
+                                boxShadow: ChairsCatalogTokens.cardShadow,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _EditFormField(
+                                    label: EditProfileStrings.fullName,
+                                    error: _nameError,
+                                    child: _EditTextField(
+                                      controller: _nameController,
+                                      hint: EditProfileStrings.fullNameHint,
+                                      hasError: _nameError != null,
+                                      onChanged: (_) {
+                                        if (_nameError != null) {
+                                          setState(() => _nameError = null);
+                                        }
+                                      },
+                                    ),
                                   ),
-                                ),
-                                ProfileFormField(
-                                  label: 'Bio',
-                                  child: ProfileTextInput(
-                                    controller: _bioController,
-                                    hint: 'Tell people a little about yourself',
-                                    maxLines: 3,
+                                  _EditFormField(
+                                    label: EditProfileStrings.username,
+                                    child: _EditTextField(
+                                      controller: _usernameController,
+                                      hint: EditProfileStrings.usernameHint,
+                                    ),
                                   ),
-                                ),
-                                ProfileFormField(
-                                  label: 'City',
-                                  child: ProfileTextInput(
-                                    controller: _cityController,
-                                    hint: 'Kathmandu',
+                                  _EditFormField(
+                                    label: EditProfileStrings.bio,
+                                    child: _EditTextField(
+                                      controller: _bioController,
+                                      hint: EditProfileStrings.bioHint,
+                                      maxLines: 3,
+                                    ),
                                   ),
-                                ),
-                                ProfileFormField(
-                                  label: 'Email',
-                                  error: _emailError,
-                                  child: ProfileTextInput(
-                                    controller: _emailController,
-                                    hint: 'you@example.com',
-                                    keyboardType: TextInputType.emailAddress,
-                                    hasError: _emailError != null,
-                                    onChanged: (_) {
-                                      if (_emailError != null) {
-                                        setState(() => _emailError = null);
-                                      }
-                                    },
+                                  _EditFormField(
+                                    label: EditProfileStrings.city,
+                                    child: _EditTextField(
+                                      controller: _cityController,
+                                      hint: EditProfileStrings.cityHint,
+                                    ),
                                   ),
-                                ),
-                                ProfileFormField(
-                                  label: 'Phone',
-                                  child: PhoneInputField(
-                                    initialPhone:
-                                        _phone.isNotEmpty ? _phone : null,
-                                    onChanged: (value) => _phone = value,
+                                  _EditFormField(
+                                    label: EditProfileStrings.email,
+                                    error: _emailError,
+                                    child: _EditTextField(
+                                      controller: _emailController,
+                                      hint: EditProfileStrings.emailHint,
+                                      keyboardType:
+                                          TextInputType.emailAddress,
+                                      hasError: _emailError != null,
+                                      onChanged: (_) {
+                                        if (_emailError != null) {
+                                          setState(() => _emailError = null);
+                                        }
+                                      },
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  _EditFormField(
+                                    label: EditProfileStrings.phone,
+                                    child: PhoneInputField(
+                                      initialPhone:
+                                          _phone.isNotEmpty ? _phone : null,
+                                      onChanged: (value) => _phone = value,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 20),
-                          ProfileSubmitButton(
-                            label: _saving ? 'Saving...' : 'Save Changes',
-                            onPressed: _saving ? () {} : _save,
-                          ),
-                        ],
-                      ),
-          ),
-        ],
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ProfileActionButton(
+                                label: _saving
+                                    ? EditProfileStrings.saving
+                                    : EditProfileStrings.saveChanges,
+                                onTap: _saving ? () {} : _save,
+                              ),
+                            ),
+                          ],
+                        ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -272,8 +293,11 @@ class _ProfilePhotoHeader extends StatelessWidget {
           height: ProfileMenuConfig.avatarSize,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppColors.accent,
-            border: Border.all(color: AppColors.accentLight, width: 3),
+            color: Colors.black,
+            border: Border.all(
+              color: Colors.black.withValues(alpha: 0.08),
+              width: 3,
+            ),
             image: initial == '?'
                 ? const DecorationImage(
                     image: AssetImage(ProfileMenuConfig.avatarAsset),
@@ -286,27 +310,136 @@ class _ProfilePhotoHeader extends StatelessWidget {
               ? null
               : Text(
                   initial,
-                  style: const TextStyle(
-                    fontFamily: 'Fraunces',
+                  style: AppFonts.dmSans(
                     fontSize: 40,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     color: Colors.white,
+                    letterSpacing: -0.5,
                   ),
                 ),
         ),
         const SizedBox(height: 12),
         TextButton(
           onPressed: onChangePhoto,
-          child: const Text(
-            'Change profile photo',
-            style: TextStyle(
+          child: Text(
+            EditProfileStrings.changePhoto,
+            style: AppFonts.dmSans(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: AppColors.accent,
+              color: Colors.black,
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _EditFormField extends StatelessWidget {
+  const _EditFormField({
+    required this.label,
+    required this.child,
+    this.error,
+  });
+
+  final String label;
+  final Widget child;
+  final String? error;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: AppFonts.dmSans(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: error != null ? AppColors.coral : AppColors.textPrimary,
+              letterSpacing: -0.1,
+            ),
+          ),
+          const SizedBox(height: 8),
+          child,
+          if (error != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              error!,
+              style: AppFonts.dmSans(
+                fontSize: 12,
+                color: AppColors.coral,
+                height: 1.35,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _EditTextField extends StatelessWidget {
+  const _EditTextField({
+    required this.controller,
+    required this.hint,
+    this.maxLines = 1,
+    this.keyboardType,
+    this.hasError = false,
+    this.onChanged,
+  });
+
+  final TextEditingController controller;
+  final String hint;
+  final int maxLines;
+  final TextInputType? keyboardType;
+  final bool hasError;
+  final ValueChanged<String>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final borderColor = hasError
+        ? AppColors.coral
+        : Colors.black.withValues(alpha: 0.08);
+    final focusedColor = hasError ? AppColors.coral : Colors.black;
+
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      onChanged: onChanged,
+      style: AppFonts.dmSans(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        color: AppColors.textPrimary,
+      ),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: AppFonts.dmSans(
+          fontSize: 14,
+          color: Colors.black.withValues(alpha: 0.35),
+        ),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: AppRadii.md,
+          borderSide: BorderSide(color: borderColor),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: AppRadii.md,
+          borderSide: BorderSide(color: borderColor),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: AppRadii.md,
+          borderSide: BorderSide(color: focusedColor, width: 1.5),
+        ),
+      ),
     );
   }
 }
@@ -322,19 +455,22 @@ class _SignedOutState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              'Sign in to edit your profile',
+            Text(
+              EditProfileStrings.signedOutTitle,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: AppFonts.dmSans(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: AppColors.espresso,
+                color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: () => context.go('/login'),
-              child: const Text('Go to sign in'),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ProfileActionButton(
+                label: EditProfileStrings.goToSignIn,
+                onTap: () => context.go('/login'),
+              ),
             ),
           ],
         ),
