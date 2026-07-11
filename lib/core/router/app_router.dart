@@ -58,6 +58,7 @@ import '../../features/orders/presentation/my_orders_screen.dart';
 import '../../features/orders/presentation/order_detail_screen.dart';
 import '../../features/orders/presentation/order_tracking_screen.dart';
 import '../../features/profile/presentation/profile_edit_screen.dart';
+import '../../features/profile/presentation/profile_application_pending_screen.dart';
 import '../../features/profile/presentation/profile_password_screen.dart';
 import '../../features/profile/presentation/profile_refund_screen.dart';
 import '../../features/profile/presentation/profile_settings_screen.dart';
@@ -405,6 +406,14 @@ List<RouteBase> get _appRoutes => [
           pageBuilder: (context, state) => _slidePage(
             key: ValueKey<String>(state.uri.toString()),
             child: const ProfileEditScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/profile/application-pending',
+          name: 'profileApplicationPending',
+          pageBuilder: (context, state) => _slidePage(
+            key: ValueKey<String>(state.uri.toString()),
+            child: const ProfileApplicationPendingScreen(),
           ),
         ),
         GoRoute(

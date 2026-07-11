@@ -108,7 +108,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
       case VendorStatus.none:
         context.push(VendorRoutes.register);
       case VendorStatus.pending:
-        VendorStatusGateSheets.showPending(context);
+        context.pushNamed('profileApplicationPending');
       case VendorStatus.approved:
         context.push(VendorRoutes.dashboard);
       case VendorStatus.suspended:
