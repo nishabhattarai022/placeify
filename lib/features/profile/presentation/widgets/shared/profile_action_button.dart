@@ -5,8 +5,8 @@ import '../../../../../core/services/haptic_service.dart';
 import '../../../../../core/theme/app_fonts.dart';
 
 /// Pill action button aligned with order cards — black primary, white secondary.
-class RefundActionButton extends StatelessWidget {
-  const RefundActionButton({
+class ProfileActionButton extends StatelessWidget {
+  const ProfileActionButton({
     required this.label,
     required this.onTap,
     this.icon,
