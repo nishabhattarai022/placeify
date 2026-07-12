@@ -817,7 +817,7 @@ final class HomeRecommendedProductsProvider
 }
 
 String _$homeRecommendedProductsHash() =>
-    r'742800ecf9b2a6780d818fa926f23343d2a022c8';
+    r'2629cf984aac66add93a6b00435a43510d38c517';
 
 final class HomeRecommendedProductsFamily extends $Family
     with $FunctionalFamilyOverride<List<Product>, String> {

@@ -127,12 +127,12 @@ class _HeroImage extends StatelessWidget {
       fit: BoxFit.cover,
       width: double.infinity,
       height: double.infinity,
-      errorBuilder: (_, __, ___) => Image.asset(
+      errorBuilder: (_, _, _) => Image.asset(
         HomeScreenTokens.heroFallbackAsset,
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
-        errorBuilder: (_, __, ___) => ColoredBox(
+        errorBuilder: (_, _, _) => ColoredBox(
           color: HomeScreenTokens.homeBg,
           child: Center(
             child: Icon(

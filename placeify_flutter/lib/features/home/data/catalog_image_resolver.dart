@@ -16,10 +16,7 @@ abstract final class CatalogImageResolver {
     ]);
     if (resolved != null) return resolved;
 
-    final byName = CatalogDemoImageCatalog.imageForName(
-      product.name,
-      productId: productKey,
-    );
+    final byName = CatalogDemoImageCatalog.imageForName(product.name);
     if (byName != null) return byName;
 
     return fallbackForProduct(

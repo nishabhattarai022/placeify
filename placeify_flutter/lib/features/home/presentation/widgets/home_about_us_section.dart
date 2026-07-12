@@ -67,7 +67,7 @@ class _InteriorImage extends StatelessWidget {
         child: Image.asset(
           assetPath,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) =>
+          errorBuilder: (_, _, _) =>
               const ColoredBox(color: HomeAboutUsSection._fallbackBg),
         ),
       ),

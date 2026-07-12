@@ -45,7 +45,7 @@ class HomeFeaturedProductCard extends StatelessWidget {
                     product.imageAsset,
                     height: 100,
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => Icon(
+                    errorBuilder: (_, _, _) => Icon(
                       Icons.chair_outlined,
                       size: 56,
                       color: AppColors.textMuted.withValues(alpha: 0.5),

@@ -292,7 +292,7 @@ class _ProductCardImage extends StatelessWidget {
         product.imageUrl,
         fit: fit,
         alignment: Alignment.center,
-        errorBuilder: (_, __, ___) => _ProductCardImageFallback(
+        errorBuilder: (_, _, _) => _ProductCardImageFallback(
           svgPath: product.svgIconPath,
         ),
       );
@@ -301,8 +301,8 @@ class _ProductCardImage extends StatelessWidget {
     return CachedNetworkImage(
       imageUrl: product.imageUrl,
       fit: fit,
-      placeholder: (_, __) => const ShimmerLoader(),
-      errorWidget: (_, __, ___) => _ProductCardImageFallback(
+      placeholder: (_, _) => const ShimmerLoader(),
+      errorWidget: (_, _, _) => _ProductCardImageFallback(
         svgPath: product.svgIconPath,
       ),
     );

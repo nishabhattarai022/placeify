@@ -71,7 +71,7 @@ class _DiscountedProductsSectionState
 
     return offersAsync.when(
       loading: () => const _OffersLoading(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (offers) {
         if (offers.isEmpty) return const SizedBox.shrink();
 
@@ -599,7 +599,7 @@ class _ProductFrame extends StatelessWidget {
               alignment: Alignment.center,
               children: [
                 ...previousChildren,
-                if (currentChild != null) currentChild,
+                ?currentChild,
               ],
             );
           },
@@ -627,7 +627,7 @@ class _OfferImage extends StatelessWidget {
         alignment: Alignment.center,
         width: double.infinity,
         height: double.infinity,
-        errorBuilder: (_, __, ___) => const ColoredBox(
+        errorBuilder: (_, _, _) => const ColoredBox(
           color: Color(0xFFEFE9DC),
         ),
       );
@@ -639,7 +639,7 @@ class _OfferImage extends StatelessWidget {
       alignment: Alignment.center,
       width: double.infinity,
       height: double.infinity,
-      errorBuilder: (_, __, ___) => const ColoredBox(
+      errorBuilder: (_, _, _) => const ColoredBox(
         color: Color(0xFFEFE9DC),
       ),
     );

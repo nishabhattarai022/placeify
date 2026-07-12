@@ -111,7 +111,7 @@ class _RoomProductsScreenState extends ConsumerState<RoomProductsScreen> {
               ),
             ),
           ),
-          error: (_, __) => _RoomProductsScaffold(
+          error: (_, _) => _RoomProductsScaffold(
             category: widget.category,
             onBack: () => context.pop(),
             onSort: _openSortSheet,

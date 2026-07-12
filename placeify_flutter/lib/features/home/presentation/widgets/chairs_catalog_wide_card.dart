@@ -66,13 +66,13 @@ class ChairsCatalogWideCard extends ConsumerWidget {
                       ? Image.asset(
                           product.imageUrl,
                           fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) =>
+                          errorBuilder: (_, _, _) =>
                               _FallbackIcon(svgPath: product.svgIconPath),
                         )
                       : CachedNetworkImage(
                           imageUrl: product.imageUrl,
                           fit: BoxFit.contain,
-                          errorWidget: (_, __, ___) =>
+                          errorWidget: (_, _, _) =>
                               _FallbackIcon(svgPath: product.svgIconPath),
                         ),
                 ),

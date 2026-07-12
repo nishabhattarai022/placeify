@@ -102,7 +102,7 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
             displayName: displayName,
             onBack: () => context.pop(),
           ),
-          error: (_, __) => _CategoryErrorScaffold(
+          error: (_, _) => _CategoryErrorScaffold(
             displayName: displayName,
             onBack: () => context.pop(),
             onRetry: () => ref.invalidate(catalogIndexProvider),

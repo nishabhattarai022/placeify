@@ -69,7 +69,7 @@ class _HomeRoomChipRowState extends ConsumerState<HomeRoomChipRow> {
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.only(right: 32),
         itemCount: rooms.length,
-        separatorBuilder: (_, __) =>
+        separatorBuilder: (_, _) =>
             const SizedBox(width: HomeRoomChipRow.chipGap),
         itemBuilder: (context, index) {
           final room = rooms[index];

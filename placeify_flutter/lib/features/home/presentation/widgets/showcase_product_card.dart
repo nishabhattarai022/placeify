@@ -103,7 +103,7 @@ class _ProductImage extends StatelessWidget {
         product.imageUrl,
         fit: BoxFit.contain,
         height: 120,
-        errorBuilder: (_, __, ___) => _FallbackIcon(svgPath: product.svgIconPath),
+        errorBuilder: (_, _, _) => _FallbackIcon(svgPath: product.svgIconPath),
       );
     }
 
@@ -111,7 +111,7 @@ class _ProductImage extends StatelessWidget {
       imageUrl: product.imageUrl,
       fit: BoxFit.contain,
       height: 120,
-      errorWidget: (_, __, ___) => _FallbackIcon(svgPath: product.svgIconPath),
+      errorWidget: (_, _, _) => _FallbackIcon(svgPath: product.svgIconPath),
     );
   }
 }

@@ -19,7 +19,7 @@ class SlideImageLayer extends StatelessWidget {
     return CoverAssetImage(
       asset: slide.imageAsset,
       alignment: slide.imageAlignment,
-      errorBuilder: (_, __, ___) => ColoredBox(
+      errorBuilder: (_, _, _) => ColoredBox(
         color: AppColors.onboardingBgCard,
         child: Center(
           child: RoomIllustration(slideIndex: slideIndex),

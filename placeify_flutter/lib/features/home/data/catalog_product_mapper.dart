@@ -69,7 +69,7 @@ abstract final class CatalogProductMapper {
     api.Product product,
     Map<int, String>? categoryNamesById,
   ) {
-    final fromRelation = product.category?.name?.trim();
+    final fromRelation = product.category?.name.trim();
     if (fromRelation != null && fromRelation.isNotEmpty) {
       return fromRelation.toLowerCase();
     }

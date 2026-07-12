@@ -22,7 +22,7 @@ class ChairsCatalogGrid extends ConsumerWidget {
         height: 320,
         child: Center(child: CircularProgressIndicator(strokeWidth: 2.5)),
       ),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (_) {
         final products = ref.watch(browseCategoryProductsProvider(categoryId));
         if (products.isEmpty) return const SizedBox.shrink();

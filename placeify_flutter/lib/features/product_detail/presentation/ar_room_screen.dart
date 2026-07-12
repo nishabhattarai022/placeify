@@ -423,7 +423,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       final node = _buildFurnitureNode(modelUri);
       final didAddNode = await objectManager.addNode(node, planeAnchor: anchor);
       if (didAddNode != true) {
-        await anchorManager.removeAnchor(anchor);
+        anchorManager.removeAnchor(anchor);
         _showStatus('Could not place the model. Try another spot.');
         await _restorePreviewAfterFailedPlace();
         return;
@@ -544,13 +544,13 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   }) async {
     final node = _furnitureNode;
     if (node != null) {
-      await objectManager.removeNode(node);
+      objectManager.removeNode(node);
       _furnitureNode = null;
     }
 
     final anchor = _currentAnchor;
     if (anchor != null) {
-      await anchorManager.removeAnchor(anchor);
+      anchorManager.removeAnchor(anchor);
       _currentAnchor = null;
     }
   }

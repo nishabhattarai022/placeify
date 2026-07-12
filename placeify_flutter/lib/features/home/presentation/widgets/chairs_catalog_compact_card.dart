@@ -52,7 +52,7 @@ class ChairsCatalogCompactCard extends ConsumerWidget {
                         product.imageUrl,
                         fit: BoxFit.cover,
                         width: double.infinity,
-                        errorBuilder: (_, __, ___) => Center(
+                        errorBuilder: (_, _, _) => Center(
                           child: SvgPicture.asset(
                             product.svgIconPath,
                             width: 48,
@@ -67,7 +67,7 @@ class ChairsCatalogCompactCard extends ConsumerWidget {
                         imageUrl: product.imageUrl,
                         fit: BoxFit.cover,
                         width: double.infinity,
-                        errorWidget: (_, __, ___) => Center(
+                        errorWidget: (_, _, _) => Center(
                           child: SvgPicture.asset(
                             product.svgIconPath,
                             width: 48,
