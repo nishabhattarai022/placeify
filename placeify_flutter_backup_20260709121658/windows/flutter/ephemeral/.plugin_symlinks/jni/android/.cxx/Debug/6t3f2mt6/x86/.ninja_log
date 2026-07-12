@@ -1,5 +1,0 @@
-# ninja log v5
-1	39	1780831630459663704	CMakeFiles/jni.dir/include/dart_api_dl.c.o	9205eb7902a3048
-0	53	1780831630473670015	CMakeFiles/jni.dir/dartjni.c.o	bad3f2dee69b54be
-1	99	1780831630517973347	CMakeFiles/jni.dir/third_party/global_jni_env.c.o	46023910a1a5af4b
-99	145	1780831630565368143	/Users/anubudhathoki/Downloads/placeify-frontend-nisha/build/jni/intermediates/cxx/Debug/6t3f2mt6/obj/x86/libdartjni.so	fbf30dbc6adda4fd
