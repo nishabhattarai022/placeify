@@ -45,7 +45,7 @@ class ShopListingImage extends StatelessWidget {
         width: width,
         height: height,
         fit: fit,
-        errorBuilder: (_, __, ___) => _buildImage(fallbackUrl),
+        errorBuilder: (_, _, _) => _buildImage(fallbackUrl),
       );
     }
 
@@ -55,7 +55,7 @@ class ShopListingImage extends StatelessWidget {
       height: height,
       fit: fit,
       memCacheWidth: memCacheWidth,
-      errorWidget: (_, __, ___) => _buildImage(fallbackUrl),
+      errorWidget: (_, _, _) => _buildImage(fallbackUrl),
     );
   }
 }

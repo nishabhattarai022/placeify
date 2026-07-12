@@ -117,7 +117,7 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
                                   color: const Color(0xFF8A8A8A),
                                 ),
                               ),
-                              error: (_, __) => const SizedBox.shrink(),
+                              error: (_, _) => const SizedBox.shrink(),
                             ),
                           ],
                         ),

@@ -20,11 +20,10 @@ class ARNode {
     Vector4? rotation,
     Vector3? eulerAngles,
     Matrix4? transformation,
-    Map<String, dynamic>? data,
+    this.data,
   })  : name = name ?? UniqueKey().toString(),
         transformNotifier = ValueNotifier(createTransformMatrix(
-            transformation, position, scale, rotation, eulerAngles)),
-        data = data ?? null;
+            transformation, position, scale, rotation, eulerAngles));
 
   /// Specifies the receiver's [NodeType]
   NodeType type;

@@ -158,7 +158,7 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
               loading: () => const Center(
                 child: CircularProgressIndicator(color: AppColors.espresso),
               ),
-              error: (_, __) => _EmptyState(
+              error: (_, _) => _EmptyState(
                 message: Vendor3dBuilderStrings.noProducts,
               ),
               data: (items) {

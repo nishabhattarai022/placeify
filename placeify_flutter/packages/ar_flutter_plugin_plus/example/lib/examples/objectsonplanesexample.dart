@@ -14,7 +14,7 @@ import 'package:ar_flutter_plugin_plus/models/ar_hittest_result.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 class ObjectsOnPlanesWidget extends StatefulWidget {
-  ObjectsOnPlanesWidget({Key? key}) : super(key: key);
+  const ObjectsOnPlanesWidget({super.key});
   @override
   _ObjectsOnPlanesWidgetState createState() => _ObjectsOnPlanesWidgetState();
 }
@@ -95,7 +95,7 @@ class _ObjectsOnPlanesWidgetState extends State<ObjectsOnPlanesWidget> {
 
   Future<void> onNodeTapped(List<String> nodes) async {
     var number = nodes.length;
-    this.arSessionManager!.onError("Tapped $number node(s)");
+    arSessionManager!.onError("Tapped $number node(s)");
   }
 
   Future<void> onPlaneOrPointTapped(
@@ -106,37 +106,33 @@ class _ObjectsOnPlanesWidgetState extends State<ObjectsOnPlanesWidget> {
         .toList();
 
     if (planeHitResults.isEmpty) {
-      this
-          .arSessionManager
+      arSessionManager
           ?.onError("No plane hit. Try moving the device to detect a plane.");
       return;
     }
 
     final singleHitTestResult = planeHitResults.first;
-    if (singleHitTestResult != null) {
-      var newAnchor =
-          ARPlaneAnchor(transformation: singleHitTestResult.worldTransform);
-      bool? didAddAnchor = await this.arAnchorManager!.addAnchor(newAnchor);
-      if (didAddAnchor!) {
-        this.anchors.add(newAnchor);
-        // Add note to anchor
-        var newNode = ARNode(
-            type: NodeType.webGLB,
-            uri: GlobalVariables.arObjectUrl1,
-            scale: Vector3(0.05, 0.05, 0.05),
-            position: Vector3(0.0, 0.0, 0.0),
-            rotation: Vector4(1.0, 0.0, 0.0, 0.0));
-        bool? didAddNodeToAnchor = await this
-            .arObjectManager!
-            .addNode(newNode, planeAnchor: newAnchor);
-        if (didAddNodeToAnchor!) {
-          this.nodes.add(newNode);
-        } else {
-          this.arSessionManager!.onError("Adding Node to Anchor failed");
-        }
+    var newAnchor =
+        ARPlaneAnchor(transformation: singleHitTestResult.worldTransform);
+    bool? didAddAnchor = await arAnchorManager!.addAnchor(newAnchor);
+    if (didAddAnchor!) {
+      anchors.add(newAnchor);
+      // Add note to anchor
+      var newNode = ARNode(
+          type: NodeType.webGLB,
+          uri: GlobalVariables.arObjectUrl1,
+          scale: Vector3(0.05, 0.05, 0.05),
+          position: Vector3(0.0, 0.0, 0.0),
+          rotation: Vector4(1.0, 0.0, 0.0, 0.0));
+      bool? didAddNodeToAnchor = await arObjectManager!
+          .addNode(newNode, planeAnchor: newAnchor);
+      if (didAddNodeToAnchor!) {
+        nodes.add(newNode);
       } else {
-        this.arSessionManager!.onError("Adding Anchor failed");
+        arSessionManager!.onError("Adding Node to Anchor failed");
       }
+    } else {
+      arSessionManager!.onError("Adding Anchor failed");
     }
   }
 }

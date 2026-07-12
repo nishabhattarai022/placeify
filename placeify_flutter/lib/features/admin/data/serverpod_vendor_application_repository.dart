@@ -1,5 +1,4 @@
 import 'package:placeify_client/placeify_client.dart';
-import 'package:serverpod_client/serverpod_client.dart';
 
 import '../../../core/config/placeify_server_client.dart';
 import '../domain/enums/vendor_application_list_filter.dart';

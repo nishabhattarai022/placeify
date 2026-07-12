@@ -48,7 +48,7 @@ class VendorApplicationDetailScreen extends ConsumerWidget {
       ),
       body: applicationAsync.when(
         loading: () => const _ApplicationDetailShimmer(),
-        error: (_, __) => _ApplicationDetailError(
+        error: (_, _) => _ApplicationDetailError(
           onRetry: () =>
               ref.invalidate(vendorApplicationDetailProvider(applicationId)),
         ),

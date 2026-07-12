@@ -1,7 +1,6 @@
 import 'package:serverpod/serverpod.dart';
 
 import '../../generated/protocol.dart';
-import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
 
 /// Admin profile storage and lookups.
@@ -99,6 +98,15 @@ class AdminStore {
       );
     }
 
+    return _promoteUserToAdmin(session, target, adminType: adminType);
+  }
+
+  /// Ensures [target] has [UserRole.admin] and an active [Admin] profile row.
+  Future<Admin> ensureAdminAccount(
+    Session session,
+    User target, {
+    AdminType adminType = AdminType.moderator,
+  }) {
     return _promoteUserToAdmin(session, target, adminType: adminType);
   }
 

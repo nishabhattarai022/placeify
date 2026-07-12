@@ -39,7 +39,7 @@ class VendorOrderDetailScreen extends ConsumerWidget {
       backgroundColor: AppColors.cream,
       body: detailAsync.when(
         loading: () => const _OrderDetailShimmer(),
-        error: (_, __) => _OrderDetailError(
+        error: (_, _) => _OrderDetailError(
           onRetry: () {
             ref.invalidate(vendorOrderDetailProvider(orderId));
           },
@@ -264,7 +264,7 @@ class _PaymentSection extends ConsumerWidget {
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
             ),
-            error: (_, __) => const Text(
+            error: (_, _) => const Text(
               'Could not load payment history.',
               style: TextStyle(
                 fontSize: 13,

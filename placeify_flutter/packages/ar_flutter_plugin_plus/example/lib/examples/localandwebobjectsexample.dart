@@ -16,7 +16,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter_archive/flutter_archive.dart';
 
 class LocalAndWebObjectsWidget extends StatefulWidget {
-  LocalAndWebObjectsWidget({Key? key}) : super(key: key);
+  const LocalAndWebObjectsWidget({super.key});
   @override
   _LocalAndWebObjectsWidgetState createState() =>
       _LocalAndWebObjectsWidgetState();
@@ -108,7 +108,7 @@ class _LocalAndWebObjectsWidgetState extends State<LocalAndWebObjectsWidget> {
     this.arObjectManager!.onInitialize();
 
     //Download model to file system
-    httpClient = new HttpClient();
+    httpClient = HttpClient();
     _downloadFile(GlobalVariables.arObjectUrl1, "LocalDuck.glb");
     // Alternative to use type fileSystemAppFolderGLTF2:
     /*_downloadAndUnpack(
@@ -121,9 +121,9 @@ class _LocalAndWebObjectsWidgetState extends State<LocalAndWebObjectsWidget> {
     var response = await request.close();
     var bytes = await consolidateHttpClientResponseBytes(response);
     String dir = (await getApplicationDocumentsDirectory()).path;
-    File file = new File('$dir/$filename');
+    File file = File('$dir/$filename');
     await file.writeAsBytes(bytes);
-    print("Downloading finished, path: " + '$dir/$filename');
+    print("Downloading finished, path: " '$dir/$filename');
     fileDownloadReady = true;
     return file;
   }
@@ -133,9 +133,9 @@ class _LocalAndWebObjectsWidgetState extends State<LocalAndWebObjectsWidget> {
     var response = await request.close();
     var bytes = await consolidateHttpClientResponseBytes(response);
     String dir = (await getApplicationDocumentsDirectory()).path;
-    File file = new File('$dir/$filename');
+    File file = File('$dir/$filename');
     await file.writeAsBytes(bytes);
-    print("Downloading finished, path: " + '$dir/$filename');
+    print("Downloading finished, path: " '$dir/$filename');
 
     // To print all files in the directory: print(Directory(dir).listSync());
     try {
@@ -143,14 +143,14 @@ class _LocalAndWebObjectsWidgetState extends State<LocalAndWebObjectsWidget> {
           zipFile: File('$dir/$filename'), destinationDir: Directory(dir));
       print("Unzipping successful");
     } catch (e) {
-      print("Unzipping failed: " + e.toString());
+      print("Unzipping failed: $e");
     }
   }
 
   Future<void> onLocalObjectAtOriginButtonPressed() async {
-    if (this.localObjectNode != null) {
-      this.arObjectManager!.removeNode(this.localObjectNode!);
-      this.localObjectNode = null;
+    if (localObjectNode != null) {
+      arObjectManager!.removeNode(localObjectNode!);
+      localObjectNode = null;
     } else {
       var newNode = ARNode(
           type: NodeType.localGLTF2,
@@ -158,40 +158,39 @@ class _LocalAndWebObjectsWidgetState extends State<LocalAndWebObjectsWidget> {
           scale: Vector3(0.02, 0.02, 0.02),
           position: Vector3(0.0, 0.0, 0.0),
           rotation: Vector4(1.0, 0.0, 0.0, 0.0));
-      bool? didAddLocalNode = await this.arObjectManager!.addNode(newNode);
-      this.localObjectNode = (didAddLocalNode!) ? newNode : null;
+      bool? didAddLocalNode = await arObjectManager!.addNode(newNode);
+      localObjectNode = (didAddLocalNode!) ? newNode : null;
     }
   }
 
   Future<void> onWebObjectAtOriginButtonPressed() async {
-    if (this.webObjectNode != null) {
-      this.arObjectManager!.removeNode(this.webObjectNode!);
-      this.webObjectNode = null;
+    if (webObjectNode != null) {
+      arObjectManager!.removeNode(webObjectNode!);
+      webObjectNode = null;
     } else {
       var newNode = ARNode(
           type: NodeType.webGLB,
           uri: GlobalVariables.arObjectUrl1,
           scale: Vector3(0.2, 0.2, 0.2));
-      bool? didAddWebNode = await this.arObjectManager!.addNode(newNode);
-      this.webObjectNode = (didAddWebNode!) ? newNode : null;
+      bool? didAddWebNode = await arObjectManager!.addNode(newNode);
+      webObjectNode = (didAddWebNode!) ? newNode : null;
     }
   }
 
   Future<void> onFileSystemObjectAtOriginButtonPressed() async {
-    if (this.fileSystemNode != null) {
-      this.arObjectManager!.removeNode(this.fileSystemNode!);
-      this.fileSystemNode = null;
+    if (fileSystemNode != null) {
+      arObjectManager!.removeNode(fileSystemNode!);
+      fileSystemNode = null;
     } else {
       if (!fileDownloadReady) {
-        this.arSessionManager?.onError(
+        arSessionManager?.onError(
             "Model is still downloading. Please try again in a moment.");
         return;
       }
       final dir = (await getApplicationDocumentsDirectory()).path;
       final filePath = File('$dir/LocalDuck.glb');
       if (!await filePath.exists()) {
-        this
-            .arSessionManager
+        arSessionManager
             ?.onError("Model file not found. Please retry download.");
         return;
       }
@@ -204,13 +203,13 @@ class _LocalAndWebObjectsWidgetState extends State<LocalAndWebObjectsWidget> {
           type: NodeType.fileSystemAppFolderGLTF2,
           uri: "Chicken_01.gltf",
           scale: Vector3(0.2, 0.2, 0.2));*/
-      bool? didAddFileSystemNode = await this.arObjectManager!.addNode(newNode);
-      this.fileSystemNode = (didAddFileSystemNode!) ? newNode : null;
+      bool? didAddFileSystemNode = await arObjectManager!.addNode(newNode);
+      fileSystemNode = (didAddFileSystemNode!) ? newNode : null;
     }
   }
 
   Future<void> onLocalObjectShuffleButtonPressed() async {
-    if (this.localObjectNode != null) {
+    if (localObjectNode != null) {
       var newScale = Random().nextDouble() / 3;
       var newTranslationAxis = Random().nextInt(3);
       var newTranslationAmount = Random().nextDouble() / 3;
@@ -227,12 +226,12 @@ class _LocalAndWebObjectsWidgetState extends State<LocalAndWebObjectsWidget> {
       newTransform.rotate(newRotationAxis, newRotationAmount);
       newTransform.scale(newScale);
 
-      this.localObjectNode!.transform = newTransform;
+      localObjectNode!.transform = newTransform;
     }
   }
 
   Future<void> onWebObjectShuffleButtonPressed() async {
-    if (this.webObjectNode != null) {
+    if (webObjectNode != null) {
       var newScale = Random().nextDouble() / 3;
       var newTranslationAxis = Random().nextInt(3);
       var newTranslationAmount = Random().nextDouble() / 3;
@@ -249,7 +248,7 @@ class _LocalAndWebObjectsWidgetState extends State<LocalAndWebObjectsWidget> {
       newTransform.rotate(newRotationAxis, newRotationAmount);
       newTransform.scale(newScale);
 
-      this.webObjectNode!.transform = newTransform;
+      webObjectNode!.transform = newTransform;
     }
   }
 }

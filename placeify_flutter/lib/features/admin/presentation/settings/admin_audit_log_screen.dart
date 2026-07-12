@@ -134,13 +134,13 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                   BottomNavTokens.scrollBottomPadding,
                 ),
                 itemCount: 8,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (_, __) => const SizedBox(
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
+                itemBuilder: (_, _) => const SizedBox(
                   height: 88,
                   child: ShimmerLoader(borderRadius: AppRadii.md),
                 ),
               ),
-              error: (_, __) => Center(
+              error: (_, _) => Center(
                 child: TextButton(
                   onPressed: () =>
                       ref.read(adminAuditLogProvider.notifier).refresh(),
@@ -178,7 +178,7 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                       BottomNavTokens.scrollBottomPadding,
                     ),
                     itemCount: filtered.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
                       final entry = filtered[index];
                       return _AuditLogTile(

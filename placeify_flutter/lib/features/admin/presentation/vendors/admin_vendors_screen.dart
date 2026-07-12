@@ -89,7 +89,7 @@ class _AdminVendorsScreenState extends ConsumerState<AdminVendorsScreen> {
                   ? const _VendorsShimmer()
                   : vendorsAsync.when(
                       loading: () => const _VendorsShimmer(),
-                      error: (_, __) => _VendorsError(onRetry: _onRefresh),
+                      error: (_, _) => _VendorsError(onRetry: _onRefresh),
                       data: (vendors) {
                         final query = _searchQuery.trim().toLowerCase();
                         final filtered = query.isEmpty
@@ -204,7 +204,7 @@ class _VendorsShimmer extends StatelessWidget {
         BottomNavTokens.scrollBottomPadding,
       ),
       itemCount: 5,
-      itemBuilder: (_, __) => const Padding(
+      itemBuilder: (_, _) => const Padding(
         padding: EdgeInsets.only(bottom: 10),
         child: SizedBox(
           height: 76,

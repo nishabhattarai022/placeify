@@ -238,7 +238,7 @@ class _VendorProductsScreenState extends ConsumerState<VendorProductsScreen> {
                 loading: () => _ProductsListShimmer(
                   viewMode: _viewMode,
                 ),
-                error: (_, __) => VendorProductsEmptyState(
+                error: (_, _) => VendorProductsEmptyState(
                   onClearFilters: _clearFilters,
                 ),
                 data: (products) {
@@ -742,15 +742,15 @@ class _ProductsListShimmer extends StatelessWidget {
           childAspectRatio: 0.78,
         ),
         itemCount: 6,
-        itemBuilder: (_, __) => const ShimmerLoader(borderRadius: AppRadii.md),
+        itemBuilder: (_, _) => const ShimmerLoader(borderRadius: AppRadii.md),
       );
     }
 
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, AppSpacing.xxl),
       itemCount: 5,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, __) => const SizedBox(
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (_, _) => const SizedBox(
         height: 76,
         child: ShimmerLoader(borderRadius: AppRadii.md),
       ),

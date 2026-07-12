@@ -106,7 +106,7 @@ class ARObjectManager {
           }
       }
     } catch (e) {
-      print('Error caught: ' + e.toString());
+      print('Error caught: $e');
     }
     return Future.value();
   }
@@ -114,7 +114,7 @@ class ARObjectManager {
   /// Sets up the AR Object Manager
   /// [iosScaleFactor] and [androidScaleFactor] control native model scaling.
   /// Defaults match current native behavior.
-  onInitialize(
+  void onInitialize(
       {double iosScaleFactor = 0.4, double androidScaleFactor = 0.33}) {
     _channel.invokeMethod<void>('init', {
       'iosScaleFactor': iosScaleFactor,
@@ -145,7 +145,7 @@ class ARObjectManager {
   }
 
   /// Remove given node from the AR Scene
-  removeNode(ARNode node) {
+  void removeNode(ARNode node) {
     _channel.invokeMethod<String>('removeNode', {'name': node.name});
   }
 }

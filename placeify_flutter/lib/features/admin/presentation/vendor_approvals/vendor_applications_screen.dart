@@ -85,7 +85,7 @@ class _VendorApplicationsScreenState
                   ? const _ApplicationsShimmer()
                   : applicationsAsync.when(
                       loading: () => const _ApplicationsShimmer(),
-                      error: (_, __) => _ApplicationsError(onRetry: _onRefresh),
+                      error: (_, _) => _ApplicationsError(onRetry: _onRefresh),
                       data: (applications) {
                         if (applications.isEmpty) {
                           return RefreshIndicator(
@@ -150,7 +150,7 @@ class _ApplicationsShimmer extends StatelessWidget {
         BottomNavTokens.scrollBottomPadding,
       ),
       itemCount: 5,
-      itemBuilder: (_, __) => const Padding(
+      itemBuilder: (_, _) => const Padding(
         padding: EdgeInsets.only(bottom: 10),
         child: SizedBox(
           height: 76,

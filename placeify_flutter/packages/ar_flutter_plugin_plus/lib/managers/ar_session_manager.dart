@@ -56,7 +56,7 @@ class ARSessionManager {
           await _channel.invokeMethod<List<dynamic>>('getCameraPose', {});
       return MatrixConverter().fromJson(serializedCameraPose!);
     } catch (e) {
-      print('Error caught: ' + e.toString());
+      print('Error caught: $e');
       return null;
     }
   }
@@ -73,7 +73,7 @@ class ARSessionManager {
       });
       return MatrixConverter().fromJson(serializedCameraPose!);
     } catch (e) {
-      print('Error caught: ' + e.toString());
+      print('Error caught: $e');
       return null;
     }
   }
@@ -167,7 +167,7 @@ class ARSessionManager {
           }
       }
     } catch (e) {
-      print('Error caught: ' + e.toString());
+      print('Error caught: $e');
     }
     return Future.value();
   }
@@ -216,7 +216,7 @@ class ARSessionManager {
         'multiplier': multiplier,
       });
     } catch (e) {
-      print('Error caught: ' + e.toString());
+      print('Error caught: $e');
     }
   }
 
@@ -231,7 +231,7 @@ class ARSessionManager {
       );
       return result ?? false;
     } catch (e) {
-      print('Error caught: ' + e.toString());
+      print('Error caught: $e');
       return false;
     }
   }
@@ -250,12 +250,12 @@ class ARSessionManager {
         'trackingImagePaths': trackingImagePaths,
       });
     } catch (e) {
-      print('Error caught: ' + e.toString());
+      print('Error caught: $e');
     }
   }
 
   /// Displays the [errorMessage] in a snackbar of the parent widget
-  onError(String errorMessage) {
+  void onError(String errorMessage) {
     ScaffoldMessenger.of(buildContext).showSnackBar(SnackBar(
         content: Text(errorMessage),
         action: SnackBarAction(
@@ -266,7 +266,7 @@ class ARSessionManager {
 
   /// Dispose the AR view on the platforms to pause the scenes and disconnect the platform handlers.
   /// You should call this before removing the AR view to prevent out of memory erros
-  dispose() async {
+  Future<void> dispose() async {
     try {
       await _channel.invokeMethod<void>("dispose");
     } catch (e) {

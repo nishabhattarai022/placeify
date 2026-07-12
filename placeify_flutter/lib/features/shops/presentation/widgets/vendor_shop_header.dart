@@ -144,7 +144,7 @@ class _ShopLogo extends StatelessWidget {
           width: 48,
           height: 48,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const _LogoPlaceholder(),
+          errorBuilder: (_, _, _) => const _LogoPlaceholder(),
         ),
       );
     }
@@ -156,7 +156,7 @@ class _ShopLogo extends StatelessWidget {
           width: 48,
           height: 48,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const _LogoPlaceholder(),
+          errorBuilder: (_, _, _) => const _LogoPlaceholder(),
         ),
       );
     }
@@ -167,7 +167,7 @@ class _ShopLogo extends StatelessWidget {
         width: 48,
         height: 48,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const _LogoPlaceholder(),
+        errorBuilder: (_, _, _) => const _LogoPlaceholder(),
       ),
     );
   }

@@ -44,7 +44,7 @@ class AdminVendorDetailScreen extends ConsumerWidget {
       ),
       body: vendorAsync.when(
         loading: () => const _VendorDetailShimmer(),
-        error: (_, __) => _VendorDetailError(
+        error: (_, _) => _VendorDetailError(
           onRetry: () => ref.invalidate(vendorApplicationDetailProvider(vendorId)),
         ),
         data: (vendor) {

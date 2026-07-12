@@ -5,6 +5,7 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
 
 import '../../auth/auth_email_resolver.dart';
+import '../../auth/admin_auth_config.dart';
 import '../../generated/protocol.dart';
 import '../../shared/session_service.dart';
 import 'order_count_store.dart';
@@ -172,8 +173,8 @@ class UserService {
   Future<void> provisionDemoAdmin(Session session) async {
     _requireDevelopmentMode(session);
 
-    const email = 'admin@placeify.com';
-    const password = 'demo1234';
+    final email = AdminAuthConfig.adminEmail(session);
+    final password = AdminAuthConfig.adminPassword(session);
     const fullName = 'Demo Admin';
     const devCode = '123456';
 
@@ -302,12 +303,13 @@ class UserService {
   Future<User> ensureDemoAdmin(Session session) async {
     _requireDevelopmentMode(session);
 
-    const demoAdminEmail = 'admin@placeify.com';
+    final demoAdminEmail = AdminAuthConfig.adminEmail(session);
     final user = await SessionService.requireUser(session);
     final email = await AuthEmailResolver.requireAuthEmail(session, user);
     if (email != demoAdminEmail) {
       throw PlaceifyException(
-        message: 'Demo admin access is limited to $demoAdminEmail.',
+        message:
+            'Demo admin access is limited to the configured admin account.',
         code: 'DEMO_ADMIN_ONLY',
       );
     }

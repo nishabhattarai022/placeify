@@ -74,13 +74,13 @@ class AdminNotificationsScreen extends ConsumerWidget {
                   BottomNavTokens.scrollBottomPadding,
                 ),
                 itemCount: 6,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (_, __) => const SizedBox(
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
+                itemBuilder: (_, _) => const SizedBox(
                   height: 88,
                   child: ShimmerLoader(borderRadius: AppRadii.md),
                 ),
               ),
-              error: (_, __) => Center(
+              error: (_, _) => Center(
                 child: TextButton(
                   onPressed: () =>
                       ref.read(adminNotificationsProvider.notifier).refresh(),
@@ -112,7 +112,7 @@ class AdminNotificationsScreen extends ConsumerWidget {
                       BottomNavTokens.scrollBottomPadding,
                     ),
                     itemCount: notifications.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
                       final notification = notifications[index];
                       return _NotificationTile(

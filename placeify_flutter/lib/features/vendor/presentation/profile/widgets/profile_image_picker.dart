@@ -101,7 +101,7 @@ class ProfileImagePicker extends StatelessWidget {
             : Image.network(
                 imagePath!,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
+                errorBuilder: (_, _, _) =>
                     const Center(child: Icon(Icons.broken_image_outlined)),
               ),
         if (isEditMode && onTap != null)

@@ -118,7 +118,7 @@ class _ImageLayer extends StatelessWidget {
     return Image.file(
       File(path),
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Container(
+      errorBuilder: (_, _, _) => Container(
         color: AppColors.cream,
         alignment: Alignment.center,
         child: const Icon(Icons.broken_image_outlined, color: AppColors.bark),

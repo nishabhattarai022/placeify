@@ -30,7 +30,7 @@ class AdminUserDetailScreen extends ConsumerWidget {
           Expanded(
             child: userAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => const Center(child: Text('Could not load user')),
+              error: (_, _) => const Center(child: Text('Could not load user')),
               data: (user) {
                 if (user == null) {
                   return const Center(child: Text('User not found'));

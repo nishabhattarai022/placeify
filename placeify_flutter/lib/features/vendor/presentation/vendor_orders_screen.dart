@@ -133,7 +133,7 @@ class _VendorOrdersScreenState extends ConsumerState<VendorOrdersScreen> {
             Expanded(
               child: ordersAsync.when(
                 loading: () => const _OrdersListShimmer(),
-                error: (_, __) => VendorOrdersEmptyState(
+                error: (_, _) => VendorOrdersEmptyState(
                   tab: _selectedTab,
                   onSwitchTab: (tab) => setState(() => _selectedTab = tab),
                 ),
@@ -296,8 +296,8 @@ class _OrdersListShimmer extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, AppSpacing.xxl),
       itemCount: 5,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, __) => const SizedBox(
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (_, _) => const SizedBox(
         height: 76,
         child: ShimmerLoader(borderRadius: AppRadii.md),
       ),

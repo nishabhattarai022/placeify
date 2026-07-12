@@ -85,7 +85,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                   ? const _UsersShimmer()
                   : usersAsync.when(
                       loading: () => const _UsersShimmer(),
-                      error: (_, __) => _UsersError(onRetry: _onRefresh),
+                      error: (_, _) => _UsersError(onRetry: _onRefresh),
                       data: (users) {
                         if (users.isEmpty) {
                           return RefreshIndicator(
@@ -282,7 +282,7 @@ class _UsersShimmer extends StatelessWidget {
         BottomNavTokens.scrollBottomPadding,
       ),
       itemCount: 6,
-      itemBuilder: (_, __) => const Padding(
+      itemBuilder: (_, _) => const Padding(
         padding: EdgeInsets.only(bottom: 10),
         child: SizedBox(
           height: 76,

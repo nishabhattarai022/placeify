@@ -123,7 +123,7 @@ class _VendorNotificationsScreenState
           ),
           notificationsAsync.when(
             loading: () => const Expanded(child: _NotificationsShimmer()),
-            error: (_, __) => Expanded(
+            error: (_, _) => Expanded(
               child: _NotificationsError(onRetry: _onRefresh),
             ),
             data: (state) {
@@ -619,8 +619,8 @@ class _NotificationsShimmer extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
       itemCount: 6,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, __) => const SizedBox(
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (_, _) => const SizedBox(
         height: 96,
         child: ShimmerLoader(borderRadius: AppRadii.md),
       ),

@@ -25,7 +25,7 @@ class VendorPaymentsScreen extends ConsumerWidget {
       body: SafeArea(
         child: paymentsAsync.when(
           loading: () => const _PaymentsShimmer(),
-          error: (_, __) => _PaymentsError(
+          error: (_, _) => _PaymentsError(
             onRetry: () => ref.invalidate(vendorPaymentsProvider),
           ),
           data: (data) {

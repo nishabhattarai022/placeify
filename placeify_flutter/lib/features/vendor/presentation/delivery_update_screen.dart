@@ -128,7 +128,7 @@ class _DeliveryUpdateScreenState extends ConsumerState<DeliveryUpdateScreen> {
             ),
           ],
         ),
-        error: (_, __) => _DeliveryUpdateError(
+        error: (_, _) => _DeliveryUpdateError(
           onRetry: () =>
               ref.invalidate(vendorOrderDetailProvider(widget.orderId)),
         ),

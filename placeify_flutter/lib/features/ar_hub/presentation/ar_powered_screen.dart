@@ -249,7 +249,7 @@ class _ArDefaultPreview extends StatelessWidget {
       child: Image.asset(
         'assets/images/products/chair_green.png',
         fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => const ColoredBox(
+        errorBuilder: (_, _, _) => const ColoredBox(
           color: Color(0xFFF3EFE8),
           child: Center(
             child: Icon(

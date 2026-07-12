@@ -104,7 +104,7 @@ class _ArProductCarouselStripState extends State<ArProductCarouselStrip> {
                 controller: _scrollController,
                 scrollDirection: Axis.horizontal,
                 itemCount: widget.products.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 10),
+                separatorBuilder: (_, _) => const SizedBox(width: 10),
                 itemBuilder: (context, index) {
                   final product = widget.products[index];
                   final isActive = index == widget.activeIndex;

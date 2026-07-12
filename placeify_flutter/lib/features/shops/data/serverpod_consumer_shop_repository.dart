@@ -1,5 +1,4 @@
 import 'package:placeify_client/placeify_client.dart' hide Product;
-import 'package:serverpod_client/serverpod_client.dart';
 
 import '../../../core/config/placeify_server_client.dart';
 import '../../home/domain/models/product.dart';

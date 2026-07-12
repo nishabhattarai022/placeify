@@ -71,7 +71,7 @@ class _AmbientStripState extends State<AmbientStrip>
             child: Image.asset(
               widget.imagePath,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) =>
+              errorBuilder: (_, _, _) =>
                   const ColoredBox(color: _fallbackBg),
             ),
           ),

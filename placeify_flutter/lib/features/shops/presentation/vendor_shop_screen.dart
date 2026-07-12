@@ -101,7 +101,7 @@ class _VendorShopScreenState extends ConsumerState<VendorShopScreen> {
       body: SafeArea(
         child: shopAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => _VendorShopError(
+          error: (_, _) => _VendorShopError(
             onBack: () => context.pop(),
           ),
           data: (shop) {
@@ -111,7 +111,7 @@ class _VendorShopScreenState extends ConsumerState<VendorShopScreen> {
 
             return productsAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => _VendorShopScaffold(
+              error: (_, _) => _VendorShopScaffold(
                 shop: shop,
                 products: const [],
                 onOpenSortSheet: _openSortSheet,

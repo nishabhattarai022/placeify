@@ -103,14 +103,14 @@ class _ShopThumbnail extends StatelessWidget {
               width: 48,
               height: 48,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const _PlaceholderThumbnail(),
+              errorBuilder: (_, _, _) => const _PlaceholderThumbnail(),
             )
           : Image.network(
               logoUrl,
               width: 48,
               height: 48,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const _PlaceholderThumbnail(),
+              errorBuilder: (_, _, _) => const _PlaceholderThumbnail(),
             );
     }
 
