@@ -11,3 +11,6 @@ pubspec_overrides.yaml
 
 # Large local-only splash videos (app uses placeify_showcase.mp4)
 placeify_flutter/assets/video/*uhd*.mp4
+
+# Local Flutter backup
+placeify_flutter_backup_20260709121658/
