@@ -68,6 +68,18 @@ class CurrentUser extends _$CurrentUser {
     if (state.hasError) throw _unwrapError(state.error!);
   }
 
+  Future<void> signInAsAdmin({
+    required String adminId,
+    required String password,
+  }) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final repo = await ref.read(authRepositoryProvider.future);
+      return repo.signInAsAdmin(adminId: adminId, password: password);
+    });
+    if (state.hasError) throw _unwrapError(state.error!);
+  }
+
   Future<void> signOut() async {
     final repo = await ref.read(authRepositoryProvider.future);
     await repo.signOut();

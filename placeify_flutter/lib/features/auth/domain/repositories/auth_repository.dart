@@ -20,6 +20,12 @@ abstract interface class AuthRepository {
   /// Confirms the signed-in user has an active admin profile on the server.
   Future<bool> verifyAdminAccess();
 
+  /// Dedicated admin authorization (not consumer email login).
+  Future<AppUser> signInAsAdmin({
+    required String adminId,
+    required String password,
+  });
+
   /// All registered users (admin user-management and application joins).
   Future<List<AppUser>> getAllUsers();
 

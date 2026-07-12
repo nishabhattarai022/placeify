@@ -166,6 +166,41 @@ class ServerpodAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<AppUser> signInAsAdmin({
+    required String adminId,
+    required String password,
+  }) async {
+    return _withConnectionRetry(
+      () => _signInAsAdmin(adminId: adminId, password: password),
+    );
+  }
+
+  Future<AppUser> _signInAsAdmin({
+    required String adminId,
+    required String password,
+  }) async {
+    final normalizedId = adminId.trim().toLowerCase();
+    try {
+      final authSuccess = await client.adminAuth.login(
+        normalizedId,
+        password,
+      );
+      await client.auth.updateSignedInUser(authSuccess);
+      await _prefs.setString(_sessionEmailKey, normalizedId);
+
+      final verified = await verifyAdminAccess();
+      if (!verified) {
+        await signOut();
+        throw AuthException('Admin access denied.');
+      }
+
+      return _loadAppUser(normalizedId);
+    } catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
   Future<AppUser> updateVendorStatus({
     required VendorStatus status,
     String? vendorId,
@@ -444,6 +479,11 @@ class ServerpodAuthRepository implements AuthRepository {
       return AuthException(error.message);
     }
 
+    if (message.contains('admin_auth_failed') ||
+        message.contains('invalid admin credentials') ||
+        message.contains('admin access denied')) {
+      return AuthException('Invalid admin credentials.');
+    }
     if (message.contains('invalid_current_password')) {
       return AuthException('Current password is incorrect.');
     }

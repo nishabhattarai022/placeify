@@ -1,12 +1,11 @@
-/// Demo account for local mock sign-in (development / QA).
+/// Demo account for local mock / consumer QA sign-in.
+///
+/// Admin credentials are never shipped in the client. Use the Admin access
+/// screen; the server validates against its configured admin identity.
 abstract final class DemoCredentials {
   static const String email = 'placify@gmail.com';
   static const String password = 'demo1234';
   static const String fullName = 'Demo User';
-
-  static const String adminEmail = 'admin@placeify.com';
-  static const String adminPassword = 'demo123';
-  static const String adminFullName = 'Demo Admin';
 
   static const String hint = 'Demo: $email / $password';
 }

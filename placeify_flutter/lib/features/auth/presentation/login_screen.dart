@@ -52,12 +52,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     await _submit(destination: '/home');
   }
 
-  Future<void> _signInWithDemoAdmin() async {
-    _emailController.text = DemoCredentials.adminEmail;
-    _passwordController.text = DemoCredentials.adminPassword;
-    await _submit(destination: '/admin');
-  }
-
   Future<void> _submit({required String destination}) async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_isSubmitting) return;
@@ -66,7 +60,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     await HapticService.heavy();
 
     try {
-      await ref.read(currentUserProvider.notifier).signIn(
+      await ref
+          .read(currentUserProvider.notifier)
+          .signIn(
             email: _emailController.text.trim(),
             password: _passwordController.text,
           );
@@ -270,16 +266,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   ? null
                                   : () {
                                       HapticService.light();
-                                      _signInWithDemoAdmin();
+                                      context.push('/login/admin');
                                     },
                               child: Text(
-                                'Demo Admin Access',
+                                'Admin access',
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
-                                  color: AppColors.onboardingTextBody.withValues(
-                                    alpha: 0.65,
-                                  ),
+                                  color: AppColors.onboardingTextBody
+                                      .withValues(
+                                        alpha: 0.65,
+                                      ),
                                 ),
                               ),
                             ),

@@ -7,6 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../core/widgets/toast_overlay.dart';
+import '../../admin/domain/constants/admin_routes.dart';
 import '../../admin/domain/enums/user_role.dart';
 import '../../splash/presentation/widgets/onboarding/primary_cta_button.dart';
 import '../constants/auth_assets.dart';
@@ -26,7 +27,7 @@ class AdminLoginScreen extends ConsumerStatefulWidget {
 class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
   bool _isSubmitting = false;
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _adminIdController = TextEditingController();
   final _passwordController = TextEditingController();
 
   @override
@@ -42,7 +43,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _adminIdController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -55,22 +56,28 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     await HapticService.heavy();
 
     try {
-      await ref.read(currentUserProvider.notifier).signIn(
-            email: _emailController.text.trim(),
+      await ref
+          .read(currentUserProvider.notifier)
+          .signInAsAdmin(
+            adminId: _adminIdController.text.trim(),
             password: _passwordController.text,
           );
       if (!mounted) return;
 
       final user = ref.read(currentUserProvider).value;
       if (user?.role == UserRole.admin) {
-        context.go('/admin');
+        context.go(AdminRoutes.dashboard);
       } else {
-        context.go('/home');
+        await ref.read(currentUserProvider.notifier).signOut();
+        if (!mounted) return;
+        PlaceifyToast.show(context, 'Invalid admin credentials.');
       }
     } on AuthException catch (e) {
       if (mounted) PlaceifyToast.show(context, e.message);
     } catch (_) {
-      if (mounted) PlaceifyToast.show(context, 'Log in failed. Try again.');
+      if (mounted) {
+        PlaceifyToast.show(context, 'Invalid admin credentials.');
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -81,13 +88,9 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     return null;
   }
 
-  String? _emailValidator(String? value) {
-    final required = _required(value, 'Enter your email');
+  String? _adminIdValidator(String? value) {
+    final required = _required(value, 'Enter your admin ID');
     if (required != null) return required;
-    final email = value!.trim();
-    if (!email.contains('@') || !email.contains('.')) {
-      return 'Enter a valid email';
-    }
     return null;
   }
 
@@ -168,7 +171,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                           ),
                           const SizedBox(height: 10),
                           Text(
-                            'Sign in with your admin credentials to manage the platform.',
+                            'Sign in with your admin ID and password to manage the platform.',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w300,
@@ -180,12 +183,12 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                           ),
                           SizedBox(height: topPadding > 0 ? 36 : 40),
                           AuthTextField(
-                            label: 'Email',
-                            hint: 'Admin email',
-                            controller: _emailController,
+                            label: 'Admin ID',
+                            hint: 'Your admin ID',
+                            controller: _adminIdController,
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
-                            validator: _emailValidator,
+                            validator: _adminIdValidator,
                           ),
                           const SizedBox(height: 18),
                           AuthTextField(
@@ -198,7 +201,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                           ),
                           const SizedBox(height: 32),
                           PrimaryCtaButton(
-                            label: _isSubmitting ? 'Logging in...' : 'Log In',
+                            label: _isSubmitting ? 'Verifying...' : 'Authorize',
                             onTap: _submit,
                           ),
                         ],

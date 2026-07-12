@@ -12,9 +12,9 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'dart:async' as _i2;
-import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
-    as _i3;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
+    as _i3;
+import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
     as _i4;
 import 'package:placeify_client/src/protocol/user.dart' as _i5;
 import 'package:placeify_client/src/protocol/user_role.dart' as _i6;
@@ -102,6 +102,28 @@ import 'package:placeify_client/src/protocol/wishlist_page.dart' as _i64;
 import 'package:placeify_client/src/protocol/wishlist_item.dart' as _i65;
 import 'protocol.dart' as _i66;
 
+/// Unauthenticated admin authorization endpoint.
+/// {@category Endpoint}
+class EndpointAdminAuth extends _i1.EndpointRef {
+  EndpointAdminAuth(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'adminAuth';
+
+  /// Verifies admin credentials and returns an auth session for an admin user.
+  _i2.Future<_i3.AuthSuccess> login(
+    String adminId,
+    String password,
+  ) => caller.callServerEndpoint<_i3.AuthSuccess>(
+    'adminAuth',
+    'login',
+    {
+      'adminId': adminId,
+      'password': password,
+    },
+  );
+}
+
 /// Development-only auth helpers (no login required).
 /// {@category Endpoint}
 class EndpointDevAuth extends _i1.EndpointRef {
@@ -122,7 +144,7 @@ class EndpointDevAuth extends _i1.EndpointRef {
 /// are made available on the server and enable the corresponding sign-in widget
 /// on the client.
 /// {@category Endpoint}
-class EndpointEmailIdp extends _i3.EndpointEmailIdpBase {
+class EndpointEmailIdp extends _i4.EndpointEmailIdpBase {
   EndpointEmailIdp(_i1.EndpointCaller caller) : super(caller);
 
   @override
@@ -138,10 +160,10 @@ class EndpointEmailIdp extends _i3.EndpointEmailIdpBase {
   ///
   /// Throws an [AuthUserBlockedException] if the auth user is blocked.
   @override
-  _i2.Future<_i4.AuthSuccess> login({
+  _i2.Future<_i3.AuthSuccess> login({
     required String email,
     required String password,
-  }) => caller.callServerEndpoint<_i4.AuthSuccess>(
+  }) => caller.callServerEndpoint<_i3.AuthSuccess>(
     'emailIdp',
     'login',
     {
@@ -206,10 +228,10 @@ class EndpointEmailIdp extends _i3.EndpointEmailIdpBase {
   ///
   /// Returns a session for the newly created user.
   @override
-  _i2.Future<_i4.AuthSuccess> finishRegistration({
+  _i2.Future<_i3.AuthSuccess> finishRegistration({
     required String registrationToken,
     required String password,
-  }) => caller.callServerEndpoint<_i4.AuthSuccess>(
+  }) => caller.callServerEndpoint<_i3.AuthSuccess>(
     'emailIdp',
     'finishRegistration',
     {
@@ -304,7 +326,7 @@ class EndpointEmailIdp extends _i3.EndpointEmailIdpBase {
 /// By extending [RefreshJwtTokensEndpoint], the JWT token refresh endpoint
 /// is made available on the server and enables automatic token refresh on the client.
 /// {@category Endpoint}
-class EndpointJwtRefresh extends _i4.EndpointRefreshJwtTokens {
+class EndpointJwtRefresh extends _i3.EndpointRefreshJwtTokens {
   EndpointJwtRefresh(_i1.EndpointCaller caller) : super(caller);
 
   @override
@@ -329,9 +351,9 @@ class EndpointJwtRefresh extends _i4.EndpointRefreshJwtTokens {
   /// This endpoint is unauthenticated, meaning the client won't include any
   /// authentication information with the call.
   @override
-  _i2.Future<_i4.AuthSuccess> refreshAccessToken({
+  _i2.Future<_i3.AuthSuccess> refreshAccessToken({
     required String refreshToken,
-  }) => caller.callServerEndpoint<_i4.AuthSuccess>(
+  }) => caller.callServerEndpoint<_i3.AuthSuccess>(
     'jwtRefresh',
     'refreshAccessToken',
     {'refreshToken': refreshToken},
@@ -1637,13 +1659,13 @@ class EndpointWishlist extends _i1.EndpointRef {
 
 class Modules {
   Modules(Client client) {
-    auth = _i4.Caller(client);
-    auth_idp = _i3.Caller(client);
+    auth = _i3.Caller(client);
+    auth_idp = _i4.Caller(client);
   }
 
-  late final _i4.Caller auth;
+  late final _i3.Caller auth;
 
-  late final _i3.Caller auth_idp;
+  late final _i4.Caller auth_idp;
 }
 
 class Client extends _i1.ServerpodClientShared {
@@ -1675,6 +1697,7 @@ class Client extends _i1.ServerpodClientShared {
          disconnectStreamsOnLostInternetConnection:
              disconnectStreamsOnLostInternetConnection,
        ) {
+    adminAuth = EndpointAdminAuth(this);
     devAuth = EndpointDevAuth(this);
     emailIdp = EndpointEmailIdp(this);
     jwtRefresh = EndpointJwtRefresh(this);
@@ -1695,6 +1718,8 @@ class Client extends _i1.ServerpodClientShared {
     wishlist = EndpointWishlist(this);
     modules = Modules(this);
   }
+
+  late final EndpointAdminAuth adminAuth;
 
   late final EndpointDevAuth devAuth;
 
@@ -1736,6 +1761,7 @@ class Client extends _i1.ServerpodClientShared {
 
   @override
   Map<String, _i1.EndpointRef> get endpointRefLookup => {
+    'adminAuth': adminAuth,
     'devAuth': devAuth,
     'emailIdp': emailIdp,
     'jwtRefresh': jwtRefresh,

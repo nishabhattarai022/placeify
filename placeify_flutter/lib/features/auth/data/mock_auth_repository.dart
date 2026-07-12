@@ -94,6 +94,41 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<AppUser> signInAsAdmin({
+    required String adminId,
+    required String password,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    final normalizedId = adminId.trim().toLowerCase();
+    // Mock-only identity for local UI tests (not used by Serverpod builds).
+    const mockAdminId = 'admin@placeify.com';
+    const mockAdminPassword = 'demo1234';
+    if (normalizedId != mockAdminId || password != mockAdminPassword) {
+      throw AuthException('Invalid admin credentials.');
+    }
+
+    final users = await _loadUsers();
+    final index = users.indexWhere((u) => u.email == normalizedId);
+    late final _StoredUser admin;
+    if (index == -1) {
+      admin = _StoredUser(
+        id: 'admin-1',
+        fullName: 'Demo Admin',
+        email: normalizedId,
+        password: mockAdminPassword,
+        role: UserRole.admin,
+      );
+      users.add(admin);
+    } else {
+      admin = users[index].copyWith(role: UserRole.admin);
+      users[index] = admin;
+    }
+    await _saveUsers(users);
+    await _prefs.setString(_sessionEmailKey, normalizedId);
+    return admin.toAppUser();
+  }
+
+  @override
   Future<void> signOut() async {
     await _prefs.remove(_sessionEmailKey);
   }
