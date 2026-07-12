@@ -7,7 +7,6 @@ import '../../../core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import '../../../core/widgets/toast_overlay.dart';
 import '../data/profile_constants.dart';
 import '../data/profile_notification_mapper.dart';
-import 'providers/profile_in_app_notifications_provider.dart';
 import 'providers/profile_notifications_provider.dart';
 import 'widgets/profile_notifications_inbox_section.dart';
 import 'widgets/profile_sub_hero.dart';

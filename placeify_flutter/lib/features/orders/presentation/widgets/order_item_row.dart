@@ -134,7 +134,7 @@ class _OrderItemImage extends StatelessWidget {
         child: Image.asset(
           imageUrl,
           fit: fit,
-          errorBuilder: (_, __, ___) => _fallbackIcon(),
+          errorBuilder: (_, _, _) => _fallbackIcon(),
         ),
       );
     }
@@ -142,8 +142,8 @@ class _OrderItemImage extends StatelessWidget {
     return CachedNetworkImage(
       imageUrl: imageUrl,
       fit: fit,
-      placeholder: (_, __) => const ShimmerLoader(),
-      errorWidget: (_, __, ___) => _fallbackIcon(),
+      placeholder: (_, _) => const ShimmerLoader(),
+      errorWidget: (_, _, _) => _fallbackIcon(),
     );
   }
 

@@ -159,7 +159,7 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
             Expanded(
               child: ordersAsync.when(
                 loading: () => const _OrdersListShimmer(),
-                error: (_, __) => _OrdersErrorState(onRetry: _onRefresh),
+                error: (_, _) => _OrdersErrorState(onRetry: _onRefresh),
                 data: (_) => Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -246,7 +246,7 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
           BottomNavTokens.scrollBottomPadding + bottomInset,
         ),
         itemCount: filteredOrders.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 32),
+        separatorBuilder: (_, _) => const SizedBox(height: 32),
         itemBuilder: (context, index) {
           final order = filteredOrders[index];
           final card = OrderCard(
@@ -329,8 +329,8 @@ class _OrdersListShimmer extends StatelessWidget {
         AppSpacing.xxl,
       ),
       itemCount: 5,
-      separatorBuilder: (_, __) => const SizedBox(height: 32),
-      itemBuilder: (_, __) => const SizedBox(
+      separatorBuilder: (_, _) => const SizedBox(height: 32),
+      itemBuilder: (_, _) => const SizedBox(
         height: 320,
         child: ShimmerLoader(
           borderRadius: BorderRadius.all(

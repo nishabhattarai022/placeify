@@ -37,7 +37,7 @@ class OrderDetailScreen extends ConsumerWidget {
       backgroundColor: AppColors.cream,
       body: orderAsync.when(
         loading: () => const _OrderDetailShimmer(),
-        error: (_, __) => _OrderDetailError(
+        error: (_, _) => _OrderDetailError(
           onRetry: () => ref.invalidate(orderByIdProvider(orderId)),
         ),
         data: (order) {

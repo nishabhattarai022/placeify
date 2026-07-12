@@ -275,7 +275,7 @@ class _OrderHeroImage extends StatelessWidget {
         fit: BoxFit.contain,
         width: double.infinity,
         height: double.infinity,
-        errorBuilder: (_, __, ___) => _fallbackIcon(),
+        errorBuilder: (_, _, _) => _fallbackIcon(),
       );
     }
 
@@ -284,8 +284,8 @@ class _OrderHeroImage extends StatelessWidget {
       fit: BoxFit.cover,
       width: double.infinity,
       height: double.infinity,
-      placeholder: (_, __) => const ShimmerLoader(),
-      errorWidget: (_, __, ___) => _fallbackIcon(),
+      placeholder: (_, _) => const ShimmerLoader(),
+      errorWidget: (_, _, _) => _fallbackIcon(),
     );
   }
 

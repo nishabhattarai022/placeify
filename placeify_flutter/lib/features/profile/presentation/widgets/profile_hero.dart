@@ -77,7 +77,7 @@ class ProfileHero extends ConsumerWidget {
                 const SizedBox(height: 12),
                 userAsync.when(
                   loading: () => const _UserInfoShimmer(),
-                  error: (_, __) => const _UserInfoPlaceholder(),
+                  error: (_, _) => const _UserInfoPlaceholder(),
                   data: (user) => user == null
                       ? const _UserInfoPlaceholder()
                       : _UserInfo(name: user.fullName, email: user.email),

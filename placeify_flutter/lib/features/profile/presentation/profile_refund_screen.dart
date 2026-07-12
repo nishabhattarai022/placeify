@@ -81,7 +81,7 @@ class _ProfileRefundScreenState extends ConsumerState<ProfileRefundScreen> {
           Expanded(
             child: refundsAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => _RefundBody(
+              error: (_, _) => _RefundBody(
                 state: ProfileRefundsState.empty,
                 order: _selectedOrder,
                 reason: _reason,

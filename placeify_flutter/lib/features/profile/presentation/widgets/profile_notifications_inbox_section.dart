@@ -18,7 +18,7 @@ class ProfileNotificationsInboxSection extends ConsumerWidget {
         padding: EdgeInsets.only(bottom: 20),
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (_, __) => const Padding(
+      error: (_, _) => const Padding(
         padding: EdgeInsets.only(bottom: 20),
         child: Text(
           'Could not load notifications.',

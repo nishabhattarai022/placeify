@@ -33,7 +33,7 @@ class OrderTrackingScreen extends ConsumerWidget {
       backgroundColor: AppColors.cream,
       body: orderAsync.when(
         loading: () => const _TrackingShimmer(),
-        error: (_, __) => _TrackingError(
+        error: (_, _) => _TrackingError(
           onRetry: () => ref.invalidate(orderByIdProvider(orderId)),
         ),
         data: (order) {

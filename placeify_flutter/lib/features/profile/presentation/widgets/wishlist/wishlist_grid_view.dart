@@ -100,7 +100,7 @@ class WishlistGridView extends ConsumerWidget {
                 bottom,
               ),
               itemCount: products.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 32),
+              separatorBuilder: (_, _) => const SizedBox(height: 32),
               itemBuilder: (context, index) {
                 final product = products[index];
                 return CategoryProductListTile(
