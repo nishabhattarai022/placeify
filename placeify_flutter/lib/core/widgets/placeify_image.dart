@@ -43,7 +43,7 @@ class PlaceifyImage extends StatelessWidget {
         trimmed,
         fit: fit,
         alignment: alignment,
-        errorBuilder: (_, __, ___) => error ?? _defaultError(),
+        errorBuilder: (_, _, _) => error ?? _defaultError(),
       );
     }
 
@@ -53,7 +53,7 @@ class PlaceifyImage extends StatelessWidget {
           trimmed,
           fit: fit,
           alignment: alignment,
-          errorBuilder: (_, __, ___) => error ?? _defaultError(),
+          errorBuilder: (_, _, _) => error ?? _defaultError(),
         );
       }
 
@@ -64,7 +64,7 @@ class PlaceifyImage extends StatelessWidget {
         File(path),
         fit: fit,
         alignment: alignment,
-        errorBuilder: (_, __, ___) => error ?? _defaultError(),
+        errorBuilder: (_, _, _) => error ?? _defaultError(),
       );
     }
 
@@ -73,8 +73,8 @@ class PlaceifyImage extends StatelessWidget {
         imageUrl: trimmed,
         fit: fit,
         alignment: alignment,
-        placeholder: (_, __) => placeholder ?? _defaultPlaceholder(),
-        errorWidget: (_, __, ___) => error ?? _defaultError(),
+        placeholder: (_, _) => placeholder ?? _defaultPlaceholder(),
+        errorWidget: (_, _, _) => error ?? _defaultError(),
       );
     }
 
@@ -82,7 +82,7 @@ class PlaceifyImage extends StatelessWidget {
       trimmed,
       fit: fit,
       alignment: alignment,
-      errorBuilder: (_, __, ___) => error ?? _defaultError(),
+      errorBuilder: (_, _, _) => error ?? _defaultError(),
     );
   }
 

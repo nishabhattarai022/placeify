@@ -146,9 +146,7 @@ abstract final class HomeCategoriesConfig {
         productId: product.id,
         displayName: product.name,
         displayPrice: 'NPR ${product.price.toInt()}',
-        imageAsset: product.imageUrl.startsWith('http')
-            ? _fallbackAsset
-            : product.imageUrl,
+        imageAsset: product.imageUrl,
         roomIds: roomIds,
         swatches: swatches ?? _defaultSwatches,
       );
