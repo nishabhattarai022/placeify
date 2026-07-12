@@ -154,22 +154,78 @@ class ArScaleControlBar extends StatelessWidget {
   }
 }
 
-/// Always-visible save action at the bottom of the AR screen.
+/// Frosted save-room-shot control (camera icon + label).
 ///
-/// Placed here (not top-right) because Android full-screen [AndroidView]
-/// platform views often swallow touches over the upper overlay region.
+/// Use [compact] when sharing a row with the product carousel (no outer
+/// padding, fixed 56px height to match the carousel).
 class ArSaveRoomShotBar extends StatelessWidget {
   const ArSaveRoomShotBar({
     required this.onCapture,
     this.enabled = true,
+    this.compact = false,
     super.key,
   });
 
   final Future<void> Function() onCapture;
   final bool enabled;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final bar = GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: enabled ? () => unawaited(onCapture()) : null,
+      child: Opacity(
+        opacity: enabled ? 1 : 0.5,
+        child: SizedBox(
+          height: compact ? 56 : null,
+          width: double.infinity,
+          child: ArFrostedSurface(
+            strong: true,
+            borderRadius: compact
+                ? BorderRadius.circular(28)
+                : const BorderRadius.all(
+                    Radius.circular(ArRoomUiTokens.cardRadius),
+                  ),
+            padding: EdgeInsets.symmetric(
+              horizontal: compact ? 12 : 16,
+              vertical: compact ? 0 : 12,
+            ),
+            child: Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.camera_alt_rounded,
+                    size: compact ? 18 : 20,
+                    color: ArRoomUiTokens.overlayTextPrimary,
+                  ),
+                  SizedBox(width: compact ? 6 : 10),
+                  Flexible(
+                    child: Text(
+                      enabled
+                          ? (compact ? 'Save' : 'Save room shot')
+                          : (compact ? 'Saving…' : 'Saving room shot…'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppFonts.dmSans(
+                        fontSize: compact ? 13 : 14,
+                        fontWeight: FontWeight.w600,
+                        color: ArRoomUiTokens.overlayTextPrimary,
+                        letterSpacing: -0.15,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (compact) return bar;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         ArRoomUiTokens.screenPadding,
@@ -177,130 +233,7 @@ class ArSaveRoomShotBar extends StatelessWidget {
         ArRoomUiTokens.screenPadding,
         8,
       ),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: enabled ? () => unawaited(onCapture()) : null,
-        child: Opacity(
-          opacity: enabled ? 1 : 0.5,
-          child: ArFrostedSurface(
-            strong: true,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.camera_alt_rounded,
-                  size: 20,
-                  color: ArRoomUiTokens.overlayTextPrimary,
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  enabled ? 'Save room shot' : 'Saving room shot…',
-                  style: AppFonts.dmSans(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: ArRoomUiTokens.overlayTextPrimary,
-                    letterSpacing: -0.15,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Reset and secondary actions — auto-hide when idle.
-class ArEditingActionsBar extends StatelessWidget {
-  const ArEditingActionsBar({
-    required this.visible,
-    required this.onReset,
-    super.key,
-  });
-
-  final bool visible;
-  final VoidCallback onReset;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedSlide(
-      duration: ArRoomUiTokens.motionStandard,
-      curve: visible ? ArRoomUiTokens.motionEnterCurve : ArRoomUiTokens.motionExitCurve,
-      offset: visible ? Offset.zero : const Offset(0, 0.25),
-      child: AnimatedOpacity(
-        duration: ArRoomUiTokens.motionStandard,
-        curve: visible ? ArRoomUiTokens.motionEnterCurve : ArRoomUiTokens.motionExitCurve,
-        opacity: visible ? 1 : 0,
-        child: IgnorePointer(
-          ignoring: !visible,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              ArRoomUiTokens.screenPadding,
-              0,
-              ArRoomUiTokens.screenPadding,
-              4,
-            ),
-            child: ArFrostedSurface(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              child: _ToolbarAction(
-                icon: Icons.restart_alt_rounded,
-                label: 'Reset',
-                onTap: onReset,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ToolbarAction extends StatelessWidget {
-  const _ToolbarAction({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final content = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 20,
-            color: ArRoomUiTokens.overlayTextPrimary,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: AppFonts.dmSans(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w500,
-              color: ArRoomUiTokens.overlayTextSecondary,
-              letterSpacing: -0.1,
-            ),
-          ),
-        ],
-      ),
-    );
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: content,
-      ),
+      child: bar,
     );
   }
 }

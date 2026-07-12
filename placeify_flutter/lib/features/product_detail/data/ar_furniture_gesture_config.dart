@@ -9,15 +9,6 @@ abstract final class ArFurnitureGestureConfig {
   /// Smoothing for anchored drag moves on Android (0–1).
   static const panSmoothFactor = 0.32;
 
-  /// Retries for auto-placement after floor detection.
-  static const maxAutoPlaceAttempts = 12;
-
-  /// Delay between auto-placement retries.
-  static const autoPlaceRetryDelay = Duration(milliseconds: 100);
-
-  /// Wait for plane refinement before anchoring furniture.
-  static const planeStabilizeDelay = Duration(milliseconds: 250);
-
   /// Hold steady tracking for this long before placement is allowed.
   static const trackingSettleDelay = Duration(milliseconds: 200);
 

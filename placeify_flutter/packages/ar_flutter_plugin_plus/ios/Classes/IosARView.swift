@@ -661,6 +661,11 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
     func addNode(dict_node: Dictionary<String, Any>, dict_anchor: Dictionary<String, Any>? = nil) -> Future<Bool, Never> {
         return Future {promise in
             let nodeName = dict_node["name"] as! String
+            let perNodeTargetHeight: Float? = {
+                guard let value = dict_node["targetHeightMeters"] as? NSNumber else { return nil }
+                let meters = value.floatValue
+                return meters > 0 ? meters : nil
+            }()
             
             switch (dict_node["type"] as! Int) {
                 case 0: // GLTF2 Model from Flutter asset folder
@@ -668,7 +673,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                     let key = FlutterDartProject.lookupKey(forAsset: dict_node["uri"] as! String)
                     print("iOS: Adding GLTF2 node from asset: \(dict_node["uri"] as! String)")
                     // Add object to scene
-                    if let node: SCNNode = self.modelBuilder.makeNodeFromGltf(name: dict_node["name"] as! String, modelPath: key, transformation: dict_node["transformation"] as? Array<NSNumber>) {
+                    if let node: SCNNode = self.modelBuilder.makeNodeFromGltf(name: dict_node["name"] as! String, modelPath: key, transformation: dict_node["transformation"] as? Array<NSNumber>, perNodeTargetHeightMeters: perNodeTargetHeight) {
                         print("iOS: Node created successfully: \(dict_node["name"] as! String)")
                         if let anchorName = dict_anchor?["name"] as? String, let anchorType = dict_anchor?["type"] as? Int {
                             switch anchorType{
@@ -695,7 +700,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                     let key = FlutterDartProject.lookupKey(forAsset: dict_node["uri"] as! String)
                     print("iOS: Adding GLB node from asset: \(dict_node["uri"] as! String)")
                     // Add object to scene
-                    if let node: SCNNode = self.modelBuilder.makeNodeFromGLB(name: dict_node["name"] as! String, modelPath: key, transformation: dict_node["transformation"] as? Array<NSNumber>) {
+                    if let node: SCNNode = self.modelBuilder.makeNodeFromGLB(name: dict_node["name"] as! String, modelPath: key, transformation: dict_node["transformation"] as? Array<NSNumber>, perNodeTargetHeightMeters: perNodeTargetHeight) {
                         print("iOS: Node created successfully: \(dict_node["name"] as! String)")
                         if let anchorName = dict_anchor?["name"] as? String, let anchorType = dict_anchor?["type"] as? Int {
                             switch anchorType{
@@ -720,7 +725,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                     break
                 case 2: // GLB Model from the web
                     // Add object to scene
-                    self.modelBuilder.makeNodeFromWebGlb(name: dict_node["name"] as! String, modelURL: dict_node["uri"] as! String, transformation: dict_node["transformation"] as? Array<NSNumber>)
+                    self.modelBuilder.makeNodeFromWebGlb(name: dict_node["name"] as! String, modelURL: dict_node["uri"] as! String, transformation: dict_node["transformation"] as? Array<NSNumber>, perNodeTargetHeightMeters: perNodeTargetHeight)
                     .sink(receiveCompletion: {
                                     completion in print("Async Model Downloading Task completed: ", completion)
                     }, receiveValue: { val in
@@ -751,7 +756,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                     let targetPath = documentsDirectory.appendingPathComponent(dict_node["uri"] as! String).path
  
                     // Add object to scene
-                    if let node: SCNNode = self.modelBuilder.makeNodeFromFileSystemGLB(name: dict_node["name"] as! String, modelPath: targetPath, transformation: dict_node["transformation"] as? Array<NSNumber>) {
+                    if let node: SCNNode = self.modelBuilder.makeNodeFromFileSystemGLB(name: dict_node["name"] as! String, modelPath: targetPath, transformation: dict_node["transformation"] as? Array<NSNumber>, perNodeTargetHeightMeters: perNodeTargetHeight) {
                         if let anchorName = dict_anchor?["name"] as? String, let anchorType = dict_anchor?["type"] as? Int {
                             switch anchorType{
                                 case 0: //PlaneAnchor
@@ -777,7 +782,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                     let targetPath = documentsDirectory.appendingPathComponent(dict_node["uri"] as! String).path
 
                     // Add object to scene
-                    if let node: SCNNode = self.modelBuilder.makeNodeFromFileSystemGltf(name: dict_node["name"] as! String, modelPath: targetPath, transformation: dict_node["transformation"] as? Array<NSNumber>) {
+                    if let node: SCNNode = self.modelBuilder.makeNodeFromFileSystemGltf(name: dict_node["name"] as! String, modelPath: targetPath, transformation: dict_node["transformation"] as? Array<NSNumber>, perNodeTargetHeightMeters: perNodeTargetHeight) {
                         if let anchorName = dict_anchor?["name"] as? String, let anchorType = dict_anchor?["type"] as? Int {
                             switch anchorType{
                                 case 0: //PlaneAnchor
@@ -871,11 +876,11 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                     self.objectManagerChannel.invokeMethod("onPanStart", arguments: panningNode!.name) // Chaining of Array and Set is used to remove duplicates
                     return
                 }
-                if let fallbackNode = singleFlutterManagedNode(in: sceneView) {
-                    panningNode = fallbackNode
-                    panningNodeCurrentWorldLocation = fallbackNode.worldPosition
+                if let nearestNode = nearestFlutterManagedNode(to: startLocation, in: sceneView) {
+                    panningNode = nearestNode
+                    panningNodeCurrentWorldLocation = nearestNode.worldPosition
                     lastPanNotifiedTransform = nil
-                    self.objectManagerChannel.invokeMethod("onPanStart", arguments: fallbackNode.name)
+                    self.objectManagerChannel.invokeMethod("onPanStart", arguments: nearestNode.name)
                     return
                 }
             }
@@ -956,7 +961,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
     private static let rotationSensitivity: Float = 0.85
     private static let rotationDeadZoneRadians: Float = 0.004
     private static let rotationHitMaxHorizontalDistanceM: Float = 0.8
-    private static let rotationScreenHitRadiusPx: CGFloat = 140
+    private static let rotationScreenHitRadiusPx: CGFloat = 280
 
     private func resolveRotationNode(at location: CGPoint, in sceneView: ARSCNView) -> SCNNode? {
         let allHitResults = sceneView.hitTest(
@@ -969,31 +974,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             }
         }
 
-        if let fallbackNode = singleFlutterManagedNode(in: sceneView) {
-            let projected = sceneView.projectPoint(fallbackNode.worldPosition)
-            if projected.z >= 0 && projected.z <= 1 {
-                let dx = CGFloat(projected.x) - location.x
-                let dy = CGFloat(projected.y) - location.y
-                if dx * dx + dy * dy <= Self.rotationScreenHitRadiusPx * Self.rotationScreenHitRadiusPx {
-                    return fallbackNode
-                }
-            }
-
-            if let query = sceneView.raycastQuery(from: location, allowing: .estimatedPlane, alignment: .horizontal),
-               let raycast = sceneView.session.raycast(query).first {
-                let hitX = raycast.worldTransform.columns.3.x
-                let hitZ = raycast.worldTransform.columns.3.z
-                let nodePos = fallbackNode.worldPosition
-                let dx = hitX - nodePos.x
-                let dz = hitZ - nodePos.z
-                if dx * dx + dz * dz <=
-                    Self.rotationHitMaxHorizontalDistanceM * Self.rotationHitMaxHorizontalDistanceM {
-                    return fallbackNode
-                }
-            }
-        }
-
-        return nil
+        return nearestFlutterManagedNode(to: location, in: sceneView)
     }
 
     private func applyRotationDelta(to node: SCNNode, deltaRadians: Float) {
@@ -1049,6 +1030,82 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             current = candidate.parent
         }
         return nil
+    }
+
+    /// When mesh hit-testing misses, pick the Flutter-managed node nearest the
+    /// touch in screen space (floor ray is only a fallback). Screen-first avoids
+    /// the previous chair stealing the first gesture after switching targets.
+    func nearestFlutterManagedNode(to location: CGPoint, in sceneView: ARSCNView) -> SCNNode? {
+        let managedNodes: [SCNNode] = flutterNodeNames.compactMap { name in
+            sceneView.scene.rootNode.childNode(withName: name, recursively: true)
+        }
+        guard !managedNodes.isEmpty else { return nil }
+
+        var nearestScreen: SCNNode?
+        var minScreenDist = CGFloat.greatestFiniteMagnitude
+        let maxScreenSq = Self.rotationScreenHitRadiusPx * Self.rotationScreenHitRadiusPx
+        for node in managedNodes {
+            let dist = minScreenDistanceSquared(to: location, node: node, in: sceneView)
+            if dist <= maxScreenSq && dist < minScreenDist {
+                minScreenDist = dist
+                nearestScreen = node
+            }
+        }
+        if let nearestScreen { return nearestScreen }
+
+        if let query = sceneView.raycastQuery(
+            from: location,
+            allowing: .estimatedPlane,
+            alignment: .horizontal
+        ),
+           let raycast = sceneView.session.raycast(query).first {
+            let hitX = raycast.worldTransform.columns.3.x
+            let hitZ = raycast.worldTransform.columns.3.z
+            var nearest: SCNNode?
+            var minDist = Float.greatestFiniteMagnitude
+            let maxDistSq =
+                Self.rotationHitMaxHorizontalDistanceM * Self.rotationHitMaxHorizontalDistanceM
+            for node in managedNodes {
+                let pos = node.worldPosition
+                let dx = hitX - pos.x
+                let dz = hitZ - pos.z
+                let dist = dx * dx + dz * dz
+                if dist <= maxDistSq && dist < minDist {
+                    minDist = dist
+                    nearest = node
+                }
+            }
+            if let nearest { return nearest }
+        }
+
+        return nil
+    }
+
+    private func minScreenDistanceSquared(
+        to location: CGPoint,
+        node: SCNNode,
+        in sceneView: ARSCNView
+    ) -> CGFloat {
+        let (minB, maxB) = node.boundingBox
+        let height = max(0.1, maxB.y - minB.y)
+        let base = node.worldPosition
+        let samples: [SCNVector3] = [
+            base,
+            SCNVector3(base.x, base.y + height * 0.45, base.z),
+            SCNVector3(base.x, base.y + height * 0.85, base.z),
+        ]
+        var minDist = CGFloat.greatestFiniteMagnitude
+        for sample in samples {
+            let projected = sceneView.projectPoint(sample)
+            guard projected.z >= 0 && projected.z <= 1 else { continue }
+            let dx = CGFloat(projected.x) - location.x
+            let dy = CGFloat(projected.y) - location.y
+            let dist = dx * dx + dy * dy
+            if dist < minDist {
+                minDist = dist
+            }
+        }
+        return minDist
     }
 
     func singleFlutterManagedNode(in sceneView: ARSCNView) -> SCNNode? {

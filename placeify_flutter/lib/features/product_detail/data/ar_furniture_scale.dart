@@ -30,7 +30,7 @@ abstract final class ArFurnitureScale {
   /// height normalization (e.g. ModelViewer on web).
   static const realWorldCalibrationFactor = 1.0;
 
-  /// Target height in meters for native iOS bounding-box normalization.
+  /// Target height in meters for native bounding-box normalization.
   static double targetHeightMeters(ProductDimensions dimensions) {
     final heightM = dimensions.heightCm / 100.0;
     final widthM = dimensions.widthCm / 100.0;
@@ -42,6 +42,11 @@ abstract final class ArFurnitureScale {
     // applies only the user multiplier, so avoid applying the calibration factor
     // twice (which makes models feel "camera-attached" and oversized).
     return targetMeters;
+  }
+
+  /// Catalog height passed to native GLB normalization (per-node or init fallback).
+  static double targetHeightMetersForNative(ProductDimensions dimensions) {
+    return targetHeightMeters(dimensions);
   }
 
   /// Node scale when native iOS already normalized mesh height to catalog size.

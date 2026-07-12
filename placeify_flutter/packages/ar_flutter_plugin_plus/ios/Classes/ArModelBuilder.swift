@@ -55,7 +55,8 @@ class ArModelBuilder: NSObject {
     private func wrapLoadedScene(
         name: String,
         scene: SCNScene,
-        transformation: Array<NSNumber>?
+        transformation: Array<NSNumber>?,
+        perNodeTargetHeightMeters: Float? = nil
     ) -> SCNNode? {
         let node = SCNNode()
         let meshRoot = SCNNode()
@@ -65,8 +66,11 @@ class ArModelBuilder: NSObject {
             meshRoot.addChildNode(child)
         }
 
-        if targetHeightMeters > 0 {
-            normalizeScale(meshRoot, targetHeightMeters: targetHeightMeters)
+        let effectiveTargetHeight = perNodeTargetHeightMeters ?? (
+            targetHeightMeters > 0 ? targetHeightMeters : nil
+        )
+        if let effectiveTargetHeight, effectiveTargetHeight > 0 {
+            normalizeScale(meshRoot, targetHeightMeters: effectiveTargetHeight)
         } else if iosModelScaleFactor != 1.0 {
             for child in meshRoot.childNodes {
                 child.scale = SCNVector3(
@@ -141,7 +145,12 @@ class ArModelBuilder: NSObject {
     }
 
     // Creates a node from a given gltf2 (.gltf) model in the Flutter assets folder
-    func makeNodeFromGltf(name: String, modelPath: String, transformation: Array<NSNumber>?) -> SCNNode? {
+    func makeNodeFromGltf(
+        name: String,
+        modelPath: String,
+        transformation: Array<NSNumber>?,
+        perNodeTargetHeightMeters: Float? = nil
+    ) -> SCNNode? {
         do {
             let resolvedPath = resolveFlutterAssetPath(modelPath)
             let sceneSource: GLTFSceneSource
@@ -152,7 +161,12 @@ class ArModelBuilder: NSObject {
             }
             let scene = try sceneSource.scene()
             print("iOS ModelBuilder: Scene loaded, processing \(scene.rootNode.childNodes.count) child nodes")
-            return wrapLoadedScene(name: name, scene: scene, transformation: transformation)
+            return wrapLoadedScene(
+                name: name,
+                scene: scene,
+                transformation: transformation,
+                perNodeTargetHeightMeters: perNodeTargetHeightMeters
+            )
         } catch {
             print("iOS ModelBuilder ERROR: \(error.localizedDescription)")
             return nil
@@ -160,7 +174,12 @@ class ArModelBuilder: NSObject {
     }
 
     // Creates a node from a given glb model in the Flutter assets folder
-    func makeNodeFromGLB(name: String, modelPath: String, transformation: Array<NSNumber>?) -> SCNNode? {
+    func makeNodeFromGLB(
+        name: String,
+        modelPath: String,
+        transformation: Array<NSNumber>?,
+        perNodeTargetHeightMeters: Float? = nil
+    ) -> SCNNode? {
         do {
             let resolvedPath = resolveFlutterAssetPath(modelPath)
             let sceneSource: GLTFSceneSource
@@ -171,7 +190,12 @@ class ArModelBuilder: NSObject {
             }
             let scene = try sceneSource.scene()
             print("iOS ModelBuilder: GLB scene loaded with \(scene.rootNode.childNodes.count) root children")
-            return wrapLoadedScene(name: name, scene: scene, transformation: transformation)
+            return wrapLoadedScene(
+                name: name,
+                scene: scene,
+                transformation: transformation,
+                perNodeTargetHeightMeters: perNodeTargetHeightMeters
+            )
         } catch {
             print("\(error.localizedDescription)")
             return nil
@@ -196,11 +220,21 @@ class ArModelBuilder: NSObject {
     }
 
     // Creates a node from a given gltf2 (.gltf) model in the Flutter assets folder
-    func makeNodeFromFileSystemGltf(name: String, modelPath: String, transformation: Array<NSNumber>?) -> SCNNode? {
+    func makeNodeFromFileSystemGltf(
+        name: String,
+        modelPath: String,
+        transformation: Array<NSNumber>?,
+        perNodeTargetHeightMeters: Float? = nil
+    ) -> SCNNode? {
         do {
             let sceneSource = try GLTFSceneSource(path: modelPath)
             let scene = try sceneSource.scene()
-            return wrapLoadedScene(name: name, scene: scene, transformation: transformation)
+            return wrapLoadedScene(
+                name: name,
+                scene: scene,
+                transformation: transformation,
+                perNodeTargetHeightMeters: perNodeTargetHeightMeters
+            )
         } catch {
             print("\(error.localizedDescription)")
             return nil
@@ -208,11 +242,21 @@ class ArModelBuilder: NSObject {
     }
     
     // Creates a node from a given glb model in the app's documents directory
-    func makeNodeFromFileSystemGLB(name: String, modelPath: String, transformation: Array<NSNumber>?) -> SCNNode? {
+    func makeNodeFromFileSystemGLB(
+        name: String,
+        modelPath: String,
+        transformation: Array<NSNumber>?,
+        perNodeTargetHeightMeters: Float? = nil
+    ) -> SCNNode? {
         do {
             let sceneSource = try GLTFSceneSource(path: modelPath)
             let scene = try sceneSource.scene()
-            return wrapLoadedScene(name: name, scene: scene, transformation: transformation)
+            return wrapLoadedScene(
+                name: name,
+                scene: scene,
+                transformation: transformation,
+                perNodeTargetHeightMeters: perNodeTargetHeightMeters
+            )
         } catch {
             print("\(error.localizedDescription)")
             return nil
@@ -220,7 +264,12 @@ class ArModelBuilder: NSObject {
     }
     
     // Creates a node form a given glb model path
-    func makeNodeFromWebGlb(name: String, modelURL: String, transformation: Array<NSNumber>?) -> Future<SCNNode?, Never> {
+    func makeNodeFromWebGlb(
+        name: String,
+        modelURL: String,
+        transformation: Array<NSNumber>?,
+        perNodeTargetHeightMeters: Float? = nil
+    ) -> Future<SCNNode?, Never> {
         
         return Future {promise in
             var node: SCNNode? = nil
@@ -247,7 +296,8 @@ class ArModelBuilder: NSObject {
                             node = self.wrapLoadedScene(
                                 name: name,
                                 scene: scene,
-                                transformation: transformation
+                                transformation: transformation,
+                                perNodeTargetHeightMeters: perNodeTargetHeightMeters
                             )
                         } catch {
                             print("\(error.localizedDescription)")

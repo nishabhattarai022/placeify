@@ -161,7 +161,7 @@ internal class FilamentArRenderer(
         }
     }
 
-    fun loadGlb(name: String, data: ByteArray) {
+    fun loadGlb(name: String, data: ByteArray, targetHeightMeters: Float? = null) {
         mainHandler.post {
             val assetLoader = assetLoader ?: return@post
             val resourceLoader = resourceLoader ?: return@post
@@ -178,7 +178,7 @@ internal class FilamentArRenderer(
             }
             resourceLoader.loadResources(asset)
             asset.releaseSourceData()
-            snapModelBottomToOrigin(name, asset)
+            snapModelBottomToOrigin(name, asset, targetHeightMeters)
             configureRenderableMaterials(asset)
             scene.addEntities(asset.entities)
             modelAssets[name] = asset
@@ -200,7 +200,12 @@ internal class FilamentArRenderer(
         }
     }
 
-    fun loadGltf(name: String, json: ByteArray, resources: Map<String, ByteArray>) {
+    fun loadGltf(
+        name: String,
+        json: ByteArray,
+        resources: Map<String, ByteArray>,
+        targetHeightMeters: Float? = null,
+    ) {
         mainHandler.post {
             val assetLoader = assetLoader ?: return@post
             val resourceLoader = resourceLoader ?: return@post
@@ -222,7 +227,7 @@ internal class FilamentArRenderer(
             resourceLoader.loadResources(asset)
             resourceLoader.evictResourceData()
             asset.releaseSourceData()
-            snapModelBottomToOrigin(name, asset)
+            snapModelBottomToOrigin(name, asset, targetHeightMeters)
             configureRenderableMaterials(asset)
             scene.addEntities(asset.entities)
             modelAssets[name] = asset
@@ -814,19 +819,24 @@ internal class FilamentArRenderer(
         return sh
     }
 
-    private fun snapModelBottomToOrigin(name: String, asset: FilamentAsset) {
+    private fun snapModelBottomToOrigin(
+        name: String,
+        asset: FilamentAsset,
+        perNodeTargetHeightMeters: Float? = null,
+    ) {
         val box = asset.boundingBox
         val center = box.center
         val halfExtent = box.halfExtent
         val minY = center[1] - halfExtent[1]
         val height = halfExtent[1] * 2f
+        val effectiveTargetHeight = perNodeTargetHeightMeters ?: targetHeightMeters
 
         val correction = FloatArray(16)
         GlMatrix.setIdentityM(correction, 0)
 
         var uniformScale = 1f
-        if (targetHeightMeters > 1e-4f && height > 1e-4f) {
-            uniformScale = targetHeightMeters / height
+        if (effectiveTargetHeight > 1e-4f && height > 1e-4f) {
+            uniformScale = effectiveTargetHeight / height
             GlMatrix.scaleM(correction, 0, uniformScale, uniformScale, uniformScale)
         }
 
@@ -840,7 +850,7 @@ internal class FilamentArRenderer(
         rootOffsetCorrections[name] = correction
         Log.d(
             tag,
-            "snapModelBottomToOrigin $name: height=$height targetHeight=$targetHeightMeters " +
+            "snapModelBottomToOrigin $name: height=$height targetHeight=$effectiveTargetHeight " +
                 "uniformScale=$uniformScale minY=$minY correctionY=${correction[13]}",
         )
     }

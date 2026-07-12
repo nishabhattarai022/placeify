@@ -110,7 +110,15 @@ internal class AndroidARView(
         /** Max horizontal world distance from hit to node center for twist start. */
         private const val ROTATION_HIT_MAX_HORIZONTAL_DISTANCE_M = 0.8f
         /** Screen-space fallback radius when plane hit test misses the model. */
-        private const val ROTATION_SCREEN_HIT_RADIUS_PX = 140f
+        private const val ROTATION_SCREEN_HIT_RADIUS_PX = 220f
+        /** Max floor distance (m) from a touch ray to a node for gesture targeting. */
+        private const val GESTURE_HIT_MAX_HORIZONTAL_DISTANCE_M = 0.8f
+        /**
+         * Screen-space radius (px) for associating a touch with a node.
+         * Large enough that tapping a chair backrest still hits the node whose
+         * origin sits on the floor (feet project lower than the finger).
+         */
+        private const val GESTURE_SCREEN_HIT_RADIUS_PX = 280f
     }
     private val TAG = "AndroidARView"
 
@@ -914,7 +922,6 @@ internal class AndroidARView(
             val transformation = dict_node["transformation"] as ArrayList<Double>
             val nodeType = dict_node["type"] as Int
             val uri = dict_node["uri"] as String
-
             val anchorName: String? = dict_anchor?.get("name") as? String
             nodesByName[nodeName] = SimpleNode(
                 name = nodeName,
@@ -923,6 +930,10 @@ internal class AndroidARView(
                 uri = uri,
                 anchorName = anchorName,
                 worldLocked = anchorName != null,
+                targetHeightMeters = when (val raw = dict_node["targetHeightMeters"]) {
+                    is Number -> raw.toFloat().takeIf { it.isFinite() && it > 0f }
+                    else -> null
+                },
             )
 
             if (anchorName != null) {
@@ -952,25 +963,35 @@ internal class AndroidARView(
                         val gltfBytes = readFlutterAssetBytes(node.uri)
                         val basePath = node.uri.substringBeforeLast("/", "")
                         val resourceMap = loadGltfResourcesFromAssets(gltfBytes, basePath)
-                        filamentRenderer.loadGltf(node.name, gltfBytes, resourceMap)
+                        filamentRenderer.loadGltf(
+                            node.name,
+                            gltfBytes,
+                            resourceMap,
+                            node.targetHeightMeters,
+                        )
                     }
                     1 -> { // localGLB
                         val glbBytes = readFlutterAssetBytes(node.uri)
-                        filamentRenderer.loadGlb(node.name, glbBytes)
+                        filamentRenderer.loadGlb(node.name, glbBytes, node.targetHeightMeters)
                     }
                     2 -> { // webGLB
                         val glbBytes = readUrlBytes(node.uri)
-                        filamentRenderer.loadGlb(node.name, glbBytes)
+                        filamentRenderer.loadGlb(node.name, glbBytes, node.targetHeightMeters)
                     }
                     3 -> { // fileSystemAppFolderGLB
                         val glbBytes = readFileBytes(node.uri)
-                        filamentRenderer.loadGlb(node.name, glbBytes)
+                        filamentRenderer.loadGlb(node.name, glbBytes, node.targetHeightMeters)
                     }
                     4 -> { // fileSystemAppFolderGLTF2
                         val gltfBytes = readFileBytes(node.uri)
                         val basePath = File(node.uri).parent ?: ""
                         val resourceMap = loadGltfResourcesFromFile(gltfBytes, basePath)
-                        filamentRenderer.loadGltf(node.name, gltfBytes, resourceMap)
+                        filamentRenderer.loadGltf(
+                            node.name,
+                            gltfBytes,
+                            resourceMap,
+                            node.targetHeightMeters,
+                        )
                     }
                     else -> {
                         activity.runOnUiThread {
@@ -1745,15 +1766,25 @@ internal class AndroidARView(
                 lastRotationAngle = 0f
                 pendingRotationDelta = 0f
 
-                // Only prepare drag gestures for world-anchored nodes; preview nodes
-                // must receive taps for plane placement.
+                // Target the anchored node under / nearest the touch — never the
+                // camera-nearest node (that breaks multi-item drag/rotate).
                 if (enablePans) {
-                    val anchored = findNearestAnchoredNodeToCamera(frame)
+                    val anchored = findNearestAnchoredNodeAtScreen(
+                        frame,
+                        motionEvent.x,
+                        motionEvent.y,
+                    )
                     if (anchored != null) {
                         activeGestureNodeName = anchored.name
                         panStartX = motionEvent.x
                         panStartY = motionEvent.y
                         panPending = true
+                        // Select immediately so the next gesture / scale slider
+                        // targets this node without waiting for touch-slop.
+                        objectManagerChannel.invokeMethod(
+                            "onNodeTap",
+                            listOf(anchored.name),
+                        )
                         return true
                     }
                 }
@@ -1766,19 +1797,28 @@ internal class AndroidARView(
                 cancelQueuedTap()
                 cancelActivePanGesture()
 
-                val anchored = findNearestAnchoredNodeToCamera(frame) ?: return false
-                if (!isTwoFingerTouchNearNode(frame, motionEvent, anchored)) {
-                    return panPending || isPanning
-                }
+                val midpoint = motionEventMidpoint(motionEvent) ?: return false
+                try {
+                    val anchored = findNearestAnchoredNodeAtScreen(
+                        frame,
+                        midpoint.x,
+                        midpoint.y,
+                    ) ?: return false
+                    if (!isTwoFingerTouchNearNode(frame, motionEvent, anchored)) {
+                        return panPending || isPanning
+                    }
 
-                activeGestureNodeName = anchored.name
-                isRotating = true
-                isPanning = false
-                panPending = false
-                pendingRotationDelta = 0f
-                lastRotationAngle = rotationAngle(motionEvent)
-                objectManagerChannel.invokeMethod("onRotationStart", anchored.name)
-                return true
+                    activeGestureNodeName = anchored.name
+                    isRotating = true
+                    isPanning = false
+                    panPending = false
+                    pendingRotationDelta = 0f
+                    lastRotationAngle = rotationAngle(motionEvent)
+                    objectManagerChannel.invokeMethod("onRotationStart", anchored.name)
+                    return true
+                } finally {
+                    midpoint.recycle()
+                }
             }
             MotionEvent.ACTION_MOVE -> {
                 val nodeName = activeGestureNodeName
@@ -1787,10 +1827,22 @@ internal class AndroidARView(
                     val dx = motionEvent.x - panStartX
                     val dy = motionEvent.y - panStartY
                     if (dx * dx + dy * dy > touchSlop * touchSlop) {
+                        // Re-resolve at the current finger position so a slight
+                        // slide onto a different chair doesn't keep the previous
+                        // ACTION_DOWN target locked in.
+                        val retargeted = findNearestAnchoredNodeAtScreen(
+                            frame,
+                            motionEvent.x,
+                            motionEvent.y,
+                        )
+                        if (retargeted != null) {
+                            activeGestureNodeName = retargeted.name
+                        }
+                        val activeName = activeGestureNodeName ?: return false
                         panPending = false
                         isPanning = true
                         cancelQueuedTap()
-                        objectManagerChannel.invokeMethod("onPanStart", nodeName)
+                        objectManagerChannel.invokeMethod("onPanStart", activeName)
                     } else {
                         return true
                     }
@@ -1928,12 +1980,11 @@ internal class AndroidARView(
                 }
             }
 
-            val screen = projectWorldToScreen(frame, getNodeWorldPosition(node)) ?: return false
             val touchMidX = (motionEvent.getX(0) + motionEvent.getX(1)) / 2f
             val touchMidY = (motionEvent.getY(0) + motionEvent.getY(1)) / 2f
-            val dx = screen[0] - touchMidX
-            val dy = screen[1] - touchMidY
-            return dx * dx + dy * dy <=
+            val screenDist = minScreenDistanceToNode(frame, node, touchMidX, touchMidY)
+                ?: return false
+            return screenDist <=
                 ROTATION_SCREEN_HIT_RADIUS_PX * ROTATION_SCREEN_HIT_RADIUS_PX
         } finally {
             midpoint.recycle()
@@ -2146,28 +2197,97 @@ internal class AndroidARView(
         return nearest
     }
 
-    private fun findNearestAnchoredNodeToCamera(frame: Frame): SimpleNode? {
+    /**
+     * Picks the anchored furniture node that a screen touch should control.
+     *
+     * Screen proximity wins over floor-ray distance: users tap the visible
+     * mesh (seat/backrest), while the node origin sits on the floor. Preferring
+     * the floor hit first made the previous chair steal the first gesture after
+     * switching targets.
+     */
+    private fun findNearestAnchoredNodeAtScreen(
+        frame: Frame,
+        screenX: Float,
+        screenY: Float,
+    ): SimpleNode? {
         if (nodesByName.isEmpty()) return null
-        val cameraPose = frame.camera.pose
-        val camX = cameraPose.tx()
-        val camY = cameraPose.ty()
-        val camZ = cameraPose.tz()
+
+        var nearestScreen: SimpleNode? = null
+        var minScreenDist = Float.MAX_VALUE
+        val maxScreenSq = GESTURE_SCREEN_HIT_RADIUS_PX * GESTURE_SCREEN_HIT_RADIUS_PX
+        for (node in nodesByName.values) {
+            if (node.anchorName == null) continue
+            val dist = minScreenDistanceToNode(frame, node, screenX, screenY) ?: continue
+            if (dist <= maxScreenSq && dist < minScreenDist) {
+                minScreenDist = dist
+                nearestScreen = node
+            }
+        }
+        if (nearestScreen != null) return nearestScreen
+
+        val floorY = referenceFloorY
+        val viewWidth = textureView.width
+        val viewHeight = textureView.height
+        val hitPose = if (floorY != null && viewWidth > 0 && viewHeight > 0) {
+            val hits = frame.hitTest(screenX, screenY)
+            fallbackSnapPoseFromRay(frame, screenX, screenY, floorY)
+                ?: pickBestDragPlaneHit(hits, floorY)?.hitPose
+                ?: hits.firstOrNull()?.hitPose
+        } else {
+            frame.hitTest(screenX, screenY).firstOrNull()?.hitPose
+        } ?: return null
 
         var nearest: SimpleNode? = null
         var minDist = Float.MAX_VALUE
-        nodesByName.values.forEach { node ->
-            if (node.anchorName == null) return@forEach
+        val maxDistSq =
+            GESTURE_HIT_MAX_HORIZONTAL_DISTANCE_M * GESTURE_HIT_MAX_HORIZONTAL_DISTANCE_M
+        for (node in nodesByName.values) {
+            if (node.anchorName == null) continue
             val pos = getNodeWorldPosition(node)
-            val dx = pos[0] - camX
-            val dy = pos[1] - camY
-            val dz = pos[2] - camZ
-            val dist = dx * dx + dy * dy + dz * dz
-            if (dist < minDist) {
+            val dx = pos[0] - hitPose.tx()
+            val dz = pos[2] - hitPose.tz()
+            val dist = dx * dx + dz * dz
+            if (dist <= maxDistSq && dist < minDist) {
                 minDist = dist
                 nearest = node
             }
         }
         return nearest
+    }
+
+    /**
+     * Squared screen distance from [screenX]/[screenY] to the closest of the
+     * node's floor origin, mid-height, and near-top samples (catalog height when
+     * known). Touching a tall chair's backrest still associates with that node.
+     */
+    private fun minScreenDistanceToNode(
+        frame: Frame,
+        node: SimpleNode,
+        screenX: Float,
+        screenY: Float,
+    ): Float? {
+        val origin = getNodeWorldPosition(node)
+        val x = origin[0]
+        val y = origin[1]
+        val z = origin[2]
+        val height = node.targetHeightMeters?.takeIf { it > 0.1f } ?: 0.75f
+        val sampleYs = floatArrayOf(y, y + height * 0.45f, y + height * 0.85f)
+
+        var minDist: Float? = null
+        val sample = FloatArray(3)
+        for (sampleY in sampleYs) {
+            sample[0] = x
+            sample[1] = sampleY
+            sample[2] = z
+            val screen = projectWorldToScreen(frame, sample) ?: continue
+            val dx = screen[0] - screenX
+            val dy = screen[1] - screenY
+            val dist = dx * dx + dy * dy
+            if (minDist == null || dist < minDist) {
+                minDist = dist
+            }
+        }
+        return minDist
     }
 
     private fun reportPlaneDetectedIfNeeded(frame: Frame) {
@@ -2772,6 +2892,7 @@ internal class AndroidARView(
         val uri: String,
         var anchorName: String?,
         val worldLocked: Boolean = false,
+        val targetHeightMeters: Float? = null,
     )
 
 }

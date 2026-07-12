@@ -30,11 +30,16 @@ import 'ar_room_ui_tokens.dart';
 import 'webcam_ar_room_screen.dart';
 import 'widgets/ar_frosted_surface.dart';
 import 'widgets/ar_placement_controls.dart';
+import 'widgets/ar_product_carousel.dart';
 import 'widgets/ar_product_tray.dart';
 import 'widgets/ar_room_overlays.dart';
 
 /// One instance of a product placed in the room. Multiple instances may
 /// share the same [productId] (two of the same chair) or not.
+///
+/// Each item owns its own placement-reveal [AnimationController] so that
+/// placing a new item can never cut short a previous item's "grow to full
+/// size" animation.
 class _PlacedFurniture {
   _PlacedFurniture({
     required this.nodeName,
@@ -43,6 +48,7 @@ class _PlacedFurniture {
     required this.dimensions,
     required this.node,
     required this.anchor,
+    required this.revealController,
   });
 
   final String nodeName;
@@ -51,37 +57,37 @@ class _PlacedFurniture {
   final ProductDimensions dimensions;
   final ARNode node;
   final ARPlaneAnchor anchor;
+  final AnimationController revealController;
 
   double userScaleMultiplier = ArFurnitureScale.defaultUserMultiplier;
   double placedScaleMultiplier = ArFurnitureScale.defaultUserMultiplier;
   double rotationY = 0;
   double placedRotationY = 0;
+  double? lastAppliedRevealT;
 
   bool isDragging = false;
   bool isRotating = false;
 }
 
 /// A product that has been chosen (either the initial one or one from the
-/// tray) and is loading / waiting for a floor tap before it becomes a
+/// carousel) and is loading / waiting for a floor tap before it becomes a
 /// [_PlacedFurniture].
 class _PendingPlacement {
   _PendingPlacement({
     required this.productId,
     required this.productName,
     required this.dimensions,
-    required this.autoPlace,
   });
 
   final String productId;
   final String productName;
   final ProductDimensions dimensions;
   String? modelUri;
-  final bool autoPlace;
 }
 
 /// Full-screen AR furniture placement (IKEA Place–style workflow).
 /// Supports placing any number of products — including repeats — in the
-/// same session via the in-AR "add" tray.
+/// same session via the persistent product carousel.
 class ArRoomScreen extends StatefulWidget {
   const ArRoomScreen({
     required this.remoteModelUrl,
@@ -99,9 +105,9 @@ class ArRoomScreen extends StatefulWidget {
   final ProductDimensions dimensions;
   final ArLocalModelFile? preloadedModel;
 
-  /// Other catalog products the user can add to the room from the in-AR
-  /// tray. Pass everything reasonable to offer here (e.g. same category,
-  /// or the whole catalog) — the tray itself just lists what you give it.
+  /// Other catalog products the user can add to the room from the
+  /// persistent carousel. Pass everything reasonable to offer here (e.g.
+  /// same category, or the whole catalog).
   final List<ArAddableProduct> availableProducts;
 
   static bool get hasNativeAr {
@@ -117,7 +123,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     with TickerProviderStateMixin {
   static const _furnitureNodeName = 'placeify_furniture';
   static const _hintAutoHideDuration = Duration(seconds: 3);
-  static const _controlsAutoHideDuration = Duration(seconds: 4);
 
   ARSessionManager? _sessionManager;
   ARObjectManager? _objectManager;
@@ -130,15 +135,17 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   final Map<String, _PlacedFurniture> _placed = {};
   int _placementCounter = 0;
 
-  /// The item most recently tapped / placed — scale slider, reset, and
-  /// remove act on this one.
+  /// The item most recently tapped / placed — the scale slider acts on
+  /// this one.
   String? _selectedNodeName;
 
-  /// The item awaiting a floor tap (or auto-place) right now, if any.
+  /// The item awaiting a floor tap right now, if any.
   _PendingPlacement? _pending;
 
-  /// Node currently animating in from its placement reveal, if any.
-  String? _revealingNodeName;
+  /// The reveal controller currently animating in a just-placed item, if
+  /// any — used to drive the placement-moment overlay.
+  AnimationController? _activeRevealController;
+  String _revealProductName = '';
 
   bool _isPlaneDetected = false;
   bool _isDragging = false;
@@ -150,24 +157,14 @@ class _ArRoomScreenState extends State<ArRoomScreen>
 
   String _cameraTrackingState = 'INITIALIZING';
   DateTime? _trackingSince;
-  DateTime? _planeDetectedAt;
-
-  int _autoPlaceAttempts = 0;
-  bool _autoPlaceScheduled = false;
 
   String? _hintMessage;
   bool _hintVisible = false;
   Timer? _hintHideTimer;
 
-  bool _editingActionsVisible = false;
-  Timer? _controlsHideTimer;
-
   late final AnimationController _scanPulseController;
   late final AnimationController _scanLineController;
   late final AnimationController _reticlePulseController;
-  late final AnimationController _placementRevealController;
-
-  double? _lastAppliedRevealT;
 
   @override
   void initState() {
@@ -176,7 +173,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       productId: widget.productId,
       productName: widget.productName,
       dimensions: widget.dimensions,
-      autoPlace: true,
     );
     _scanPulseController = AnimationController(
       vsync: this,
@@ -190,20 +186,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       vsync: this,
       duration: ArRoomUiTokens.reticlePulse,
     );
-    _placementRevealController = AnimationController(
-      vsync: this,
-      duration: ArRoomUiTokens.placementReveal,
-    )
-      ..addListener(_onPlacementRevealTick)
-      ..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          _finalizePlacementReveal();
-        }
-        if (status == AnimationStatus.completed ||
-            status == AnimationStatus.dismissed) {
-          if (mounted) setState(() {});
-        }
-      });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _syncOverlayAnimations();
     });
@@ -247,11 +229,12 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   @override
   void dispose() {
     _hintHideTimer?.cancel();
-    _controlsHideTimer?.cancel();
     _scanPulseController.dispose();
     _scanLineController.dispose();
     _reticlePulseController.dispose();
-    _placementRevealController.dispose();
+    for (final item in _placed.values) {
+      item.revealController.dispose();
+    }
 
     final objectManager = _objectManager;
     final anchorManager = _anchorManager;
@@ -275,6 +258,9 @@ class _ArRoomScreenState extends State<ArRoomScreen>
 
   _PlacedFurniture? get _selectedItem =>
       _selectedNodeName != null ? _placed[_selectedNodeName] : null;
+
+  Animation<double> get _revealProgress =>
+      _activeRevealController ?? const AlwaysStoppedAnimation<double>(0);
 
   bool get _showScanOverlay =>
       !_isPlaneDetected && !_modelLoading && _hasPendingPlacement && !_isPlacing;
@@ -317,13 +303,11 @@ class _ArRoomScreenState extends State<ArRoomScreen>
             IgnorePointer(
               child: ArPlacementReticle(pulse: _reticlePulseController),
             ),
-          if (_isPlacing ||
-              _revealingNodeName != null ||
-              _placementRevealController.isAnimating)
+          if (_isPlacing || _activeRevealController != null)
             IgnorePointer(
               child: ArPlacementMomentOverlay(
-                progress: _placementRevealController,
-                productName: _pending?.productName ?? '',
+                progress: _revealProgress,
+                productName: _revealProductName,
               ),
             ),
           IgnorePointer(
@@ -348,18 +332,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
                           onPressed: () => Navigator.of(context).pop(),
                         ),
                         const Spacer(),
-                        if (_placed.isNotEmpty &&
-                            widget.availableProducts.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: ArGlassIconButton(
-                              icon: Icons.add_rounded,
-                              tooltip: 'Add another item',
-                              onPressed: _hasPendingPlacement
-                                  ? null
-                                  : _openProductTray,
-                            ),
-                          ),
                         if (_placed.isNotEmpty)
                           ArDoneButton(
                             onDone: () => Navigator.of(context).pop(),
@@ -378,26 +350,47 @@ class _ArRoomScreenState extends State<ArRoomScreen>
                   ),
                   const Spacer(),
                   if (_placed.isNotEmpty) ...[
-                    ArSaveRoomShotBar(
-                      enabled: !_isCapturing,
-                      onCapture: _onCaptureTap,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: ArRoomUiTokens.screenPadding,
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            // Slightly more room than a lone icon button;
+                            // carousel still keeps the majority of the row.
+                            flex: widget.availableProducts.isEmpty ? 1 : 2,
+                            child: ArSaveRoomShotBar(
+                              compact: true,
+                              enabled: !_isCapturing,
+                              onCapture: _onCaptureTap,
+                            ),
+                          ),
+                          if (widget.availableProducts.isNotEmpty) ...[
+                            const SizedBox(width: 10),
+                            Expanded(
+                              flex: 5,
+                              child: ArProductCarousel(
+                                products: widget.availableProducts,
+                                selectedProductId: _pending?.productId ??
+                                    selected?.productId,
+                                enabled: !_modelLoading,
+                                onSelected: _selectProductForPlacement,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                     if (selected != null) ...[
-                      ArEditingActionsBar(
-                        visible: _editingActionsVisible,
-                        onReset: () {
-                          _resetPlacement(selected);
-                          _showEditingControls();
-                        },
-                      ),
+                      const SizedBox(height: 12),
                       ArScaleControlBar(
                         scaleMultiplier: selected.userScaleMultiplier,
                         minMultiplier: ArFurnitureScale.minUserMultiplier,
                         maxMultiplier: ArFurnitureScale.maxUserMultiplier,
-                        onScaleChanged: (value) {
-                          _onScaleSliderChanged(selected, value);
-                          _showEditingControls();
-                        },
+                        onScaleChanged: (value) =>
+                            _onScaleSliderChanged(selected, value),
                       ),
                     ],
                   ],
@@ -437,18 +430,14 @@ class _ArRoomScreenState extends State<ArRoomScreen>
 
   Future<void> _bootstrapArSession(ARObjectManager objectManager) async {
     await _initSession();
-    // NOTE: targetHeightMeters / androidScaleFactor are currently GLOBAL on
-    // the native side (set once here). Every product placed this session is
-    // normalized against widget.dimensions. If you place a second product
-    // with very different real-world size, it will be scaled as if it had
-    // the *first* product's proportions until FilamentArRenderer.kt and
-    // AndroidARView.addNode support a per-node target height. Each
-    // _PlacedFurniture still tracks its own userScaleMultiplier so users can
-    // manually correct relative sizing in the meantime.
+    // Global native target height remains as a fallback for nodes that
+    // omit per-node targetHeightMeters (backward compatible).
     objectManager.onInitialize(
       iosScaleFactor: ArFurnitureScale.nativeIosFactor,
       androidScaleFactor: ArFurnitureScale.nativeAndroidFactor,
-      targetHeightMeters: ArFurnitureScale.targetHeightMeters(widget.dimensions),
+      targetHeightMeters: ArFurnitureScale.targetHeightMetersForNative(
+        widget.dimensions,
+      ),
     );
     if (!mounted) return;
     await _loadPendingModel();
@@ -469,23 +458,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     );
     await _sessionManager?.setLightIntensityMultiplier(_arLightIntensity);
     await _sessionManager?.setDepthOcclusionEnabled(Platform.isIOS);
-  }
-
-  void _showEditingControls() {
-    if (_selectedNodeName == null || !mounted) return;
-    _controlsHideTimer?.cancel();
-    if (!_editingActionsVisible) {
-      setState(() => _editingActionsVisible = true);
-    }
-    _scheduleHideEditingActions();
-  }
-
-  void _scheduleHideEditingActions() {
-    _controlsHideTimer?.cancel();
-    _controlsHideTimer = Timer(_controlsAutoHideDuration, () {
-      if (!mounted || _isDragging || _isRotating) return;
-      setState(() => _editingActionsVisible = false);
-    });
   }
 
   void _showTransientHint(String message) {
@@ -542,13 +514,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     _cameraTrackingState = state;
     if (state == 'TRACKING') {
       _trackingSince ??= DateTime.now();
-      if (_isPlaneDetected &&
-          !_modelLoading &&
-          !_isPlacing &&
-          _pending?.autoPlace == true &&
-          _pending?.modelUri != null) {
-        unawaited(_tryAutoPlace());
-      }
     } else {
       _trackingSince = null;
     }
@@ -556,40 +521,12 @@ class _ArRoomScreenState extends State<ArRoomScreen>
 
   void _onPlaneDetected() {
     if (!mounted || _modelLoading || _isPlaneDetected) return;
-    _planeDetectedAt = DateTime.now();
     setState(() => _isPlaneDetected = true);
     unawaited(_sessionManager?.setShowPlanes(false));
-    if (_pending?.autoPlace == true && _pending?.modelUri != null) {
-      unawaited(_placeAfterPlaneStabilizes());
+    final pending = _pending;
+    if (pending?.modelUri != null) {
+      _showTransientHint('Tap the floor to place ${pending!.productName}');
     }
-  }
-
-  Future<void> _placeAfterPlaneStabilizes() async {
-    final detectedAt = _planeDetectedAt;
-    final elapsed = detectedAt == null
-        ? Duration.zero
-        : DateTime.now().difference(detectedAt);
-    final remaining = ArFurnitureGestureConfig.planeStabilizeDelay - elapsed;
-    if (remaining > Duration.zero) {
-      await Future<void>.delayed(remaining);
-    }
-    if (mounted) unawaited(_tryAutoPlace());
-  }
-
-  Future<List<ARHitTestResult>> _placementHitCandidates(
-    ARSessionManager session,
-  ) async {
-    const probes = <(double, double)>[
-      (0.5, 0.68),
-      (0.5, 0.5),
-      (0.5, 0.78),
-    ];
-
-    final merged = <ARHitTestResult>[];
-    for (final (x, y) in probes) {
-      merged.addAll(await session.hitTestNormalized(x, y));
-    }
-    return merged;
   }
 
   /// Loads the model for whatever is currently in `_pending`.
@@ -620,7 +557,9 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       uri = localModel?.arNodeUri;
     }
 
-    if (!mounted) return;
+    // The user may have switched the pending selection again while this
+    // model was still downloading — if so, drop this stale result.
+    if (!mounted || !identical(_pending, pending)) return;
 
     if (uri == null) {
       setState(() => _modelLoading = false);
@@ -636,68 +575,9 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     });
 
     await _sessionManager?.setLightIntensityMultiplier(_arLightIntensity);
-    if (_isPlaneDetected && pending.autoPlace) {
-      unawaited(_placeAfterPlaneStabilizes());
-    } else if (_isPlaneDetected) {
+    if (_isPlaneDetected) {
       _showTransientHint('Tap the floor to place ${pending.productName}');
     }
-  }
-
-  Future<void> _tryAutoPlace() async {
-    final pending = _pending;
-    if (pending == null ||
-        !pending.autoPlace ||
-        pending.modelUri == null ||
-        _isPlacing ||
-        _autoPlaceScheduled) {
-      return;
-    }
-    if (!_isTrackingReady) {
-      await Future<void>.delayed(ArFurnitureGestureConfig.autoPlaceRetryDelay);
-      if (mounted) unawaited(_tryAutoPlace());
-      return;
-    }
-    if (_autoPlaceAttempts >= ArFurnitureGestureConfig.maxAutoPlaceAttempts) {
-      _showTransientHint('Tap the floor to place ${pending.productName}');
-      return;
-    }
-
-    _autoPlaceScheduled = true;
-    _autoPlaceAttempts++;
-
-    final session = _sessionManager;
-    final objectManager = _objectManager;
-    final anchorManager = _anchorManager;
-    if (session == null || objectManager == null || anchorManager == null) {
-      _autoPlaceScheduled = false;
-      return;
-    }
-
-    final hits = await _placementHitCandidates(session);
-    final cameraPose = await session.getCameraPose();
-    final hit = ArFurniturePlacement.bestSurfaceHit(
-      hits,
-      cameraPose: cameraPose,
-    );
-
-    if (!mounted) {
-      _autoPlaceScheduled = false;
-      return;
-    }
-
-    if (hit == null || hit.type != ARHitTestResultType.plane) {
-      _autoPlaceScheduled = false;
-      await Future<void>.delayed(ArFurnitureGestureConfig.autoPlaceRetryDelay);
-      if (mounted) unawaited(_tryAutoPlace());
-      return;
-    }
-
-    _autoPlaceScheduled = false;
-    await _placeOnSurface(
-      objectManager: objectManager,
-      anchorManager: anchorManager,
-      hit: hit,
-    );
   }
 
   Future<void> _onPlaneTapped(List<ARHitTestResult> hitTestResults) async {
@@ -777,9 +657,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     setState(() => _isPlacing = true);
 
     try {
-      _revealingNodeName = null;
-      _placementRevealController.reset();
-
       _placementCounter++;
       final nodeName =
           '${_furnitureNodeName}_${pending.productId}_$_placementCounter';
@@ -801,6 +678,9 @@ class _ArRoomScreenState extends State<ArRoomScreen>
           rotationY: 0,
           rawT: 0,
         ),
+        targetHeightMeters: ArFurnitureScale.targetHeightMetersForNative(
+          pending.dimensions,
+        ),
       );
       final didAddNode = await objectManager.addNode(node, planeAnchor: anchor);
       if (didAddNode != true) {
@@ -811,6 +691,15 @@ class _ArRoomScreenState extends State<ArRoomScreen>
 
       if (!mounted) return;
 
+      // Each item gets its own reveal controller so placing item #2 can
+      // never cut short item #1's still-playing "grow to full size"
+      // animation (that was the cause of items looking permanently
+      // undersized after a second/third placement).
+      final revealController = AnimationController(
+        vsync: this,
+        duration: ArRoomUiTokens.placementReveal,
+      );
+
       final item = _PlacedFurniture(
         nodeName: nodeName,
         productId: pending.productId,
@@ -818,7 +707,20 @@ class _ArRoomScreenState extends State<ArRoomScreen>
         dimensions: pending.dimensions,
         node: node,
         anchor: anchor,
+        revealController: revealController,
       );
+
+      revealController.addListener(() => _onPlacementRevealTick(nodeName));
+      revealController.addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          _finalizePlacementReveal(nodeName);
+        }
+        if (mounted &&
+            (status == AnimationStatus.completed ||
+                status == AnimationStatus.dismissed)) {
+          setState(() {});
+        }
+      });
 
       setState(() {
         _placed[nodeName] = item;
@@ -826,14 +728,13 @@ class _ArRoomScreenState extends State<ArRoomScreen>
         _pending = null;
       });
 
-      _revealingNodeName = nodeName;
-      _lastAppliedRevealT = null;
-      _placementRevealController.forward(from: 0);
-      _onPlacementRevealTick();
+      _revealProductName = item.productName;
+      _activeRevealController = revealController;
+      revealController.forward(from: 0);
+      _onPlacementRevealTick(nodeName);
       await _sessionManager?.setShowPlanes(false);
       await _sessionManager?.setLightIntensityMultiplier(_arLightIntensity);
       _showTransientHint('Drag to move · twist to rotate');
-      _showEditingControls();
     } finally {
       if (mounted) setState(() => _isPlacing = false);
     }
@@ -850,37 +751,33 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     );
   }
 
-  void _finalizePlacementReveal() {
-    final nodeName = _revealingNodeName;
-    _revealingNodeName = null;
-    _lastAppliedRevealT = null;
-    if (nodeName == null) return;
+  void _finalizePlacementReveal(String nodeName) {
     final item = _placed[nodeName];
     if (item == null) return;
+    item.lastAppliedRevealT = null;
     item.node.transform = _restingNodeTransform(item);
+    if (_activeRevealController == item.revealController) {
+      _activeRevealController = null;
+    }
   }
 
   void _cancelPlacementReveal(String nodeName) {
-    if (_revealingNodeName != nodeName) return;
-    _revealingNodeName = null;
-    _lastAppliedRevealT = null;
-    _placementRevealController.stop();
-    _finalizePlacementReveal();
+    final item = _placed[nodeName];
+    if (item == null || !item.revealController.isAnimating) return;
+    item.revealController.stop();
+    _finalizePlacementReveal(nodeName);
   }
 
-  void _onPlacementRevealTick() {
-    final nodeName = _revealingNodeName;
-    if (nodeName == null) return;
+  void _onPlacementRevealTick(String nodeName) {
     final item = _placed[nodeName];
     if (item == null || item.isDragging || item.isRotating) return;
 
-    final t = _placementRevealController.value;
-    if (_lastAppliedRevealT != null &&
-        t < 1.0 &&
-        (t - _lastAppliedRevealT!).abs() < 0.03) {
+    final t = item.revealController.value;
+    final last = item.lastAppliedRevealT;
+    if (last != null && t < 1.0 && (t - last).abs() < 0.03) {
       return;
     }
-    _lastAppliedRevealT = t;
+    item.lastAppliedRevealT = t;
     item.node.transform = _placementFrameTransformFor(
       userScaleMultiplier: item.userScaleMultiplier,
       rotationY: item.rotationY,
@@ -895,7 +792,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     );
     if (nodeName.isEmpty) return;
     setState(() => _selectedNodeName = nodeName);
-    _showEditingControls();
   }
 
   void _onPanStart(String nodeName) {
@@ -909,12 +805,10 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     });
     _hintHideTimer?.cancel();
     if (mounted) setState(() => _hintVisible = false);
-    _showEditingControls();
   }
 
   void _onPanChange(String nodeName) {
-    if (!_placed.containsKey(nodeName)) return;
-    _showEditingControls();
+    // No-op — kept as a named handler for the ar_object_manager callback API.
   }
 
   Future<void> _onPanEnd(String nodeName, Matrix4 transform) async {
@@ -923,7 +817,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     item.isDragging = false;
     setState(() => _isDragging = false);
     _writeConstrainedNodeTransform(item, transform);
-    _scheduleHideEditingActions();
   }
 
   void _onRotationStart(String nodeName) {
@@ -937,7 +830,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     });
     _hintHideTimer?.cancel();
     if (mounted) setState(() => _hintVisible = false);
-    _showEditingControls();
   }
 
   Future<void> _onRotationEnd(String nodeName, Matrix4 transform) async {
@@ -946,7 +838,6 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     item.isRotating = false;
     setState(() => _isRotating = false);
     _writeConstrainedNodeTransform(item, transform);
-    _scheduleHideEditingActions();
   }
 
   /// Single entry point for writing node transforms after gestures or UI edits.
@@ -964,7 +855,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   }
 
   void _applyAnchoredNodeTransform(_PlacedFurniture item) {
-    if (item.isDragging || item.isRotating || _revealingNodeName == item.nodeName) {
+    if (item.isDragging || item.isRotating || item.revealController.isAnimating) {
       return;
     }
     _writeConstrainedNodeTransform(item, item.node.transform);
@@ -987,56 +878,19 @@ class _ArRoomScreenState extends State<ArRoomScreen>
     _applyAnchoredNodeTransform(item);
   }
 
-  void _resetPlacement(_PlacedFurniture item) {
-    setState(() {
-      item.userScaleMultiplier = item.placedScaleMultiplier;
-      item.rotationY = item.placedRotationY;
-    });
-    _applyAnchoredNodeTransform(item);
-    _showTransientHint('Placement reset');
-  }
-
-  /// Opens the in-AR tray so the user can pick another product to add.
-  Future<void> _openProductTray() async {
-    if (_hasPendingPlacement) return;
-    final selected = await ArProductTray.show(
-      context,
-      products: widget.availableProducts,
-    );
-    if (selected == null || !mounted) return;
-
+  /// Selects a product from the persistent carousel to place next — loads
+  /// its model and waits for a floor tap (same tap-to-place path as the
+  /// very first product).
+  Future<void> _selectProductForPlacement(ArAddableProduct product) async {
+    if (_pending?.productId == product.id) return;
     setState(() {
       _pending = _PendingPlacement(
-        productId: selected.id,
-        productName: selected.name,
-        dimensions: selected.dimensions,
-        autoPlace: false,
+        productId: product.id,
+        productName: product.name,
+        dimensions: product.dimensions,
       );
-      _autoPlaceAttempts = 0;
     });
     await _loadPendingModel();
-  }
-
-  /// Removes a single placed item (e.g. via a "remove" action on the
-  /// selected item's editing controls).
-  // ignore: unused_element
-  Future<void> _removeItem(String nodeName) async {
-    final item = _placed[nodeName];
-    final objectManager = _objectManager;
-    final anchorManager = _anchorManager;
-    if (item == null || objectManager == null || anchorManager == null) return;
-
-    await objectManager.removeNode(item.node);
-    await anchorManager.removeAnchor(item.anchor);
-
-    if (!mounted) return;
-    setState(() {
-      _placed.remove(nodeName);
-      if (_selectedNodeName == nodeName) {
-        _selectedNodeName = _placed.keys.isEmpty ? null : _placed.keys.last;
-      }
-      if (_revealingNodeName == nodeName) _revealingNodeName = null;
-    });
   }
 
   Future<void> _removeAllFurniture({

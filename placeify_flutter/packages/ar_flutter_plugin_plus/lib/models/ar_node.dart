@@ -21,6 +21,7 @@ class ARNode {
     Vector3? eulerAngles,
     Matrix4? transformation,
     Map<String, dynamic>? data,
+    this.targetHeightMeters,
   })  : name = name ?? UniqueKey().toString(),
         transformNotifier = ValueNotifier(createTransformMatrix(
             transformation, position, scale, rotation, eulerAngles)),
@@ -31,6 +32,11 @@ class ARNode {
 
   /// Specifies the path to the 3D model used for the [ARNode]. Depending on the [type], this is either a relative path or an URL to an online asset
   String uri;
+
+  /// Optional catalog height in meters for native GLB/GLTF normalization.
+  /// When set, overrides the session-wide [ARObjectManager.onInitialize]
+  /// `targetHeightMeters` fallback for this node only.
+  final double? targetHeightMeters;
 
   /// Determines the receiver's transform.
   /// The transform is the combination of the position, rotation and scale defined below.
@@ -103,6 +109,7 @@ class ARNode {
             _matrixValueNotifierConverter.toJson(transformNotifier),
         'name': name,
         'data': data,
+        if (targetHeightMeters != null) 'targetHeightMeters': targetHeightMeters,
       }..removeWhere((String k, dynamic v) => v == null);
 
   static ARNode fromMap(Map<String, dynamic> map) {
@@ -111,7 +118,8 @@ class ARNode {
         uri: map["uri"] as String,
         name: map["name"] as String,
         transformation: MatrixConverter().fromJson(map["transformation"]),
-        data: Map<String, dynamic>.from(map["data"]));
+        data: Map<String, dynamic>.from(map["data"]),
+        targetHeightMeters: (map["targetHeightMeters"] as num?)?.toDouble());
   }
 }
 
