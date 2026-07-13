@@ -3,11 +3,12 @@ import 'package:serverpod/serverpod.dart' hide Order;
 import '../../generated/protocol.dart';
 import '../vendor/vendor_shop_category_codec.dart';
 import 'admin_repository.dart';
+import 'admin_vendor_lifecycle.dart';
 
 /// Read-side admin platform queries backed by PostgreSQL.
 class AdminPlatformStore {
   AdminPlatformStore({AdminStore? adminStore})
-      : _adminStore = adminStore ?? AdminStore();
+    : _adminStore = adminStore ?? AdminStore();
 
   final AdminStore _adminStore;
 
@@ -23,15 +24,33 @@ class AdminPlatformStore {
       where: (row) => row.deletedAt.equals(null),
     );
 
+    final vendors = await Vendor.db.find(
+      session,
+      include: Vendor.include(user: User.include()),
+    );
+    final vendorUserIds = <UuidValue>{
+      for (final vendor in vendors) vendor.userId,
+    };
+
     final vendorUsers = users.where((user) => user.role == UserRole.vendor);
-    final approvedCount =
-        vendorUsers.where((user) => user.status == UserAccountStatus.approved).length;
-    final pendingCount =
-        vendorUsers.where((user) => user.status == UserAccountStatus.pending).length;
-    final declinedCount =
-        vendorUsers.where((user) => user.status == UserAccountStatus.rejected).length;
-    final suspendedCount =
-        vendorUsers.where((user) => user.status == UserAccountStatus.suspended).length;
+    final approvedCount = vendorUsers
+        .where((user) => user.status == UserAccountStatus.approved)
+        .length;
+    // Pending applicants keep consumer (or other) role until approval.
+    final pendingCount = users
+        .where(
+          (user) =>
+              user.status == UserAccountStatus.pending &&
+              user.id != null &&
+              vendorUserIds.contains(user.id),
+        )
+        .length;
+    final declinedCount = vendorUsers
+        .where((user) => user.status == UserAccountStatus.rejected)
+        .length;
+    final suspendedCount = vendorUsers
+        .where((user) => user.status == UserAccountStatus.suspended)
+        .length;
 
     final gmvResult = await session.db.unsafeQuery(
       'SELECT COALESCE(SUM("totalAmount"), 0) AS gmv FROM "order" WHERE "status" = @status',
@@ -132,8 +151,10 @@ class AdminPlatformStore {
       final user = vendor.user;
       final vendorId = vendor.id;
       if (user == null || vendorId == null) continue;
-      if (user.role != UserRole.vendor) continue;
-      if (status != null && user.status != status) continue;
+      if (status != null &&
+          !AdminVendorLifecycle.matchesListFilter(user, vendor, status)) {
+        continue;
+      }
 
       applications.add(
         VendorApplicationSummary(
@@ -167,7 +188,7 @@ class AdminPlatformStore {
     if (vendor == null) return null;
 
     final user = vendor.user;
-    if (user == null || user.role != UserRole.vendor) return null;
+    if (user == null) return null;
 
     final documents = await VendorDocument.db.find(
       session,
@@ -198,7 +219,9 @@ class AdminPlatformStore {
       state: addressParts.state,
       postalCode: addressParts.postalCode,
       country: vendor.country ?? addressParts.country,
-      category: VendorShopCategoryCodec.decode(vendor.shopCategory ?? '').join(', '),
+      category: VendorShopCategoryCodec.decode(
+        vendor.shopCategory ?? '',
+      ).join(', '),
       description: vendor.description ?? '',
       businessLicenseUrl: documentUrl(VendorDocumentType.businessLicense),
       governmentIdUrl: documentUrl(VendorDocumentType.governmentId),
@@ -262,8 +285,14 @@ class AdminPlatformStore {
     };
   }
 
-  ({String street, String city, String state, String postalCode, String country})
-      _parseAddress(String? raw) {
+  ({
+    String street,
+    String city,
+    String state,
+    String postalCode,
+    String country,
+  })
+  _parseAddress(String? raw) {
     if (raw == null || raw.trim().isEmpty) {
       return (
         street: '',

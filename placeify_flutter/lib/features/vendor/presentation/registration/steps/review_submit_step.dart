@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/constants/app_colors.dart';
+import '../../../domain/constants/vendor_registration_field_keys.dart'
+    show isUploadedVendorDocument;
 import '../../../domain/models/vendor_registration.dart';
 import '../../providers/vendor_registration_provider.dart';
 
@@ -67,15 +69,21 @@ class ReviewSubmitStep extends ConsumerWidget {
           rows: [
             _ReviewRow(
               'Business License',
-              form.documents.businessLicensePath != null ? 'Uploaded' : 'Missing',
+              isUploadedVendorDocument(form.documents.businessLicensePath)
+                  ? 'Uploaded'
+                  : 'Missing',
             ),
             _ReviewRow(
               'Government ID',
-              form.documents.governmentIdPath != null ? 'Uploaded' : 'Missing',
+              isUploadedVendorDocument(form.documents.governmentIdPath)
+                  ? 'Uploaded'
+                  : 'Missing',
             ),
             _ReviewRow(
               'Tax Certificate',
-              form.documents.taxCertificatePath != null ? 'Uploaded' : 'Not provided',
+              isUploadedVendorDocument(form.documents.taxCertificatePath)
+                  ? 'Uploaded'
+                  : 'Not provided',
             ),
           ],
         ),
@@ -99,11 +107,17 @@ class ReviewSubmitStep extends ConsumerWidget {
             decoration: BoxDecoration(
               color: AppColors.coralBg,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.coral.withValues(alpha: 0.35)),
+              border: Border.all(
+                color: AppColors.coral.withValues(alpha: 0.35),
+              ),
             ),
             child: Row(
               children: [
-                const Icon(Icons.error_outline, color: AppColors.coral, size: 20),
+                const Icon(
+                  Icons.error_outline,
+                  color: AppColors.coral,
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(

@@ -25,7 +25,7 @@ import 'vendor_shop_category_codec.dart';
 
 class VendorStore {
   VendorStore({InAppNotificationStore? notifications})
-      : _notifications = notifications ?? InAppNotificationStore();
+    : _notifications = notifications ?? InAppNotificationStore();
 
   final InAppNotificationStore _notifications;
   Future<VendorDashboard> getDashboard(Session session) async {
@@ -35,7 +35,8 @@ class VendorStore {
       where: (row) => row.userId.equals(user.id!),
     );
     if (vendor == null) {
-      throw PlaceifyException(message: 'Shop not found.',
+      throw PlaceifyException(
+        message: 'Shop not found.',
         code: 'SHOP_NOT_FOUND',
       );
     }
@@ -45,15 +46,18 @@ class VendorStore {
       session,
       where: (row) => row.vendorId.equals(vendorId),
     );
-    final activeProducts =
-        products.where((p) => p.status == ProductStatus.active).length;
+    final activeProducts = products
+        .where((p) => p.status == ProductStatus.active)
+        .length;
 
     final orderItems = await _loadVendorOrderItems(session, vendorId);
     final deliveredOrderIds = VendorSalesMetricsCalculator.deliveredItems(
       orderItems,
     ).map((item) => item.orderId).toSet();
-    final refundedOrderIds =
-        await _loadCompletedRefundOrderIds(session, deliveredOrderIds);
+    final refundedOrderIds = await _loadCompletedRefundOrderIds(
+      session,
+      deliveredOrderIds,
+    );
     final sales = VendorSalesMetricsCalculator.compute(
       orderItems: orderItems,
       completedRefundOrderIds: refundedOrderIds,
@@ -135,8 +139,7 @@ class VendorStore {
           status: OrderStatus.pending,
           placedAt: request.createdAt,
           isCustomizationRequest: true,
-          requestMeta:
-              'Request · ${request.user?.name ?? 'Customer'}',
+          requestMeta: 'Request · ${request.user?.name ?? 'Customer'}',
         ),
       );
     }
@@ -165,31 +168,35 @@ class VendorStore {
       where: (row) => row.userId.equals(user.id!),
     );
     if (vendor == null) {
-      throw PlaceifyException(message: 'Vendor profile not found.',
+      throw PlaceifyException(
+        message: 'Vendor profile not found.',
         code: 'VENDOR_NOT_FOUND',
       );
     }
     return vendor;
   }
 
-  /// Resolves the vendor shop for the logged-in user without requiring a
-  /// pre-set vendor role (upgrades role when a shop already exists).
+  /// Resolves the vendor shop for the logged-in user.
+  ///
+  /// Does **not** mutate [User.role]. Vendor role is assigned only via admin
+  /// approval ([AdminModerationStore.approveVendor]).
   Future<Vendor> requireOwnedVendor(Session session) async {
-    var user = await SessionService.requireUser(session);
+    final user = await SessionService.requireUser(session);
     final vendor = await Vendor.db.findFirstRow(
       session,
       where: (row) => row.userId.equals(user.id!),
     );
     if (vendor == null) {
-      throw PlaceifyException(message: 'Shop not found.',
+      throw PlaceifyException(
+        message: 'Shop not found.',
         code: 'SHOP_NOT_FOUND',
       );
     }
 
     if (user.role != UserRole.vendor && user.role != UserRole.admin) {
-      user = await User.db.updateRow(
-        session,
-        user.copyWith(role: UserRole.vendor),
+      throw PlaceifyException(
+        message: 'Vendor account is pending admin approval.',
+        code: 'VENDOR_NOT_APPROVED',
       );
     }
 
@@ -239,7 +246,8 @@ class VendorStore {
       where: (row) => row.userId.equals(user.id!),
     );
     if (existing != null) {
-      throw PlaceifyException(message: 'Vendor shop already exists.',
+      throw PlaceifyException(
+        message: 'Vendor shop already exists.',
         code: 'VENDOR_EXISTS',
       );
     }
@@ -288,7 +296,9 @@ class VendorStore {
         code: 'MISSING_REQUIRED_FIELD',
       );
     }
-    final normalizedCategory = VendorShopCategoryCodec.normalize(trimmedCategory);
+    final normalizedCategory = VendorShopCategoryCodec.normalize(
+      trimmedCategory,
+    );
 
     final trimmedContactEmail = contactEmail?.trim();
     if (trimmedContactEmail != null && trimmedContactEmail.isNotEmpty) {
@@ -306,10 +316,10 @@ class VendorStore {
 
     await _requireRegistrationDocuments(session, user.id!);
 
+    // Keep role unchanged until admin approval promotes to [UserRole.vendor].
     await User.db.updateRow(
       session,
       user.copyWith(
-        role: UserRole.vendor,
         phone: trimmedPhone,
         address: trimmedAddress,
         status: UserAccountStatus.pending,
@@ -416,8 +426,7 @@ class VendorStore {
       );
     }
 
-    final ownerSegment =
-        vendor?.id?.toString() ?? 'user_${user.id.toString()}';
+    final ownerSegment = vendor?.id?.toString() ?? 'user_${user.id.toString()}';
     final fileUrl = await VendorDocumentStorage.persist(
       session: session,
       ownerSegment: ownerSegment,
@@ -428,8 +437,7 @@ class VendorStore {
     final existing = await VendorDocument.db.findFirstRow(
       session,
       where: (row) =>
-          row.userId.equals(user.id!) &
-          row.documentType.equals(documentType),
+          row.userId.equals(user.id!) & row.documentType.equals(documentType),
     );
 
     if (existing != null) {
@@ -496,7 +504,8 @@ class VendorStore {
       );
       if (document == null || document.fileUrl.trim().isEmpty) {
         throw PlaceifyException(
-          message: 'Upload all required verification documents before submitting.',
+          message:
+              'Upload all required verification documents before submitting.',
           code: 'MISSING_REQUIRED_FIELD',
         );
       }
@@ -712,8 +721,7 @@ class VendorStore {
     User? user,
     bool includeNotificationPrefs = false,
   }) async {
-    final resolvedUser =
-        user ?? await User.db.findById(session, vendor.userId);
+    final resolvedUser = user ?? await User.db.findById(session, vendor.userId);
     if (resolvedUser == null) {
       throw PlaceifyException(
         message: 'User account not found.',
@@ -724,8 +732,9 @@ class VendorStore {
     final metrics = await _loadVendorMetrics(session, vendor.id!);
     NotificationPreference? notificationPreferences;
     if (includeNotificationPrefs) {
-      notificationPreferences =
-          await NotificationStore().getPreferences(session);
+      notificationPreferences = await NotificationStore().getPreferences(
+        session,
+      );
     }
 
     return VendorProfileMapper.toDetail(
@@ -770,8 +779,10 @@ class VendorStore {
       orderItems,
     ).map((item) => item.orderId).toSet();
 
-    final refundedOrderIds =
-        await _loadCompletedRefundOrderIds(session, deliveredOrderIds);
+    final refundedOrderIds = await _loadCompletedRefundOrderIds(
+      session,
+      deliveredOrderIds,
+    );
 
     return VendorSalesMetricsCalculator.compute(
       orderItems: orderItems,
@@ -834,35 +845,43 @@ class VendorStore {
   }) async {
     final vendor = await requireOwnedVendor(session);
     if (name.trim().isEmpty || description.trim().isEmpty) {
-      throw PlaceifyException(message: 'Name and description are required.',
+      throw PlaceifyException(
+        message: 'Name and description are required.',
         code: 'INVALID_PRODUCT',
       );
     }
     if (price <= 0) {
-      throw PlaceifyException(message: 'Price must be positive.', code: 'INVALID_PRICE');
+      throw PlaceifyException(
+        message: 'Price must be positive.',
+        code: 'INVALID_PRICE',
+      );
     }
 
     final trimmedMaterials = materials?.trim();
     if (trimmedMaterials == null || trimmedMaterials.isEmpty) {
-      throw PlaceifyException(message: 'Materials are required.',
+      throw PlaceifyException(
+        message: 'Materials are required.',
         code: 'INVALID_MATERIALS',
       );
     }
 
     if (widthCm == null || depthCm == null || heightCm == null) {
-      throw PlaceifyException(message: 'Product dimensions are required.',
+      throw PlaceifyException(
+        message: 'Product dimensions are required.',
         code: 'INVALID_DIMENSIONS',
       );
     }
     if (widthCm <= 0 || depthCm <= 0 || heightCm <= 0) {
-      throw PlaceifyException(message: 'Dimensions must be positive.',
+      throw PlaceifyException(
+        message: 'Dimensions must be positive.',
         code: 'INVALID_DIMENSIONS',
       );
     }
 
     final trimmedCare = careInstructions?.trim();
     if (trimmedCare == null || trimmedCare.isEmpty) {
-      throw PlaceifyException(message: 'Care instructions are required.',
+      throw PlaceifyException(
+        message: 'Care instructions are required.',
         code: 'INVALID_CARE',
       );
     }
@@ -988,7 +1007,10 @@ class VendorStore {
       );
     }
     if (input.price <= 0) {
-      throw PlaceifyException(message: 'Price must be positive.', code: 'INVALID_PRICE');
+      throw PlaceifyException(
+        message: 'Price must be positive.',
+        code: 'INVALID_PRICE',
+      );
     }
 
     final trimmedMaterials = input.materials.trim();
@@ -1166,7 +1188,10 @@ class VendorStore {
     final vendor = await requireVendorProfile(session);
     final product = await Product.db.findById(session, productId);
     if (product == null || product.vendorId != vendor.id) {
-      throw PlaceifyException(message: 'Product not found.', code: 'PRODUCT_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Product not found.',
+        code: 'PRODUCT_NOT_FOUND',
+      );
     }
 
     return Product.db.updateRow(
@@ -1201,10 +1226,14 @@ class VendorStore {
       fileData.lengthInBytes,
     );
     if (bytes.isEmpty) {
-      throw PlaceifyException(message: 'Image file is empty.', code: 'INVALID_FILE');
+      throw PlaceifyException(
+        message: 'Image file is empty.',
+        code: 'INVALID_FILE',
+      );
     }
     if (bytes.length > 8 * 1024 * 1024) {
-      throw PlaceifyException(message: 'Image must be 8 MB or smaller.',
+      throw PlaceifyException(
+        message: 'Image must be 8 MB or smaller.',
         code: 'FILE_TOO_LARGE',
       );
     }
@@ -1355,12 +1384,18 @@ class VendorStore {
     );
 
     if (orderItems.isEmpty) {
-      throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Order not found.',
+        code: 'ORDER_NOT_FOUND',
+      );
     }
 
     final orders = _groupVendorShopOrders(orderItems);
     if (orders.isEmpty) {
-      throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Order not found.',
+        code: 'ORDER_NOT_FOUND',
+      );
     }
     return orders.first;
   }
@@ -1368,7 +1403,11 @@ class VendorStore {
   Future<VendorShopOrder> acceptShopOrder(Session session, int orderId) async {
     final vendor = await requireOwnedVendor(session);
     final user = await SessionService.requireUser(session);
-    final order = await _requireMutableVendorOrder(session, vendor.id!, orderId);
+    final order = await _requireMutableVendorOrder(
+      session,
+      vendor.id!,
+      orderId,
+    );
 
     if (order.status != OrderStatus.pending &&
         order.status != OrderStatus.confirmed) {
@@ -1446,7 +1485,11 @@ class VendorStore {
       );
     }
 
-    final order = await _requireMutableVendorOrder(session, vendor.id!, orderId);
+    final order = await _requireMutableVendorOrder(
+      session,
+      vendor.id!,
+      orderId,
+    );
     if (order.status != OrderStatus.pending &&
         order.status != OrderStatus.confirmed) {
       throw PlaceifyException(
@@ -1505,7 +1548,11 @@ class VendorStore {
   }) async {
     final vendor = await requireOwnedVendor(session);
     final user = await SessionService.requireUser(session);
-    final order = await _requireMutableVendorOrder(session, vendor.id!, orderId);
+    final order = await _requireMutableVendorOrder(
+      session,
+      vendor.id!,
+      orderId,
+    );
 
     if (order.status == OrderStatus.pending ||
         order.status == OrderStatus.confirmed) {
@@ -1531,7 +1578,9 @@ class VendorStore {
       );
     }
 
-    final nextDeliveryStatus = OrderLifecycleStore.deliveryStatusForStage(stage);
+    final nextDeliveryStatus = OrderLifecycleStore.deliveryStatusForStage(
+      stage,
+    );
     if (nextDeliveryStatus == null) {
       throw PlaceifyException(
         message: 'This delivery stage cannot be applied.',
@@ -1544,8 +1593,7 @@ class VendorStore {
       nextDeliveryStatus,
     )) {
       throw PlaceifyException(
-        message:
-            'Delivery status can only move forward one step at a time.',
+        message: 'Delivery status can only move forward one step at a time.',
         code: 'INVALID_DELIVERY_STAGE',
       );
     }
@@ -1588,8 +1636,9 @@ class VendorStore {
         transaction: transaction,
       );
 
-      final nextOrderStatus =
-          OrderLifecycleStore.orderStatusForDelivery(nextDeliveryStatus);
+      final nextOrderStatus = OrderLifecycleStore.orderStatusForDelivery(
+        nextDeliveryStatus,
+      );
       final updatedOrder = await OrderLifecycleStore.updateOrderWithVersion(
         session,
         order,
@@ -1657,7 +1706,10 @@ class VendorStore {
     await _assertVendorOwnsOrder(session, vendorId, orderId);
     final order = await Order.db.findById(session, orderId);
     if (order == null) {
-      throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Order not found.',
+        code: 'ORDER_NOT_FOUND',
+      );
     }
     return order;
   }
@@ -1673,7 +1725,10 @@ class VendorStore {
           row.vendorId.equals(vendorId) & row.orderId.equals(orderId),
     );
     if (ownsOrder == null) {
-      throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Order not found.',
+        code: 'ORDER_NOT_FOUND',
+      );
     }
   }
 
@@ -1791,7 +1846,11 @@ class VendorStore {
     int limit = 50,
   }) async {
     final user = await SessionService.requireUser(session);
-    final rows = await _notifications.listForUser(session, user.id!, limit: limit);
+    final rows = await _notifications.listForUser(
+      session,
+      user.id!,
+      limit: limit,
+    );
 
     return [
       for (final row in rows)

@@ -54,20 +54,17 @@ class VendorApplicationActions extends _$VendorApplicationActions {
     if (!ref.mounted) return 'Could not approve application';
 
     try {
-      await ref.read(currentUserProvider.notifier).updateVendorStatusForUser(
-            userId: userId,
-            status: VendorStatus.approved,
-            vendorId: vendorId,
-          );
-      if (!ref.mounted) return 'Could not approve application';
-
       await repo.approve(userId: userId, vendorId: vendorId);
       if (!ref.mounted) return 'Could not approve application';
 
       _invalidateAfterDecision(vendorId);
       return null;
-    } catch (_) {
-      return 'Could not approve application';
+    } catch (e, st) {
+      // ignore: avoid_print
+      print('APPROVE ERROR: $e');
+      // ignore: avoid_print
+      print('STACK: $st');
+      return 'Could not approve application: $e';
     }
   }
 

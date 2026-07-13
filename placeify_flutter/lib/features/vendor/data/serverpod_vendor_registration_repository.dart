@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:placeify_client/placeify_client.dart'
     hide Product, VendorBankDetails;
 import 'package:placeify_flutter/core/config/placeify_server_client.dart';
@@ -62,10 +63,28 @@ class ServerpodVendorRegistrationRepository
       );
     }
 
-    if (!isUploadedVendorDocument(registration.documents.businessLicensePath) ||
-        !isUploadedVendorDocument(registration.documents.governmentIdPath)) {
+    final licensePath = registration.documents.businessLicensePath;
+    final governmentIdPath = registration.documents.governmentIdPath;
+    final taxCertificatePath = registration.documents.taxCertificatePath;
+
+    if (kDebugMode) {
+      debugPrint(
+        'vendor_registration_docs '
+        'businessLicensePath=$licensePath '
+        'governmentIdPath=$governmentIdPath '
+        'taxCertificatePath=$taxCertificatePath',
+      );
+    }
+
+    final missingDocuments = <String>[
+      if (!isUploadedVendorDocument(licensePath)) 'Business License',
+      if (!isUploadedVendorDocument(governmentIdPath)) 'Government ID',
+    ];
+    if (missingDocuments.isNotEmpty) {
       throw VendorRegistrationException(
-        'Upload all required verification documents before submitting.',
+        missingDocuments.length == 1
+            ? 'Upload ${missingDocuments.first} before submitting.'
+            : 'Upload ${missingDocuments.join(' and ')} before submitting.',
       );
     }
 

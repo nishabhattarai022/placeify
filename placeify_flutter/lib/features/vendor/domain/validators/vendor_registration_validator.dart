@@ -1,4 +1,6 @@
 import 'package:placeify_flutter/core/constants/country_phone_codes.dart';
+import 'package:placeify_flutter/features/vendor/domain/constants/vendor_registration_field_keys.dart'
+    show isUploadedVendorDocument;
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_registration.dart';
 
 /// Map keys for inline field error display on the vendor registration form.
@@ -97,8 +99,7 @@ abstract final class VendorRegistrationValidator {
     final errors = <String, String>{};
 
     if (address.street.trim().isEmpty) {
-      errors[VendorRegistrationFieldKeys.street] =
-          'Street address is required';
+      errors[VendorRegistrationFieldKeys.street] = 'Street address is required';
     }
     if (address.city.trim().isEmpty) {
       errors[VendorRegistrationFieldKeys.city] = 'City is required';
@@ -111,7 +112,8 @@ abstract final class VendorRegistrationValidator {
     if (postalCode.isEmpty) {
       errors[VendorRegistrationFieldKeys.postalCode] =
           'Postal code is required';
-    } else if (postalCode.length != 5 || !RegExp(r'^\d{5}$').hasMatch(postalCode)) {
+    } else if (postalCode.length != 5 ||
+        !RegExp(r'^\d{5}$').hasMatch(postalCode)) {
       errors[VendorRegistrationFieldKeys.postalCode] =
           'Postal code must be exactly 5 digits';
     }
@@ -135,11 +137,11 @@ abstract final class VendorRegistrationValidator {
   static Map<String, String> _validateDocuments(VendorDocuments documents) {
     final errors = <String, String>{};
 
-    if (documents.businessLicensePath == null) {
+    if (!isUploadedVendorDocument(documents.businessLicensePath)) {
       errors[VendorRegistrationFieldKeys.businessLicense] =
           'Upload your business license';
     }
-    if (documents.governmentIdPath == null) {
+    if (!isUploadedVendorDocument(documents.governmentIdPath)) {
       errors[VendorRegistrationFieldKeys.governmentId] =
           'Upload a government-issued ID';
     }

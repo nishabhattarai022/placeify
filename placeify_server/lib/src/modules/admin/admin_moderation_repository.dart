@@ -3,12 +3,15 @@ import 'package:serverpod/serverpod.dart';
 import '../../generated/protocol.dart';
 import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
+import '../../shared/user_role_audit_log.dart';
+import 'admin_action_audit_log.dart';
 import 'admin_repository.dart';
+import 'admin_vendor_lifecycle.dart';
 
 /// Admin moderation: vendor approval, user status, product removal, complaints.
 class AdminModerationStore {
   AdminModerationStore({AdminStore? adminStore})
-      : _adminStore = adminStore ?? AdminStore();
+    : _adminStore = adminStore ?? AdminStore();
 
   final AdminStore _adminStore;
 
@@ -19,7 +22,7 @@ class AdminModerationStore {
   Future<Vendor> approveVendor(Session session, UuidValue vendorUserId) async {
     final admin = await _requireAdminProfile(session);
     final user = await User.db.findById(session, vendorUserId);
-    if (user == null || user.role != UserRole.vendor) {
+    if (user == null) {
       throw PlaceifyException(
         message: 'Vendor account not found.',
         code: 'VENDOR_NOT_FOUND',
@@ -37,46 +40,122 @@ class AdminModerationStore {
       );
     }
 
-    final now = DateTime.now();
-    await User.db.updateRow(
-      session,
-      user.copyWith(
-        status: UserAccountStatus.approved,
-        isActive: true,
-        approvedById: admin.id,
-        statusChangedById: admin.id,
-        updatedAt: now,
-      ),
-    );
+    AdminVendorLifecycle.ensureCanApprove(user, vendor);
 
-    return Vendor.db.updateRow(
-      session,
-      vendor.copyWith(
-        approvedById: admin.id,
-        approvedAt: now,
-        updatedAt: now,
-      ),
-    );
+    if (user.status == UserAccountStatus.approved &&
+        user.role == UserRole.vendor) {
+      return vendor;
+    }
+
+    final now = DateTime.now();
+    final previousRole = user.role;
+    final previousStatus = user.status.name;
+
+    final updatedVendor = await session.db.transaction((transaction) async {
+      await User.db.updateRow(
+        session,
+        user.copyWith(
+          role: UserRole.vendor,
+          status: UserAccountStatus.approved,
+          isActive: true,
+          approvedById: admin.id,
+          statusChangedById: admin.id,
+          updatedAt: now,
+        ),
+        transaction: transaction,
+      );
+
+      final vendorRow = await Vendor.db.updateRow(
+        session,
+        vendor.copyWith(
+          approvedById: vendor.approvedById ?? admin.id,
+          approvedAt: vendor.approvedAt ?? now,
+          updatedAt: now,
+        ),
+        transaction: transaction,
+      );
+
+      await AdminActionAuditLog.record(
+        session,
+        actorAdminId: admin.id!,
+        actionType: AdminActionType.approveVendor,
+        targetUserId: vendorUserId,
+        targetVendorId: vendor.id,
+        previousStatus: previousStatus,
+        newStatus: UserAccountStatus.approved.name,
+        transaction: transaction,
+      );
+
+      return vendorRow;
+    });
+
+    if (previousRole != UserRole.vendor) {
+      UserRoleAuditLog.roleChanged(
+        session,
+        userId: user.id!,
+        previousRole: previousRole,
+        newRole: UserRole.vendor,
+        source: 'admin.approveVendor',
+        changedByAdminId: admin.id,
+      );
+    }
+
+    return updatedVendor;
   }
 
   Future<User> rejectVendor(Session session, UuidValue vendorUserId) async {
     final admin = await _requireAdminProfile(session);
     final user = await User.db.findById(session, vendorUserId);
-    if (user == null || user.role != UserRole.vendor) {
+    if (user == null) {
       throw PlaceifyException(
         message: 'Vendor account not found.',
         code: 'VENDOR_NOT_FOUND',
       );
     }
 
-    return User.db.updateRow(
+    final vendor = await Vendor.db.findFirstRow(
       session,
-      user.copyWith(
-        status: UserAccountStatus.rejected,
-        statusChangedById: admin.id,
-        updatedAt: DateTime.now(),
-      ),
+      where: (row) => row.userId.equals(vendorUserId),
     );
+    if (vendor == null) {
+      throw PlaceifyException(
+        message: 'Vendor profile not found.',
+        code: 'VENDOR_NOT_FOUND',
+      );
+    }
+
+    AdminVendorLifecycle.ensureCanReject(user);
+    if (user.status == UserAccountStatus.rejected) {
+      return user;
+    }
+
+    final previousStatus = user.status.name;
+    final now = DateTime.now();
+
+    return session.db.transaction((transaction) async {
+      final updated = await User.db.updateRow(
+        session,
+        user.copyWith(
+          status: UserAccountStatus.rejected,
+          statusChangedById: admin.id,
+          updatedAt: now,
+        ),
+        transaction: transaction,
+      );
+
+      await AdminActionAuditLog.record(
+        session,
+        actorAdminId: admin.id!,
+        actionType: AdminActionType.rejectVendor,
+        targetUserId: vendorUserId,
+        targetVendorId: vendor.id,
+        previousStatus: previousStatus,
+        newStatus: UserAccountStatus.rejected.name,
+        transaction: transaction,
+      );
+
+      return updated;
+    });
   }
 
   Future<User> updateUserStatus(
@@ -88,7 +167,10 @@ class AdminModerationStore {
     final admin = await _requireAdminProfile(session);
     final user = await User.db.findById(session, targetUserId);
     if (user == null) {
-      throw PlaceifyException(message: 'User not found.', code: 'USER_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'User not found.',
+        code: 'USER_NOT_FOUND',
+      );
     }
 
     return User.db.updateRow(
@@ -106,7 +188,10 @@ class AdminModerationStore {
     final admin = await _requireAdminProfile(session);
     final user = await User.db.findById(session, targetUserId);
     if (user == null) {
-      throw PlaceifyException(message: 'User not found.', code: 'USER_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'User not found.',
+        code: 'USER_NOT_FOUND',
+      );
     }
 
     final now = DateTime.now();
@@ -130,7 +215,10 @@ class AdminModerationStore {
     final admin = await _requireAdminProfile(session);
     final product = await Product.db.findById(session, productId);
     if (product == null) {
-      throw PlaceifyException(message: 'Product not found.', code: 'PRODUCT_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Product not found.',
+        code: 'PRODUCT_NOT_FOUND',
+      );
     }
 
     final trimmedReason = reason.trim();
@@ -158,7 +246,10 @@ class AdminModerationStore {
     await _requireAdminProfile(session);
     final product = await Product.db.findById(session, productId);
     if (product == null) {
-      throw PlaceifyException(message: 'Product not found.', code: 'PRODUCT_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Product not found.',
+        code: 'PRODUCT_NOT_FOUND',
+      );
     }
 
     return Product.db.updateRow(
@@ -179,7 +270,10 @@ class AdminModerationStore {
     final reporter = await SessionService.requireUser(session);
     final product = await Product.db.findById(session, productId);
     if (product == null) {
-      throw PlaceifyException(message: 'Product not found.', code: 'PRODUCT_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Product not found.',
+        code: 'PRODUCT_NOT_FOUND',
+      );
     }
 
     final trimmedReason = reason.trim();
@@ -209,9 +303,7 @@ class AdminModerationStore {
     await _requireAdminProfile(session);
     return Complaint.db.find(
       session,
-      where: status == null
-          ? null
-          : (row) => row.status.equals(status),
+      where: status == null ? null : (row) => row.status.equals(status),
       include: Complaint.include(
         product: Product.include(vendor: Vendor.include()),
         reportedBy: User.include(),
@@ -222,7 +314,10 @@ class AdminModerationStore {
     );
   }
 
-  Future<Complaint> resolveComplaint(Session session, UuidValue complaintId) async {
+  Future<Complaint> resolveComplaint(
+    Session session,
+    UuidValue complaintId,
+  ) async {
     final admin = await _requireAdminProfile(session);
     final complaint = await Complaint.db.findById(session, complaintId);
     if (complaint == null) {
