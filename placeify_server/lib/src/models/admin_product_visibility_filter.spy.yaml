@@ -1,0 +1,6 @@
+### Admin catalog filter for product list screens.
+enum: AdminProductVisibilityFilter
+values:
+  - all
+  - active
+  - removed

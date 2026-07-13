@@ -1,0 +1,6 @@
+### Curated marketplace product rows for consumer dashboards and home feeds.
+class: MarketplaceHighlights
+fields:
+  recentProducts: List<Product>
+  featuredProducts: List<Product>
+  offerProducts: List<Product>
