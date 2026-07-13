@@ -156,7 +156,7 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
           Expanded(
             child: productsAsync.when(
               loading: () => const Center(
-                child: CircularProgressIndicator(color: AppColors.espresso),
+                child: CircularProgressIndicator(color: Colors.black),
               ),
               error: (_, __) => _EmptyState(
                 message: Vendor3dBuilderStrings.noProducts,
@@ -958,8 +958,8 @@ class _PrimaryActionButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           color: muted
-              ? AppColors.espresso.withValues(alpha: 0.35)
-              : AppColors.espresso,
+              ? Colors.black.withValues(alpha: 0.35)
+              : Colors.black,
           borderRadius: AppRadii.pill,
         ),
         alignment: Alignment.center,

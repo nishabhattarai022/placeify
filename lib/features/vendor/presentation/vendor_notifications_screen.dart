@@ -721,7 +721,7 @@ class _UndoToastState extends State<_UndoToast>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
               decoration: BoxDecoration(
-                color: AppColors.espresso,
+                color: Colors.black,
                 borderRadius: AppRadii.pill,
                 border: Border.all(
                   color: Colors.white.withValues(alpha: 0.10),
