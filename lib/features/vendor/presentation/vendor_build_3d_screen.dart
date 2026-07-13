@@ -143,15 +143,7 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
         children: [
           ProfileSubHero(
             title: Vendor3dBuilderStrings.screenTitle,
-            bottom: Text(
-              Vendor3dBuilderStrings.screenSubtitle,
-              style: GoogleFonts.dmSans(
-                fontSize: 13,
-                fontWeight: FontWeight.w400,
-                color: Colors.white.withValues(alpha: 0.78),
-                height: 1.45,
-              ),
-            ),
+            subtitle: Vendor3dBuilderStrings.screenSubtitle,
           ),
           Expanded(
             child: productsAsync.when(

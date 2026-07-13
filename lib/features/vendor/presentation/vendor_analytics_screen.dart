@@ -60,7 +60,10 @@ class VendorAnalyticsScreen extends StatelessWidget {
         ),
         slivers: [
           const SliverToBoxAdapter(
-            child: ProfileSubHero(title: 'Analytics'),
+            child: ProfileSubHero(
+              title: 'Analytics',
+              subtitle: 'insights & trends',
+            ),
           ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(24, 24, 24, AppSpacing.xxl),

@@ -28,7 +28,10 @@ class AdminNotificationsScreen extends ConsumerWidget {
       backgroundColor: AppColors.cream,
       body: Column(
         children: [
-          ProfileSubHero(title: AdminStrings.notificationsTitle),
+          ProfileSubHero(
+            title: AdminStrings.notificationsTitle,
+            subtitle: 'alerts & updates',
+          ),
           notificationsAsync.maybeWhen(
             data: (items) {
               if (!items.any((n) => !n.read)) {

@@ -26,7 +26,10 @@ class AdminUserDetailScreen extends ConsumerWidget {
       backgroundColor: AppColors.cream,
       body: Column(
         children: [
-          const ProfileSubHero(title: AdminStrings.userDetailTitle),
+          const ProfileSubHero(
+            title: AdminStrings.userDetailTitle,
+            subtitle: 'account overview',
+          ),
           Expanded(
             child: userAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),

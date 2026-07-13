@@ -68,23 +68,11 @@ class _OrderDetailBody extends ConsumerWidget {
         SliverToBoxAdapter(
           child: ProfileSubHero(
             title: order.orderNumber,
-            bottom: Padding(
-              padding: const EdgeInsets.only(top: 6, bottom: 20),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      '${OrderStrings.placedOnPrefix} ${Formatters.shortDate(order.placedAt)}',
-                      style: GoogleFonts.dmSans(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.white.withValues(alpha: 0.72),
-                      ),
-                    ),
-                  ),
-                  ConsumerPaymentStatusChip(status: order.paymentStatus),
-                ],
-              ),
+            subtitle:
+                '${OrderStrings.placedOnPrefix} ${Formatters.shortDate(order.placedAt)}',
+            bottom: Align(
+              alignment: Alignment.centerLeft,
+              child: ConsumerPaymentStatusChip(status: order.paymentStatus),
             ),
           ),
         ),

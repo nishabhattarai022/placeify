@@ -64,7 +64,12 @@ class _VendorReviewsScreenState extends State<VendorReviewsScreen> {
       backgroundColor: AppColors.cream,
       body: CustomScrollView(
         slivers: [
-          const SliverToBoxAdapter(child: ProfileSubHero(title: 'Reviews')),
+          const SliverToBoxAdapter(
+            child: ProfileSubHero(
+              title: 'Reviews',
+              subtitle: 'customer feedback',
+            ),
+          ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(24, 24, 24, AppSpacing.xxl),
             sliver: SliverList(

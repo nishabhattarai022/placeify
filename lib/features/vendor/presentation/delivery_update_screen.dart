@@ -156,16 +156,7 @@ class _DeliveryUpdateScreenState extends ConsumerState<DeliveryUpdateScreen> {
             children: [
               ProfileSubHero(
                 title: 'Update Delivery',
-                bottom: Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: Text(
-                    'Order #${order.orderNumber}',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0x99FFFFFF),
-                    ),
-                  ),
-                ),
+                subtitle: 'Order #${order.orderNumber}',
               ),
               Expanded(
                 child: SingleChildScrollView(

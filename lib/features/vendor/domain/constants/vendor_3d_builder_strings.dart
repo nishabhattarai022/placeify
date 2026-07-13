@@ -6,8 +6,7 @@ abstract final class Vendor3dBuilderStrings {
   static const moduleCta = 'Open 3D Studio';
 
   static const screenTitle = 'Build 3D Model';
-  static const screenSubtitle =
-      'Capture angles, confirm dimensions, and publish an AR preview';
+  static const screenSubtitle = 'photos, dimensions & AR';
 
   static const productSectionTitle = 'Select product';
   static const productSectionHint =

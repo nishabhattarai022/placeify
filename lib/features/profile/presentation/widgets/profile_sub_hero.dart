@@ -2,29 +2,40 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/services/haptic_service.dart';
+import '../../../../core/theme/app_fonts.dart';
 
+/// Light page header — matches [ProfileListScreenHeader] / My Orders.
+/// No brown fill; bold title + optional italic subtitle.
 class ProfileSubHero extends StatelessWidget {
   const ProfileSubHero({
     required this.title,
+    this.subtitle,
     this.bottom,
     super.key,
   });
 
   final String title;
+  final String? subtitle;
   final Widget? bottom;
 
   @override
   Widget build(BuildContext context) {
     final top = MediaQuery.paddingOf(context).top;
 
-    return Container(
-      color: AppColors.espresso,
-      padding: EdgeInsets.fromLTRB(22, top + 8, 22, bottom != null ? 0 : 24),
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.screenPadding,
+        top + 8,
+        AppSpacing.screenPadding,
+        8,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               GestureDetector(
                 onTap: () {
@@ -36,37 +47,59 @@ class ProfileSubHero extends StatelessWidget {
                   height: 38,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
+                    color: AppColors.warmWhite,
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      width: 1.5,
+                      color: Colors.black.withValues(alpha: 0.08),
                     ),
                   ),
                   alignment: Alignment.center,
                   child: const Icon(
                     Icons.arrow_back,
-                    color: Colors.white,
+                    color: Colors.black,
                     size: 20,
                   ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontFamily: 'Fraunces',
-                    fontSize: 22,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppFonts.dmSans(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                        letterSpacing: -0.5,
+                        height: 1.05,
+                      ),
+                    ),
+                    if (subtitle != null && subtitle!.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 2),
+                        child: Text(
+                          subtitle!,
+                          style: AppFonts.dmSerifDisplay(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w400,
+                            fontStyle: FontStyle.italic,
+                            color: AppColors.textMuted,
+                            height: 1.05,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ],
           ),
           if (bottom != null) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             bottom!,
-            const SizedBox(height: 16),
           ],
         ],
       ),

@@ -79,7 +79,10 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
       backgroundColor: AppColors.cream,
       body: Column(
         children: [
-          const ProfileSubHero(title: AdminStrings.auditLogTitle),
+          const ProfileSubHero(
+            title: AdminStrings.auditLogTitle,
+            subtitle: 'system activity',
+          ),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),

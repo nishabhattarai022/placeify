@@ -25,7 +25,10 @@ class VendorSettingsScreen extends ConsumerWidget {
       backgroundColor: AppColors.cream,
       body: Column(
         children: [
-          const ProfileSubHero(title: VendorSettingsStrings.screenTitle),
+          const ProfileSubHero(
+            title: VendorSettingsStrings.screenTitle,
+            subtitle: 'store preferences',
+          ),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(
