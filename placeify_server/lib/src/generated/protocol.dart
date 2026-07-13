@@ -2455,6 +2455,32 @@ class Protocol extends _i1.SerializationManagerServer {
           dartType: 'List<String>?',
         ),
         _i2.ColumnDefinition(
+          name: 'discountPrice',
+          columnType: _i2.ColumnType.doublePrecision,
+          isNullable: true,
+          dartType: 'double?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'discountPercentage',
+          columnType: _i2.ColumnType.doublePrecision,
+          isNullable: true,
+          dartType: 'double?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'featured',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _i2.ColumnDefinition(
+          name: 'isOffer',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _i2.ColumnDefinition(
           name: 'averageRating',
           columnType: _i2.ColumnType.doublePrecision,
           isNullable: false,
@@ -2467,6 +2493,19 @@ class Protocol extends _i1.SerializationManagerServer {
           isNullable: false,
           dartType: 'int',
           columnDefault: '0',
+        ),
+        _i2.ColumnDefinition(
+          name: 'isDeleted',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _i2.ColumnDefinition(
+          name: 'deletedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
         ),
         _i2.ColumnDefinition(
           name: 'status',
@@ -3313,6 +3352,30 @@ class Protocol extends _i1.SerializationManagerServer {
           isNullable: false,
           dartType: 'double',
           columnDefault: '0',
+        ),
+        _i2.ColumnDefinition(
+          name: 'moderationNote',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'moderatedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'appealMessage',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'appealSubmittedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
         ),
         _i2.ColumnDefinition(
           name: 'approvedById',

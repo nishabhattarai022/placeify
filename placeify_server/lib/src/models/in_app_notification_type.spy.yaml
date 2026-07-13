@@ -6,3 +6,9 @@ values:
   - orderCancelled
   - deliveryUpdate
   - paymentUpdate
+  - productUpdate
+  - promotionUpdate
+  - refundUpdate
+  - vendorApplication
+  - vendorFlagged
+  - systemAlert

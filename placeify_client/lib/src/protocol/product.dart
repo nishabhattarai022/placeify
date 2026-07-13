@@ -38,8 +38,14 @@ abstract class Product implements _i1.SerializableModel {
     this.model3dUrl,
     this.thumbnailUrl,
     this.viewImageUrls,
+    this.discountPrice,
+    this.discountPercentage,
+    bool? featured,
+    bool? isOffer,
     double? averageRating,
     int? reviewCount,
+    bool? isDeleted,
+    this.deletedAt,
     _i2.ProductStatus? status,
     this.removedReason,
     this.removedById,
@@ -47,8 +53,11 @@ abstract class Product implements _i1.SerializableModel {
     this.removedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
-  }) : averageRating = averageRating ?? 0.0,
+  }) : featured = featured ?? false,
+       isOffer = isOffer ?? false,
+       averageRating = averageRating ?? 0.0,
        reviewCount = reviewCount ?? 0,
+       isDeleted = isDeleted ?? false,
        status = status ?? _i2.ProductStatus.active,
        createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
@@ -73,8 +82,14 @@ abstract class Product implements _i1.SerializableModel {
     String? model3dUrl,
     String? thumbnailUrl,
     List<String>? viewImageUrls,
+    double? discountPrice,
+    double? discountPercentage,
+    bool? featured,
+    bool? isOffer,
     double? averageRating,
     int? reviewCount,
+    bool? isDeleted,
+    DateTime? deletedAt,
     _i2.ProductStatus? status,
     String? removedReason,
     _i1.UuidValue? removedById,
@@ -117,8 +132,23 @@ abstract class Product implements _i1.SerializableModel {
           : _i6.Protocol().deserialize<List<String>>(
               jsonSerialization['viewImageUrls'],
             ),
+      discountPrice: (jsonSerialization['discountPrice'] as num?)?.toDouble(),
+      discountPercentage: (jsonSerialization['discountPercentage'] as num?)
+          ?.toDouble(),
+      featured: jsonSerialization['featured'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['featured']),
+      isOffer: jsonSerialization['isOffer'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['isOffer']),
       averageRating: (jsonSerialization['averageRating'] as num?)?.toDouble(),
       reviewCount: jsonSerialization['reviewCount'] as int?,
+      isDeleted: jsonSerialization['isDeleted'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['isDeleted']),
+      deletedAt: jsonSerialization['deletedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['deletedAt']),
       status: jsonSerialization['status'] == null
           ? null
           : _i2.ProductStatus.fromJson((jsonSerialization['status'] as String)),
@@ -187,10 +217,27 @@ abstract class Product implements _i1.SerializableModel {
   /// Extra product photos for multiview 3D generation (left, back, right, etc.).
   List<String>? viewImageUrls;
 
+  /// Optional sale price when running a fixed-price promotion.
+  double? discountPrice;
+
+  /// Optional percentage discount (0-100). Ignored when discountPrice is set.
+  double? discountPercentage;
+
+  /// Highlights the product in featured / promotion surfaces.
+  bool featured;
+
+  /// True when the product has an active offer (derived from discount fields).
+  bool isOffer;
+
   /// Aggregated from product reviews (updated when reviews are submitted).
   double averageRating;
 
   int reviewCount;
+
+  /// Vendor or admin soft-delete flag; row is never physically removed.
+  bool isDeleted;
+
+  DateTime? deletedAt;
 
   _i2.ProductStatus status;
 
@@ -231,8 +278,14 @@ abstract class Product implements _i1.SerializableModel {
     String? model3dUrl,
     String? thumbnailUrl,
     List<String>? viewImageUrls,
+    double? discountPrice,
+    double? discountPercentage,
+    bool? featured,
+    bool? isOffer,
     double? averageRating,
     int? reviewCount,
+    bool? isDeleted,
+    DateTime? deletedAt,
     _i2.ProductStatus? status,
     String? removedReason,
     _i1.UuidValue? removedById,
@@ -264,8 +317,14 @@ abstract class Product implements _i1.SerializableModel {
       if (model3dUrl != null) 'model3dUrl': model3dUrl,
       if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
       if (viewImageUrls != null) 'viewImageUrls': viewImageUrls?.toJson(),
+      if (discountPrice != null) 'discountPrice': discountPrice,
+      if (discountPercentage != null) 'discountPercentage': discountPercentage,
+      'featured': featured,
+      'isOffer': isOffer,
       'averageRating': averageRating,
       'reviewCount': reviewCount,
+      'isDeleted': isDeleted,
+      if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
       'status': status.toJson(),
       if (removedReason != null) 'removedReason': removedReason,
       if (removedById != null) 'removedById': removedById?.toJson(),
@@ -305,8 +364,14 @@ class _ProductImpl extends Product {
     String? model3dUrl,
     String? thumbnailUrl,
     List<String>? viewImageUrls,
+    double? discountPrice,
+    double? discountPercentage,
+    bool? featured,
+    bool? isOffer,
     double? averageRating,
     int? reviewCount,
+    bool? isDeleted,
+    DateTime? deletedAt,
     _i2.ProductStatus? status,
     String? removedReason,
     _i1.UuidValue? removedById,
@@ -334,8 +399,14 @@ class _ProductImpl extends Product {
          model3dUrl: model3dUrl,
          thumbnailUrl: thumbnailUrl,
          viewImageUrls: viewImageUrls,
+         discountPrice: discountPrice,
+         discountPercentage: discountPercentage,
+         featured: featured,
+         isOffer: isOffer,
          averageRating: averageRating,
          reviewCount: reviewCount,
+         isDeleted: isDeleted,
+         deletedAt: deletedAt,
          status: status,
          removedReason: removedReason,
          removedById: removedById,
@@ -369,8 +440,14 @@ class _ProductImpl extends Product {
     Object? model3dUrl = _Undefined,
     Object? thumbnailUrl = _Undefined,
     Object? viewImageUrls = _Undefined,
+    Object? discountPrice = _Undefined,
+    Object? discountPercentage = _Undefined,
+    bool? featured,
+    bool? isOffer,
     double? averageRating,
     int? reviewCount,
+    bool? isDeleted,
+    Object? deletedAt = _Undefined,
     _i2.ProductStatus? status,
     Object? removedReason = _Undefined,
     Object? removedById = _Undefined,
@@ -405,8 +482,18 @@ class _ProductImpl extends Product {
       viewImageUrls: viewImageUrls is List<String>?
           ? viewImageUrls
           : this.viewImageUrls?.map((e0) => e0).toList(),
+      discountPrice: discountPrice is double?
+          ? discountPrice
+          : this.discountPrice,
+      discountPercentage: discountPercentage is double?
+          ? discountPercentage
+          : this.discountPercentage,
+      featured: featured ?? this.featured,
+      isOffer: isOffer ?? this.isOffer,
       averageRating: averageRating ?? this.averageRating,
       reviewCount: reviewCount ?? this.reviewCount,
+      isDeleted: isDeleted ?? this.isDeleted,
+      deletedAt: deletedAt is DateTime? ? deletedAt : this.deletedAt,
       status: status ?? this.status,
       removedReason: removedReason is String?
           ? removedReason

@@ -38,6 +38,10 @@ abstract class Vendor
     this.facebookHandle,
     this.operatingHours,
     double? rating,
+    this.moderationNote,
+    this.moderatedAt,
+    this.appealMessage,
+    this.appealSubmittedAt,
     this.approvedById,
     this.approvedBy,
     this.approvedAt,
@@ -67,6 +71,10 @@ abstract class Vendor
     String? facebookHandle,
     String? operatingHours,
     double? rating,
+    String? moderationNote,
+    DateTime? moderatedAt,
+    String? appealMessage,
+    DateTime? appealSubmittedAt,
     _i1.UuidValue? approvedById,
     _i3.Admin? approvedBy,
     DateTime? approvedAt,
@@ -100,6 +108,18 @@ abstract class Vendor
       facebookHandle: jsonSerialization['facebookHandle'] as String?,
       operatingHours: jsonSerialization['operatingHours'] as String?,
       rating: (jsonSerialization['rating'] as num?)?.toDouble(),
+      moderationNote: jsonSerialization['moderationNote'] as String?,
+      moderatedAt: jsonSerialization['moderatedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['moderatedAt'],
+            ),
+      appealMessage: jsonSerialization['appealMessage'] as String?,
+      appealSubmittedAt: jsonSerialization['appealSubmittedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['appealSubmittedAt'],
+            ),
       approvedById: jsonSerialization['approvedById'] == null
           ? null
           : _i1.UuidValueJsonExtension.fromJson(
@@ -167,6 +187,18 @@ abstract class Vendor
 
   double rating;
 
+  /// Admin suspend reason or reinstate terms note.
+  String? moderationNote;
+
+  /// When the vendor was last suspended or reinstated by admin.
+  DateTime? moderatedAt;
+
+  /// Suspension appeal message; cleared on reinstate or new suspension.
+  String? appealMessage;
+
+  /// When the vendor submitted their current appeal.
+  DateTime? appealSubmittedAt;
+
   _i1.UuidValue? approvedById;
 
   /// Admin who approved this vendor shop.
@@ -203,6 +235,10 @@ abstract class Vendor
     String? facebookHandle,
     String? operatingHours,
     double? rating,
+    String? moderationNote,
+    DateTime? moderatedAt,
+    String? appealMessage,
+    DateTime? appealSubmittedAt,
     _i1.UuidValue? approvedById,
     _i3.Admin? approvedBy,
     DateTime? approvedAt,
@@ -231,6 +267,11 @@ abstract class Vendor
       if (facebookHandle != null) 'facebookHandle': facebookHandle,
       if (operatingHours != null) 'operatingHours': operatingHours,
       'rating': rating,
+      if (moderationNote != null) 'moderationNote': moderationNote,
+      if (moderatedAt != null) 'moderatedAt': moderatedAt?.toJson(),
+      if (appealMessage != null) 'appealMessage': appealMessage,
+      if (appealSubmittedAt != null)
+        'appealSubmittedAt': appealSubmittedAt?.toJson(),
       if (approvedById != null) 'approvedById': approvedById?.toJson(),
       if (approvedBy != null) 'approvedBy': approvedBy?.toJson(),
       if (approvedAt != null) 'approvedAt': approvedAt?.toJson(),
@@ -261,6 +302,11 @@ abstract class Vendor
       if (facebookHandle != null) 'facebookHandle': facebookHandle,
       if (operatingHours != null) 'operatingHours': operatingHours,
       'rating': rating,
+      if (moderationNote != null) 'moderationNote': moderationNote,
+      if (moderatedAt != null) 'moderatedAt': moderatedAt?.toJson(),
+      if (appealMessage != null) 'appealMessage': appealMessage,
+      if (appealSubmittedAt != null)
+        'appealSubmittedAt': appealSubmittedAt?.toJson(),
       if (approvedById != null) 'approvedById': approvedById?.toJson(),
       if (approvedBy != null) 'approvedBy': approvedBy?.toJsonForProtocol(),
       if (approvedAt != null) 'approvedAt': approvedAt?.toJson(),
@@ -327,6 +373,10 @@ class _VendorImpl extends Vendor {
     String? facebookHandle,
     String? operatingHours,
     double? rating,
+    String? moderationNote,
+    DateTime? moderatedAt,
+    String? appealMessage,
+    DateTime? appealSubmittedAt,
     _i1.UuidValue? approvedById,
     _i3.Admin? approvedBy,
     DateTime? approvedAt,
@@ -351,6 +401,10 @@ class _VendorImpl extends Vendor {
          facebookHandle: facebookHandle,
          operatingHours: operatingHours,
          rating: rating,
+         moderationNote: moderationNote,
+         moderatedAt: moderatedAt,
+         appealMessage: appealMessage,
+         appealSubmittedAt: appealSubmittedAt,
          approvedById: approvedById,
          approvedBy: approvedBy,
          approvedAt: approvedAt,
@@ -381,6 +435,10 @@ class _VendorImpl extends Vendor {
     Object? facebookHandle = _Undefined,
     Object? operatingHours = _Undefined,
     double? rating,
+    Object? moderationNote = _Undefined,
+    Object? moderatedAt = _Undefined,
+    Object? appealMessage = _Undefined,
+    Object? appealSubmittedAt = _Undefined,
     Object? approvedById = _Undefined,
     Object? approvedBy = _Undefined,
     Object? approvedAt = _Undefined,
@@ -414,6 +472,16 @@ class _VendorImpl extends Vendor {
           ? operatingHours
           : this.operatingHours,
       rating: rating ?? this.rating,
+      moderationNote: moderationNote is String?
+          ? moderationNote
+          : this.moderationNote,
+      moderatedAt: moderatedAt is DateTime? ? moderatedAt : this.moderatedAt,
+      appealMessage: appealMessage is String?
+          ? appealMessage
+          : this.appealMessage,
+      appealSubmittedAt: appealSubmittedAt is DateTime?
+          ? appealSubmittedAt
+          : this.appealSubmittedAt,
       approvedById: approvedById is _i1.UuidValue?
           ? approvedById
           : this.approvedById,
@@ -517,6 +585,30 @@ class VendorUpdateTable extends _i1.UpdateTable<VendorTable> {
     value,
   );
 
+  _i1.ColumnValue<String, String> moderationNote(String? value) =>
+      _i1.ColumnValue(
+        table.moderationNote,
+        value,
+      );
+
+  _i1.ColumnValue<DateTime, DateTime> moderatedAt(DateTime? value) =>
+      _i1.ColumnValue(
+        table.moderatedAt,
+        value,
+      );
+
+  _i1.ColumnValue<String, String> appealMessage(String? value) =>
+      _i1.ColumnValue(
+        table.appealMessage,
+        value,
+      );
+
+  _i1.ColumnValue<DateTime, DateTime> appealSubmittedAt(DateTime? value) =>
+      _i1.ColumnValue(
+        table.appealSubmittedAt,
+        value,
+      );
+
   _i1.ColumnValue<_i1.UuidValue, _i1.UuidValue> approvedById(
     _i1.UuidValue? value,
   ) => _i1.ColumnValue(
@@ -612,6 +704,22 @@ class VendorTable extends _i1.Table<_i1.UuidValue?> {
       this,
       hasDefault: true,
     );
+    moderationNote = _i1.ColumnString(
+      'moderationNote',
+      this,
+    );
+    moderatedAt = _i1.ColumnDateTime(
+      'moderatedAt',
+      this,
+    );
+    appealMessage = _i1.ColumnString(
+      'appealMessage',
+      this,
+    );
+    appealSubmittedAt = _i1.ColumnDateTime(
+      'appealSubmittedAt',
+      this,
+    );
     approvedById = _i1.ColumnUuid(
       'approvedById',
       this,
@@ -672,6 +780,18 @@ class VendorTable extends _i1.Table<_i1.UuidValue?> {
 
   late final _i1.ColumnDouble rating;
 
+  /// Admin suspend reason or reinstate terms note.
+  late final _i1.ColumnString moderationNote;
+
+  /// When the vendor was last suspended or reinstated by admin.
+  late final _i1.ColumnDateTime moderatedAt;
+
+  /// Suspension appeal message; cleared on reinstate or new suspension.
+  late final _i1.ColumnString appealMessage;
+
+  /// When the vendor submitted their current appeal.
+  late final _i1.ColumnDateTime appealSubmittedAt;
+
   late final _i1.ColumnUuid approvedById;
 
   /// Admin who approved this vendor shop.
@@ -728,6 +848,10 @@ class VendorTable extends _i1.Table<_i1.UuidValue?> {
     facebookHandle,
     operatingHours,
     rating,
+    moderationNote,
+    moderatedAt,
+    appealMessage,
+    appealSubmittedAt,
     approvedById,
     approvedAt,
     createdAt,

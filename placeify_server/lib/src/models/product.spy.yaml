@@ -19,9 +19,20 @@ fields:
   thumbnailUrl: String?
   ### Extra product photos for multiview 3D generation (left, back, right, etc.).
   viewImageUrls: List<String>?
+  ### Optional sale price when running a fixed-price promotion.
+  discountPrice: double?
+  ### Optional percentage discount (0-100). Ignored when discountPrice is set.
+  discountPercentage: double?
+  ### Highlights the product in featured / promotion surfaces.
+  featured: bool, default=false
+  ### True when the product has an active offer (derived from discount fields).
+  isOffer: bool, default=false
   ### Aggregated from product reviews (updated when reviews are submitted).
   averageRating: double, default=0
   reviewCount: int, default=0
+  ### Vendor or admin soft-delete flag; row is never physically removed.
+  isDeleted: bool, default=false
+  deletedAt: DateTime?
   status: ProductStatus, default=active
   ### Why the product was removed from the catalog.
   removedReason: String?

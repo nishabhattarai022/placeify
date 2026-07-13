@@ -1824,6 +1824,12 @@ class VendorStore {
       InAppNotificationType.orderCancelled => VendorNotificationType.order,
       InAppNotificationType.deliveryUpdate => VendorNotificationType.order,
       InAppNotificationType.paymentUpdate => VendorNotificationType.payment,
+      InAppNotificationType.productUpdate => VendorNotificationType.order,
+      InAppNotificationType.promotionUpdate => VendorNotificationType.order,
+      InAppNotificationType.refundUpdate => VendorNotificationType.payment,
+      InAppNotificationType.vendorApplication => VendorNotificationType.order,
+      InAppNotificationType.vendorFlagged => VendorNotificationType.order,
+      InAppNotificationType.systemAlert => VendorNotificationType.order,
     };
   }
 

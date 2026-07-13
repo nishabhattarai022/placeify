@@ -23,6 +23,14 @@ fields:
   facebookHandle: String?
   operatingHours: String?
   rating: double, default=0
+  ### Admin suspend reason or reinstate terms note.
+  moderationNote: String?
+  ### When the vendor was last suspended or reinstated by admin.
+  moderatedAt: DateTime?
+  ### Suspension appeal message; cleared on reinstate or new suspension.
+  appealMessage: String?
+  ### When the vendor submitted their current appeal.
+  appealSubmittedAt: DateTime?
   ### Admin who approved this vendor shop.
   approvedBy: Admin?, relation(optional)
   approvedAt: DateTime?
