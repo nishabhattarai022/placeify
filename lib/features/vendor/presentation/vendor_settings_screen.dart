@@ -271,7 +271,8 @@ class _SectionTitle extends StatelessWidget {
         fontFamily: 'Fraunces',
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        color: AppColors.espresso,
+        fontStyle: FontStyle.italic,
+        color: Colors.black,
       ),
     );
   }

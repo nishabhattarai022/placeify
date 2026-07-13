@@ -46,9 +46,10 @@ class ProductDetailInfoSection extends StatelessWidget {
           children: [
             Text(
               title,
-              style: AppFonts.dmSans(
+              style: AppFonts.dmSerifDisplay(
                 fontSize: 22,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w400,
+                fontStyle: FontStyle.italic,
                 color: ProductDetailTokens.textPrimary,
                 letterSpacing: -0.4,
                 height: 1.2,

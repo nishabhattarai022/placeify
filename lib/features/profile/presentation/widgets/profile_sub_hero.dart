@@ -67,11 +67,12 @@ class ProfileSubHero extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: AppFonts.dmSans(
+                      style: AppFonts.dmSerifDisplay(
                         fontSize: 28,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w400,
+                        fontStyle: FontStyle.italic,
                         color: Colors.black87,
-                        letterSpacing: -0.5,
+                        letterSpacing: -0.4,
                         height: 1.05,
                       ),
                     ),

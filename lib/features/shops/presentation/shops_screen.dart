@@ -91,6 +91,7 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
                               style: AppFonts.dmSerifDisplay(
                                 fontSize: 48,
                                 fontWeight: FontWeight.w400,
+                                fontStyle: FontStyle.italic,
                                 color: Colors.black,
                                 height: 1.0,
                                 letterSpacing: -0.5,
@@ -245,9 +246,10 @@ class _EmptyState extends StatelessWidget {
                 ? ShopStrings.emptySearch(query)
                 : ShopStrings.emptyShopsTitle,
             textAlign: TextAlign.center,
-            style: AppFonts.cormorantGaramond(
+            style: AppFonts.dmSerifDisplay(
               fontSize: 22,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w400,
+              fontStyle: FontStyle.italic,
               color: AppColors.charcoal.withValues(alpha: 0.65),
               height: 1.25,
             ),
@@ -317,9 +319,10 @@ class _ErrorState extends StatelessWidget {
           Text(
             ShopStrings.errorTitle,
             textAlign: TextAlign.center,
-            style: AppFonts.cormorantGaramond(
+            style: AppFonts.dmSerifDisplay(
               fontSize: 22,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w400,
+              fontStyle: FontStyle.italic,
               color: AppColors.charcoal.withValues(alpha: 0.65),
             ),
           ),

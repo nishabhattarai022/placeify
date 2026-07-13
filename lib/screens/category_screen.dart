@@ -129,9 +129,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
                     ),
                     Text(
                       '$displayName ($count)',
-                      style: GoogleFonts.dmSans(
+                      style: GoogleFonts.dmSerifDisplay(
                         fontSize: 34,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w400,
+                        fontStyle: FontStyle.italic,
                         color: Colors.black87,
                         letterSpacing: -0.5,
                         height: 1.05,

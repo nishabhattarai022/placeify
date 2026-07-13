@@ -54,9 +54,10 @@ class OrdersEmptyState extends StatelessWidget {
             Text(
               OrderStrings.emptyTitle(filter),
               textAlign: TextAlign.center,
-              style: AppFonts.dmSans(
+              style: AppFonts.dmSerifDisplay(
                 fontSize: 22,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w400,
+                fontStyle: FontStyle.italic,
                 color: AppColors.textPrimary,
                 letterSpacing: -0.3,
               ),

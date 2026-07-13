@@ -471,9 +471,10 @@ class _MyArSearchEmptyState extends StatelessWidget {
           Text(
             'No saved items match your search',
             textAlign: TextAlign.center,
-            style: AppFonts.cormorantGaramond(
+            style: AppFonts.dmSerifDisplay(
               fontSize: 22,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w400,
+              fontStyle: FontStyle.italic,
               color: AppColors.charcoal.withValues(alpha: 0.65),
             ),
           ),

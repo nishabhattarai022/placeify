@@ -240,6 +240,7 @@ class _NotificationsHeader extends StatelessWidget {
                 fontFamily: 'Fraunces',
                 fontSize: 22,
                 fontWeight: FontWeight.w600,
+                fontStyle: FontStyle.italic,
                 color: Colors.white,
               ),
             ),

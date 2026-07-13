@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/theme/app_fonts.dart';
 import '../models/onboarding_slide.dart';
 
 class OnboardingHeadline extends StatelessWidget {
@@ -16,6 +15,7 @@ class OnboardingHeadline extends StatelessWidget {
           fontFamily: 'Fraunces',
           fontSize: 40,
           fontWeight: FontWeight.w300,
+          fontStyle: FontStyle.italic,
           color: AppColors.onboardingTextHead,
           height: 1.12,
           letterSpacing: -0.5,
@@ -24,7 +24,8 @@ class OnboardingHeadline extends StatelessWidget {
           TextSpan(text: slide.headlinePart1),
           TextSpan(
             text: slide.headlineItalic,
-            style: AppFonts.poppins(
+            style: const TextStyle(
+              fontFamily: 'Fraunces',
               fontSize: 40,
               fontWeight: FontWeight.w300,
               fontStyle: FontStyle.italic,

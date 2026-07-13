@@ -84,6 +84,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                             style: AppFonts.dmSerifDisplay(
                               fontSize: 48,
                               fontWeight: FontWeight.w400,
+                              fontStyle: FontStyle.italic,
                               color: Colors.black,
                               height: 1.0,
                               letterSpacing: -0.5,
