@@ -11,7 +11,6 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../splash/presentation/widgets/onboarding/primary_cta_button.dart';
 import '../constants/auth_assets.dart';
-import '../constants/demo_credentials.dart';
 import 'widgets/auth_text_field.dart';
 import 'widgets/foggy_image_background.dart';
 
@@ -44,12 +43,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  Future<void> _signInWithDemoAdmin() async {
-    _emailController.text = DemoCredentials.adminEmail;
-    _passwordController.text = DemoCredentials.adminPassword;
-    await _submit(destination: '/admin');
   }
 
   Future<void> _submit({required String destination}) async {
@@ -228,27 +221,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             onTap: () => _submit(destination: '/home'),
                           ),
                           const SizedBox(height: 12),
-                          Center(
-                            child: TextButton(
-                              onPressed: _isSubmitting
-                                  ? null
-                                  : () {
-                                      HapticService.light();
-                                      _signInWithDemoAdmin();
-                                    },
-                              child: Text(
-                                'Demo Admin Access',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.onboardingTextBody.withValues(
-                                    alpha: 0.65,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
                           Center(
                             child: TextButton(
                               onPressed: () {
