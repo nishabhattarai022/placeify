@@ -97,6 +97,10 @@ class MockVendorProductRepository implements VendorProductRepository {
       throw VendorProductActionException('Product not found.');
     }
 
-    return product;
+    return product.copyWith(
+      model3dStatus: 'building',
+      model3dError: '',
+      hasArView: product.hasArView,
+    );
   }
 }

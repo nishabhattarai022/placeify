@@ -155,8 +155,12 @@ class VendorProducts extends _$VendorProducts {
         imageSources: imageSources,
       );
 
-      await Product3dModelLoader.invalidateCache(productId);
-      Product3dModelResolver.clearModelUrl(productId);
+      // Background job: keep the previous GLB until Tripo finishes.
+      // Only clear local cache when a new ready model arrives via refresh.
+      if (updated.model3dStatus == 'ready' && updated.hasArView) {
+        await Product3dModelLoader.invalidateCache(productId);
+        Product3dModelResolver.clearModelUrl(productId);
+      }
 
       final products = state.value;
       if (products != null) {
@@ -169,7 +173,9 @@ class VendorProducts extends _$VendorProducts {
           await refresh();
         }
       }
-      await publishProductToCustomerCatalog(ref, updated);
+      if (updated.model3dStatus == 'ready') {
+        await publishProductToCustomerCatalog(ref, updated);
+      }
       return null;
     } on VendorProductActionException catch (e) {
       return e.message;

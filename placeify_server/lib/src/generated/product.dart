@@ -42,6 +42,8 @@ abstract class Product
     this.careInstructions,
     this.warranty,
     this.model3dUrl,
+    String? model3dStatus,
+    this.model3dError,
     this.thumbnailUrl,
     this.viewImageUrls,
     _i2.ProductStatus? status,
@@ -55,6 +57,7 @@ abstract class Product
     DateTime? updatedAt,
   }) : featured = featured ?? false,
        isOffer = isOffer ?? false,
+       model3dStatus = model3dStatus ?? 'none',
        status = status ?? _i2.ProductStatus.active,
        isDeleted = isDeleted ?? false,
        createdAt = createdAt ?? DateTime.now(),
@@ -82,6 +85,8 @@ abstract class Product
     String? careInstructions,
     String? warranty,
     String? model3dUrl,
+    String? model3dStatus,
+    String? model3dError,
     String? thumbnailUrl,
     List<String>? viewImageUrls,
     _i2.ProductStatus? status,
@@ -131,6 +136,8 @@ abstract class Product
       careInstructions: jsonSerialization['careInstructions'] as String?,
       warranty: jsonSerialization['warranty'] as String?,
       model3dUrl: jsonSerialization['model3dUrl'] as String?,
+      model3dStatus: jsonSerialization['model3dStatus'] as String?,
+      model3dError: jsonSerialization['model3dError'] as String?,
       thumbnailUrl: jsonSerialization['thumbnailUrl'] as String?,
       viewImageUrls: jsonSerialization['viewImageUrls'] == null
           ? null
@@ -220,6 +227,12 @@ abstract class Product
 
   String? model3dUrl;
 
+  /// none | building | ready | failed — background Tripo generation status.
+  String? model3dStatus;
+
+  /// Last Tripo generation error message when [model3dStatus] is failed.
+  String? model3dError;
+
   String? thumbnailUrl;
 
   /// Extra product photos for multiview 3D generation (left, back, right, etc.).
@@ -274,6 +287,8 @@ abstract class Product
     String? careInstructions,
     String? warranty,
     String? model3dUrl,
+    String? model3dStatus,
+    String? model3dError,
     String? thumbnailUrl,
     List<String>? viewImageUrls,
     _i2.ProductStatus? status,
@@ -311,6 +326,8 @@ abstract class Product
       if (careInstructions != null) 'careInstructions': careInstructions,
       if (warranty != null) 'warranty': warranty,
       if (model3dUrl != null) 'model3dUrl': model3dUrl,
+      if (model3dStatus != null) 'model3dStatus': model3dStatus,
+      if (model3dError != null) 'model3dError': model3dError,
       if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
       if (viewImageUrls != null) 'viewImageUrls': viewImageUrls?.toJson(),
       'status': status.toJson(),
@@ -350,6 +367,8 @@ abstract class Product
       if (careInstructions != null) 'careInstructions': careInstructions,
       if (warranty != null) 'warranty': warranty,
       if (model3dUrl != null) 'model3dUrl': model3dUrl,
+      if (model3dStatus != null) 'model3dStatus': model3dStatus,
+      if (model3dError != null) 'model3dError': model3dError,
       if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
       if (viewImageUrls != null) 'viewImageUrls': viewImageUrls?.toJson(),
       'status': status.toJson(),
@@ -427,6 +446,8 @@ class _ProductImpl extends Product {
     String? careInstructions,
     String? warranty,
     String? model3dUrl,
+    String? model3dStatus,
+    String? model3dError,
     String? thumbnailUrl,
     List<String>? viewImageUrls,
     _i2.ProductStatus? status,
@@ -460,6 +481,8 @@ class _ProductImpl extends Product {
          careInstructions: careInstructions,
          warranty: warranty,
          model3dUrl: model3dUrl,
+         model3dStatus: model3dStatus,
+         model3dError: model3dError,
          thumbnailUrl: thumbnailUrl,
          viewImageUrls: viewImageUrls,
          status: status,
@@ -499,6 +522,8 @@ class _ProductImpl extends Product {
     Object? careInstructions = _Undefined,
     Object? warranty = _Undefined,
     Object? model3dUrl = _Undefined,
+    Object? model3dStatus = _Undefined,
+    Object? model3dError = _Undefined,
     Object? thumbnailUrl = _Undefined,
     Object? viewImageUrls = _Undefined,
     _i2.ProductStatus? status,
@@ -541,6 +566,10 @@ class _ProductImpl extends Product {
           : this.careInstructions,
       warranty: warranty is String? ? warranty : this.warranty,
       model3dUrl: model3dUrl is String? ? model3dUrl : this.model3dUrl,
+      model3dStatus: model3dStatus is String?
+          ? model3dStatus
+          : this.model3dStatus,
+      model3dError: model3dError is String? ? model3dError : this.model3dError,
       thumbnailUrl: thumbnailUrl is String? ? thumbnailUrl : this.thumbnailUrl,
       viewImageUrls: viewImageUrls is List<String>?
           ? viewImageUrls
@@ -661,6 +690,18 @@ class ProductUpdateTable extends _i1.UpdateTable<ProductTable> {
     table.model3dUrl,
     value,
   );
+
+  _i1.ColumnValue<String, String> model3dStatus(String? value) =>
+      _i1.ColumnValue(
+        table.model3dStatus,
+        value,
+      );
+
+  _i1.ColumnValue<String, String> model3dError(String? value) =>
+      _i1.ColumnValue(
+        table.model3dError,
+        value,
+      );
 
   _i1.ColumnValue<String, String> thumbnailUrl(String? value) =>
       _i1.ColumnValue(
@@ -802,6 +843,15 @@ class ProductTable extends _i1.Table<int?> {
       'model3dUrl',
       this,
     );
+    model3dStatus = _i1.ColumnString(
+      'model3dStatus',
+      this,
+      hasDefault: true,
+    );
+    model3dError = _i1.ColumnString(
+      'model3dError',
+      this,
+    );
     thumbnailUrl = _i1.ColumnString(
       'thumbnailUrl',
       this,
@@ -895,6 +945,12 @@ class ProductTable extends _i1.Table<int?> {
 
   late final _i1.ColumnString model3dUrl;
 
+  /// none | building | ready | failed — background Tripo generation status.
+  late final _i1.ColumnString model3dStatus;
+
+  /// Last Tripo generation error message when [model3dStatus] is failed.
+  late final _i1.ColumnString model3dError;
+
   late final _i1.ColumnString thumbnailUrl;
 
   /// Extra product photos for multiview 3D generation (left, back, right, etc.).
@@ -981,6 +1037,8 @@ class ProductTable extends _i1.Table<int?> {
     careInstructions,
     warranty,
     model3dUrl,
+    model3dStatus,
+    model3dError,
     thumbnailUrl,
     viewImageUrls,
     status,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:serverpod/serverpod.dart';
@@ -7,8 +8,8 @@ import '../../../shared/placeify_exception.dart';
 import '../../../shared/session_service.dart';
 import '../../marketplace/marketplace_events.dart';
 import '../../product/product_pricing.dart';
-import '../product_3d/product_3d_generation_result.dart';
-import '../product_3d/product_3d_generator.dart';
+import '../product_3d/product_3d_generation_future_call.dart';
+import '../product_3d/product_model_3d_status.dart';
 import '../vendor_product_image_storage.dart';
 import 'vendor_access_guard.dart';
 
@@ -239,12 +240,7 @@ class VendorProductStore {
     );
 
     if (input.generateModel3d) {
-      product = await _generateAndStoreModel3d(
-        session,
-        product,
-        skipIfExists: false,
-        throwOnFailure: false,
-      );
+      product = await _queueProductModel3dGeneration(session, product);
     }
 
     final loaded = await _loadProductWithCategory(session, product);
@@ -366,12 +362,7 @@ class VendorProductStore {
     );
 
     if (input.generateModel3d) {
-      updated = await _generateAndStoreModel3d(
-        session,
-        updated,
-        skipIfExists: false,
-        throwOnFailure: false,
-      );
+      updated = await _queueProductModel3dGeneration(session, updated);
     }
 
     final loaded = await _loadProductWithCategory(session, updated);
@@ -399,54 +390,44 @@ class VendorProductStore {
     return loaded ?? product;
   }
 
-  Future<Product> _generateAndStoreModel3d(
+  /// Marks [product] as building and starts Tripo generation in the background.
+  Future<Product> _queueProductModel3dGeneration(
     Session session,
-    Product product, {
-    bool skipIfExists = true,
-    bool throwOnFailure = false,
-  }) async {
-    if (skipIfExists &&
-        product.model3dUrl != null &&
-        product.model3dUrl!.trim().isNotEmpty) {
-      return product;
-    }
+    Product product,
+  ) async {
+    final productId = product.id;
+    if (productId == null) return product;
 
-    final generator = Product3dGenerator();
-    final result = await generator.generateForProduct(
+    final now = DateTime.now();
+    final building = await Product.db.updateRow(
       session,
-      product: product,
+      product.copyWith(
+        model3dStatus: ProductModel3dStatus.building,
+        model3dError: null,
+        updatedAt: now,
+      ),
     );
 
-    if (result is Product3dGenerationSuccess) {
-      return Product.db.updateRow(
-        session,
-        product.copyWith(model3dUrl: result.modelUrl),
-      );
-    }
-    if (result is Product3dGenerationFailure) {
-      if (throwOnFailure) {
-        throw PlaceifyException(
-          message: result.message,
-          code: result.code,
-        );
-      }
-      session.log(
-        '3D generation skipped for product ${product.id}: ${result.code}',
-        level: LogLevel.warning,
-      );
-      return product;
-    }
+    // Run off the request session so regenerate returns immediately and
+    // cannot fail the HTTP call if scheduling/background setup has issues.
+    unawaited(
+      runProduct3dGenerationInBackground(session.serverpod, productId),
+    );
 
-    if (throwOnFailure) {
-      throw PlaceifyException(
-        message: '3D model generation returned an unknown result.',
-        code: 'MODEL3D_GENERATION_FAILED',
-      );
-    }
-    return product;
+    session.log(
+      'Started background Tripo generation for product $productId',
+      level: LogLevel.info,
+    );
+
+    return building;
   }
 
-  /// Generates a 3D model for an existing vendor product via Tripo API.
+  /// Starts Tripo 3D generation in the background and returns immediately.
+  ///
+  /// Sets [Product.model3dStatus] to building, enqueues a FutureCall, and
+  /// returns so the vendor is not blocked on the HTTP request. The GLB URL is
+  /// written when the job finishes (keeps any existing [Product.model3dUrl]
+  /// until then so shoppers still see the previous model during regenerate).
   Future<Product> regenerateProductModel3d(
     Session session,
     int productId,
@@ -459,12 +440,9 @@ class VendorProductStore {
         code: 'PRODUCT_NOT_FOUND',
       );
     }
-    return _generateAndStoreModel3d(
-      session,
-      product,
-      skipIfExists: false,
-      throwOnFailure: true,
-    );
+
+    final building = await _queueProductModel3dGeneration(session, product);
+    return _loadProductWithCategory(session, building);
   }
 
   Future<Product> updateProductThumbnail(

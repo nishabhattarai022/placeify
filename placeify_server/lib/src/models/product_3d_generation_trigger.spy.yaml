@@ -1,0 +1,6 @@
+### Payload for background Tripo 3D model generation.
+class: Product3dGenerationTrigger
+fields:
+  productId: int
+  vendorId: UuidValue?
+  requestedAt: DateTime?

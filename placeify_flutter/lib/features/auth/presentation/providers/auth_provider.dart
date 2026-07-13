@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../vendor/domain/enums/vendor_status.dart';
@@ -39,7 +41,7 @@ class CurrentUser extends _$CurrentUser {
       );
     });
     if (state.hasError) throw _unwrapError(state.error!);
-    await ensurePlaceifyRealtime();
+    unawaited(ensurePlaceifyRealtime());
   }
 
   Future<AppUser> signIn({
@@ -52,7 +54,7 @@ class CurrentUser extends _$CurrentUser {
       return repo.signIn(email: email, password: password);
     });
     if (state.hasError) throw _unwrapError(state.error!);
-    await ensurePlaceifyRealtime();
+    unawaited(ensurePlaceifyRealtime());
     return _requireSignedInUser();
   }
 
@@ -69,7 +71,7 @@ class CurrentUser extends _$CurrentUser {
       );
     });
     if (state.hasError) throw _unwrapError(state.error!);
-    await ensurePlaceifyRealtime();
+    unawaited(ensurePlaceifyRealtime());
     return _requireSignedInUser();
   }
 
@@ -86,7 +88,7 @@ class CurrentUser extends _$CurrentUser {
       );
     });
     if (state.hasError) throw _unwrapError(state.error!);
-    await ensurePlaceifyRealtime();
+    unawaited(ensurePlaceifyRealtime());
     return _requireSignedInUser();
   }
 

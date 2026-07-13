@@ -41,6 +41,9 @@ abstract final class VendorProductMapper {
     final listPrice = product.price;
     final effectivePrice = CatalogProductMapper.effectiveUnitPrice(product);
     final hasOffer = CatalogProductMapper.hasActiveOffer(product);
+    final model3dStatus = (product.model3dStatus ?? 'none').trim().isEmpty
+        ? 'none'
+        : product.model3dStatus!.trim();
 
     return VendorProduct(
       id: uiId,
@@ -62,6 +65,8 @@ abstract final class VendorProductMapper {
       heightCm: product.heightCm ?? 0,
       weightKg: product.weightKg ?? 0,
       hasArView: has3dPreview,
+      model3dStatus: model3dStatus,
+      model3dError: product.model3dError?.trim() ?? '',
       materials: product.materials ?? '',
     );
   }

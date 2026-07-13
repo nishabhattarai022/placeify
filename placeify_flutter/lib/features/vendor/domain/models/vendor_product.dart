@@ -25,6 +25,9 @@ abstract class VendorProduct with _$VendorProduct {
     @Default(0) double heightCm,
     @Default(0) double weightKg,
     @Default(false) bool hasArView,
+    /// none | building | ready | failed — mirrors server [Product.model3dStatus].
+    @Default('none') String model3dStatus,
+    @Default('') String model3dError,
     @Default('') String materials,
     @Default('') String warrantyNote,
     @Default('') String shippingNote,

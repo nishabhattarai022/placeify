@@ -24,6 +24,10 @@ fields:
   careInstructions: String?
   warranty: String?
   model3dUrl: String?
+  ### none | building | ready | failed — background Tripo generation status.
+  model3dStatus: String?, default='none'
+  ### Last Tripo generation error message when [model3dStatus] is failed.
+  model3dError: String?
   thumbnailUrl: String?
   ### Extra product photos for multiview 3D generation (left, back, right, etc.).
   viewImageUrls: List<String>?

@@ -19,6 +19,7 @@ void run(List<String> args) async {
   setupPlaceifyAuthServices(pod, args: args);
 
   pod.registerFutureCall(OrderAutoCancelFutureCall(), 'orderAutoCancel');
+  // Product3dGenerationFutureCall is registered by generated FutureCalls.
 
   // Setup a default page at the web root.
   // These are used by the default page.

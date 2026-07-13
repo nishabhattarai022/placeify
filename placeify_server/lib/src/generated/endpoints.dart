@@ -57,6 +57,8 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _i36;
 import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _i37;
+import 'package:placeify_server/src/generated/future_calls.dart' as _i38;
+export 'future_calls.dart' show ServerpodFutureCallsGetter;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -3352,5 +3354,10 @@ class Endpoints extends _i1.EndpointDispatch {
       ..initializeEndpoints(server);
     modules['serverpod_auth_idp'] = _i37.Endpoints()
       ..initializeEndpoints(server);
+  }
+
+  @override
+  _i1.FutureCallDispatch? get futureCalls {
+    return _i38.FutureCalls();
   }
 }

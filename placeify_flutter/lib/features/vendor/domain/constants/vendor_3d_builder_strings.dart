@@ -30,6 +30,8 @@ abstract final class Vendor3dBuilderStrings {
   static const regenerateCta = 'Regenerate model';
 
   static const modelReady = '3D model ready';
+  static const modelQueued =
+      'Building 3D in the background. You can leave this screen — we\'ll notify you when it\'s ready.';
   static const modelProcessing =
       'Generating model… This usually takes 1–3 minutes.';
   static const modelFailed =

@@ -226,15 +226,17 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
     final updated = _selectedProduct(updatedProducts);
     if (updated != null) {
       Vendor3dModelStore.preloadFromProduct(updated);
+    } else {
+      Vendor3dModelStore.markProcessing(productId);
     }
-    Vendor3dModelStore.markReady(productId);
 
     setState(() {
       _isGenerating = false;
-      _modelReady = updated?.hasArView ?? true;
+      _modelReady = updated?.hasArView == true &&
+          updated?.model3dStatus == 'ready';
     });
-    HapticService.heavy();
-    PlaceifyToast.show(context, Vendor3dBuilderStrings.modelReady);
+    HapticService.selection();
+    PlaceifyToast.show(context, Vendor3dBuilderStrings.modelQueued);
   }
 
   @override
@@ -883,10 +885,13 @@ class _GeneratePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final showBuilding = isGenerating ||
+        status == VendorProduct3dStatus.processing;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (isGenerating) ...[
+        if (showBuilding) ...[
           ClipRRect(
             borderRadius: AppRadii.pill,
             child: const LinearProgressIndicator(
@@ -897,7 +902,9 @@ class _GeneratePanel extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            Vendor3dBuilderStrings.modelProcessing,
+            isGenerating
+                ? Vendor3dBuilderStrings.modelProcessing
+                : Vendor3dBuilderStrings.modelQueued,
             style: GoogleFonts.dmSans(
               fontSize: 13,
               fontWeight: FontWeight.w600,

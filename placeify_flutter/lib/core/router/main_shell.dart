@@ -5,6 +5,7 @@ import 'package:placeify_flutter/features/admin/domain/constants/admin_routes.da
 import 'package:placeify_flutter/features/ar/presentation/widgets/ar_selection_done_bar.dart';
 import 'package:placeify_flutter/features/shops/domain/constants/shop_routes.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_routes.dart';
+import 'package:placeify_flutter/features/vendor/presentation/widgets/vendor_model_3d_notification_listener.dart';
 
 import '../widgets/placeify_bottom_nav.dart';
 
@@ -85,40 +86,42 @@ class MainShell extends ConsumerWidget {
     final showVendorNav = _showVendorNav(location);
     final showAdminNav = _showAdminNav(location);
 
-    return Scaffold(
-      extendBody: true,
-      backgroundColor: Colors.transparent,
-      body: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          child,
-          ArSelectionDoneBar(showAboveNav: showConsumerNav),
-        ],
+    return VendorModel3dNotificationListener(
+      child: Scaffold(
+        extendBody: true,
+        backgroundColor: Colors.transparent,
+        body: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            child,
+            ArSelectionDoneBar(showAboveNav: showConsumerNav),
+          ],
+        ),
+        bottomNavigationBar: showConsumerNav
+            ? SafeArea(
+                top: false,
+                child: PlaceifyBottomNav(
+                  activeIndex: _consumerActiveIndex(location),
+                ),
+              )
+            : showVendorNav
+                ? SafeArea(
+                    top: false,
+                    child: PlaceifyBottomNav(
+                      activeIndex: _vendorActiveIndex(location),
+                      mode: PlaceifyBottomNavMode.vendor,
+                    ),
+                  )
+                : showAdminNav
+                    ? SafeArea(
+                        top: false,
+                        child: PlaceifyBottomNav(
+                          activeIndex: _adminActiveIndex(location),
+                          mode: PlaceifyBottomNavMode.admin,
+                        ),
+                      )
+                    : null,
       ),
-      bottomNavigationBar: showConsumerNav
-          ? SafeArea(
-              top: false,
-              child: PlaceifyBottomNav(
-                activeIndex: _consumerActiveIndex(location),
-              ),
-            )
-          : showVendorNav
-              ? SafeArea(
-                  top: false,
-                  child: PlaceifyBottomNav(
-                    activeIndex: _vendorActiveIndex(location),
-                    mode: PlaceifyBottomNavMode.vendor,
-                  ),
-                )
-              : showAdminNav
-                  ? SafeArea(
-                      top: false,
-                      child: PlaceifyBottomNav(
-                        activeIndex: _adminActiveIndex(location),
-                        mode: PlaceifyBottomNavMode.admin,
-                      ),
-                    )
-                  : null,
     );
   }
 }

@@ -15,7 +15,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$VendorProduct {
 
- String get id; String get vendorId; String get name; String get sku; double get price; int get stock; List<String> get imageUrls; String get categoryId; bool get isActive; DateTime get createdAt; String get description; String get brand; double? get originalPrice; String get offerLabel; double get widthCm; double get depthCm; double get heightCm; double get weightKg; bool get hasArView; String get materials; String get warrantyNote; String get shippingNote; int get lowStockThreshold;
+ String get id; String get vendorId; String get name; String get sku; double get price; int get stock; List<String> get imageUrls; String get categoryId; bool get isActive; DateTime get createdAt; String get description; String get brand; double? get originalPrice; String get offerLabel; double get widthCm; double get depthCm; double get heightCm; double get weightKg; bool get hasArView;/// none | building | ready | failed — mirrors server [Product.model3dStatus].
+ String get model3dStatus; String get model3dError; String get materials; String get warrantyNote; String get shippingNote; int get lowStockThreshold;
 /// Create a copy of VendorProduct
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +29,16 @@ $VendorProductCopyWith<VendorProduct> get copyWith => _$VendorProductCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VendorProduct&&(identical(other.id, id) || other.id == id)&&(identical(other.vendorId, vendorId) || other.vendorId == vendorId)&&(identical(other.name, name) || other.name == name)&&(identical(other.sku, sku) || other.sku == sku)&&(identical(other.price, price) || other.price == price)&&(identical(other.stock, stock) || other.stock == stock)&&const DeepCollectionEquality().equals(other.imageUrls, imageUrls)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.brand, brand) || other.brand == brand)&&(identical(other.originalPrice, originalPrice) || other.originalPrice == originalPrice)&&(identical(other.offerLabel, offerLabel) || other.offerLabel == offerLabel)&&(identical(other.widthCm, widthCm) || other.widthCm == widthCm)&&(identical(other.depthCm, depthCm) || other.depthCm == depthCm)&&(identical(other.heightCm, heightCm) || other.heightCm == heightCm)&&(identical(other.weightKg, weightKg) || other.weightKg == weightKg)&&(identical(other.hasArView, hasArView) || other.hasArView == hasArView)&&(identical(other.materials, materials) || other.materials == materials)&&(identical(other.warrantyNote, warrantyNote) || other.warrantyNote == warrantyNote)&&(identical(other.shippingNote, shippingNote) || other.shippingNote == shippingNote)&&(identical(other.lowStockThreshold, lowStockThreshold) || other.lowStockThreshold == lowStockThreshold));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VendorProduct&&(identical(other.id, id) || other.id == id)&&(identical(other.vendorId, vendorId) || other.vendorId == vendorId)&&(identical(other.name, name) || other.name == name)&&(identical(other.sku, sku) || other.sku == sku)&&(identical(other.price, price) || other.price == price)&&(identical(other.stock, stock) || other.stock == stock)&&const DeepCollectionEquality().equals(other.imageUrls, imageUrls)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.brand, brand) || other.brand == brand)&&(identical(other.originalPrice, originalPrice) || other.originalPrice == originalPrice)&&(identical(other.offerLabel, offerLabel) || other.offerLabel == offerLabel)&&(identical(other.widthCm, widthCm) || other.widthCm == widthCm)&&(identical(other.depthCm, depthCm) || other.depthCm == depthCm)&&(identical(other.heightCm, heightCm) || other.heightCm == heightCm)&&(identical(other.weightKg, weightKg) || other.weightKg == weightKg)&&(identical(other.hasArView, hasArView) || other.hasArView == hasArView)&&(identical(other.model3dStatus, model3dStatus) || other.model3dStatus == model3dStatus)&&(identical(other.model3dError, model3dError) || other.model3dError == model3dError)&&(identical(other.materials, materials) || other.materials == materials)&&(identical(other.warrantyNote, warrantyNote) || other.warrantyNote == warrantyNote)&&(identical(other.shippingNote, shippingNote) || other.shippingNote == shippingNote)&&(identical(other.lowStockThreshold, lowStockThreshold) || other.lowStockThreshold == lowStockThreshold));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,vendorId,name,sku,price,stock,const DeepCollectionEquality().hash(imageUrls),categoryId,isActive,createdAt,description,brand,originalPrice,offerLabel,widthCm,depthCm,heightCm,weightKg,hasArView,materials,warrantyNote,shippingNote,lowStockThreshold]);
+int get hashCode => Object.hashAll([runtimeType,id,vendorId,name,sku,price,stock,const DeepCollectionEquality().hash(imageUrls),categoryId,isActive,createdAt,description,brand,originalPrice,offerLabel,widthCm,depthCm,heightCm,weightKg,hasArView,model3dStatus,model3dError,materials,warrantyNote,shippingNote,lowStockThreshold]);
 
 @override
 String toString() {
-  return 'VendorProduct(id: $id, vendorId: $vendorId, name: $name, sku: $sku, price: $price, stock: $stock, imageUrls: $imageUrls, categoryId: $categoryId, isActive: $isActive, createdAt: $createdAt, description: $description, brand: $brand, originalPrice: $originalPrice, offerLabel: $offerLabel, widthCm: $widthCm, depthCm: $depthCm, heightCm: $heightCm, weightKg: $weightKg, hasArView: $hasArView, materials: $materials, warrantyNote: $warrantyNote, shippingNote: $shippingNote, lowStockThreshold: $lowStockThreshold)';
+  return 'VendorProduct(id: $id, vendorId: $vendorId, name: $name, sku: $sku, price: $price, stock: $stock, imageUrls: $imageUrls, categoryId: $categoryId, isActive: $isActive, createdAt: $createdAt, description: $description, brand: $brand, originalPrice: $originalPrice, offerLabel: $offerLabel, widthCm: $widthCm, depthCm: $depthCm, heightCm: $heightCm, weightKg: $weightKg, hasArView: $hasArView, model3dStatus: $model3dStatus, model3dError: $model3dError, materials: $materials, warrantyNote: $warrantyNote, shippingNote: $shippingNote, lowStockThreshold: $lowStockThreshold)';
 }
 
 
@@ -48,7 +49,7 @@ abstract mixin class $VendorProductCopyWith<$Res>  {
   factory $VendorProductCopyWith(VendorProduct value, $Res Function(VendorProduct) _then) = _$VendorProductCopyWithImpl;
 @useResult
 $Res call({
- String id, String vendorId, String name, String sku, double price, int stock, List<String> imageUrls, String categoryId, bool isActive, DateTime createdAt, String description, String brand, double? originalPrice, String offerLabel, double widthCm, double depthCm, double heightCm, double weightKg, bool hasArView, String materials, String warrantyNote, String shippingNote, int lowStockThreshold
+ String id, String vendorId, String name, String sku, double price, int stock, List<String> imageUrls, String categoryId, bool isActive, DateTime createdAt, String description, String brand, double? originalPrice, String offerLabel, double widthCm, double depthCm, double heightCm, double weightKg, bool hasArView, String model3dStatus, String model3dError, String materials, String warrantyNote, String shippingNote, int lowStockThreshold
 });
 
 
@@ -65,7 +66,7 @@ class _$VendorProductCopyWithImpl<$Res>
 
 /// Create a copy of VendorProduct
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? vendorId = null,Object? name = null,Object? sku = null,Object? price = null,Object? stock = null,Object? imageUrls = null,Object? categoryId = null,Object? isActive = null,Object? createdAt = null,Object? description = null,Object? brand = null,Object? originalPrice = freezed,Object? offerLabel = null,Object? widthCm = null,Object? depthCm = null,Object? heightCm = null,Object? weightKg = null,Object? hasArView = null,Object? materials = null,Object? warrantyNote = null,Object? shippingNote = null,Object? lowStockThreshold = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? vendorId = null,Object? name = null,Object? sku = null,Object? price = null,Object? stock = null,Object? imageUrls = null,Object? categoryId = null,Object? isActive = null,Object? createdAt = null,Object? description = null,Object? brand = null,Object? originalPrice = freezed,Object? offerLabel = null,Object? widthCm = null,Object? depthCm = null,Object? heightCm = null,Object? weightKg = null,Object? hasArView = null,Object? model3dStatus = null,Object? model3dError = null,Object? materials = null,Object? warrantyNote = null,Object? shippingNote = null,Object? lowStockThreshold = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,vendorId: null == vendorId ? _self.vendorId : vendorId // ignore: cast_nullable_to_non_nullable
@@ -86,7 +87,9 @@ as double,depthCm: null == depthCm ? _self.depthCm : depthCm // ignore: cast_nul
 as double,heightCm: null == heightCm ? _self.heightCm : heightCm // ignore: cast_nullable_to_non_nullable
 as double,weightKg: null == weightKg ? _self.weightKg : weightKg // ignore: cast_nullable_to_non_nullable
 as double,hasArView: null == hasArView ? _self.hasArView : hasArView // ignore: cast_nullable_to_non_nullable
-as bool,materials: null == materials ? _self.materials : materials // ignore: cast_nullable_to_non_nullable
+as bool,model3dStatus: null == model3dStatus ? _self.model3dStatus : model3dStatus // ignore: cast_nullable_to_non_nullable
+as String,model3dError: null == model3dError ? _self.model3dError : model3dError // ignore: cast_nullable_to_non_nullable
+as String,materials: null == materials ? _self.materials : materials // ignore: cast_nullable_to_non_nullable
 as String,warrantyNote: null == warrantyNote ? _self.warrantyNote : warrantyNote // ignore: cast_nullable_to_non_nullable
 as String,shippingNote: null == shippingNote ? _self.shippingNote : shippingNote // ignore: cast_nullable_to_non_nullable
 as String,lowStockThreshold: null == lowStockThreshold ? _self.lowStockThreshold : lowStockThreshold // ignore: cast_nullable_to_non_nullable
@@ -175,10 +178,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String vendorId,  String name,  String sku,  double price,  int stock,  List<String> imageUrls,  String categoryId,  bool isActive,  DateTime createdAt,  String description,  String brand,  double? originalPrice,  String offerLabel,  double widthCm,  double depthCm,  double heightCm,  double weightKg,  bool hasArView,  String materials,  String warrantyNote,  String shippingNote,  int lowStockThreshold)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String vendorId,  String name,  String sku,  double price,  int stock,  List<String> imageUrls,  String categoryId,  bool isActive,  DateTime createdAt,  String description,  String brand,  double? originalPrice,  String offerLabel,  double widthCm,  double depthCm,  double heightCm,  double weightKg,  bool hasArView,  String model3dStatus,  String model3dError,  String materials,  String warrantyNote,  String shippingNote,  int lowStockThreshold)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VendorProduct() when $default != null:
-return $default(_that.id,_that.vendorId,_that.name,_that.sku,_that.price,_that.stock,_that.imageUrls,_that.categoryId,_that.isActive,_that.createdAt,_that.description,_that.brand,_that.originalPrice,_that.offerLabel,_that.widthCm,_that.depthCm,_that.heightCm,_that.weightKg,_that.hasArView,_that.materials,_that.warrantyNote,_that.shippingNote,_that.lowStockThreshold);case _:
+return $default(_that.id,_that.vendorId,_that.name,_that.sku,_that.price,_that.stock,_that.imageUrls,_that.categoryId,_that.isActive,_that.createdAt,_that.description,_that.brand,_that.originalPrice,_that.offerLabel,_that.widthCm,_that.depthCm,_that.heightCm,_that.weightKg,_that.hasArView,_that.model3dStatus,_that.model3dError,_that.materials,_that.warrantyNote,_that.shippingNote,_that.lowStockThreshold);case _:
   return orElse();
 
 }
@@ -196,10 +199,10 @@ return $default(_that.id,_that.vendorId,_that.name,_that.sku,_that.price,_that.s
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String vendorId,  String name,  String sku,  double price,  int stock,  List<String> imageUrls,  String categoryId,  bool isActive,  DateTime createdAt,  String description,  String brand,  double? originalPrice,  String offerLabel,  double widthCm,  double depthCm,  double heightCm,  double weightKg,  bool hasArView,  String materials,  String warrantyNote,  String shippingNote,  int lowStockThreshold)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String vendorId,  String name,  String sku,  double price,  int stock,  List<String> imageUrls,  String categoryId,  bool isActive,  DateTime createdAt,  String description,  String brand,  double? originalPrice,  String offerLabel,  double widthCm,  double depthCm,  double heightCm,  double weightKg,  bool hasArView,  String model3dStatus,  String model3dError,  String materials,  String warrantyNote,  String shippingNote,  int lowStockThreshold)  $default,) {final _that = this;
 switch (_that) {
 case _VendorProduct():
-return $default(_that.id,_that.vendorId,_that.name,_that.sku,_that.price,_that.stock,_that.imageUrls,_that.categoryId,_that.isActive,_that.createdAt,_that.description,_that.brand,_that.originalPrice,_that.offerLabel,_that.widthCm,_that.depthCm,_that.heightCm,_that.weightKg,_that.hasArView,_that.materials,_that.warrantyNote,_that.shippingNote,_that.lowStockThreshold);case _:
+return $default(_that.id,_that.vendorId,_that.name,_that.sku,_that.price,_that.stock,_that.imageUrls,_that.categoryId,_that.isActive,_that.createdAt,_that.description,_that.brand,_that.originalPrice,_that.offerLabel,_that.widthCm,_that.depthCm,_that.heightCm,_that.weightKg,_that.hasArView,_that.model3dStatus,_that.model3dError,_that.materials,_that.warrantyNote,_that.shippingNote,_that.lowStockThreshold);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -216,10 +219,10 @@ return $default(_that.id,_that.vendorId,_that.name,_that.sku,_that.price,_that.s
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String vendorId,  String name,  String sku,  double price,  int stock,  List<String> imageUrls,  String categoryId,  bool isActive,  DateTime createdAt,  String description,  String brand,  double? originalPrice,  String offerLabel,  double widthCm,  double depthCm,  double heightCm,  double weightKg,  bool hasArView,  String materials,  String warrantyNote,  String shippingNote,  int lowStockThreshold)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String vendorId,  String name,  String sku,  double price,  int stock,  List<String> imageUrls,  String categoryId,  bool isActive,  DateTime createdAt,  String description,  String brand,  double? originalPrice,  String offerLabel,  double widthCm,  double depthCm,  double heightCm,  double weightKg,  bool hasArView,  String model3dStatus,  String model3dError,  String materials,  String warrantyNote,  String shippingNote,  int lowStockThreshold)?  $default,) {final _that = this;
 switch (_that) {
 case _VendorProduct() when $default != null:
-return $default(_that.id,_that.vendorId,_that.name,_that.sku,_that.price,_that.stock,_that.imageUrls,_that.categoryId,_that.isActive,_that.createdAt,_that.description,_that.brand,_that.originalPrice,_that.offerLabel,_that.widthCm,_that.depthCm,_that.heightCm,_that.weightKg,_that.hasArView,_that.materials,_that.warrantyNote,_that.shippingNote,_that.lowStockThreshold);case _:
+return $default(_that.id,_that.vendorId,_that.name,_that.sku,_that.price,_that.stock,_that.imageUrls,_that.categoryId,_that.isActive,_that.createdAt,_that.description,_that.brand,_that.originalPrice,_that.offerLabel,_that.widthCm,_that.depthCm,_that.heightCm,_that.weightKg,_that.hasArView,_that.model3dStatus,_that.model3dError,_that.materials,_that.warrantyNote,_that.shippingNote,_that.lowStockThreshold);case _:
   return null;
 
 }
@@ -231,7 +234,7 @@ return $default(_that.id,_that.vendorId,_that.name,_that.sku,_that.price,_that.s
 @JsonSerializable()
 
 class _VendorProduct extends VendorProduct {
-  const _VendorProduct({required this.id, required this.vendorId, required this.name, required this.sku, required this.price, required this.stock, final  List<String> imageUrls = const [], required this.categoryId, this.isActive = true, required this.createdAt, this.description = '', this.brand = '', this.originalPrice, this.offerLabel = '', this.widthCm = 0, this.depthCm = 0, this.heightCm = 0, this.weightKg = 0, this.hasArView = false, this.materials = '', this.warrantyNote = '', this.shippingNote = '', this.lowStockThreshold = 5}): _imageUrls = imageUrls,super._();
+  const _VendorProduct({required this.id, required this.vendorId, required this.name, required this.sku, required this.price, required this.stock, final  List<String> imageUrls = const [], required this.categoryId, this.isActive = true, required this.createdAt, this.description = '', this.brand = '', this.originalPrice, this.offerLabel = '', this.widthCm = 0, this.depthCm = 0, this.heightCm = 0, this.weightKg = 0, this.hasArView = false, this.model3dStatus = 'none', this.model3dError = '', this.materials = '', this.warrantyNote = '', this.shippingNote = '', this.lowStockThreshold = 5}): _imageUrls = imageUrls,super._();
   factory _VendorProduct.fromJson(Map<String, dynamic> json) => _$VendorProductFromJson(json);
 
 @override final  String id;
@@ -259,6 +262,9 @@ class _VendorProduct extends VendorProduct {
 @override@JsonKey() final  double heightCm;
 @override@JsonKey() final  double weightKg;
 @override@JsonKey() final  bool hasArView;
+/// none | building | ready | failed — mirrors server [Product.model3dStatus].
+@override@JsonKey() final  String model3dStatus;
+@override@JsonKey() final  String model3dError;
 @override@JsonKey() final  String materials;
 @override@JsonKey() final  String warrantyNote;
 @override@JsonKey() final  String shippingNote;
@@ -277,16 +283,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VendorProduct&&(identical(other.id, id) || other.id == id)&&(identical(other.vendorId, vendorId) || other.vendorId == vendorId)&&(identical(other.name, name) || other.name == name)&&(identical(other.sku, sku) || other.sku == sku)&&(identical(other.price, price) || other.price == price)&&(identical(other.stock, stock) || other.stock == stock)&&const DeepCollectionEquality().equals(other._imageUrls, _imageUrls)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.brand, brand) || other.brand == brand)&&(identical(other.originalPrice, originalPrice) || other.originalPrice == originalPrice)&&(identical(other.offerLabel, offerLabel) || other.offerLabel == offerLabel)&&(identical(other.widthCm, widthCm) || other.widthCm == widthCm)&&(identical(other.depthCm, depthCm) || other.depthCm == depthCm)&&(identical(other.heightCm, heightCm) || other.heightCm == heightCm)&&(identical(other.weightKg, weightKg) || other.weightKg == weightKg)&&(identical(other.hasArView, hasArView) || other.hasArView == hasArView)&&(identical(other.materials, materials) || other.materials == materials)&&(identical(other.warrantyNote, warrantyNote) || other.warrantyNote == warrantyNote)&&(identical(other.shippingNote, shippingNote) || other.shippingNote == shippingNote)&&(identical(other.lowStockThreshold, lowStockThreshold) || other.lowStockThreshold == lowStockThreshold));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VendorProduct&&(identical(other.id, id) || other.id == id)&&(identical(other.vendorId, vendorId) || other.vendorId == vendorId)&&(identical(other.name, name) || other.name == name)&&(identical(other.sku, sku) || other.sku == sku)&&(identical(other.price, price) || other.price == price)&&(identical(other.stock, stock) || other.stock == stock)&&const DeepCollectionEquality().equals(other._imageUrls, _imageUrls)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.brand, brand) || other.brand == brand)&&(identical(other.originalPrice, originalPrice) || other.originalPrice == originalPrice)&&(identical(other.offerLabel, offerLabel) || other.offerLabel == offerLabel)&&(identical(other.widthCm, widthCm) || other.widthCm == widthCm)&&(identical(other.depthCm, depthCm) || other.depthCm == depthCm)&&(identical(other.heightCm, heightCm) || other.heightCm == heightCm)&&(identical(other.weightKg, weightKg) || other.weightKg == weightKg)&&(identical(other.hasArView, hasArView) || other.hasArView == hasArView)&&(identical(other.model3dStatus, model3dStatus) || other.model3dStatus == model3dStatus)&&(identical(other.model3dError, model3dError) || other.model3dError == model3dError)&&(identical(other.materials, materials) || other.materials == materials)&&(identical(other.warrantyNote, warrantyNote) || other.warrantyNote == warrantyNote)&&(identical(other.shippingNote, shippingNote) || other.shippingNote == shippingNote)&&(identical(other.lowStockThreshold, lowStockThreshold) || other.lowStockThreshold == lowStockThreshold));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,vendorId,name,sku,price,stock,const DeepCollectionEquality().hash(_imageUrls),categoryId,isActive,createdAt,description,brand,originalPrice,offerLabel,widthCm,depthCm,heightCm,weightKg,hasArView,materials,warrantyNote,shippingNote,lowStockThreshold]);
+int get hashCode => Object.hashAll([runtimeType,id,vendorId,name,sku,price,stock,const DeepCollectionEquality().hash(_imageUrls),categoryId,isActive,createdAt,description,brand,originalPrice,offerLabel,widthCm,depthCm,heightCm,weightKg,hasArView,model3dStatus,model3dError,materials,warrantyNote,shippingNote,lowStockThreshold]);
 
 @override
 String toString() {
-  return 'VendorProduct(id: $id, vendorId: $vendorId, name: $name, sku: $sku, price: $price, stock: $stock, imageUrls: $imageUrls, categoryId: $categoryId, isActive: $isActive, createdAt: $createdAt, description: $description, brand: $brand, originalPrice: $originalPrice, offerLabel: $offerLabel, widthCm: $widthCm, depthCm: $depthCm, heightCm: $heightCm, weightKg: $weightKg, hasArView: $hasArView, materials: $materials, warrantyNote: $warrantyNote, shippingNote: $shippingNote, lowStockThreshold: $lowStockThreshold)';
+  return 'VendorProduct(id: $id, vendorId: $vendorId, name: $name, sku: $sku, price: $price, stock: $stock, imageUrls: $imageUrls, categoryId: $categoryId, isActive: $isActive, createdAt: $createdAt, description: $description, brand: $brand, originalPrice: $originalPrice, offerLabel: $offerLabel, widthCm: $widthCm, depthCm: $depthCm, heightCm: $heightCm, weightKg: $weightKg, hasArView: $hasArView, model3dStatus: $model3dStatus, model3dError: $model3dError, materials: $materials, warrantyNote: $warrantyNote, shippingNote: $shippingNote, lowStockThreshold: $lowStockThreshold)';
 }
 
 
@@ -297,7 +303,7 @@ abstract mixin class _$VendorProductCopyWith<$Res> implements $VendorProductCopy
   factory _$VendorProductCopyWith(_VendorProduct value, $Res Function(_VendorProduct) _then) = __$VendorProductCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String vendorId, String name, String sku, double price, int stock, List<String> imageUrls, String categoryId, bool isActive, DateTime createdAt, String description, String brand, double? originalPrice, String offerLabel, double widthCm, double depthCm, double heightCm, double weightKg, bool hasArView, String materials, String warrantyNote, String shippingNote, int lowStockThreshold
+ String id, String vendorId, String name, String sku, double price, int stock, List<String> imageUrls, String categoryId, bool isActive, DateTime createdAt, String description, String brand, double? originalPrice, String offerLabel, double widthCm, double depthCm, double heightCm, double weightKg, bool hasArView, String model3dStatus, String model3dError, String materials, String warrantyNote, String shippingNote, int lowStockThreshold
 });
 
 
@@ -314,7 +320,7 @@ class __$VendorProductCopyWithImpl<$Res>
 
 /// Create a copy of VendorProduct
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? vendorId = null,Object? name = null,Object? sku = null,Object? price = null,Object? stock = null,Object? imageUrls = null,Object? categoryId = null,Object? isActive = null,Object? createdAt = null,Object? description = null,Object? brand = null,Object? originalPrice = freezed,Object? offerLabel = null,Object? widthCm = null,Object? depthCm = null,Object? heightCm = null,Object? weightKg = null,Object? hasArView = null,Object? materials = null,Object? warrantyNote = null,Object? shippingNote = null,Object? lowStockThreshold = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? vendorId = null,Object? name = null,Object? sku = null,Object? price = null,Object? stock = null,Object? imageUrls = null,Object? categoryId = null,Object? isActive = null,Object? createdAt = null,Object? description = null,Object? brand = null,Object? originalPrice = freezed,Object? offerLabel = null,Object? widthCm = null,Object? depthCm = null,Object? heightCm = null,Object? weightKg = null,Object? hasArView = null,Object? model3dStatus = null,Object? model3dError = null,Object? materials = null,Object? warrantyNote = null,Object? shippingNote = null,Object? lowStockThreshold = null,}) {
   return _then(_VendorProduct(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,vendorId: null == vendorId ? _self.vendorId : vendorId // ignore: cast_nullable_to_non_nullable
@@ -335,7 +341,9 @@ as double,depthCm: null == depthCm ? _self.depthCm : depthCm // ignore: cast_nul
 as double,heightCm: null == heightCm ? _self.heightCm : heightCm // ignore: cast_nullable_to_non_nullable
 as double,weightKg: null == weightKg ? _self.weightKg : weightKg // ignore: cast_nullable_to_non_nullable
 as double,hasArView: null == hasArView ? _self.hasArView : hasArView // ignore: cast_nullable_to_non_nullable
-as bool,materials: null == materials ? _self.materials : materials // ignore: cast_nullable_to_non_nullable
+as bool,model3dStatus: null == model3dStatus ? _self.model3dStatus : model3dStatus // ignore: cast_nullable_to_non_nullable
+as String,model3dError: null == model3dError ? _self.model3dError : model3dError // ignore: cast_nullable_to_non_nullable
+as String,materials: null == materials ? _self.materials : materials // ignore: cast_nullable_to_non_nullable
 as String,warrantyNote: null == warrantyNote ? _self.warrantyNote : warrantyNote // ignore: cast_nullable_to_non_nullable
 as String,shippingNote: null == shippingNote ? _self.shippingNote : shippingNote // ignore: cast_nullable_to_non_nullable
 as String,lowStockThreshold: null == lowStockThreshold ? _self.lowStockThreshold : lowStockThreshold // ignore: cast_nullable_to_non_nullable

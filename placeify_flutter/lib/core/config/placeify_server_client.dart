@@ -119,7 +119,7 @@ Future<void> initializePlaceifyClient() async {
   _authSessionManager = FlutterAuthSessionManager();
   await _createClient(forceRefresh: false);
   if (client.auth.isAuthenticated) {
-    await ensurePlaceifyRealtime();
+    unawaited(ensurePlaceifyRealtime());
   }
 }
 
@@ -131,19 +131,21 @@ Future<void> reconnectPlaceifyClient({bool forceRefresh = true}) async {
   }
   await _createClient(forceRefresh: forceRefresh);
   if (client.auth.isAuthenticated) {
-    await ensurePlaceifyRealtime();
+    unawaited(ensurePlaceifyRealtime());
   }
 }
 
-/// Tripo 3D generation can take several minutes; default Serverpod timeout is 20s.
-const Duration placeifyLongRequestTimeout = Duration(minutes: 10);
+/// Default endpoint timeout. Keep short so login/catalog fail fast when the
+/// server is unreachable. Build 3D no longer needs a long client timeout
+/// because Tripo runs in a server background job.
+const Duration placeifyRequestTimeout = Duration(seconds: 20);
 
 Future<void> _createClient({required bool forceRefresh}) async {
   await resetPlaceifyRealtime();
   serverUrl = await resolveServerUrl(forceRefresh: forceRefresh);
   client = Client(
     serverUrl,
-    connectionTimeout: placeifyLongRequestTimeout,
+    connectionTimeout: placeifyRequestTimeout,
   )
     ..connectivityMonitor = FlutterConnectivityMonitor()
     ..authSessionManager = _authSessionManager;

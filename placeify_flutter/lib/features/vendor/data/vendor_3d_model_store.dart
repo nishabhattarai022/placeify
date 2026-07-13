@@ -73,8 +73,17 @@ abstract final class Vendor3dModelStore {
   static final Map<String, Vendor3dModelRecord> _records = {};
 
   static VendorProduct3dStatus statusFor(VendorProduct product) {
-    if (product.hasArView) return VendorProduct3dStatus.ready;
-    return _records[product.id]?.status ?? VendorProduct3dStatus.none;
+    switch (product.model3dStatus) {
+      case 'building':
+        return VendorProduct3dStatus.processing;
+      case 'ready':
+        return VendorProduct3dStatus.ready;
+      case 'failed':
+        return VendorProduct3dStatus.failed;
+      default:
+        if (product.hasArView) return VendorProduct3dStatus.ready;
+        return _records[product.id]?.status ?? VendorProduct3dStatus.none;
+    }
   }
 
   static Vendor3dModelRecord? recordFor(String productId) => _records[productId];
@@ -108,15 +117,15 @@ abstract final class Vendor3dModelStore {
     }
 
     final record = ensureDraft(product.id);
+    final serverStatus = statusFor(product);
     updateRecord(
       record.copyWith(
         angleSources: sources,
-        status: product.hasArView
-            ? VendorProduct3dStatus.ready
-            : sources.isEmpty
-                ? VendorProduct3dStatus.none
-                : VendorProduct3dStatus.draft,
-        clearError: true,
+        status: serverStatus == VendorProduct3dStatus.none && sources.isNotEmpty
+            ? VendorProduct3dStatus.draft
+            : serverStatus,
+        errorMessage: product.model3dError.isEmpty ? null : product.model3dError,
+        clearError: product.model3dError.isEmpty,
       ),
     );
   }

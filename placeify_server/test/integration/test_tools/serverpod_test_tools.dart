@@ -114,6 +114,9 @@ import 'package:placeify_server/src/generated/vendor_review_summary.dart'
     as _i67;
 import 'package:placeify_server/src/generated/wishlist_page.dart' as _i68;
 import 'package:placeify_server/src/generated/wishlist_item.dart' as _i69;
+import 'package:placeify_server/src/generated/product_3d_generation_trigger.dart'
+    as _i70;
+import 'package:placeify_server/src/generated/future_calls.dart' as _i71;
 import 'package:placeify_server/src/generated/protocol.dart';
 import 'package:placeify_server/src/generated/endpoints.dart';
 export 'package:serverpod_test/serverpod_test_public_exports.dart';
@@ -228,6 +231,8 @@ void withServerpod(
 }
 
 class TestEndpoints {
+  late final futureCalls = _FutureCalls();
+
   late final _EmailIdpEndpoint emailIdp;
 
   late final _JwtRefreshEndpoint jwtRefresh;
@@ -333,6 +338,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
   }
+}
+
+class _FutureCalls {
+  late final product3dGeneration = _Product3dGenerationFutureCall();
 }
 
 class _EmailIdpEndpoint {
@@ -5290,5 +5299,23 @@ class _WishlistEndpoint {
         await _localUniqueSession.close();
       }
     });
+  }
+}
+
+class _Product3dGenerationFutureCall {
+  Future<void> invoke(
+    _i1.TestSessionBuilder sessionBuilder,
+    _i70.Product3dGenerationTrigger? trigger,
+  ) async {
+    var _localUniqueSession = (sessionBuilder as _i1.InternalTestSessionBuilder)
+        .internalBuild();
+    try {
+      await _i71.Product3dGenerationInvokeFutureCall().invoke(
+        _localUniqueSession,
+        trigger,
+      );
+    } finally {
+      await _localUniqueSession.close();
+    }
   }
 }
