@@ -221,7 +221,9 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
           ),
           children: [
             SizedBox(
-              height: MediaQuery.sizeOf(context).height * 0.28,
+              height: (MediaQuery.sizeOf(context).height * 0.48)
+                  .clamp(340.0, 480.0)
+                  .toDouble(),
               child: hasSearch
                   ? _OrdersNoSearchResultsState(query: _searchQuery.trim())
                   : OrdersEmptyState(filter: _selectedFilter),

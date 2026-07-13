@@ -137,25 +137,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text.rich(
-                            TextSpan(
-                              style: const TextStyle(
-                                fontFamily: 'Fraunces',
-                                fontSize: 40,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.onboardingTextHead,
-                                letterSpacing: -1.0,
-                                height: 1.05,
-                              ),
-                              children: const [
-                                TextSpan(text: 'Welcome '),
-                                TextSpan(
-                                  text: 'Back',
-                                  style: TextStyle(
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                ),
-                              ],
+                          const Text(
+                            'Welcome Back',
+                            style: TextStyle(
+                              fontFamily: 'Fraunces',
+                              fontSize: 40,
+                              fontWeight: FontWeight.w700,
+                              fontStyle: FontStyle.italic,
+                              color: AppColors.onboardingAmber,
+                              letterSpacing: -1.0,
+                              height: 1.05,
                             ),
                           ),
                           const SizedBox(height: 10),

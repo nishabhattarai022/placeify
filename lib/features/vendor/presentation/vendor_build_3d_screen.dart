@@ -196,48 +196,31 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
                               ).isReady;
                             });
                           },
+                          expansionFor: (product) {
+                            if (product.id != _selectedProductId) {
+                              return null;
+                            }
+                            return _SelectedProductBuildPanel(
+                              product: product,
+                              record: record,
+                              status: status,
+                              isGenerating: _isGenerating,
+                              progress: _generateProgress,
+                              modelReady: _modelReady || status.isReady,
+                              onToggleAngle: (angle) {
+                                HapticService.light();
+                                setState(() {
+                                  Vendor3dModelStore.toggleCapture(
+                                    product.id,
+                                    angle,
+                                  );
+                                });
+                              },
+                              onGenerate: _generateModel,
+                            );
+                          },
                         ),
                       ),
-                      if (selected != null) ...[
-                        const SizedBox(height: 16),
-                        _SelectedProductPreview(product: selected),
-                        const SizedBox(height: 16),
-                        _SectionCard(
-                          title: Vendor3dBuilderStrings.captureSectionTitle,
-                          subtitle: Vendor3dBuilderStrings.captureSectionHint,
-                          child: _CaptureAngleGrid(
-                            captured: record?.capturedAngles ?? const {},
-                            onToggle: (angle) {
-                              HapticService.light();
-                              setState(() {
-                                Vendor3dModelStore.toggleCapture(
-                                  selected.id,
-                                  angle,
-                                );
-                              });
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        _SectionCard(
-                          title: Vendor3dBuilderStrings.dimensionsSectionTitle,
-                          subtitle: Vendor3dBuilderStrings.dimensionsSectionHint,
-                          child: _DimensionsPanel(product: selected),
-                        ),
-                        const SizedBox(height: 16),
-                        _SectionCard(
-                          title: Vendor3dBuilderStrings.generateSectionTitle,
-                          subtitle: Vendor3dBuilderStrings.generateSectionHint,
-                          child: _GeneratePanel(
-                            status: status,
-                            isGenerating: _isGenerating,
-                            progress: _generateProgress,
-                            modelReady: _modelReady || status.isReady,
-                            modelFileName: record?.modelFileName,
-                            onGenerate: _generateModel,
-                          ),
-                        ),
-                      ],
                     ],
                   ),
                 );
@@ -309,11 +292,13 @@ class _ProductSelector extends StatelessWidget {
     required this.products,
     required this.selectedId,
     required this.onSelected,
+    required this.expansionFor,
   });
 
   final List<VendorProduct> products;
   final String? selectedId;
   final ValueChanged<String> onSelected;
+  final Widget? Function(VendorProduct product) expansionFor;
 
   @override
   Widget build(BuildContext context) {
@@ -326,8 +311,123 @@ class _ProductSelector extends StatelessWidget {
             selected: products[i].id == selectedId,
             onTap: () => onSelected(products[i].id),
           ),
+          if (expansionFor(products[i]) case final expansion?) ...[
+            const SizedBox(height: 12),
+            expansion,
+          ],
         ],
       ],
+    );
+  }
+}
+
+/// Build flow sections rendered directly under the selected product tile.
+class _SelectedProductBuildPanel extends StatelessWidget {
+  const _SelectedProductBuildPanel({
+    required this.product,
+    required this.record,
+    required this.status,
+    required this.isGenerating,
+    required this.progress,
+    required this.modelReady,
+    required this.onToggleAngle,
+    required this.onGenerate,
+  });
+
+  final VendorProduct product;
+  final Vendor3dModelRecord? record;
+  final VendorProduct3dStatus status;
+  final bool isGenerating;
+  final double progress;
+  final bool modelReady;
+  final ValueChanged<String> onToggleAngle;
+  final VoidCallback onGenerate;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SelectedProductPreview(product: product),
+        const SizedBox(height: 12),
+        _NestedSectionCard(
+          title: Vendor3dBuilderStrings.captureSectionTitle,
+          subtitle: Vendor3dBuilderStrings.captureSectionHint,
+          child: _CaptureAngleGrid(
+            captured: record?.capturedAngles ?? const {},
+            onToggle: onToggleAngle,
+          ),
+        ),
+        const SizedBox(height: 12),
+        _NestedSectionCard(
+          title: Vendor3dBuilderStrings.dimensionsSectionTitle,
+          subtitle: Vendor3dBuilderStrings.dimensionsSectionHint,
+          child: _DimensionsPanel(product: product),
+        ),
+        const SizedBox(height: 12),
+        _NestedSectionCard(
+          title: Vendor3dBuilderStrings.generateSectionTitle,
+          subtitle: Vendor3dBuilderStrings.generateSectionHint,
+          child: _GeneratePanel(
+            status: status,
+            isGenerating: isGenerating,
+            progress: progress,
+            modelReady: modelReady,
+            modelFileName: record?.modelFileName,
+            onGenerate: onGenerate,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _NestedSectionCard extends StatelessWidget {
+  const _NestedSectionCard({
+    required this.title,
+    required this.subtitle,
+    required this.child,
+  });
+
+  final String title;
+  final String subtitle;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      decoration: BoxDecoration(
+        color: AppColors.cream.withValues(alpha: 0.55),
+        borderRadius: AppRadii.md,
+        border: Border.all(color: AppColors.creamDark, width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.dmSans(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: GoogleFonts.dmSans(
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textMuted,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 14),
+          child,
+        ],
+      ),
     );
   }
 }
