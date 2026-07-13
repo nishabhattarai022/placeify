@@ -247,7 +247,7 @@ class _VendorProductsScreenState extends ConsumerState<VendorProductsScreen> {
                   if (filtered.isEmpty) {
                     return RefreshIndicator(
                       onRefresh: _onRefresh,
-                      color: AppColors.espresso,
+                      color: Colors.black,
                       child: ListView(
                         physics: const AlwaysScrollableScrollPhysics(
                           parent: BouncingScrollPhysics(),
@@ -273,7 +273,7 @@ class _VendorProductsScreenState extends ConsumerState<VendorProductsScreen> {
 
                   return RefreshIndicator(
                     onRefresh: _onRefresh,
-                    color: AppColors.espresso,
+                    color: Colors.black,
                     child: _viewMode == _VendorProductViewMode.list
                         ? _buildList(filtered)
                         : _buildGrid(filtered),
@@ -402,7 +402,7 @@ class _HeaderTextButton extends StatelessWidget {
           style: GoogleFonts.dmSans(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: AppColors.espresso,
+            color: Colors.black,
           ),
         ),
       ),
@@ -471,7 +471,7 @@ class _ViewModeButton extends StatelessWidget {
         height: 32,
         margin: const EdgeInsets.all(2),
         decoration: BoxDecoration(
-          color: selected ? AppColors.espresso : Colors.transparent,
+          color: selected ? Colors.black : Colors.transparent,
           borderRadius: AppRadii.pill,
         ),
         child: Icon(
@@ -651,7 +651,7 @@ class _BulkActionBar extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.espresso.withValues(alpha: 0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, -4),
           ),

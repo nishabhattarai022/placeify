@@ -168,10 +168,10 @@ class _SelectionCheckbox extends StatelessWidget {
         width: 24,
         height: 24,
         decoration: BoxDecoration(
-          color: selected ? AppColors.espresso : AppColors.warmWhite,
+          color: selected ? Colors.black : AppColors.warmWhite,
           borderRadius: BorderRadius.circular(7),
           border: Border.all(
-            color: selected ? AppColors.espresso : AppColors.creamDark,
+            color: selected ? Colors.black : AppColors.creamDark,
             width: 1.5,
           ),
           boxShadow: const [
