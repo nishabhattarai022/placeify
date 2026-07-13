@@ -15,7 +15,7 @@ abstract final class AppTypography {
     fontFamily: 'Fraunces',
     fontSize: 22,
     fontWeight: FontWeight.w600,
-    color: AppColors.espresso,
+    color: Colors.black,
   );
 
   static const TextStyle bannerHeadline = TextStyle(
@@ -61,7 +61,7 @@ abstract final class AppTypography {
     fontFamily: 'Fraunces',
     fontSize: 28,
     fontWeight: FontWeight.w600,
-    color: AppColors.espresso,
+    color: Colors.black,
     height: 1.0,
   );
 

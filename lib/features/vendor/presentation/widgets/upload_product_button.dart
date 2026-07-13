@@ -18,7 +18,7 @@ class UploadProductButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         decoration: BoxDecoration(
-          color: AppColors.espresso,
+          color: Colors.black,
           borderRadius: AppRadii.md,
           boxShadow: AppShadows.soft,
         ),
