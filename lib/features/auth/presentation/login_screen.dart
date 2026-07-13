@@ -46,12 +46,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _signInWithDemo() async {
-    _emailController.text = DemoCredentials.email;
-    _passwordController.text = DemoCredentials.password;
-    await _submit(destination: '/home');
-  }
-
   Future<void> _signInWithDemoAdmin() async {
     _emailController.text = DemoCredentials.adminEmail;
     _passwordController.text = DemoCredentials.adminPassword;
@@ -186,7 +180,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           SizedBox(height: topPadding > 0 ? 36 : 40),
                           AuthTextField(
                             label: 'Email',
-                            hint: DemoCredentials.email,
+                            hint: 'you@example.com',
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
@@ -228,42 +222,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          Text(
-                            DemoCredentials.hint,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              color: AppColors.onboardingTextBody.withValues(
-                                alpha: 0.75,
-                              ),
-                            ),
-                          ),
                           const SizedBox(height: 32),
                           PrimaryCtaButton(
                             label: _isSubmitting ? 'Logging in...' : 'Log In',
                             onTap: () => _submit(destination: '/home'),
                           ),
                           const SizedBox(height: 12),
-                          Center(
-                            child: TextButton(
-                              onPressed: _isSubmitting
-                                  ? null
-                                  : () {
-                                      HapticService.light();
-                                      _signInWithDemo();
-                                    },
-                              child: const Text(
-                                'Use demo account',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.onboardingAmber,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
                           Center(
                             child: TextButton(
                               onPressed: _isSubmitting
