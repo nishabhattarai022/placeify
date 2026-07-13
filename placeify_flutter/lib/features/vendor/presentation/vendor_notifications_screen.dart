@@ -97,13 +97,18 @@ class _VendorNotificationsScreenState
     });
   }
 
+  bool _isNavigating = false;
+
   void _onNotificationTap(VendorNotification notification) {
+    if (_isNavigating) return;
     HapticService.light();
     ref.read(vendorNotificationsProvider.notifier).markRead(notification.id);
-
     if (notification.type == NotificationType.order &&
         notification.relatedId != null) {
-      context.push(VendorRoutes.orderDetail(notification.relatedId!));
+      _isNavigating = true;
+      context.push(VendorRoutes.orderDetail(notification.relatedId!)).then((_) {
+        if (mounted) _isNavigating = false;
+      });
     }
   }
 

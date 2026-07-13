@@ -157,7 +157,9 @@ class _ApplicationDetailBody extends ConsumerWidget {
                 context,
                 application: application,
                 onApproved: () {
-                  if (context.mounted) context.pop();
+                  Future.delayed(const Duration(milliseconds: 150), () {
+                    if (context.mounted) context.pop();
+                  });
                 },
               );
             },
