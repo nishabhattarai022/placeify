@@ -66,6 +66,7 @@ class _OrderActionSheetBodyState extends State<_OrderActionSheetBody> {
 
     setState(() => _isSubmitting = true);
     HapticService.light();
+    Navigator.pop(widget.sheetContext);
 
     final result = await widget.ref
         .read(vendorOrdersProvider.notifier)
@@ -73,14 +74,14 @@ class _OrderActionSheetBodyState extends State<_OrderActionSheetBody> {
 
     if (!widget.parentContext.mounted) return;
 
-    if (widget.sheetContext.mounted) {
-      Navigator.pop(widget.sheetContext);
+    if (result.error != null) {
+      PlaceifyToast.show(widget.parentContext, result.error!);
+    } else {
+      PlaceifyToast.show(
+        widget.parentContext,
+        result.message ?? 'Order accepted ✓',
+      );
     }
-
-    PlaceifyToast.show(
-      widget.parentContext,
-      result.isSuccess ? result.message! : result.error!,
-    );
   }
 
   Future<void> _reject() async {
@@ -98,17 +99,17 @@ class _OrderActionSheetBodyState extends State<_OrderActionSheetBody> {
 
     if (!widget.parentContext.mounted) return;
 
-    if (!result.isSuccess) {
+    if (result.error != null) {
       setState(() => _isSubmitting = false);
       PlaceifyToast.show(widget.parentContext, result.error!);
       return;
     }
 
-    if (widget.sheetContext.mounted) {
-      Navigator.pop(widget.sheetContext);
-    }
-
-    PlaceifyToast.show(widget.parentContext, result.message!);
+    Navigator.pop(widget.sheetContext);
+    PlaceifyToast.show(
+      widget.parentContext,
+      result.message ?? 'Order rejected',
+    );
   }
 
   @override

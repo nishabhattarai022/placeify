@@ -67,22 +67,10 @@ class _TrackingBody extends StatelessWidget {
       children: [
         ProfileSubHero(
           title: OrderStrings.trackingTitle,
-          bottom: Padding(
-            padding: const EdgeInsets.only(top: 4, bottom: 20),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    order.orderNumber,
-                    style: GoogleFonts.dmSans(
-                      fontSize: 13,
-                      color: Colors.white.withValues(alpha: 0.72),
-                    ),
-                  ),
-                ),
-                ConsumerOrderStatusChip(status: order.status),
-              ],
-            ),
+          subtitle: order.orderNumber,
+          bottom: Align(
+            alignment: Alignment.centerLeft,
+            child: ConsumerOrderStatusChip(status: order.status),
           ),
         ),
         Expanded(

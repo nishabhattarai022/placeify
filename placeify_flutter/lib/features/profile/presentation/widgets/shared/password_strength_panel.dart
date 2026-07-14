@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/constants/app_radii.dart';
+import '../../../../../core/theme/app_fonts.dart';
+import '../../../../home/presentation/chairs_catalog_tokens.dart';
 
 class PasswordStrengthPanel extends StatelessWidget {
   const PasswordStrengthPanel({
@@ -12,18 +15,19 @@ class PasswordStrengthPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final len = password.length >= 8;
-    final upper = RegExp(r'[A-Z]').hasMatch(password);
-    final num = RegExp(r'\d').hasMatch(password);
-    final sym = RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password);
-    final score = [len, upper, num, sym].where((e) => e).length;
+    final hasLength = password.length >= 8;
+    final hasUpper = RegExp(r'[A-Z]').hasMatch(password);
+    final hasNumber = RegExp(r'\d').hasMatch(password);
+    final hasSymbol = RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password);
+    final score =
+        [hasLength, hasUpper, hasNumber, hasSymbol].where((e) => e).length;
 
     final configs = [
       (0.0, AppColors.textMuted, ''),
       (0.25, AppColors.rust, 'Weak'),
-      (0.5, AppColors.accent, 'Fair'),
+      (0.5, Colors.black54, 'Fair'),
       (0.75, AppColors.sage, 'Good'),
-      (1.0, AppColors.teal, 'Strong'),
+      (1.0, Colors.black, 'Strong'),
     ];
     final cfg = configs[score.clamp(0, 4)];
 
@@ -32,11 +36,11 @@ class PasswordStrengthPanel extends StatelessWidget {
       children: [
         const SizedBox(height: 8),
         ClipRRect(
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: AppRadii.pill,
           child: LinearProgressIndicator(
             value: cfg.$1,
             minHeight: 4,
-            backgroundColor: AppColors.creamDark,
+            backgroundColor: Colors.black.withValues(alpha: 0.08),
             color: cfg.$2,
           ),
         ),
@@ -44,47 +48,54 @@ class PasswordStrengthPanel extends StatelessWidget {
           const SizedBox(height: 5),
           Text(
             cfg.$3,
-            style: TextStyle(
+            style: AppFonts.dmSans(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: cfg.$2,
             ),
           ),
         ],
-        const SizedBox(height: 6),
-        _PwRules(len: len, upper: upper, num: num, sym: sym),
+        const SizedBox(height: 8),
+        _PasswordRules(
+          hasLength: hasLength,
+          hasUpper: hasUpper,
+          hasNumber: hasNumber,
+          hasSymbol: hasSymbol,
+        ),
       ],
     );
   }
 }
 
-class _PwRules extends StatelessWidget {
-  const _PwRules({
-    required this.len,
-    required this.upper,
-    required this.num,
-    required this.sym,
+class _PasswordRules extends StatelessWidget {
+  const _PasswordRules({
+    required this.hasLength,
+    required this.hasUpper,
+    required this.hasNumber,
+    required this.hasSymbol,
   });
 
-  final bool len;
-  final bool upper;
-  final bool num;
-  final bool sym;
+  final bool hasLength;
+  final bool hasUpper;
+  final bool hasNumber;
+  final bool hasSymbol;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: AppColors.cream,
-        borderRadius: BorderRadius.circular(14),
+        color: ChairsCatalogTokens.imageWell,
+        borderRadius:
+            BorderRadius.circular(ChairsCatalogTokens.compactCardRadius),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
       ),
       child: Column(
         children: [
-          _Rule(label: 'At least 8 characters', valid: len),
-          _Rule(label: 'One uppercase letter', valid: upper),
-          _Rule(label: 'One number', valid: num),
-          _Rule(label: 'One special character (!@#\$...)', valid: sym),
+          _Rule(label: 'At least 8 characters', valid: hasLength),
+          _Rule(label: 'One uppercase letter', valid: hasUpper),
+          _Rule(label: 'One number', valid: hasNumber),
+          _Rule(label: 'One special character (!@#\$...)', valid: hasSymbol),
         ],
       ),
     );
@@ -107,7 +118,9 @@ class _Rule extends StatelessWidget {
             width: 18,
             height: 18,
             decoration: BoxDecoration(
-              color: valid ? AppColors.teal : AppColors.creamDark,
+              color: valid
+                  ? Colors.black
+                  : Colors.black.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
             alignment: Alignment.center,
@@ -120,9 +133,10 @@ class _Rule extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             label,
-            style: TextStyle(
+            style: AppFonts.dmSans(
               fontSize: 13,
-              color: valid ? AppColors.teal : AppColors.textMuted,
+              fontWeight: FontWeight.w400,
+              color: valid ? AppColors.textPrimary : AppColors.textMuted,
             ),
           ),
         ],

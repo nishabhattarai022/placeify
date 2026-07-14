@@ -8,6 +8,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/config/placeify_server_client.dart';
+import '../../../core/debug/agent_debug_log.dart';
 import '../../home/domain/models/product.dart';
 import '../../home/presentation/providers/catalog_provider.dart';
 import '../../orders/presentation/providers/customer_in_app_notifications_provider.dart';
@@ -147,6 +148,19 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen> {
       final fallback = await ref.read(catalogDiscountedProductsProvider.future);
       offers = fallback.take(_dashboardOfferProductLimit).toList();
     }
+    // #region agent log
+    agentDebugLog(
+      location: 'user_dashboard_screen.dart:_loadMarketplaceProducts',
+      message: 'User dashboard special offers loaded',
+      hypothesisId: 'E',
+      data: {
+        'apiOfferCount': dashboard.marketplace.offerProducts.length,
+        'finalOfferCount': offers.length,
+        'names': offers.map((p) => p.name).take(4).toList(growable: false),
+        'usedFallback': dashboard.marketplace.offerProducts.isEmpty,
+      },
+    );
+    // #endregion
     final featured = await UserDashboardMarketplaceMapper.toUiProducts(
       dashboard.marketplace.featuredProducts,
     );

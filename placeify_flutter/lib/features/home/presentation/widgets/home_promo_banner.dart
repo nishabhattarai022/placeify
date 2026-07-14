@@ -58,8 +58,10 @@ class HomePromoBanner extends StatelessWidget {
                   Text(
                     '30% off',
                     style: TextStyle(
+                      fontFamily: 'Fraunces',
                       fontSize: 34,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
+                      fontStyle: FontStyle.italic,
                       color: _discountInk,
                       height: 1.1,
                     ),

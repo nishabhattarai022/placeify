@@ -21,17 +21,19 @@ class SuperscriptCountTitle extends StatelessWidget {
     final countFontSize = fontSize * 0.38;
     final superscriptLift = fontSize * 0.44;
 
-    final titleStyle = GoogleFonts.dmSans(
+    final titleStyle = GoogleFonts.dmSerifDisplay(
       fontSize: fontSize,
-      fontWeight: FontWeight.w700,
+      fontWeight: FontWeight.w400,
+      fontStyle: FontStyle.italic,
       color: color,
       letterSpacing: -0.5,
       height: 1.0,
     );
 
-    final countStyle = GoogleFonts.dmSans(
+    final countStyle = GoogleFonts.dmSerifDisplay(
       fontSize: countFontSize,
-      fontWeight: FontWeight.w600,
+      fontWeight: FontWeight.w400,
+      fontStyle: FontStyle.italic,
       color: color,
       letterSpacing: -0.15,
       height: 1.0,

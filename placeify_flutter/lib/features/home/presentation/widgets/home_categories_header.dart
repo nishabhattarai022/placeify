@@ -17,8 +17,10 @@ class HomeCategoriesHeader extends StatelessWidget {
           child: Text(
             'Categories',
             style: TextStyle(
+              fontFamily: 'Fraunces',
               fontSize: 32,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
+              fontStyle: FontStyle.italic,
               color: AppColors.textPrimary,
               letterSpacing: -0.5,
             ),

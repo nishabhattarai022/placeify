@@ -17,29 +17,20 @@ class HomeRecommendSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final productsAsync = ref.watch(recommendedProductsProvider);
 
-    return productsAsync.when(
-      loading: () => const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          HomeRecommendHeader(),
-          SizedBox(height: HomeScreenTokens.sectionSpacing),
-          SizedBox(height: 180),
-        ],
-      ),
-      error: (_, __) => const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          HomeRecommendHeader(),
-          SizedBox(height: HomeScreenTokens.sectionSpacing),
-          _EmptyRecommendations(key: ValueKey('empty_recommendations')),
-        ],
-      ),
-      data: (products) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const HomeRecommendHeader(),
-          const SizedBox(height: HomeScreenTokens.sectionSpacing),
-          AnimatedSwitcher(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const HomeRecommendHeader(),
+        const SizedBox(height: HomeScreenTokens.sectionSpacing),
+        productsAsync.when(
+          loading: () => const SizedBox(
+            height: 120,
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          ),
+          error: (_, __) => const _EmptyRecommendations(
+            key: ValueKey('error_recommendations'),
+          ),
+          data: (products) => AnimatedSwitcher(
             duration: _switchDuration,
             switchInCurve: Curves.easeOutCubic,
             switchOutCurve: Curves.easeInCubic,
@@ -64,8 +55,8 @@ class HomeRecommendSection extends ConsumerWidget {
                     products: products,
                   ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -108,7 +108,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
       case VendorStatus.none:
         context.push(VendorRoutes.register);
       case VendorStatus.pending:
-        VendorStatusGateSheets.showPending(context);
+        context.pushNamed('profileApplicationPending');
       case VendorStatus.approved:
         context.push(VendorRoutes.dashboard);
       case VendorStatus.suspended:
@@ -158,7 +158,8 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
                         fontFamily: 'Fraunces',
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.espresso,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.black,
                       ),
                     ),
                   ),

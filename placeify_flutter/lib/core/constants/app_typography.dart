@@ -6,6 +6,7 @@ abstract final class AppTypography {
     fontFamily: 'Fraunces',
     fontSize: 50,
     fontWeight: FontWeight.w300,
+    fontStyle: FontStyle.italic,
     color: AppColors.warmWhite,
     height: 1.0,
     letterSpacing: -0.5,
@@ -15,13 +16,15 @@ abstract final class AppTypography {
     fontFamily: 'Fraunces',
     fontSize: 22,
     fontWeight: FontWeight.w600,
-    color: AppColors.espresso,
+    fontStyle: FontStyle.italic,
+    color: Colors.black,
   );
 
   static const TextStyle bannerHeadline = TextStyle(
     fontFamily: 'Fraunces',
     fontSize: 28,
     fontWeight: FontWeight.w300,
+    fontStyle: FontStyle.italic,
     color: AppColors.warmWhite,
     height: 1.1,
   );
@@ -30,6 +33,7 @@ abstract final class AppTypography {
     fontFamily: 'Fraunces',
     fontSize: 30,
     fontWeight: FontWeight.w600,
+    fontStyle: FontStyle.italic,
     color: AppColors.warmWhite,
   );
 
@@ -45,6 +49,7 @@ abstract final class AppTypography {
     fontFamily: 'Fraunces',
     fontSize: 28,
     fontWeight: FontWeight.w700,
+    fontStyle: FontStyle.italic,
     color: AppColors.espresso,
     letterSpacing: -0.5,
   );
@@ -61,7 +66,7 @@ abstract final class AppTypography {
     fontFamily: 'Fraunces',
     fontSize: 28,
     fontWeight: FontWeight.w600,
-    color: AppColors.espresso,
+    color: Colors.black,
     height: 1.0,
   );
 

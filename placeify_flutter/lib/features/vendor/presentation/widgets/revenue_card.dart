@@ -39,7 +39,7 @@ class _RevenueCardState extends State<RevenueCard> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.espresso,
+        color: Colors.black,
         borderRadius: AppRadii.lg,
       ),
       child: Column(

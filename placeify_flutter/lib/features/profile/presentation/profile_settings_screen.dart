@@ -25,7 +25,10 @@ class ProfileSettingsScreen extends ConsumerWidget {
       backgroundColor: AppColors.cream,
       body: Column(
         children: [
-          const ProfileSubHero(title: 'Settings'),
+          const ProfileSubHero(
+            title: 'Settings',
+            subtitle: 'account & privacy',
+          ),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(
@@ -42,7 +45,8 @@ class ProfileSettingsScreen extends ConsumerWidget {
                       fontFamily: 'Fraunces',
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.espresso,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.black,
                     ),
                   ),
                   const SizedBox(height: 12),

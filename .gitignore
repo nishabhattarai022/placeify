@@ -3,6 +3,9 @@
 .packages
 **/build/
 
+# Flutter DevTools local settings (auto-created by IDE, not needed in repo)
+devtools_options.yaml
+
 # Pubspec overrides
 pubspec_overrides.yaml
 

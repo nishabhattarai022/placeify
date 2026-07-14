@@ -6,9 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../core/debug/agent_debug_log.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../data/discounted_products.dart';
-import '../../domain/models/product.dart';
+import '../../data/marketplace_highlights_mapper.dart';
 import '../providers/catalog_provider.dart';
 
 /// Auto-cycling premium promo card. One card on screen at all times — content
@@ -31,6 +32,8 @@ class _DiscountedProductsSectionState
 
   int _currentIndex = 0;
   Timer? _timer;
+  bool _ctaPressed = false;
+  List<DiscountedProduct> _products = const [];
 
   @override
   void dispose() {
@@ -38,27 +41,30 @@ class _DiscountedProductsSectionState
     super.dispose();
   }
 
-  void _restartAutoplay(int length) {
+  void _syncTimer(List<DiscountedProduct> products) {
     _timer?.cancel();
-    if (length <= 1) return;
+    if (products.isEmpty) return;
+    if (_currentIndex >= products.length) {
+      _currentIndex = 0;
+    }
     _timer = Timer.periodic(_autoplayInterval, (_) {
-      if (!mounted) return;
+      if (!mounted || _products.isEmpty) return;
       setState(() {
-        _currentIndex = (_currentIndex + 1) % length;
+        _currentIndex = (_currentIndex + 1) % _products.length;
       });
     });
   }
 
-  void _onShopNow() {
+  void _onShopNow(DiscountedProduct product) {
     HapticService.light();
-    context.go('/browse');
+    context.push('/product/${product.id}');
   }
 
-  void _onDotTap(int i, int length) {
-    if (i == _currentIndex) return;
+  void _onDotTap(int i) {
+    if (i == _currentIndex || _products.isEmpty) return;
     HapticService.selection();
     setState(() => _currentIndex = i);
-    _restartAutoplay(length);
+    _syncTimer(_products);
   }
 
   @override
@@ -66,224 +72,176 @@ class _DiscountedProductsSectionState
     final offersAsync = ref.watch(catalogDiscountedProductsProvider);
 
     return offersAsync.when(
-      loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
-      data: (products) {
-        final offers = _mapUiProducts(products);
-        if (offers.isEmpty) return const SizedBox.shrink();
-        if (_timer == null) {
+      loading: () {
+        // #region agent log
+        agentDebugLog(
+          location: 'discounted_products_section.dart:loading',
+          message: 'Special offers loading',
+          hypothesisId: 'B',
+        );
+        // #endregion
+        return const SizedBox.shrink();
+      },
+      error: (error, stack) {
+        // #region agent log
+        agentDebugLog(
+          location: 'discounted_products_section.dart:error',
+          message: 'Special offers provider error',
+          hypothesisId: 'C',
+          data: {'error': error.toString()},
+        );
+        // #endregion
+        return const SizedBox.shrink();
+      },
+      data: (liveProducts) {
+        final products =
+            MarketplaceHighlightsMapper.fromUiProducts(liveProducts);
+        // #region agent log
+        agentDebugLog(
+          location: 'discounted_products_section.dart:data',
+          message: 'Special offers data resolved',
+          hypothesisId: 'A',
+          data: {
+            'liveCount': liveProducts.length,
+            'onSaleCount': products.length,
+            'firstId': products.isNotEmpty ? products.first.id : null,
+            'firstName': products.isNotEmpty ? products.first.name : null,
+            'firstImage': products.isNotEmpty ? products.first.imagePath : null,
+            'usesMockSeed': products.isNotEmpty &&
+                products.first.imagePath.contains('catalog-seed'),
+            'mockNames': products
+                .take(3)
+                .map((p) => p.name)
+                .toList(growable: false),
+          },
+        );
+        // #endregion
+        if (products.isEmpty) return const SizedBox.shrink();
+
+        if (!identical(_products, products)) {
+          _products = products;
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) _restartAutoplay(offers.length);
+            if (!mounted) return;
+            _syncTimer(products);
           });
         }
-        return _OffersCarousel(
-          offers: offers,
-          currentIndex: _currentIndex,
-          swapDuration: _swapDuration,
-          cardHeight: _cardHeight,
-          cardRadius: _cardRadius,
-          headerSpacing: _headerSpacing,
-          onShopNow: _onShopNow,
-          onDotTap: (i) => _onDotTap(i, offers.length),
-          onOffersLoaded: _restartAutoplay,
-        );
-      },
-    );
-  }
 
-  List<DiscountedProduct> _mapUiProducts(List<Product> products) {
-    const cardColors = [
-      Color(0xFFB5A99A),
-      Color(0xFFA8B5A0),
-      Color(0xFFB0AABF),
-      Color(0xFFBFAE98),
-    ];
-    final offers = <DiscountedProduct>[];
-    for (var i = 0; i < products.length; i++) {
-      final product = products[i];
-      if (!product.isOnSale) continue;
-      offers.add(
-        DiscountedProduct(
-          id: product.id,
-          name: product.name,
-          imagePath: product.imageUrl,
-          originalPrice: product.originalPrice ?? product.price,
-          discountedPrice: product.price,
-          discountPercent: product.discountPercent.round(),
-          tagline: product.brand,
-          cardColor: cardColors[i % cardColors.length],
-        ),
-      );
-    }
-    return offers;
-  }
-}
+        final product = products[_currentIndex];
+        final darkAccent = Color.lerp(product.cardColor, Colors.black, 0.22)!;
+        final cleanTagline = product.tagline.replaceFirst('— ', '');
 
-class _OffersCarousel extends StatefulWidget {
-  const _OffersCarousel({
-    required this.offers,
-    required this.currentIndex,
-    required this.swapDuration,
-    required this.cardHeight,
-    required this.cardRadius,
-    required this.headerSpacing,
-    required this.onShopNow,
-    required this.onDotTap,
-    required this.onOffersLoaded,
-  });
-
-  final List<DiscountedProduct> offers;
-  final int currentIndex;
-  final Duration swapDuration;
-  final double cardHeight;
-  final double cardRadius;
-  final double headerSpacing;
-  final VoidCallback onShopNow;
-  final void Function(int index) onDotTap;
-  final void Function(int length) onOffersLoaded;
-
-  @override
-  State<_OffersCarousel> createState() => _OffersCarouselState();
-}
-
-class _OffersCarouselState extends State<_OffersCarousel> {
-  bool _ctaPressed = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      widget.onOffersLoaded(widget.offers.length);
-    });
-  }
-
-  @override
-  void didUpdateWidget(covariant _OffersCarousel oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.offers.length != widget.offers.length) {
-      widget.onOffersLoaded(widget.offers.length);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final offers = widget.offers;
-    final index = widget.currentIndex.clamp(0, offers.length - 1);
-    final product = offers[index];
-    final darkAccent = Color.lerp(product.cardColor, Colors.black, 0.22)!;
-    final cleanTagline = product.tagline.replaceFirst('— ', '');
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Special Offers',
-              style: GoogleFonts.dmSans(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-                letterSpacing: -0.2,
-              ),
-            ),
-            Text(
-              '${index + 1} / ${offers.length}',
-              style: GoogleFonts.dmSans(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Colors.black45,
-                letterSpacing: 0.4,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: widget.headerSpacing),
-        SizedBox(
-          width: double.infinity,
-          height: widget.cardHeight,
-          child: Stack(
-            children: [
-              _CardBackground(
-                cardColor: product.cardColor,
-                darkAccent: darkAccent,
-                height: widget.cardHeight,
-                radius: widget.cardRadius,
-                swapDuration: widget.swapDuration,
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 14, 16),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      child: _TextPanel(
-                        product: product,
-                        cleanTagline: cleanTagline,
-                        ctaPressed: _ctaPressed,
-                        onCtaTapDown: (_) =>
-                            setState(() => _ctaPressed = true),
-                        onCtaTapUp: (_) =>
-                            setState(() => _ctaPressed = false),
-                        onCtaTapCancel: () =>
-                            setState(() => _ctaPressed = false),
-                        onCtaTap: widget.onShopNow,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    AspectRatio(
-                      aspectRatio: 0.92,
-                      child: _ProductFrame(
-                        product: product,
-                        swapDuration: widget.swapDuration,
-                      ),
-                    ),
-                  ],
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  'Special Offers',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                    letterSpacing: -0.2,
+                  ),
                 ),
-              ),
-              Positioned(
-                top: 6,
-                right: 8,
-                child: _PriceTag(
-                  product: product,
-                  duration: widget.swapDuration,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        Center(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (var i = 0; i < offers.length; i++) ...[
-                if (i > 0) const SizedBox(width: 6),
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => widget.onDotTap(i),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 320),
-                      curve: Curves.easeOutCubic,
-                      width: i == index ? 22 : 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: i == index ? Colors.black87 : Colors.black26,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
+                Text(
+                  '${_currentIndex + 1} / ${products.length}',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black45,
+                    letterSpacing: 0.4,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
               ],
-            ],
-          ),
-        ),
-      ],
+            ),
+            const SizedBox(height: _headerSpacing),
+            SizedBox(
+              width: double.infinity,
+              height: _cardHeight,
+              child: Stack(
+                children: [
+                  _CardBackground(
+                    cardColor: product.cardColor,
+                    darkAccent: darkAccent,
+                    height: _cardHeight,
+                    radius: _cardRadius,
+                    swapDuration: _swapDuration,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 14, 16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: _TextPanel(
+                            product: product,
+                            cleanTagline: cleanTagline,
+                            ctaPressed: _ctaPressed,
+                            onCtaTapDown: (_) =>
+                                setState(() => _ctaPressed = true),
+                            onCtaTapUp: (_) =>
+                                setState(() => _ctaPressed = false),
+                            onCtaTapCancel: () =>
+                                setState(() => _ctaPressed = false),
+                            onCtaTap: () => _onShopNow(product),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        AspectRatio(
+                          aspectRatio: 0.92,
+                          child: _ProductFrame(
+                            product: product,
+                            swapDuration: _swapDuration,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    top: 6,
+                    right: 8,
+                    child: _PriceTag(product: product, duration: _swapDuration),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (var i = 0; i < products.length; i++) ...[
+                    if (i > 0) const SizedBox(width: 6),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _onDotTap(i),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 320),
+                          curve: Curves.easeOutCubic,
+                          width: i == _currentIndex ? 22 : 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: i == _currentIndex
+                                ? Colors.black87
+                                : Colors.black26,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -412,7 +370,7 @@ class _TextPanel extends StatelessWidget {
             ),
           ),
           child: Text(
-            '${product.discountPercent.round()}% OFF',
+            'LIMITED OFFER',
             style: GoogleFonts.dmSans(
               fontSize: 9,
               fontWeight: FontWeight.w700,
@@ -612,8 +570,6 @@ class _ProductFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const radius = 22.0;
-    final isNetwork = product.imagePath.startsWith('http');
-
     return DecoratedBox(
       decoration: BoxDecoration(
         color: const Color(0xFFEFE9DC),
@@ -649,23 +605,21 @@ class _ProductFrame extends StatelessWidget {
           },
           child: SizedBox.expand(
             key: ValueKey<String>('frame_${product.imagePath}'),
-            child: isNetwork
+            child: product.imagePath.startsWith('http')
                 ? CachedNetworkImage(
                     imageUrl: product.imagePath,
                     fit: BoxFit.cover,
-                    alignment: Alignment.center,
                     errorWidget: (_, __, ___) => const ColoredBox(
                       color: Color(0xFFEFE9DC),
+                      child: Icon(Icons.chair_outlined, color: Colors.black26),
                     ),
                   )
                 : Image.asset(
                     product.imagePath,
                     fit: BoxFit.cover,
-                    alignment: Alignment.center,
-                    width: double.infinity,
-                    height: double.infinity,
                     errorBuilder: (_, __, ___) => const ColoredBox(
                       color: Color(0xFFEFE9DC),
+                      child: Icon(Icons.chair_outlined, color: Colors.black26),
                     ),
                   ),
           ),

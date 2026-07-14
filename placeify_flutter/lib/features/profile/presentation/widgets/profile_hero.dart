@@ -44,6 +44,7 @@ class ProfileHero extends ConsumerWidget {
                           fontFamily: 'Fraunces',
                           fontSize: 30,
                           fontWeight: FontWeight.w700,
+                          fontStyle: FontStyle.italic,
                           color: Colors.white,
                           letterSpacing: -0.3,
                         ),
