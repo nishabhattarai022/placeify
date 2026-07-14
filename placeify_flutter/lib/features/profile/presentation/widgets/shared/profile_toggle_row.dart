@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/constants/app_radii.dart';
 import '../../../../../core/services/haptic_service.dart';
+import '../../../../../core/theme/app_fonts.dart';
+import '../../../../home/presentation/chairs_catalog_tokens.dart';
 
 class ProfileToggleRow extends StatelessWidget {
   const ProfileToggleRow({
@@ -20,12 +23,13 @@ class ProfileToggleRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.creamDark, width: 1.5),
+        color: ChairsCatalogTokens.imageWell,
+        borderRadius:
+            BorderRadius.circular(ChairsCatalogTokens.compactCardRadius),
+        boxShadow: ChairsCatalogTokens.cardShadow,
       ),
       child: Row(
         children: [
@@ -35,23 +39,27 @@ class ProfileToggleRow extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: AppFonts.dmSans(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.espresso,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    fontSize: 12,
+                  style: AppFonts.dmSerifDisplay(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    fontStyle: FontStyle.italic,
                     color: AppColors.textMuted,
+                    height: 1.35,
                   ),
                 ),
               ],
             ),
           ),
+          const SizedBox(width: 12),
           GestureDetector(
             onTap: () {
               HapticService.selection();
@@ -62,13 +70,16 @@ class ProfileToggleRow extends StatelessWidget {
               width: 44,
               height: 24,
               decoration: BoxDecoration(
-                color: value ? AppColors.teal : AppColors.sand,
-                borderRadius: BorderRadius.circular(999),
+                color: value
+                    ? Colors.black
+                    : Colors.black.withValues(alpha: 0.12),
+                borderRadius: AppRadii.pill,
               ),
               child: AnimatedAlign(
                 duration: const Duration(milliseconds: 250),
                 curve: Curves.easeOutBack,
-                alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+                alignment:
+                    value ? Alignment.centerRight : Alignment.centerLeft,
                 child: Container(
                   width: 18,
                   height: 18,

@@ -15,7 +15,10 @@ class ProfileArHistoryScreen extends StatelessWidget {
       backgroundColor: AppColors.cream,
       body: Column(
         children: [
-          const ProfileSubHero(title: 'AR History · 24 tries'),
+          const ProfileSubHero(
+            title: 'AR History',
+            subtitle: '24 tries',
+          ),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(

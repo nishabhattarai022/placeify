@@ -50,7 +50,7 @@ abstract final class PlaceifyTheme {
       ),
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: AppColors.warmWhite,
-        modalBarrierColor: AppColors.espresso.withValues(alpha: 0.32),
+        modalBarrierColor: Colors.black.withValues(alpha: 0.32),
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: AppRadii.rLg),
         ),

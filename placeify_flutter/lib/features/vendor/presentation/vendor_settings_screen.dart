@@ -5,8 +5,8 @@ import 'package:placeify_flutter/features/auth/presentation/providers/auth_provi
 import 'package:placeify_flutter/core/constants/app_colors.dart';
 import 'package:placeify_flutter/core/services/haptic_service.dart';
 import 'package:placeify_flutter/core/widgets/bottom_nav/bottom_nav_tokens.dart';
+import 'package:placeify_flutter/core/widgets/placeify_action_row.dart';
 import 'package:placeify_flutter/core/widgets/placeify_bottom_sheet.dart';
-import 'package:placeify_flutter/core/widgets/shimmer_loader.dart';
 import 'package:placeify_flutter/core/widgets/toast_overlay.dart';
 import 'package:placeify_flutter/features/profile/presentation/widgets/profile_sub_hero.dart';
 import 'package:placeify_flutter/features/profile/presentation/widgets/shared/profile_toggle_row.dart';
@@ -25,124 +25,98 @@ class VendorSettingsScreen extends ConsumerWidget {
       backgroundColor: AppColors.cream,
       body: Column(
         children: [
-          const ProfileSubHero(title: VendorSettingsStrings.screenTitle),
+          const ProfileSubHero(
+            title: VendorSettingsStrings.screenTitle,
+            subtitle: 'store preferences',
+          ),
           Expanded(
             child: settingsAsync.when(
-              loading: () => const Center(child: ShimmerLoader()),
-              error: (_, __) => Center(
-                child: TextButton(
-                  onPressed: () =>
-                      ref.read(vendorSettingsProvider.notifier).refresh(),
-                  child: const Text('Retry loading settings'),
-                ),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (_, __) => const Center(
+                child: Text('Could not load settings'),
               ),
               data: (settings) => ListView(
-                padding: const EdgeInsets.fromLTRB(
-                  18,
-                  20,
-                  18,
-                  BottomNavTokens.scrollBottomPadding,
-                ),
-                children: [
-                  if (settings.isDeactivateCooldownActive) ...[
-                    _DeactivateCooldownBanner(
-                      remaining: settings.deactivateCooldownRemaining,
-                      onCancel: () async {
-                        await ref
-                            .read(vendorSettingsProvider.notifier)
-                            .cancelDeactivateRequest();
-                        if (!context.mounted) return;
-                        PlaceifyToast.show(
-                          context,
-                          'Store deactivation cancelled',
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                  const _SectionTitle(
-                    VendorSettingsStrings.notificationsSection,
-                  ),
-                  const SizedBox(height: 12),
-                  for (final type in NotificationType.values)
-                    ProfileToggleRow(
-                      title: VendorSettingsStrings.notificationTitle(
-                        type.name,
-                      ),
-                      subtitle: VendorSettingsStrings.notificationSubtitle(
-                        type.name,
-                      ),
-                      value: settings.notifications[type] ?? true,
-                      onChanged: (enabled) async {
-                        try {
-                          await ref
-                              .read(vendorSettingsProvider.notifier)
-                              .setNotification(type, enabled);
-                        } catch (_) {
-                          if (!context.mounted) return;
-                          PlaceifyToast.show(
-                            context,
-                            'Could not save notification preference',
-                          );
-                        }
-                      },
-                    ),
-                  const SizedBox(height: 20),
-                  const _SectionTitle(VendorSettingsStrings.storeSection),
-                  const SizedBox(height: 12),
-                  ProfileToggleRow(
-                    title: VendorSettingsStrings.storeVisibleTitle,
-                    subtitle: VendorSettingsStrings.storeVisibleSubtitle,
-                    value: settings.storeVisible,
-                    onChanged: (visible) async {
-                      try {
-                        await ref
-                            .read(vendorSettingsProvider.notifier)
-                            .setStoreVisible(visible);
-                      } catch (_) {
-                        if (!context.mounted) return;
-                        PlaceifyToast.show(
-                          context,
-                          'Could not update store visibility',
-                        );
-                      }
+              padding: const EdgeInsets.fromLTRB(
+                18,
+                20,
+                18,
+                BottomNavTokens.scrollBottomPadding,
+              ),
+              children: [
+                if (settings.isDeactivateCooldownActive) ...[
+                  _DeactivateCooldownBanner(
+                    remaining: settings.deactivateCooldownRemaining,
+                    onCancel: () async {
+                      await ref
+                          .read(vendorSettingsProvider.notifier)
+                          .cancelDeactivateRequest();
+                      if (!context.mounted) return;
+                      PlaceifyToast.show(
+                        context,
+                        'Store deactivation cancelled',
+                      );
                     },
                   ),
                   const SizedBox(height: 20),
-                  const _SectionTitle(VendorSettingsStrings.payoutSection),
-                  const SizedBox(height: 12),
-                  _PayoutMethodCard(settings: settings),
-                  const SizedBox(height: 20),
-                  const _SectionTitle(VendorSettingsStrings.accountSection),
-                  const SizedBox(height: 12),
-                  _SettingsActionTile(
-                    icon: Icons.lock_outline,
-                    title: VendorSettingsStrings.changePasswordTitle,
-                    subtitle: VendorSettingsStrings.changePasswordSubtitle,
-                    onTap: () => context.pushNamed('profilePassword'),
-                  ),
-                  const SizedBox(height: 10),
-                  _SettingsActionTile(
-                    icon: Icons.logout_outlined,
-                    title: VendorSettingsStrings.signOutTitle,
-                    subtitle: VendorSettingsStrings.signOutSubtitle,
-                    isDestructive: true,
-                    onTap: () => _signOut(context, ref),
-                  ),
-                  const SizedBox(height: 10),
-                  _SettingsActionTile(
-                    icon: Icons.storefront_outlined,
-                    title: VendorSettingsStrings.deactivateStoreTitle,
-                    subtitle: settings.isDeactivateCooldownActive
-                        ? VendorSettingsStrings.cooldownLabel(
-                            settings.deactivateCooldownRemaining,
-                          )
-                        : VendorSettingsStrings.deactivateStoreSubtitle,
-                    isDestructive: true,
-                    onTap: () => _showDeactivateSheet(context, ref),
-                  ),
                 ],
-              ),
+                const _SectionTitle(VendorSettingsStrings.notificationsSection),
+                const SizedBox(height: 12),
+                for (final type in NotificationType.values)
+                  ProfileToggleRow(
+                    title: VendorSettingsStrings.notificationTitle(type.name),
+                    subtitle:
+                        VendorSettingsStrings.notificationSubtitle(type.name),
+                    value: settings.notifications[type] ?? true,
+                    onChanged: (enabled) => ref
+                        .read(vendorSettingsProvider.notifier)
+                        .setNotification(type, enabled),
+                  ),
+                const SizedBox(height: 20),
+                const _SectionTitle(VendorSettingsStrings.storeSection),
+                const SizedBox(height: 12),
+                ProfileToggleRow(
+                  title: VendorSettingsStrings.storeVisibleTitle,
+                  subtitle: VendorSettingsStrings.storeVisibleSubtitle,
+                  value: settings.storeVisible,
+                  onChanged: (visible) => ref
+                      .read(vendorSettingsProvider.notifier)
+                      .setStoreVisible(visible),
+                ),
+                const SizedBox(height: 20),
+                const _SectionTitle(VendorSettingsStrings.payoutSection),
+                const SizedBox(height: 12),
+                const _PayoutMethodCard(),
+                const SizedBox(height: 20),
+                const _SectionTitle(VendorSettingsStrings.accountSection),
+                const SizedBox(height: 12),
+                _SettingsActionTile(
+                  icon: Icons.lock_outline,
+                  title: VendorSettingsStrings.changePasswordTitle,
+                  subtitle: VendorSettingsStrings.changePasswordSubtitle,
+                  onTap: () => context.pushNamed('profilePassword'),
+                ),
+                const SizedBox(height: 10),
+                _SettingsActionTile(
+                  icon: Icons.logout_outlined,
+                  title: VendorSettingsStrings.signOutTitle,
+                  subtitle: VendorSettingsStrings.signOutSubtitle,
+                  isDestructive: true,
+                  onTap: () => _signOut(context, ref),
+                ),
+                const SizedBox(height: 10),
+                _SettingsActionTile(
+                  icon: Icons.storefront_outlined,
+                  title: VendorSettingsStrings.deactivateStoreTitle,
+                  subtitle: settings.isDeactivateCooldownActive
+                      ? VendorSettingsStrings.cooldownLabel(
+                          settings.deactivateCooldownRemaining,
+                        )
+                      : VendorSettingsStrings.deactivateStoreSubtitle,
+                  isDestructive: true,
+                  onTap: () => _showDeactivateSheet(context, ref),
+                ),
+              ],
+            ),
             ),
           ),
         ],
@@ -164,12 +138,13 @@ class VendorSettingsScreen extends ConsumerWidget {
   ) async {
     HapticService.light();
     final settings = ref.read(vendorSettingsProvider).value;
+    if (settings == null) return;
 
-    if (settings?.isDeactivateCooldownActive ?? false) {
+    if (settings.isDeactivateCooldownActive) {
       PlaceifyToast.show(
         context,
         VendorSettingsStrings.cooldownLabel(
-          settings!.deactivateCooldownRemaining,
+          settings.deactivateCooldownRemaining,
         ),
       );
       return;
@@ -203,16 +178,11 @@ class VendorSettingsScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 20),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.coral,
-                foregroundColor: Colors.white,
-                minimumSize: const Size.fromHeight(48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              onPressed: () async {
+            PlaceifyStackedActions(
+              confirmLabel: VendorSettingsStrings.deactivateSheetConfirm,
+              cancelLabel: 'Cancel',
+              confirmColor: AppColors.coral,
+              onConfirm: () async {
                 await ref
                     .read(vendorSettingsProvider.notifier)
                     .requestDeactivateStore();
@@ -224,12 +194,7 @@ class VendorSettingsScreen extends ConsumerWidget {
                   VendorSettingsStrings.deactivateScheduledToast,
                 );
               },
-              child: const Text(VendorSettingsStrings.deactivateSheetConfirm),
-            ),
-            const SizedBox(height: 10),
-            TextButton(
-              onPressed: () => Navigator.pop(sheetContext),
-              child: const Text('Cancel'),
+              onCancel: () => Navigator.pop(sheetContext),
             ),
           ],
         );
@@ -313,38 +278,18 @@ class _SectionTitle extends StatelessWidget {
         fontFamily: 'Fraunces',
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        color: AppColors.espresso,
+        fontStyle: FontStyle.italic,
+        color: Colors.black,
       ),
     );
   }
 }
 
 class _PayoutMethodCard extends StatelessWidget {
-  const _PayoutMethodCard({required this.settings});
-
-  final VendorSettingsState settings;
+  const _PayoutMethodCard();
 
   @override
   Widget build(BuildContext context) {
-    if (!settings.hasBankDetails) {
-      return Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.creamDark, width: 1.5),
-        ),
-        child: const Text(
-          VendorSettingsStrings.payoutNoBankDetails,
-          style: TextStyle(
-            fontSize: 12,
-            color: AppColors.textSecondary,
-            height: 1.4,
-          ),
-        ),
-      );
-    }
-
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -352,28 +297,28 @@ class _PayoutMethodCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.creamDark, width: 1.5),
       ),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.account_balance_outlined,
                 color: AppColors.espresso,
                 size: 20,
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  settings.bankName!,
-                  style: const TextStyle(
+                  VendorSettingsStrings.payoutBankName,
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: AppColors.espresso,
                   ),
                 ),
               ),
-              const Text(
+              Text(
                 VendorSettingsStrings.payoutPrimaryBadge,
                 style: TextStyle(
                   fontSize: 11,
@@ -383,27 +328,16 @@ class _PayoutMethodCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
-            'Account ${settings.maskedAccountNumber}',
-            style: const TextStyle(
+            VendorSettingsStrings.payoutAccountMasked,
+            style: TextStyle(
               fontSize: 12,
               color: AppColors.textMuted,
             ),
           ),
-          if (settings.accountHolderName != null &&
-              settings.accountHolderName!.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              settings.accountHolderName!,
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textMuted,
-              ),
-            ),
-          ],
-          const SizedBox(height: 12),
-          const Text(
+          SizedBox(height: 12),
+          Text(
             VendorSettingsStrings.payoutSupportNote,
             style: TextStyle(
               fontSize: 12,

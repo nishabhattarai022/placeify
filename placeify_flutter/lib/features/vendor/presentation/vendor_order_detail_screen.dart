@@ -278,33 +278,24 @@ class _PaymentSection extends ConsumerWidget {
             },
           ),
           const SizedBox(height: 16),
-          if (order.canUpdatePayment)
-            OutlinedButton(
-              onPressed: () async {
-                HapticService.light();
-                await PaymentUpdateSheet.show(
-                  context,
-                  ref,
-                  orderId: order.id,
-                  orderLabel: 'Order #${order.orderNumber}',
-                );
-                ref.invalidate(orderPaymentAuditTrailProvider(order.id));
-              },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.vendorForest,
-                side: const BorderSide(color: AppColors.vendorForest),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-              child: const Text('Update payment'),
-            )
-          else
-            const Text(
-              'Payment is complete. No further updates are allowed.',
-              style: TextStyle(
-                fontSize: 13,
-                color: AppColors.textMuted,
-              ),
+          OutlinedButton(
+            onPressed: () async {
+              HapticService.light();
+              await PaymentUpdateSheet.show(
+                context,
+                ref,
+                orderId: order.id,
+                orderLabel: 'Order #${order.orderNumber}',
+              );
+              ref.invalidate(orderPaymentAuditTrailProvider(order.id));
+            },
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.vendorForest,
+              side: const BorderSide(color: AppColors.vendorForest),
+              padding: const EdgeInsets.symmetric(vertical: 12),
             ),
+            child: const Text('Update payment'),
+          ),
         ],
       ),
     );

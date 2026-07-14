@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
 import '../constants/app_radii.dart';
 import '../constants/app_typography.dart';
 
@@ -92,7 +91,7 @@ class _ToastWidgetState extends State<_ToastWidget>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
               decoration: BoxDecoration(
-                color: AppColors.espresso,
+                color: Colors.black,
                 borderRadius: AppRadii.pill,
                 border: Border.all(
                   color: Colors.white.withValues(alpha: 0.10),

@@ -9,8 +9,8 @@ class PlaceifyPillButton extends StatelessWidget {
   const PlaceifyPillButton({
     required this.label,
     required this.onTap,
-    this.color = AppColors.espresso,
-    this.textColor = AppColors.warmWhite,
+    this.color = Colors.black,
+    this.textColor = Colors.white,
     this.variant = PlaceifyPillVariant.primary,
     this.enabled = true,
     this.isLoading = false,
@@ -31,15 +31,15 @@ class PlaceifyPillButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final backgroundColor = switch (variant) {
       PlaceifyPillVariant.primary =>
-        enabled ? color : AppColors.creamDark,
-      PlaceifyPillVariant.secondary => AppColors.cream,
+        enabled ? color : Colors.black.withValues(alpha: 0.18),
+      PlaceifyPillVariant.secondary => Colors.white,
     };
 
     final foregroundColor = switch (variant) {
       PlaceifyPillVariant.primary =>
-        enabled ? textColor : AppColors.textMuted,
+        enabled ? textColor : Colors.white.withValues(alpha: 0.7),
       PlaceifyPillVariant.secondary =>
-        enabled ? AppColors.textPrimary : AppColors.textMuted,
+        enabled ? Colors.black87 : AppColors.textMuted,
     };
 
     return GestureDetector(
@@ -51,7 +51,7 @@ class PlaceifyPillButton extends StatelessWidget {
           color: backgroundColor,
           borderRadius: AppRadii.pill,
           border: variant == PlaceifyPillVariant.secondary
-              ? Border.all(color: AppColors.creamDark, width: 1.5)
+              ? Border.all(color: Colors.black.withValues(alpha: 0.08))
               : null,
         ),
         child: Text(

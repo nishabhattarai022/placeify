@@ -25,8 +25,10 @@ class HomeHeaderSection extends StatelessWidget {
               child: Text(
                 'Find Your\nDream Furniture',
                 style: TextStyle(
+                  fontFamily: 'Fraunces',
                   fontSize: 32,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
+                  fontStyle: FontStyle.italic,
                   height: 1.1,
                   letterSpacing: -0.5,
                   color: AppColors.textPrimary,

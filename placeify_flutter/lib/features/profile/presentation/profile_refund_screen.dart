@@ -10,10 +10,10 @@ import '../../../core/widgets/toast_overlay.dart';
 import '../data/profile_mock_data.dart';
 import '../domain/constants/refund_strings.dart';
 import 'widgets/profile_list_screen_header.dart';
-import 'widgets/refund/refund_action_button.dart';
 import 'widgets/refund/refund_list_item.dart';
 import 'widgets/refund/refund_section_title.dart';
 import 'widgets/refund/refund_summary_card.dart';
+import 'widgets/shared/profile_action_button.dart';
 
 class ProfileRefundScreen extends StatefulWidget {
   const ProfileRefundScreen({super.key});
@@ -134,7 +134,7 @@ class _ProfileRefundScreenState extends State<ProfileRefundScreen> {
                   ),
                   SizedBox(
                     width: double.infinity,
-                    child: RefundActionButton(
+                    child: ProfileActionButton(
                       label: RefundStrings.submitRequest,
                       onTap: () => PlaceifyToast.show(
                         context,

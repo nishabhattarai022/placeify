@@ -13,7 +13,7 @@ abstract final class PlaceifyBottomSheet {
     return showModalBottomSheet<T>(
       context: context,
       backgroundColor: AppColors.warmWhite,
-      barrierColor: AppColors.espresso.withValues(alpha: 0.32),
+      barrierColor: Colors.black.withValues(alpha: 0.32),
       isScrollControlled: true,
       useRootNavigator: true,
       showDragHandle: true,
@@ -134,7 +134,7 @@ class PlaceifySelectTile extends StatelessWidget {
                     icon,
                     size: 20,
                     color: selected
-                        ? AppColors.espresso
+                        ? Colors.black
                         : AppColors.textSecondary,
                   ),
                   const SizedBox(width: 12),
@@ -147,7 +147,7 @@ class PlaceifySelectTile extends StatelessWidget {
                       fontWeight:
                           selected ? FontWeight.w600 : FontWeight.w400,
                       color: selected
-                          ? AppColors.espresso
+                          ? Colors.black
                           : AppColors.textPrimary,
                     ),
                   ),
@@ -170,7 +170,7 @@ class PlaceifySelectTile extends StatelessWidget {
                           Icons.check_rounded,
                           key: ValueKey('check'),
                           size: 20,
-                          color: AppColors.espresso,
+                          color: Colors.black,
                         )
                       : const SizedBox(
                           key: ValueKey('no-check'),

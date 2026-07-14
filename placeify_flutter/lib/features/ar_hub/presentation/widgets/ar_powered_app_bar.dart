@@ -38,9 +38,10 @@ class ArPoweredAppBar extends StatelessWidget {
             child: Text(
               ArHubTokens.appBarTitle,
               textAlign: TextAlign.center,
-              style: AppFonts.dmSans(
+              style: AppFonts.dmSerifDisplay(
                 fontSize: 17,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w400,
+                fontStyle: FontStyle.italic,
                 color: ArHubTokens.textPrimary,
               ),
             ),

@@ -135,7 +135,7 @@ class _BulkDiscountSheetBodyState extends State<_BulkDiscountSheetBody> {
         _isApplying
             ? const Center(
                 child: CircularProgressIndicator(
-                  color: AppColors.espresso,
+                  color: Colors.black,
                   strokeWidth: 2,
                 ),
               )

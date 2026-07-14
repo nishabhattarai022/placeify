@@ -4,8 +4,8 @@ import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/theme/app_fonts.dart';
 import '../../../../../core/widgets/toast_overlay.dart';
 import '../../../domain/constants/refund_strings.dart';
+import '../shared/profile_action_button.dart';
 import '../../../../home/presentation/chairs_catalog_tokens.dart';
-import 'refund_action_button.dart';
 
 class RefundSummaryCard extends StatelessWidget {
   const RefundSummaryCard({
@@ -101,7 +101,7 @@ class RefundSummaryCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: RefundActionButton(
+                child: ProfileActionButton(
                   label: RefundStrings.toCard,
                   icon: Icons.credit_card_outlined,
                   onTap: () => PlaceifyToast.show(
@@ -112,7 +112,7 @@ class RefundSummaryCard extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: RefundActionButton(
+                child: ProfileActionButton(
                   label: RefundStrings.toWallet,
                   icon: Icons.account_balance_wallet_outlined,
                   primary: false,

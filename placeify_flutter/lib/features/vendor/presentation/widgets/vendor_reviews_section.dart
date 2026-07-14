@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_routes.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_review.dart';
-import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_reviews_provider.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radii.dart';
@@ -12,12 +10,12 @@ import '../../../../core/constants/app_typography.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/utils/formatters.dart';
 
-class VendorReviewsSection extends ConsumerWidget {
+class VendorReviewsSection extends StatelessWidget {
   const VendorReviewsSection({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final reviewsAsync = ref.watch(vendorReviewsProvider);
+  Widget build(BuildContext context) {
+    final preview = vendorMockReviews.take(2).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -36,46 +34,7 @@ class VendorReviewsSection extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 12),
-        reviewsAsync.when(
-          loading: () => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Text(
-              'Loading reviews…',
-              style: AppTypography.metricLabel.copyWith(
-                color: AppColors.textMuted,
-              ),
-            ),
-          ),
-          error: (_, __) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Text(
-              'Could not load reviews.',
-              style: AppTypography.metricLabel.copyWith(
-                color: AppColors.textMuted,
-              ),
-            ),
-          ),
-          data: (reviews) {
-            if (reviews.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Text(
-                  'No reviews yet',
-                  style: AppTypography.metricLabel.copyWith(
-                    color: AppColors.textMuted,
-                  ),
-                ),
-              );
-            }
-
-            return Column(
-              children: [
-                for (final review in reviews.take(2))
-                  _ReviewPreviewCard(review: review),
-              ],
-            );
-          },
-        ),
+        ...preview.map((review) => _ReviewPreviewCard(review: review)),
       ],
     );
   }
