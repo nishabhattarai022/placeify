@@ -37,7 +37,7 @@ class HybridVendorRepository implements VendorRepository {
   Future<VendorStats> getStats(String vendorId) => _profile.getStats(vendorId);
 
   @override
-  Future<List<VendorOrder>> getOrders(String vendorId, {int limit = 20}) =>
+  Future<List<VendorOrder>> getOrders(String vendorId, {int limit = 50}) =>
       _orders.getOrders(vendorId, limit: limit);
 
   @override

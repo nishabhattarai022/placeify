@@ -129,6 +129,10 @@ class UserService {
   Future<User> becomeVendor(Session session) async {
     final user = await SessionService.requireUser(session);
     if (user.role == UserRole.admin) return user;
+    if (user.role == UserRole.vendor &&
+        user.status == UserAccountStatus.approved) {
+      return user;
+    }
 
     final shop = await Vendor.db.findFirstRow(
       session,
@@ -139,6 +143,13 @@ class UserService {
         message:
             'Complete vendor registration before switching to vendor mode.',
         code: 'SHOP_NOT_FOUND',
+      );
+    }
+
+    if (user.status != UserAccountStatus.approved) {
+      throw PlaceifyException(
+        message: 'Vendor account is pending admin approval.',
+        code: 'VENDOR_NOT_APPROVED',
       );
     }
 

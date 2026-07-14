@@ -115,6 +115,8 @@ class VendorNotifications extends _$VendorNotifications {
     final updated = [...current.notifications];
     updated[index] = notification.copyWith(isRead: true);
     state = AsyncData(current.copyWith(notifications: updated));
+
+    ref.read(vendorRepositoryProvider).markNotificationRead(id);
   }
 
   void markAllRead() {
@@ -125,6 +127,8 @@ class VendorNotifications extends _$VendorNotifications {
         .map((notification) => notification.copyWith(isRead: true))
         .toList();
     state = AsyncData(current.copyWith(notifications: updated));
+
+    ref.read(vendorRepositoryProvider).markAllNotificationsRead();
   }
 
   VendorNotification? dismiss(String id) {

@@ -99,16 +99,29 @@ class _VendorNotificationsScreenState
 
   bool _isNavigating = false;
 
-  void _onNotificationTap(VendorNotification notification) {
+  Future<void> _onNotificationTap(VendorNotification notification) async {
     if (_isNavigating) return;
     HapticService.light();
     ref.read(vendorNotificationsProvider.notifier).markRead(notification.id);
-    if (notification.type == NotificationType.order &&
-        notification.relatedId != null) {
-      _isNavigating = true;
-      context.push(VendorRoutes.orderDetail(notification.relatedId!)).then((_) {
-        if (mounted) _isNavigating = false;
-      });
+
+    if (notification.type != NotificationType.order ||
+        notification.relatedId == null ||
+        notification.relatedId!.trim().isEmpty) {
+      return;
+    }
+
+    final orderId = notification.relatedId!.trim();
+    _isNavigating = true;
+    try {
+      if (!mounted) return;
+      // Must use go (never push): notifications is a shell sibling route, while
+      // order detail lives inside VendorShell. push() stacks across navigators
+      // and triggers Navigator '!keyReservation.contains(key)' crashes.
+      context.go(VendorRoutes.orderDetail(orderId));
+    } finally {
+      if (mounted) {
+        _isNavigating = false;
+      }
     }
   }
 
@@ -122,7 +135,8 @@ class _VendorNotificationsScreenState
         children: [
           _NotificationsHeader(
             onMarkAllRead: notificationsAsync.maybeWhen(
-              data: (state) => state.unreadCount > 0 ? _confirmMarkAllRead : null,
+              data: (state) =>
+                  state.unreadCount > 0 ? _confirmMarkAllRead : null,
               orElse: () => null,
             ),
           ),
@@ -144,8 +158,8 @@ class _VendorNotificationsScreenState
                       onClear: state.typeFilters.isEmpty
                           ? null
                           : () => ref
-                              .read(vendorNotificationsProvider.notifier)
-                              .clearTypeFilters(),
+                                .read(vendorNotificationsProvider.notifier)
+                                .clearTypeFilters(),
                     ),
                     Expanded(
                       child: state.visible.isEmpty
@@ -157,8 +171,11 @@ class _VendorNotificationsScreenState
                                 onClearFilters: state.typeFilters.isEmpty
                                     ? null
                                     : () => ref
-                                        .read(vendorNotificationsProvider.notifier)
-                                        .clearTypeFilters(),
+                                          .read(
+                                            vendorNotificationsProvider
+                                                .notifier,
+                                          )
+                                          .clearTypeFilters(),
                               ),
                             )
                           : RefreshIndicator(

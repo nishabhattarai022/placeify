@@ -173,15 +173,68 @@ class AdminModerationStore {
       );
     }
 
-    return User.db.updateRow(
+    final vendor = await Vendor.db.findFirstRow(
       session,
-      user.copyWith(
-        status: status,
-        isActive: isActive ?? user.isActive,
-        statusChangedById: admin.id,
-        updatedAt: DateTime.now(),
-      ),
+      where: (row) => row.userId.equals(targetUserId),
     );
+
+    if (vendor != null) {
+      if (status == UserAccountStatus.suspended) {
+        AdminVendorLifecycle.ensureCanSuspend(user, vendor);
+      } else if (status == UserAccountStatus.approved &&
+          user.status == UserAccountStatus.suspended) {
+        AdminVendorLifecycle.ensureCanReinstate(user);
+      }
+    }
+
+    final previousStatus = user.status.name;
+    final now = DateTime.now();
+    final resolvedActive =
+        isActive ??
+        (status == UserAccountStatus.approved
+            ? true
+            : status == UserAccountStatus.suspended
+            ? false
+            : user.isActive);
+
+    return session.db.transaction((transaction) async {
+      final updated = await User.db.updateRow(
+        session,
+        user.copyWith(
+          role: status == UserAccountStatus.approved && vendor != null
+              ? UserRole.vendor
+              : user.role,
+          status: status,
+          isActive: resolvedActive,
+          statusChangedById: admin.id,
+          updatedAt: now,
+        ),
+        transaction: transaction,
+      );
+
+      if (vendor != null) {
+        final actionType = switch (status) {
+          UserAccountStatus.suspended => AdminActionType.suspendVendor,
+          UserAccountStatus.approved
+              when user.status == UserAccountStatus.suspended =>
+            AdminActionType.reinstateVendor,
+          _ => AdminActionType.updateUserStatus,
+        };
+
+        await AdminActionAuditLog.record(
+          session,
+          actorAdminId: admin.id!,
+          actionType: actionType,
+          targetUserId: targetUserId,
+          targetVendorId: vendor.id,
+          previousStatus: previousStatus,
+          newStatus: status.name,
+          transaction: transaction,
+        );
+      }
+
+      return updated;
+    });
   }
 
   Future<User> deactivateUser(Session session, UuidValue targetUserId) async {

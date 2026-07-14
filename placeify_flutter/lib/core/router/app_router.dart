@@ -243,14 +243,6 @@ List<RouteBase> get _appRoutes => [
       child: const VendorRegistrationSuccessScreen(),
     ),
   ),
-  GoRoute(
-    path: VendorRoutes.notifications,
-    name: 'vendorNotifications',
-    pageBuilder: (context, state) => _slidePage(
-      key: ValueKey<String>(state.uri.toString()),
-      child: const VendorNotificationsScreen(),
-    ),
-  ),
   ShellRoute(
     navigatorKey: shellNavigatorKey,
     builder: (context, state, child) => MainShell(child: child),
@@ -667,22 +659,26 @@ List<RouteBase> get _appRoutes => [
                   GoRoute(
                     path: ':orderId',
                     name: 'vendorOrderDetail',
-                    pageBuilder: (context, state) => _slidePage(
-                      key: ValueKey<String>(state.uri.toString()),
-                      child: VendorOrderDetailScreen(
-                        orderId: state.pathParameters['orderId']!,
-                      ),
-                    ),
+                    pageBuilder: (context, state) {
+                      final orderId = state.pathParameters['orderId']!;
+                      return _slidePage(
+                        key: ValueKey<String>('vendor-order-detail-$orderId'),
+                        child: VendorOrderDetailScreen(orderId: orderId),
+                      );
+                    },
                     routes: [
                       GoRoute(
                         path: 'delivery-update',
                         name: 'vendorDeliveryUpdate',
-                        pageBuilder: (context, state) => _slidePage(
-                          key: ValueKey<String>(state.uri.toString()),
-                          child: DeliveryUpdateScreen(
-                            orderId: state.pathParameters['orderId']!,
-                          ),
-                        ),
+                        pageBuilder: (context, state) {
+                          final orderId = state.pathParameters['orderId']!;
+                          return _slidePage(
+                            key: ValueKey<String>(
+                              'vendor-delivery-update-$orderId',
+                            ),
+                            child: DeliveryUpdateScreen(orderId: orderId),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -760,6 +756,17 @@ List<RouteBase> get _appRoutes => [
             ],
           ),
         ],
+      ),
+      // Sibling of VendorShell (same pattern as admin notifications). Must NOT
+      // use parentNavigatorKey under StatefulShellRoute — that causes Navigator
+      // keyReservation crashes when opening order detail from a notification.
+      GoRoute(
+        path: VendorRoutes.notifications,
+        name: 'vendorNotifications',
+        pageBuilder: (context, state) => _slidePage(
+          key: const ValueKey<String>('vendor-notifications'),
+          child: const VendorNotificationsScreen(),
+        ),
       ),
     ],
   ),

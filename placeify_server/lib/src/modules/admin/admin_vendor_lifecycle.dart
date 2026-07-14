@@ -4,20 +4,11 @@ import '../../shared/placeify_exception.dart';
 /// Shared rules for admin vendor approval, listing, and suspension.
 abstract final class AdminVendorLifecycle {
   static bool isApprovedActiveVendor(User user, Vendor vendor) {
-    if (user.status == UserAccountStatus.suspended ||
-        user.status == UserAccountStatus.rejected) {
+    if (user.status != UserAccountStatus.approved) {
       return false;
     }
 
-    if (user.status == UserAccountStatus.pending &&
-        user.role != UserRole.vendor &&
-        vendor.approvedAt == null) {
-      return false;
-    }
-
-    return user.role == UserRole.vendor ||
-        vendor.approvedAt != null ||
-        user.status == UserAccountStatus.approved;
+    return user.role == UserRole.vendor || vendor.approvedAt != null;
   }
 
   static UserAccountStatus effectiveAccountStatus(User user, Vendor vendor) {

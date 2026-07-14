@@ -32,6 +32,9 @@ class VendorProductImages {
 }
 
 /// Removes backgrounds via remove.bg for catalog; keeps originals for Tripo 3D.
+///
+/// Background removal is best-effort: quota, auth, network, or segmentation
+/// failures never block product upload — the original photo is saved instead.
 class ProductImageProcessor {
   ProductImageProcessor({http.Client? httpClient})
     : _httpClient = httpClient ?? http.Client();
@@ -68,35 +71,57 @@ class ProductImageProcessor {
     required String fileExtension,
   }) async {
     final apiKey = RemoveBgApiKeyConfig.apiKey();
+    Uint8List? cutout;
+
     if (apiKey == null || apiKey.isEmpty) {
-      throw PlaceifyException(
-        message:
-            'Background removal is not configured. Copy '
-            'config/removebg_api_key.example.yaml to config/removebg_api_key.yaml '
-            'and add your remove.bg API key.',
-        code: 'BG_REMOVAL_NOT_CONFIGURED',
+      session.log(
+        'remove.bg API key missing — saving catalog without bg removal',
+        level: LogLevel.warning,
       );
+    } else {
+      session.log(
+        'Removing product image background via remove.bg (catalog only)',
+        level: LogLevel.info,
+      );
+      try {
+        cutout = await _removeBackgroundBestEffort(
+          session,
+          apiKey,
+          bytes,
+          fileName,
+        );
+      } catch (error, stackTrace) {
+        session.log(
+          'remove.bg failed unexpectedly — continuing with original photo: $error',
+          level: LogLevel.warning,
+          stackTrace: stackTrace,
+        );
+        cutout = null;
+      }
     }
-
-    session.log(
-      'Removing product image background via remove.bg (catalog only)',
-      level: LogLevel.info,
-    );
-
-    final cutout = await _removeBackgroundBestEffort(session, apiKey, bytes, fileName);
 
     final Uint8List catalogBytes;
     final bool backgroundRemoved;
     if (cutout != null) {
-      final composited = _compositedOnWhiteImage(cutout);
-      catalogBytes = Uint8List.fromList(
-        img.encodeJpg(composited, quality: _jpegQuality),
-      );
-      backgroundRemoved = true;
+      try {
+        final composited = _compositedOnWhiteImage(cutout);
+        catalogBytes = Uint8List.fromList(
+          img.encodeJpg(composited, quality: _jpegQuality),
+        );
+        backgroundRemoved = true;
+      } catch (error, stackTrace) {
+        session.log(
+          'Cutout compositing failed — catalog fallback: $error',
+          level: LogLevel.warning,
+          stackTrace: stackTrace,
+        );
+        catalogBytes = _fallbackCatalogFromOriginal(bytes);
+        backgroundRemoved = false;
+      }
     } else {
       session.log(
-        'remove.bg could not segment this photo — saving catalog fallback '
-        '(original on white, upload continues)',
+        'remove.bg unavailable for this photo — saving catalog fallback '
+        '(original, upload continues)',
         level: LogLevel.warning,
       );
       catalogBytes = _fallbackCatalogFromOriginal(bytes);
@@ -130,6 +155,7 @@ class ProductImageProcessor {
   ) async {
     for (final type in ['product', 'auto']) {
       final result = await _callRemoveBg(
+        session,
         apiKey,
         bytes,
         fileName,
@@ -173,7 +199,9 @@ class ProductImageProcessor {
     final resized = img.copyResize(decoded, width: _maxTripoWidth);
     final encoded = switch (ext) {
       '.png' => Uint8List.fromList(img.encodePng(resized)),
-      _ => Uint8List.fromList(img.encodeJpg(resized, quality: _tripoJpegQuality)),
+      _ => Uint8List.fromList(
+          img.encodeJpg(resized, quality: _tripoJpegQuality),
+        ),
     };
 
     return ProcessedProductImage(
@@ -202,63 +230,61 @@ class ProductImageProcessor {
   }
 
   Future<Uint8List?> _callRemoveBg(
+    Session session,
     String apiKey,
     Uint8List bytes,
     String fileName, {
     required String type,
   }) async {
-    final request = http.MultipartRequest('POST', Uri.parse(_removeBgUrl))
-      ..headers['X-Api-Key'] = apiKey
-      ..fields['size'] = 'auto'
-      ..fields['type'] = type
-      ..fields['format'] = 'png'
-      ..fields['bg_color'] = 'FFFFFF'
-      ..files.add(
-        http.MultipartFile.fromBytes(
-          'image_file',
-          bytes,
-          filename: _uploadFileName(fileName),
-        ),
+    try {
+      final request = http.MultipartRequest('POST', Uri.parse(_removeBgUrl))
+        ..headers['X-Api-Key'] = apiKey
+        ..fields['size'] = 'auto'
+        ..fields['type'] = type
+        ..fields['format'] = 'png'
+        ..fields['bg_color'] = 'FFFFFF'
+        ..files.add(
+          http.MultipartFile.fromBytes(
+            'image_file',
+            bytes,
+            filename: _uploadFileName(fileName),
+          ),
+        );
+
+      final streamed = await _httpClient.send(request);
+      final body = await http.Response.fromStream(streamed);
+
+      if (body.statusCode == 200) {
+        return body.bodyBytes;
+      }
+
+      final detail = _extractRemoveBgError(body.body);
+      session.log(
+        'remove.bg HTTP ${body.statusCode} (type=$type): $detail',
+        level: LogLevel.warning,
       );
 
-    final streamed = await _httpClient.send(request);
-    final body = await http.Response.fromStream(streamed);
+      // Quota / auth / rate limit: never fail product upload — fall back.
+      if (body.statusCode == 402 ||
+          body.statusCode == 403 ||
+          body.statusCode == 429) {
+        session.log(
+          'remove.bg quota/auth/rate-limit (${body.statusCode}) — '
+          'catalog will use original photo',
+          level: LogLevel.warning,
+        );
+        return null;
+      }
 
-    if (body.statusCode == 200) {
-      return body.bodyBytes;
-    }
-
-    final detail = _extractRemoveBgError(body.body);
-
-    if (body.statusCode == 402 || body.statusCode == 403) {
-      throw PlaceifyException(
-        message: 'Background removal quota or API key issue.',
-        code: 'BG_REMOVAL_AUTH',
+      return null;
+    } catch (error, stackTrace) {
+      session.log(
+        'remove.bg request error (type=$type): $error',
+        level: LogLevel.warning,
+        stackTrace: stackTrace,
       );
-    }
-
-    if (body.statusCode == 429) {
-      throw PlaceifyException(
-        message: 'Background removal rate limit reached. Try again shortly.',
-        code: 'BG_REMOVAL_AUTH',
-      );
-    }
-
-    // Segmentation / foreground failures — caller will fall back to original.
-    if (_isSegmentationFailure(body.statusCode, detail)) {
       return null;
     }
-
-    // Unknown errors: still allow upload via fallback rather than block vendor.
-    return null;
-  }
-
-  bool _isSegmentationFailure(int statusCode, String detail) {
-    if (statusCode == 400 || statusCode == 422) return true;
-    final lower = detail.toLowerCase();
-    return lower.contains('foreground') ||
-        lower.contains('identify') ||
-        lower.contains('segment');
   }
 
   String _extractRemoveBgError(String body) {

@@ -2,8 +2,6 @@ import 'package:placeify_flutter/features/admin/domain/enums/vendor_application_
 import 'package:placeify_flutter/features/admin/domain/models/vendor_application.dart';
 import 'package:placeify_flutter/features/admin/presentation/providers/admin_stats_provider.dart';
 import 'package:placeify_flutter/features/admin/presentation/providers/vendor_application_repository_provider.dart';
-import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
-import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_profile_provider.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_stats_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -77,13 +75,6 @@ class VendorApplicationActions extends _$VendorApplicationActions {
     if (!ref.mounted) return 'Could not decline application';
 
     try {
-      await ref.read(currentUserProvider.notifier).updateVendorStatusForUser(
-            userId: userId,
-            status: VendorStatus.none,
-            vendorId: null,
-          );
-      if (!ref.mounted) return 'Could not decline application';
-
       await repo.decline(userId: userId, note: note);
       if (!ref.mounted) return 'Could not decline application';
 
