@@ -73,4 +73,42 @@ class ReviewStore {
       offset: offset,
     );
   }
+
+  Future<List<VendorReviewSummary>> listVendorReviews(
+    Session session,
+    UuidValue vendorId, {
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    final products = await Product.db.find(
+      session,
+      where: (row) => row.vendorId.equals(vendorId),
+    );
+    final productIds =
+        products.map((product) => product.id).whereType<int>().toList();
+    if (productIds.isEmpty) return const [];
+
+    final reviews = await Review.db.find(
+      session,
+      where: (row) => row.productId.inSet(productIds.toSet()),
+      include: Review.include(user: User.include(), product: Product.include()),
+      orderBy: (row) => row.createdAt,
+      orderDescending: true,
+      limit: limit,
+      offset: offset,
+    );
+
+    return [
+      for (final review in reviews)
+        if (review.id != null)
+          VendorReviewSummary(
+            id: review.id!,
+            customerName: review.user?.name ?? 'Customer',
+            productName: review.product?.name ?? 'Product',
+            rating: review.rating,
+            comment: review.comment,
+            createdAt: review.createdAt,
+          ),
+    ];
+  }
 }

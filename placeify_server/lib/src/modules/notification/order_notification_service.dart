@@ -202,16 +202,120 @@ abstract final class OrderNotificationService {
     Session session, {
     required RefundRequest refund,
     required bool approved,
+    String? reason,
   }) async {
+    final trimmedReason = reason?.trim();
+    final body = approved
+        ? 'Your refund request for order '
+            '#${refund.orderId.toString().padLeft(5, '0')} was approved. '
+            'Payment has been marked as refunded.'
+        : trimmedReason != null && trimmedReason.isNotEmpty
+            ? 'Your refund request was rejected. $trimmedReason'
+            : 'Your refund request was rejected.';
+
+    if (!await _allowsRefundStatus(session, refund.userId)) return;
+
     await _notifyCustomerByUserId(
       session,
       userId: refund.userId,
       title: approved ? 'Refund approved' : 'Refund update',
-      body: approved
-          ? 'Your refund request was approved.'
-          : 'Your refund request was reviewed.',
+      body: body,
+      type: InAppNotificationType.refundUpdate,
+      referenceId: refund.id,
       event: approved ? 'refund_approved' : 'refund_rejected',
     );
+  }
+
+  static Future<void> notifyConsumersNewProduct(
+    Session session, {
+    required Product product,
+    required String vendorName,
+  }) async {
+    final title = 'New product added';
+    final body = '$vendorName added ${product.name}.';
+    final consumers = await User.db.find(
+      session,
+      where: (row) => row.role.equals(UserRole.consumer),
+      limit: 500,
+    );
+
+    for (final consumer in consumers) {
+      final userId = consumer.id;
+      if (userId == null) continue;
+      if (!await _allowsPromotions(session, userId)) continue;
+
+      await _notifications.create(
+        session,
+        userId: userId,
+        title: title,
+        message: body,
+        type: InAppNotificationType.productUpdate,
+        referenceId: product.id,
+      );
+    }
+
+    session.log(
+      'MarketplaceNotification event=new_product productId=${product.id} '
+      'recipients=${consumers.length}',
+      level: LogLevel.info,
+    );
+  }
+
+  static Future<void> notifyConsumersSpecialOffer(
+    Session session, {
+    required Product product,
+    required String vendorName,
+  }) async {
+    final title = 'Special Offer available';
+    final body = '${product.name} from $vendorName is now on sale.';
+    final consumers = await User.db.find(
+      session,
+      where: (row) => row.role.equals(UserRole.consumer),
+      limit: 500,
+    );
+
+    for (final consumer in consumers) {
+      final userId = consumer.id;
+      if (userId == null) continue;
+      if (!await _allowsPromotions(session, userId)) continue;
+
+      await _notifications.create(
+        session,
+        userId: userId,
+        title: title,
+        message: body,
+        type: InAppNotificationType.promotionUpdate,
+        referenceId: product.id,
+      );
+    }
+
+    session.log(
+      'MarketplaceNotification event=special_offer productId=${product.id} '
+      'recipients=${consumers.length}',
+      level: LogLevel.info,
+    );
+  }
+
+  static Future<bool> _allowsPromotions(
+    Session session,
+    UuidValue userId,
+  ) async {
+    final prefs = await NotificationPreference.db.findFirstRow(
+      session,
+      where: (row) => row.userId.equals(userId),
+    );
+    return prefs?.promotions ?? true;
+  }
+
+  static Future<bool> _allowsRefundStatus(
+    Session session,
+    UuidValue userId,
+  ) async {
+    final prefs = await NotificationPreference.db.findFirstRow(
+      session,
+      where: (row) => row.userId.equals(userId),
+    );
+    return prefs?.refundStatus ?? true;
   }
 
   static Future<void> _notifyCustomer(

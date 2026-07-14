@@ -42,6 +42,35 @@ class InAppNotificationStore {
     );
   }
 
+  /// Notifies every active admin (used for vendor applications, flags, etc.).
+  ///
+  /// [referenceKey] is accepted for call-site compatibility; this schema stores
+  /// only integer [referenceId], so keys are ignored.
+  Future<void> notifyActiveAdmins(
+    Session session, {
+    required String title,
+    required String message,
+    required InAppNotificationType type,
+    int? referenceId,
+    String? referenceKey,
+  }) async {
+    final admins = await Admin.db.find(
+      session,
+      where: (row) => row.isActive.equals(true),
+    );
+
+    for (final admin in admins) {
+      await create(
+        session,
+        userId: admin.userId,
+        title: title,
+        message: message,
+        type: type,
+        referenceId: referenceId,
+      );
+    }
+  }
+
   Future<List<InAppNotificationSummary>> listForUser(
     Session session,
     UuidValue userId, {

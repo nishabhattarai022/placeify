@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:placeify_client/placeify_client.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
@@ -115,6 +116,10 @@ class ServerpodAuthRepository implements AuthRepository {
   }) async {
     final normalizedEmail = email.trim().toLowerCase();
 
+    // #region agent log
+    debugPrint('[AuthDebug][H5] login attempt email=$normalizedEmail');
+    // #endregion
+
     try {
       final authSuccess = await client.emailIdp.login(
         email: normalizedEmail,
@@ -122,8 +127,17 @@ class ServerpodAuthRepository implements AuthRepository {
       );
       await client.auth.updateSignedInUser(authSuccess);
       await _prefs.setString(_sessionEmailKey, normalizedEmail);
+      // #region agent log
+      debugPrint('[AuthDebug][H5] login success email=$normalizedEmail');
+      // #endregion
       return _loadAppUser(normalizedEmail);
     } catch (error) {
+      // #region agent log
+      debugPrint(
+        '[AuthDebug][H5] login failed email=$normalizedEmail '
+        'errorType=${error.runtimeType} error=$error',
+      );
+      // #endregion
       throw _mapError(error);
     }
   }
