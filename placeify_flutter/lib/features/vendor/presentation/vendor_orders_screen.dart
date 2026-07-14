@@ -7,10 +7,15 @@ import '../../../core/constants/app_radii.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/services/haptic_service.dart';
+import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/bottom_nav/bottom_nav_tokens.dart';
+import '../../../core/widgets/placeify_bottom_sheet.dart';
 import '../../../core/widgets/shimmer_loader.dart';
+import '../../../core/widgets/toast_overlay.dart';
 import '../domain/enums/order_status.dart';
+import '../domain/models/vendor_notification.dart';
 import '../domain/models/vendor_order.dart';
+import 'providers/vendor_notifications_provider.dart';
 import 'providers/vendor_orders_provider.dart';
 import 'widgets/vendor_order_date_filter_sheet.dart';
 import 'widgets/vendor_order_filter_tabs.dart';
@@ -18,7 +23,10 @@ import 'widgets/vendor_order_row.dart';
 import 'widgets/vendor_orders_empty_state.dart';
 
 class VendorOrdersScreen extends ConsumerStatefulWidget {
-  const VendorOrdersScreen({super.key});
+  const VendorOrdersScreen({this.showAllOrdersOnly = false, super.key});
+
+  /// When true (dashboard "See all"), shows every order in a simple list.
+  final bool showAllOrdersOnly;
 
   @override
   ConsumerState<VendorOrdersScreen> createState() => _VendorOrdersScreenState();
@@ -37,6 +45,10 @@ class _VendorOrdersScreenState extends ConsumerState<VendorOrdersScreen> {
   }
 
   List<VendorOrder> _filterOrders(List<VendorOrder> orders) {
+    if (widget.showAllOrdersOnly) {
+      return [...orders]..sort((a, b) => b.orderedAt.compareTo(a.orderedAt));
+    }
+
     final query = _searchQuery.trim().toLowerCase();
 
     return orders.where((order) {
@@ -91,6 +103,18 @@ class _VendorOrdersScreenState extends ConsumerState<VendorOrdersScreen> {
   @override
   Widget build(BuildContext context) {
     final ordersAsync = ref.watch(vendorOrdersProvider);
+    final vendorOrderIds =
+        ordersAsync.value?.map((order) => order.id).toSet() ?? const {};
+    final orderAlerts = ref.watch(vendorNotificationsProvider).maybeWhen(
+          data: (state) => state.orderAlerts
+              .where(
+                (alert) =>
+                    alert.relatedId != null &&
+                    vendorOrderIds.contains(alert.relatedId),
+              )
+              .toList(),
+          orElse: () => const <VendorNotification>[],
+        );
 
     return Scaffold(
       backgroundColor: AppColors.cream,
@@ -98,42 +122,57 @@ class _VendorOrdersScreenState extends ConsumerState<VendorOrdersScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Orders', style: AppTypography.sectionTitle),
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _VendorOrdersSearchField(
-                          controller: _searchController,
-                          onChanged: (value) =>
-                              setState(() => _searchQuery = value),
+            if (!widget.showAllOrdersOnly)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Orders', style: AppTypography.sectionTitle),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _VendorOrdersSearchField(
+                            controller: _searchController,
+                            onChanged: (value) =>
+                                setState(() => _searchQuery = value),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      _DateFilterButton(
-                        filter: _dateFilter,
-                        onTap: _openDateFilter,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  VendorOrderFilterTabs(
-                    selectedTab: _selectedTab,
-                    onSelected: (tab) => setState(() => _selectedTab = tab),
-                  ),
-                ],
+                        const SizedBox(width: 10),
+                        _DateFilterButton(
+                          filter: _dateFilter,
+                          onTap: _openDateFilter,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    VendorOrderFilterTabs(
+                      selectedTab: _selectedTab,
+                      onSelected: (tab) => setState(() => _selectedTab = tab),
+                    ),
+                  ],
+                ),
+              )
+            else
+              const Padding(
+                padding: EdgeInsets.fromLTRB(24, 14, 24, 0),
+                child: Text('Orders', style: AppTypography.sectionTitle),
               ),
-            ),
             const SizedBox(height: 16),
+            if (!widget.showAllOrdersOnly && orderAlerts.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+                child: _VendorOrderAlertsSection(
+                  alerts: orderAlerts.take(3).toList(),
+                  onTap: (notification) =>
+                      _onOrderAlertTap(context, notification),
+                ),
+              ),
             Expanded(
               child: ordersAsync.when(
                 loading: () => const _OrdersListShimmer(),
-                error: (_, _) => VendorOrdersEmptyState(
+                error: (_, __) => VendorOrdersEmptyState(
                   tab: _selectedTab,
                   onSwitchTab: (tab) => setState(() => _selectedTab = tab),
                 ),
@@ -141,6 +180,34 @@ class _VendorOrdersScreenState extends ConsumerState<VendorOrdersScreen> {
                   final filtered = _filterOrders(orders);
 
                   if (filtered.isEmpty) {
+                    if (widget.showAllOrdersOnly) {
+                      return RefreshIndicator(
+                        onRefresh: _onRefresh,
+                        color: AppColors.espresso,
+                        child: ListView(
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(),
+                          ),
+                          children: [
+                            SizedBox(
+                              height: MediaQuery.sizeOf(context).height * 0.35,
+                              child: Center(
+                                child: Text(
+                                  'No orders yet',
+                                  style: AppTypography.metricLabel.copyWith(
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(
+                              height: BottomNavTokens.scrollBottomPadding,
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
                     return RefreshIndicator(
                       onRefresh: _onRefresh,
                       color: AppColors.espresso,
@@ -192,6 +259,170 @@ class _VendorOrdersScreenState extends ConsumerState<VendorOrdersScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _onOrderAlertTap(
+    BuildContext context,
+    VendorNotification notification,
+  ) async {
+    HapticService.light();
+    final viewOrder = await _showOrderAlertDetail(context, notification);
+    if (!context.mounted) return;
+
+    if (!notification.isRead) {
+      ref.read(vendorNotificationsProvider.notifier).markRead(notification.id);
+    }
+
+    if (viewOrder == true && notification.relatedId != null) {
+      final orders = ref.read(vendorOrdersProvider).value;
+      final hasOrder =
+          orders?.any((order) => order.id == notification.relatedId) ?? false;
+      if (!hasOrder) {
+        if (context.mounted) {
+          PlaceifyToast.show(context, 'That order is no longer available.');
+        }
+        return;
+      }
+      try {
+        openVendorOrderFromNotification(context, notification.relatedId!);
+      } catch (_) {
+        if (context.mounted) {
+          PlaceifyToast.show(
+            context,
+            'Could not open that order. Check it from the Orders tab.',
+          );
+        }
+      }
+    }
+  }
+
+  Future<bool?> _showOrderAlertDetail(
+    BuildContext context,
+    VendorNotification notification,
+  ) {
+    final canViewOrder = notification.relatedId != null;
+
+    return PlaceifyBottomSheet.show<bool>(
+      context,
+      builder: (sheetContext) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            PlaceifyBottomSheetHeader(title: notification.title),
+            const SizedBox(height: 8),
+            Text(
+              notification.body,
+              style: AppTypography.metricLabel.copyWith(
+                color: AppColors.textSecondary,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              Formatters.shortDate(notification.createdAt),
+              style: AppTypography.metricLabel.copyWith(
+                color: AppColors.textMuted,
+                fontSize: 12,
+              ),
+            ),
+            if (canViewOrder) ...[
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: () => Navigator.pop(sheetContext, true),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.vendorForest,
+                ),
+                child: const Text('View order'),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _VendorOrderAlertsSection extends StatelessWidget {
+  const _VendorOrderAlertsSection({
+    required this.alerts,
+    required this.onTap,
+  });
+
+  final List<VendorNotification> alerts;
+  final ValueChanged<VendorNotification> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Order updates',
+          style: AppTypography.metricLabel.copyWith(
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        for (final alert in alerts) ...[
+          _VendorOrderAlertTile(
+            notification: alert,
+            onTap: () => onTap(alert),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ],
+    );
+  }
+}
+
+class _VendorOrderAlertTile extends StatelessWidget {
+  const _VendorOrderAlertTile({
+    required this.notification,
+    required this.onTap,
+  });
+
+  final VendorNotification notification;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.vendorForestBg,
+      borderRadius: AppRadii.md,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: AppRadii.md,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: AppRadii.md,
+            border: Border.all(color: AppColors.vendorForest, width: 1.5),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                notification.title,
+                style: AppTypography.sectionTitle.copyWith(fontSize: 14),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                notification.body,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.metricLabel.copyWith(
+                  color: AppColors.textSecondary,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -296,8 +527,8 @@ class _OrdersListShimmer extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, AppSpacing.xxl),
       itemCount: 5,
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
-      itemBuilder: (_, _) => const SizedBox(
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      itemBuilder: (_, __) => const SizedBox(
         height: 76,
         child: ShimmerLoader(borderRadius: AppRadii.md),
       ),

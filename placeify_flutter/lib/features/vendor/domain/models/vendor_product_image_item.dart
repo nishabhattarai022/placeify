@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 /// A product photo in the upload/edit form — either a newly picked file or an
 /// existing remote URL from the catalog.
 class VendorProductImageItem {
@@ -5,7 +7,10 @@ class VendorProductImageItem {
     required this.id,
     this.localPath,
     this.remoteUrl,
+    this.localBytes,
+    this.fileName,
     this.processedLocalPath,
+    this.processedLocalBytes,
     this.isProcessingBg = false,
     this.bgRemovalError,
   }) : assert(
@@ -25,6 +30,19 @@ class VendorProductImageItem {
     );
   }
 
+  factory VendorProductImageItem.fromLocalBytes({
+    required String path,
+    required Uint8List bytes,
+    required String fileName,
+  }) {
+    return VendorProductImageItem(
+      id: _nextId(),
+      localPath: path,
+      localBytes: bytes,
+      fileName: fileName,
+    );
+  }
+
   factory VendorProductImageItem.fromRemoteUrl(String url) {
     return VendorProductImageItem(
       id: _nextId(),
@@ -35,13 +53,17 @@ class VendorProductImageItem {
   final String id;
   final String? localPath;
   final String? remoteUrl;
+  final Uint8List? localBytes;
+  final String? fileName;
   final String? processedLocalPath;
+  final Uint8List? processedLocalBytes;
   final bool isProcessingBg;
   final String? bgRemovalError;
 
   bool get isLocal => localPath != null;
 
-  bool get hasBackgroundRemoved => processedLocalPath != null;
+  bool get hasBackgroundRemoved =>
+      processedLocalPath != null || processedLocalBytes != null;
 
   String get displaySource =>
       processedLocalPath ?? localPath ?? remoteUrl ?? '';
@@ -51,7 +73,10 @@ class VendorProductImageItem {
   VendorProductImageItem copyWith({
     String? localPath,
     String? remoteUrl,
+    Uint8List? localBytes,
+    String? fileName,
     String? processedLocalPath,
+    Uint8List? processedLocalBytes,
     bool? isProcessingBg,
     String? bgRemovalError,
     bool clearProcessedPath = false,
@@ -61,9 +86,14 @@ class VendorProductImageItem {
       id: id,
       localPath: localPath ?? this.localPath,
       remoteUrl: remoteUrl ?? this.remoteUrl,
+      localBytes: localBytes ?? this.localBytes,
+      fileName: fileName ?? this.fileName,
       processedLocalPath: clearProcessedPath
           ? null
           : (processedLocalPath ?? this.processedLocalPath),
+      processedLocalBytes: clearProcessedPath
+          ? null
+          : (processedLocalBytes ?? this.processedLocalBytes),
       isProcessingBg: isProcessingBg ?? this.isProcessingBg,
       bgRemovalError:
           clearBgError ? null : (bgRemovalError ?? this.bgRemovalError),

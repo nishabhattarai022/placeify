@@ -2,6 +2,7 @@ import 'package:placeify_client/placeify_client.dart' as api;
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/formatters.dart';
+import '../../cart/data/product_id_codec.dart';
 import '../domain/models/vendor_metric.dart';
 import '../domain/models/vendor_order.dart';
 import '../domain/models/vendor_stats.dart';
@@ -35,13 +36,20 @@ abstract final class VendorDashboardMapper {
             id: summary.orderId.toString(),
             orderNumber: summary.orderNumber,
             vendorId: vendorId,
-            productId: 'p${summary.orderItemId}',
+            productId: summary.productId != null
+                ? ProductIdCodec.fromDatabaseId(summary.productId!)
+                : 'p${summary.orderItemId}',
             productName: summary.productName,
             quantity: summary.quantity,
             totalAmount: summary.lineTotal,
             status: VendorOrderMapper.mapOrderStatus(summary.status),
             customerName: summary.customerName ?? 'Customer',
             orderedAt: summary.placedAt,
+            currentDeliveryStage: summary.currentDeliveryStage == null
+                ? null
+                : VendorOrderMapper.mapDeliveryStage(
+                    summary.currentDeliveryStage!,
+                  ),
           ),
     ];
   }
@@ -77,9 +85,7 @@ abstract final class VendorDashboardMapper {
 
   /// Builds a six-month revenue trend from order line totals when the API
   /// does not expose a dedicated time-series field.
-  static List<double> revenueSeriesFromDashboard(
-    api.VendorDashboard dashboard,
-  ) {
+  static List<double> revenueSeriesFromDashboard(api.VendorDashboard dashboard) {
     final now = DateTime.now();
     final buckets = List<double>.filled(6, 0);
 

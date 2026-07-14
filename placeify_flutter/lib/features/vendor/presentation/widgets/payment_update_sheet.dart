@@ -171,7 +171,7 @@ class _PaymentUpdateSheetBodyState extends State<_PaymentUpdateSheetBody> {
                   onTap: _isSubmitting
                       ? null
                       : () =>
-                            setState(() => _selected = PaymentStatus.refunded),
+                          setState(() => _selected = PaymentStatus.refunded),
                 ),
               ],
             ),

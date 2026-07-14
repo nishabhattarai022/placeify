@@ -16,4 +16,10 @@ abstract interface class VendorProductRepository {
     String vendorId,
     VendorProduct product,
   );
+
+  Future<VendorProduct> regenerateProductModel3d(
+    String vendorId,
+    String productId, {
+    List<String>? imageSources,
+  });
 }

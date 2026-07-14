@@ -1,0 +1,89 @@
+material {
+    name : camera_stream_depth,
+    vertexDomain : device,
+    shadingModel : unlit,
+    blending : opaque,
+    culling : none,
+    parameters : [
+        {
+            type : samplerExternal,
+            name : cameraTexture
+        },
+        {
+            type : sampler2d,
+            name : depthTexture
+        },
+        {
+            type : float4x4,
+            name : uvTransform
+        },
+        {
+            type : float2,
+            name : depthTextureInvSize
+        },
+        {
+            type : float,
+            name : occlusionBiasMm
+        },
+        {
+            type : float,
+            name : minConfidence
+        }
+    ],
+    requires : [
+        uv0
+    ]
+}
+
+fragment {
+    vec2 sampleDepthConfidence(vec2 uv) {
+        vec2 invSize = materialParams.depthTextureInvSize;
+        float sumDepth = 0.0;
+        float sumWeight = 0.0;
+        float minConf = 1.0;
+
+        for (int j = -1; j <= 1; j++) {
+            for (int i = -1; i <= 1; i++) {
+                vec2 tapUv = uv + vec2(float(i), float(j)) * invSize;
+                vec4 tap = texture(materialParams_depthTexture, tapUv);
+                float depth_mm = dot(tap.rg, vec2(255.0, 256.0 * 255.0));
+                float confidence = tap.b;
+                if (depth_mm > 0.0 && confidence > 0.0) {
+                    sumDepth += depth_mm * confidence;
+                    sumWeight += confidence;
+                    minConf = min(minConf, confidence);
+                }
+            }
+        }
+
+        if (sumWeight <= 0.0) {
+            return vec2(0.0, 0.0);
+        }
+        return vec2(sumDepth / sumWeight, minConf);
+    }
+
+    void material(inout MaterialInputs material) {
+        prepareMaterial(material);
+        material.baseColor.rgb = inverseTonemapSRGB(texture(materialParams_cameraTexture, getUV0()).rgb);
+        material.baseColor.a = 1.f;
+
+        vec2 depthConfidence = sampleDepthConfidence(getUV0());
+        float depth_mm = depthConfidence.r;
+        float confidence = depthConfidence.g;
+
+        if (depth_mm > 0.0 && confidence >= materialParams.minConfidence) {
+            float biased_mm = depth_mm + materialParams.occlusionBiasMm;
+            vec4 clip = mulMat4x4Float3(getClipFromViewMatrix(), vec3(0.0, 0.0, -biased_mm / 1000.0));
+            gl_FragDepth = clip.z / clip.w;
+        }
+    }
+}
+
+vertex {
+    void materialVertex(inout MaterialVertexInputs material) {
+        material.uv0 = mulMat4x4Float3(materialParams.uvTransform, vec3(material.uv0.x, material.uv0.y, 0.f)).xy;
+        vec4 clip = getPosition();
+        clip.z = 0.9999f;
+        material.worldPosition = mulMat4x4Float3(getWorldFromClipMatrix(), clip.xyz);
+    }
+}

@@ -38,12 +38,16 @@ abstract class VendorProduct with _$VendorProduct {
   bool get isOnSale =>
       originalPrice != null && originalPrice! > price;
 
+  bool get isOffer => isOnSale;
+
   String? get primaryImageUrl =>
       imageUrls.isNotEmpty ? imageUrls.first : null;
 
   double get discountPercent => isOnSale
       ? ((originalPrice! - price) / originalPrice! * 100).roundToDouble()
       : 0;
+
+  double get discountPercentage => discountPercent;
 
   /// Combined warranty + shipping line for product detail (e.g. "2-year warranty • Ships in 5–7 days").
   String? get fulfillmentNote {

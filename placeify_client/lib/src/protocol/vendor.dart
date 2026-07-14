@@ -36,13 +36,13 @@ abstract class Vendor implements _i1.SerializableModel {
     this.facebookHandle,
     this.operatingHours,
     double? rating,
+    this.approvedById,
+    this.approvedBy,
+    this.approvedAt,
     this.moderationNote,
     this.moderatedAt,
     this.appealMessage,
     this.appealSubmittedAt,
-    this.approvedById,
-    this.approvedBy,
-    this.approvedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : isOpen = isOpen ?? true,
@@ -69,13 +69,13 @@ abstract class Vendor implements _i1.SerializableModel {
     String? facebookHandle,
     String? operatingHours,
     double? rating,
+    _i1.UuidValue? approvedById,
+    _i3.Admin? approvedBy,
+    DateTime? approvedAt,
     String? moderationNote,
     DateTime? moderatedAt,
     String? appealMessage,
     DateTime? appealSubmittedAt,
-    _i1.UuidValue? approvedById,
-    _i3.Admin? approvedBy,
-    DateTime? approvedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) = _VendorImpl;
@@ -106,18 +106,6 @@ abstract class Vendor implements _i1.SerializableModel {
       facebookHandle: jsonSerialization['facebookHandle'] as String?,
       operatingHours: jsonSerialization['operatingHours'] as String?,
       rating: (jsonSerialization['rating'] as num?)?.toDouble(),
-      moderationNote: jsonSerialization['moderationNote'] as String?,
-      moderatedAt: jsonSerialization['moderatedAt'] == null
-          ? null
-          : _i1.DateTimeJsonExtension.fromJson(
-              jsonSerialization['moderatedAt'],
-            ),
-      appealMessage: jsonSerialization['appealMessage'] as String?,
-      appealSubmittedAt: jsonSerialization['appealSubmittedAt'] == null
-          ? null
-          : _i1.DateTimeJsonExtension.fromJson(
-              jsonSerialization['appealSubmittedAt'],
-            ),
       approvedById: jsonSerialization['approvedById'] == null
           ? null
           : _i1.UuidValueJsonExtension.fromJson(
@@ -131,6 +119,18 @@ abstract class Vendor implements _i1.SerializableModel {
       approvedAt: jsonSerialization['approvedAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['approvedAt']),
+      moderationNote: jsonSerialization['moderationNote'] as String?,
+      moderatedAt: jsonSerialization['moderatedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['moderatedAt'],
+            ),
+      appealMessage: jsonSerialization['appealMessage'] as String?,
+      appealSubmittedAt: jsonSerialization['appealSubmittedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['appealSubmittedAt'],
+            ),
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
@@ -183,6 +183,13 @@ abstract class Vendor implements _i1.SerializableModel {
 
   double rating;
 
+  _i1.UuidValue? approvedById;
+
+  /// Admin who approved this vendor shop.
+  _i3.Admin? approvedBy;
+
+  DateTime? approvedAt;
+
   /// Admin suspend reason or reinstate terms note.
   String? moderationNote;
 
@@ -194,13 +201,6 @@ abstract class Vendor implements _i1.SerializableModel {
 
   /// When the vendor submitted their current appeal.
   DateTime? appealSubmittedAt;
-
-  _i1.UuidValue? approvedById;
-
-  /// Admin who approved this vendor shop.
-  _i3.Admin? approvedBy;
-
-  DateTime? approvedAt;
 
   DateTime createdAt;
 
@@ -228,13 +228,13 @@ abstract class Vendor implements _i1.SerializableModel {
     String? facebookHandle,
     String? operatingHours,
     double? rating,
+    _i1.UuidValue? approvedById,
+    _i3.Admin? approvedBy,
+    DateTime? approvedAt,
     String? moderationNote,
     DateTime? moderatedAt,
     String? appealMessage,
     DateTime? appealSubmittedAt,
-    _i1.UuidValue? approvedById,
-    _i3.Admin? approvedBy,
-    DateTime? approvedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   });
@@ -260,14 +260,14 @@ abstract class Vendor implements _i1.SerializableModel {
       if (facebookHandle != null) 'facebookHandle': facebookHandle,
       if (operatingHours != null) 'operatingHours': operatingHours,
       'rating': rating,
+      if (approvedById != null) 'approvedById': approvedById?.toJson(),
+      if (approvedBy != null) 'approvedBy': approvedBy?.toJson(),
+      if (approvedAt != null) 'approvedAt': approvedAt?.toJson(),
       if (moderationNote != null) 'moderationNote': moderationNote,
       if (moderatedAt != null) 'moderatedAt': moderatedAt?.toJson(),
       if (appealMessage != null) 'appealMessage': appealMessage,
       if (appealSubmittedAt != null)
         'appealSubmittedAt': appealSubmittedAt?.toJson(),
-      if (approvedById != null) 'approvedById': approvedById?.toJson(),
-      if (approvedBy != null) 'approvedBy': approvedBy?.toJson(),
-      if (approvedAt != null) 'approvedAt': approvedAt?.toJson(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
     };
@@ -301,13 +301,13 @@ class _VendorImpl extends Vendor {
     String? facebookHandle,
     String? operatingHours,
     double? rating,
+    _i1.UuidValue? approvedById,
+    _i3.Admin? approvedBy,
+    DateTime? approvedAt,
     String? moderationNote,
     DateTime? moderatedAt,
     String? appealMessage,
     DateTime? appealSubmittedAt,
-    _i1.UuidValue? approvedById,
-    _i3.Admin? approvedBy,
-    DateTime? approvedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : super._(
@@ -329,13 +329,13 @@ class _VendorImpl extends Vendor {
          facebookHandle: facebookHandle,
          operatingHours: operatingHours,
          rating: rating,
+         approvedById: approvedById,
+         approvedBy: approvedBy,
+         approvedAt: approvedAt,
          moderationNote: moderationNote,
          moderatedAt: moderatedAt,
          appealMessage: appealMessage,
          appealSubmittedAt: appealSubmittedAt,
-         approvedById: approvedById,
-         approvedBy: approvedBy,
-         approvedAt: approvedAt,
          createdAt: createdAt,
          updatedAt: updatedAt,
        );
@@ -363,13 +363,13 @@ class _VendorImpl extends Vendor {
     Object? facebookHandle = _Undefined,
     Object? operatingHours = _Undefined,
     double? rating,
+    Object? approvedById = _Undefined,
+    Object? approvedBy = _Undefined,
+    Object? approvedAt = _Undefined,
     Object? moderationNote = _Undefined,
     Object? moderatedAt = _Undefined,
     Object? appealMessage = _Undefined,
     Object? appealSubmittedAt = _Undefined,
-    Object? approvedById = _Undefined,
-    Object? approvedBy = _Undefined,
-    Object? approvedAt = _Undefined,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -400,6 +400,13 @@ class _VendorImpl extends Vendor {
           ? operatingHours
           : this.operatingHours,
       rating: rating ?? this.rating,
+      approvedById: approvedById is _i1.UuidValue?
+          ? approvedById
+          : this.approvedById,
+      approvedBy: approvedBy is _i3.Admin?
+          ? approvedBy
+          : this.approvedBy?.copyWith(),
+      approvedAt: approvedAt is DateTime? ? approvedAt : this.approvedAt,
       moderationNote: moderationNote is String?
           ? moderationNote
           : this.moderationNote,
@@ -410,13 +417,6 @@ class _VendorImpl extends Vendor {
       appealSubmittedAt: appealSubmittedAt is DateTime?
           ? appealSubmittedAt
           : this.appealSubmittedAt,
-      approvedById: approvedById is _i1.UuidValue?
-          ? approvedById
-          : this.approvedById,
-      approvedBy: approvedBy is _i3.Admin?
-          ? approvedBy
-          : this.approvedBy?.copyWith(),
-      approvedAt: approvedAt is DateTime? ? approvedAt : this.approvedAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

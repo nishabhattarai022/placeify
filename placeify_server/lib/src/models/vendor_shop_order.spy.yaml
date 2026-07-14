@@ -12,3 +12,4 @@ fields:
   items: List<VendorOrderLineItem>
   rejectionReason: String?
   orderPaymentStatus: OrderPaymentStatus
+  currentDeliveryStage: DeliveryStage?

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_radii.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/services/haptic_service.dart';
-import '../../../../core/widgets/placeify_action_row.dart';
 import '../../../../core/widgets/placeify_bottom_sheet.dart';
 import '../../../../core/widgets/toast_overlay.dart';
 import '../providers/vendor_products_provider.dart';
@@ -98,18 +99,58 @@ class _VendorProductDeleteSheetBodyState
               'This cannot be undone. Selected products will be permanently removed from your catalog.',
         ),
         const SizedBox(height: AppSpacing.xl),
-        PlaceifyActionRow(
-          cancelLabel: 'Cancel',
-          confirmLabel: _isDeleting ? 'Deleting…' : 'Delete',
-          confirmColor: AppColors.rust,
-          isConfirmLoading: _isDeleting,
-          onCancel: _isDeleting
-              ? null
-              : () {
-                  HapticService.light();
-                  Navigator.pop(widget.sheetContext);
-                },
-          onConfirm: _isDeleting ? null : _confirmDelete,
+        Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: _isDeleting
+                    ? null
+                    : () {
+                        HapticService.light();
+                        Navigator.pop(widget.sheetContext);
+                      },
+                child: Container(
+                  height: 48,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.cream,
+                    borderRadius: AppRadii.pill,
+                    border: Border.all(color: AppColors.creamDark, width: 1.5),
+                  ),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.dmSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: GestureDetector(
+                onTap: _isDeleting ? null : _confirmDelete,
+                child: Container(
+                  height: 48,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.rust,
+                    borderRadius: AppRadii.pill,
+                  ),
+                  child: Text(
+                    _isDeleting ? 'Deleting…' : 'Delete',
+                    style: GoogleFonts.dmSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.warmWhite,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );

@@ -19,7 +19,7 @@ class ProfileStatsStrip extends ConsumerWidget {
 
     return statsAsync.when(
       loading: () => const _StatsStripShimmer(),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
       data: (data) => _StatsRow(stats: data.stats),
     );
   }

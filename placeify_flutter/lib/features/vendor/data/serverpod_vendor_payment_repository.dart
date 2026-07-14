@@ -115,9 +115,7 @@ class ServerpodVendorPaymentRepository implements VendorPaymentRepository {
     if (colonIndex > 0 && colonIndex < 40) {
       final message = raw.substring(colonIndex + 2).trim();
       if (message.isNotEmpty && !message.startsWith('Exception')) {
-        return message.length <= 200
-            ? message
-            : 'Could not update payment status.';
+        return message.length <= 200 ? message : 'Could not update payment status.';
       }
     }
 

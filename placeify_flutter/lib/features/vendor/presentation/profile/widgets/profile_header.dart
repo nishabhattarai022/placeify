@@ -194,7 +194,7 @@ class _LogoCircle extends StatelessWidget {
                     : Image.network(
                         imagePath!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => const Icon(
+                        errorBuilder: (_, __, ___) => const Icon(
                           Icons.broken_image_outlined,
                         ),
                       ),

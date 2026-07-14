@@ -76,7 +76,7 @@ class _ImageContent extends StatelessWidget {
       return Image.asset(
         imageUrl,
         fit: fit,
-        errorBuilder: (_, _, _) => _InitialFallback(
+        errorBuilder: (_, __, ___) => _InitialFallback(
           label: label,
           fallbackIconPath: fallbackIconPath,
           size: size,
@@ -87,8 +87,8 @@ class _ImageContent extends StatelessWidget {
     return CachedNetworkImage(
       imageUrl: imageUrl,
       fit: fit,
-      placeholder: (_, _) => const ShimmerLoader(),
-      errorWidget: (_, _, _) => _InitialFallback(
+      placeholder: (_, __) => const ShimmerLoader(),
+      errorWidget: (_, __, ___) => _InitialFallback(
         label: label,
         fallbackIconPath: fallbackIconPath,
         size: size,

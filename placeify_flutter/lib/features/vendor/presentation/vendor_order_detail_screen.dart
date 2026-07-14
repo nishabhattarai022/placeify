@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -20,11 +19,13 @@ import '../domain/enums/payment_status.dart';
 import '../domain/models/payment_update.dart';
 import 'providers/vendor_order_detail_provider.dart';
 import 'providers/vendor_payments_provider.dart';
+import 'providers/vendor_product_image_provider.dart';
 import 'widgets/order_action_sheet.dart';
 import 'widgets/order_status_chip.dart';
 import 'widgets/order_timeline_widget.dart';
 import 'widgets/payment_status_chip.dart';
 import 'widgets/payment_update_sheet.dart';
+import 'widgets/vendor_list_thumbnail.dart';
 
 class VendorOrderDetailScreen extends ConsumerWidget {
   const VendorOrderDetailScreen({required this.orderId, super.key});
@@ -39,18 +40,14 @@ class VendorOrderDetailScreen extends ConsumerWidget {
       backgroundColor: AppColors.cream,
       body: detailAsync.when(
         loading: () => const _OrderDetailShimmer(),
-        error: (_, _) => _OrderDetailError(
-          onRetry: () {
-            ref.invalidate(vendorOrderDetailProvider(orderId));
-          },
-        ),
+        error: (_, __) => _OrderDetailError(onRetry: () {
+          ref.invalidate(vendorOrderDetailProvider(orderId));
+        }),
         data: (detail) {
           if (detail == null) {
-            return _OrderDetailError(
-              onRetry: () {
-                ref.invalidate(vendorOrderDetailProvider(orderId));
-              },
-            );
+            return _OrderDetailError(onRetry: () {
+              ref.invalidate(vendorOrderDetailProvider(orderId));
+            });
           }
 
           return _OrderDetailBody(
@@ -78,11 +75,11 @@ class _OrderDetailBody extends ConsumerWidget {
         ? order.totalAmount / order.quantity
         : order.totalAmount;
     final isPending = order.status == OrderStatus.pending;
-    final canUpdateDelivery =
-        !isPending &&
+    final canUpdateDelivery = !isPending &&
         order.status != OrderStatus.rejected &&
         order.status != OrderStatus.cancelled &&
         order.status != OrderStatus.delivered;
+    final imageUrl = ref.watch(vendorProductImageUrlProvider(order.productId));
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(
@@ -128,23 +125,11 @@ class _OrderDetailBody extends ConsumerWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: AppColors.cream,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Center(
-                        child: SvgPicture.asset(
-                          _iconForProduct(order.productName),
-                          width: 26,
-                          colorFilter: const ColorFilter.mode(
-                            AppColors.bark,
-                            BlendMode.srcIn,
-                          ),
-                        ),
-                      ),
+                    VendorListThumbnail(
+                      label: order.productName,
+                      imageUrl: imageUrl,
+                      fallbackIconPath: _iconForProduct(order.productName),
+                      size: 56,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -264,7 +249,7 @@ class _PaymentSection extends ConsumerWidget {
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
             ),
-            error: (_, _) => const Text(
+            error: (_, __) => const Text(
               'Could not load payment history.',
               style: TextStyle(
                 fontSize: 13,
@@ -293,24 +278,33 @@ class _PaymentSection extends ConsumerWidget {
             },
           ),
           const SizedBox(height: 16),
-          OutlinedButton(
-            onPressed: () async {
-              HapticService.light();
-              await PaymentUpdateSheet.show(
-                context,
-                ref,
-                orderId: order.id,
-                orderLabel: 'Order #${order.orderNumber}',
-              );
-              ref.invalidate(orderPaymentAuditTrailProvider(order.id));
-            },
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.vendorForest,
-              side: const BorderSide(color: AppColors.vendorForest),
-              padding: const EdgeInsets.symmetric(vertical: 12),
+          if (order.canUpdatePayment)
+            OutlinedButton(
+              onPressed: () async {
+                HapticService.light();
+                await PaymentUpdateSheet.show(
+                  context,
+                  ref,
+                  orderId: order.id,
+                  orderLabel: 'Order #${order.orderNumber}',
+                );
+                ref.invalidate(orderPaymentAuditTrailProvider(order.id));
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.vendorForest,
+                side: const BorderSide(color: AppColors.vendorForest),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+              child: const Text('Update payment'),
+            )
+          else
+            const Text(
+              'Payment is complete. No further updates are allowed.',
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.textMuted,
+              ),
             ),
-            child: const Text('Update payment'),
-          ),
         ],
       ),
     );

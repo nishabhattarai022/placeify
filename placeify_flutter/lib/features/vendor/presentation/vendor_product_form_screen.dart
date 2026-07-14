@@ -9,6 +9,7 @@ import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_fo
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_image_item.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_product_form_provider.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_strings.dart';
+import 'package:placeify_flutter/features/vendor/presentation/vendor_3d_model_access.dart';
 import 'package:placeify_flutter/features/vendor/presentation/widgets/product_image_picker_grid.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -19,7 +20,6 @@ import '../../../core/services/haptic_service.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/percent_input_formatter.dart';
 import '../../../core/widgets/animated_scale_tap.dart';
-import '../../../core/widgets/placeify_action_row.dart';
 import '../../../core/widgets/placeify_bottom_sheet.dart';
 import '../../../core/widgets/toast_overlay.dart';
 
@@ -204,19 +204,37 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
       return;
     }
 
-    final success = await ref.read(vendorProductFormProvider.notifier).submit();
+    final saved = await ref.read(vendorProductFormProvider.notifier).submit();
     if (!mounted) return;
 
-    if (success) {
+    if (saved != null) {
       HapticService.medium();
       PlaceifyToast.show(context, VendorStrings.productSaved);
-      context.pop();
+
+      if (!saved.hasArView) {
+        await Vendor3dModelAccess.promptAfterProductSaved(
+          context: context,
+          ref: ref,
+          product: saved,
+        );
+      }
+
+      if (!mounted) return;
+      _popAfterProductSave();
       return;
     }
 
     final error = ref.read(vendorProductFormProvider).submitError;
     if (error != null) {
       PlaceifyToast.show(context, error);
+    }
+  }
+
+  void _popAfterProductSave() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/vendor/products');
     }
   }
 
@@ -233,15 +251,16 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
       return;
     }
 
-    final success = await ref
+    final saved = await ref
         .read(vendorProductFormProvider.notifier)
         .submit(resetOnSuccess: false);
     if (!mounted) return;
 
-    if (success) {
+    if (saved != null) {
       HapticService.medium();
       PlaceifyToast.show(context, VendorStrings.changesSaved);
       setState(() => _isDirty = false);
+      _popAfterProductSave();
       return;
     }
 
@@ -267,18 +286,62 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                   'Your unsaved edits will be lost if you leave this screen.',
             ),
             const SizedBox(height: AppSpacing.xl),
-            PlaceifyActionRow(
-              cancelLabel: 'Keep Editing',
-              confirmLabel: 'Discard',
-              confirmColor: AppColors.rust,
-              onCancel: () {
-                HapticService.light();
-                Navigator.pop(sheetContext, false);
-              },
-              onConfirm: () {
-                HapticService.medium();
-                Navigator.pop(sheetContext, true);
-              },
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticService.light();
+                      Navigator.pop(sheetContext, false);
+                    },
+                    child: Container(
+                      height: 48,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.cream,
+                        borderRadius: AppRadii.pill,
+                        border: Border.all(
+                          color: AppColors.creamDark,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Text(
+                        'Keep Editing',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticService.medium();
+                      Navigator.pop(sheetContext, true);
+                    },
+                    child: Container(
+                      height: 48,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.rust,
+                        borderRadius: AppRadii.pill,
+                      ),
+                      child: Text(
+                        'Discard',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.warmWhite,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         );
@@ -953,21 +1016,41 @@ class _CategoryPicker extends StatelessWidget {
     return InkWell(
       onTap: () async {
         HapticService.light();
-        final selected = await PlaceifyBottomSheet.show<String>(
-          context,
+        final selected = await showModalBottomSheet<String>(
+          context: context,
+          backgroundColor: AppColors.warmWhite,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
           builder: (sheetContext) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const PlaceifyBottomSheetHeader(title: 'Select category'),
-                for (final category in MockProductRepository.categories)
-                  PlaceifySelectTile(
-                    label: category.label,
-                    selected: categoryId == category.id,
-                    onTap: () => Navigator.pop(sheetContext, category.id),
+            return SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Select category',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.espresso,
+                        ),
+                      ),
+                    ),
                   ),
-              ],
+                  for (final category in MockProductRepository.categories)
+                    ListTile(
+                      title: Text(category.label),
+                      trailing: categoryId == category.id
+                          ? const Icon(Icons.check, color: AppColors.accent)
+                          : null,
+                      onTap: () => Navigator.pop(sheetContext, category.id),
+                    ),
+                ],
+              ),
             );
           },
         );

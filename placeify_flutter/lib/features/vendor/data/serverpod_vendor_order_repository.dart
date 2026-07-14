@@ -14,7 +14,7 @@ import 'vendor_order_mapper.dart';
 class ServerpodVendorOrderRepository {
   const ServerpodVendorOrderRepository();
 
-  Future<List<VendorOrder>> getOrders(String vendorId, {int limit = 50}) async {
+  Future<List<VendorOrder>> getOrders(String vendorId, {int limit = 20}) async {
     try {
       final shopOrders = await client.vendor.listShopOrders(
         limit: limit,
@@ -37,6 +37,9 @@ class ServerpodVendorOrderRepository {
       final shopOrder = await client.vendor.getShopOrder(parsedId);
       return VendorOrderMapper.fromShopOrder(shopOrder, vendorId: vendorId);
     } catch (error) {
+      if (error is PlaceifyException && error.code == 'ORDER_NOT_FOUND') {
+        return null;
+      }
       throw VendorOrderActionException(_mapError(error));
     }
   }

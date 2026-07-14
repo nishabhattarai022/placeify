@@ -1,10 +1,9 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/services/haptic_service.dart';
+import '../../../../core/widgets/local_image_preview.dart';
 import '../../../../core/widgets/placeify_bottom_sheet.dart';
 import '../../../../core/widgets/toast_overlay.dart';
 import '../../domain/models/vendor_product_image_item.dart';
@@ -54,12 +53,16 @@ class BackgroundRemovalSheet {
                     DraggableSplitPreview(
                       originalPath: current.localPath!,
                       processedPath: current.processedLocalPath!,
+                      originalBytes: current.localBytes,
+                      processedBytes: current.processedLocalBytes,
                     )
                   else if (current.localPath != null)
                     ClipRRect(
                       borderRadius: BorderRadius.circular(16),
-                      child: Image.file(
-                        File(current.localPath!),
+                      child: LocalImagePreview(
+                        source: current.localPath!,
+                        bytes: current.localBytes,
+                        fileName: current.fileName,
                         height: 200,
                         width: double.infinity,
                         fit: BoxFit.cover,

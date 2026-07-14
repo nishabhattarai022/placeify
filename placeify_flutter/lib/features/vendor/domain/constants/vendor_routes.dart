@@ -2,6 +2,7 @@ abstract final class VendorRoutes {
   static const prefix = '/vendor';
   static const dashboard = '/vendor';
   static const orders = '/vendor/orders';
+  static const ordersAll = '/vendor/orders?view=all';
 
   static String orderDetail(String orderId) => '$orders/$orderId';
 
@@ -13,6 +14,7 @@ abstract final class VendorRoutes {
   static const products = '/vendor/products';
   static const productsUpload = '/vendor/products/upload';
   static const productsBuild3d = '/vendor/products/build-3d';
+  static const productsUpload3d = '/vendor/products/upload-3d';
 
   static String productsBuild3dFor(String? productId) {
     if (productId == null || productId.isEmpty) {
@@ -38,4 +40,8 @@ abstract final class VendorRoutes {
     payments,
     profile,
   };
+
+  /// Tab roots plus the dashboard "See all orders" list view.
+  static bool isOrdersListView(Uri uri) =>
+      uri.path == orders && uri.queryParameters['view'] == 'all';
 }

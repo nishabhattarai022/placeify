@@ -67,6 +67,13 @@ class VendorEndpoint extends Endpoint {
     return _service.getMyProfile(session);
   }
 
+  Future<VendorProfileDetail> submitSuspensionAppeal(
+    Session session,
+    String message,
+  ) {
+    return _service.submitSuspensionAppeal(session, message);
+  }
+
   Future<VendorProfileDetail> updateMyProfile(
     Session session,
     VendorProfileUpdateInput input,
@@ -230,6 +237,18 @@ class VendorEndpoint extends Endpoint {
     return _service.regenerateProductModel3d(session, productId);
   }
 
+  Future<Product> deleteProduct(Session session, int productId) {
+    return _service.deleteProduct(session, productId);
+  }
+
+  Future<Product> restoreProduct(Session session, int productId) {
+    return _service.restoreProduct(session, productId);
+  }
+
+  Future<Product> archiveProduct(Session session, int productId) {
+    return _service.archiveProduct(session, productId);
+  }
+
   Future<List<VendorShopOrder>> listShopOrders(
     Session session, {
     int limit = 50,
@@ -304,5 +323,38 @@ class VendorEndpoint extends Endpoint {
 
   Future<void> markAllNotificationsRead(Session session) {
     return _service.markAllNotificationsRead(session);
+  }
+
+  Future<List<RefundRequestSummary>> listPendingRefundRequests(
+    Session session,
+  ) {
+    return _service.listPendingRefundRequests(session);
+  }
+
+  Future<RefundRequestSummary> approveRefundRequest(
+    Session session,
+    int refundId,
+  ) {
+    return _service.approveRefundRequest(session, refundId);
+  }
+
+  Future<RefundRequestSummary> rejectRefundRequest(
+    Session session,
+    int refundId, {
+    String? reason,
+  }) {
+    return _service.rejectRefundRequest(session, refundId, reason: reason);
+  }
+
+  Future<List<VendorReviewSummary>> listShopReviews(
+    Session session, {
+    int limit = 20,
+    int offset = 0,
+  }) {
+    return _service.listShopReviews(
+      session,
+      limit: limit,
+      offset: offset,
+    );
   }
 }

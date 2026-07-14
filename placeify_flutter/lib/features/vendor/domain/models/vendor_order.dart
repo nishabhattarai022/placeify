@@ -1,4 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:placeify_client/placeify_client.dart' show OrderPaymentStatus;
+import 'package:placeify_flutter/features/vendor/domain/enums/delivery_stage.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/order_status.dart';
 
 part 'vendor_order.freezed.dart';
@@ -17,6 +19,8 @@ abstract class VendorOrder with _$VendorOrder {
     required OrderStatus status,
     required String customerName,
     required DateTime orderedAt,
+    @Default(OrderPaymentStatus.unpaid) OrderPaymentStatus orderPaymentStatus,
+    DeliveryStage? currentDeliveryStage,
   }) = _VendorOrder;
 
   const VendorOrder._();
@@ -24,13 +28,35 @@ abstract class VendorOrder with _$VendorOrder {
   factory VendorOrder.fromJson(Map<String, dynamic> json) =>
       _$VendorOrderFromJson(json);
 
-  String get statusLabel => switch (status) {
-    OrderStatus.pending => 'Pending',
-    OrderStatus.accepted => 'Accepted',
-    OrderStatus.rejected => 'Rejected',
-    OrderStatus.processing => 'Processing',
-    OrderStatus.shipped => 'Shipped',
-    OrderStatus.delivered => 'Delivered',
-    OrderStatus.cancelled => 'Cancelled',
-  };
+  bool get canUpdatePayment =>
+      orderPaymentStatus == OrderPaymentStatus.unpaid;
+
+  String get displayStatusLabel {
+    if (status == OrderStatus.rejected) return 'Rejected';
+    if (status == OrderStatus.cancelled) return 'Cancelled';
+    if (currentDeliveryStage != null) {
+      return _deliveryStageLabel(currentDeliveryStage!);
+    }
+    return switch (status) {
+      OrderStatus.pending => 'Pending',
+      OrderStatus.accepted => 'Order Placed',
+      OrderStatus.processing => 'Packed',
+      OrderStatus.shipped => 'Shipped',
+      OrderStatus.delivered => 'Delivered',
+      OrderStatus.rejected => 'Rejected',
+      OrderStatus.cancelled => 'Cancelled',
+    };
+  }
+
+  String get statusLabel => displayStatusLabel;
+
+  static String _deliveryStageLabel(DeliveryStage stage) {
+    return switch (stage) {
+      DeliveryStage.orderPlaced => 'Order Placed',
+      DeliveryStage.packed => 'Packed',
+      DeliveryStage.shipped => 'Shipped',
+      DeliveryStage.outForDelivery => 'Out for Delivery',
+      DeliveryStage.delivered => 'Delivered',
+    };
+  }
 }

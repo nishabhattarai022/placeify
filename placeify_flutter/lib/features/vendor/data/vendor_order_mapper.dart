@@ -31,6 +31,10 @@ abstract final class VendorOrderMapper {
       status: mapOrderStatus(shopOrder.status),
       customerName: shopOrder.customerName,
       orderedAt: shopOrder.placedAt,
+      orderPaymentStatus: shopOrder.orderPaymentStatus,
+      currentDeliveryStage: shopOrder.currentDeliveryStage == null
+          ? null
+          : mapDeliveryStage(shopOrder.currentDeliveryStage!),
     );
   }
 

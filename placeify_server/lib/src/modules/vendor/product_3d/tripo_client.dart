@@ -11,12 +11,12 @@ import 'aws_s3_put.dart';
 /// API key: [TripoApiKeyConfig.configFileName] or [TripoApiKeyConfig.apiKeyEnv].
 abstract final class TripoClient {
   static const _baseUrl = 'https://api.tripo3d.ai/v2/openapi';
-  /// v2.5 multiview — fastest stable option for live demos (~1–2 min).
+  /// v2.5 multiview — fast generation with photo-aligned standard textures (~1–2 min).
   static const _modelVersion = 'v2.5-20250123';
   static const _pollInterval = Duration(seconds: 2);
-  static const _maxPollAttempts = 60;
+  static const _maxPollAttempts = 90;
 
-  /// Fast demo profile: textured but not extreme/PBR (saves several minutes).
+  /// Fast profile: photo-aligned diffuse textures (no PBR — avoids specular wash-out).
   static const _baseTextureParams = <String, dynamic>{
     'texture': true,
     'pbr': false,
@@ -303,11 +303,13 @@ abstract final class TripoClient {
     String apiKey,
     String taskId,
   ) async {
+    final pollStarted = DateTime.now();
     for (var attempt = 0; attempt < _maxPollAttempts; attempt++) {
       if (attempt > 0) {
         await Future<void>.delayed(_pollInterval);
       }
 
+      final elapsed = DateTime.now().difference(pollStarted);
       final response = await http.get(
         Uri.parse('$_baseUrl/task/$taskId'),
         headers: _headers(apiKey),
@@ -317,12 +319,13 @@ abstract final class TripoClient {
       final status = data['status'] as String? ?? 'unknown';
       final progress = data['progress'];
 
-      if (progress != null) {
-        session.log(
-          'Tripo task $taskId: $status ($progress%)',
-          level: LogLevel.info,
-        );
-      }
+      final progressSuffix =
+          progress != null ? ', progress=$progress%' : '';
+      session.log(
+        'Tripo task $taskId poll ${attempt + 1}/$_maxPollAttempts: '
+        '$status (${elapsed.inSeconds}s elapsed$progressSuffix)',
+        level: LogLevel.info,
+      );
 
       switch (status) {
         case 'success':
@@ -359,8 +362,10 @@ abstract final class TripoClient {
     }
 
     throw TripoClientException(
-      'Tripo generation timed out after ${(_maxPollAttempts * _pollInterval.inSeconds) ~/ 60} '
-      'minutes. Try again — Tripo may be busy.',
+      'Tripo generation timed out after '
+      '${_maxPollAttempts * _pollInterval.inSeconds ~/ 60} '
+      'minutes ($_maxPollAttempts polls × ${_pollInterval.inSeconds}s). '
+      'Try again — Tripo may be busy.',
     );
   }
 

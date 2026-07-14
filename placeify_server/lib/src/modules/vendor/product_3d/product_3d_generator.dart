@@ -1,15 +1,18 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 import 'package:serverpod/serverpod.dart';
 
 import '../../../generated/protocol.dart';
 import '../../../shared/server_static_paths.dart';
+import 'glb_material_patcher.dart';
 import 'product_3d_generation_result.dart';
 import 'product_3d_image_paths.dart';
 import 'product_3d_views.dart';
 import 'tripo_client.dart';
+import 'tripo_input_preprocessor.dart';
 import 'tripo_view_mapper.dart';
 
 /// Generates a per-product GLB via the Tripo multiview API.
@@ -72,13 +75,6 @@ class Product3dGenerator {
         );
       }
 
-      final tripoSlots = TripoViewMapper.toTripoMultiviewSlots(
-        front: views.front,
-        left: views.left,
-        back: views.back,
-        right: views.right,
-      );
-
       final slotSources = TripoViewMapper.slotSourceLabels(
         front: views.front,
         left: views.left,
@@ -87,9 +83,14 @@ class Product3dGenerator {
       );
 
       session.log(
-        'Tripo demo mode: 4 raw photos [${slotSources.join(', ')}] loaded in '
+        'Tripo: 4 raw photos [${slotSources.join(', ')}] loaded in '
         '${DateTime.now().difference(started).inMilliseconds}ms',
         level: LogLevel.info,
+      );
+
+      final tripoSlots = _preprocessViewsForTripo(
+        session,
+        views: views,
       );
 
       session.log(
@@ -106,12 +107,22 @@ class Product3dGenerator {
       );
 
       final glbBytes = await _downloadGlb(remoteModelUrl);
-      final localUrl = await _storeGlb(productId, glbBytes);
+      final patchedGlb = const GlbMaterialPatcher().patchMaterials(
+        Uint8List.fromList(glbBytes),
+      );
+      if (!identical(patchedGlb, glbBytes)) {
+        session.log(
+          'GLB material patch applied for product $productId '
+          '(${glbBytes.length} → ${patchedGlb.length} bytes)',
+          level: LogLevel.info,
+        );
+      }
+      final localUrl = await _storeGlb(productId, patchedGlb);
 
       final totalSeconds = DateTime.now().difference(started).inSeconds;
       session.log(
         'Tripo 3D model saved for product $productId at $localUrl '
-        '(demo/fast, ${totalSeconds}s total)',
+        '(${totalSeconds}s total)',
         level: LogLevel.info,
       );
       return Product3dGenerationResult.success(localUrl);
@@ -217,16 +228,58 @@ class Product3dGenerator {
     return response.bodyBytes;
   }
 
-  Future<String> _storeGlb(int productId, List<int> bytes) async {
+  Future<String> _storeGlb(int productId, Uint8List bytes) async {
     final outputDir = Directory(ServerStaticPaths.uploadsModelsDir());
     if (!outputDir.existsSync()) {
       outputDir.createSync(recursive: true);
     }
 
+    final fileName = 'product_$productId.glb';
     final outputPath =
-        '${outputDir.path}${Platform.pathSeparator}product_$productId.glb';
+        '${outputDir.path}${Platform.pathSeparator}$fileName';
     await File(outputPath).writeAsBytes(bytes);
-    return '/uploads/models/product_$productId.glb';
+
+    // Version query busts client/WebView caches after regenerate (same file path).
+    final version = DateTime.now().millisecondsSinceEpoch;
+    return '/uploads/models/$fileName?v=$version';
+  }
+
+  List<TripoViewImage?> _preprocessViewsForTripo(
+    Session session, {
+    required _ProductViews views,
+  }) {
+    final rawViews = [views.front, views.left, views.back, views.right];
+    if (rawViews.any((view) => view == null)) {
+      return TripoViewMapper.toTripoMultiviewSlots(
+        front: views.front,
+        left: views.left,
+        back: views.back,
+        right: views.right,
+      );
+    }
+
+    const labels = ['front', 'left', 'back', 'right'];
+    final preprocessor = TripoInputPreprocessor();
+    final prepared = preprocessor.prepareMultiviewCatalogFrames(
+      [
+        Uint8List.fromList(rawViews[0]!.bytes),
+        Uint8List.fromList(rawViews[1]!.bytes),
+        Uint8List.fromList(rawViews[2]!.bytes),
+        Uint8List.fromList(rawViews[3]!.bytes),
+      ],
+      session: session,
+      viewLabels: labels,
+    );
+
+    session.log(
+      'Tripo: multiview exposure normalization and framing complete',
+      level: LogLevel.info,
+    );
+
+    return [
+      for (final frame in prepared)
+        TripoViewImage(bytes: frame.bytes, format: frame.format),
+    ];
   }
 }
 

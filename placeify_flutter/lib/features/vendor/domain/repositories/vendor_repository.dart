@@ -13,7 +13,7 @@ abstract interface class VendorRepository {
 
   Future<VendorStats> getStats(String vendorId);
 
-  Future<List<VendorOrder>> getOrders(String vendorId, {int limit = 50});
+  Future<List<VendorOrder>> getOrders(String vendorId, {int limit = 20});
 
   Future<VendorOrder?> getOrder(String vendorId, String orderId);
 

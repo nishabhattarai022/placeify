@@ -1,6 +1,4 @@
-import 'package:flutter/foundation.dart';
-import 'package:placeify_client/placeify_client.dart'
-    hide Product, VendorBankDetails;
+import 'package:placeify_client/placeify_client.dart' hide Product, VendorBankDetails;
 import 'package:placeify_flutter/core/config/placeify_server_client.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_registration_field_keys.dart'
@@ -63,28 +61,10 @@ class ServerpodVendorRegistrationRepository
       );
     }
 
-    final licensePath = registration.documents.businessLicensePath;
-    final governmentIdPath = registration.documents.governmentIdPath;
-    final taxCertificatePath = registration.documents.taxCertificatePath;
-
-    if (kDebugMode) {
-      debugPrint(
-        'vendor_registration_docs '
-        'businessLicensePath=$licensePath '
-        'governmentIdPath=$governmentIdPath '
-        'taxCertificatePath=$taxCertificatePath',
-      );
-    }
-
-    final missingDocuments = <String>[
-      if (!isUploadedVendorDocument(licensePath)) 'Business License',
-      if (!isUploadedVendorDocument(governmentIdPath)) 'Government ID',
-    ];
-    if (missingDocuments.isNotEmpty) {
+    if (!isUploadedVendorDocument(registration.documents.businessLicensePath) ||
+        !isUploadedVendorDocument(registration.documents.governmentIdPath)) {
       throw VendorRegistrationException(
-        missingDocuments.length == 1
-            ? 'Upload ${missingDocuments.first} before submitting.'
-            : 'Upload ${missingDocuments.join(' and ')} before submitting.',
+        'Upload all required verification documents before submitting.',
       );
     }
 
@@ -122,16 +102,19 @@ class ServerpodVendorRegistrationRepository
           'You already have a vendor shop linked to this account.',
         'INVALID_SHOP_NAME' => 'Enter your business name.',
         'INVALID_DESCRIPTION' ||
-        'INVALID_SHOP_DESCRIPTION' => 'Add a short store description.',
-        'INVALID_PHONE' ||
-        'INVALID_PHONE_FORMAT' => 'Enter a valid phone number.',
-        'INVALID_ADDRESS' || 'MISSING_REQUIRED_FIELD' => error.message,
+        'INVALID_SHOP_DESCRIPTION' =>
+          'Add a short store description.',
+        'INVALID_PHONE' || 'INVALID_PHONE_FORMAT' =>
+          'Enter a valid phone number.',
+        'INVALID_ADDRESS' || 'MISSING_REQUIRED_FIELD' =>
+          error.message,
         'BUSINESS_NAME_TOO_SHORT' => error.message,
         'BUSINESS_NAME_TOO_LONG' => error.message,
         'INVALID_ACCOUNT_HOLDER' ||
         'INVALID_BANK_NAME' ||
         'INVALID_ACCOUNT_NUMBER' ||
-        'INVALID_BRANCH_CODE' => error.message,
+        'INVALID_BRANCH_CODE' =>
+          error.message,
         _ => error.message,
       };
     }

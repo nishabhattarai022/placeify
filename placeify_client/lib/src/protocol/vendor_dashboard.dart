@@ -24,9 +24,10 @@ abstract class VendorDashboard implements _i1.SerializableModel {
     required this.activeProductCount,
     required this.orderCount,
     required this.revenue,
+    int? pendingRefundCount,
     required this.recentOrders,
     required this.topProducts,
-  });
+  }) : pendingRefundCount = pendingRefundCount ?? 0;
 
   factory VendorDashboard({
     required _i2.Vendor shop,
@@ -34,6 +35,7 @@ abstract class VendorDashboard implements _i1.SerializableModel {
     required int activeProductCount,
     required int orderCount,
     required double revenue,
+    int? pendingRefundCount,
     required List<_i3.VendorOrderSummary> recentOrders,
     required List<_i4.VendorProductStat> topProducts,
   }) = _VendorDashboardImpl;
@@ -45,6 +47,7 @@ abstract class VendorDashboard implements _i1.SerializableModel {
       activeProductCount: jsonSerialization['activeProductCount'] as int,
       orderCount: jsonSerialization['orderCount'] as int,
       revenue: (jsonSerialization['revenue'] as num).toDouble(),
+      pendingRefundCount: jsonSerialization['pendingRefundCount'] as int?,
       recentOrders: _i5.Protocol().deserialize<List<_i3.VendorOrderSummary>>(
         jsonSerialization['recentOrders'],
       ),
@@ -64,6 +67,8 @@ abstract class VendorDashboard implements _i1.SerializableModel {
 
   double revenue;
 
+  int pendingRefundCount;
+
   List<_i3.VendorOrderSummary> recentOrders;
 
   List<_i4.VendorProductStat> topProducts;
@@ -77,6 +82,7 @@ abstract class VendorDashboard implements _i1.SerializableModel {
     int? activeProductCount,
     int? orderCount,
     double? revenue,
+    int? pendingRefundCount,
     List<_i3.VendorOrderSummary>? recentOrders,
     List<_i4.VendorProductStat>? topProducts,
   });
@@ -89,6 +95,7 @@ abstract class VendorDashboard implements _i1.SerializableModel {
       'activeProductCount': activeProductCount,
       'orderCount': orderCount,
       'revenue': revenue,
+      'pendingRefundCount': pendingRefundCount,
       'recentOrders': recentOrders.toJson(valueToJson: (v) => v.toJson()),
       'topProducts': topProducts.toJson(valueToJson: (v) => v.toJson()),
     };
@@ -107,6 +114,7 @@ class _VendorDashboardImpl extends VendorDashboard {
     required int activeProductCount,
     required int orderCount,
     required double revenue,
+    int? pendingRefundCount,
     required List<_i3.VendorOrderSummary> recentOrders,
     required List<_i4.VendorProductStat> topProducts,
   }) : super._(
@@ -115,6 +123,7 @@ class _VendorDashboardImpl extends VendorDashboard {
          activeProductCount: activeProductCount,
          orderCount: orderCount,
          revenue: revenue,
+         pendingRefundCount: pendingRefundCount,
          recentOrders: recentOrders,
          topProducts: topProducts,
        );
@@ -129,6 +138,7 @@ class _VendorDashboardImpl extends VendorDashboard {
     int? activeProductCount,
     int? orderCount,
     double? revenue,
+    int? pendingRefundCount,
     List<_i3.VendorOrderSummary>? recentOrders,
     List<_i4.VendorProductStat>? topProducts,
   }) {
@@ -138,6 +148,7 @@ class _VendorDashboardImpl extends VendorDashboard {
       activeProductCount: activeProductCount ?? this.activeProductCount,
       orderCount: orderCount ?? this.orderCount,
       revenue: revenue ?? this.revenue,
+      pendingRefundCount: pendingRefundCount ?? this.pendingRefundCount,
       recentOrders:
           recentOrders ?? this.recentOrders.map((e0) => e0.copyWith()).toList(),
       topProducts:

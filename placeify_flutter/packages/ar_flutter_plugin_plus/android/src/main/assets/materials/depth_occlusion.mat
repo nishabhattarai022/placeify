@@ -1,0 +1,42 @@
+material {
+    name : depth_occlusion,
+    shadingModel : unlit,
+    blending : opaque,
+    vertexDomain : device,
+    colorWrite : false,
+    depthWrite : true,
+    depthCulling : false,
+    culling : none,
+    parameters : [
+        {
+            type : sampler2d,
+            name : depthTexture
+        },
+        {
+            type : float4x4,
+            name : uvTransform
+        }
+    ],
+    requires : [
+        uv0
+    ]
+}
+
+fragment {
+    void material(inout MaterialInputs material) {
+        prepareMaterial(material);
+        float depth_mm = texture(materialParams_depthTexture, getUV0()).r;
+        // Zero means no depth measurement at this pixel.
+        if (depth_mm <= 0.0) {
+            discard;
+        }
+        vec4 clip = mulMat4x4Float3(getClipFromViewMatrix(), vec3(0.0, 0.0, -depth_mm / 1000.0));
+        gl_FragDepth = clip.z / clip.w;
+    }
+}
+
+vertex {
+    void materialVertex(inout MaterialVertexInputs material) {
+        material.uv0 = mulMat4x4Float3(materialParams.uvTransform, vec3(material.uv0.x, material.uv0.y, 0.f)).xy;
+    }
+}

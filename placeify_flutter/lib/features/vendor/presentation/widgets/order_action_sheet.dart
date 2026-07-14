@@ -66,19 +66,21 @@ class _OrderActionSheetBodyState extends State<_OrderActionSheetBody> {
 
     setState(() => _isSubmitting = true);
     HapticService.light();
-    Navigator.pop(widget.sheetContext);
 
-    final error = await widget.ref
+    final result = await widget.ref
         .read(vendorOrdersProvider.notifier)
         .acceptOrder(widget.order.id);
 
     if (!widget.parentContext.mounted) return;
 
-    if (error != null) {
-      PlaceifyToast.show(widget.parentContext, error);
-    } else {
-      PlaceifyToast.show(widget.parentContext, 'Order accepted ✓');
+    if (widget.sheetContext.mounted) {
+      Navigator.pop(widget.sheetContext);
     }
+
+    PlaceifyToast.show(
+      widget.parentContext,
+      result.isSuccess ? result.message! : result.error!,
+    );
   }
 
   Future<void> _reject() async {
@@ -87,7 +89,7 @@ class _OrderActionSheetBodyState extends State<_OrderActionSheetBody> {
     setState(() => _isSubmitting = true);
     HapticService.light();
 
-    final error = await widget.ref
+    final result = await widget.ref
         .read(vendorOrdersProvider.notifier)
         .rejectOrder(
           widget.order.id,
@@ -96,14 +98,17 @@ class _OrderActionSheetBodyState extends State<_OrderActionSheetBody> {
 
     if (!widget.parentContext.mounted) return;
 
-    if (error != null) {
+    if (!result.isSuccess) {
       setState(() => _isSubmitting = false);
-      PlaceifyToast.show(widget.parentContext, error);
+      PlaceifyToast.show(widget.parentContext, result.error!);
       return;
     }
 
-    Navigator.pop(widget.sheetContext);
-    PlaceifyToast.show(widget.parentContext, 'Order rejected');
+    if (widget.sheetContext.mounted) {
+      Navigator.pop(widget.sheetContext);
+    }
+
+    PlaceifyToast.show(widget.parentContext, result.message!);
   }
 
   @override

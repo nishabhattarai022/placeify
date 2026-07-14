@@ -1,99 +1,85 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:placeify_flutter/features/profile/presentation/widgets/profile_sub_hero.dart';
-import 'package:placeify_flutter/features/profile/presentation/widgets/shared/profile_form_field.dart';
-import 'package:placeify_flutter/features/profile/presentation/widgets/shared/profile_submit_button.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_review.dart';
+import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_reviews_provider.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_radii.dart';
 import '../../../core/constants/app_spacing.dart';
-import '../../../core/services/haptic_service.dart';
 import '../../../core/utils/formatters.dart';
-import '../../../core/widgets/placeify_bottom_sheet.dart';
-import '../../../core/widgets/toast_overlay.dart';
+import '../../../core/widgets/shimmer_loader.dart';
 
-class VendorReviewsScreen extends StatefulWidget {
+class VendorReviewsScreen extends ConsumerWidget {
   const VendorReviewsScreen({super.key});
 
   @override
-  State<VendorReviewsScreen> createState() => _VendorReviewsScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final reviewsAsync = ref.watch(vendorReviewsProvider);
 
-class _VendorReviewsScreenState extends State<VendorReviewsScreen> {
-  late List<VendorReview> _reviews;
-
-  @override
-  void initState() {
-    super.initState();
-    _reviews = List<VendorReview>.from(vendorMockReviews);
-  }
-
-  void _openReplySheet(VendorReview review) {
-    HapticService.light();
-    PlaceifyBottomSheet.show<void>(
-      context,
-      builder: (sheetContext) => _ReplySheet(
-        review: review,
-        onSubmit: (reply) {
-          setState(() {
-            final index = _reviews.indexWhere((item) => item.id == review.id);
-            if (index >= 0) {
-              final current = _reviews[index];
-              _reviews[index] = VendorReview(
-                id: current.id,
-                customerName: current.customerName,
-                productName: current.productName,
-                rating: current.rating,
-                comment: current.comment,
-                createdAt: current.createdAt,
-                vendorReply: reply,
-              );
-            }
-          });
-          Navigator.pop(sheetContext);
-          PlaceifyToast.show(context, 'Reply posted ✓');
-        },
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.cream,
-      body: CustomScrollView(
-        slivers: [
-          const SliverToBoxAdapter(child: ProfileSubHero(title: 'Reviews')),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, AppSpacing.xxl),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate(
-                _reviews
-                    .map(
-                      (review) => _ReviewCard(
-                        review: review,
-                        onReply: () => _openReplySheet(review),
-                      ),
-                    )
-                    .toList(),
+      body: reviewsAsync.when(
+        loading: () => const CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(child: ProfileSubHero(title: 'Reviews')),
+            SliverFillRemaining(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: ShimmerLoader(borderRadius: AppRadii.lg),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
+        error: (_, __) => CustomScrollView(
+          slivers: [
+            const SliverToBoxAdapter(child: ProfileSubHero(title: 'Reviews')),
+            SliverFillRemaining(
+              child: Center(
+                child: TextButton(
+                  onPressed: () => ref.invalidate(vendorReviewsProvider),
+                  child: const Text('Try again'),
+                ),
+              ),
+            ),
+          ],
+        ),
+        data: (reviews) => CustomScrollView(
+          slivers: [
+            const SliverToBoxAdapter(child: ProfileSubHero(title: 'Reviews')),
+            if (reviews.isEmpty)
+              const SliverFillRemaining(
+                child: Center(
+                  child: Text(
+                    'No reviews yet',
+                    style: TextStyle(color: AppColors.textMuted),
+                  ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding:
+                    const EdgeInsets.fromLTRB(24, 24, 24, AppSpacing.xxl),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) =>
+                        _ReviewCard(review: reviews[index]),
+                    childCount: reviews.length,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _ReviewCard extends StatelessWidget {
-  const _ReviewCard({
-    required this.review,
-    required this.onReply,
-  });
+  const _ReviewCard({required this.review});
 
   final VendorReview review;
-  final VoidCallback onReply;
 
   @override
   Widget build(BuildContext context) {
@@ -152,110 +138,8 @@ class _ReviewCard extends StatelessWidget {
               height: 1.4,
             ),
           ),
-          if (review.vendorReply != null) ...[
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.cream,
-                borderRadius: AppRadii.md,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Your reply',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    review.vendorReply!,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textPrimary,
-                      height: 1.35,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: onReply,
-              child: Text(review.vendorReply == null ? 'Reply' : 'Edit reply'),
-            ),
-          ),
         ],
       ),
-    );
-  }
-}
-
-class _ReplySheet extends StatefulWidget {
-  const _ReplySheet({
-    required this.review,
-    required this.onSubmit,
-  });
-
-  final VendorReview review;
-  final ValueChanged<String> onSubmit;
-
-  @override
-  State<_ReplySheet> createState() => _ReplySheetState();
-}
-
-class _ReplySheetState extends State<_ReplySheet> {
-  late final TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.review.vendorReply ?? '');
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        PlaceifyBottomSheetHeader(
-          title: 'Reply to ${widget.review.customerName}',
-          subtitle: widget.review.productName,
-        ),
-        const SizedBox(height: 12),
-        ProfileFormField(
-          label: 'Your response',
-          child: ProfileTextInput(
-            controller: _controller,
-            hint: 'Thank the customer or address their feedback',
-            maxLines: 4,
-          ),
-        ),
-        const SizedBox(height: 16),
-        ProfileSubmitButton(
-          label: 'Post reply',
-          onPressed: () {
-            final reply = _controller.text.trim();
-            if (reply.isEmpty) return;
-            widget.onSubmit(reply);
-          },
-        ),
-      ],
     );
   }
 }

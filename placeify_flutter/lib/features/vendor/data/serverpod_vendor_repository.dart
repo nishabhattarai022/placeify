@@ -17,8 +17,8 @@ class ServerpodVendorRepository implements VendorRepository {
   const ServerpodVendorRepository({
     ServerpodVendorOrderRepository? orderRepository,
     ServerpodVendorProfileRepository? profileRepository,
-  }) : _orders = orderRepository ?? const ServerpodVendorOrderRepository(),
-       _profile = profileRepository ?? const ServerpodVendorProfileRepository();
+  })  : _orders = orderRepository ?? const ServerpodVendorOrderRepository(),
+        _profile = profileRepository ?? const ServerpodVendorProfileRepository();
 
   final ServerpodVendorOrderRepository _orders;
   final ServerpodVendorProfileRepository _profile;
@@ -35,7 +35,7 @@ class ServerpodVendorRepository implements VendorRepository {
   Future<VendorStats> getStats(String vendorId) => _profile.getStats(vendorId);
 
   @override
-  Future<List<VendorOrder>> getOrders(String vendorId, {int limit = 50}) =>
+  Future<List<VendorOrder>> getOrders(String vendorId, {int limit = 20}) =>
       _orders.getOrders(vendorId, limit: limit);
 
   @override
@@ -51,7 +51,8 @@ class ServerpodVendorRepository implements VendorRepository {
     String vendorId,
     String orderId, {
     required String reason,
-  }) => _orders.rejectOrder(vendorId, orderId, reason: reason);
+  }) =>
+      _orders.rejectOrder(vendorId, orderId, reason: reason);
 
   @override
   Future<List<DeliveryUpdate>> getDeliveryUpdates(String orderId) =>
@@ -64,13 +65,14 @@ class ServerpodVendorRepository implements VendorRepository {
     required DeliveryStage stage,
     String? note,
     String? photoProofPath,
-  }) => _orders.submitDeliveryUpdate(
-    vendorId,
-    orderId,
-    stage: stage,
-    note: note,
-    photoProofPath: photoProofPath,
-  );
+  }) =>
+      _orders.submitDeliveryUpdate(
+        vendorId,
+        orderId,
+        stage: stage,
+        note: note,
+        photoProofPath: photoProofPath,
+      );
 
   @override
   Future<List<VendorNotification>> getNotifications(String vendorId) async {

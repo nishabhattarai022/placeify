@@ -17,9 +17,9 @@ class HybridVendorRepository implements VendorRepository {
     required MockVendorRepository mockRepository,
     ServerpodVendorOrderRepository? orderRepository,
     ServerpodVendorProfileRepository? profileRepository,
-  }) : _mock = mockRepository,
-       _orders = orderRepository ?? const ServerpodVendorOrderRepository(),
-       _profile = profileRepository ?? const ServerpodVendorProfileRepository();
+  })  : _mock = mockRepository,
+        _orders = orderRepository ?? const ServerpodVendorOrderRepository(),
+        _profile = profileRepository ?? const ServerpodVendorProfileRepository();
 
   final MockVendorRepository _mock;
   final ServerpodVendorOrderRepository _orders;
@@ -37,7 +37,7 @@ class HybridVendorRepository implements VendorRepository {
   Future<VendorStats> getStats(String vendorId) => _profile.getStats(vendorId);
 
   @override
-  Future<List<VendorOrder>> getOrders(String vendorId, {int limit = 50}) =>
+  Future<List<VendorOrder>> getOrders(String vendorId, {int limit = 20}) =>
       _orders.getOrders(vendorId, limit: limit);
 
   @override
@@ -53,7 +53,8 @@ class HybridVendorRepository implements VendorRepository {
     String vendorId,
     String orderId, {
     required String reason,
-  }) => _orders.rejectOrder(vendorId, orderId, reason: reason);
+  }) =>
+      _orders.rejectOrder(vendorId, orderId, reason: reason);
 
   @override
   Future<List<DeliveryUpdate>> getDeliveryUpdates(String orderId) =>
@@ -66,23 +67,26 @@ class HybridVendorRepository implements VendorRepository {
     required DeliveryStage stage,
     String? note,
     String? photoProofPath,
-  }) => _orders.submitDeliveryUpdate(
-    vendorId,
-    orderId,
-    stage: stage,
-    note: note,
-    photoProofPath: photoProofPath,
-  );
+  }) =>
+      _orders.submitDeliveryUpdate(
+        vendorId,
+        orderId,
+        stage: stage,
+        note: note,
+        photoProofPath: photoProofPath,
+      );
 
   @override
   Future<List<VendorNotification>> getNotifications(String vendorId) =>
       _mock.getNotifications(vendorId);
 
   @override
-  Future<void> markNotificationRead(String notificationId) async {}
+  Future<void> markNotificationRead(String notificationId) =>
+      _mock.markNotificationRead(notificationId);
 
   @override
-  Future<void> markAllNotificationsRead() async {}
+  Future<void> markAllNotificationsRead() =>
+      _mock.markAllNotificationsRead();
 
   @override
   Future<List<VendorPayout>> getPayouts(String vendorId) =>
