@@ -2270,6 +2270,25 @@ class Endpoints extends _i1.EndpointDispatch {
               ) async => (endpoints['vendor'] as _i19.VendorEndpoint)
                   .getMyProfile(session),
         ),
+        'submitSuspensionAppeal': _i1.MethodConnector(
+          name: 'submitSuspensionAppeal',
+          params: {
+            'message': _i1.ParameterDescription(
+              name: 'message',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['vendor'] as _i19.VendorEndpoint)
+                  .submitSuspensionAppeal(
+                    session,
+                    params['message'],
+                  ),
+        ),
         'updateMyProfile': _i1.MethodConnector(
           name: 'updateMyProfile',
           params: {
@@ -2695,6 +2714,63 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['productId'],
                   ),
         ),
+        'deleteProduct': _i1.MethodConnector(
+          name: 'deleteProduct',
+          params: {
+            'productId': _i1.ParameterDescription(
+              name: 'productId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i19.VendorEndpoint).deleteProduct(
+                    session,
+                    params['productId'],
+                  ),
+        ),
+        'restoreProduct': _i1.MethodConnector(
+          name: 'restoreProduct',
+          params: {
+            'productId': _i1.ParameterDescription(
+              name: 'productId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i19.VendorEndpoint).restoreProduct(
+                    session,
+                    params['productId'],
+                  ),
+        ),
+        'archiveProduct': _i1.MethodConnector(
+          name: 'archiveProduct',
+          params: {
+            'productId': _i1.ParameterDescription(
+              name: 'productId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i19.VendorEndpoint).archiveProduct(
+                    session,
+                    params['productId'],
+                  ),
+        ),
         'listShopOrders': _i1.MethodConnector(
           name: 'listShopOrders',
           params: {
@@ -2917,6 +2993,85 @@ class Endpoints extends _i1.EndpointDispatch {
                 Map<String, dynamic> params,
               ) async => (endpoints['vendor'] as _i19.VendorEndpoint)
                   .markAllNotificationsRead(session),
+        ),
+        'listPendingRefundRequests': _i1.MethodConnector(
+          name: 'listPendingRefundRequests',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['vendor'] as _i19.VendorEndpoint)
+                  .listPendingRefundRequests(session),
+        ),
+        'approveRefundRequest': _i1.MethodConnector(
+          name: 'approveRefundRequest',
+          params: {
+            'refundId': _i1.ParameterDescription(
+              name: 'refundId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['vendor'] as _i19.VendorEndpoint)
+                  .approveRefundRequest(
+                    session,
+                    params['refundId'],
+                  ),
+        ),
+        'rejectRefundRequest': _i1.MethodConnector(
+          name: 'rejectRefundRequest',
+          params: {
+            'refundId': _i1.ParameterDescription(
+              name: 'refundId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'reason': _i1.ParameterDescription(
+              name: 'reason',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['vendor'] as _i19.VendorEndpoint)
+                  .rejectRefundRequest(
+                    session,
+                    params['refundId'],
+                    reason: params['reason'],
+                  ),
+        ),
+        'listShopReviews': _i1.MethodConnector(
+          name: 'listShopReviews',
+          params: {
+            'limit': _i1.ParameterDescription(
+              name: 'limit',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'offset': _i1.ParameterDescription(
+              name: 'offset',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['vendor'] as _i19.VendorEndpoint).listShopReviews(
+                    session,
+                    limit: params['limit'],
+                    offset: params['offset'],
+                  ),
         ),
       },
     );

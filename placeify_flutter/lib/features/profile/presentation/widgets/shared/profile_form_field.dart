@@ -64,7 +64,6 @@ class ProfileTextInput extends StatelessWidget {
     this.validator,
     this.fieldKey,
     this.hasError = false,
-    this.readOnly = false,
     super.key,
   });
 
@@ -80,7 +79,6 @@ class ProfileTextInput extends StatelessWidget {
   final FormFieldValidator<String>? validator;
   final GlobalKey<FormFieldState<String>>? fieldKey;
   final bool hasError;
-  final bool readOnly;
 
   InputDecoration _decoration() {
     final borderRadius = BorderRadius.circular(14);
@@ -131,7 +129,6 @@ class ProfileTextInput extends StatelessWidget {
         key: fieldKey,
         controller: controller,
         obscureText: obscureText,
-        readOnly: readOnly,
         onChanged: onChanged,
         onEditingComplete: onEditingComplete,
         keyboardType: keyboardType,
@@ -146,7 +143,6 @@ class ProfileTextInput extends StatelessWidget {
     return TextField(
       controller: controller,
       obscureText: obscureText,
-      readOnly: readOnly,
       onChanged: onChanged,
       onEditingComplete: onEditingComplete,
       keyboardType: keyboardType,
@@ -183,10 +179,7 @@ class ProfileDropdown extends StatelessWidget {
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
-          icon: const Icon(
-            Icons.keyboard_arrow_down,
-            color: AppColors.espresso,
-          ),
+          icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.espresso),
           style: const TextStyle(
             fontSize: 14,
             color: AppColors.espresso,

@@ -2,9 +2,6 @@
 
 Consumer-facing Serverpod endpoints used by the user dashboard and profile flows.
 
-**Canonical contract (source of truth):** [CONSUMER_API_CONTRACT.md](./CONSUMER_API_CONTRACT.md)  
-**Screen mapping:** [USER_FRONTEND_BACKEND_MATRIX.md](./USER_FRONTEND_BACKEND_MATRIX.md)
-
 **Base URL (local):** `http://localhost:8080`  
 **Auth:** All endpoints below require a valid JWT unless marked public. Send the access token via Serverpod client auth (`client.auth`).
 
@@ -35,13 +32,8 @@ Module: `user` endpoint · Tables: `user`, `order`, `wishlist_item`, `ar_session
 |----------|------|-------------|----------|
 | `user.getCurrentUser` | Yes | Load Placeify profile for signed-in auth user | `User?` |
 | `user.updateProfile` | Yes | Update name, phone, address | `User` |
-| `user.uploadProfileImage` | Yes | Upload profile photo (`ByteData`, file name) | `User` with `profileImageUrl` |
 | `user.getDashboard` | Yes | Aggregated dashboard metrics | `UserDashboard` |
 | `user.listMyOrders` | Yes | Paginated order history | `List<UserOrderSummary>` |
-| `user.getMyOrder` | Yes | Order detail with items and delivery timeline | `UserOrderDetail` |
-| `user.cancelMyOrder` | Yes | Cancel a pending/confirmed order (`orderId`, `reason`) | `UserOrderDetail` |
-| `user.getMyOrderPayment` | Yes | Payment status for an order | `UserOrderPaymentSummary` |
-| `user.completePayment` | Yes | **Disabled in production flow** — throws `FORBIDDEN`; vendor updates payment after checkout. See [USER_FRONTEND_BACKEND_MATRIX.md](./USER_FRONTEND_BACKEND_MATRIX.md). | — |
 | `user.listMyArSessions` | Yes | AR try-on history | `List<UserArSessionSummary>` |
 | `user.becomeVendor` | Yes | Switch role to vendor (requires shop) | `User` |
 | `user.becomeConsumer` | Yes | Switch role back to consumer | `User` |
@@ -51,7 +43,7 @@ Module: `user` endpoint · Tables: `user`, `order`, `wishlist_item`, `ar_session
 | Field | Source |
 |-------|--------|
 | `profile` | `user` row |
-| `orderCount` | Count of non-cancelled `order` rows for user (excludes `cancelled`, `autoCancelled`, `rejected`) |
+| `orderCount` | Count of `order` for user |
 | `wishlistCount` | Count of `wishlist_item` for user |
 | `cartItemCount` | Total quantity of items in the user's cart |
 | `arSessionCount` | Count of `ar_session` for user |
@@ -107,47 +99,14 @@ Module: `refund` endpoint · Table: `refund_request`
 
 ---
 
-## Product catalog
-
-Module: `product` endpoint
-
-| Endpoint | Auth | Description |
-|----------|------|-------------|
-| `product.listCategories` | Public | Canonical browse categories |
-| `product.searchProducts` | Public | Paginated catalog search |
-| `product.getProduct` | Public | Product detail |
-| `product.listApprovedShops` | Public | Approved vendor shop cards for suppliers/discovery UI |
-
-Each `Product` in list/detail responses includes:
-- `averageRating` (`0.0` when no reviews)
-- `reviewCount` (`0` when no reviews)
-- nested `vendor` and `category` when loaded by the repository
-
----
-
-## Customization requests
-
-Module: `customization` endpoint · Table: `customization_request`
-
-| Endpoint | Auth | Description |
-|----------|------|-------------|
-| `customization.createRequest` | Yes | Open a customization request for a product (`productId`, `description`, optional `attachmentUrl`) |
-| `customization.listMyRequests` | Yes | List requests created by the signed-in user |
-
----
-
 ## Related commerce APIs (used by user flows)
 
 | Module | Key endpoints |
 |--------|----------------|
 | `cart` | `getCartItems`, `addToCart`, `updateCartItemQuantity`, `removeFromCart`, `clearCart` |
-| `checkout` | `checkout` — creates `order` + `order_item` rows, clears cart, records `paymentMethod`, notifies vendors |
-| `product` | `searchProducts`, `getProduct`, `listCategories`, `listApprovedShops` |
-| `review` | `submitReview`, `listProductReviews` |
-| `customization` | `createRequest`, `listMyRequests` |
-| `notification` | `getPreferences`, `updatePreferences`, `listInAppNotifications`, `unreadInAppNotificationCount`, `markInAppNotificationRead`, `markAllInAppNotificationsRead` |
-
-> **Frontend ↔ backend mapping:** See [USER_FRONTEND_BACKEND_MATRIX.md](./USER_FRONTEND_BACKEND_MATRIX.md) for per-screen endpoints, payload shapes, enum mappings, and wiring status.
+| `checkout` | `checkout` — creates `order` + `order_item` rows, clears cart |
+| `product` | `searchProducts`, `getProduct` |
+| `notification` | `getPreferences`, `updatePreferences` |
 
 ### Cart & checkout rules
 
@@ -200,8 +159,6 @@ dart test
 | `test/integration/wishlist_endpoint_test.dart` | Wishlist list + toggle |
 | `test/integration/refund_endpoint_test.dart` | Refund create + list + dashboard count |
 | `test/integration/checkout_flow_endpoint_test.dart` | Cart add → checkout → order list + dashboard |
-| `test/integration/user_payment_flow_test.dart` | Checkout payment pending → vendor payment update (consumer `completePayment` is disabled) |
-| `test/integration/vendor_starter_catalog_test.dart` | Vendor-listed product → consumer checkout → appears in shop orders |
 
 ---
 

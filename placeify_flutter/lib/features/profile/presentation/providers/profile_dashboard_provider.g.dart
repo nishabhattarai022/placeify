@@ -80,7 +80,7 @@ final class ProfileDashboardProvider
   ProfileDashboard create() => ProfileDashboard();
 }
 
-String _$profileDashboardHash() => r'9c1cd0ad56d1b9acb8aa6e718b67ec3f6211e590';
+String _$profileDashboardHash() => r'c174bc662c4977e8404f904f744e76f81ca18069';
 
 abstract class _$ProfileDashboard extends $AsyncNotifier<UserDashboard?> {
   FutureOr<UserDashboard?> build();
@@ -93,6 +93,55 @@ abstract class _$ProfileDashboard extends $AsyncNotifier<UserDashboard?> {
             as $ClassProviderElement<
               AnyNotifier<AsyncValue<UserDashboard?>, UserDashboard?>,
               AsyncValue<UserDashboard?>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(ProfileOrders)
+final profileOrdersProvider = ProfileOrdersProvider._();
+
+final class ProfileOrdersProvider
+    extends $AsyncNotifierProvider<ProfileOrders, List<UserOrderSummary>> {
+  ProfileOrdersProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'profileOrdersProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$profileOrdersHash();
+
+  @$internal
+  @override
+  ProfileOrders create() => ProfileOrders();
+}
+
+String _$profileOrdersHash() => r'9abd1cf446d8982522e61b0fe04fd0c61a9313ea';
+
+abstract class _$ProfileOrders extends $AsyncNotifier<List<UserOrderSummary>> {
+  FutureOr<List<UserOrderSummary>> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref =
+        this.ref
+            as $Ref<AsyncValue<List<UserOrderSummary>>, List<UserOrderSummary>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<
+                AsyncValue<List<UserOrderSummary>>,
+                List<UserOrderSummary>
+              >,
+              AsyncValue<List<UserOrderSummary>>,
               Object?,
               Object?
             >;

@@ -65,7 +65,7 @@ final class RoomCategoryProductsProvider
 }
 
 String _$roomCategoryProductsHash() =>
-    r'f10fcb7c82bb10b8a904c4f1dbde9e2b95c7a594';
+    r'4caefe687853394a1259a87d49ef82770608a8be';
 
 final class RoomCategoryProductsFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<Product>>, String> {

@@ -115,6 +115,7 @@ vendor:
   - getMyBankDetails:
   - saveMyBankDetails:
   - getMyProfile:
+  - submitSuspensionAppeal:
   - updateMyProfile:
   - uploadShopLogo:
   - uploadShopBanner:
@@ -129,6 +130,9 @@ vendor:
   - updateProductThumbnail:
   - uploadProductImage:
   - regenerateProductModel3d:
+  - deleteProduct:
+  - restoreProduct:
+  - archiveProduct:
   - listShopOrders:
   - getShopOrder:
   - acceptShopOrder:
@@ -139,6 +143,10 @@ vendor:
   - listNotifications:
   - markNotificationRead:
   - markAllNotificationsRead:
+  - listPendingRefundRequests:
+  - approveRefundRequest:
+  - rejectRefundRequest:
+  - listShopReviews:
 wishlist:
   - listMyWishlist:
   - addToWishlist:

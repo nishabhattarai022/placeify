@@ -28,20 +28,16 @@ class WishlistGridView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final wishlist = ref.watch(wishlistProvider);
-    final savedAt = wishlist.savedAt;
+    final savedAt = ref.watch(wishlistProvider);
     final sort = ref.watch(wishlistSortProvider);
     final byId = {
       for (final p in MockProductRepository.products) p.id: p,
     };
-    final resolvedProducts = wishlist.products.isNotEmpty
-        ? wishlist.products
-        : [
-            for (final id in savedAt.keys)
-              if (byId.containsKey(id)) byId[id]!,
-          ];
     final sortedProducts = sortWishlistProducts(
-      products: resolvedProducts,
+      products: [
+        for (final id in savedAt.keys)
+          if (byId.containsKey(id)) byId[id]!,
+      ],
       savedAt: savedAt,
       sort: sort,
     );
@@ -100,7 +96,7 @@ class WishlistGridView extends ConsumerWidget {
                 bottom,
               ),
               itemCount: products.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 32),
+              separatorBuilder: (_, __) => const SizedBox(height: 32),
               itemBuilder: (context, index) {
                 final product = products[index];
                 return CategoryProductListTile(

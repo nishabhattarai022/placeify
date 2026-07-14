@@ -150,6 +150,8 @@ import 'package:placeify_server/src/generated/review.dart' as _i122;
 import 'package:placeify_server/src/generated/vendor_shop_order.dart' as _i123;
 import 'package:placeify_server/src/generated/vendor_notification_summary.dart'
     as _i124;
+import 'package:placeify_server/src/generated/vendor_review_summary.dart'
+    as _i125;
 export 'admin.dart';
 export 'admin_action_type.dart';
 export 'admin_audit_log.dart';
@@ -3354,6 +3356,18 @@ class Protocol extends _i1.SerializationManagerServer {
           columnDefault: '0',
         ),
         _i2.ColumnDefinition(
+          name: 'approvedById',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'approvedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _i2.ColumnDefinition(
           name: 'moderationNote',
           columnType: _i2.ColumnType.text,
           isNullable: true,
@@ -3373,18 +3387,6 @@ class Protocol extends _i1.SerializationManagerServer {
         ),
         _i2.ColumnDefinition(
           name: 'appealSubmittedAt',
-          columnType: _i2.ColumnType.timestampWithoutTimeZone,
-          isNullable: true,
-          dartType: 'DateTime?',
-        ),
-        _i2.ColumnDefinition(
-          name: 'approvedById',
-          columnType: _i2.ColumnType.uuid,
-          isNullable: true,
-          dartType: 'UuidValue?',
-        ),
-        _i2.ColumnDefinition(
-          name: 'approvedAt',
           columnType: _i2.ColumnType.timestampWithoutTimeZone,
           isNullable: true,
           dartType: 'DateTime?',
@@ -4791,6 +4793,12 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == List<_i124.VendorNotificationSummary>) {
       return (data as List)
               .map((e) => deserialize<_i124.VendorNotificationSummary>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i125.VendorReviewSummary>) {
+      return (data as List)
+              .map((e) => deserialize<_i125.VendorReviewSummary>(e))
               .toList()
           as T;
     }

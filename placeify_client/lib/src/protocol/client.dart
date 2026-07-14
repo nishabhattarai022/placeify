@@ -98,9 +98,11 @@ import 'package:placeify_client/src/protocol/vendor_shop_order.dart' as _i61;
 import 'package:placeify_client/src/protocol/delivery_stage.dart' as _i62;
 import 'package:placeify_client/src/protocol/vendor_notification_summary.dart'
     as _i63;
-import 'package:placeify_client/src/protocol/wishlist_page.dart' as _i64;
-import 'package:placeify_client/src/protocol/wishlist_item.dart' as _i65;
-import 'protocol.dart' as _i66;
+import 'package:placeify_client/src/protocol/vendor_review_summary.dart'
+    as _i64;
+import 'package:placeify_client/src/protocol/wishlist_page.dart' as _i65;
+import 'package:placeify_client/src/protocol/wishlist_item.dart' as _i66;
+import 'protocol.dart' as _i67;
 
 /// Unauthenticated admin authorization endpoint.
 /// {@category Endpoint}
@@ -1323,6 +1325,13 @@ class EndpointVendor extends _i1.EndpointRef {
         {},
       );
 
+  _i2.Future<_i50.VendorProfileDetail> submitSuspensionAppeal(String message) =>
+      caller.callServerEndpoint<_i50.VendorProfileDetail>(
+        'vendor',
+        'submitSuspensionAppeal',
+        {'message': message},
+      );
+
   _i2.Future<_i50.VendorProfileDetail> updateMyProfile(
     _i58.VendorProfileUpdateInput input,
   ) => caller.callServerEndpoint<_i50.VendorProfileDetail>(
@@ -1514,6 +1523,27 @@ class EndpointVendor extends _i1.EndpointRef {
         {'productId': productId},
       );
 
+  _i2.Future<_i20.Product> deleteProduct(int productId) =>
+      caller.callServerEndpoint<_i20.Product>(
+        'vendor',
+        'deleteProduct',
+        {'productId': productId},
+      );
+
+  _i2.Future<_i20.Product> restoreProduct(int productId) =>
+      caller.callServerEndpoint<_i20.Product>(
+        'vendor',
+        'restoreProduct',
+        {'productId': productId},
+      );
+
+  _i2.Future<_i20.Product> archiveProduct(int productId) =>
+      caller.callServerEndpoint<_i20.Product>(
+        'vendor',
+        'archiveProduct',
+        {'productId': productId},
+      );
+
   _i2.Future<List<_i61.VendorShopOrder>> listShopOrders({
     required int limit,
     required int offset,
@@ -1610,6 +1640,44 @@ class EndpointVendor extends _i1.EndpointRef {
         'markAllNotificationsRead',
         {},
       );
+
+  _i2.Future<List<_i53.RefundRequestSummary>> listPendingRefundRequests() =>
+      caller.callServerEndpoint<List<_i53.RefundRequestSummary>>(
+        'vendor',
+        'listPendingRefundRequests',
+        {},
+      );
+
+  _i2.Future<_i53.RefundRequestSummary> approveRefundRequest(int refundId) =>
+      caller.callServerEndpoint<_i53.RefundRequestSummary>(
+        'vendor',
+        'approveRefundRequest',
+        {'refundId': refundId},
+      );
+
+  _i2.Future<_i53.RefundRequestSummary> rejectRefundRequest(
+    int refundId, {
+    String? reason,
+  }) => caller.callServerEndpoint<_i53.RefundRequestSummary>(
+    'vendor',
+    'rejectRefundRequest',
+    {
+      'refundId': refundId,
+      'reason': reason,
+    },
+  );
+
+  _i2.Future<List<_i64.VendorReviewSummary>> listShopReviews({
+    required int limit,
+    required int offset,
+  }) => caller.callServerEndpoint<List<_i64.VendorReviewSummary>>(
+    'vendor',
+    'listShopReviews',
+    {
+      'limit': limit,
+      'offset': offset,
+    },
+  );
 }
 
 /// Wishlist management for authenticated customers.
@@ -1620,16 +1688,16 @@ class EndpointWishlist extends _i1.EndpointRef {
   @override
   String get name => 'wishlist';
 
-  _i2.Future<_i64.WishlistPage> listMyWishlist({
+  _i2.Future<_i65.WishlistPage> listMyWishlist({
     _i40.PaginationInput? pagination,
-  }) => caller.callServerEndpoint<_i64.WishlistPage>(
+  }) => caller.callServerEndpoint<_i65.WishlistPage>(
     'wishlist',
     'listMyWishlist',
     {'pagination': pagination},
   );
 
-  _i2.Future<_i65.WishlistItem> addToWishlist(int productId) =>
-      caller.callServerEndpoint<_i65.WishlistItem>(
+  _i2.Future<_i66.WishlistItem> addToWishlist(int productId) =>
+      caller.callServerEndpoint<_i66.WishlistItem>(
         'wishlist',
         'addToWishlist',
         {'productId': productId},
@@ -1688,7 +1756,7 @@ class Client extends _i1.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i66.Protocol(),
+         _i67.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,

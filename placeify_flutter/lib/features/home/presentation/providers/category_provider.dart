@@ -1,9 +1,11 @@
-import 'package:placeify_flutter/data/furniture_categories.dart';
 import 'package:placeify_flutter/features/shops/data/mock_consumer_shop_repository.dart';
+import 'package:placeify_flutter/features/shops/data/vendor_product_mapper.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../data/mock_product_repository.dart';
 import '../../domain/models/category.dart';
 import '../../domain/models/product.dart';
+import '../../../shops/presentation/providers/consumer_shop_provider.dart';
 import 'catalog_provider.dart';
 
 part 'category_provider.g.dart';
@@ -19,34 +21,65 @@ class SelectedCategory extends _$SelectedCategory {
 @riverpod
 List<ProductCategory> categories(Ref ref) {
   ref.watch(catalogIndexProvider);
-  return [
-    for (final category in furnitureCategories)
-      ProductCategory(
-        id: category.id,
-        label: category.name,
-        svgIconAssetPath: category.svgIconAssetPath,
-        isActive: category.id == 'chairs',
-      ),
+  return const [
+    ProductCategory(id: 'chairs', label: 'Chairs', svgIconAssetPath: 'assets/icons/ic_chair.svg'),
+    ProductCategory(id: 'sofas', label: 'Sofas', svgIconAssetPath: 'assets/icons/ic_sofa.svg'),
+    ProductCategory(id: 'tables', label: 'Tables', svgIconAssetPath: 'assets/icons/ic_table.svg'),
+    ProductCategory(id: 'desks', label: 'Desks', svgIconAssetPath: 'assets/icons/ic_table.svg'),
+    ProductCategory(id: 'beds', label: 'Beds', svgIconAssetPath: 'assets/icons/ic_bed.svg'),
+    ProductCategory(id: 'storage', label: 'Storage', svgIconAssetPath: 'assets/icons/ic_package.svg'),
+    ProductCategory(id: 'lighting', label: 'Lighting', svgIconAssetPath: 'assets/icons/ic_lamp.svg'),
+    ProductCategory(id: 'outdoor', label: 'Outdoor', svgIconAssetPath: 'assets/icons/ic_plant.svg'),
   ];
 }
 
 @riverpod
 List<Product> filteredProducts(Ref ref) {
   final categoryId = ref.watch(selectedCategoryProvider);
-  ref.watch(catalogIndexProvider);
-  return ref.watch(browseCategoryProductsProvider(categoryId));
+  return ref.watch(catalogProductsByCategoryProvider(categoryId));
 }
 
 @riverpod
 Product? productById(Ref ref, String id) {
-  final fromCatalog = ref.watch(catalogIndexProvider).value?[id];
-  if (fromCatalog != null) return fromCatalog;
+  final catalog = ref.watch(catalogIndexProvider).value;
+  if (catalog != null) {
+    final direct = catalog[id];
+    if (direct != null) return direct;
 
-  return MockConsumerShopRepository.productByIdSync(id);
+    if (VendorProductMapper.isShopProductId(id)) {
+      final parsed = VendorProductMapper.parseConsumerProductId(id);
+      if (parsed != null) {
+        final base = catalog[parsed.productId];
+        if (base != null) {
+          return base.copyWith(id: id, vendorId: parsed.vendorId);
+        }
+      }
+    }
+  }
+
+  final shopProduct = ref.watch(shopProductByConsumerIdProvider(id)).value;
+  if (shopProduct != null) return shopProduct;
+
+  // Sync fallback keeps My AR / browse working when catalog is still loading
+  // or the backend is unreachable.
+  try {
+    return MockProductRepository.products.firstWhere((p) => p.id == id);
+  } catch (_) {
+    return MockConsumerShopRepository.productByIdSync(id);
+  }
 }
 
+const _categoryLabels = <String, String>{
+  'chairs': 'Chairs',
+  'sofas': 'Sofas',
+  'tables': 'Tables',
+  'desks': 'Desks',
+  'beds': 'Beds',
+  'storage': 'Storage',
+  'lighting': 'Lighting',
+  'outdoor': 'Outdoor',
+};
+
 String categoryTitle(String categoryId) {
-  final category = furnitureCategoryById(categoryId);
-  if (category != null) return category.name;
-  return categoryId;
+  return _categoryLabels[categoryId] ?? 'Chairs';
 }

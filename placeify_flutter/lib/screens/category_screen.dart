@@ -91,271 +91,117 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final catalogAsync = ref.watch(catalogIndexProvider);
+    final products = _sortedProducts(
+      ref.watch(browseCategoryProductsProvider(widget.category.id)),
+    );
     final displayName = categoryDisplayName(widget.category);
+    final titleCount = products.isNotEmpty
+        ? products.length
+        : widget.category.itemCount;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9F8F4),
       body: SafeArea(
-        child: catalogAsync.when(
-          loading: () => _CategoryLoadingScaffold(
-            displayName: displayName,
-            onBack: () => context.pop(),
-          ),
-          error: (_, _) => _CategoryErrorScaffold(
-            displayName: displayName,
-            onBack: () => context.pop(),
-            onRetry: () => ref.invalidate(catalogIndexProvider),
-          ),
-          data: (_) {
-            final products = _sortedProducts(
-              ref.watch(browseCategoryProductsProvider(widget.category.id)),
-            );
-            final titleCount = products.isNotEmpty
-                ? products.length
-                : widget.category.itemCount;
-
-            return CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Row(
-                          children: [
-                            IconButton(
-                              onPressed: () => context.pop(),
-                              icon: const Icon(
-                                Icons.arrow_back_ios_new_rounded,
-                                size: 20,
-                                color: Colors.black87,
-                              ),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(
-                                minWidth: 40,
-                                minHeight: 40,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Text(
-                          '$displayName ($titleCount)',
-                          style: GoogleFonts.dmSans(
-                            fontSize: 34,
-                            fontWeight: FontWeight.w700,
+                        IconButton(
+                          onPressed: () => context.pop(),
+                          icon: const Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            size: 20,
                             color: Colors.black87,
-                            letterSpacing: -0.5,
-                            height: 1.05,
+                          ),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 40,
+                            minHeight: 40,
                           ),
                         ),
-                        const SizedBox(height: 14),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Expanded(child: _Breadcrumb(category: widget.category)),
-                            GestureDetector(
-                              onTap: _openSortSheet,
-                              behavior: HitTestBehavior.opaque,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'Sort by',
-                                    style: GoogleFonts.dmSans(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const Icon(
-                                    Icons.unfold_more_rounded,
-                                    size: 18,
-                                    color: Colors.black54,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
                       ],
                     ),
-                  ),
-                ),
-                if (products.isEmpty)
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: _EmptyCategoryState(
-                      categoryName: displayName,
-                      onBrowse: () => context.go('/browse'),
-                    ),
-                  )
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final product = products[index];
-                          return Padding(
-                            padding: EdgeInsets.only(
-                              bottom: index < products.length - 1 ? 32 : 0,
-                            ),
-                            child: CategoryProductListTile(product: product),
-                          );
-                        },
-                        childCount: products.length,
+                    Text(
+                      '$displayName ($titleCount)',
+                      style: GoogleFonts.dmSans(
+                        fontSize: 34,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                        letterSpacing: -0.5,
+                        height: 1.05,
                       ),
                     ),
+                    const SizedBox(height: 14),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(child: _Breadcrumb(category: widget.category)),
+                        GestureDetector(
+                          onTap: _openSortSheet,
+                          behavior: HitTestBehavior.opaque,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Sort by',
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(
+                                Icons.unfold_more_rounded,
+                                size: 18,
+                                color: Colors.black54,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ),
+            if (products.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: _EmptyCategoryState(
+                  categoryName: displayName,
+                  onBrowse: () => context.go('/browse'),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final product = products[index];
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          bottom: index < products.length - 1 ? 32 : 0,
+                        ),
+                        child: CategoryProductListTile(product: product),
+                      );
+                    },
+                    childCount: products.length,
                   ),
-              ],
-            );
-          },
+                ),
+              ),
+          ],
         ),
       ),
-    );
-  }
-}
-
-class _CategoryLoadingScaffold extends StatelessWidget {
-  const _CategoryLoadingScaffold({
-    required this.displayName,
-    required this.onBack,
-  });
-
-  final String displayName;
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-          child: Row(
-            children: [
-              IconButton(
-                onPressed: onBack,
-                icon: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  size: 20,
-                  color: Colors.black87,
-                ),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-              ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-          child: Text(
-            displayName,
-            style: GoogleFonts.dmSans(
-              fontSize: 34,
-              fontWeight: FontWeight.w700,
-              color: Colors.black87,
-              letterSpacing: -0.5,
-              height: 1.05,
-            ),
-          ),
-        ),
-        const Expanded(
-          child: Center(
-            child: Padding(
-              padding: EdgeInsets.only(top: 48),
-              child: CircularProgressIndicator(strokeWidth: 2.5),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CategoryErrorScaffold extends StatelessWidget {
-  const _CategoryErrorScaffold({
-    required this.displayName,
-    required this.onBack,
-    required this.onRetry,
-  });
-
-  final String displayName;
-  final VoidCallback onBack;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-          child: Row(
-            children: [
-              IconButton(
-                onPressed: onBack,
-                icon: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  size: 20,
-                  color: Colors.black87,
-                ),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-              ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-          child: Text(
-            displayName,
-            style: GoogleFonts.dmSans(
-              fontSize: 34,
-              fontWeight: FontWeight.w700,
-              color: Colors.black87,
-              letterSpacing: -0.5,
-              height: 1.05,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Could not load products.',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.dmSans(
-                      fontSize: 15,
-                      color: Colors.black38,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  TextButton(
-                    onPressed: onRetry,
-                    child: Text(
-                      'Try again',
-                      style: GoogleFonts.dmSans(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

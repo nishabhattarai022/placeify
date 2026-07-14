@@ -227,7 +227,7 @@ final class VendorApplicationActionsProvider
 }
 
 String _$vendorApplicationActionsHash() =>
-    r'a83346bd6a9d2a6932d75be51a5ffde7b88b7332';
+    r'52e06816f7204815abc3d0ed99a6d4155aa5fc50';
 
 /// Long-lived action channel for admin approve/decline flows.
 ///

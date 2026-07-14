@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:placeify_client/placeify_client.dart' hide Product;
 
 import '../../../core/config/placeify_server_client.dart';
@@ -14,48 +15,115 @@ class ServerpodConsumerShopRepository implements ConsumerShopRepository {
 
   @override
   Future<List<ShopListing>> listShops({String? query}) async {
-    final shops = await client.product.listApprovedShops(query: query);
-    return shops.map(_toListing).toList();
+    // #region agent log
+    debugPrint(
+      '[ShopAPI] listApprovedShops request query=${query ?? "(none)"} '
+      'serverUrl=$serverUrl',
+    );
+    // #endregion
+    try {
+      final shops = await client.product.listApprovedShops(query: query);
+      // #region agent log
+      debugPrint(
+        '[ShopAPI] listApprovedShops success status=200 count=${shops.length}',
+      );
+      for (final shop in shops) {
+        debugPrint(
+          '[ShopAPI] shop vendorId=${shop.vendorId} '
+          'name="${shop.businessName}" products=${shop.productCount} '
+          'locality="${shop.locality}"',
+        );
+      }
+      // #endregion
+      return shops.map(_toListing).toList();
+    } catch (error, stackTrace) {
+      _logApiError('listApprovedShops', error, stackTrace);
+      rethrow;
+    }
   }
 
   @override
   Future<ShopListing?> getShop(String vendorId) async {
-    final profile = await client.product.getShopProfile(
-      UuidValue.fromString(vendorId),
-    );
-    if (profile == null) return null;
+    // #region agent log
+    debugPrint('[ShopAPI] getShopProfile request vendorId=$vendorId');
+    // #endregion
+    try {
+      final profile = await client.product.getShopProfile(
+        UuidValue.fromString(vendorId),
+      );
+      if (profile == null) {
+        debugPrint(
+          '[ShopAPI] getShopProfile response status=200 body=null '
+          '(vendor not visible or not found)',
+        );
+        return null;
+      }
 
-    return ShopListing(
-      vendorId: profile.id.toString(),
-      businessName: profile.businessName,
-      locality: profile.city.isNotEmpty ? profile.city : profile.address,
-      tags: VendorShopCategoryCodec.decode(profile.category),
-      logoUrl: profile.logoUrl,
-      bannerUrl: profile.bannerUrl,
-      productCount: profile.totalProducts,
-      averageRating: 0,
-    );
+      debugPrint(
+        '[ShopAPI] getShopProfile success status=200 '
+        'name="${profile.businessName}" products=${profile.totalProducts}',
+      );
+
+      return ShopListing(
+        vendorId: profile.id.toString(),
+        businessName: profile.businessName,
+        locality: profile.city.isNotEmpty ? profile.city : profile.address,
+        tags: VendorShopCategoryCodec.decode(profile.category),
+        logoUrl: profile.logoUrl,
+        bannerUrl: profile.bannerUrl,
+        productCount: profile.totalProducts,
+        averageRating: 0,
+      );
+    } catch (error, stackTrace) {
+      _logApiError('getShopProfile', error, stackTrace);
+      rethrow;
+    }
   }
 
   @override
   Future<List<Product>> getShopProducts(String vendorId) async {
-    final page = await client.product.searchProducts(
-      ProductSearchInput(
-        vendorId: UuidValue.fromString(vendorId),
-        pagination: PaginationInput(page: 1, pageSize: 100),
-      ),
-    );
+    // #region agent log
+    debugPrint('[ShopAPI] searchProducts request vendorId=$vendorId');
+    // #endregion
+    try {
+      final page = await client.product.searchProducts(
+        ProductSearchInput(
+          vendorId: UuidValue.fromString(vendorId),
+          pagination: PaginationInput(page: 1, pageSize: 100),
+        ),
+      );
 
-    final products = <Product>[];
-    for (final product in page.items) {
-      final vendorProduct =
-          await vendor_mapper.VendorProductMapper.fromApiProduct(
-            product,
-            vendorId: vendorId,
-          );
-      products.add(VendorProductMapper.toConsumerProduct(vendorProduct));
+      debugPrint(
+        '[ShopAPI] searchProducts success status=200 '
+        'count=${page.items.length} total=${page.total}',
+      );
+
+      final products = <Product>[];
+      for (final product in page.items) {
+        final vendorProduct =
+            await vendor_mapper.VendorProductMapper.fromApiProduct(
+              product,
+              vendorId: vendorId,
+            );
+        products.add(VendorProductMapper.toConsumerProduct(vendorProduct));
+      }
+      return products;
+    } catch (error, stackTrace) {
+      _logApiError('searchProducts', error, stackTrace);
+      rethrow;
     }
-    return products;
+  }
+
+  void _logApiError(String endpoint, Object error, StackTrace stackTrace) {
+    if (error is ServerpodClientException) {
+      debugPrint(
+        '[ShopAPI] $endpoint FAILED '
+        'statusCode=${error.statusCode} message="${error.message}"',
+      );
+    } else {
+      debugPrint('[ShopAPI] $endpoint FAILED error=$error');
+    }
+    debugPrint('[ShopAPI] $endpoint stackTrace=$stackTrace');
   }
 
   ShopListing _toListing(ShopListingSummary shop) {

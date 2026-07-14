@@ -5,13 +5,8 @@ Quick guide to get the Serverpod backend running locally.
 ## Prerequisites
 
 - Dart SDK 3.8+
-- Docker Desktop (installed; scripts auto-start it on macOS)
+- Docker Desktop (running)
 - Serverpod CLI 3.4.8
-
-**macOS — start Docker at login (recommended):**  
-Docker Desktop → **Settings** → **General** → enable **Start Docker Desktop when you sign in to your computer**.
-
-`./scripts/start-server.sh` and `./scripts/ensure-docker.sh` will launch Docker Desktop if it is not already running.
 
 ```bash
 dart pub global activate serverpod_cli 3.4.8
@@ -40,17 +35,8 @@ Run the **placeify_server** launch configuration (starts Docker + server with mi
 ### Option B — Terminal
 
 ```bash
-# Starts Docker Desktop automatically if needed, then Postgres + Redis + server
-cd placeify_server
-./scripts/start-server.sh
-```
-
-Or manually:
-
-```bash
 # 1. Start Postgres + Redis
 cd placeify_server
-./scripts/ensure-docker.sh
 docker compose up -d
 
 # 2. Install deps & generate code
@@ -94,51 +80,6 @@ docker compose down
 
 See [PRODUCTION_AUTH.md](PRODUCTION_AUTH.md) for environment variables, email (Resend), and deployment.
 
-## Consumer API & frontend alignment
-
-| Doc | Purpose |
-|-----|---------|
-| [docs/CONSUMER_API_CONTRACT.md](docs/CONSUMER_API_CONTRACT.md) | **Canonical consumer API** — modules, payloads, deprecated surface |
-| [docs/USER_API.md](docs/USER_API.md) | Endpoint reference |
-| [docs/USER_FRONTEND_BACKEND_MATRIX.md](docs/USER_FRONTEND_BACKEND_MATRIX.md) | Per-screen UI ↔ API mapping |
-
-Verify contract after backend changes:
-
-```bash
-cd placeify_server && ./scripts/verify-consumer-contract.sh
-cd placeify_server && ./scripts/verify-backend-readiness.sh
-```
-
-**Frontend wiring guide:** [docs/BACKEND_FRONTEND_WIRING.md](docs/BACKEND_FRONTEND_WIRING.md)
-
-When your teammate adds UI, check the matrix first: most consumer features already have endpoints — gaps are usually **frontend wiring**, not missing backend.
-
-## Demo catalog seed
-
-On the first `product.listCategories` or `product.searchProducts` call, the server ensures:
-
-- **8 browse categories:** `chairs`, `sofas`, `desks`, `beds`, `tables`, `storage`, `lighting`, `outdoor`
-- **18 demo products** (`p1`…`p18` insert order) with `thumbnailUrl` and `viewImageUrls` under `/uploads/catalog-seed/`
-- Legacy rows (`lights`, `decor`) remapped to `lighting` / `storage` when empty
-
-Bundled source images live in `assets/catalog_seed/`. They are copied into `web/static/uploads/catalog-seed/` at runtime.
-
-Fresh database after pull:
-
-```bash
-cd placeify_server
-./scripts/reset-dev-database.sh
-```
-
-Register a user (e.g. `demo@placeify.app`), then open browse — seed runs automatically.
-
-Verify seed contract:
-
-```bash
-cd placeify_server
-dart test test/integration/catalog_seed_contract_test.dart
-```
-
 ## Troubleshooting
 
 | Problem | Fix |
@@ -148,4 +89,3 @@ dart test test/integration/catalog_seed_contract_test.dart
 | Port 8090 in use | `docker compose down` then retry |
 | Checkout returns 500 Internal Server Error | Run `./scripts/fix-migrations.sh` then restart the server — adds missing `paymentMethod` column on `payment_transaction` |
 | Code out of sync after model changes | `serverpod generate` from `placeify_server/` |
-| Empty catalog / missing product images | `./scripts/reset-dev-database.sh`, register a user, call `product.listCategories` |

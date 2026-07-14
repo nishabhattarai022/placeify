@@ -4,7 +4,6 @@ import '../../../core/config/resolve_media_url.dart';
 import '../../cart/data/product_id_codec.dart';
 import '../../product_detail/data/product_3d_model_resolver.dart';
 import '../domain/models/product.dart';
-import 'catalog_image_resolver.dart';
 
 abstract final class CatalogProductMapper {
   static const _defaultDimensions = ProductDimensions(
@@ -26,20 +25,18 @@ abstract final class CatalogProductMapper {
     'decor': 'assets/icons/ic_plant.svg',
   };
 
-  static Future<Product> toUiProduct(
-    api.Product product, {
-    Map<int, String>? categoryNamesById,
-  }) async {
+  static Future<Product> toUiProduct(api.Product product) async {
     final id = product.id;
     if (id == null) {
       throw StateError('Catalog product is missing a database id.');
     }
 
-    final categoryId = _resolveCategoryId(product, categoryNamesById);
+    final categoryId = product.category?.name ?? 'chairs';
     final shopName = product.vendor?.shopName ?? 'Placeify vendor';
-    // Prefer API thumbnail; when missing, resolver uses name or
-    // category+productId seed so catalog cards don't share one category image.
-    final imageUrl = await CatalogImageResolver.resolveFromApiProduct(product);
+    final thumbnail = product.thumbnailUrl;
+    final imageUrl = thumbnail == null || thumbnail.isEmpty
+        ? 'assets/icons/ic_chair.svg'
+        : await resolveMediaUrl(thumbnail);
 
     final dimensions = _dimensionsFromApi(product);
     final uiId = ProductIdCodec.fromDatabaseId(id);
@@ -50,39 +47,26 @@ abstract final class CatalogProductMapper {
       Product3dModelResolver.setModelUrl(uiId, resolved);
     }
 
+    final pricing = _pricing(product);
+    final salePrice = pricing.salePrice;
+    final listPrice = pricing.listPrice;
+    final isOnSale = pricing.isOnSale;
+
     return Product(
       id: uiId,
       name: product.name,
       brand: shopName,
       sku: 'PF${id.toString().padLeft(5, '0')}',
       price: product.price,
-      imageUrl: imageUrl,
+      imageUrl: imageUrl.isEmpty
+          ? 'assets/images/categories/chair.jpg'
+          : imageUrl,
       svgIconPath: _categoryIcons[categoryId] ?? 'assets/icons/ic_chair.svg',
       hasArView: has3dPreview,
       categoryId: categoryId,
       dimensions: dimensions,
       vendorId: product.vendorId.toString(),
     );
-  }
-
-  static String _resolveCategoryId(
-    api.Product product,
-    Map<int, String>? categoryNamesById,
-  ) {
-    final fromRelation = product.category?.name.trim();
-    if (fromRelation != null && fromRelation.isNotEmpty) {
-      return fromRelation.toLowerCase();
-    }
-
-    final categoryDbId = product.categoryId;
-    if (categoryDbId != null && categoryNamesById != null) {
-      final fromMap = categoryNamesById[categoryDbId]?.trim();
-      if (fromMap != null && fromMap.isNotEmpty) {
-        return fromMap.toLowerCase();
-      }
-    }
-
-    return '';
   }
 
   static ProductDimensions _dimensionsFromApi(api.Product product) {

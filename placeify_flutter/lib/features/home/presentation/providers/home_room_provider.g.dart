@@ -49,4 +49,4 @@ final class RecommendedProductsProvider
 }
 
 String _$recommendedProductsHash() =>
-    r'83a73522b8aac6982cf0d9fc0625fffbf9ff7b72';
+    r'c15676df520aaa4d9f78b0802b6a09a6fdb32364';

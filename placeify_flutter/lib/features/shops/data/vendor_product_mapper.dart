@@ -1,3 +1,4 @@
+import 'package:placeify_flutter/features/admin/data/config/admin_seed_data.dart';
 import 'package:placeify_flutter/features/home/data/mock_product_repository.dart';
 import 'package:placeify_flutter/features/home/domain/models/product.dart';
 import 'package:placeify_flutter/features/shops/data/consumer_shop_seed.dart';
@@ -15,39 +16,55 @@ abstract final class VendorProductMapper {
 
   static bool isShopProductId(String id) => id.startsWith(_idPrefix);
 
-  /// Resolves a namespaced shop product id back to [VendorProduct].
-  static VendorProduct? resolveVendorProduct(String consumerId) {
-    if (!isShopProductId(consumerId)) return null;
+  /// Parses `shop-{vendorId}-{productId}` (vendor UUID may contain dashes).
+  static ({String vendorId, String productId})? parseConsumerProductId(
+    String id,
+  ) {
+    if (!isShopProductId(id)) return null;
 
-    for (final vendorId in _knownVendorIds) {
-      for (final product in _productsForVendor(vendorId)) {
-        if (consumerProductId(
-              vendorId: vendorId,
-              productId: product.id,
-            ) ==
-            consumerId) {
-          return product;
-        }
-      }
+    final rest = id.substring(_idPrefix.length);
+    final productMarker = rest.lastIndexOf('-p');
+    if (productMarker <= 0) return null;
+
+    final vendorId = rest.substring(0, productMarker);
+    final productId = rest.substring(productMarker + 1);
+    if (vendorId.isEmpty || productId.isEmpty) return null;
+
+    return (vendorId: vendorId, productId: productId);
+  }
+
+  static Iterable<String> get searchableVendorIds sync* {
+    yield VendorMockConfig.demoVendorId;
+    yield AdminSeedData.approvedVendorId;
+    yield* AdminSeedData.catalogShopVendorIds;
+    yield* ConsumerShopSeed.catalogVendorIds;
+  }
+
+  static VendorProduct? resolveVendorProduct(String consumerProductId) {
+    if (!isShopProductId(consumerProductId)) return null;
+
+    for (final vendorId in searchableVendorIds) {
+      final prefix = '$_idPrefix$vendorId-';
+      if (!consumerProductId.startsWith(prefix)) continue;
+      final productId = consumerProductId.substring(prefix.length);
+      final product = _vendorProductById(vendorId, productId);
+      if (product != null) return product;
     }
     return null;
   }
 
-  static Iterable<String> get _knownVendorIds sync* {
-    yield VendorMockConfig.demoVendorId;
-    yield* ConsumerShopSeed.catalogVendorIds;
-  }
-
-  static List<VendorProduct> _productsForVendor(String vendorId) {
-    if (VendorMockConfig.isKnownVendor(vendorId)) {
-      return VendorMockConfig.productsFor(vendorId)
-          .where((product) => product.isActive)
-          .toList();
+  static VendorProduct? _vendorProductById(String vendorId, String productId) {
+    if (VendorMockConfig.isKnownVendor(vendorId) ||
+        VendorMockConfig.usesDemoPortalData(vendorId)) {
+      final product = VendorMockConfig.productById(productId);
+      if (product != null) return product;
     }
     if (ConsumerShopSeed.hasSeedProducts(vendorId)) {
-      return ConsumerShopSeed.productsFor(vendorId);
+      for (final product in ConsumerShopSeed.productsFor(vendorId)) {
+        if (product.id == productId) return product;
+      }
     }
-    return const [];
+    return null;
   }
 
   static Product toConsumerProduct(VendorProduct vendorProduct) {

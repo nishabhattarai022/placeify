@@ -32,6 +32,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   bool _loading = true;
   bool _saving = false;
   String? _nameError;
+  String? _emailError;
 
   @override
   void initState() {
@@ -50,9 +51,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   }
 
   Future<void> _loadProfile() async {
-    final profile = await ref
-        .read(currentUserProvider.notifier)
-        .loadConsumerProfile();
+    final profile =
+        await ref.read(currentUserProvider.notifier).loadConsumerProfile();
     if (!mounted) return;
 
     if (profile == null) {
@@ -76,14 +76,26 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   bool _validate() {
     var valid = true;
     String? nameError;
+    String? emailError;
 
     if (_nameController.text.trim().isEmpty) {
       nameError = 'Name is required';
       valid = false;
     }
 
+    final email = _emailController.text.trim();
+    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+    if (email.isEmpty) {
+      emailError = 'Email is required';
+      valid = false;
+    } else if (!emailRegex.hasMatch(email)) {
+      emailError = 'Enter a valid email address';
+      valid = false;
+    }
+
     setState(() {
       _nameError = nameError;
+      _emailError = emailError;
     });
     return valid;
   }
@@ -102,9 +114,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         city: _cityController.text.trim(),
       );
 
-      await ref
-          .read(currentUserProvider.notifier)
-          .updateConsumerProfile(profile);
+      await ref.read(currentUserProvider.notifier).updateConsumerProfile(profile);
       if (!mounted) return;
 
       PlaceifyToast.show(context, 'Profile updated successfully');
@@ -138,109 +148,105 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : user == null
-                ? const _SignedOutState()
-                : ListView(
-                    padding: const EdgeInsets.fromLTRB(
-                      18,
-                      20,
-                      18,
-                      BottomNavTokens.scrollBottomPadding,
-                    ),
-                    children: [
-                      _ProfilePhotoHeader(
-                        initial: initial,
-                        onChangePhoto: () => PlaceifyToast.show(
-                          context,
-                          'Photo upload coming soon',
+                    ? const _SignedOutState()
+                    : ListView(
+                        padding: const EdgeInsets.fromLTRB(
+                          18,
+                          20,
+                          18,
+                          BottomNavTokens.scrollBottomPadding,
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      Container(
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: AppColors.warmWhite,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: AppColors.creamDark,
-                            width: 1.5,
+                        children: [
+                          _ProfilePhotoHeader(
+                            initial: initial,
+                            onChangePhoto: () => PlaceifyToast.show(
+                              context,
+                              'Photo upload coming soon',
+                            ),
                           ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ProfileFormField(
-                              label: 'Full Name',
-                              error: _nameError,
-                              child: ProfileTextInput(
-                                controller: _nameController,
-                                hint: 'Your full name',
-                                hasError: _nameError != null,
-                                onChanged: (_) {
-                                  if (_nameError != null) {
-                                    setState(() => _nameError = null);
-                                  }
-                                },
+                          const SizedBox(height: 20),
+                          Container(
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              color: AppColors.warmWhite,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: AppColors.creamDark,
+                                width: 1.5,
                               ),
                             ),
-                            ProfileFormField(
-                              label: 'Username',
-                              child: ProfileTextInput(
-                                controller: _usernameController,
-                                hint: 'placeify_user',
-                              ),
-                            ),
-                            ProfileFormField(
-                              label: 'Bio',
-                              child: ProfileTextInput(
-                                controller: _bioController,
-                                hint: 'Tell people a little about yourself',
-                                maxLines: 3,
-                              ),
-                            ),
-                            ProfileFormField(
-                              label: 'City',
-                              child: ProfileTextInput(
-                                controller: _cityController,
-                                hint: 'Kathmandu',
-                              ),
-                            ),
-                            ProfileFormField(
-                              label: 'Email',
-                              child: ProfileTextInput(
-                                controller: _emailController,
-                                hint: 'you@example.com',
-                                keyboardType: TextInputType.emailAddress,
-                                readOnly: true,
-                              ),
-                            ),
-                            const Padding(
-                              padding: EdgeInsets.only(bottom: 14),
-                              child: Text(
-                                'Email is tied to your login and cannot be changed here.',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textMuted,
-                                  height: 1.35,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ProfileFormField(
+                                  label: 'Full Name',
+                                  error: _nameError,
+                                  child: ProfileTextInput(
+                                    controller: _nameController,
+                                    hint: 'Your full name',
+                                    hasError: _nameError != null,
+                                    onChanged: (_) {
+                                      if (_nameError != null) {
+                                        setState(() => _nameError = null);
+                                      }
+                                    },
+                                  ),
                                 ),
-                              ),
+                                ProfileFormField(
+                                  label: 'Username',
+                                  child: ProfileTextInput(
+                                    controller: _usernameController,
+                                    hint: 'placeify_user',
+                                  ),
+                                ),
+                                ProfileFormField(
+                                  label: 'Bio',
+                                  child: ProfileTextInput(
+                                    controller: _bioController,
+                                    hint: 'Tell people a little about yourself',
+                                    maxLines: 3,
+                                  ),
+                                ),
+                                ProfileFormField(
+                                  label: 'City',
+                                  child: ProfileTextInput(
+                                    controller: _cityController,
+                                    hint: 'Kathmandu',
+                                  ),
+                                ),
+                                ProfileFormField(
+                                  label: 'Email',
+                                  error: _emailError,
+                                  child: ProfileTextInput(
+                                    controller: _emailController,
+                                    hint: 'you@example.com',
+                                    keyboardType: TextInputType.emailAddress,
+                                    hasError: _emailError != null,
+                                    onChanged: (_) {
+                                      if (_emailError != null) {
+                                        setState(() => _emailError = null);
+                                      }
+                                    },
+                                  ),
+                                ),
+                                ProfileFormField(
+                                  label: 'Phone',
+                                  child: PhoneInputField(
+                                    initialPhone:
+                                        _phone.isNotEmpty ? _phone : null,
+                                    onChanged: (value) => _phone = value,
+                                  ),
+                                ),
+                              ],
                             ),
-                            ProfileFormField(
-                              label: 'Phone',
-                              child: PhoneInputField(
-                                initialPhone: _phone.isNotEmpty ? _phone : null,
-                                onChanged: (value) => _phone = value,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 20),
+                          ProfileSubmitButton(
+                            label: _saving ? 'Saving...' : 'Save Changes',
+                            onPressed: _saving ? () {} : _save,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 20),
-                      ProfileSubmitButton(
-                        label: _saving ? 'Saving...' : 'Save Changes',
-                        onPressed: _saving ? () {} : _save,
-                      ),
-                    ],
-                  ),
           ),
         ],
       ),
