@@ -142,11 +142,14 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     required String materials,
   }) async {
     final multiview = await _uploadMultiviewUrlsFromSources(imageSources);
+    final pricing = _resolveUploadPricing(product);
 
     return client.vendor.createProduct(
       product.name.trim(),
       description,
-      product.price,
+      pricing.listPrice,
+      discountPrice: pricing.discountPrice,
+      discountPercentage: pricing.discountPercentage,
       categoryId: await _resolveCategoryId(product.categoryId),
       materials: materials,
       widthCm: product.widthCm,

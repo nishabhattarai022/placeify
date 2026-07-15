@@ -193,6 +193,8 @@ class VendorStore {
     String name,
     String description,
     double price, {
+    double? discountPrice,
+    double? discountPercentage,
     int? categoryId,
     String? materials,
     double? widthCm,
@@ -211,6 +213,8 @@ class VendorStore {
         name,
         description,
         price,
+        discountPrice: discountPrice,
+        discountPercentage: discountPercentage,
         categoryId: categoryId,
         materials: materials,
         widthCm: widthCm,

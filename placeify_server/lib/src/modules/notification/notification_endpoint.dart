@@ -60,4 +60,8 @@ class NotificationEndpoint extends Endpoint {
   Future<void> markAllInAppNotificationsRead(Session session) {
     return _service.markAllInAppNotificationsRead(session);
   }
+
+  Stream<InAppNotificationSummary> watchInAppNotifications(Session session) {
+    return _service.watchInAppNotifications(session);
+  }
 }

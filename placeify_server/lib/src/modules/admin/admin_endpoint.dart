@@ -126,6 +126,13 @@ class AdminEndpoint extends PlaceifyAuthenticatedEndpoint {
     return _service.listUsers(session, query: query, role: role);
   }
 
+  Future<List<AdminProductSummary>> listProducts(
+    Session session,
+    AdminProductListInput input,
+  ) {
+    return _service.listProducts(session, input);
+  }
+
   Future<List<VendorApplicationSummary>> listVendorApplications(
     Session session, {
     UserAccountStatus? status,

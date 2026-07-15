@@ -160,6 +160,8 @@ class VendorEndpoint extends Endpoint {
     String name,
     String description,
     double price, {
+    double? discountPrice,
+    double? discountPercentage,
     int? categoryId,
     String? materials,
     double? widthCm,
@@ -178,6 +180,8 @@ class VendorEndpoint extends Endpoint {
       name,
       description,
       price,
+      discountPrice: discountPrice,
+      discountPercentage: discountPercentage,
       categoryId: categoryId,
       materials: materials,
       widthCm: widthCm,

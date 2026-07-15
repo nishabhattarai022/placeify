@@ -83,6 +83,8 @@ class VendorProductStore {
     String name,
     String description,
     double price, {
+    double? discountPrice,
+    double? discountPercentage,
     int? categoryId,
     String? materials,
     double? widthCm,
@@ -148,7 +150,7 @@ class VendorProductStore {
       resolvedCategoryId = defaultCategory?.id;
     }
 
-    return Product.db.insertRow(
+    final product = await Product.db.insertRow(
       session,
       Product(
         vendorId: vendor.id!,
@@ -170,6 +172,15 @@ class VendorProductStore {
           viewImageUrls,
         ),
         status: ProductStatus.active,
+      ),
+    );
+    return Product.db.updateRow(
+      session,
+      withPricing(
+        product: product,
+        listPrice: price,
+        discountPrice: discountPrice,
+        discountPercentage: discountPercentage,
       ),
     );
   }

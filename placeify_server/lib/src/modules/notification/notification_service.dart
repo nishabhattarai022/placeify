@@ -70,4 +70,13 @@ class NotificationService {
     final user = await SessionService.requireUser(session);
     await _inAppNotifications.markAllRead(session, user.id!);
   }
+
+  Stream<InAppNotificationSummary> watchInAppNotifications(
+    Session session,
+  ) async* {
+    final user = await SessionService.requireUser(session);
+    yield* session.messages.createStream<InAppNotificationSummary>(
+      InAppNotificationStore.userChannel(user.id!),
+    );
+  }
 }

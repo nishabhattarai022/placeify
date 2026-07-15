@@ -5,7 +5,6 @@ fields:
   visibility: AdminProductVisibilityFilter, default=all
   categoryId: int?
   vendorId: UuidValue?
-  ### When true, only products with at least one complaint are returned.
   reportedOnly: bool, default=false
   sortNewest: bool, default=true
   pagination: PaginationInput?

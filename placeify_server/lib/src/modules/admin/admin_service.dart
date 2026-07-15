@@ -12,10 +12,10 @@ class AdminService {
     AdminModerationStore? moderation,
     AdminPlatformStore? platform,
     AdminFinanceStore? finance,
-  })  : _repository = repository ?? AdminStore(),
-        _moderation = moderation ?? AdminModerationStore(),
-        _platform = platform ?? AdminPlatformStore(),
-        _finance = finance ?? AdminFinanceStore();
+  }) : _repository = repository ?? AdminStore(),
+       _moderation = moderation ?? AdminModerationStore(),
+       _platform = platform ?? AdminPlatformStore(),
+       _finance = finance ?? AdminFinanceStore();
 
   final AdminStore _repository;
   final AdminModerationStore _moderation;
@@ -141,6 +141,13 @@ class AdminService {
     UserRole? role,
   }) {
     return _platform.listUsers(session, query: query, role: role);
+  }
+
+  Future<List<AdminProductSummary>> listProducts(
+    Session session,
+    AdminProductListInput input,
+  ) {
+    return _platform.listProducts(session, input);
   }
 
   Future<List<VendorApplicationSummary>> listVendorApplications(

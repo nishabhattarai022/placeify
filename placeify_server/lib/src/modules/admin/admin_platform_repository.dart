@@ -1,6 +1,8 @@
 import 'package:serverpod/serverpod.dart' hide Order;
+import 'package:serverpod/serverpod.dart' as sp show Order;
 
 import '../../generated/protocol.dart';
+import '../../shared/pagination_helper.dart';
 import '../vendor/vendor_shop_category_codec.dart';
 import 'admin_repository.dart';
 import 'admin_vendor_lifecycle.dart';
@@ -125,6 +127,154 @@ class AdminPlatformStore {
           status: user.status,
           vendorId: vendorByUserId[user.id!]?.id,
           createdAt: user.createdAt,
+        ),
+      );
+    }
+
+    return summaries;
+  }
+
+  Future<List<AdminProductSummary>> listProducts(
+    Session session,
+    AdminProductListInput input,
+  ) async {
+    await _requireAdmin(session);
+
+    final paging = PaginationHelper.resolve(input.pagination);
+
+    final trimmedQuery = input.query?.trim();
+    final query = (trimmedQuery == null || trimmedQuery.isEmpty)
+        ? null
+        : trimmedQuery;
+
+    // Reported-only: resolve the set of product ids that have at least one
+    // persisted complaint before touching the product table, so pagination is
+    // applied to the already-filtered set at the database level.
+    Set<int>? reportedProductIds;
+    if (input.reportedOnly) {
+      final complaints = await Complaint.db.find(session);
+      reportedProductIds = <int>{
+        for (final complaint in complaints) complaint.productId,
+      };
+      if (reportedProductIds.isEmpty) return [];
+    }
+
+    final visibility = input.visibility;
+    final categoryId = input.categoryId;
+    final vendorId = input.vendorId;
+    final reportedIds = reportedProductIds;
+    final descending = input.sortNewest;
+
+    final products = await Product.db.find(
+      session,
+      where: (row) {
+        Expression? expression;
+        void and(Expression next) {
+          expression = expression == null ? next : expression! & next;
+        }
+
+        // Visibility maps onto persisted product state. ProductStatus is
+        // exactly {active, flagged, removed}; a product counts as "removed"
+        // when soft-deleted (isDeleted) or admin-removed (status == removed).
+        switch (visibility) {
+          case AdminProductVisibilityFilter.all:
+            break;
+          case AdminProductVisibilityFilter.active:
+            and(
+              row.isDeleted.equals(false) &
+                  (row.status.equals(ProductStatus.active) |
+                      row.status.equals(ProductStatus.flagged)),
+            );
+          case AdminProductVisibilityFilter.removed:
+            and(
+              row.isDeleted.equals(true) |
+                  row.status.equals(ProductStatus.removed),
+            );
+        }
+
+        if (categoryId != null) {
+          and(row.categoryId.equals(categoryId));
+        }
+        if (vendorId != null) {
+          and(row.vendorId.equals(vendorId));
+        }
+        if (reportedIds != null) {
+          and(row.id.inSet(reportedIds));
+        }
+        if (query != null) {
+          final pattern = '%$query%';
+          and(row.name.ilike(pattern) | row.description.ilike(pattern));
+        }
+
+        // No active filter (visibility == all, no other constraints): match
+        // every stored row, mirroring the existing `.equals(null)` idiom.
+        return expression ?? row.id.notEquals(null);
+      },
+      include: Product.include(
+        vendor: Vendor.include(user: User.include()),
+        category: Category.include(),
+      ),
+      orderByList: (row) => [
+        sp.Order(column: row.createdAt, orderDescending: descending),
+        sp.Order(column: row.id, orderDescending: descending),
+      ],
+      limit: paging.pageSize,
+      offset: paging.offset,
+    );
+
+    // Aggregate complaints for the current page in a single batch query.
+    final pageProductIds = <int>{
+      for (final product in products)
+        if (product.id != null) product.id!,
+    };
+    final complaintCounts = <int, int>{};
+    final latestComplaintByProduct = <int, DateTime>{};
+    if (pageProductIds.isNotEmpty) {
+      final complaints = await Complaint.db.find(
+        session,
+        where: (row) => row.productId.inSet(pageProductIds),
+      );
+      for (final complaint in complaints) {
+        final productId = complaint.productId;
+        complaintCounts[productId] = (complaintCounts[productId] ?? 0) + 1;
+        final current = latestComplaintByProduct[productId];
+        if (current == null || complaint.createdAt.isAfter(current)) {
+          latestComplaintByProduct[productId] = complaint.createdAt;
+        }
+      }
+    }
+
+    final summaries = <AdminProductSummary>[];
+    for (final product in products) {
+      final productId = product.id;
+      final vendor = product.vendor;
+      // Every product is created against a vendor (and every vendor against a
+      // user), so a missing relation here means orphaned data. Follow the
+      // existing admin convention (listVendorApplications) and skip such rows
+      // rather than fabricating vendor values.
+      if (productId == null || vendor == null) continue;
+      final vendorId = vendor.id;
+      final owner = vendor.user;
+      if (vendorId == null || owner == null) continue;
+
+      summaries.add(
+        AdminProductSummary(
+          productId: productId,
+          productName: product.name,
+          description: product.description,
+          price: product.price,
+          categoryName: product.category?.name,
+          thumbnailUrl: product.thumbnailUrl,
+          status: product.status,
+          isDeleted: product.isDeleted,
+          createdAt: product.createdAt,
+          updatedAt: product.updatedAt,
+          vendorId: vendorId,
+          shopName: vendor.shopName,
+          ownerName: owner.name,
+          vendorEmail: vendor.contactEmail ?? owner.email ?? '',
+          complaintCount: complaintCounts[productId] ?? 0,
+          latestComplaintAt: latestComplaintByProduct[productId],
         ),
       );
     }

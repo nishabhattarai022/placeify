@@ -100,8 +100,8 @@ class ProductImageProcessor {
       }
     }
 
-    late final Uint8List catalogBytes;
-    late final bool backgroundRemoved;
+    Uint8List catalogBytes;
+    bool backgroundRemoved;
     if (cutout != null) {
       try {
         final composited = _compositedOnWhiteImage(cutout);

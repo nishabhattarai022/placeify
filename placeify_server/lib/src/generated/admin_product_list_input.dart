@@ -76,7 +76,6 @@ abstract class AdminProductListInput
 
   _i1.UuidValue? vendorId;
 
-  /// When true, only products with at least one complaint are returned.
   bool reportedOnly;
 
   bool sortNewest;

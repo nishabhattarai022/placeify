@@ -51,6 +51,7 @@ admin:
   - resolveComplaint:
   - getPlatformStats:
   - listUsers:
+  - listProducts:
   - listVendorApplications:
   - getVendorApplication:
   - getAuditLog:
@@ -83,6 +84,7 @@ notification:
   - unreadInAppNotificationCount:
   - markInAppNotificationRead:
   - markAllInAppNotificationsRead:
+  - watchInAppNotifications:
 order:
   - listMyOrders:
   - getOrder:
