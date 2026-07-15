@@ -93,7 +93,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
       case ProfileMenuRoute.savedRooms:
         context.pushNamed('profileRoomSnapshots');
       case ProfileMenuRoute.augmentedReality:
-        context.pushNamed('profileAugmentedReality');
+        context.pushNamed('profileArHistory');
       case ProfileMenuRoute.refund:
         context.pushNamed('profileRefund');
       case ProfileMenuRoute.notifications:

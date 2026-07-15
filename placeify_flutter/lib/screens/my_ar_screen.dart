@@ -118,7 +118,7 @@ class _MyArScreenState extends ConsumerState<MyArScreen> {
 
       final trayCandidates = selectedProducts.length > 1
           ? selectedProducts.skip(1)
-          : [for (final entry in entries) entry.product];
+          : const <Product>[];
 
       final availableProducts = <ArAddableProduct>[];
       for (final product in trayCandidates) {

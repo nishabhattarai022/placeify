@@ -25,6 +25,7 @@ import '../../home/domain/models/product.dart';
 import '../data/ar_furniture_gesture_config.dart';
 import '../data/ar_furniture_placement.dart';
 import '../data/ar_furniture_scale.dart';
+import '../data/ar_session_recorder.dart';
 import '../data/product_3d_model_loader.dart';
 import 'ar_room_ui_tokens.dart';
 import 'webcam_ar_room_screen.dart';
@@ -134,6 +135,11 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   /// All furniture currently placed in the room, keyed by unique node name.
   final Map<String, _PlacedFurniture> _placed = {};
   int _placementCounter = 0;
+
+  /// UI product ids already recorded as an AR session this camera visit —
+  /// prevents duplicate ar_session rows when the same product is placed
+  /// more than once.
+  final Set<String> _recordedSessionProductIds = {};
 
   /// The item most recently tapped / placed — the scale slider acts on
   /// this one.
@@ -728,6 +734,13 @@ class _ArRoomScreenState extends State<ArRoomScreen>
         _pending = null;
       });
 
+      // Record one AR session row per distinct product placed this visit.
+      // Silently no-ops for guests / codec failures / network errors —
+      // ArSessionRecorder.recordQuietly already swallows all of that.
+      if (_recordedSessionProductIds.add(pending.productId)) {
+        unawaited(ArSessionRecorder.recordQuietly(pending.productId));
+      }
+
       _revealProductName = item.productName;
       _activeRevealController = revealController;
       revealController.forward(from: 0);
@@ -958,6 +971,7 @@ abstract final class ArRoomLauncher {
           fullscreenDialog: true,
           builder: (context) => WebcamArRoomScreen(
             modelSrc: remoteModelUrl,
+            productId: productId,
             productName: productName,
           ),
         ),

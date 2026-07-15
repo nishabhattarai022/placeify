@@ -1,16 +1,22 @@
+import 'dart:async';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
+
+import '../data/ar_session_recorder.dart';
 
 /// Laptop/desktop AR test: live webcam feed with the product GLB overlaid.
 class WebcamArRoomScreen extends StatefulWidget {
   const WebcamArRoomScreen({
     required this.modelSrc,
+    required this.productId,
     required this.productName,
     super.key,
   });
 
   final String modelSrc;
+  final String productId;
   final String productName;
 
   @override
@@ -25,6 +31,7 @@ class _WebcamArRoomScreenState extends State<WebcamArRoomScreen> {
   void initState() {
     super.initState();
     _initCamera();
+    unawaited(ArSessionRecorder.recordQuietly(widget.productId));
   }
 
   @override

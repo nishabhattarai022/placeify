@@ -76,8 +76,8 @@ abstract final class ProfileMenuItems {
       route: ProfileMenuRoute.savedRooms,
     ),
     ProfileMenuItemData(
-      title: 'Augmented Reality',
-      subtitle: 'Preview furniture in your space',
+      title: 'AR History',
+      subtitle: "Products you've tried in your space",
       icon: Icons.view_in_ar_outlined,
       iconColor: AppColors.lavender,
       backgroundColor: AppColors.lavenderBg,

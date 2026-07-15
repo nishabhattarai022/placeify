@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../cart/presentation/providers/cart_provider.dart';
 import '../../home/domain/models/product.dart';
-import '../../home/presentation/providers/catalog_provider.dart';
 import '../../home/presentation/providers/category_provider.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../core/widgets/toast_overlay.dart';
@@ -14,7 +13,6 @@ import '../data/product_detail_content.dart';
 import 'ar_room_screen.dart';
 import 'product_detail_tokens.dart';
 import 'package:placeify_flutter/features/shops/presentation/providers/consumer_shop_provider.dart';
-import 'widgets/ar_product_tray.dart';
 import 'widgets/product_detail_cart_bar.dart';
 import 'widgets/product_detail_gallery.dart';
 import 'widgets/product_detail_header.dart';
@@ -113,18 +111,12 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
       return;
     }
 
-    final availableProducts = ArAddableProduct.fromCatalogProducts(
-      ref.read(catalogProductsByCategoryProvider(product.categoryId)),
-      excludeProductId: product.id,
-    );
-
     final result = await ArRoomLauncher.open(
       context: context,
       remoteModelUrl: remoteUrl,
       productId: product.id,
       productName: product.name,
       dimensions: product.dimensions,
-      availableProducts: availableProducts,
     );
 
     if (!context.mounted) return;
@@ -153,11 +145,6 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
         ),
       );
     }
-
-    final availableProducts = ArAddableProduct.fromCatalogProducts(
-      ref.read(catalogProductsByCategoryProvider(product.categoryId)),
-      excludeProductId: product.id,
-    );
 
     final content = ProductDetailContentRepository.forProduct(product);
     final top = MediaQuery.paddingOf(context).top;
@@ -191,7 +178,6 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                       selectedIndex: _selectedImageIndex,
                       onSelected: (i) =>
                           setState(() => _selectedImageIndex = i),
-                      availableProducts: availableProducts,
                     ),
                   ),
                 ),
