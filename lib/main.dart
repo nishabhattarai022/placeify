@@ -7,25 +7,25 @@ import 'app.dart';
 import 'core/providers/shared_preferences_provider.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+WidgetsFlutterBinding.ensureInitialized();
 
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
+await SystemChrome.setPreferredOrientations([
+DeviceOrientation.portraitUp,
+DeviceOrientation.portraitDown,
   ]);
 
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
+SystemChrome.setSystemUIOverlayStyle(
+const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
       systemNavigationBarColor: Colors.transparent,
     ),
   );
 
-  final sharedPreferences = await SharedPreferences.getInstance();
+final sharedPreferences = await SharedPreferences.getInstance();
 
-  runApp(
-    ProviderScope(
+runApp(
+ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(sharedPreferences),
       ],
