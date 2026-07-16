@@ -122,7 +122,7 @@ class _VendorOnboardingChecklistState
                   style: GoogleFonts.dmSans(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.espresso,
+                    color: Colors.black,
                   ),
                 ),
               ),

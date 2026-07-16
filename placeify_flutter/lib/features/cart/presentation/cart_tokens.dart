@@ -109,8 +109,10 @@ abstract final class CartTokens {
   );
 
   static const TextStyle sectionTitle = TextStyle(
+    fontFamily: 'Fraunces',
     fontSize: 18,
-    fontWeight: FontWeight.w700,
+    fontWeight: FontWeight.w600,
+    fontStyle: FontStyle.italic,
     color: textPrimary,
     letterSpacing: -0.3,
   );

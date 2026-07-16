@@ -19,10 +19,8 @@ import 'package:placeify_flutter/features/vendor/presentation/widgets/metric_car
 import 'package:placeify_flutter/features/vendor/presentation/widgets/revenue_card.dart';
 import 'package:placeify_flutter/features/vendor/presentation/widgets/top_products_chart.dart';
 import 'package:placeify_flutter/features/vendor/presentation/widgets/upload_product_button.dart';
-import 'package:placeify_flutter/features/vendor/presentation/widgets/vendor_dashboard_3d_reminders.dart';
 import 'package:placeify_flutter/features/vendor/presentation/widgets/vendor_onboarding_checklist.dart';
 import 'package:placeify_flutter/features/vendor/presentation/widgets/vendor_order_row.dart';
-import 'package:placeify_flutter/features/vendor/presentation/widgets/vendor_pending_refunds_section.dart';
 import 'package:placeify_flutter/features/vendor/presentation/widgets/vendor_reviews_section.dart';
 
 class VendorDashboardScreen extends ConsumerStatefulWidget {
@@ -65,6 +63,13 @@ class _VendorDashboardScreenState extends ConsumerState<VendorDashboardScreen> {
     return businessName.split(' ').first;
   }
 
+  String _formatViewCount(int count) {
+    if (count >= 1000) {
+      return '${(count / 1000).toStringAsFixed(1)}k';
+    }
+    return count.toString();
+  }
+
   List<VendorMetric> _metricsFor(VendorDashboardData data) {
     final stats = data.stats;
     return [
@@ -76,9 +81,10 @@ class _VendorDashboardScreenState extends ConsumerState<VendorDashboardScreen> {
         iconPath: 'assets/icons/ic_trending_up.svg',
       ),
       VendorMetric(
-        label: 'Products',
-        value: stats.productCount.toString(),
-        trendLabel: stats.periodLabel,
+        label: 'Views',
+        value: _formatViewCount(stats.viewCount),
+        trendLabel:
+            '${(stats.conversionRate * 100).toStringAsFixed(1)}% conversion',
         trendColor: AppColors.sage,
         iconPath: 'assets/icons/ic_check_circle.svg',
       ),
@@ -230,14 +236,12 @@ class _DashboardBody extends StatelessWidget {
           const SizedBox(height: 12),
           const UploadProductButton(),
           const SizedBox(height: 20),
-          const VendorDashboard3dReminders(),
-          VendorPendingRefundsSection(refunds: data.pendingRefunds),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Recent Orders', style: AppTypography.sectionTitle),
               GestureDetector(
-                onTap: () => context.go(VendorRoutes.ordersAll),
+                onTap: () => context.go(VendorRoutes.orders),
                 child: const Text('See all', style: AppTypography.seeAll),
               ),
             ],
@@ -254,12 +258,7 @@ class _DashboardBody extends StatelessWidget {
               ),
             )
           else
-            ...data.recentOrders.map(
-              (order) => VendorOrderRow(
-                order: order,
-                style: VendorOrderRowStyle.recentSummary,
-              ),
-            ),
+            ...data.recentOrders.map((order) => VendorOrderRow(order: order)),
           const SizedBox(height: 20),
           const VendorReviewsSection(),
           const SizedBox(height: 20),
@@ -366,28 +365,28 @@ class _DashboardBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        HapticService.light();
-        if (context.canPop()) {
-          context.pop();
-        } else {
-          context.go(VendorRoutes.profileFallback);
-        }
-      },
-      child: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          color: AppColors.warmWhite,
-          shape: BoxShape.circle,
-          border: Border.all(color: AppColors.creamDark, width: 1.5),
-        ),
-        alignment: Alignment.center,
-        child: const Icon(
-          Icons.arrow_back,
-          size: 22,
-          color: AppColors.vendorForest,
+    return Semantics(
+      button: true,
+      label: 'Back to home',
+      child: GestureDetector(
+        onTap: () {
+          HapticService.light();
+          context.go('/home');
+        },
+        child: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: AppColors.warmWhite,
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.creamDark, width: 1.5),
+          ),
+          alignment: Alignment.center,
+          child: const Icon(
+            Icons.arrow_back,
+            size: 22,
+            color: AppColors.vendorForest,
+          ),
         ),
       ),
     );

@@ -27,11 +27,15 @@ abstract class Admin implements _i1.SerializableModel {
     this.phoneNumber,
     _i2.AdminType? adminType,
     bool? isActive,
+    bool? newApplicationAlerts,
+    bool? systemAlerts,
     this.lastLoginAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : adminType = adminType ?? _i2.AdminType.moderator,
        isActive = isActive ?? true,
+       newApplicationAlerts = newApplicationAlerts ?? true,
+       systemAlerts = systemAlerts ?? true,
        createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
 
@@ -44,6 +48,8 @@ abstract class Admin implements _i1.SerializableModel {
     String? phoneNumber,
     _i2.AdminType? adminType,
     bool? isActive,
+    bool? newApplicationAlerts,
+    bool? systemAlerts,
     DateTime? lastLoginAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -67,6 +73,14 @@ abstract class Admin implements _i1.SerializableModel {
       isActive: jsonSerialization['isActive'] == null
           ? null
           : _i1.BoolJsonExtension.fromJson(jsonSerialization['isActive']),
+      newApplicationAlerts: jsonSerialization['newApplicationAlerts'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(
+              jsonSerialization['newApplicationAlerts'],
+            ),
+      systemAlerts: jsonSerialization['systemAlerts'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['systemAlerts']),
       lastLoginAt: jsonSerialization['lastLoginAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(
@@ -100,6 +114,10 @@ abstract class Admin implements _i1.SerializableModel {
 
   bool isActive;
 
+  bool newApplicationAlerts;
+
+  bool systemAlerts;
+
   DateTime? lastLoginAt;
 
   DateTime createdAt;
@@ -118,6 +136,8 @@ abstract class Admin implements _i1.SerializableModel {
     String? phoneNumber,
     _i2.AdminType? adminType,
     bool? isActive,
+    bool? newApplicationAlerts,
+    bool? systemAlerts,
     DateTime? lastLoginAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -134,6 +154,8 @@ abstract class Admin implements _i1.SerializableModel {
       if (phoneNumber != null) 'phoneNumber': phoneNumber,
       'adminType': adminType.toJson(),
       'isActive': isActive,
+      'newApplicationAlerts': newApplicationAlerts,
+      'systemAlerts': systemAlerts,
       if (lastLoginAt != null) 'lastLoginAt': lastLoginAt?.toJson(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
@@ -158,6 +180,8 @@ class _AdminImpl extends Admin {
     String? phoneNumber,
     _i2.AdminType? adminType,
     bool? isActive,
+    bool? newApplicationAlerts,
+    bool? systemAlerts,
     DateTime? lastLoginAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -170,6 +194,8 @@ class _AdminImpl extends Admin {
          phoneNumber: phoneNumber,
          adminType: adminType,
          isActive: isActive,
+         newApplicationAlerts: newApplicationAlerts,
+         systemAlerts: systemAlerts,
          lastLoginAt: lastLoginAt,
          createdAt: createdAt,
          updatedAt: updatedAt,
@@ -188,6 +214,8 @@ class _AdminImpl extends Admin {
     Object? phoneNumber = _Undefined,
     _i2.AdminType? adminType,
     bool? isActive,
+    bool? newApplicationAlerts,
+    bool? systemAlerts,
     Object? lastLoginAt = _Undefined,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -201,6 +229,8 @@ class _AdminImpl extends Admin {
       phoneNumber: phoneNumber is String? ? phoneNumber : this.phoneNumber,
       adminType: adminType ?? this.adminType,
       isActive: isActive ?? this.isActive,
+      newApplicationAlerts: newApplicationAlerts ?? this.newApplicationAlerts,
+      systemAlerts: systemAlerts ?? this.systemAlerts,
       lastLoginAt: lastLoginAt is DateTime? ? lastLoginAt : this.lastLoginAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

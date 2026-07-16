@@ -5,6 +5,7 @@ import 'package:serverpod/serverpod.dart' hide Order;
 import '../../../generated/protocol.dart';
 import '../../../shared/placeify_exception.dart';
 import '../../../shared/session_service.dart';
+import '../../notification/in_app_notification_store.dart';
 import '../../notification/notification_repository.dart';
 import '../../product/product_catalog_policy.dart';
 import '../vendor_bank_details_validation.dart';
@@ -96,7 +97,15 @@ class VendorProfileStore {
         ),
     ];
 
-    final recentOrderItems = orderItems.take(6).toList();
+    // Awaiting vendor action only (accept/reject). Lifecycle continues on Orders page.
+    final awaitingItems = [
+      for (final item in orderItems)
+        if (item.order != null &&
+            (item.order!.status == OrderStatus.pending ||
+                item.order!.status == OrderStatus.confirmed))
+          item,
+    ];
+    final recentOrderItems = awaitingItems.take(6).toList();
     final recentOrderIds = recentOrderItems.map((item) => item.orderId).toSet();
     final deliveryStages = await VendorOrderSupport.latestDeliveryStagesForOrders(
       session,
@@ -284,6 +293,17 @@ class VendorProfileStore {
     if (bankDetails != null) {
       await _upsertBankDetails(session, vendor.id!, bankDetails);
     }
+
+    try {
+      await InAppNotificationStore().notifyActiveAdmins(
+        session,
+        title: 'New vendor application',
+        message: '$trimmedName submitted a vendor application for review.',
+        type: InAppNotificationType.vendorApplication,
+        referenceKey: vendor.id!.uuid,
+      );
+    } catch (_) {}
+
     return vendor;
   }
 

@@ -25,8 +25,9 @@ abstract final class CategoryShowcaseConfig {
     };
   }
 
-  /// Product ids in display order for the staggered grid (chairs mock).
-  static List<String> chairProductIds() => ['p1', 'p5', 'p6', 'p3'];
+  /// Product ids in display order for the staggered grid (legacy; unused —
+  /// chairs grid now reads live catalog products).
+  static List<String> chairProductIds() => const [];
 
   static const showroomTitle = 'Showroom';
   static const showroomAddress =

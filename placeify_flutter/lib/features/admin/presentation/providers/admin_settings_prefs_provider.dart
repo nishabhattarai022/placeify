@@ -1,4 +1,5 @@
-import 'package:placeify_flutter/core/providers/shared_preferences_provider.dart';
+import 'package:placeify_flutter/features/admin/data/serverpod_admin_repository.dart';
+import 'package:placeify_flutter/features/admin/presentation/providers/admin_repository_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'admin_settings_prefs_provider.g.dart';
@@ -25,27 +26,63 @@ class AdminNotificationPrefs {
 
 @riverpod
 class AdminSettingsPrefs extends _$AdminSettingsPrefs {
-  static const _newAppKey = 'admin_pref_new_application_alerts';
-  static const _systemKey = 'admin_pref_system_alerts';
-
   @override
   AdminNotificationPrefs build() {
-    final prefs = ref.watch(sharedPreferencesProvider);
-    return AdminNotificationPrefs(
-      newApplicationAlerts: prefs.getBool(_newAppKey) ?? true,
-      systemAlerts: prefs.getBool(_systemKey) ?? true,
+    Future.microtask(_loadFromServer);
+    return const AdminNotificationPrefs(
+      newApplicationAlerts: true,
+      systemAlerts: true,
     );
   }
 
+  Future<void> _loadFromServer() async {
+    try {
+      final repo = await ref.read(adminRepositoryProvider.future);
+      if (repo is! ServerpodAdminRepository) return;
+      final prefs = await repo.getNotificationPreferences();
+      if (!ref.mounted) return;
+      state = AdminNotificationPrefs(
+        newApplicationAlerts: prefs.newApplicationAlerts,
+        systemAlerts: prefs.systemAlerts,
+      );
+    } catch (_) {}
+  }
+
   Future<void> setNewApplicationAlerts(bool value) async {
-    final prefs = ref.read(sharedPreferencesProvider);
-    await prefs.setBool(_newAppKey, value);
+    final previous = state;
     state = state.copyWith(newApplicationAlerts: value);
+    try {
+      final repo = await ref.read(adminRepositoryProvider.future);
+      if (repo is! ServerpodAdminRepository) return;
+      final prefs = await repo.updateNotificationPreferences(
+        newApplicationAlerts: value,
+        systemAlerts: state.systemAlerts,
+      );
+      state = AdminNotificationPrefs(
+        newApplicationAlerts: prefs.newApplicationAlerts,
+        systemAlerts: prefs.systemAlerts,
+      );
+    } catch (_) {
+      state = previous;
+    }
   }
 
   Future<void> setSystemAlerts(bool value) async {
-    final prefs = ref.read(sharedPreferencesProvider);
-    await prefs.setBool(_systemKey, value);
+    final previous = state;
     state = state.copyWith(systemAlerts: value);
+    try {
+      final repo = await ref.read(adminRepositoryProvider.future);
+      if (repo is! ServerpodAdminRepository) return;
+      final prefs = await repo.updateNotificationPreferences(
+        newApplicationAlerts: state.newApplicationAlerts,
+        systemAlerts: value,
+      );
+      state = AdminNotificationPrefs(
+        newApplicationAlerts: prefs.newApplicationAlerts,
+        systemAlerts: prefs.systemAlerts,
+      );
+    } catch (_) {
+      state = previous;
+    }
   }
 }

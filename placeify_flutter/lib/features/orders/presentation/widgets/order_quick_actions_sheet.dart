@@ -12,6 +12,8 @@ import '../../domain/constants/order_strings.dart';
 import '../../domain/enums/consumer_order_status.dart';
 import '../../domain/models/order.dart';
 import '../providers/orders_provider.dart';
+import '../providers/submitted_order_reviews_provider.dart';
+import 'leave_review_sheet.dart';
 
 abstract final class OrderQuickActionsSheet {
   static Future<void> show(
@@ -47,7 +49,7 @@ class _OrderQuickActionsBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final actions = _actionsForOrder();
+    final actions = _actionsForOrder(ref);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -73,7 +75,7 @@ class _OrderQuickActionsBody extends ConsumerWidget {
     );
   }
 
-  List<_QuickAction> _actionsForOrder() {
+  List<_QuickAction> _actionsForOrder(WidgetRef ref) {
     final actions = <_QuickAction>[
       _QuickAction(
         icon: Icons.receipt_long_outlined,
@@ -116,15 +118,16 @@ class _OrderQuickActionsBody extends ConsumerWidget {
           },
         ),
       );
+      final alreadyReviewed =
+          ref.watch(submittedOrderReviewsProvider).contains(order.id);
       actions.add(
         _QuickAction(
           icon: Icons.rate_review_outlined,
-          label: OrderStrings.leaveReviewAction,
+          label: alreadyReviewed
+              ? OrderStrings.reviewSubmittedAction
+              : OrderStrings.leaveReviewAction,
           onTap: (context, ref) {
-            PlaceifyToast.show(
-              context,
-              '${OrderStrings.leaveReviewAction} coming soon',
-            );
+            LeaveReviewSheet.show(context, ref, order: order);
           },
         ),
       );

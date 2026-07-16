@@ -19,11 +19,6 @@ _AdminStats _$AdminStatsFromJson(Map<String, dynamic> json) => _AdminStats(
           ?.map((e) => AdminAuditLogEntry.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const <AdminAuditLogEntry>[],
-  signupSeries:
-      (json['signupSeries'] as List<dynamic>?)
-          ?.map((e) => (e as num).toDouble())
-          .toList() ??
-      const <double>[],
   recentApplications:
       (json['recentApplications'] as List<dynamic>?)
           ?.map((e) => VendorApplication.fromJson(e as Map<String, dynamic>))
@@ -41,6 +36,5 @@ Map<String, dynamic> _$AdminStatsToJson(_AdminStats instance) =>
       'declinedCount': instance.declinedCount,
       'suspendedCount': instance.suspendedCount,
       'recentActivity': instance.recentActivity,
-      'signupSeries': instance.signupSeries,
       'recentApplications': instance.recentApplications,
     };

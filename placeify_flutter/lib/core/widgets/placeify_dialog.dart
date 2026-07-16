@@ -9,7 +9,7 @@ import 'placeify_bottom_sheet.dart';
 
 /// Centered dialog shell aligned with the Placeify design system.
 abstract final class PlaceifyDialog {
-  static Color get barrierColor => AppColors.espresso.withValues(alpha: 0.32);
+  static Color get barrierColor => Colors.black.withValues(alpha: 0.32);
 
   static Future<T?> show<T>(
     BuildContext context, {
@@ -43,7 +43,7 @@ abstract final class PlaceifyDialog {
     required String message,
     String cancelLabel = 'Cancel',
     String confirmLabel = 'Confirm',
-    Color confirmColor = AppColors.espresso,
+    Color confirmColor = Colors.black,
     bool isDestructive = false,
   }) {
     final resolvedConfirmColor =

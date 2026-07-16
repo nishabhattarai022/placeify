@@ -38,10 +38,12 @@ abstract final class ChairsCatalogTokens {
   ];
 
   static const TextStyle titleStyle = TextStyle(
+    fontFamily: 'Fraunces',
     fontSize: 42,
-    fontWeight: FontWeight.w800,
+    fontWeight: FontWeight.w600,
+    fontStyle: FontStyle.italic,
     color: AppColors.textPrimary,
-    letterSpacing: 2,
+    letterSpacing: 1,
     height: 1.0,
   );
 

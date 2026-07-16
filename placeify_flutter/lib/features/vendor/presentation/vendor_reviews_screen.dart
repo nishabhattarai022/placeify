@@ -20,57 +20,66 @@ class VendorReviewsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.cream,
-      body: reviewsAsync.when(
-        loading: () => const CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(child: ProfileSubHero(title: 'Reviews')),
-            SliverFillRemaining(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: ShimmerLoader(borderRadius: AppRadii.lg),
-              ),
-            ),
-          ],
+      body: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
         ),
-        error: (_, __) => CustomScrollView(
-          slivers: [
-            const SliverToBoxAdapter(child: ProfileSubHero(title: 'Reviews')),
-            SliverFillRemaining(
-              child: Center(
-                child: TextButton(
-                  onPressed: () => ref.invalidate(vendorReviewsProvider),
-                  child: const Text('Try again'),
+        slivers: [
+          const SliverToBoxAdapter(
+            child: ProfileSubHero(
+              title: 'Reviews',
+              subtitle: 'customer feedback',
+            ),
+          ),
+          ...reviewsAsync.when(
+            loading: () => [
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: SizedBox(
+                    height: 120,
+                    child: ShimmerLoader(borderRadius: AppRadii.lg),
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-        data: (reviews) => CustomScrollView(
-          slivers: [
-            const SliverToBoxAdapter(child: ProfileSubHero(title: 'Reviews')),
-            if (reviews.isEmpty)
+            ],
+            error: (_, _) => [
               const SliverFillRemaining(
-                child: Center(
-                  child: Text(
-                    'No reviews yet',
-                    style: TextStyle(color: AppColors.textMuted),
-                  ),
-                ),
-              )
-            else
-              SliverPadding(
-                padding:
-                    const EdgeInsets.fromLTRB(24, 24, 24, AppSpacing.xxl),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) =>
-                        _ReviewCard(review: reviews[index]),
-                    childCount: reviews.length,
-                  ),
-                ),
+                hasScrollBody: false,
+                child: Center(child: Text('Could not load reviews')),
               ),
-          ],
-        ),
+            ],
+            data: (reviews) {
+              if (reviews.isEmpty) {
+                return [
+                  const SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: Text(
+                        'No reviews yet',
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ),
+                  ),
+                ];
+              }
+              return [
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, AppSpacing.xxl),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => _ReviewCard(review: reviews[index]),
+                      childCount: reviews.length,
+                    ),
+                  ),
+                ),
+              ];
+            },
+          ),
+        ],
       ),
     );
   }
@@ -129,15 +138,17 @@ class _ReviewCard extends StatelessWidget {
             '${review.productName} · ${Formatters.shortDate(review.createdAt)}',
             style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
           ),
-          const SizedBox(height: 10),
-          Text(
-            review.comment,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppColors.textSecondary,
-              height: 1.4,
+          if (review.comment.trim().isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              review.comment,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+                height: 1.4,
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

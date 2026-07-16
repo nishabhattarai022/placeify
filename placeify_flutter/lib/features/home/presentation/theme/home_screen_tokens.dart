@@ -59,9 +59,10 @@ abstract final class HomeScreenTokens {
         letterSpacing: -0.1,
       );
 
-  static TextStyle sectionTitle() => AppFonts.dmSans(
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
+  static TextStyle sectionTitle() => AppFonts.dmSerifDisplay(
+        fontSize: 20,
+        fontWeight: FontWeight.w400,
+        fontStyle: FontStyle.italic,
         color: Colors.black87,
         letterSpacing: -0.3,
       );

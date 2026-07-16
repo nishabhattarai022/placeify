@@ -16,7 +16,6 @@ import 'package:placeify_flutter/features/ar/presentation/widgets/ar_products_by
 import 'package:placeify_flutter/features/ar/presentation/widgets/my_ar_toolbar.dart';
 import 'package:placeify_flutter/features/ar/presentation/widgets/my_ar_try_in_room_bar.dart';
 import 'package:placeify_flutter/features/home/domain/models/product.dart';
-import 'package:placeify_flutter/features/home/presentation/providers/catalog_provider.dart';
 import 'package:placeify_flutter/features/home/presentation/providers/category_provider.dart';
 import 'package:placeify_flutter/features/product_detail/data/product_3d_model_resolver.dart';
 import 'package:placeify_flutter/features/product_detail/presentation/ar_room_screen.dart';
@@ -244,7 +243,6 @@ class _MyArScreenState extends ConsumerState<MyArScreen> {
   @override
   Widget build(BuildContext context) {
     final saved = ref.watch(arSavedProductsProvider);
-    ref.watch(catalogIndexProvider);
     final entries = _resolveEntries(saved);
     final topInset = MediaQuery.paddingOf(context).top;
     final isSearching = _searchInput.trim().isNotEmpty;
@@ -534,9 +532,10 @@ class _MyArSearchEmptyState extends StatelessWidget {
           Text(
             'No saved items match your search',
             textAlign: TextAlign.center,
-            style: AppFonts.cormorantGaramond(
+            style: AppFonts.dmSerifDisplay(
               fontSize: 22,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w400,
+              fontStyle: FontStyle.italic,
               color: AppColors.charcoal.withValues(alpha: 0.65),
             ),
           ),

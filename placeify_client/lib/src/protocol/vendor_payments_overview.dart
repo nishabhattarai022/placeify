@@ -12,7 +12,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'vendor_payout_summary.dart' as _i2;
-import 'package:placeify_client/src/protocol/protocol.dart' as _i3;
+import 'payment_update_summary.dart' as _i3;
+import 'package:placeify_client/src/protocol/protocol.dart' as _i4;
 
 /// Aggregated vendor payment balances for the payments dashboard.
 abstract class VendorPaymentsOverview implements _i1.SerializableModel {
@@ -20,23 +21,32 @@ abstract class VendorPaymentsOverview implements _i1.SerializableModel {
     required this.payouts,
     required this.pendingBalance,
     required this.totalEarned,
+    required this.pendingPaymentCount,
+    required this.paymentHistory,
   });
 
   factory VendorPaymentsOverview({
     required List<_i2.VendorPayoutSummary> payouts,
     required double pendingBalance,
     required double totalEarned,
+    required int pendingPaymentCount,
+    required List<_i3.PaymentUpdateSummary> paymentHistory,
   }) = _VendorPaymentsOverviewImpl;
 
   factory VendorPaymentsOverview.fromJson(
     Map<String, dynamic> jsonSerialization,
   ) {
     return VendorPaymentsOverview(
-      payouts: _i3.Protocol().deserialize<List<_i2.VendorPayoutSummary>>(
+      payouts: _i4.Protocol().deserialize<List<_i2.VendorPayoutSummary>>(
         jsonSerialization['payouts'],
       ),
       pendingBalance: (jsonSerialization['pendingBalance'] as num).toDouble(),
       totalEarned: (jsonSerialization['totalEarned'] as num).toDouble(),
+      pendingPaymentCount: jsonSerialization['pendingPaymentCount'] as int,
+      paymentHistory: _i4.Protocol()
+          .deserialize<List<_i3.PaymentUpdateSummary>>(
+            jsonSerialization['paymentHistory'],
+          ),
     );
   }
 
@@ -46,6 +56,12 @@ abstract class VendorPaymentsOverview implements _i1.SerializableModel {
 
   double totalEarned;
 
+  /// Count of OrderVendorPayment rows still pending for this vendor.
+  int pendingPaymentCount;
+
+  /// Completed customer payments (COD + eSewa) for this vendor shop.
+  List<_i3.PaymentUpdateSummary> paymentHistory;
+
   /// Returns a shallow copy of this [VendorPaymentsOverview]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -53,6 +69,8 @@ abstract class VendorPaymentsOverview implements _i1.SerializableModel {
     List<_i2.VendorPayoutSummary>? payouts,
     double? pendingBalance,
     double? totalEarned,
+    int? pendingPaymentCount,
+    List<_i3.PaymentUpdateSummary>? paymentHistory,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -61,6 +79,8 @@ abstract class VendorPaymentsOverview implements _i1.SerializableModel {
       'payouts': payouts.toJson(valueToJson: (v) => v.toJson()),
       'pendingBalance': pendingBalance,
       'totalEarned': totalEarned,
+      'pendingPaymentCount': pendingPaymentCount,
+      'paymentHistory': paymentHistory.toJson(valueToJson: (v) => v.toJson()),
     };
   }
 
@@ -75,10 +95,14 @@ class _VendorPaymentsOverviewImpl extends VendorPaymentsOverview {
     required List<_i2.VendorPayoutSummary> payouts,
     required double pendingBalance,
     required double totalEarned,
+    required int pendingPaymentCount,
+    required List<_i3.PaymentUpdateSummary> paymentHistory,
   }) : super._(
          payouts: payouts,
          pendingBalance: pendingBalance,
          totalEarned: totalEarned,
+         pendingPaymentCount: pendingPaymentCount,
+         paymentHistory: paymentHistory,
        );
 
   /// Returns a shallow copy of this [VendorPaymentsOverview]
@@ -89,11 +113,17 @@ class _VendorPaymentsOverviewImpl extends VendorPaymentsOverview {
     List<_i2.VendorPayoutSummary>? payouts,
     double? pendingBalance,
     double? totalEarned,
+    int? pendingPaymentCount,
+    List<_i3.PaymentUpdateSummary>? paymentHistory,
   }) {
     return VendorPaymentsOverview(
       payouts: payouts ?? this.payouts.map((e0) => e0.copyWith()).toList(),
       pendingBalance: pendingBalance ?? this.pendingBalance,
       totalEarned: totalEarned ?? this.totalEarned,
+      pendingPaymentCount: pendingPaymentCount ?? this.pendingPaymentCount,
+      paymentHistory:
+          paymentHistory ??
+          this.paymentHistory.map((e0) => e0.copyWith()).toList(),
     );
   }
 }

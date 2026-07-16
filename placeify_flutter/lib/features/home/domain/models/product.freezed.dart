@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Product {
 
- String get id; String get name; String get brand; String get sku; double get price; double? get originalPrice; String get imageUrl; String get svgIconPath; bool get hasArView; bool get isWishlisted; String get categoryId; ProductDimensions get dimensions; String? get vendorId;
+ String get id; String get name; String get brand; String get sku; double get price; double? get originalPrice; String get imageUrl; List<String> get imageUrls; String get svgIconPath; bool get hasArView; bool get isWishlisted; String get categoryId; ProductDimensions get dimensions; String? get vendorId;
 /// Create a copy of Product
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $ProductCopyWith<Product> get copyWith => _$ProductCopyWithImpl<Product>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Product&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.brand, brand) || other.brand == brand)&&(identical(other.sku, sku) || other.sku == sku)&&(identical(other.price, price) || other.price == price)&&(identical(other.originalPrice, originalPrice) || other.originalPrice == originalPrice)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.svgIconPath, svgIconPath) || other.svgIconPath == svgIconPath)&&(identical(other.hasArView, hasArView) || other.hasArView == hasArView)&&(identical(other.isWishlisted, isWishlisted) || other.isWishlisted == isWishlisted)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.dimensions, dimensions) || other.dimensions == dimensions)&&(identical(other.vendorId, vendorId) || other.vendorId == vendorId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Product&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.brand, brand) || other.brand == brand)&&(identical(other.sku, sku) || other.sku == sku)&&(identical(other.price, price) || other.price == price)&&(identical(other.originalPrice, originalPrice) || other.originalPrice == originalPrice)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&const DeepCollectionEquality().equals(other.imageUrls, imageUrls)&&(identical(other.svgIconPath, svgIconPath) || other.svgIconPath == svgIconPath)&&(identical(other.hasArView, hasArView) || other.hasArView == hasArView)&&(identical(other.isWishlisted, isWishlisted) || other.isWishlisted == isWishlisted)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.dimensions, dimensions) || other.dimensions == dimensions)&&(identical(other.vendorId, vendorId) || other.vendorId == vendorId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,brand,sku,price,originalPrice,imageUrl,svgIconPath,hasArView,isWishlisted,categoryId,dimensions,vendorId);
+int get hashCode => Object.hash(runtimeType,id,name,brand,sku,price,originalPrice,imageUrl,const DeepCollectionEquality().hash(imageUrls),svgIconPath,hasArView,isWishlisted,categoryId,dimensions,vendorId);
 
 @override
 String toString() {
-  return 'Product(id: $id, name: $name, brand: $brand, sku: $sku, price: $price, originalPrice: $originalPrice, imageUrl: $imageUrl, svgIconPath: $svgIconPath, hasArView: $hasArView, isWishlisted: $isWishlisted, categoryId: $categoryId, dimensions: $dimensions, vendorId: $vendorId)';
+  return 'Product(id: $id, name: $name, brand: $brand, sku: $sku, price: $price, originalPrice: $originalPrice, imageUrl: $imageUrl, imageUrls: $imageUrls, svgIconPath: $svgIconPath, hasArView: $hasArView, isWishlisted: $isWishlisted, categoryId: $categoryId, dimensions: $dimensions, vendorId: $vendorId)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $ProductCopyWith<$Res>  {
   factory $ProductCopyWith(Product value, $Res Function(Product) _then) = _$ProductCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String brand, String sku, double price, double? originalPrice, String imageUrl, String svgIconPath, bool hasArView, bool isWishlisted, String categoryId, ProductDimensions dimensions, String? vendorId
+ String id, String name, String brand, String sku, double price, double? originalPrice, String imageUrl, List<String> imageUrls, String svgIconPath, bool hasArView, bool isWishlisted, String categoryId, ProductDimensions dimensions, String? vendorId
 });
 
 
@@ -62,7 +62,7 @@ class _$ProductCopyWithImpl<$Res>
 
 /// Create a copy of Product
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? brand = null,Object? sku = null,Object? price = null,Object? originalPrice = freezed,Object? imageUrl = null,Object? svgIconPath = null,Object? hasArView = null,Object? isWishlisted = null,Object? categoryId = null,Object? dimensions = null,Object? vendorId = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? brand = null,Object? sku = null,Object? price = null,Object? originalPrice = freezed,Object? imageUrl = null,Object? imageUrls = null,Object? svgIconPath = null,Object? hasArView = null,Object? isWishlisted = null,Object? categoryId = null,Object? dimensions = null,Object? vendorId = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -71,7 +71,8 @@ as String,sku: null == sku ? _self.sku : sku // ignore: cast_nullable_to_non_nul
 as String,price: null == price ? _self.price : price // ignore: cast_nullable_to_non_nullable
 as double,originalPrice: freezed == originalPrice ? _self.originalPrice : originalPrice // ignore: cast_nullable_to_non_nullable
 as double?,imageUrl: null == imageUrl ? _self.imageUrl : imageUrl // ignore: cast_nullable_to_non_nullable
-as String,svgIconPath: null == svgIconPath ? _self.svgIconPath : svgIconPath // ignore: cast_nullable_to_non_nullable
+as String,imageUrls: null == imageUrls ? _self.imageUrls : imageUrls // ignore: cast_nullable_to_non_nullable
+as List<String>,svgIconPath: null == svgIconPath ? _self.svgIconPath : svgIconPath // ignore: cast_nullable_to_non_nullable
 as String,hasArView: null == hasArView ? _self.hasArView : hasArView // ignore: cast_nullable_to_non_nullable
 as bool,isWishlisted: null == isWishlisted ? _self.isWishlisted : isWishlisted // ignore: cast_nullable_to_non_nullable
 as bool,categoryId: null == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
@@ -171,10 +172,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String brand,  String sku,  double price,  double? originalPrice,  String imageUrl,  String svgIconPath,  bool hasArView,  bool isWishlisted,  String categoryId,  ProductDimensions dimensions,  String? vendorId)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String brand,  String sku,  double price,  double? originalPrice,  String imageUrl,  List<String> imageUrls,  String svgIconPath,  bool hasArView,  bool isWishlisted,  String categoryId,  ProductDimensions dimensions,  String? vendorId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Product() when $default != null:
-return $default(_that.id,_that.name,_that.brand,_that.sku,_that.price,_that.originalPrice,_that.imageUrl,_that.svgIconPath,_that.hasArView,_that.isWishlisted,_that.categoryId,_that.dimensions,_that.vendorId);case _:
+return $default(_that.id,_that.name,_that.brand,_that.sku,_that.price,_that.originalPrice,_that.imageUrl,_that.imageUrls,_that.svgIconPath,_that.hasArView,_that.isWishlisted,_that.categoryId,_that.dimensions,_that.vendorId);case _:
   return orElse();
 
 }
@@ -192,10 +193,10 @@ return $default(_that.id,_that.name,_that.brand,_that.sku,_that.price,_that.orig
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String brand,  String sku,  double price,  double? originalPrice,  String imageUrl,  String svgIconPath,  bool hasArView,  bool isWishlisted,  String categoryId,  ProductDimensions dimensions,  String? vendorId)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String brand,  String sku,  double price,  double? originalPrice,  String imageUrl,  List<String> imageUrls,  String svgIconPath,  bool hasArView,  bool isWishlisted,  String categoryId,  ProductDimensions dimensions,  String? vendorId)  $default,) {final _that = this;
 switch (_that) {
 case _Product():
-return $default(_that.id,_that.name,_that.brand,_that.sku,_that.price,_that.originalPrice,_that.imageUrl,_that.svgIconPath,_that.hasArView,_that.isWishlisted,_that.categoryId,_that.dimensions,_that.vendorId);case _:
+return $default(_that.id,_that.name,_that.brand,_that.sku,_that.price,_that.originalPrice,_that.imageUrl,_that.imageUrls,_that.svgIconPath,_that.hasArView,_that.isWishlisted,_that.categoryId,_that.dimensions,_that.vendorId);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -212,10 +213,10 @@ return $default(_that.id,_that.name,_that.brand,_that.sku,_that.price,_that.orig
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String brand,  String sku,  double price,  double? originalPrice,  String imageUrl,  String svgIconPath,  bool hasArView,  bool isWishlisted,  String categoryId,  ProductDimensions dimensions,  String? vendorId)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String brand,  String sku,  double price,  double? originalPrice,  String imageUrl,  List<String> imageUrls,  String svgIconPath,  bool hasArView,  bool isWishlisted,  String categoryId,  ProductDimensions dimensions,  String? vendorId)?  $default,) {final _that = this;
 switch (_that) {
 case _Product() when $default != null:
-return $default(_that.id,_that.name,_that.brand,_that.sku,_that.price,_that.originalPrice,_that.imageUrl,_that.svgIconPath,_that.hasArView,_that.isWishlisted,_that.categoryId,_that.dimensions,_that.vendorId);case _:
+return $default(_that.id,_that.name,_that.brand,_that.sku,_that.price,_that.originalPrice,_that.imageUrl,_that.imageUrls,_that.svgIconPath,_that.hasArView,_that.isWishlisted,_that.categoryId,_that.dimensions,_that.vendorId);case _:
   return null;
 
 }
@@ -227,7 +228,7 @@ return $default(_that.id,_that.name,_that.brand,_that.sku,_that.price,_that.orig
 
 
 class _Product extends Product {
-  const _Product({required this.id, required this.name, required this.brand, required this.sku, required this.price, this.originalPrice, required this.imageUrl, required this.svgIconPath, required this.hasArView, this.isWishlisted = false, required this.categoryId, required this.dimensions, this.vendorId}): super._();
+  const _Product({required this.id, required this.name, required this.brand, required this.sku, required this.price, this.originalPrice, required this.imageUrl, final  List<String> imageUrls = const <String>[], required this.svgIconPath, required this.hasArView, this.isWishlisted = false, required this.categoryId, required this.dimensions, this.vendorId}): _imageUrls = imageUrls,super._();
   
 
 @override final  String id;
@@ -237,6 +238,13 @@ class _Product extends Product {
 @override final  double price;
 @override final  double? originalPrice;
 @override final  String imageUrl;
+ final  List<String> _imageUrls;
+@override@JsonKey() List<String> get imageUrls {
+  if (_imageUrls is EqualUnmodifiableListView) return _imageUrls;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_imageUrls);
+}
+
 @override final  String svgIconPath;
 @override final  bool hasArView;
 @override@JsonKey() final  bool isWishlisted;
@@ -254,16 +262,16 @@ _$ProductCopyWith<_Product> get copyWith => __$ProductCopyWithImpl<_Product>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Product&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.brand, brand) || other.brand == brand)&&(identical(other.sku, sku) || other.sku == sku)&&(identical(other.price, price) || other.price == price)&&(identical(other.originalPrice, originalPrice) || other.originalPrice == originalPrice)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.svgIconPath, svgIconPath) || other.svgIconPath == svgIconPath)&&(identical(other.hasArView, hasArView) || other.hasArView == hasArView)&&(identical(other.isWishlisted, isWishlisted) || other.isWishlisted == isWishlisted)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.dimensions, dimensions) || other.dimensions == dimensions)&&(identical(other.vendorId, vendorId) || other.vendorId == vendorId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Product&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.brand, brand) || other.brand == brand)&&(identical(other.sku, sku) || other.sku == sku)&&(identical(other.price, price) || other.price == price)&&(identical(other.originalPrice, originalPrice) || other.originalPrice == originalPrice)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&const DeepCollectionEquality().equals(other._imageUrls, _imageUrls)&&(identical(other.svgIconPath, svgIconPath) || other.svgIconPath == svgIconPath)&&(identical(other.hasArView, hasArView) || other.hasArView == hasArView)&&(identical(other.isWishlisted, isWishlisted) || other.isWishlisted == isWishlisted)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.dimensions, dimensions) || other.dimensions == dimensions)&&(identical(other.vendorId, vendorId) || other.vendorId == vendorId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,brand,sku,price,originalPrice,imageUrl,svgIconPath,hasArView,isWishlisted,categoryId,dimensions,vendorId);
+int get hashCode => Object.hash(runtimeType,id,name,brand,sku,price,originalPrice,imageUrl,const DeepCollectionEquality().hash(_imageUrls),svgIconPath,hasArView,isWishlisted,categoryId,dimensions,vendorId);
 
 @override
 String toString() {
-  return 'Product(id: $id, name: $name, brand: $brand, sku: $sku, price: $price, originalPrice: $originalPrice, imageUrl: $imageUrl, svgIconPath: $svgIconPath, hasArView: $hasArView, isWishlisted: $isWishlisted, categoryId: $categoryId, dimensions: $dimensions, vendorId: $vendorId)';
+  return 'Product(id: $id, name: $name, brand: $brand, sku: $sku, price: $price, originalPrice: $originalPrice, imageUrl: $imageUrl, imageUrls: $imageUrls, svgIconPath: $svgIconPath, hasArView: $hasArView, isWishlisted: $isWishlisted, categoryId: $categoryId, dimensions: $dimensions, vendorId: $vendorId)';
 }
 
 
@@ -274,7 +282,7 @@ abstract mixin class _$ProductCopyWith<$Res> implements $ProductCopyWith<$Res> {
   factory _$ProductCopyWith(_Product value, $Res Function(_Product) _then) = __$ProductCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String brand, String sku, double price, double? originalPrice, String imageUrl, String svgIconPath, bool hasArView, bool isWishlisted, String categoryId, ProductDimensions dimensions, String? vendorId
+ String id, String name, String brand, String sku, double price, double? originalPrice, String imageUrl, List<String> imageUrls, String svgIconPath, bool hasArView, bool isWishlisted, String categoryId, ProductDimensions dimensions, String? vendorId
 });
 
 
@@ -291,7 +299,7 @@ class __$ProductCopyWithImpl<$Res>
 
 /// Create a copy of Product
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? brand = null,Object? sku = null,Object? price = null,Object? originalPrice = freezed,Object? imageUrl = null,Object? svgIconPath = null,Object? hasArView = null,Object? isWishlisted = null,Object? categoryId = null,Object? dimensions = null,Object? vendorId = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? brand = null,Object? sku = null,Object? price = null,Object? originalPrice = freezed,Object? imageUrl = null,Object? imageUrls = null,Object? svgIconPath = null,Object? hasArView = null,Object? isWishlisted = null,Object? categoryId = null,Object? dimensions = null,Object? vendorId = freezed,}) {
   return _then(_Product(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -300,7 +308,8 @@ as String,sku: null == sku ? _self.sku : sku // ignore: cast_nullable_to_non_nul
 as String,price: null == price ? _self.price : price // ignore: cast_nullable_to_non_nullable
 as double,originalPrice: freezed == originalPrice ? _self.originalPrice : originalPrice // ignore: cast_nullable_to_non_nullable
 as double?,imageUrl: null == imageUrl ? _self.imageUrl : imageUrl // ignore: cast_nullable_to_non_nullable
-as String,svgIconPath: null == svgIconPath ? _self.svgIconPath : svgIconPath // ignore: cast_nullable_to_non_nullable
+as String,imageUrls: null == imageUrls ? _self._imageUrls : imageUrls // ignore: cast_nullable_to_non_nullable
+as List<String>,svgIconPath: null == svgIconPath ? _self.svgIconPath : svgIconPath // ignore: cast_nullable_to_non_nullable
 as String,hasArView: null == hasArView ? _self.hasArView : hasArView // ignore: cast_nullable_to_non_nullable
 as bool,isWishlisted: null == isWishlisted ? _self.isWishlisted : isWishlisted // ignore: cast_nullable_to_non_nullable
 as bool,categoryId: null == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable

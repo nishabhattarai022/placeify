@@ -15,6 +15,7 @@ _VendorNotification _$VendorNotificationFromJson(Map<String, dynamic> json) =>
       isRead: json['isRead'] as bool? ?? false,
       createdAt: DateTime.parse(json['createdAt'] as String),
       relatedId: json['relatedId'] as String?,
+      relatedKey: json['relatedKey'] as String?,
     );
 
 Map<String, dynamic> _$VendorNotificationToJson(_VendorNotification instance) =>
@@ -26,6 +27,7 @@ Map<String, dynamic> _$VendorNotificationToJson(_VendorNotification instance) =>
       'isRead': instance.isRead,
       'createdAt': instance.createdAt.toIso8601String(),
       'relatedId': instance.relatedId,
+      'relatedKey': instance.relatedKey,
     };
 
 const _$NotificationTypeEnumMap = {

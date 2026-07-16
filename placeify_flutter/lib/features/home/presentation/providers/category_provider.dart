@@ -1,8 +1,6 @@
-import 'package:placeify_flutter/features/shops/data/mock_consumer_shop_repository.dart';
 import 'package:placeify_flutter/features/shops/data/vendor_product_mapper.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../data/mock_product_repository.dart';
 import '../../domain/models/category.dart';
 import '../../domain/models/product.dart';
 import '../../../shops/presentation/providers/consumer_shop_provider.dart';
@@ -60,13 +58,8 @@ Product? productById(Ref ref, String id) {
   final shopProduct = ref.watch(shopProductByConsumerIdProvider(id)).value;
   if (shopProduct != null) return shopProduct;
 
-  // Sync fallback keeps My AR / browse working when catalog is still loading
-  // or the backend is unreachable (Nishabh used mock-only lookups here).
-  try {
-    return MockProductRepository.products.firstWhere((p) => p.id == id);
-  } catch (_) {
-    return MockConsumerShopRepository.productByIdSync(id);
-  }
+  // Never fall back to mock/demo catalog — cart/wishlist must stay on live IDs.
+  return null;
 }
 
 const _categoryLabels = <String, String>{

@@ -202,8 +202,42 @@ abstract final class OrderNotificationService {
       event: 'payment_${status.name}',
     );
 
-    // Vendor initiated the update; customer notification is sufficient.
-    // TODO(production): optional FCM push to customer devices.
+    // Best-effort vendor notify so Orders/Payments/Dashboard refresh via
+    // existing inAppNotificationEvents. Must never fail the payment response.
+    if (status != OrderPaymentStatus.paymentReceived &&
+        status != OrderPaymentStatus.paymentConfirmed) {
+      return;
+    }
+
+    try {
+      final vendorUserId = await _notifications.vendorUserId(session, vendorId);
+      if (vendorUserId == null) return;
+
+      final vendorBody = status == OrderPaymentStatus.paymentReceived
+          ? 'Customer has completed payment for Order #$orderLabel.'
+          : 'Payment for order #$orderLabel has been confirmed.';
+      await _notifications.create(
+        session,
+        userId: vendorUserId,
+        title: 'Payment received',
+        message: vendorBody,
+        type: InAppNotificationType.paymentUpdate,
+        referenceId: order.id,
+      );
+      session.log(
+        'VendorNotification event=payment_${status.name} '
+        'vendorId=$vendorId orderId=${order.id}',
+        level: LogLevel.info,
+      );
+    } catch (error, stackTrace) {
+      session.log(
+        'VendorNotification failed event=payment_${status.name} '
+        'vendorId=$vendorId orderId=${order.id} error=$error',
+        level: LogLevel.warning,
+        exception: error,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   static Future<void> notifyCustomerPaymentAllocation(
@@ -220,8 +254,10 @@ abstract final class OrderNotificationService {
         'Payment for order #$orderLabel has been refunded.',
       PaymentTransactionStatus.pending =>
         'Payment for order #$orderLabel is pending.',
-      PaymentTransactionStatus.succeeded =>
+      PaymentTransactionStatus.paid =>
         note.isNotEmpty ? note : 'Payment for order #$orderLabel was updated.',
+      PaymentTransactionStatus.cancelled =>
+        'Payment for order #$orderLabel was cancelled.',
     };
 
     await _notifyCustomer(
@@ -479,6 +515,10 @@ abstract final class OrderNotificationService {
       InAppNotificationType.productUpdate ||
       InAppNotificationType.promotionUpdate =>
         _allowsPromotions(session, userId),
+      InAppNotificationType.vendorApplication ||
+      InAppNotificationType.vendorFlagged ||
+      InAppNotificationType.systemAlert =>
+        Future.value(true),
     };
   }
 

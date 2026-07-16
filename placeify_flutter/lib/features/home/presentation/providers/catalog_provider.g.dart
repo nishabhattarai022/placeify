@@ -389,7 +389,7 @@ final class CatalogDiscountedProductsProvider
 }
 
 String _$catalogDiscountedProductsHash() =>
-    r'1dd8c5bd8bf4868e35626b73517e968cb693c6b0';
+    r'30eecaa12ca3198037ceb686941e6e81d3cfd3ad';
 
 @ProviderFor(catalogNewestProducts)
 final catalogNewestProductsProvider = CatalogNewestProductsFamily._();

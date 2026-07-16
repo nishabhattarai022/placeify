@@ -29,6 +29,7 @@ class VendorNotificationStore {
             isRead: row.isRead,
             createdAt: row.createdAt,
             relatedId: row.referenceId?.toString(),
+            relatedKey: row.referenceKey,
           ),
     ];
   }
@@ -65,6 +66,10 @@ class VendorNotificationStore {
       InAppNotificationType.productUpdate => VendorNotificationType.product,
       InAppNotificationType.promotionUpdate => VendorNotificationType.product,
       InAppNotificationType.refundUpdate => VendorNotificationType.payment,
+      InAppNotificationType.vendorApplication ||
+      InAppNotificationType.vendorFlagged ||
+      InAppNotificationType.systemAlert =>
+        VendorNotificationType.product,
     };
   }
 }

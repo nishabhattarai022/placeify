@@ -14,21 +14,21 @@ import 'package:serverpod/serverpod.dart' as _i1;
 
 /// Consumer checkout payment option.
 enum PaymentMethod implements _i1.SerializableModel {
-  cod,
   mockOnline,
   esewa,
-  khalti;
+  khalti,
+  cashOnDelivery;
 
   static PaymentMethod fromJson(String name) {
     switch (name) {
-      case 'cod':
-        return PaymentMethod.cod;
       case 'mockOnline':
         return PaymentMethod.mockOnline;
       case 'esewa':
         return PaymentMethod.esewa;
       case 'khalti':
         return PaymentMethod.khalti;
+      case 'cashOnDelivery':
+        return PaymentMethod.cashOnDelivery;
       default:
         return PaymentMethod.mockOnline;
     }

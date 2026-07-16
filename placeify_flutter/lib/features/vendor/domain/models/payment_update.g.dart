@@ -14,6 +14,8 @@ _PaymentUpdate _$PaymentUpdateFromJson(Map<String, dynamic> json) =>
       status: $enumDecode(_$PaymentStatusEnumMap, json['status']),
       note: json['note'] as String,
       updatedAt: DateTime.parse(json['updatedAt'] as String),
+      paymentMethodLabel: json['paymentMethodLabel'] as String?,
+      customerName: json['customerName'] as String?,
     );
 
 Map<String, dynamic> _$PaymentUpdateToJson(_PaymentUpdate instance) =>
@@ -24,6 +26,8 @@ Map<String, dynamic> _$PaymentUpdateToJson(_PaymentUpdate instance) =>
       'status': _$PaymentStatusEnumMap[instance.status]!,
       'note': instance.note,
       'updatedAt': instance.updatedAt.toIso8601String(),
+      'paymentMethodLabel': instance.paymentMethodLabel,
+      'customerName': instance.customerName,
     };
 
 const _$PaymentStatusEnumMap = {

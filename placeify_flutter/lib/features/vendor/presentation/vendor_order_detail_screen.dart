@@ -17,6 +17,7 @@ import '../domain/models/delivery_update.dart';
 import '../domain/models/vendor_order.dart';
 import '../domain/enums/payment_status.dart';
 import '../domain/models/payment_update.dart';
+import '../domain/payment_update_eligibility.dart';
 import 'providers/vendor_order_detail_provider.dart';
 import 'providers/vendor_payments_provider.dart';
 import 'providers/vendor_product_image_provider.dart';
@@ -277,8 +278,8 @@ class _PaymentSection extends ConsumerWidget {
               );
             },
           ),
-          const SizedBox(height: 16),
-          if (order.canUpdatePayment)
+          if (canVendorUpdatePayment(order.status)) ...[
+            const SizedBox(height: 16),
             OutlinedButton(
               onPressed: () async {
                 HapticService.light();
@@ -296,15 +297,8 @@ class _PaymentSection extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
               child: const Text('Update payment'),
-            )
-          else
-            const Text(
-              'Payment is complete. No further updates are allowed.',
-              style: TextStyle(
-                fontSize: 13,
-                color: AppColors.textMuted,
-              ),
             ),
+          ],
         ],
       ),
     );

@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AdminStats {
 
- int get totalVendors; int get pendingCount; int get totalUsers; double get platformGmv; int get approvedCount; int get declinedCount; int get suspendedCount; List<AdminAuditLogEntry> get recentActivity; List<double> get signupSeries; List<VendorApplication> get recentApplications;
+ int get totalVendors; int get pendingCount; int get totalUsers; double get platformGmv; int get approvedCount; int get declinedCount; int get suspendedCount; List<AdminAuditLogEntry> get recentActivity; List<VendorApplication> get recentApplications;
 /// Create a copy of AdminStats
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $AdminStatsCopyWith<AdminStats> get copyWith => _$AdminStatsCopyWithImpl<AdminSt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AdminStats&&(identical(other.totalVendors, totalVendors) || other.totalVendors == totalVendors)&&(identical(other.pendingCount, pendingCount) || other.pendingCount == pendingCount)&&(identical(other.totalUsers, totalUsers) || other.totalUsers == totalUsers)&&(identical(other.platformGmv, platformGmv) || other.platformGmv == platformGmv)&&(identical(other.approvedCount, approvedCount) || other.approvedCount == approvedCount)&&(identical(other.declinedCount, declinedCount) || other.declinedCount == declinedCount)&&(identical(other.suspendedCount, suspendedCount) || other.suspendedCount == suspendedCount)&&const DeepCollectionEquality().equals(other.recentActivity, recentActivity)&&const DeepCollectionEquality().equals(other.signupSeries, signupSeries)&&const DeepCollectionEquality().equals(other.recentApplications, recentApplications));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AdminStats&&(identical(other.totalVendors, totalVendors) || other.totalVendors == totalVendors)&&(identical(other.pendingCount, pendingCount) || other.pendingCount == pendingCount)&&(identical(other.totalUsers, totalUsers) || other.totalUsers == totalUsers)&&(identical(other.platformGmv, platformGmv) || other.platformGmv == platformGmv)&&(identical(other.approvedCount, approvedCount) || other.approvedCount == approvedCount)&&(identical(other.declinedCount, declinedCount) || other.declinedCount == declinedCount)&&(identical(other.suspendedCount, suspendedCount) || other.suspendedCount == suspendedCount)&&const DeepCollectionEquality().equals(other.recentActivity, recentActivity)&&const DeepCollectionEquality().equals(other.recentApplications, recentApplications));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,totalVendors,pendingCount,totalUsers,platformGmv,approvedCount,declinedCount,suspendedCount,const DeepCollectionEquality().hash(recentActivity),const DeepCollectionEquality().hash(signupSeries),const DeepCollectionEquality().hash(recentApplications));
+int get hashCode => Object.hash(runtimeType,totalVendors,pendingCount,totalUsers,platformGmv,approvedCount,declinedCount,suspendedCount,const DeepCollectionEquality().hash(recentActivity),const DeepCollectionEquality().hash(recentApplications));
 
 @override
 String toString() {
-  return 'AdminStats(totalVendors: $totalVendors, pendingCount: $pendingCount, totalUsers: $totalUsers, platformGmv: $platformGmv, approvedCount: $approvedCount, declinedCount: $declinedCount, suspendedCount: $suspendedCount, recentActivity: $recentActivity, signupSeries: $signupSeries, recentApplications: $recentApplications)';
+  return 'AdminStats(totalVendors: $totalVendors, pendingCount: $pendingCount, totalUsers: $totalUsers, platformGmv: $platformGmv, approvedCount: $approvedCount, declinedCount: $declinedCount, suspendedCount: $suspendedCount, recentActivity: $recentActivity, recentApplications: $recentApplications)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $AdminStatsCopyWith<$Res>  {
   factory $AdminStatsCopyWith(AdminStats value, $Res Function(AdminStats) _then) = _$AdminStatsCopyWithImpl;
 @useResult
 $Res call({
- int totalVendors, int pendingCount, int totalUsers, double platformGmv, int approvedCount, int declinedCount, int suspendedCount, List<AdminAuditLogEntry> recentActivity, List<double> signupSeries, List<VendorApplication> recentApplications
+ int totalVendors, int pendingCount, int totalUsers, double platformGmv, int approvedCount, int declinedCount, int suspendedCount, List<AdminAuditLogEntry> recentActivity, List<VendorApplication> recentApplications
 });
 
 
@@ -65,7 +65,7 @@ class _$AdminStatsCopyWithImpl<$Res>
 
 /// Create a copy of AdminStats
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? totalVendors = null,Object? pendingCount = null,Object? totalUsers = null,Object? platformGmv = null,Object? approvedCount = null,Object? declinedCount = null,Object? suspendedCount = null,Object? recentActivity = null,Object? signupSeries = null,Object? recentApplications = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? totalVendors = null,Object? pendingCount = null,Object? totalUsers = null,Object? platformGmv = null,Object? approvedCount = null,Object? declinedCount = null,Object? suspendedCount = null,Object? recentActivity = null,Object? recentApplications = null,}) {
   return _then(_self.copyWith(
 totalVendors: null == totalVendors ? _self.totalVendors : totalVendors // ignore: cast_nullable_to_non_nullable
 as int,pendingCount: null == pendingCount ? _self.pendingCount : pendingCount // ignore: cast_nullable_to_non_nullable
@@ -75,8 +75,7 @@ as double,approvedCount: null == approvedCount ? _self.approvedCount : approvedC
 as int,declinedCount: null == declinedCount ? _self.declinedCount : declinedCount // ignore: cast_nullable_to_non_nullable
 as int,suspendedCount: null == suspendedCount ? _self.suspendedCount : suspendedCount // ignore: cast_nullable_to_non_nullable
 as int,recentActivity: null == recentActivity ? _self.recentActivity : recentActivity // ignore: cast_nullable_to_non_nullable
-as List<AdminAuditLogEntry>,signupSeries: null == signupSeries ? _self.signupSeries : signupSeries // ignore: cast_nullable_to_non_nullable
-as List<double>,recentApplications: null == recentApplications ? _self.recentApplications : recentApplications // ignore: cast_nullable_to_non_nullable
+as List<AdminAuditLogEntry>,recentApplications: null == recentApplications ? _self.recentApplications : recentApplications // ignore: cast_nullable_to_non_nullable
 as List<VendorApplication>,
   ));
 }
@@ -162,10 +161,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int totalVendors,  int pendingCount,  int totalUsers,  double platformGmv,  int approvedCount,  int declinedCount,  int suspendedCount,  List<AdminAuditLogEntry> recentActivity,  List<double> signupSeries,  List<VendorApplication> recentApplications)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int totalVendors,  int pendingCount,  int totalUsers,  double platformGmv,  int approvedCount,  int declinedCount,  int suspendedCount,  List<AdminAuditLogEntry> recentActivity,  List<VendorApplication> recentApplications)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AdminStats() when $default != null:
-return $default(_that.totalVendors,_that.pendingCount,_that.totalUsers,_that.platformGmv,_that.approvedCount,_that.declinedCount,_that.suspendedCount,_that.recentActivity,_that.signupSeries,_that.recentApplications);case _:
+return $default(_that.totalVendors,_that.pendingCount,_that.totalUsers,_that.platformGmv,_that.approvedCount,_that.declinedCount,_that.suspendedCount,_that.recentActivity,_that.recentApplications);case _:
   return orElse();
 
 }
@@ -183,10 +182,10 @@ return $default(_that.totalVendors,_that.pendingCount,_that.totalUsers,_that.pla
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int totalVendors,  int pendingCount,  int totalUsers,  double platformGmv,  int approvedCount,  int declinedCount,  int suspendedCount,  List<AdminAuditLogEntry> recentActivity,  List<double> signupSeries,  List<VendorApplication> recentApplications)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int totalVendors,  int pendingCount,  int totalUsers,  double platformGmv,  int approvedCount,  int declinedCount,  int suspendedCount,  List<AdminAuditLogEntry> recentActivity,  List<VendorApplication> recentApplications)  $default,) {final _that = this;
 switch (_that) {
 case _AdminStats():
-return $default(_that.totalVendors,_that.pendingCount,_that.totalUsers,_that.platformGmv,_that.approvedCount,_that.declinedCount,_that.suspendedCount,_that.recentActivity,_that.signupSeries,_that.recentApplications);case _:
+return $default(_that.totalVendors,_that.pendingCount,_that.totalUsers,_that.platformGmv,_that.approvedCount,_that.declinedCount,_that.suspendedCount,_that.recentActivity,_that.recentApplications);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -203,10 +202,10 @@ return $default(_that.totalVendors,_that.pendingCount,_that.totalUsers,_that.pla
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int totalVendors,  int pendingCount,  int totalUsers,  double platformGmv,  int approvedCount,  int declinedCount,  int suspendedCount,  List<AdminAuditLogEntry> recentActivity,  List<double> signupSeries,  List<VendorApplication> recentApplications)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int totalVendors,  int pendingCount,  int totalUsers,  double platformGmv,  int approvedCount,  int declinedCount,  int suspendedCount,  List<AdminAuditLogEntry> recentActivity,  List<VendorApplication> recentApplications)?  $default,) {final _that = this;
 switch (_that) {
 case _AdminStats() when $default != null:
-return $default(_that.totalVendors,_that.pendingCount,_that.totalUsers,_that.platformGmv,_that.approvedCount,_that.declinedCount,_that.suspendedCount,_that.recentActivity,_that.signupSeries,_that.recentApplications);case _:
+return $default(_that.totalVendors,_that.pendingCount,_that.totalUsers,_that.platformGmv,_that.approvedCount,_that.declinedCount,_that.suspendedCount,_that.recentActivity,_that.recentApplications);case _:
   return null;
 
 }
@@ -218,7 +217,7 @@ return $default(_that.totalVendors,_that.pendingCount,_that.totalUsers,_that.pla
 @JsonSerializable()
 
 class _AdminStats implements AdminStats {
-  const _AdminStats({required this.totalVendors, required this.pendingCount, required this.totalUsers, required this.platformGmv, required this.approvedCount, required this.declinedCount, required this.suspendedCount, final  List<AdminAuditLogEntry> recentActivity = const <AdminAuditLogEntry>[], final  List<double> signupSeries = const <double>[], final  List<VendorApplication> recentApplications = const <VendorApplication>[]}): _recentActivity = recentActivity,_signupSeries = signupSeries,_recentApplications = recentApplications;
+  const _AdminStats({required this.totalVendors, required this.pendingCount, required this.totalUsers, required this.platformGmv, required this.approvedCount, required this.declinedCount, required this.suspendedCount, final  List<AdminAuditLogEntry> recentActivity = const <AdminAuditLogEntry>[], final  List<VendorApplication> recentApplications = const <VendorApplication>[]}): _recentActivity = recentActivity,_recentApplications = recentApplications;
   factory _AdminStats.fromJson(Map<String, dynamic> json) => _$AdminStatsFromJson(json);
 
 @override final  int totalVendors;
@@ -233,13 +232,6 @@ class _AdminStats implements AdminStats {
   if (_recentActivity is EqualUnmodifiableListView) return _recentActivity;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_recentActivity);
-}
-
- final  List<double> _signupSeries;
-@override@JsonKey() List<double> get signupSeries {
-  if (_signupSeries is EqualUnmodifiableListView) return _signupSeries;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_signupSeries);
 }
 
  final  List<VendorApplication> _recentApplications;
@@ -263,16 +255,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AdminStats&&(identical(other.totalVendors, totalVendors) || other.totalVendors == totalVendors)&&(identical(other.pendingCount, pendingCount) || other.pendingCount == pendingCount)&&(identical(other.totalUsers, totalUsers) || other.totalUsers == totalUsers)&&(identical(other.platformGmv, platformGmv) || other.platformGmv == platformGmv)&&(identical(other.approvedCount, approvedCount) || other.approvedCount == approvedCount)&&(identical(other.declinedCount, declinedCount) || other.declinedCount == declinedCount)&&(identical(other.suspendedCount, suspendedCount) || other.suspendedCount == suspendedCount)&&const DeepCollectionEquality().equals(other._recentActivity, _recentActivity)&&const DeepCollectionEquality().equals(other._signupSeries, _signupSeries)&&const DeepCollectionEquality().equals(other._recentApplications, _recentApplications));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AdminStats&&(identical(other.totalVendors, totalVendors) || other.totalVendors == totalVendors)&&(identical(other.pendingCount, pendingCount) || other.pendingCount == pendingCount)&&(identical(other.totalUsers, totalUsers) || other.totalUsers == totalUsers)&&(identical(other.platformGmv, platformGmv) || other.platformGmv == platformGmv)&&(identical(other.approvedCount, approvedCount) || other.approvedCount == approvedCount)&&(identical(other.declinedCount, declinedCount) || other.declinedCount == declinedCount)&&(identical(other.suspendedCount, suspendedCount) || other.suspendedCount == suspendedCount)&&const DeepCollectionEquality().equals(other._recentActivity, _recentActivity)&&const DeepCollectionEquality().equals(other._recentApplications, _recentApplications));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,totalVendors,pendingCount,totalUsers,platformGmv,approvedCount,declinedCount,suspendedCount,const DeepCollectionEquality().hash(_recentActivity),const DeepCollectionEquality().hash(_signupSeries),const DeepCollectionEquality().hash(_recentApplications));
+int get hashCode => Object.hash(runtimeType,totalVendors,pendingCount,totalUsers,platformGmv,approvedCount,declinedCount,suspendedCount,const DeepCollectionEquality().hash(_recentActivity),const DeepCollectionEquality().hash(_recentApplications));
 
 @override
 String toString() {
-  return 'AdminStats(totalVendors: $totalVendors, pendingCount: $pendingCount, totalUsers: $totalUsers, platformGmv: $platformGmv, approvedCount: $approvedCount, declinedCount: $declinedCount, suspendedCount: $suspendedCount, recentActivity: $recentActivity, signupSeries: $signupSeries, recentApplications: $recentApplications)';
+  return 'AdminStats(totalVendors: $totalVendors, pendingCount: $pendingCount, totalUsers: $totalUsers, platformGmv: $platformGmv, approvedCount: $approvedCount, declinedCount: $declinedCount, suspendedCount: $suspendedCount, recentActivity: $recentActivity, recentApplications: $recentApplications)';
 }
 
 
@@ -283,7 +275,7 @@ abstract mixin class _$AdminStatsCopyWith<$Res> implements $AdminStatsCopyWith<$
   factory _$AdminStatsCopyWith(_AdminStats value, $Res Function(_AdminStats) _then) = __$AdminStatsCopyWithImpl;
 @override @useResult
 $Res call({
- int totalVendors, int pendingCount, int totalUsers, double platformGmv, int approvedCount, int declinedCount, int suspendedCount, List<AdminAuditLogEntry> recentActivity, List<double> signupSeries, List<VendorApplication> recentApplications
+ int totalVendors, int pendingCount, int totalUsers, double platformGmv, int approvedCount, int declinedCount, int suspendedCount, List<AdminAuditLogEntry> recentActivity, List<VendorApplication> recentApplications
 });
 
 
@@ -300,7 +292,7 @@ class __$AdminStatsCopyWithImpl<$Res>
 
 /// Create a copy of AdminStats
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? totalVendors = null,Object? pendingCount = null,Object? totalUsers = null,Object? platformGmv = null,Object? approvedCount = null,Object? declinedCount = null,Object? suspendedCount = null,Object? recentActivity = null,Object? signupSeries = null,Object? recentApplications = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? totalVendors = null,Object? pendingCount = null,Object? totalUsers = null,Object? platformGmv = null,Object? approvedCount = null,Object? declinedCount = null,Object? suspendedCount = null,Object? recentActivity = null,Object? recentApplications = null,}) {
   return _then(_AdminStats(
 totalVendors: null == totalVendors ? _self.totalVendors : totalVendors // ignore: cast_nullable_to_non_nullable
 as int,pendingCount: null == pendingCount ? _self.pendingCount : pendingCount // ignore: cast_nullable_to_non_nullable
@@ -310,8 +302,7 @@ as double,approvedCount: null == approvedCount ? _self.approvedCount : approvedC
 as int,declinedCount: null == declinedCount ? _self.declinedCount : declinedCount // ignore: cast_nullable_to_non_nullable
 as int,suspendedCount: null == suspendedCount ? _self.suspendedCount : suspendedCount // ignore: cast_nullable_to_non_nullable
 as int,recentActivity: null == recentActivity ? _self._recentActivity : recentActivity // ignore: cast_nullable_to_non_nullable
-as List<AdminAuditLogEntry>,signupSeries: null == signupSeries ? _self._signupSeries : signupSeries // ignore: cast_nullable_to_non_nullable
-as List<double>,recentApplications: null == recentApplications ? _self._recentApplications : recentApplications // ignore: cast_nullable_to_non_nullable
+as List<AdminAuditLogEntry>,recentApplications: null == recentApplications ? _self._recentApplications : recentApplications // ignore: cast_nullable_to_non_nullable
 as List<VendorApplication>,
   ));
 }

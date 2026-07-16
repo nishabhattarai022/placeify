@@ -161,18 +161,14 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                 fontFamily: 'Fraunces',
                                 fontSize: 36,
                                 fontWeight: FontWeight.w700,
+                                fontStyle: FontStyle.italic,
                                 color: AppColors.onboardingTextHead,
                                 letterSpacing: -0.8,
                                 height: 1.08,
                               ),
                               children: const [
                                 TextSpan(text: 'Forgot '),
-                                TextSpan(
-                                  text: 'Password?',
-                                  style: TextStyle(
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                ),
+                                TextSpan(text: 'Password?'),
                               ],
                             ),
                           ),

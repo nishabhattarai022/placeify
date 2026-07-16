@@ -24,5 +24,6 @@ Future<List<RecommendProduct>> recommendedProducts(Ref ref) async {
   );
   if (general.isNotEmpty) return general;
 
-  return HomeCategoriesConfig.forRoom(roomId);
+  // Never fabricate recommend cards — empty section until live catalog exists.
+  return const [];
 }

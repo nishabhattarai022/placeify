@@ -72,6 +72,9 @@ WIRING_FILES=(
   placeify_flutter/lib/features/shops/presentation/providers/consumer_shop_provider.g.dart
   placeify_flutter/lib/features/product_detail/data/product_3d_model_loader.dart
   placeify_flutter/lib/features/product_detail/data/product_3d_model_resolver.dart
+  placeify_flutter/lib/features/product_detail/presentation/product_detail_screen.dart
+  placeify_flutter/lib/features/product_detail/presentation/widgets/product_detail_gallery.dart
+  placeify_flutter/lib/features/product_detail/presentation/widgets/product_3d_preview.dart
   placeify_flutter/lib/features/user/presentation/providers/user_wishlist_provider.dart
   placeify_flutter/lib/features/user/presentation/providers/user_wishlist_provider.g.dart
   placeify_flutter/lib/features/vendor/domain/models/vendor_review.dart

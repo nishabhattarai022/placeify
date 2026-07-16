@@ -16,6 +16,8 @@ sealed class WishlistToggleResult {
     WishlistToggleRemoved() => 'Removed from wishlist',
     _ => null,
   };
+
+  String get toastMessage => errorMessage ?? successMessage ?? 'Wishlist updated';
 }
 
 final class WishlistToggleAdded extends WishlistToggleResult {

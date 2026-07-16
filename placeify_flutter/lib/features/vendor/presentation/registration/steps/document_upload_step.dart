@@ -6,11 +6,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:placeify_client/placeify_client.dart';
 
+import '../../../../../core/config/placeify_server_client.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/services/haptic_service.dart';
 import '../../../../../core/widgets/toast_overlay.dart';
 import '../../../data/serverpod_vendor_document_repository.dart';
-import '../../../domain/constants/vendor_registration_field_keys.dart';
+import '../../../domain/constants/vendor_registration_field_keys.dart'
+    show isUploadedVendorDocument;
+import '../../../domain/validators/vendor_registration_validator.dart';
 import '../../providers/vendor_document_repository_provider.dart';
 import '../../providers/vendor_registration_provider.dart';
 import '../widgets/vendor_registration_error_banner.dart';
@@ -361,6 +364,9 @@ class _DocumentTileState extends ConsumerState<_DocumentTile> {
 
     final isPdf = path.toLowerCase().endsWith('.pdf') ||
         path.toLowerCase().contains('.pdf?');
+    final previewPath = path.startsWith('/uploads/')
+        ? '$serverUrl$path'
+        : path;
 
     showDialog<void>(
       context: context,
@@ -391,9 +397,9 @@ class _DocumentTileState extends ConsumerState<_DocumentTile> {
                     aspectRatio: 1,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: path.startsWith('http')
-                          ? Image.network(path, fit: BoxFit.cover)
-                          : Image.file(File(path), fit: BoxFit.cover),
+                      child: previewPath.startsWith('http')
+                          ? Image.network(previewPath, fit: BoxFit.cover)
+                          : Image.file(File(previewPath), fit: BoxFit.cover),
                     ),
                   ),
                 ),

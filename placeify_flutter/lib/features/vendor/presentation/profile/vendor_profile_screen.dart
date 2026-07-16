@@ -10,7 +10,9 @@ import 'package:placeify_flutter/core/services/background_removal_service.dart';
 import 'package:placeify_flutter/core/services/haptic_service.dart';
 import 'package:placeify_flutter/core/widgets/animated_scale_tap.dart';
 import 'package:placeify_flutter/core/widgets/bottom_nav/bottom_nav_tokens.dart';
+import 'package:placeify_flutter/core/widgets/placeify_action_row.dart';
 import 'package:placeify_flutter/core/widgets/placeify_bottom_sheet.dart';
+import 'package:placeify_flutter/core/widgets/placeify_dialog.dart';
 import 'package:placeify_flutter/core/widgets/shimmer_loader.dart';
 import 'package:placeify_flutter/core/widgets/toast_overlay.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
@@ -175,22 +177,12 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
               subtitle: VendorProfileStrings.discardSubtitle,
             ),
             const SizedBox(height: 20),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.coral,
-                foregroundColor: Colors.white,
-                minimumSize: const Size.fromHeight(48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              onPressed: () => Navigator.pop(sheetContext, true),
-              child: const Text(VendorProfileStrings.discardChanges),
-            ),
-            const SizedBox(height: 10),
-            TextButton(
-              onPressed: () => Navigator.pop(sheetContext, false),
-              child: const Text(VendorProfileStrings.keepEditing),
+            PlaceifyStackedActions(
+              confirmLabel: VendorProfileStrings.discardChanges,
+              cancelLabel: VendorProfileStrings.keepEditing,
+              confirmColor: AppColors.coral,
+              onConfirm: () => Navigator.pop(sheetContext, true),
+              onCancel: () => Navigator.pop(sheetContext, false),
             ),
           ],
         );
@@ -403,14 +395,14 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
     required String path,
     required double aspectRatio,
   }) async {
-    final result = await showDialog<bool>(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.7),
-      builder: (dialogContext) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.all(20),
-          child: Column(
+    final result = await PlaceifyDialog.show<bool>(
+      context,
+      barrierColor: AppColors.espresso.withValues(alpha: 0.7),
+      insetPadding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
+      child: Builder(
+        builder: (dialogContext) {
+          return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               AspectRatio(
@@ -427,30 +419,17 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(dialogContext, false),
-                      child: const Text(VendorProfileStrings.cancel),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.vendorForest,
-                      ),
-                      onPressed: () => Navigator.pop(dialogContext, true),
-                      child: const Text('Use photo'),
-                    ),
-                  ),
-                ],
+              PlaceifyActionRow(
+                cancelLabel: VendorProfileStrings.cancel,
+                confirmLabel: 'Use photo',
+                confirmColor: AppColors.vendorForest,
+                onCancel: () => Navigator.pop(dialogContext, false),
+                onConfirm: () => Navigator.pop(dialogContext, true),
               ),
             ],
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
     return result ?? false;
   }

@@ -1,13 +1,12 @@
 import 'dart:async';
 
-import 'package:placeify_client/placeify_client.dart' hide Order, VendorPayout;
+import 'package:placeify_client/placeify_client.dart' hide Order;
 import 'package:placeify_flutter/core/config/placeify_server_client.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify_flutter/features/vendor/data/serverpod_vendor_payment_repository.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/payment_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/payment_update.dart';
-import 'package:placeify_flutter/features/vendor/domain/models/vendor_payout.dart';
 import 'package:placeify_flutter/features/vendor/domain/repositories/vendor_payment_repository.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_order_detail_provider.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_orders_provider.dart';
@@ -23,18 +22,26 @@ VendorPaymentRepository vendorPaymentRepository(Ref ref) {
 
 class VendorPaymentsData {
   const VendorPaymentsData({
-    required this.payouts,
-    required this.pendingBalance,
     required this.totalEarned,
-    this.isRequestingPayout = false,
+    required this.pendingPaymentCount,
+    this.paymentHistory = const [],
   });
 
-  final List<VendorPayout> payouts;
-  final double pendingBalance;
   final double totalEarned;
-  final bool isRequestingPayout;
+  final int pendingPaymentCount;
+  final List<PaymentUpdate> paymentHistory;
 
-  bool get canRequestPayout => pendingBalance > 0 && !isRequestingPayout;
+  VendorPaymentsData copyWith({
+    double? totalEarned,
+    int? pendingPaymentCount,
+    List<PaymentUpdate>? paymentHistory,
+  }) {
+    return VendorPaymentsData(
+      totalEarned: totalEarned ?? this.totalEarned,
+      pendingPaymentCount: pendingPaymentCount ?? this.pendingPaymentCount,
+      paymentHistory: paymentHistory ?? this.paymentHistory,
+    );
+  }
 }
 
 @riverpod
@@ -56,6 +63,13 @@ class VendorPayments extends _$VendorPayments {
         return;
       }
       unawaited(refresh(silent: true));
+      final orderId = notification.referenceId?.toString();
+      if (orderId != null) {
+        ref.invalidate(orderPaymentAuditTrailProvider(orderId));
+        ref.invalidate(vendorOrderDetailProvider(orderId));
+      }
+      ref.invalidate(vendorOrdersProvider);
+      ref.invalidate(vendorStatsProvider);
     });
   }
 
@@ -70,52 +84,19 @@ class VendorPayments extends _$VendorPayments {
     final user = await ref.watch(currentUserProvider.future);
     if (user?.vendorStatus != VendorStatus.approved || user?.vendorId == null) {
       return const VendorPaymentsData(
-        payouts: [],
-        pendingBalance: 0,
         totalEarned: 0,
+        pendingPaymentCount: 0,
       );
     }
 
     final repo = ref.watch(vendorPaymentRepositoryProvider);
-    final vendorId = user!.vendorId!;
-
-    final results = await Future.wait([
-      repo.getPayouts(vendorId),
-      repo.getPendingBalance(vendorId),
-      repo.getTotalEarned(vendorId),
-    ]);
+    final overview = await repo.getPaymentsOverview(user!.vendorId!);
 
     return VendorPaymentsData(
-      payouts: results[0] as List<VendorPayout>,
-      pendingBalance: results[1] as double,
-      totalEarned: results[2] as double,
+      totalEarned: overview.totalEarned,
+      pendingPaymentCount: overview.pendingPaymentCount,
+      paymentHistory: overview.paymentHistory,
     );
-  }
-
-  Future<String?> requestPayout() async {
-    final user = await ref.read(currentUserProvider.future);
-    final vendorId = user?.vendorId;
-    if (vendorId == null) return 'Vendor account not found.';
-
-    final current = state.value;
-    if (current == null || !current.canRequestPayout) {
-      return 'No pending balance to request.';
-    }
-
-    state = AsyncData(current.copyWith(isRequestingPayout: true));
-
-    try {
-      final repo = ref.read(vendorPaymentRepositoryProvider);
-      await repo.requestPayout(vendorId);
-      ref.invalidateSelf();
-      return null;
-    } on VendorPaymentException catch (e) {
-      state = AsyncData(current);
-      return e.message;
-    } catch (_) {
-      state = AsyncData(current);
-      return 'Payout request failed.';
-    }
   }
 
   Future<String?> updateOrderPayment({
@@ -146,22 +127,6 @@ class VendorPayments extends _$VendorPayments {
     } catch (_) {
       return 'Could not update payment status.';
     }
-  }
-}
-
-extension on VendorPaymentsData {
-  VendorPaymentsData copyWith({
-    List<VendorPayout>? payouts,
-    double? pendingBalance,
-    double? totalEarned,
-    bool? isRequestingPayout,
-  }) {
-    return VendorPaymentsData(
-      payouts: payouts ?? this.payouts,
-      pendingBalance: pendingBalance ?? this.pendingBalance,
-      totalEarned: totalEarned ?? this.totalEarned,
-      isRequestingPayout: isRequestingPayout ?? this.isRequestingPayout,
-    );
   }
 }
 

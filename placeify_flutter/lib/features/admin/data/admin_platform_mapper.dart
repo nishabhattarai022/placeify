@@ -1,11 +1,14 @@
 import 'package:placeify_client/placeify_client.dart' as api;
+import 'package:placeify_flutter/core/config/resolve_media_url.dart';
 import 'package:placeify_flutter/features/admin/domain/enums/admin_product_visibility_filter.dart';
 import 'package:placeify_flutter/features/admin/domain/enums/application_decision.dart';
 import 'package:placeify_flutter/features/admin/domain/enums/audit_action.dart';
 import 'package:placeify_flutter/features/admin/domain/enums/user_role.dart'
     as admin;
 import 'package:placeify_flutter/features/admin/domain/enums/vendor_application_list_filter.dart';
+import 'package:placeify_flutter/features/admin/domain/enums/admin_notification_type.dart';
 import 'package:placeify_flutter/features/admin/domain/models/admin_audit_log_entry.dart';
+import 'package:placeify_flutter/features/admin/domain/models/admin_notification.dart';
 import 'package:placeify_flutter/features/admin/domain/models/admin_product_complaint_summary.dart';
 import 'package:placeify_flutter/features/admin/domain/models/admin_product_summary.dart';
 import 'package:placeify_flutter/features/admin/domain/models/admin_stats.dart';
@@ -26,9 +29,28 @@ abstract final class AdminPlatformMapper {
       declinedCount: stats.declinedCount,
       suspendedCount: stats.suspendedCount,
       recentActivity: stats.recentActivity.map(toAuditLogEntry).toList(),
-      signupSeries: stats.signupSeries,
       recentApplications:
           stats.recentApplications.map(toVendorApplication).toList(),
+    );
+  }
+
+  static AdminNotification toAdminNotification(
+    api.InAppNotificationSummary notification,
+  ) {
+    return AdminNotification(
+      id: notification.id.toString(),
+      title: notification.title,
+      body: notification.message,
+      createdAt: notification.createdAt,
+      read: notification.isRead,
+      type: switch (notification.type) {
+        api.InAppNotificationType.vendorApplication =>
+          AdminNotificationType.newApplication,
+        api.InAppNotificationType.vendorFlagged =>
+          AdminNotificationType.vendorFlagged,
+        _ => AdminNotificationType.systemAlert,
+      },
+      linkedVendorId: notification.referenceKey,
     );
   }
 
@@ -180,14 +202,16 @@ abstract final class AdminPlatformMapper {
     };
   }
 
-  static AdminProductSummary toAdminProductSummary(api.AdminProductSummary product) {
+  static Future<AdminProductSummary> toAdminProductSummary(
+    api.AdminProductSummary product,
+  ) async {
     return AdminProductSummary(
       productId: product.productId,
       productName: product.productName,
       description: product.description,
       price: product.price,
       categoryName: product.categoryName,
-      thumbnailUrl: product.thumbnailUrl,
+      thumbnailUrl: await _resolvePrimaryImageUrl(product.thumbnailUrl),
       status: product.status.name,
       isDeleted: product.isDeleted,
       createdAt: product.createdAt,
@@ -201,14 +225,26 @@ abstract final class AdminPlatformMapper {
     );
   }
 
-  static AdminProductDetail toAdminProductDetail(api.AdminProductDetail product) {
+  static Future<AdminProductDetail> toAdminProductDetail(
+    api.AdminProductDetail product,
+  ) async {
+    final viewImageUrls = <String>[];
+    for (final viewUrl in product.viewImageUrls ?? const <String>[]) {
+      final resolved = await _resolvePrimaryImageUrl(viewUrl);
+      if (resolved == null) continue;
+      viewImageUrls.add(resolved);
+    }
+
     return AdminProductDetail(
       productId: product.productId,
       productName: product.productName,
       description: product.description,
       price: product.price,
       categoryName: product.categoryName,
-      thumbnailUrl: product.thumbnailUrl,
+      thumbnailUrl: await _resolvePrimaryImageUrl(
+        product.thumbnailUrl,
+        fallbackUrls: product.viewImageUrls,
+      ),
       status: product.status.name,
       isDeleted: product.isDeleted,
       createdAt: product.createdAt,
@@ -220,7 +256,7 @@ abstract final class AdminPlatformMapper {
       complaintCount: product.complaintCount,
       latestComplaintAt: product.latestComplaintAt,
       discountPrice: product.discountPrice,
-      viewImageUrls: product.viewImageUrls ?? const [],
+      viewImageUrls: viewImageUrls,
       removedReason: product.removedReason,
       removedAt: product.removedAt,
       removedByAdminName: product.removedByAdminName,
@@ -236,5 +272,23 @@ abstract final class AdminPlatformMapper {
           )
           .toList(),
     );
+  }
+
+  /// Resolves stored `/uploads/...` paths the same way catalog/vendor mappers do.
+  static Future<String?> _resolvePrimaryImageUrl(
+    String? primary, {
+    List<String>? fallbackUrls,
+  }) async {
+    final candidates = <String>[
+      ?primary,
+      ...?fallbackUrls,
+    ];
+    for (final candidate in candidates) {
+      final trimmed = candidate.trim();
+      if (trimmed.isEmpty) continue;
+      final resolved = await resolveMediaUrl(trimmed);
+      if (resolved.isNotEmpty) return resolved;
+    }
+    return null;
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:placeify_client/placeify_client.dart' hide Product;
+import 'package:placeify_flutter/core/debug/agent_debug_log.dart';
 import 'package:placeify_flutter/features/shops/presentation/providers/consumer_shop_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -156,7 +157,22 @@ Future<List<Product>> catalogDiscountedProducts(Ref ref) async {
     return discountB.compareTo(discountA);
   });
 
-  return products.take(6).toList();
+  final result = products.take(6).toList();
+  // #region agent log
+  agentDebugLog(
+    location: 'catalog_provider.dart:catalogDiscountedProducts',
+    message: 'Discounted products fetched from API',
+    hypothesisId: 'D',
+    data: {
+      'apiCount': page.items.length,
+      'mappedCount': products.length,
+      'returnedCount': result.length,
+      'names': result.map((p) => p.name).take(4).toList(growable: false),
+      'onSaleFlags': result.map((p) => p.isOnSale).toList(growable: false),
+    },
+  );
+  // #endregion
+  return result;
 }
 
 @riverpod

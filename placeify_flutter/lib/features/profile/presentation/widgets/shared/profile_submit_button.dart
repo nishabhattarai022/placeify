@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/services/haptic_service.dart';
 
 class ProfileSubmitButton extends StatelessWidget {
@@ -23,7 +22,7 @@ class ProfileSubmitButton extends StatelessWidget {
           onPressed();
         },
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.espresso,
+          backgroundColor: Colors.black,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(

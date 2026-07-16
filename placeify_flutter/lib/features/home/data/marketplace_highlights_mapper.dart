@@ -50,6 +50,16 @@ abstract final class MarketplaceHighlightsMapper {
     );
   }
 
+  /// Maps live catalog products into carousel cards for Special Offers.
+  static List<DiscountedProduct> fromUiProducts(List<Product> products) {
+    final onSale = products.where((p) => p.isOnSale).toList()
+      ..sort((a, b) => b.discountPercent.compareTo(a.discountPercent));
+    return [
+      for (var i = 0; i < onSale.length; i++)
+        _toDiscountedProduct(onSale[i], i),
+    ];
+  }
+
   static Future<List<RecommendProduct>> toRecommendProducts(
     List<api.Product> products, {
     String? roomId,

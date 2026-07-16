@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:placeify_client/placeify_client.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/services/haptic_service.dart';
-import '../../../core/widgets/toast_overlay.dart';
 import '../../../core/config/placeify_server_client.dart';
+import '../../cart/presentation/cart_actions.dart';
 import '../../cart/presentation/providers/cart_provider.dart';
+import '../../cart/presentation/providers/cart_totals_provider.dart';
 import '../../cart/presentation/widgets/cart_line_card.dart';
 import '../../cart/presentation/widgets/cart_order_summary.dart';
 import '../../home/presentation/providers/category_provider.dart';
-import '../../profile/presentation/providers/profile_dashboard_provider.dart';
 
 /// Shopping cart backed by [client.cart] and [client.checkout].
 class UserCartPage extends ConsumerStatefulWidget {
@@ -25,23 +24,8 @@ class UserCartPage extends ConsumerStatefulWidget {
 }
 
 class _UserCartPageState extends ConsumerState<UserCartPage> {
-  PaymentMethod _paymentMethod = PaymentMethod.cod;
-
   Future<void> _refresh() async {
     await ref.read(cartProvider.notifier).refresh();
-  }
-
-  Future<void> _checkout() async {
-    final message =
-        await ref.read(cartProvider.notifier).checkout(paymentMethod: _paymentMethod);
-    if (!mounted) return;
-
-    PlaceifyToast.show(context, message);
-
-    if (message.contains('placed successfully')) {
-      ref.invalidate(profileOrdersProvider);
-      await ref.read(profileDashboardProvider.notifier).refresh();
-    }
   }
 
   @override
@@ -160,7 +144,7 @@ class _UserCartPageState extends ConsumerState<UserCartPage> {
                 ),
                 child: CartOrderSummary(
                   totals: totals,
-                  onCheckout: _checkout,
+                  onCheckout: () => navigateToCheckout(ref, context),
                 ),
               ),
             ),

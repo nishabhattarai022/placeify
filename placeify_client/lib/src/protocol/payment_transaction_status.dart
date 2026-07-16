@@ -14,18 +14,21 @@ import 'package:serverpod_client/serverpod_client.dart' as _i1;
 
 enum PaymentTransactionStatus implements _i1.SerializableModel {
   pending,
-  succeeded,
+  paid,
   failed,
+  cancelled,
   refunded;
 
   static PaymentTransactionStatus fromJson(String name) {
     switch (name) {
       case 'pending':
         return PaymentTransactionStatus.pending;
-      case 'succeeded':
-        return PaymentTransactionStatus.succeeded;
+      case 'paid':
+        return PaymentTransactionStatus.paid;
       case 'failed':
         return PaymentTransactionStatus.failed;
+      case 'cancelled':
+        return PaymentTransactionStatus.cancelled;
       case 'refunded':
         return PaymentTransactionStatus.refunded;
       default:

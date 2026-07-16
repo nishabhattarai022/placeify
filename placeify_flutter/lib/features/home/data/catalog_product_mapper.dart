@@ -25,6 +25,31 @@ abstract final class CatalogProductMapper {
     'decor': 'assets/icons/ic_plant.svg',
   };
 
+  static const _categoryAssets = <String, String>{
+    'chairs': 'assets/images/categories/chair.jpg',
+    'sofas': 'assets/images/categories/sofa.jpg',
+    'tables': 'assets/images/categories/table.jpg',
+    'desks': 'assets/images/categories/desk.jpg',
+    'beds': 'assets/images/categories/bed.jpg',
+    'storage': 'assets/images/categories/storage.jpg',
+    'lighting': 'assets/images/categories/lighting.jpg',
+    'lights': 'assets/images/categories/lighting.jpg',
+    'outdoor': 'assets/images/categories/outdoor.jpg',
+    'decor': 'assets/images/categories/outdoor.jpg',
+  };
+
+  static String _categoryAsset(String? categoryId) {
+    if (categoryId == null || categoryId.isEmpty) {
+      return _categoryAssets['chairs']!;
+    }
+    return _categoryAssets[categoryId] ?? _categoryAssets['chairs']!;
+  }
+
+  static bool _isBrokenThumbnail(String? url) {
+    if (url == null || url.isEmpty) return true;
+    return url.contains('Instance of');
+  }
+
   static Future<Product> toUiProduct(api.Product product) async {
     final id = product.id;
     if (id == null) {
@@ -33,7 +58,9 @@ abstract final class CatalogProductMapper {
 
     final categoryId = product.category?.name ?? 'chairs';
     final shopName = product.vendor?.shopName ?? 'Placeify vendor';
-    final imageUrl = await _resolvePrimaryImage(product);
+    final imageUrls = await _resolveImageUrls(product, categoryId);
+    final imageUrl =
+        imageUrls.isNotEmpty ? imageUrls.first : _categoryAsset(categoryId);
 
     final dimensions = _dimensionsFromApi(product);
     final uiId = ProductIdCodec.fromDatabaseId(id);
@@ -53,14 +80,19 @@ abstract final class CatalogProductMapper {
       sku: 'PF${id.toString().padLeft(5, '0')}',
       price: effectivePrice,
       originalPrice: originalPrice,
-      imageUrl: imageUrl.isEmpty
-          ? 'assets/images/categories/chair.jpg'
-          : imageUrl,
+      imageUrl: imageUrl,
+      imageUrls: imageUrls,
       svgIconPath: _categoryIcons[categoryId] ?? 'assets/icons/ic_chair.svg',
       hasArView: has3dPreview,
       categoryId: categoryId,
       dimensions: dimensions,
       vendorId: product.vendorId.toString(),
+      description: product.description,
+      materials: product.materials,
+      weightKg: product.weightKg,
+      assemblyNote: product.assemblyNote,
+      careInstructions: product.careInstructions,
+      warranty: product.warranty,
     );
   }
 
@@ -102,18 +134,37 @@ abstract final class CatalogProductMapper {
     return product.warranty?.trim() ?? '';
   }
 
-  static Future<String> _resolvePrimaryImage(api.Product product) async {
-    final thumbnail = product.thumbnailUrl?.trim();
-    if (thumbnail != null && thumbnail.isNotEmpty) {
-      return resolveMediaUrl(thumbnail);
+  static Future<String> _resolvePrimaryImage(
+    api.Product product,
+    String categoryId,
+  ) async {
+    final urls = await _resolveImageUrls(product, categoryId);
+    return urls.isNotEmpty ? urls.first : _categoryAsset(categoryId);
+  }
+
+  /// Returns all real uploaded images (thumbnail + view images). Never pads
+  /// with category placeholders when at least one upload exists.
+  static Future<List<String>> _resolveImageUrls(
+    api.Product product,
+    String categoryId,
+  ) async {
+    final resolved = <String>[];
+
+    Future<void> addResolved(String? raw) async {
+      final trimmed = raw?.trim();
+      if (trimmed == null || trimmed.isEmpty || _isBrokenThumbnail(trimmed)) {
+        return;
+      }
+      final url = await resolveMediaUrl(trimmed);
+      if (url.isEmpty || resolved.contains(url)) return;
+      resolved.add(url);
     }
 
+    await addResolved(product.thumbnailUrl);
     for (final viewUrl in product.viewImageUrls ?? const <String>[]) {
-      final trimmed = viewUrl.trim();
-      if (trimmed.isEmpty) continue;
-      return resolveMediaUrl(trimmed);
+      await addResolved(viewUrl);
     }
 
-    return '';
+    return resolved;
   }
 }

@@ -12,13 +12,13 @@ import 'package:placeify_flutter/features/vendor/domain/constants/product_photo_
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_3d_builder_strings.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_product_3d_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product.dart';
-import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_model_3d_generation_provider.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_products_provider.dart';
 import 'package:placeify_flutter/features/vendor/presentation/widgets/vendor_list_thumbnail.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radii.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/debug/agent_debug_log.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import '../../../../core/widgets/toast_overlay.dart';
@@ -35,6 +35,8 @@ class VendorBuild3dScreen extends ConsumerStatefulWidget {
 
 class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
   String? _selectedProductId;
+  bool _isGenerating = false;
+  double _generateProgress = 0;
   bool _modelReady = false;
   bool _didPreloadInitialProduct = false;
 
@@ -70,24 +72,35 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
     return product.widthCm > 0 && product.depthCm > 0 && product.heightCm > 0;
   }
 
-  void _selectProduct(VendorProduct product) {
+  void _selectProduct(String id, List<VendorProduct> items) {
     HapticService.selection();
+    final product = items.firstWhere((p) => p.id == id);
     Vendor3dModelStore.preloadFromProduct(product);
     setState(() {
-      _selectedProductId = product.id;
-      _modelReady = product.hasArView;
+      _selectedProductId = id;
+      _modelReady = product.hasArView || Vendor3dModelStore.statusFor(product).isReady;
     });
   }
 
   void _maybePreloadInitialProduct(List<VendorProduct> products) {
-    if (_didPreloadInitialProduct || _selectedProductId == null) return;
+    if (_didPreloadInitialProduct || products.isEmpty) return;
+
+    _didPreloadInitialProduct = true;
+
+    if (_selectedProductId == null) {
+      _selectProduct(products.first.id, products);
+      return;
+    }
+
     final product = _selectedProduct(products);
     if (product == null) return;
 
-    _didPreloadInitialProduct = true;
     Vendor3dModelStore.preloadFromProduct(product);
     if (mounted) {
-      setState(() => _modelReady = product.hasArView);
+      setState(() {
+        _modelReady =
+            product.hasArView || Vendor3dModelStore.statusFor(product).isReady;
+      });
     }
   }
 
@@ -184,6 +197,15 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
     }
   }
 
+  Future<void> _animateProgressWhileGenerating() async {
+    for (var i = 1; i <= 24; i++) {
+      if (!mounted || !_isGenerating) return;
+      await Future<void>.delayed(const Duration(milliseconds: 90));
+      if (!mounted || !_isGenerating) return;
+      setState(() => _generateProgress = (i / 24) * 0.92);
+    }
+  }
+
   Future<void> _generateModel() async {
     final productId = _selectedProductId;
     if (productId == null) {
@@ -201,33 +223,53 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
       return;
     }
 
-    final generation = ref.read(vendorModel3dGenerationProvider.notifier);
-    if (generation.isStarting(productId)) return;
-
     HapticService.medium();
-    setState(() => _modelReady = false);
+    setState(() {
+      _isGenerating = true;
+      _generateProgress = 0;
+      _modelReady = false;
+    });
+    Vendor3dModelStore.markProcessing(productId);
 
+    final progressFuture = _animateProgressWhileGenerating();
     final imageSources = Vendor3dModelStore.orderedSourcesFor(productId);
-    final error = await generation.start(
-      productId,
-      imageSources: imageSources,
-    );
+    final error = await ref
+        .read(vendorProductsProvider.notifier)
+        .regenerateProductModel3d(productId, imageSources: imageSources);
+    await progressFuture;
 
     if (!mounted) return;
 
     if (error != null) {
+      Vendor3dModelStore.markFailed(productId, error);
+      setState(() {
+        _isGenerating = false;
+        _generateProgress = 0;
+      });
       PlaceifyToast.show(context, error);
       return;
     }
 
     final updatedProducts = ref.read(vendorProductsProvider).value ?? [];
     final updated = _selectedProduct(updatedProducts);
+    if (updated != null) {
+      Vendor3dModelStore.preloadFromProduct(updated);
+    }
+    Vendor3dModelStore.markReady(productId);
+
     setState(() {
-      _modelReady = updated?.hasArView == true &&
-          updated?.model3dStatus == 'ready';
+      _isGenerating = false;
+      _generateProgress = 1;
+      _modelReady = updated?.hasArView ?? true;
     });
-    HapticService.selection();
-    PlaceifyToast.show(context, Vendor3dBuilderStrings.modelQueued);
+    HapticService.heavy();
+    PlaceifyToast.show(context, Vendor3dBuilderStrings.modelReady);
+  }
+
+  Future<void> _finishAndClose() async {
+    HapticService.heavy();
+    PlaceifyToast.show(context, Vendor3dBuilderStrings.modelReady);
+    if (mounted) context.pop();
   }
 
   @override
@@ -235,13 +277,26 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
     final productsAsync = ref.watch(vendorProductsProvider);
     final products = productsAsync.value ?? const [];
     final selected = _selectedProduct(products);
-    final startingIds = ref.watch(vendorModel3dGenerationProvider);
-    final isStarting = selected != null && startingIds.contains(selected.id);
     final record = _record;
     final status = selected == null
         ? VendorProduct3dStatus.none
         : Vendor3dModelStore.statusFor(selected);
-    final modelReady = _modelReady || status.isReady;
+
+    // #region agent log
+    agentDebugLog(
+      location: 'vendor_build_3d_screen.dart:build',
+      message: 'Vendor build 3D screen rendered',
+      hypothesisId: 'V1',
+      runId: 'post-fix',
+      data: {
+        'uiLayout': 'nisha-inline-expansion',
+        'selectedProductId': _selectedProductId,
+        'productCount': products.length,
+        'hasExpansionPanel': selected != null,
+        'routeProductId': widget.productId,
+      },
+    );
+    // #endregion
 
     return Scaffold(
       backgroundColor: AppColors.cream,
@@ -249,20 +304,12 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
         children: [
           ProfileSubHero(
             title: Vendor3dBuilderStrings.screenTitle,
-            bottom: Text(
-              Vendor3dBuilderStrings.screenSubtitle,
-              style: GoogleFonts.dmSans(
-                fontSize: 13,
-                fontWeight: FontWeight.w400,
-                color: Colors.white.withValues(alpha: 0.78),
-                height: 1.45,
-              ),
-            ),
+            subtitle: Vendor3dBuilderStrings.screenSubtitle,
           ),
           Expanded(
             child: productsAsync.when(
               loading: () => const Center(
-                child: CircularProgressIndicator(color: AppColors.espresso),
+                child: CircularProgressIndicator(color: Colors.black),
               ),
               error: (_, __) => _EmptyState(
                 message: Vendor3dBuilderStrings.noProducts,
@@ -295,48 +342,35 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
                         child: _ProductSelector(
                           products: items,
                           selectedId: _selectedProductId,
-                          onSelected: _selectProduct,
+                          onSelected: (id) => _selectProduct(id, items),
+                          expansionFor: (product) {
+                            if (product.id != _selectedProductId) {
+                              return null;
+                            }
+                            return _SelectedProductBuildPanel(
+                              product: product,
+                              record: record,
+                              status: status,
+                              isGenerating: _isGenerating,
+                              progress: _generateProgress,
+                              modelReady: _modelReady || status.isReady,
+                              onAngleTap: (angle) =>
+                                  _pickAnglePhoto(product.id, angle),
+                              onGenerate: _generateModel,
+                            );
+                          },
                         ),
                       ),
-                      if (selected != null) ...[
-                        const SizedBox(height: 16),
-                        _SelectedProductPreview(product: selected),
-                        const SizedBox(height: 16),
-                        _SectionCard(
-                          title: Vendor3dBuilderStrings.captureSectionTitle,
-                          subtitle: Vendor3dBuilderStrings.captureSectionHint,
-                          child: _CaptureAngleGrid(
-                            angleSources: record?.angleSources ?? const {},
-                            onTap: (angle) =>
-                                _pickAnglePhoto(selected.id, angle),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        _SectionCard(
-                          title: Vendor3dBuilderStrings.dimensionsSectionTitle,
-                          subtitle: Vendor3dBuilderStrings.dimensionsSectionHint,
-                          child: _DimensionsPanel(product: selected),
-                        ),
-                        const SizedBox(height: 16),
-                        _SectionCard(
-                          title: Vendor3dBuilderStrings.generateSectionTitle,
-                          subtitle: Vendor3dBuilderStrings.generateSectionHint,
-                          child: _GeneratePanel(
-                            status: status,
-                            isPreparing: isStarting,
-                            modelReady: modelReady,
-                            onGenerate: _generateModel,
-                          ),
-                        ),
-                      ],
                     ],
                   ),
                 );
               },
             ),
           ),
-          if (selected != null && modelReady && !isStarting)
-            _BottomDoneBar(onDone: () => context.pop()),
+          if (selected != null &&
+              (_modelReady || status.isReady) &&
+              !_isGenerating)
+            _BottomAttachBar(onAttach: _finishAndClose),
         ],
       ),
     );
@@ -400,11 +434,13 @@ class _ProductSelector extends StatelessWidget {
     required this.products,
     required this.selectedId,
     required this.onSelected,
+    required this.expansionFor,
   });
 
   final List<VendorProduct> products;
   final String? selectedId;
-  final ValueChanged<VendorProduct> onSelected;
+  final ValueChanged<String> onSelected;
+  final Widget? Function(VendorProduct product) expansionFor;
 
   @override
   Widget build(BuildContext context) {
@@ -415,10 +451,125 @@ class _ProductSelector extends StatelessWidget {
           _ProductOptionTile(
             product: products[i],
             selected: products[i].id == selectedId,
-            onTap: () => onSelected(products[i]),
+            onTap: () => onSelected(products[i].id),
           ),
+          if (expansionFor(products[i]) case final expansion?) ...[
+            const SizedBox(height: 12),
+            expansion,
+          ],
         ],
       ],
+    );
+  }
+}
+
+/// Build flow sections rendered directly under the selected product tile.
+class _SelectedProductBuildPanel extends StatelessWidget {
+  const _SelectedProductBuildPanel({
+    required this.product,
+    required this.record,
+    required this.status,
+    required this.isGenerating,
+    required this.progress,
+    required this.modelReady,
+    required this.onAngleTap,
+    required this.onGenerate,
+  });
+
+  final VendorProduct product;
+  final Vendor3dModelRecord? record;
+  final VendorProduct3dStatus status;
+  final bool isGenerating;
+  final double progress;
+  final bool modelReady;
+  final ValueChanged<String> onAngleTap;
+  final VoidCallback onGenerate;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SelectedProductPreview(product: product),
+        const SizedBox(height: 12),
+        _NestedSectionCard(
+          title: Vendor3dBuilderStrings.captureSectionTitle,
+          subtitle: Vendor3dBuilderStrings.captureSectionHint,
+          child: _CaptureAngleGrid(
+            angleSources: record?.angleSources ?? const {},
+            onTap: onAngleTap,
+          ),
+        ),
+        const SizedBox(height: 12),
+        _NestedSectionCard(
+          title: Vendor3dBuilderStrings.dimensionsSectionTitle,
+          subtitle: Vendor3dBuilderStrings.dimensionsSectionHint,
+          child: _DimensionsPanel(product: product),
+        ),
+        const SizedBox(height: 12),
+        _NestedSectionCard(
+          title: Vendor3dBuilderStrings.generateSectionTitle,
+          subtitle: Vendor3dBuilderStrings.generateSectionHint,
+          child: _GeneratePanel(
+            status: status,
+            isGenerating: isGenerating,
+            progress: progress,
+            modelReady: modelReady,
+            modelFileName: record?.modelFileName,
+            onGenerate: onGenerate,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _NestedSectionCard extends StatelessWidget {
+  const _NestedSectionCard({
+    required this.title,
+    required this.subtitle,
+    required this.child,
+  });
+
+  final String title;
+  final String subtitle;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      decoration: BoxDecoration(
+        color: AppColors.cream.withValues(alpha: 0.55),
+        borderRadius: AppRadii.md,
+        border: Border.all(color: AppColors.creamDark, width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.dmSans(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: GoogleFonts.dmSans(
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textMuted,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 14),
+          child,
+        ],
+      ),
     );
   }
 }
@@ -680,8 +831,7 @@ class _CaptureTile extends StatelessWidget {
                       ? Icons.check_circle_rounded
                       : Icons.add_a_photo_outlined,
                   size: 18,
-                  color:
-                      _hasPhoto ? AppColors.accent : AppColors.textSecondary,
+                  color: _hasPhoto ? AppColors.accent : AppColors.textSecondary,
                 ),
                 const Spacer(),
                 if (_hasPhoto)
@@ -866,28 +1016,30 @@ class _DimensionStat extends StatelessWidget {
 class _GeneratePanel extends StatelessWidget {
   const _GeneratePanel({
     required this.status,
-    required this.isPreparing,
+    required this.isGenerating,
+    required this.progress,
     required this.modelReady,
     required this.onGenerate,
+    this.modelFileName,
   });
 
   final VendorProduct3dStatus status;
-  final bool isPreparing;
+  final bool isGenerating;
+  final double progress;
   final bool modelReady;
+  final String? modelFileName;
   final VoidCallback onGenerate;
 
   @override
   Widget build(BuildContext context) {
-    final showBuilding = isPreparing ||
-        status == VendorProduct3dStatus.processing;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (showBuilding) ...[
+        if (isGenerating) ...[
           ClipRRect(
             borderRadius: AppRadii.pill,
-            child: const LinearProgressIndicator(
+            child: LinearProgressIndicator(
+              value: progress,
               minHeight: 8,
               backgroundColor: AppColors.creamDark,
               color: AppColors.vendorForest,
@@ -895,9 +1047,7 @@ class _GeneratePanel extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            isPreparing
-                ? Vendor3dBuilderStrings.modelPreparing
-                : Vendor3dBuilderStrings.modelQueued,
+            Vendor3dBuilderStrings.modelProcessing,
             style: GoogleFonts.dmSans(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -915,24 +1065,39 @@ class _GeneratePanel extends StatelessWidget {
                 color: AppColors.sage.withValues(alpha: 0.28),
               ),
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
-                  Icons.check_circle_rounded,
-                  color: AppColors.sage,
-                  size: 20,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    Vendor3dBuilderStrings.modelReady,
-                    style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.check_circle_rounded,
                       color: AppColors.sage,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        Vendor3dBuilderStrings.modelReady,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.sage,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (modelFileName != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    modelFileName!,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 12,
+                      color: AppColors.textMuted,
                     ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -987,8 +1152,8 @@ class _PrimaryActionButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           color: muted
-              ? AppColors.espresso.withValues(alpha: 0.35)
-              : AppColors.espresso,
+              ? Colors.black.withValues(alpha: 0.35)
+              : Colors.black,
           borderRadius: AppRadii.pill,
         ),
         alignment: Alignment.center,
@@ -1005,10 +1170,10 @@ class _PrimaryActionButton extends StatelessWidget {
   }
 }
 
-class _BottomDoneBar extends StatelessWidget {
-  const _BottomDoneBar({required this.onDone});
+class _BottomAttachBar extends StatelessWidget {
+  const _BottomAttachBar({required this.onAttach});
 
-  final VoidCallback onDone;
+  final VoidCallback onAttach;
 
   @override
   Widget build(BuildContext context) {
@@ -1028,7 +1193,7 @@ class _BottomDoneBar extends StatelessWidget {
         ],
       ),
       child: GestureDetector(
-        onTap: onDone,
+        onTap: onAttach,
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 16),

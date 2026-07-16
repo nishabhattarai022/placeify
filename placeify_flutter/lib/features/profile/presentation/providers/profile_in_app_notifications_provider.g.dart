@@ -38,7 +38,7 @@ final class ProfileInAppNotificationsProvider
 }
 
 String _$profileInAppNotificationsHash() =>
-    r'74b644599a9a4ced16a66cb8f0b9714591e1fba2';
+    r'88ac9dbd5e8eae63b7cd4866666258f373348d44';
 
 abstract class _$ProfileInAppNotifications
     extends $AsyncNotifier<ProfileInAppNotificationsState> {

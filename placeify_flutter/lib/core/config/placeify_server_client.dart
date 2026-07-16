@@ -48,7 +48,9 @@ bool shouldRefreshVendorDashboardForNotification(
   InAppNotificationSummary notification,
 ) {
   return _isOrderActivityNotification(notification) ||
-      notification.type == InAppNotificationType.productUpdate;
+      notification.type == InAppNotificationType.productUpdate ||
+      notification.type == InAppNotificationType.paymentUpdate ||
+      notification.type == InAppNotificationType.refundUpdate;
 }
 
 Future<void> _ensureInAppNotificationWatch() async {

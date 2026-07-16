@@ -118,7 +118,7 @@ class _ProductRowState extends State<_ProductRow> {
           style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: AppColors.espresso,
+            color: Colors.black,
           ),
         ),
       ],

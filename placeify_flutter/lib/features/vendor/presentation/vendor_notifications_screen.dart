@@ -9,13 +9,13 @@ import 'package:placeify_flutter/core/constants/app_typography.dart';
 import 'package:placeify_flutter/core/services/haptic_service.dart';
 import 'package:placeify_flutter/core/utils/formatters.dart';
 import 'package:placeify_flutter/core/widgets/bottom_nav/bottom_nav_tokens.dart';
-import 'package:placeify_flutter/core/widgets/placeify_bottom_sheet.dart';
+import 'package:placeify_flutter/core/widgets/placeify_dialog.dart';
 import 'package:placeify_flutter/core/widgets/shimmer_loader.dart';
 import 'package:placeify_flutter/core/widgets/toast_overlay.dart';
+import 'package:placeify_flutter/features/vendor/domain/constants/vendor_routes.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/notification_type.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_notification.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_notifications_provider.dart';
-import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_orders_provider.dart';
 
 class VendorNotificationsScreen extends ConsumerStatefulWidget {
   const VendorNotificationsScreen({super.key});
@@ -31,15 +31,6 @@ class _VendorNotificationsScreenState
   OverlayEntry? _undoEntry;
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      unawaited(ref.read(vendorOrdersProvider.notifier).refresh());
-    });
-  }
-
-  @override
   void dispose() {
     _undoTimer?.cancel();
     _undoEntry?.remove();
@@ -51,27 +42,13 @@ class _VendorNotificationsScreenState
   }
 
   Future<void> _confirmMarkAllRead() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Mark all as read?'),
-        content: const Text(
+    final confirmed = await PlaceifyDialog.showConfirm(
+      context,
+      title: 'Mark all as read?',
+      message:
           'All notifications will be marked as read. This cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.vendorForest,
-            ),
-            child: const Text('Mark all read'),
-          ),
-        ],
-      ),
+      confirmLabel: 'Mark all read',
+      confirmColor: AppColors.vendorForest,
     );
 
     if (confirmed != true || !mounted) return;
@@ -91,8 +68,7 @@ class _VendorNotificationsScreenState
     _undoTimer?.cancel();
     _undoEntry?.remove();
 
-    final overlay = Overlay.maybeOf(context, rootOverlay: true);
-    if (overlay == null) return;
+    final overlay = Overlay.of(context);
     late OverlayEntry entry;
 
     entry = OverlayEntry(
@@ -124,87 +100,62 @@ class _VendorNotificationsScreenState
 
   Future<void> _onNotificationTap(VendorNotification notification) async {
     HapticService.light();
+    ref.read(vendorNotificationsProvider.notifier).markRead(notification.id);
 
-    final viewOrder = await _showNotificationDetail(notification);
-    if (!mounted) return;
-
-    if (!notification.isRead) {
-      ref.read(vendorNotificationsProvider.notifier).markRead(notification.id);
-    }
-
-    if (viewOrder == true && notification.relatedId != null) {
-      if (!_canOpenVendorOrder(notification.relatedId)) {
-        PlaceifyToast.show(context, 'That order is no longer available.');
+    switch (notification.type) {
+      case NotificationType.order:
+        final orderId = notification.relatedId;
+        if (orderId == null || orderId.isEmpty) {
+          PlaceifyToast.show(context, 'Order is no longer available.');
+          return;
+        }
+        openVendorOrderFromNotification(context, orderId);
         return;
-      }
-      try {
-        openVendorOrderFromNotification(context, notification.relatedId!);
-      } catch (_) {
-        if (!mounted) return;
-        PlaceifyToast.show(
+      case NotificationType.payment:
+        final isRefund = notification.title.toLowerCase().contains('refund') ||
+            notification.body.toLowerCase().contains('refund');
+        if (isRefund &&
+            notification.relatedId != null &&
+            notification.relatedId!.isNotEmpty) {
+          openVendorOrderFromNotification(context, notification.relatedId!);
+          return;
+        }
+        if (!context.mounted) return;
+        context.push(VendorRoutes.payments);
+        return;
+      case NotificationType.product:
+        final productDbId = notification.relatedKey ?? notification.relatedId;
+        if (productDbId == null || productDbId.isEmpty) {
+          PlaceifyToast.show(context, 'Product is no longer available.');
+          return;
+        }
+        final productId =
+            productDbId.startsWith('p') ? productDbId : 'p$productDbId';
+        final reviewId = notification.relatedKey != null
+            ? notification.relatedId
+            : null;
+        final path = reviewId != null && reviewId.isNotEmpty
+            ? '/product/$productId?highlightReviewId=$reviewId'
+            : '/product/$productId';
+        if (!context.mounted) return;
+        context.push(path);
+        return;
+      case NotificationType.system:
+        if (!context.mounted) return;
+        await PlaceifyDialog.showConfirm(
           context,
-          'Could not open that order. Check it from the Orders tab.',
+          title: notification.title,
+          message: notification.body,
+          confirmLabel: 'OK',
+          confirmColor: AppColors.vendorForest,
         );
-      }
+        return;
     }
-  }
-
-  bool _canOpenVendorOrder(String? relatedId) {
-    if (relatedId == null || relatedId.isEmpty) return false;
-    final ordersAsync = ref.read(vendorOrdersProvider);
-    return ordersAsync.maybeWhen(
-      data: (orders) => orders.any((order) => order.id == relatedId),
-      orElse: () => false,
-    );
-  }
-
-  Future<bool?> _showNotificationDetail(VendorNotification notification) {
-    final canViewOrder = _canOpenVendorOrder(notification.relatedId);
-
-    return PlaceifyBottomSheet.show<bool>(
-      context,
-      builder: (sheetContext) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            PlaceifyBottomSheetHeader(title: notification.title),
-            const SizedBox(height: 8),
-            Text(
-              notification.body,
-              style: AppTypography.metricLabel.copyWith(
-                color: AppColors.textSecondary,
-                height: 1.45,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              Formatters.shortDate(notification.createdAt),
-              style: AppTypography.metricLabel.copyWith(
-                color: AppColors.textMuted,
-                fontSize: 12,
-              ),
-            ),
-            if (canViewOrder) ...[
-              const SizedBox(height: 20),
-              FilledButton(
-                onPressed: () => Navigator.pop(sheetContext, true),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.vendorForest,
-                ),
-                child: const Text('View order'),
-              ),
-            ],
-          ],
-        );
-      },
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     final notificationsAsync = ref.watch(vendorNotificationsProvider);
-    ref.watch(vendorOrdersProvider);
 
     return Scaffold(
       backgroundColor: AppColors.cream,
@@ -335,6 +286,7 @@ class _NotificationsHeader extends StatelessWidget {
                 fontFamily: 'Fraunces',
                 fontSize: 22,
                 fontWeight: FontWeight.w600,
+                fontStyle: FontStyle.italic,
                 color: Colors.white,
               ),
             ),
@@ -575,9 +527,8 @@ class _NotificationTile extends StatelessWidget {
                   ],
                 ),
               ),
-              if (notification.relatedId != null &&
-                  (notification.type == NotificationType.order ||
-                      notification.type == NotificationType.payment))
+              if (notification.type == NotificationType.order &&
+                  notification.relatedId != null)
                 const Padding(
                   padding: EdgeInsets.only(left: 4, top: 2),
                   child: Icon(
@@ -675,9 +626,7 @@ class _NotificationsEmptyState extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    hasFilters
-                        ? 'No matching notifications'
-                        : 'No notifications yet',
+                    hasFilters ? 'No matching notifications' : 'All caught up',
                     style: AppTypography.sectionTitle,
                     textAlign: TextAlign.center,
                   ),
@@ -819,7 +768,7 @@ class _UndoToastState extends State<_UndoToast>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
               decoration: BoxDecoration(
-                color: AppColors.espresso,
+                color: Colors.black,
                 borderRadius: AppRadii.pill,
                 border: Border.all(
                   color: Colors.white.withValues(alpha: 0.10),

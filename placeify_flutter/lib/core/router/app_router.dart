@@ -68,6 +68,8 @@ import '../../features/profile/presentation/profile_settings_screen.dart';
 import '../../features/profile/presentation/profile_wishlist_screen.dart';
 import '../../features/product_detail/presentation/product_detail_screen.dart';
 import '../../features/cart/presentation/cart_screen.dart';
+import '../../features/cart/presentation/checkout_payment_screen.dart';
+import '../../features/cart/presentation/esewa_payment_screen.dart';
 import '../../features/user/presentation/user_cart_page.dart';
 import '../../features/user/presentation/user_dashboard_pages.dart';
 import '../../features/user/presentation/user_dashboard_screen.dart';
@@ -79,6 +81,7 @@ import 'main_shell.dart';
 part 'app_router.g.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
+final rootScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 final shellNavigatorKey = GlobalKey<NavigatorState>();
 final vendorDashboardNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'vendorDashboard');
@@ -554,15 +557,47 @@ List<RouteBase> get _appRoutes => [
             key: ValueKey<String>(state.uri.toString()),
             child: const CartScreen(),
           ),
+          routes: [
+            GoRoute(
+              path: 'checkout',
+              name: 'cartCheckout',
+              pageBuilder: (context, state) => _slideUpPage(
+                key: ValueKey<String>(state.uri.toString()),
+                child: const CheckoutPaymentScreen(),
+              ),
+              routes: [
+                GoRoute(
+                  path: 'esewa/:orderId',
+                  name: 'cartCheckoutEsewa',
+                  pageBuilder: (context, state) {
+                    final orderId =
+                        int.tryParse(state.pathParameters['orderId'] ?? '') ??
+                            0;
+                    return _slideUpPage(
+                      key: ValueKey<String>('esewa-$orderId'),
+                      child: EsewaPaymentScreen(orderId: orderId),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
         ),
         GoRoute(
           path: '/product/:productId',
           name: 'productDetail',
           pageBuilder: (context, state) {
             final productId = state.pathParameters['productId']!;
+            final highlightReviewId =
+                state.uri.queryParameters['highlightReviewId'];
             return _slidePage(
-              key: ValueKey<String>('product-$productId'),
-              child: ProductDetailScreen(productId: productId),
+              key: ValueKey<String>(
+                'product-$productId-${highlightReviewId ?? ''}',
+              ),
+              child: ProductDetailScreen(
+                productId: productId,
+                highlightReviewId: highlightReviewId,
+              ),
             );
           },
         ),
@@ -763,10 +798,7 @@ List<RouteBase> get _appRoutes => [
                   name: 'vendorOrders',
                   pageBuilder: (context, state) => _vendorTabPage(
                     state: state,
-                    child: VendorOrdersScreen(
-                      showAllOrdersOnly:
-                          state.uri.queryParameters['view'] == 'all',
-                    ),
+                    child: const VendorOrdersScreen(),
                   ),
                   routes: [
                     GoRoute(

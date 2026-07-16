@@ -221,7 +221,9 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
           ),
           children: [
             SizedBox(
-              height: MediaQuery.sizeOf(context).height * 0.28,
+              height: (MediaQuery.sizeOf(context).height * 0.48)
+                  .clamp(340.0, 480.0)
+                  .toDouble(),
               child: hasSearch
                   ? _OrdersNoSearchResultsState(query: _searchQuery.trim())
                   : OrdersEmptyState(filter: _selectedFilter),
@@ -376,7 +378,8 @@ class _OrdersErrorState extends StatelessWidget {
                 fontFamily: 'Fraunces',
                 fontSize: 22,
                 fontWeight: FontWeight.w600,
-                color: AppColors.espresso,
+                fontStyle: FontStyle.italic,
+                color: Colors.black,
               ),
             ),
             const SizedBox(height: 24),

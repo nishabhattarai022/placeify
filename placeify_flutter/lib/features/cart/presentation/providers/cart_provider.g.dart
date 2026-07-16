@@ -40,7 +40,7 @@ final class CartProvider extends $NotifierProvider<Cart, List<CartLineItem>> {
   }
 }
 
-String _$cartHash() => r'018ffa2925e46c0361c45de03ab72d6d7b5e4fd7';
+String _$cartHash() => r'a59872c3a3778cae416d8a3bd92ec46bf0af6653';
 
 abstract class _$Cart extends $Notifier<List<CartLineItem>> {
   List<CartLineItem> build();
@@ -150,44 +150,3 @@ abstract class _$CartEditMode extends $Notifier<bool> {
     element.handleCreate(ref, build);
   }
 }
-
-@ProviderFor(cartTotals)
-final cartTotalsProvider = CartTotalsProvider._();
-
-final class CartTotalsProvider
-    extends $FunctionalProvider<CartTotals, CartTotals, CartTotals>
-    with $Provider<CartTotals> {
-  CartTotalsProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'cartTotalsProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$cartTotalsHash();
-
-  @$internal
-  @override
-  $ProviderElement<CartTotals> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
-
-  @override
-  CartTotals create(Ref ref) {
-    return cartTotals(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(CartTotals value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<CartTotals>(value),
-    );
-  }
-}
-
-String _$cartTotalsHash() => r'53b1f86e4a49156e4e37ba5f8fe694ef3a5220e6';

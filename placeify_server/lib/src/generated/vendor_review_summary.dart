@@ -19,6 +19,8 @@ abstract class VendorReviewSummary
     required this.id,
     required this.customerName,
     required this.productName,
+    required this.productId,
+    this.thumbnailUrl,
     required this.rating,
     this.comment,
     required this.createdAt,
@@ -28,6 +30,8 @@ abstract class VendorReviewSummary
     required int id,
     required String customerName,
     required String productName,
+    required int productId,
+    String? thumbnailUrl,
     required int rating,
     String? comment,
     required DateTime createdAt,
@@ -38,6 +42,8 @@ abstract class VendorReviewSummary
       id: jsonSerialization['id'] as int,
       customerName: jsonSerialization['customerName'] as String,
       productName: jsonSerialization['productName'] as String,
+      productId: jsonSerialization['productId'] as int,
+      thumbnailUrl: jsonSerialization['thumbnailUrl'] as String?,
       rating: jsonSerialization['rating'] as int,
       comment: jsonSerialization['comment'] as String?,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
@@ -52,6 +58,10 @@ abstract class VendorReviewSummary
 
   String productName;
 
+  int productId;
+
+  String? thumbnailUrl;
+
   int rating;
 
   String? comment;
@@ -65,6 +75,8 @@ abstract class VendorReviewSummary
     int? id,
     String? customerName,
     String? productName,
+    int? productId,
+    String? thumbnailUrl,
     int? rating,
     String? comment,
     DateTime? createdAt,
@@ -76,6 +88,8 @@ abstract class VendorReviewSummary
       'id': id,
       'customerName': customerName,
       'productName': productName,
+      'productId': productId,
+      if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
       'rating': rating,
       if (comment != null) 'comment': comment,
       'createdAt': createdAt.toJson(),
@@ -89,6 +103,8 @@ abstract class VendorReviewSummary
       'id': id,
       'customerName': customerName,
       'productName': productName,
+      'productId': productId,
+      if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
       'rating': rating,
       if (comment != null) 'comment': comment,
       'createdAt': createdAt.toJson(),
@@ -108,6 +124,8 @@ class _VendorReviewSummaryImpl extends VendorReviewSummary {
     required int id,
     required String customerName,
     required String productName,
+    required int productId,
+    String? thumbnailUrl,
     required int rating,
     String? comment,
     required DateTime createdAt,
@@ -115,6 +133,8 @@ class _VendorReviewSummaryImpl extends VendorReviewSummary {
          id: id,
          customerName: customerName,
          productName: productName,
+         productId: productId,
+         thumbnailUrl: thumbnailUrl,
          rating: rating,
          comment: comment,
          createdAt: createdAt,
@@ -128,6 +148,8 @@ class _VendorReviewSummaryImpl extends VendorReviewSummary {
     int? id,
     String? customerName,
     String? productName,
+    int? productId,
+    Object? thumbnailUrl = _Undefined,
     int? rating,
     Object? comment = _Undefined,
     DateTime? createdAt,
@@ -136,6 +158,8 @@ class _VendorReviewSummaryImpl extends VendorReviewSummary {
       id: id ?? this.id,
       customerName: customerName ?? this.customerName,
       productName: productName ?? this.productName,
+      productId: productId ?? this.productId,
+      thumbnailUrl: thumbnailUrl is String? ? thumbnailUrl : this.thumbnailUrl,
       rating: rating ?? this.rating,
       comment: comment is String? ? comment : this.comment,
       createdAt: createdAt ?? this.createdAt,

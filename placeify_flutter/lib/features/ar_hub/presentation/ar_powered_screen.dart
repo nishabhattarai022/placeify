@@ -35,9 +35,10 @@ class ArPoweredScreen extends ConsumerStatefulWidget {
 class _ArPoweredScreenState extends ConsumerState<ArPoweredScreen> {
   late int _activeIndex;
 
-  static final _headlineStyle = AppFonts.dmSans(
+  static final _headlineStyle = AppFonts.dmSerifDisplay(
     fontSize: 22,
-    fontWeight: FontWeight.w700,
+    fontWeight: FontWeight.w400,
+    fontStyle: FontStyle.italic,
     color: ArHubTokens.textPrimary,
     height: 1.25,
     letterSpacing: -0.3,

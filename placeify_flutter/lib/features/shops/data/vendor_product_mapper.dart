@@ -86,6 +86,9 @@ abstract final class VendorProductMapper {
       price: vendorProduct.price,
       originalPrice: vendorProduct.originalPrice,
       imageUrl: imageUrl,
+      imageUrls: vendorProduct.imageUrls
+          .where((url) => url.trim().isNotEmpty)
+          .toList(growable: false),
       svgIconPath: _svgIconForCategory(vendorProduct.categoryId),
       hasArView: vendorProduct.hasArView,
       categoryId: vendorProduct.categoryId,
@@ -95,6 +98,18 @@ abstract final class VendorProductMapper {
         heightCm: vendorProduct.heightCm,
       ),
       vendorId: vendorProduct.vendorId,
+      description: vendorProduct.description,
+      materials:
+          vendorProduct.materials.isNotEmpty ? vendorProduct.materials : null,
+      weightKg: vendorProduct.weightKg > 0 ? vendorProduct.weightKg : null,
+      assemblyNote:
+          vendorProduct.offerLabel.isNotEmpty ? vendorProduct.offerLabel : null,
+      careInstructions: null,
+      warranty: vendorProduct.warrantyNote.isNotEmpty
+          ? vendorProduct.warrantyNote
+          : (vendorProduct.offerLabel.isNotEmpty
+              ? vendorProduct.offerLabel
+              : null),
     );
   }
 

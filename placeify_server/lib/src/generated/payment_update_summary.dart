@@ -12,6 +12,7 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
 import 'payment_transaction_status.dart' as _i2;
+import 'payment_method.dart' as _i3;
 
 /// Payment status update for a vendor order audit trail.
 abstract class PaymentUpdateSummary
@@ -23,6 +24,8 @@ abstract class PaymentUpdateSummary
     required this.status,
     required this.note,
     required this.updatedAt,
+    this.paymentMethod,
+    this.customerName,
   });
 
   factory PaymentUpdateSummary({
@@ -32,6 +35,8 @@ abstract class PaymentUpdateSummary
     required _i2.PaymentTransactionStatus status,
     required String note,
     required DateTime updatedAt,
+    _i3.PaymentMethod? paymentMethod,
+    String? customerName,
   }) = _PaymentUpdateSummaryImpl;
 
   factory PaymentUpdateSummary.fromJson(
@@ -48,6 +53,12 @@ abstract class PaymentUpdateSummary
       updatedAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['updatedAt'],
       ),
+      paymentMethod: jsonSerialization['paymentMethod'] == null
+          ? null
+          : _i3.PaymentMethod.fromJson(
+              (jsonSerialization['paymentMethod'] as String),
+            ),
+      customerName: jsonSerialization['customerName'] as String?,
     );
   }
 
@@ -63,6 +74,11 @@ abstract class PaymentUpdateSummary
 
   DateTime updatedAt;
 
+  /// Optional listing fields (vendor payment history).
+  _i3.PaymentMethod? paymentMethod;
+
+  String? customerName;
+
   /// Returns a shallow copy of this [PaymentUpdateSummary]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -73,6 +89,8 @@ abstract class PaymentUpdateSummary
     _i2.PaymentTransactionStatus? status,
     String? note,
     DateTime? updatedAt,
+    _i3.PaymentMethod? paymentMethod,
+    String? customerName,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -84,6 +102,8 @@ abstract class PaymentUpdateSummary
       'status': status.toJson(),
       'note': note,
       'updatedAt': updatedAt.toJson(),
+      if (paymentMethod != null) 'paymentMethod': paymentMethod?.toJson(),
+      if (customerName != null) 'customerName': customerName,
     };
   }
 
@@ -97,6 +117,8 @@ abstract class PaymentUpdateSummary
       'status': status.toJson(),
       'note': note,
       'updatedAt': updatedAt.toJson(),
+      if (paymentMethod != null) 'paymentMethod': paymentMethod?.toJson(),
+      if (customerName != null) 'customerName': customerName,
     };
   }
 
@@ -106,6 +128,8 @@ abstract class PaymentUpdateSummary
   }
 }
 
+class _Undefined {}
+
 class _PaymentUpdateSummaryImpl extends PaymentUpdateSummary {
   _PaymentUpdateSummaryImpl({
     required int id,
@@ -114,6 +138,8 @@ class _PaymentUpdateSummaryImpl extends PaymentUpdateSummary {
     required _i2.PaymentTransactionStatus status,
     required String note,
     required DateTime updatedAt,
+    _i3.PaymentMethod? paymentMethod,
+    String? customerName,
   }) : super._(
          id: id,
          orderId: orderId,
@@ -121,6 +147,8 @@ class _PaymentUpdateSummaryImpl extends PaymentUpdateSummary {
          status: status,
          note: note,
          updatedAt: updatedAt,
+         paymentMethod: paymentMethod,
+         customerName: customerName,
        );
 
   /// Returns a shallow copy of this [PaymentUpdateSummary]
@@ -134,6 +162,8 @@ class _PaymentUpdateSummaryImpl extends PaymentUpdateSummary {
     _i2.PaymentTransactionStatus? status,
     String? note,
     DateTime? updatedAt,
+    Object? paymentMethod = _Undefined,
+    Object? customerName = _Undefined,
   }) {
     return PaymentUpdateSummary(
       id: id ?? this.id,
@@ -142,6 +172,10 @@ class _PaymentUpdateSummaryImpl extends PaymentUpdateSummary {
       status: status ?? this.status,
       note: note ?? this.note,
       updatedAt: updatedAt ?? this.updatedAt,
+      paymentMethod: paymentMethod is _i3.PaymentMethod?
+          ? paymentMethod
+          : this.paymentMethod,
+      customerName: customerName is String? ? customerName : this.customerName,
     );
   }
 }

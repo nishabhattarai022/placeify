@@ -3,10 +3,10 @@ import '../../features/auth/domain/models/app_user.dart';
 /// Client-side mirror of server vendor self-purchase restrictions.
 abstract final class VendorPurchasePolicy {
   static const blockedMessage =
-      'This product is from your shop and cannot be purchased by you.';
+      'You cannot purchase your own product.';
 
   static const addToCartBlockedMessage =
-      "You cannot add your own shop's product to cart.";
+      'You cannot purchase your own product.';
 
   static const checkoutBlockedMessage =
       'Your order contains a product from your own shop. '

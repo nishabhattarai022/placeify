@@ -14,14 +14,15 @@ import 'package:placeify_flutter/core/widgets/shimmer_loader.dart';
 import 'package:placeify_flutter/features/admin/domain/constants/admin_routes.dart';
 import 'package:placeify_flutter/features/admin/domain/constants/admin_strings.dart';
 import 'package:placeify_flutter/features/admin/domain/models/admin_audit_log_entry.dart';
-import 'package:placeify_flutter/features/admin/domain/models/admin_stats.dart' as models;
+import 'package:placeify_flutter/features/admin/domain/models/admin_stats.dart'
+    as models;
 import 'package:placeify_flutter/features/admin/presentation/providers/admin_audit_log_provider.dart';
 import 'package:placeify_flutter/features/admin/presentation/providers/admin_notification_badge_provider.dart';
 import 'package:placeify_flutter/features/admin/presentation/providers/admin_notifications_provider.dart';
 import 'package:placeify_flutter/features/admin/presentation/providers/admin_stats_provider.dart';
+import 'package:placeify_flutter/features/admin/presentation/widgets/admin_application_row.dart';
 import 'package:placeify_flutter/features/admin/presentation/widgets/admin_stat_card.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
-import 'package:placeify_flutter/features/vendor/presentation/widgets/mini_bar_chart.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -114,6 +115,14 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                           AdminStrings.adminOverview,
                           style: AppTypography.sectionTitle,
                         ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          AdminStrings.overviewSubtitle,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -155,6 +164,8 @@ class _DashboardBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final recentApplications = stats.recentApplications.take(3).toList();
+
     return SingleChildScrollView(
       key: const PageStorageKey<String>('admin_dashboard_scroll'),
       controller: scrollController,
@@ -212,11 +223,31 @@ class _DashboardBody extends StatelessWidget {
             subtitle: AdminStrings.platformGmvSubtitle,
             accentColor: AppColors.adminSlate,
           ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _SecondaryMetric(
+                  label: AdminStrings.approvedCountLabel,
+                  value: stats.approvedCount.toString(),
+                  color: AppColors.sage,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _SecondaryMetric(
+                  label: AdminStrings.suspendedCountLabel,
+                  value: stats.suspendedCount.toString(),
+                  color: AppColors.coral,
+                ),
+              ),
+            ],
+          ),
           if (stats.pendingCount > 0) ...[
             const SizedBox(height: 16),
             _NeedsAttentionCard(pendingCount: stats.pendingCount),
           ],
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
           const Text(
             AdminStrings.quickLinks,
             style: AppTypography.sectionTitle,
@@ -252,18 +283,59 @@ class _DashboardBody extends StatelessWidget {
             children: [
               Expanded(
                 child: _QuickLinkTile(
-                  icon: Icons.notifications_outlined,
-                  label: AdminStrings.notificationsLink,
+                  icon: Icons.fact_check_outlined,
+                  label: AdminStrings.approvalsLink,
                   onTap: () {
                     HapticService.light();
-                    context.push(AdminRoutes.notifications);
+                    context.go(AdminRoutes.approvals);
                   },
                 ),
               ),
-              const Expanded(child: SizedBox()),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _QuickLinkTile(
+                  icon: Icons.history_outlined,
+                  label: AdminStrings.auditLogLink,
+                  onTap: () {
+                    HapticService.light();
+                    context.push(AdminRoutes.auditLog);
+                  },
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 20),
+          if (recentApplications.isNotEmpty) ...[
+            const SizedBox(height: 22),
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    AdminStrings.recentApplications,
+                    style: AppTypography.sectionTitle,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    HapticService.light();
+                    context.go(AdminRoutes.approvals);
+                  },
+                  child: const Text(
+                    AdminStrings.seeAll,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.adminSlate,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...recentApplications.map(
+              (application) => AdminApplicationRow(application: application),
+            ),
+          ],
+          const SizedBox(height: 22),
           const Text(
             AdminStrings.recentActivity,
             style: AppTypography.sectionTitle,
@@ -275,32 +347,59 @@ class _DashboardBody extends StatelessWidget {
             ...stats.recentActivity.map(
               (entry) => _ActivityTile(entry: entry),
             ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                AdminStrings.newSignups,
-                style: AppTypography.sectionTitle,
-              ),
-              const Text(
-                AdminStrings.last7Days,
-                style: TextStyle(fontSize: 12, color: AppColors.textMuted),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.warmWhite,
-              borderRadius: AppRadii.md,
-              border: Border.all(color: AppColors.creamDark, width: 1.5),
-            ),
-            child: MiniBarChart(heights: stats.signupSeries),
-          ),
           const SizedBox(height: BottomNavTokens.scrollBottomPadding),
+        ],
+      ),
+    );
+  }
+}
+
+class _SecondaryMetric extends StatelessWidget {
+  const _SecondaryMetric({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.warmWhite,
+        borderRadius: AppRadii.md,
+        border: Border.all(color: AppColors.creamDark, width: 1.5),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textMuted,
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColors.espresso,
+            ),
+          ),
         ],
       ),
     );
@@ -433,6 +532,21 @@ class _ActivityTile extends StatelessWidget {
       ),
       child: Row(
         children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: AppColors.adminSlateBg,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            alignment: Alignment.center,
+            child: const Icon(
+              Icons.bolt_outlined,
+              size: 18,
+              color: AppColors.adminSlate,
+            ),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               AdminStrings.auditActionLabel(entry.action),

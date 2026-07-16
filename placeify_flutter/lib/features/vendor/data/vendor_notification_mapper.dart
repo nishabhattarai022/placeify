@@ -13,6 +13,7 @@ abstract final class VendorNotificationMapper {
       isRead: summary.isRead,
       createdAt: summary.createdAt,
       relatedId: summary.relatedId,
+      relatedKey: summary.relatedKey,
     );
   }
 

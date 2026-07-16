@@ -48,6 +48,8 @@ class VendorReviews extends _$VendorReviews {
           id: summary.id.toString(),
           customerName: summary.customerName,
           productName: summary.productName,
+          productId: 'p${summary.productId}',
+          thumbnailUrl: summary.thumbnailUrl,
           rating: summary.rating,
           comment: summary.comment ?? '',
           createdAt: summary.createdAt,

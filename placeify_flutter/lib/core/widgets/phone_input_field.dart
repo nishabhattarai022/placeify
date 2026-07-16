@@ -133,11 +133,11 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
   Widget build(BuildContext context) {
     const borderRadius = BorderRadius.all(Radius.circular(14));
     final borderColor =
-        widget.hasError ? AppColors.coral : AppColors.creamDark;
+        widget.hasError ? AppColors.coral : Colors.black.withValues(alpha: 0.08);
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.cream,
+        color: Colors.white,
         borderRadius: borderRadius,
         border: Border.fromBorderSide(
           BorderSide(color: borderColor, width: 1.5),
@@ -152,7 +152,7 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
           Container(
             width: 1,
             height: 28,
-            color: AppColors.creamDark,
+            color: Colors.black.withValues(alpha: 0.08),
           ),
           Expanded(
             child: TextField(
@@ -162,18 +162,19 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
                 FilteringTextInputFormatter.digitsOnly,
                 LengthLimitingTextInputFormatter(_selectedCountry.localMaxLength),
               ],
-              style: const TextStyle(
+              style: GoogleFonts.dmSans(
                 fontSize: 14,
-                color: AppColors.espresso,
+                fontWeight: FontWeight.w400,
+                color: AppColors.textPrimary,
               ),
               decoration: InputDecoration(
                 hintText: _selectedCountry.localPlaceholder,
-                hintStyle: const TextStyle(
+                hintStyle: GoogleFonts.dmSans(
                   fontSize: 14,
-                  color: AppColors.textMuted,
+                  color: Colors.black.withValues(alpha: 0.35),
                 ),
                 filled: true,
-                fillColor: AppColors.cream,
+                fillColor: Colors.white,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 13,
@@ -220,14 +221,14 @@ class _CountryChip extends StatelessWidget {
                 style: GoogleFonts.dmSans(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.espresso,
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(width: 2),
-              const Icon(
+              Icon(
                 Icons.keyboard_arrow_down_rounded,
                 size: 20,
-                color: AppColors.espresso,
+                color: Colors.black.withValues(alpha: 0.55),
               ),
             ],
           ),

@@ -1,7 +1,9 @@
+import 'package:placeify_client/placeify_client.dart' hide VendorBankDetails;
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_strings.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_registration.dart';
 import 'package:placeify_flutter/features/vendor/domain/repositories/vendor_registration_repository.dart';
 import 'package:placeify_flutter/features/vendor/domain/validators/vendor_registration_validator.dart';
+import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_document_repository_provider.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_registration_repository_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -15,6 +17,7 @@ class VendorRegistrationUiState {
     this.isSubmitting = false,
     this.submitError,
     this.fieldErrors = const {},
+    this.uploadingDocuments = const {},
   });
 
   static const int stepCount = 6;
@@ -33,10 +36,13 @@ class VendorRegistrationUiState {
   final bool isSubmitting;
   final String? submitError;
   final Map<String, String> fieldErrors;
+  final Set<String> uploadingDocuments;
 
   bool get isLastStep => currentStep == stepCount - 1;
   bool get isReviewStep => currentStep == stepCount - 1;
   bool get hasFieldErrors => fieldErrors.isNotEmpty;
+
+  String? fieldError(String key) => fieldErrors[key];
 
   VendorRegistrationUiState copyWith({
     VendorRegistration? form,
@@ -44,6 +50,7 @@ class VendorRegistrationUiState {
     bool? isSubmitting,
     String? submitError,
     Map<String, String>? fieldErrors,
+    Set<String>? uploadingDocuments,
     bool clearSubmitError = false,
     bool clearFieldErrors = false,
   }) {
@@ -55,6 +62,7 @@ class VendorRegistrationUiState {
       fieldErrors: clearFieldErrors
           ? const {}
           : (fieldErrors ?? this.fieldErrors),
+      uploadingDocuments: uploadingDocuments ?? this.uploadingDocuments,
     );
   }
 }
@@ -140,6 +148,42 @@ class VendorRegistrationNotifier extends _$VendorRegistrationNotifier {
         currentStep: state.currentStep - 1,
         clearSubmitError: true,
         clearFieldErrors: true,
+      );
+    }
+  }
+
+  Future<void> uploadDocument({
+    required VendorDocumentType documentType,
+    required String fieldKey,
+    required String localPath,
+    required VendorDocuments Function(VendorDocuments documents, String url)
+        applyUrl,
+  }) async {
+    final uploading = {...state.uploadingDocuments, fieldKey};
+    state = state.copyWith(
+      uploadingDocuments: uploading,
+      fieldErrors: Map<String, String>.from(state.fieldErrors)..remove(fieldKey),
+    );
+
+    try {
+      final repo = ref.read(vendorDocumentRepositoryProvider);
+      final url = await repo.upload(
+        documentType: documentType,
+        localPath: localPath,
+      );
+      state = state.copyWith(
+        form: state.form.copyWith(
+          documents: applyUrl(state.form.documents, url),
+        ),
+        uploadingDocuments: {...state.uploadingDocuments}..remove(fieldKey),
+      );
+    } catch (error) {
+      state = state.copyWith(
+        uploadingDocuments: {...state.uploadingDocuments}..remove(fieldKey),
+        fieldErrors: {
+          ...state.fieldErrors,
+          fieldKey: error.toString(),
+        },
       );
     }
   }
