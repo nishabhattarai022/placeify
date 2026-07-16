@@ -1,5 +1,7 @@
 {
   "apiUrl": "http://localhost:8080",
-  "physicalApiUrl": "http://192.168.1.80:8080",
-  "androidEmulatorApiUrl": "http://10.0.2.2:8080"
+  "physicalApiUrl": "https://properly-beaches-festivals-absolute.trycloudflare.com",
+  "androidEmulatorApiUrl": "http://10.0.2.2:8080",
+  "tunnelApiUrl": "https://properly-beaches-festivals-absolute.trycloudflare.com",
+  "tunnelWebUrl": "https://eagles-confidentiality-canal-blocking.trycloudflare.com"
 }
