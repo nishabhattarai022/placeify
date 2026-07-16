@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:placeify_flutter/core/services/background_removal_service.dart';
 import 'package:placeify_flutter/core/utils/local_image_store.dart';
@@ -117,18 +116,16 @@ class VendorProductForm extends _$VendorProductForm {
       final rawName = file.name.trim();
       final fileName = rawName.isNotEmpty ? rawName : 'product.jpg';
 
-      if (kIsWeb) {
-        final uri = LocalImageStore.register(bytes, fileName);
-        additions.add(
-          VendorProductImageItem.fromLocalBytes(
-            path: uri,
-            bytes: bytes,
-            fileName: fileName,
-          ),
-        );
-      } else if (file.path.isNotEmpty) {
-        additions.add(VendorProductImageItem.fromLocalPath(file.path));
-      }
+      // Keep bytes in [LocalImageStore] on every platform. Android gallery
+      // paths are often temporary/content URIs that cannot be re-read later.
+      final uri = LocalImageStore.register(bytes, fileName);
+      additions.add(
+        VendorProductImageItem.fromLocalBytes(
+          path: uri,
+          bytes: bytes,
+          fileName: fileName,
+        ),
+      );
     }
 
     if (additions.isEmpty) return;
@@ -287,6 +284,7 @@ class VendorProductForm extends _$VendorProductForm {
     if (state.name.trim().isEmpty) return 'Enter a product name';
     if (state.sku.trim().isEmpty) return 'Enter a SKU';
     if (state.categoryId.trim().isEmpty) return 'Select a category';
+    if (state.materials.trim().isEmpty) return 'Enter product materials';
     if (state.images.isEmpty) return 'Add at least one product photo';
 
     final listPrice = state.parsedListPrice;
@@ -406,6 +404,15 @@ class VendorProductForm extends _$VendorProductForm {
   String _formatSubmitError(Object error) {
     if (error is VendorProductActionException) return error.message;
     final text = error.toString().replaceFirst('Exception: ', '').trim();
+    if (text.contains('Photo file not found')) {
+      return 'Photo file not found. Re-pick your product photos and try again.';
+    }
+    if (text.contains('SocketException') ||
+        text.contains('Connection refused') ||
+        text.contains('Failed host lookup')) {
+      return 'Cannot reach the server. Make sure placeify_server is running '
+          'and your phone is on the same Wi‑Fi network.';
+    }
     if (text.isNotEmpty && text.length <= 200) return text;
     return 'Could not save product. Try again.';
   }

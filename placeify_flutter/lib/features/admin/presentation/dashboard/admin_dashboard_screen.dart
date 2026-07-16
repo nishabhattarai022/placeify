@@ -134,7 +134,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               child: showShimmer
                   ? const _DashboardShimmer()
                   : statsAsync.hasError && stats == null
-                      ? _DashboardError(onRetry: _onRefresh)
+                      ? _DashboardError(
+                          onRetry: _onRefresh,
+                          detail: statsAsync.error?.toString(),
+                        )
                       : stats == null
                           ? const _DashboardShimmer()
                           : RefreshIndicator(
@@ -628,26 +631,42 @@ class _DashboardShimmer extends StatelessWidget {
 }
 
 class _DashboardError extends StatelessWidget {
-  const _DashboardError({required this.onRetry});
+  const _DashboardError({required this.onRetry, this.detail});
 
   final Future<void> Function() onRetry;
+  final String? detail;
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            AdminStrings.dashboardLoadError,
-            style: AppTypography.sectionTitle,
-          ),
-          const SizedBox(height: 12),
-          TextButton(
-            onPressed: onRetry,
-            child: const Text(AdminStrings.retry),
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              AdminStrings.dashboardLoadError,
+              style: AppTypography.sectionTitle,
+              textAlign: TextAlign.center,
+            ),
+            if (detail != null && detail!.trim().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                detail!,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textMuted,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: onRetry,
+              child: const Text(AdminStrings.retry),
+            ),
+          ],
+        ),
       ),
     );
   }

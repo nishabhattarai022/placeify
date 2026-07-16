@@ -14,6 +14,7 @@ import '../../../home/presentation/providers/catalog_provider.dart';
 import '../../../orders/presentation/providers/orders_provider.dart';
 import '../../../profile/presentation/providers/profile_dashboard_provider.dart';
 import '../../data/cart_api_errors.dart';
+import '../../data/cart_product_resolver.dart';
 import '../../data/product_id_codec.dart';
 import '../../data/serverpod_cart_repository.dart';
 import '../../domain/cart_line_item.dart';
@@ -223,11 +224,7 @@ class Cart extends _$Cart {
       user = ref.read(currentUserProvider).value;
     }
 
-    await ref
-        .read(catalogIndexProvider.notifier)
-        .ensureProducts([normalizedId]);
-    final catalog = ref.read(catalogIndexProvider).value;
-    final product = catalog?[normalizedId] ?? catalog?[productId];
+    final product = await CartProductResolver.resolve(ref, productId);
     if (product == null) {
       return 'This product is not available. Refresh and try again.';
     }
@@ -242,6 +239,8 @@ class Cart extends _$Cart {
       _applyLocalAdd(normalizedId, quantity: quantity);
       return 'Sign in to save items to your cart for checkout.';
     }
+
+    await client.auth.initialize();
 
     // Optimistic update so badge/count and Cart page feel immediate (like wishlist).
     _applyLocalAdd(normalizedId, quantity: quantity);
@@ -338,7 +337,8 @@ class Cart extends _$Cart {
       final user = ref.read(currentUserProvider).value;
       final catalog = ref.read(catalogIndexProvider).value ?? {};
       for (final item in serverItems) {
-        final product = catalog[item.productId];
+        final product = CartProductResolver.resolveSync(ref, item.productId) ??
+            catalog[ProductIdCodec.normalizeUiProductId(item.productId)];
         if (!VendorPurchasePolicy.canPurchase(
           user: user,
           productVendorId: product?.vendorId,

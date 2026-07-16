@@ -58,30 +58,47 @@ class UserPaymentStore {
       );
     }
 
-    final credentials = EsewaGateway.requireCredentials(session);
-    final transactionUuid = _esewaTransactionUuid(orderId, payment);
+    try {
+      final credentials = EsewaGateway.requireCredentials(session);
+      final transactionUuid = _esewaTransactionUuid(orderId, payment);
 
-    if (payment.providerTransactionId != transactionUuid) {
-      await PaymentTransaction.db.updateRow(
-        session,
-        payment.copyWith(
-          providerTransactionId: transactionUuid,
-          updatedAt: DateTime.now(),
-        ),
+      if (payment.providerTransactionId != transactionUuid) {
+        await PaymentTransaction.db.updateRow(
+          session,
+          payment.copyWith(
+            providerTransactionId: transactionUuid,
+            updatedAt: DateTime.now(),
+          ),
+        );
+      }
+
+      final fields = EsewaGateway.buildFormFields(
+        amount: payment.amount,
+        transactionUuid: transactionUuid,
+        productCode: credentials.productCode,
+        secretKey: credentials.secretKey,
+      );
+
+      return jsonEncode({
+        'orderId': orderId,
+        ...fields,
+      });
+    } on PlaceifyException {
+      rethrow;
+    } catch (error, stackTrace) {
+      session.log(
+        'getEsewaPaymentForm failed orderId=$orderId error=$error',
+        level: LogLevel.error,
+        exception: error,
+        stackTrace: stackTrace,
+      );
+      throw PlaceifyException(
+        message:
+            'Could not start eSewa payment. Check server eSewa credentials '
+            'and try again.',
+        code: 'ESEWA_FORM_FAILED',
       );
     }
-
-    final fields = EsewaGateway.buildFormFields(
-      amount: payment.amount,
-      transactionUuid: transactionUuid,
-      productCode: credentials.productCode,
-      secretKey: credentials.secretKey,
-    );
-
-    return jsonEncode({
-      'orderId': orderId,
-      ...fields,
-    });
   }
 
   Future<UserOrderPaymentSummary> completePayment(
@@ -248,11 +265,12 @@ class UserPaymentStore {
         !existing.startsWith('cod') &&
         existing.length >= 8) {
       // Prefer a stable uuid already bound to this payment row.
-      if (existing.startsWith('esewa-')) {
+      // Accept both legacy `esewa-…` ids and current `PF-…` ids.
+      if (existing.startsWith('esewa-') || existing.startsWith('PF-')) {
         return existing;
       }
     }
-    return 'esewa-$orderId-${DateTime.now().microsecondsSinceEpoch}';
+    return EsewaGateway.newTransactionUuid(orderId);
   }
 
   Future<Order> _requireOwnedOrder(

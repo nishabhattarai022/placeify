@@ -84,7 +84,7 @@ final class CatalogIndexProvider
   CatalogIndex create() => CatalogIndex();
 }
 
-String _$catalogIndexHash() => r'798cf6443bb6f5a365c55872663ebf051c06bbde';
+String _$catalogIndexHash() => r'e5908d5108f53df7fff4d510112e4e554752c2de';
 
 /// All active marketplace products (seed + vendor listings).
 
@@ -559,7 +559,7 @@ final class ProductDetailProvider
   }
 }
 
-String _$productDetailHash() => r'db68fa4bafa619270b08eb3aee766b9fd27ee896';
+String _$productDetailHash() => r'7a53ee202066dc0de785ea4a7eeaad3ae5bd7b0e';
 
 final class ProductDetailFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<Product?>, String> {

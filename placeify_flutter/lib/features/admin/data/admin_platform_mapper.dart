@@ -20,6 +20,24 @@ import 'package:placeify_flutter/features/vendor/domain/models/vendor_registrati
 
 abstract final class AdminPlatformMapper {
   static AdminStats toAdminStats(api.AdminPlatformStats stats) {
+    final recentActivity = <AdminAuditLogEntry>[];
+    for (final entry in stats.recentActivity) {
+      try {
+        recentActivity.add(toAuditLogEntry(entry));
+      } catch (_) {
+        // Skip malformed audit rows so the dashboard still loads.
+      }
+    }
+
+    final recentApplications = <VendorApplication>[];
+    for (final application in stats.recentApplications) {
+      try {
+        recentApplications.add(toVendorApplication(application));
+      } catch (_) {
+        // Skip malformed application rows so the dashboard still loads.
+      }
+    }
+
     return AdminStats(
       totalVendors: stats.totalVendors,
       pendingCount: stats.pendingCount,
@@ -28,9 +46,8 @@ abstract final class AdminPlatformMapper {
       approvedCount: stats.approvedCount,
       declinedCount: stats.declinedCount,
       suspendedCount: stats.suspendedCount,
-      recentActivity: stats.recentActivity.map(toAuditLogEntry).toList(),
-      recentApplications:
-          stats.recentApplications.map(toVendorApplication).toList(),
+      recentActivity: recentActivity,
+      recentApplications: recentApplications,
     );
   }
 
@@ -144,16 +161,18 @@ abstract final class AdminPlatformMapper {
 
   static AdminAuditAction toAuditAction(String actionType) {
     return switch (actionType) {
-      'application_approved' => const AdminAuditAction.application(
+      'application_approved' || 'approveVendor' =>
+        const AdminAuditAction.application(
           decision: ApplicationDecision.approved,
         ),
-      'application_declined' => const AdminAuditAction.application(
+      'application_declined' || 'rejectVendor' =>
+        const AdminAuditAction.application(
           decision: ApplicationDecision.declined,
         ),
-      'vendor_suspended' => const AdminAuditAction.vendor(
+      'vendor_suspended' || 'suspendVendor' => const AdminAuditAction.vendor(
           action: AuditAction.suspended,
         ),
-      'vendor_reinstated' => const AdminAuditAction.vendor(
+      'vendor_reinstated' || 'reinstateVendor' => const AdminAuditAction.vendor(
           action: AuditAction.reinstated,
         ),
       _ => const AdminAuditAction.vendor(action: AuditAction.suspended),

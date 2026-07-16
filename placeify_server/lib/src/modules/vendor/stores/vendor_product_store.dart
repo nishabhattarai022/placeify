@@ -7,6 +7,7 @@ import '../../../generated/protocol.dart';
 import '../../../shared/placeify_exception.dart';
 import '../../../shared/session_service.dart';
 import '../../marketplace/marketplace_events.dart';
+import '../../product/catalog_seed.dart';
 import '../../product/product_pricing.dart';
 import '../product_3d/product_3d_generation_future_call.dart';
 import '../product_3d/product_model_3d_status.dart';
@@ -98,6 +99,7 @@ class VendorProductStore {
     List<String>? viewImageUrls,
   }) async {
     final vendor = await _access.requireOwnedVendor(session);
+    await CatalogSeed.ensureCategories(session);
     if (name.trim().isEmpty || description.trim().isEmpty) {
       throw PlaceifyException(
         message: 'Name and description are required.',
@@ -185,6 +187,7 @@ class VendorProductStore {
     String imageFileName,
   ) async {
     await _access.requireOwnedVendor(session);
+    await CatalogSeed.ensureCategories(session);
 
     final existingProductId = input.productId;
     if (existingProductId != null) {

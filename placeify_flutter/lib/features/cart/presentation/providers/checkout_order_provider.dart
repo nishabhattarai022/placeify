@@ -10,6 +10,8 @@ import '../../../home/presentation/providers/catalog_provider.dart';
 import '../../../orders/presentation/providers/orders_provider.dart';
 import '../../../profile/presentation/providers/profile_dashboard_provider.dart';
 import '../../data/cart_api_errors.dart';
+import '../../data/cart_product_resolver.dart';
+import '../../data/product_id_codec.dart';
 import '../../data/serverpod_cart_repository.dart';
 import '../../domain/cart_totals.dart';
 import '../../domain/checkout_flow_result.dart';
@@ -111,7 +113,8 @@ class CheckoutOrderAction extends _$CheckoutOrderAction {
           );
       final resolvedCatalog = ref.read(catalogIndexProvider).value ?? catalog;
       for (final item in serverItems) {
-        final product = resolvedCatalog[item.productId];
+        final product = CartProductResolver.resolveSync(ref, item.productId) ??
+            resolvedCatalog[ProductIdCodec.normalizeUiProductId(item.productId)];
         if (product == null) {
           return CheckoutFlowFailure(
             'Cart item ${item.productId} is no longer available. '

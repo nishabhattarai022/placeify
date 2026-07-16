@@ -41,6 +41,14 @@ abstract final class CartApiErrors {
     if (haystack.contains('ESEWA') && haystack.contains('NOT CONFIGURED')) {
       return 'eSewa is not configured on the server yet.';
     }
+    if (haystack.contains('ESEWA_FORM_FAILED') ||
+        haystack.contains('COULD NOT START ESEWA')) {
+      return 'Could not start eSewa payment. Restart the server after updating passwords.yaml, then try again.';
+    }
+    if (haystack.contains('STATUSCODE = 500') ||
+        haystack.contains('INTERNAL SERVER ERROR')) {
+      return 'Payment service failed. If you just updated eSewa keys, restart the server and try again.';
+    }
 
     final colonIndex = raw.indexOf(': ');
     if (colonIndex > 0 && colonIndex < 40) {

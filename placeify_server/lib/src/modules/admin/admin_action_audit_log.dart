@@ -41,11 +41,12 @@ abstract final class AdminActionAuditLog {
   }
 
   static AdminAuditLogSummary toSummary(AdminAuditLog entry) {
+    final actorId = entry.actorAdminId;
     return AdminAuditLogSummary(
-      id: entry.id!.toString(),
+      id: entry.id?.toString() ?? 'unknown',
       actionType: entry.actionType.name,
-      actorAdminId: entry.actorAdminId!,
-      targetUserId: entry.targetUserId ?? entry.actorAdminId!,
+      actorAdminId: actorId,
+      targetUserId: entry.targetUserId ?? actorId,
       timestamp: entry.createdAt,
       note: entry.note ?? entry.reason,
     );

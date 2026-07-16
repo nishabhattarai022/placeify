@@ -61,22 +61,35 @@ class AdminPlatformStore {
           row.status.equals(UserAccountStatus.approved),
     );
 
-    final gmvResult = await session.db.unsafeQuery(
-      'SELECT COALESCE(SUM("totalAmount"), 0) AS gmv FROM "order" WHERE "status" = @status',
-      parameters: QueryParameters.named({
-        'status': OrderStatus.delivered.name,
-      }),
-    );
-    final platformGmv = gmvResult.isEmpty
-        ? 0.0
-        : (gmvResult.first.toColumnMap()['gmv'] as num?)?.toDouble() ?? 0.0;
+    final platformGmv = await _platformGmv(session);
 
-    final recentApplications = await listVendorApplications(
-      session,
-      status: UserAccountStatus.pending,
-      pagination: PaginationInput(page: 1, pageSize: 5),
-    );
-    final recentActivity = await getAuditLog(session, limit: 4);
+    List<VendorApplicationSummary> recentApplications = const [];
+    try {
+      recentApplications = await listVendorApplications(
+        session,
+        status: UserAccountStatus.pending,
+        pagination: PaginationInput(page: 1, pageSize: 5),
+      );
+    } catch (error, stackTrace) {
+      session.log(
+        'getPlatformStats recentApplications failed: $error',
+        level: LogLevel.warning,
+        exception: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    List<AdminAuditLogSummary> recentActivity = const [];
+    try {
+      recentActivity = await getAuditLog(session, limit: 4);
+    } catch (error, stackTrace) {
+      session.log(
+        'getPlatformStats recentActivity failed: $error',
+        level: LogLevel.warning,
+        exception: error,
+        stackTrace: stackTrace,
+      );
+    }
 
     return AdminPlatformStats(
       totalVendors: approvedCount,
@@ -91,6 +104,25 @@ class AdminPlatformStore {
       signupSeries: const [],
       recentApplications: recentApplications,
     );
+  }
+
+  /// Sum of delivered order totals — avoids fragile raw-SQL numeric casts.
+  Future<double> _platformGmv(Session session) async {
+    try {
+      final delivered = await Order.db.find(
+        session,
+        where: (row) => row.status.equals(OrderStatus.delivered),
+      );
+      return delivered.fold<double>(0, (sum, order) => sum + order.totalAmount);
+    } catch (error, stackTrace) {
+      session.log(
+        'getPlatformStats GMV failed: $error',
+        level: LogLevel.warning,
+        exception: error,
+        stackTrace: stackTrace,
+      );
+      return 0;
+    }
   }
 
   Future<PlatformUserDetail?> getUserDetail(

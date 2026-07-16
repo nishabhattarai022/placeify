@@ -24,6 +24,10 @@ abstract final class ProductIdCodec {
     final raw = productId.trim();
     if (raw.isEmpty) return raw;
 
+    if (raw.startsWith('rec-')) {
+      return normalizeUiProductId(raw.substring(4));
+    }
+
     if (raw.startsWith('shop-')) {
       final parsed = VendorProductMapper.parseConsumerProductId(raw);
       if (parsed != null) {

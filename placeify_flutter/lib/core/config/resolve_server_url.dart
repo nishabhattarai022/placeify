@@ -201,7 +201,8 @@ Future<bool> _canReachServer(String url) async {
 }
 
 String _ensureTrailingSlash(String url) {
-  return url.endsWith('/') ? url : '$url/';
+  final sanitized = _sanitizeUrl(url);
+  return sanitized.endsWith('/') ? sanitized : '$sanitized/';
 }
 
 String _normalizeLoopback(String url) {
@@ -209,6 +210,11 @@ String _normalizeLoopback(String url) {
   return url
       .replaceAll('localhost', loopbackHost)
       .replaceAll('127.0.0.1', loopbackHost);
+}
+
+String _sanitizeUrl(String url) {
+  // Tolerate accidental spaces in configured URLs like `http:// 192.168.x.x:8080`.
+  return url.trim().replaceFirst(RegExp(r'^(https?://)\s+'), r'$1');
 }
 
 bool _isLoopbackUrl(String url) {

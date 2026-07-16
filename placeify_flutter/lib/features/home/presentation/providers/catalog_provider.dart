@@ -85,24 +85,43 @@ class CatalogIndex extends _$CatalogIndex {
 
   /// Fetches catalog products missing from the in-memory index (e.g. cart lines).
   Future<void> ensureProducts(Iterable<String> productIds) async {
-    final current = state.value ?? {};
-    final missing = productIds
-        .where((id) => id.trim().isNotEmpty && current[id] == null)
+    final normalizedIds = productIds
+        .map(ProductIdCodec.normalizeUiProductId)
+        .where((id) => id.isNotEmpty)
         .toSet();
+    if (normalizedIds.isEmpty) return;
+
+    var current = state.value;
+    if (current == null && state.isLoading) {
+      try {
+        current = await future;
+      } catch (_) {
+        current = null;
+      }
+    }
+    current ??= {};
+
+    final missing = normalizedIds.where((id) => current![id] == null).toSet();
     if (missing.isEmpty) return;
 
     final repo = ref.read(catalogRepositoryProvider);
     final additions = <String, Product>{};
 
     for (final id in missing) {
-      final apiProduct = await repo.getByUiId(id);
-      if (apiProduct == null) continue;
-      final ui = await CatalogProductMapper.toUiProduct(apiProduct);
-      additions[ui.id] = ui;
+      try {
+        final apiProduct = await repo.getByUiId(id);
+        if (apiProduct == null) continue;
+        final ui = await CatalogProductMapper.toUiProduct(apiProduct);
+        additions[ui.id] = ui;
+      } catch (_) {
+        // Keep cart usable when a single product lookup fails transiently.
+      }
     }
 
     if (additions.isEmpty) return;
-    state = AsyncData({...current, ...additions});
+
+    final latest = state.value ?? current;
+    state = AsyncData({...latest, ...additions});
   }
 }
 
@@ -196,11 +215,13 @@ Future<List<Product>> homeFeaturedProducts(Ref ref) async {
 
 @riverpod
 Future<Product?> productDetail(Ref ref, String id) async {
-  final cached = ref.watch(catalogIndexProvider).value?[id];
+  final normalizedId = ProductIdCodec.normalizeUiProductId(id);
+  final catalog = ref.watch(catalogIndexProvider).value;
+  final cached = catalog?[id] ?? catalog?[normalizedId];
   if (cached != null) return cached;
 
   final apiProduct =
-      await ref.read(catalogRepositoryProvider).getByUiId(id);
+      await ref.read(catalogRepositoryProvider).getByUiId(normalizedId);
   if (apiProduct == null) return null;
 
   return CatalogProductMapper.toUiProduct(apiProduct);

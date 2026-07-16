@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/services/haptic_service.dart';
+import '../../../ar/data/room_snapshot_store.dart';
 import '../../data/profile_mock_data.dart';
 import '../providers/profile_dashboard_provider.dart';
 
-class ProfileStatsStrip extends ConsumerWidget {
+class ProfileStatsStrip extends ConsumerStatefulWidget {
   const ProfileStatsStrip({
     required this.onStatTap,
     super.key,
@@ -14,7 +15,26 @@ class ProfileStatsStrip extends ConsumerWidget {
   final void Function(int index) onStatTap;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileStatsStrip> createState() => _ProfileStatsStripState();
+}
+
+class _ProfileStatsStripState extends ConsumerState<ProfileStatsStrip> {
+  int? _savedRoomCount;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedRoomCount();
+  }
+
+  Future<void> _loadSavedRoomCount() async {
+    final count = (await RoomSnapshotStore().list()).length;
+    if (!mounted) return;
+    setState(() => _savedRoomCount = count);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final dashboard = ref.watch(profileDashboardProvider).value;
     final stats = [
       ProfileStat(
@@ -24,6 +44,10 @@ class ProfileStatsStrip extends ConsumerWidget {
       ProfileStat(
         value: '${dashboard?.wishlistCount ?? 0}',
         label: 'Wishlist',
+      ),
+      ProfileStat(
+        value: _savedRoomCount == null ? '—' : '$_savedRoomCount',
+        label: 'Saved Rooms',
       ),
       ProfileStat(
         value: '${dashboard?.refundCount ?? 0}',
@@ -54,7 +78,7 @@ class ProfileStatsStrip extends ConsumerWidget {
                     stat: stats[i],
                     onTap: () {
                       HapticService.light();
-                      onStatTap(i);
+                      widget.onStatTap(i);
                     },
                   ),
                 ),

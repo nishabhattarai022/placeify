@@ -36,12 +36,22 @@ class InAppNotificationStore {
     UuidValue userId,
     InAppNotificationSummary summary,
   ) async {
-    final channel = userChannel(userId);
-    final useRedis = session.serverpod.redisController != null;
-    if (useRedis) {
-      await session.messages.postMessage(channel, summary, global: true);
-    } else {
-      await session.messages.postMessage(channel, summary, global: false);
+    try {
+      final channel = userChannel(userId);
+      final useRedis = session.serverpod.redisController != null;
+      if (useRedis) {
+        await session.messages.postMessage(channel, summary, global: true);
+      } else {
+        await session.messages.postMessage(channel, summary, global: false);
+      }
+    } catch (error, stackTrace) {
+      // Live fan-out is best-effort; never fail the calling business transaction.
+      session.log(
+        'In-app notification broadcast failed userId=$userId error=$error',
+        level: LogLevel.warning,
+        exception: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 

@@ -9,6 +9,7 @@ import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
 import '../checkout/checkout_order_setup.dart';
 import '../order/order_lifecycle_store.dart';
+import '../payment/esewa_gateway.dart';
 import '../payment/payment_repository.dart';
 import '../product/product_pricing.dart';
 
@@ -52,6 +53,11 @@ class CheckoutStore {
     }
 
     final paymentMethod = request.paymentMethod;
+
+    if (paymentMethod == PaymentMethod.esewa) {
+      // Fail before creating an unpaid order if eSewa cannot be started.
+      EsewaGateway.requireCredentials(session);
+    }
 
     final user = await SessionService.requireUser(session);
     final cart = await SessionService.requireCart(session);
@@ -166,32 +172,61 @@ class CheckoutStore {
       return created;
     });
 
-    await CheckoutOrderSetup.notifyVendorsOfNewOrder(
-      session,
-      order.id!,
-      vendorIds,
-    );
+    try {
+      await CheckoutOrderSetup.notifyVendorsOfNewOrder(
+        session,
+        order.id!,
+        vendorIds,
+      );
+    } catch (error, stackTrace) {
+      session.log(
+        'notifyVendorsOfNewOrder failed orderId=${order.id} error=$error',
+        level: LogLevel.warning,
+        exception: error,
+        stackTrace: stackTrace,
+      );
+    }
 
     final customerName = user.name?.trim().isNotEmpty == true
         ? user.name!.trim()
         : 'Customer';
 
     for (final vendorId in vendorIds) {
-      await marketplaceEventDispatcher.dispatch(
-        session,
-        OrderPlacedEvent(
-          order: order,
-          vendorId: vendorId,
-          customerName: customerName,
-          itemCount: itemCount,
-        ),
-      );
+      try {
+        await marketplaceEventDispatcher.dispatch(
+          session,
+          OrderPlacedEvent(
+            order: order,
+            vendorId: vendorId,
+            customerName: customerName,
+            itemCount: itemCount,
+          ),
+        );
+      } catch (error, stackTrace) {
+        session.log(
+          'OrderPlacedEvent dispatch failed orderId=${order.id} '
+          'vendorId=$vendorId error=$error',
+          level: LogLevel.warning,
+          exception: error,
+          stackTrace: stackTrace,
+        );
+      }
     }
 
-    await marketplaceEventDispatcher.dispatch(
-      session,
-      CustomerOrderPlacedEvent(order: order),
-    );
+    try {
+      await marketplaceEventDispatcher.dispatch(
+        session,
+        CustomerOrderPlacedEvent(order: order),
+      );
+    } catch (error, stackTrace) {
+      session.log(
+        'CustomerOrderPlacedEvent dispatch failed orderId=${order.id} '
+        'error=$error',
+        level: LogLevel.warning,
+        exception: error,
+        stackTrace: stackTrace,
+      );
+    }
 
     // #region agent log
     _dbg('Order created and vendors notified', {

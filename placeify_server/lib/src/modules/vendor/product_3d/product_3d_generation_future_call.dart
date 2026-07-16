@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:serverpod/serverpod.dart' hide Order;
 
+import '../../../generated/product_3d_generation_trigger.dart';
 import '../../../generated/protocol.dart';
 import '../../notification/in_app_notification_store.dart';
 import 'product_3d_generation_result.dart';

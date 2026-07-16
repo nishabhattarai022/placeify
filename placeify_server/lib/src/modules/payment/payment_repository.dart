@@ -6,6 +6,7 @@ import '../marketplace/marketplace_events.dart';
 import '../notification/order_notification_service.dart';
 import '../order/order_lifecycle_store.dart';
 import '../vendor/vendor_repository.dart';
+import 'esewa_gateway.dart';
 import 'payment_sync.dart';
 
 /// Payment transactions and vendor payout persistence.
@@ -24,6 +25,9 @@ class PaymentStore {
     Transaction? transaction,
   }) async {
     final provider = _providerForMethod(paymentMethod);
+    final providerTransactionId = paymentMethod == PaymentMethod.esewa
+        ? EsewaGateway.newTransactionUuid(orderId)
+        : '$provider-$orderId-${DateTime.now().microsecondsSinceEpoch}';
     final payment = await PaymentTransaction.db.insertRow(
       session,
       PaymentTransaction(
@@ -31,8 +35,7 @@ class PaymentStore {
         userId: userId,
         provider: provider,
         paymentMethod: paymentMethod,
-        providerTransactionId:
-            '$provider-$orderId-${DateTime.now().microsecondsSinceEpoch}',
+        providerTransactionId: providerTransactionId,
         amount: amount,
         status: PaymentTransactionStatus.pending,
       ),
