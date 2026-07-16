@@ -99,7 +99,7 @@ abstract final class OrderApiMapper {
 
   static String paymentMethodLabel(PaymentMethod method) {
     return switch (method) {
-      PaymentMethod.cod => 'Cash on delivery',
+      PaymentMethod.cashOnDelivery => 'Cash on delivery',
       PaymentMethod.mockOnline => 'Card (mock online)',
       PaymentMethod.esewa => 'eSewa',
       PaymentMethod.khalti => 'Khalti',

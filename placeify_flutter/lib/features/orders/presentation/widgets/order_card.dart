@@ -12,14 +12,15 @@ import '../../../../core/theme/app_fonts.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/animated_scale_tap.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
-import '../../../../core/widgets/toast_overlay.dart';
 import '../../../home/presentation/chairs_catalog_tokens.dart';
 import '../../domain/constants/order_strings.dart';
 import '../../domain/enums/consumer_order_status.dart';
 import '../../domain/models/order.dart';
 import '../../domain/models/order_item.dart';
 import '../providers/orders_provider.dart';
+import '../providers/submitted_order_reviews_provider.dart';
 import 'consumer_order_status_chip.dart';
+import 'leave_review_sheet.dart';
 
 class OrderCard extends ConsumerWidget {
   const OrderCard({
@@ -228,12 +229,11 @@ class OrderCard extends ConsumerWidget {
                 .reorder(order.id, context: context),
           ),
           _OrderActionButton(
-            label: OrderStrings.leaveReviewAction,
+            label: ref.watch(submittedOrderReviewsProvider).contains(order.id)
+                ? OrderStrings.reviewSubmittedAction
+                : OrderStrings.leaveReviewAction,
             primary: false,
-            onTap: () => PlaceifyToast.show(
-              context,
-              '${OrderStrings.leaveReviewAction} coming soon',
-            ),
+            onTap: () => LeaveReviewSheet.show(context, ref, order: order),
           ),
         ],
       ConsumerOrderStatus.returnRequested ||

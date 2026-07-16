@@ -67,6 +67,11 @@ abstract class Order with _$Order {
       trackingNumber!.isNotEmpty &&
       (isActive || isDelivered);
 
+  /// Unpaid eSewa orders can resume payment from order details.
+  bool get needsEsewaPayment =>
+      paymentStatus == PaymentStatus.pending &&
+      paymentMethod.toLowerCase().contains('esewa');
+
   int get itemCount => items.fold(0, (sum, item) => sum + item.quantity);
 }
 

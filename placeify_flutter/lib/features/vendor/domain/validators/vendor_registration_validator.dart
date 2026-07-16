@@ -21,6 +21,7 @@ abstract final class VendorRegistrationFieldKeys {
 
   static const businessLicense = 'businessLicense';
   static const governmentId = 'governmentId';
+  static const taxCertificate = 'taxCertificate';
 
   static const accountHolderName = 'accountHolderName';
   static const bankName = 'bankName';

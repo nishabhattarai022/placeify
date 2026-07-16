@@ -14,6 +14,7 @@ abstract class VendorNotification with _$VendorNotification {
     @Default(false) bool isRead,
     required DateTime createdAt,
     String? relatedId,
+    String? relatedKey,
   }) = _VendorNotification;
 
   factory VendorNotification.fromJson(Map<String, dynamic> json) =>

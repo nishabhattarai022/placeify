@@ -23,6 +23,7 @@ abstract class VendorNotificationSummary implements _i1.SerializableModel {
     bool? isRead,
     required this.createdAt,
     this.relatedId,
+    this.relatedKey,
   }) : isRead = isRead ?? false;
 
   factory VendorNotificationSummary({
@@ -33,6 +34,7 @@ abstract class VendorNotificationSummary implements _i1.SerializableModel {
     bool? isRead,
     required DateTime createdAt,
     String? relatedId,
+    String? relatedKey,
   }) = _VendorNotificationSummaryImpl;
 
   factory VendorNotificationSummary.fromJson(
@@ -52,6 +54,7 @@ abstract class VendorNotificationSummary implements _i1.SerializableModel {
         jsonSerialization['createdAt'],
       ),
       relatedId: jsonSerialization['relatedId'] as String?,
+      relatedKey: jsonSerialization['relatedKey'] as String?,
     );
   }
 
@@ -69,6 +72,9 @@ abstract class VendorNotificationSummary implements _i1.SerializableModel {
 
   String? relatedId;
 
+  /// Secondary reference (e.g. productId when relatedId is a reviewId).
+  String? relatedKey;
+
   /// Returns a shallow copy of this [VendorNotificationSummary]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -80,6 +86,7 @@ abstract class VendorNotificationSummary implements _i1.SerializableModel {
     bool? isRead,
     DateTime? createdAt,
     String? relatedId,
+    String? relatedKey,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -92,6 +99,7 @@ abstract class VendorNotificationSummary implements _i1.SerializableModel {
       'isRead': isRead,
       'createdAt': createdAt.toJson(),
       if (relatedId != null) 'relatedId': relatedId,
+      if (relatedKey != null) 'relatedKey': relatedKey,
     };
   }
 
@@ -112,6 +120,7 @@ class _VendorNotificationSummaryImpl extends VendorNotificationSummary {
     bool? isRead,
     required DateTime createdAt,
     String? relatedId,
+    String? relatedKey,
   }) : super._(
          id: id,
          type: type,
@@ -120,6 +129,7 @@ class _VendorNotificationSummaryImpl extends VendorNotificationSummary {
          isRead: isRead,
          createdAt: createdAt,
          relatedId: relatedId,
+         relatedKey: relatedKey,
        );
 
   /// Returns a shallow copy of this [VendorNotificationSummary]
@@ -134,6 +144,7 @@ class _VendorNotificationSummaryImpl extends VendorNotificationSummary {
     bool? isRead,
     DateTime? createdAt,
     Object? relatedId = _Undefined,
+    Object? relatedKey = _Undefined,
   }) {
     return VendorNotificationSummary(
       id: id ?? this.id,
@@ -143,6 +154,7 @@ class _VendorNotificationSummaryImpl extends VendorNotificationSummary {
       isRead: isRead ?? this.isRead,
       createdAt: createdAt ?? this.createdAt,
       relatedId: relatedId is String? ? relatedId : this.relatedId,
+      relatedKey: relatedKey is String? ? relatedKey : this.relatedKey,
     );
   }
 }

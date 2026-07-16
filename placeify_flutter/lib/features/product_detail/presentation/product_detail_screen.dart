@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../cart/presentation/providers/cart_provider.dart';
+import '../../cart/presentation/cart_actions.dart';
 import '../../home/domain/models/product.dart';
 import '../../home/presentation/providers/category_provider.dart';
 import '../../../core/services/haptic_service.dart';
@@ -18,12 +18,18 @@ import 'widgets/product_detail_gallery.dart';
 import 'widgets/product_detail_header.dart';
 import 'widgets/product_detail_info_section.dart';
 import 'widgets/product_detail_price_row.dart';
+import 'widgets/product_detail_reviews_section.dart';
 import 'widgets/product_detail_sold_by_row.dart';
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
-  const ProductDetailScreen({required this.productId, super.key});
+  const ProductDetailScreen({
+    required this.productId,
+    this.highlightReviewId,
+    super.key,
+  });
 
   final String productId;
+  final String? highlightReviewId;
 
   @override
   ConsumerState<ProductDetailScreen> createState() =>
@@ -218,6 +224,10 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                     ),
                   ),
                 ),
+                ProductDetailReviewsSection(
+                  productId: product.id,
+                  highlightReviewId: widget.highlightReviewId,
+                ),
                 const SizedBox(
                   height: ProductDetailTokens.cartBarBottomSpacer,
                 ),
@@ -251,11 +261,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                 child: ProductDetailCartBar(
                   onTryInMyRoom: () => _openArRoom(context, product),
                   onAddToCart: () {
-                    ref
-                        .read(cartProvider.notifier)
-                        .addProduct(product.id);
-                    HapticService.medium();
-                    context.push('/cart');
+                    addToCart(ref, context, product.id);
                   },
                 ),
               ),

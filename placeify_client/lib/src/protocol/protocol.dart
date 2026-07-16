@@ -973,6 +973,12 @@ class Protocol extends _i1.SerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_i46.PaymentUpdateSummary>) {
+      return (data as List)
+              .map((e) => deserialize<_i46.PaymentUpdateSummary>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_i81.VendorOrderLineItem>) {
       return (data as List)
               .map((e) => deserialize<_i81.VendorOrderLineItem>(e))

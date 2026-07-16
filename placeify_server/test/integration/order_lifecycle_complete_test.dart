@@ -234,7 +234,7 @@ void main() {
       await endpoints.payment.updateOrderPaymentStatus(
         vendorAuth.session,
         orderId,
-        PaymentTransactionStatus.succeeded,
+        PaymentTransactionStatus.paid,
         note: 'Cash received',
       );
 
@@ -341,7 +341,7 @@ void main() {
         await endpoints.payment.updateOrderPaymentStatus(
           vendorAuth.session,
           orderId,
-          PaymentTransactionStatus.succeeded,
+          PaymentTransactionStatus.paid,
           note: 'Paid',
         );
 

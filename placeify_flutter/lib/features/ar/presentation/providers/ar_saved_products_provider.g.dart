@@ -18,15 +18,15 @@ final class ArSavedProductsProvider
     extends $NotifierProvider<ArSavedProducts, Map<String, DateTime>> {
   /// Product id → time saved (newest first when listed).
   ArSavedProductsProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'arSavedProductsProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'arSavedProductsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$arSavedProductsHash();
@@ -44,7 +44,7 @@ final class ArSavedProductsProvider
   }
 }
 
-String _$arSavedProductsHash() => r'a1b2c3d4e5f6789012345678abcdef9012345678';
+String _$arSavedProductsHash() => r'd0cf7a06ad1e4ae1b2537e128fc651cc5de6652e';
 
 /// Product id → time saved (newest first when listed).
 
@@ -54,11 +54,14 @@ abstract class _$ArSavedProducts extends $Notifier<Map<String, DateTime>> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<Map<String, DateTime>, Map<String, DateTime>>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<Map<String, DateTime>, Map<String, DateTime>>,
-        Map<String, DateTime>,
-        Object?,
-        Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Map<String, DateTime>, Map<String, DateTime>>,
+              Map<String, DateTime>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

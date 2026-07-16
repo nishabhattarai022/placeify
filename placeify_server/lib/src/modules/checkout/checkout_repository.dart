@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
@@ -14,6 +17,29 @@ class CheckoutStore {
       : _paymentStore = paymentStore ?? PaymentStore();
 
   final PaymentStore _paymentStore;
+
+  // #region agent log
+  void _dbg(String message, Map<String, Object?> data, {String hypothesisId = 'H4'}) {
+    try {
+      File(
+        '/Users/rosikagajurel/Documents/College/placeify/.cursor/debug-643556.log',
+      ).writeAsStringSync(
+        '${jsonEncode({
+          'sessionId': '643556',
+          'runId': 'post-fix',
+          'hypothesisId': hypothesisId,
+          'location': 'checkout_repository.dart:checkout',
+          'message': message,
+          'data': data,
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        })}\n',
+        mode: FileMode.append,
+        flush: true,
+      );
+    } catch (_) {}
+  }
+  // #endregion
+
   Future<CheckoutResult> checkout(
     Session session,
     CheckoutRequest request,
@@ -36,7 +62,22 @@ class CheckoutStore {
       include: CartItem.include(product: Product.include()),
     );
 
+    // #region agent log
+    _dbg('Checkout endpoint entered', {
+      'userId': user.id?.uuid,
+      'cartId': cart.id?.toString(),
+      'cartItemCount': cartItems.length,
+      'paymentMethod': paymentMethod.name,
+    }, hypothesisId: 'H3');
+    // #endregion
+
     if (cartItems.isEmpty) {
+      // #region agent log
+      _dbg('CART_EMPTY at checkout', {
+        'cartId': cart.id?.toString(),
+        'paymentMethod': paymentMethod.name,
+      }, hypothesisId: 'H3');
+      // #endregion
       throw PlaceifyException(message: 'Your cart is empty.', code: 'CART_EMPTY');
     }
 
@@ -151,6 +192,16 @@ class CheckoutStore {
       session,
       CustomerOrderPlacedEvent(order: order),
     );
+
+    // #region agent log
+    _dbg('Order created and vendors notified', {
+      'orderId': order.id,
+      'itemCount': itemCount,
+      'paymentMethod': paymentMethod.name,
+      'vendorIds': vendorIds.map((id) => id.uuid).toList(),
+      'vendorCount': vendorIds.length,
+    }, hypothesisId: 'H4');
+    // #endregion
 
     return CheckoutResult(order: order, itemCount: itemCount);
   }

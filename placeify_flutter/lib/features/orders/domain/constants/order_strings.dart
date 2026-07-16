@@ -94,6 +94,7 @@ abstract final class OrderStrings {
   static const trackAction = 'Track order';
   static const reorderAction = 'Reorder';
   static const leaveReviewAction = 'Leave review';
+  static const reviewSubmittedAction = 'Review submitted';
   static const viewReturnAction = 'View return';
   static const cancelAction = 'Cancel order';
   static const requestReturnAction = 'Request return';

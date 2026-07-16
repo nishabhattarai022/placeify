@@ -29,6 +29,7 @@ class VendorNotificationStore {
             isRead: row.isRead,
             createdAt: row.createdAt,
             relatedId: row.referenceId?.toString(),
+            relatedKey: row.referenceKey,
           ),
     ];
   }

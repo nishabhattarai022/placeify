@@ -13,6 +13,8 @@ abstract class PaymentUpdate with _$PaymentUpdate {
     required PaymentStatus status,
     required String note,
     required DateTime updatedAt,
+    String? paymentMethodLabel,
+    String? customerName,
   }) = _PaymentUpdate;
 
   factory PaymentUpdate.fromJson(Map<String, dynamic> json) =>

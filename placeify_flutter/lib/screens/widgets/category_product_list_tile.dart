@@ -120,13 +120,49 @@ class CategoryProductListTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              Text(
-                Formatters.currencyFull(product.price),
-                style: GoogleFonts.dmSans(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black87,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  if (product.isOnSale) ...[
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.rust.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        '-${product.discountPercent.round()}%',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.rust,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      Formatters.currencyFull(product.originalPrice!),
+                      style: GoogleFonts.dmSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black38,
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                  ],
+                  Text(
+                    Formatters.currencyFull(product.price),
+                    style: GoogleFonts.dmSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: product.isOnSale ? AppColors.rust : Colors.black87,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

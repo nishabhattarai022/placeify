@@ -44,12 +44,21 @@ abstract final class VendorProductCatalogMapper {
       price: vendor.price,
       originalPrice: vendor.originalPrice,
       imageUrl: imageUrl,
+      imageUrls: gallery,
       svgIconPath:
           _categoryIcons[vendor.categoryId] ?? 'assets/icons/ic_chair.svg',
       hasArView: vendor.hasArView,
       categoryId: vendor.categoryId,
       dimensions: dimensions,
       vendorId: vendor.vendorId,
+      description: vendor.description,
+      materials: vendor.materials.isNotEmpty ? vendor.materials : null,
+      weightKg: vendor.weightKg > 0 ? vendor.weightKg : null,
+      assemblyNote: vendor.offerLabel.isNotEmpty ? vendor.offerLabel : null,
+      careInstructions: null,
+      warranty: vendor.warrantyNote.isNotEmpty
+          ? vendor.warrantyNote
+          : (vendor.offerLabel.isNotEmpty ? vendor.offerLabel : null),
     );
   }
 

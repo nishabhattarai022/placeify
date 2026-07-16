@@ -12,12 +12,19 @@ abstract class Product with _$Product {
     required double price,
     double? originalPrice,
     required String imageUrl,
+    @Default(<String>[]) List<String> imageUrls,
     required String svgIconPath,
     required bool hasArView,
     @Default(false) bool isWishlisted,
     required String categoryId,
     required ProductDimensions dimensions,
     String? vendorId,
+    @Default('') String description,
+    String? materials,
+    double? weightKg,
+    String? assemblyNote,
+    String? careInstructions,
+    String? warranty,
   }) = _Product;
 
   const Product._();

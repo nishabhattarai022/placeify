@@ -156,8 +156,8 @@ abstract final class PaymentSync {
     if (values.any((status) => status == PaymentTransactionStatus.failed)) {
       return PaymentTransactionStatus.failed;
     }
-    if (values.every((status) => status == PaymentTransactionStatus.succeeded)) {
-      return PaymentTransactionStatus.succeeded;
+    if (values.every((status) => status == PaymentTransactionStatus.paid)) {
+      return PaymentTransactionStatus.paid;
     }
     return PaymentTransactionStatus.pending;
   }

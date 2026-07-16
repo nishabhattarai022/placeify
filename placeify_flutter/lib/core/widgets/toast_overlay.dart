@@ -7,7 +7,7 @@ abstract final class PlaceifyToast {
 
   static void show(BuildContext context, String message) {
     _currentEntry?.remove();
-    final overlay = Overlay.of(context);
+    final overlay = Overlay.of(context, rootOverlay: true);
     late OverlayEntry entry;
 
     entry = OverlayEntry(

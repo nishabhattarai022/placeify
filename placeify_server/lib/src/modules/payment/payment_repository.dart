@@ -1,7 +1,6 @@
 import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
-import '../../shared/placeify_exception.dart';
 import '../../shared/session_service.dart';
 import '../marketplace/marketplace_events.dart';
 import '../notification/order_notification_service.dart';
@@ -51,7 +50,7 @@ class PaymentStore {
 
   String _providerForMethod(PaymentMethod method) {
     return switch (method) {
-      PaymentMethod.cod => 'cod',
+      PaymentMethod.cashOnDelivery => 'cod',
       PaymentMethod.mockOnline => 'mock',
       PaymentMethod.esewa => 'esewa',
       PaymentMethod.khalti => 'khalti',
@@ -70,6 +69,12 @@ class PaymentStore {
     );
 
     final totalEarned = await _vendorEarnedAmount(session, vendorId);
+    final pendingPaymentCount = await OrderVendorPayment.db.count(
+      session,
+      where: (row) =>
+          row.vendorId.equals(vendorId) &
+          row.status.equals(PaymentTransactionStatus.pending),
+    );
     final reserved = payouts
         .where(
           (payout) =>
@@ -79,6 +84,8 @@ class PaymentStore {
         .fold<double>(0, (sum, payout) => sum + payout.amount);
     final rawBalance = totalEarned - reserved;
     final pendingBalance = rawBalance < 0 ? 0.0 : rawBalance;
+
+    final paymentHistory = await _listVendorPaymentHistory(session, vendorId);
 
     return VendorPaymentsOverview(
       payouts: [
@@ -95,7 +102,56 @@ class PaymentStore {
       ],
       pendingBalance: pendingBalance,
       totalEarned: totalEarned,
+      pendingPaymentCount: pendingPaymentCount,
+      paymentHistory: paymentHistory,
     );
+  }
+
+  /// Completed (paid) customer payments for this vendor — COD + eSewa.
+  /// One [OrderVendorPayment] row per order; no duplicates.
+  Future<List<PaymentUpdateSummary>> _listVendorPaymentHistory(
+    Session session,
+    UuidValue vendorId,
+  ) async {
+    final allocations = await OrderVendorPayment.db.find(
+      session,
+      where: (row) =>
+          row.vendorId.equals(vendorId) &
+          row.status.equals(PaymentTransactionStatus.paid),
+      orderBy: (row) => row.updatedAt,
+      orderDescending: true,
+      include: OrderVendorPayment.include(
+        order: Order.include(user: User.include()),
+      ),
+    );
+
+    if (allocations.isEmpty) return const [];
+
+    final orderIds = {
+      for (final row in allocations) row.orderId,
+    }.toList();
+    final transactions = await PaymentTransaction.db.find(
+      session,
+      where: (row) => row.orderId.inSet(orderIds.toSet()),
+    );
+    final methodByOrderId = <int, PaymentMethod>{
+      for (final tx in transactions) tx.orderId: tx.paymentMethod,
+    };
+
+    return [
+      for (final row in allocations)
+        if (row.id != null)
+          PaymentUpdateSummary(
+            id: row.id!,
+            orderId: row.orderId,
+            amount: row.amount,
+            status: row.status,
+            note: row.note ?? '',
+            updatedAt: row.updatedAt,
+            paymentMethod: methodByOrderId[row.orderId],
+            customerName: row.order?.user?.name,
+          ),
+    ];
   }
 
   Future<List<PaymentUpdateSummary>> listUpdatesForOrder(
@@ -140,7 +196,7 @@ class PaymentStore {
   static PaymentTransactionStatus _paymentStatusFromHistory(String newStatus) {
     return switch (newStatus) {
       'paymentReceived' || 'paymentConfirmed' =>
-        PaymentTransactionStatus.succeeded,
+        PaymentTransactionStatus.paid,
       _ => PaymentTransactionStatus.fromJson(newStatus),
     };
   }
@@ -158,6 +214,14 @@ class PaymentStore {
     final order = await Order.db.findById(session, orderId);
     if (order == null) {
       throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
+    }
+
+    if (!_isEligibleForPaymentUpdate(order.status)) {
+      throw PlaceifyException(
+        message:
+            'Payment can only be updated for accepted, processing, shipped, or delivered orders.',
+        code: 'ORDER_NOT_ELIGIBLE_FOR_PAYMENT_UPDATE',
+      );
     }
 
     final trimmedNote = note.trim();
@@ -194,7 +258,7 @@ class PaymentStore {
       final currentPaymentStatus = order.paymentStatus;
       OrderPaymentStatus? nextPaymentStatus;
 
-      if (status == PaymentTransactionStatus.succeeded) {
+      if (status == PaymentTransactionStatus.paid) {
         if (currentPaymentStatus != OrderPaymentStatus.unpaid) {
           throw PlaceifyException(
             message:
@@ -206,8 +270,8 @@ class PaymentStore {
         nextPaymentStatus = OrderPaymentStatus.paymentReceived;
       }
 
-      if (allocation.status != PaymentTransactionStatus.succeeded &&
-          status == PaymentTransactionStatus.succeeded) {
+      if (allocation.status != PaymentTransactionStatus.paid &&
+          status == PaymentTransactionStatus.paid) {
         allocation = await OrderVendorPayment.db.updateRow(
           session,
           allocation.copyWith(
@@ -217,8 +281,8 @@ class PaymentStore {
           ),
           transaction: transaction,
         );
-      } else if (status != PaymentTransactionStatus.succeeded) {
-        if (allocation.status == PaymentTransactionStatus.succeeded &&
+      } else if (status != PaymentTransactionStatus.paid) {
+        if (allocation.status == PaymentTransactionStatus.paid &&
             status != PaymentTransactionStatus.refunded) {
           throw PlaceifyException(
             message:
@@ -357,6 +421,7 @@ class PaymentStore {
     );
   }
 
+  /// Sum of paid [OrderVendorPayment] amounts for this vendor (COD + eSewa).
   Future<double> _vendorEarnedAmount(
     Session session,
     UuidValue vendorId,
@@ -365,18 +430,10 @@ class PaymentStore {
       session,
       where: (row) =>
           row.vendorId.equals(vendorId) &
-          row.status.equals(PaymentTransactionStatus.succeeded),
-      include: OrderVendorPayment.include(order: Order.include()),
+          row.status.equals(PaymentTransactionStatus.paid),
     );
 
-    var total = 0.0;
-    for (final allocation in allocations) {
-      final order = allocation.order;
-      if (order?.status != OrderStatus.delivered) continue;
-      total += allocation.amount;
-    }
-
-    return total;
+    return allocations.fold<double>(0, (sum, row) => sum + row.amount);
   }
 
   PaymentUpdateSummary _allocationSummary(OrderVendorPayment row) {
@@ -405,12 +462,29 @@ class PaymentStore {
     }
   }
 
+  static bool _isEligibleForPaymentUpdate(OrderStatus status) {
+    return switch (status) {
+      OrderStatus.accepted ||
+      OrderStatus.processing ||
+      OrderStatus.shipped ||
+      OrderStatus.delivered =>
+        true,
+      OrderStatus.pending ||
+      OrderStatus.confirmed ||
+      OrderStatus.rejected ||
+      OrderStatus.cancelled ||
+      OrderStatus.autoCancelled =>
+        false,
+    };
+  }
+
   static String _defaultNoteForStatus(PaymentTransactionStatus status) {
     return switch (status) {
-      PaymentTransactionStatus.succeeded => 'Payment marked as received.',
+      PaymentTransactionStatus.paid => 'Payment marked as received.',
       PaymentTransactionStatus.failed => 'Payment marked as failed.',
       PaymentTransactionStatus.refunded => 'Payment marked as refunded.',
       PaymentTransactionStatus.pending => 'Payment marked as pending.',
+      PaymentTransactionStatus.cancelled => 'Payment cancelled.',
     };
   }
 

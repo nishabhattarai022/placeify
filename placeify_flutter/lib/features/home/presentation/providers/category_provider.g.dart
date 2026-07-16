@@ -206,7 +206,7 @@ final class ProductByIdProvider
   }
 }
 
-String _$productByIdHash() => r'ae4d12f83109883e8b13dbc25af499c9ec697ef8';
+String _$productByIdHash() => r'ee6056c0f64e82b9adf755686c2ea7732a88a277';
 
 final class ProductByIdFamily extends $Family
     with $FunctionalFamilyOverride<Product?, String> {

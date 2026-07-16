@@ -1,32 +1,25 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:placeify_client/placeify_client.dart' hide Order;
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 import '../../../../core/config/placeify_server_client.dart';
+import '../../../../core/debug/agent_debug_log.dart';
 import '../../../../core/utils/vendor_purchase_policy.dart';
+import '../../../auth/domain/models/app_user_extensions.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../home/presentation/providers/catalog_provider.dart';
-import '../../../home/presentation/providers/category_provider.dart';
 import '../../../orders/presentation/providers/orders_provider.dart';
 import '../../../profile/presentation/providers/profile_dashboard_provider.dart';
 import '../../data/cart_api_errors.dart';
 import '../../data/product_id_codec.dart';
 import '../../data/serverpod_cart_repository.dart';
 import '../../domain/cart_line_item.dart';
+import '../../domain/constants/cart_strings.dart';
 
 part 'cart_provider.g.dart';
-
-class CartTotals {
-  const CartTotals({
-    required this.subtotal,
-    required this.discount,
-    required this.total,
-  });
-
-  final double subtotal;
-  final double discount;
-  final double total;
-}
 
 final _cartRepository = ServerpodCartRepository();
 
@@ -34,15 +27,24 @@ final _cartRepository = ServerpodCartRepository();
 class Cart extends _$Cart {
   @override
   List<CartLineItem> build() {
-    ref.watch(catalogIndexProvider);
+    // Do not watch [catalogIndexProvider] — catalog sync rebuilds wipe cart
+    // state back to [] and race Confirm Order into an empty-cart failure.
+    ref.listen(catalogIndexProvider, (previous, next) {
+      if (!next.hasValue || state.isEmpty) return;
+      unawaited(
+        ref
+            .read(catalogIndexProvider.notifier)
+            .ensureProducts(state.map((item) => item.productId)),
+      );
+    });
     ref.listen(currentUserProvider, (previous, next) {
       final wasLoggedIn = previous?.value != null;
       next.whenData((user) {
         if (user != null) {
           if (!wasLoggedIn && state.isNotEmpty) {
-            _mergeLocalCartOnSignIn();
+            unawaited(_mergeLocalCartOnSignIn());
           } else {
-            _refreshFromServer();
+            unawaited(_refreshFromServer());
           }
         } else {
           state = const [];
@@ -56,7 +58,42 @@ class Cart extends _$Cart {
   Future<void> _refreshFromServer() async {
     if (!client.auth.isAuthenticated) return;
     try {
-      state = await _cartRepository.fetchItems();
+      final before = state.length;
+      final localBefore = [...state];
+      final fetched = await _cartRepository.fetchItems();
+      // Never clobber a non-empty local cart with an empty server snapshot.
+      // That race empties checkout mid-flow and yields silent / CART_EMPTY failures.
+      if (fetched.isEmpty && localBefore.isNotEmpty) {
+        // #region agent log
+        agentDebugLog(
+          location: 'cart_provider.dart:_refreshFromServer:skipEmpty',
+          message: 'Skipped empty server overwrite of local cart',
+          hypothesisId: 'H2',
+          data: {
+            'before': before,
+            'fetched': 0,
+            'keptLocalIds':
+                localBefore.map((e) => e.productId).take(8).toList(),
+          },
+          runId: 'post-fix',
+        );
+        // #endregion
+        return;
+      }
+      state = fetched;
+      // #region agent log
+      agentDebugLog(
+        location: 'cart_provider.dart:_refreshFromServer',
+        message: 'Cart refreshed from server',
+        hypothesisId: 'H2',
+        data: {
+          'before': before,
+          'after': state.length,
+          'ids': state.map((e) => e.productId).take(8).toList(),
+        },
+        runId: 'post-fix',
+      );
+      // #endregion
       await ref
           .read(catalogIndexProvider.notifier)
           .ensureProducts(state.map((item) => item.productId));
@@ -66,6 +103,92 @@ class Cart extends _$Cart {
   }
 
   Future<void> refresh() => _refreshFromServer();
+
+  void replaceItems(List<CartLineItem> items) {
+    // #region agent log
+    agentDebugLog(
+      location: 'cart_provider.dart:replaceItems',
+      message: 'Cart replaced locally',
+      hypothesisId: 'H2',
+      data: {
+        'before': state.length,
+        'after': items.length,
+      },
+    );
+    // #endregion
+    state = items;
+  }
+
+  /// Ensures server cart has items before checkout (pushes local items when needed).
+  Future<List<CartLineItem>> resolveServerCartForCheckout() async {
+    await client.auth.initialize();
+    if (!client.auth.isAuthenticated) {
+      throw StateError('Sign in to sync your cart with the server.');
+    }
+
+    final localItems = [...state];
+    var serverItems = await _fetchServerCartOrRetry();
+
+    debugPrint(
+      '[cart] resolveServerCart local=${localItems.length} '
+      'server=${serverItems.length}',
+    );
+
+    Object? lastSyncError;
+    final needsPush = (serverItems.isEmpty && localItems.isNotEmpty) ||
+        _localHasMissingServerLines(localItems, serverItems);
+
+    if (needsPush && localItems.isNotEmpty) {
+      for (final item in localItems) {
+        final normalizedId = ProductIdCodec.normalizeUiProductId(item.productId);
+        try {
+          await _cartRepository.addProduct(
+            normalizedId,
+            quantity: item.quantity,
+          );
+        } catch (error) {
+          lastSyncError = error;
+          debugPrint(
+            '[cart] checkout sync failed productId=$normalizedId: $error',
+          );
+        }
+      }
+      serverItems = await _fetchServerCartOrRetry();
+      if (serverItems.isNotEmpty) {
+        state = serverItems;
+      } else if (lastSyncError != null) {
+        throw lastSyncError;
+      }
+    }
+
+    return serverItems;
+  }
+
+  bool _localHasMissingServerLines(
+    List<CartLineItem> localItems,
+    List<CartLineItem> serverItems,
+  ) {
+    if (localItems.isEmpty) return false;
+    final serverIds = {
+      for (final item in serverItems)
+        ProductIdCodec.normalizeUiProductId(item.productId),
+    };
+    for (final item in localItems) {
+      final id = ProductIdCodec.normalizeUiProductId(item.productId);
+      if (!serverIds.contains(id)) return true;
+    }
+    return false;
+  }
+
+  Future<List<CartLineItem>> _fetchServerCartOrRetry() async {
+    try {
+      return await _cartRepository.fetchItems();
+    } catch (error) {
+      debugPrint('[cart] fetchItems failed, retrying after auth init: $error');
+      await client.auth.initialize();
+      return _cartRepository.fetchItems();
+    }
+  }
 
   Future<void> _mergeLocalCartOnSignIn() async {
     if (!client.auth.isAuthenticated) return;
@@ -90,12 +213,27 @@ class Cart extends _$Cart {
   /// Returns an error message when the server cart could not be updated.
   Future<String?> addProduct(String productId, {int quantity = 1}) async {
     final normalizedId = ProductIdCodec.normalizeUiProductId(productId);
-    final user = ref.read(currentUserProvider).value;
+    var user = ref.read(currentUserProvider).value;
+
+    // Ensure vendorId is loaded so own-shop purchase policy can apply.
+    if (user != null &&
+        user.isVendorAccount &&
+        !user.hasVendorShop) {
+      await ref.read(currentUserProvider.notifier).refresh();
+      user = ref.read(currentUserProvider).value;
+    }
+
+    await ref
+        .read(catalogIndexProvider.notifier)
+        .ensureProducts([normalizedId]);
     final catalog = ref.read(catalogIndexProvider).value;
     final product = catalog?[normalizedId] ?? catalog?[productId];
+    if (product == null) {
+      return 'This product is not available. Refresh and try again.';
+    }
     if (!VendorPurchasePolicy.canPurchase(
       user: user,
-      productVendorId: product?.vendorId,
+      productVendorId: product.vendorId,
     )) {
       return VendorPurchasePolicy.addToCartBlockedMessage;
     }
@@ -105,6 +243,8 @@ class Cart extends _$Cart {
       return 'Sign in to save items to your cart for checkout.';
     }
 
+    // Optimistic update so badge/count and Cart page feel immediate (like wishlist).
+    _applyLocalAdd(normalizedId, quantity: quantity);
     try {
       await _cartRepository.addProduct(normalizedId, quantity: quantity);
       await _refreshFromServer();
@@ -178,7 +318,7 @@ class Cart extends _$Cart {
     }
   }
 
-  Future<String> checkout({PaymentMethod paymentMethod = PaymentMethod.cod}) async {
+  Future<String> checkout({PaymentMethod paymentMethod = PaymentMethod.cashOnDelivery}) async {
     if (!client.auth.isAuthenticated) {
       return 'Sign in to checkout';
     }
@@ -186,7 +326,6 @@ class Cart extends _$Cart {
     try {
       final serverItems = await _cartRepository.fetchItems();
       if (serverItems.isEmpty) {
-        state = const [];
         return CartApiErrors.message(
           StateError('CART_EMPTY'),
           fallback:
@@ -214,7 +353,7 @@ class Cart extends _$Cart {
           ? savedAddress
           : 'Kathmandu, Nepal';
 
-      final result = await _cartRepository.checkout(
+      await _cartRepository.checkout(
         shippingAddress,
         paymentMethod: paymentMethod,
       );
@@ -222,7 +361,7 @@ class Cart extends _$Cart {
       state = const [];
       ref.invalidate(profileDashboardProvider);
       ref.invalidate(ordersProvider);
-      return 'Order #${result.order.id} placed successfully';
+      return CartStrings.orderPlacedSuccess;
     } catch (error) {
       await _refreshFromServer();
       return CartApiErrors.message(
@@ -268,26 +407,4 @@ class CartEditMode extends _$CartEditMode {
   bool build() => false;
 
   void toggle() => state = !state;
-}
-
-@riverpod
-CartTotals cartTotals(Ref ref) {
-  final items = ref.watch(cartProvider);
-
-  var subtotal = 0.0;
-  for (final item in items) {
-    final product = ref.watch(productByIdProvider(item.productId));
-    if (product == null) continue;
-    subtotal += product.price * item.quantity;
-  }
-
-  return CartTotals(
-    subtotal: _roundMoney(subtotal),
-    discount: 0,
-    total: _roundMoney(subtotal),
-  );
-}
-
-double _roundMoney(double value) {
-  return (value * 100).roundToDouble() / 100;
 }

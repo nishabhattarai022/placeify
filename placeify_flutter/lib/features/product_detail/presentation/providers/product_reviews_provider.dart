@@ -1,8 +1,6 @@
 import 'package:placeify_client/placeify_client.dart' show Review;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
-import '../../../../core/config/placeify_server_client.dart';
 import '../../../orders/data/serverpod_review_repository.dart';
 
 part 'product_reviews_provider.g.dart';
@@ -16,7 +14,6 @@ ServerpodReviewRepository reviewRepository(Ref ref) {
 class ProductReviews extends _$ProductReviews {
   @override
   Future<List<Review>> build(String productId) async {
-    if (!client.auth.isAuthenticated) return const [];
     return ref.read(reviewRepositoryProvider).listProductReviews(productId);
   }
 

@@ -6,13 +6,10 @@ import '../../../core/constants/app_radii.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/bottom_nav/bottom_nav_tokens.dart';
-import '../../../core/widgets/placeify_dialog.dart';
 import '../../../core/widgets/shimmer_loader.dart';
-import '../../../core/widgets/toast_overlay.dart';
-import 'package:placeify_flutter/features/vendor/domain/models/vendor_payout.dart';
+import 'package:placeify_flutter/features/vendor/domain/models/payment_update.dart';
 import 'providers/vendor_payments_provider.dart';
 import 'widgets/payment_status_chip.dart';
-import 'widgets/payment_update_sheet.dart';
 
 class VendorPaymentsScreen extends ConsumerWidget {
   const VendorPaymentsScreen({super.key});
@@ -26,11 +23,13 @@ class VendorPaymentsScreen extends ConsumerWidget {
       body: SafeArea(
         child: paymentsAsync.when(
           loading: () => const _PaymentsShimmer(),
-          error: (_, __) => _PaymentsError(
+          error: (_, _) => _PaymentsError(
             onRetry: () => ref.invalidate(vendorPaymentsProvider),
           ),
           data: (data) {
-            if (data.payouts.isEmpty && data.totalEarned == 0) {
+            if (data.paymentHistory.isEmpty &&
+                data.totalEarned == 0 &&
+                data.pendingPaymentCount == 0) {
               return const _PaymentsEmptyState();
             }
 
@@ -40,96 +39,47 @@ class VendorPaymentsScreen extends ConsumerWidget {
                 ref.invalidate(vendorPaymentsProvider);
                 await ref.read(vendorPaymentsProvider.future);
               },
-              child: ListView.builder(
+              child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(
                   parent: BouncingScrollPhysics(),
                 ),
-                padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
-                itemCount: data.payouts.length + 2,
-                itemBuilder: (context, index) {
-                  if (index == 0) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Payments', style: AppTypography.sectionTitle),
-                        const SizedBox(height: 16),
-                        _SummaryCards(data: data),
-                        const SizedBox(height: 24),
-                        Row(
-                          children: [
-                            const Expanded(
-                              child: Text(
-                                'Payout history',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.espresso,
-                                ),
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: data.canRequestPayout
-                                  ? () => _requestPayout(context, ref)
-                                  : null,
-                              child: Text(
-                                data.isRequestingPayout
-                                    ? 'Processing…'
-                                    : 'Request payout',
-                              ),
-                            ),
-                          ],
+                padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
+                children: [
+                  const Text('Payments', style: AppTypography.sectionTitle),
+                  const SizedBox(height: 16),
+                  _SummaryCards(data: data),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Payment history',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.espresso,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  if (data.paymentHistory.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 16),
+                      child: Text(
+                        'No completed payments yet. COD and eSewa payments appear here after they are marked paid.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textMuted,
                         ),
-                        const SizedBox(height: 12),
-                      ],
-                    );
-                  }
-
-                  if (index == 1) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: OutlinedButton.icon(
-                        onPressed: () => PaymentUpdateSheet.show(
-                          context,
-                          ref,
-                          orderId: 'vo2',
-                          orderLabel: 'Order #4820',
-                        ),
-                        icon: const Icon(Icons.edit_outlined, size: 18),
-                        label: const Text('Manual payment update'),
                       ),
-                    );
-                  }
-
-                  final payout = data.payouts[index - 2];
-                  return _PayoutRow(payout: payout);
-                },
+                    )
+                  else
+                    for (final payment in data.paymentHistory)
+                      _PaymentHistoryRow(payment: payment),
+                  const SizedBox(height: BottomNavTokens.scrollBottomPadding),
+                ],
               ),
             );
           },
         ),
       ),
     );
-  }
-
-  Future<void> _requestPayout(BuildContext context, WidgetRef ref) async {
-    final confirmed = await PlaceifyDialog.showConfirm(
-      context,
-      title: 'Request payout?',
-      message:
-          'Your pending balance will be queued for transfer within 2–3 business days.',
-      confirmLabel: 'Confirm',
-      confirmColor: AppColors.vendorForest,
-    );
-
-    if (confirmed != true || !context.mounted) return;
-
-    final error = await ref.read(vendorPaymentsProvider.notifier).requestPayout();
-    if (!context.mounted) return;
-    if (error != null) {
-      PlaceifyToast.show(context, error);
-    } else {
-      PlaceifyToast.show(context, 'Payout request submitted');
-    }
   }
 }
 
@@ -144,17 +94,17 @@ class _SummaryCards extends StatelessWidget {
       children: [
         Expanded(
           child: _SummaryCard(
-            label: 'Pending payout',
-            value: Formatters.currencyFull(data.pendingBalance),
-            accent: AppColors.accent,
+            label: 'Total revenue',
+            value: Formatters.currencyFull(data.totalEarned),
+            accent: AppColors.vendorForest,
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: _SummaryCard(
-            label: 'Total earned',
-            value: Formatters.currencyFull(data.totalEarned),
-            accent: AppColors.vendorForest,
+            label: 'Pending payments',
+            value: '${data.pendingPaymentCount}',
+            accent: AppColors.accent,
           ),
         ),
       ],
@@ -208,13 +158,15 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-class _PayoutRow extends StatelessWidget {
-  const _PayoutRow({required this.payout});
+class _PaymentHistoryRow extends StatelessWidget {
+  const _PaymentHistoryRow({required this.payment});
 
-  final VendorPayout payout;
+  final PaymentUpdate payment;
 
   @override
   Widget build(BuildContext context) {
+    final method = payment.paymentMethodLabel;
+    final customer = payment.customerName?.trim();
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(16),
@@ -230,35 +182,46 @@ class _PayoutRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  Formatters.currencyFull(payout.amount),
+                  'Order #${payment.orderId}',
                   style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.espresso,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  payout.reference,
+                  [
+                    Formatters.currencyFull(payment.amount),
+                    if (customer != null && customer.isNotEmpty) customer,
+                  ].join(' · '),
                   style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.textMuted,
                   ),
                 ),
-                if (payout.paidAt != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    Formatters.shortDate(payout.paidAt!),
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
-          PaymentStatusChip(status: payout.status),
+          if (method != null) ...[
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.creamDark,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                method,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.espresso,
+                ),
+              ),
+            ),
+          ],
+          PaymentStatusChip(status: payment.status),
         ],
       ),
     );
@@ -281,13 +244,13 @@ class _PaymentsEmptyState extends StatelessWidget {
             child: Column(
               children: [
                 Icon(
-                  Icons.account_balance_wallet_outlined,
+                  Icons.payments_outlined,
                   size: 48,
                   color: AppColors.bark.withValues(alpha: 0.5),
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'No payouts yet',
+                  'No payments yet',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -296,7 +259,7 @@ class _PaymentsEmptyState extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Complete your first sale to start earning. Payouts appear here once orders are fulfilled.',
+                  'Completed COD and eSewa payments will appear here once they are marked paid.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,

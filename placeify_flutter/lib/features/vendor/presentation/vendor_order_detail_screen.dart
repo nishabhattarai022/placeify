@@ -17,6 +17,7 @@ import '../domain/models/delivery_update.dart';
 import '../domain/models/vendor_order.dart';
 import '../domain/enums/payment_status.dart';
 import '../domain/models/payment_update.dart';
+import '../domain/payment_update_eligibility.dart';
 import 'providers/vendor_order_detail_provider.dart';
 import 'providers/vendor_payments_provider.dart';
 import 'providers/vendor_product_image_provider.dart';
@@ -277,25 +278,27 @@ class _PaymentSection extends ConsumerWidget {
               );
             },
           ),
-          const SizedBox(height: 16),
-          OutlinedButton(
-            onPressed: () async {
-              HapticService.light();
-              await PaymentUpdateSheet.show(
-                context,
-                ref,
-                orderId: order.id,
-                orderLabel: 'Order #${order.orderNumber}',
-              );
-              ref.invalidate(orderPaymentAuditTrailProvider(order.id));
-            },
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.vendorForest,
-              side: const BorderSide(color: AppColors.vendorForest),
-              padding: const EdgeInsets.symmetric(vertical: 12),
+          if (canVendorUpdatePayment(order.status)) ...[
+            const SizedBox(height: 16),
+            OutlinedButton(
+              onPressed: () async {
+                HapticService.light();
+                await PaymentUpdateSheet.show(
+                  context,
+                  ref,
+                  orderId: order.id,
+                  orderLabel: 'Order #${order.orderNumber}',
+                );
+                ref.invalidate(orderPaymentAuditTrailProvider(order.id));
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.vendorForest,
+                side: const BorderSide(color: AppColors.vendorForest),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+              child: const Text('Update payment'),
             ),
-            child: const Text('Update payment'),
-          ),
+          ],
         ],
       ),
     );
