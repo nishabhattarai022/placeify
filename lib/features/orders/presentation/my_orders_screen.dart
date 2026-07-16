@@ -8,6 +8,7 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../core/widgets/bottom_nav/bottom_nav_tokens.dart';
+import '../../../core/widgets/placeify_cart_icon_button.dart';
 import '../../../core/widgets/shimmer_loader.dart';
 import '../../../core/widgets/superscript_count_title.dart';
 import '../../home/presentation/chairs_catalog_tokens.dart';
@@ -146,6 +147,12 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
                             ),
                           ],
                         ),
+                      ),
+                      PlaceifyCartIconButton(
+                        onTap: () {
+                          HapticService.light();
+                          context.push('/cart');
+                        },
                       ),
                     ],
                   ),
