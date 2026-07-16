@@ -3,6 +3,7 @@ import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
 
 import 'auth_callbacks.dart';
+import 'email_verification_service.dart';
 import '../email/email_service.dart';
 
 /// Registers JWT + email identity provider auth on [pod].
@@ -46,13 +47,14 @@ Future<void> sendRegistrationVerificationCode(
   required String verificationCode,
   required Transaction? transaction,
 }) async {
-  await EmailService.sendAuthCodeEmail(
+  // Production path: magic link that completes Email IDP verify+finish.
+  // The OTP remains in the pending row for Serverpod's verifyRegistrationCode.
+  await EmailVerificationService().issueMagicLink(
     session,
-    to: email,
-    subject: 'Verify your Placeify account',
-    code: verificationCode,
-    purpose:
-        'Welcome to Placeify! Verify your email to finish creating your account.',
+    email: email,
+    accountRequestId: accountRequestId,
+    verificationCode: verificationCode,
+    transaction: transaction,
   );
 }
 

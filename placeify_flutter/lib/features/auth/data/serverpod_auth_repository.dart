@@ -22,7 +22,9 @@ class ServerpodAuthRepository implements AuthRepository {
   final SharedPreferences _prefs;
 
   static const _sessionEmailKey = 'placeify_auth_session_email';
-  static const _devVerificationCode = '123456';
+  static const _pendingEmailKey = 'placeify_pending_registration_email';
+  static const _pendingPasswordKey = 'placeify_pending_registration_password';
+  static const _pendingNameKey = 'placeify_pending_registration_name';
 
   static Future<ServerpodAuthRepository> create() async {
     final prefs = await SharedPreferences.getInstance();
@@ -35,8 +37,25 @@ class ServerpodAuthRepository implements AuthRepository {
     required String email,
     required String password,
   }) async {
+    // Legacy signature: start verification only — never auto-login.
+    await beginEmailRegistration(
+      fullName: fullName,
+      email: email,
+      password: password,
+    );
+    throw AuthException(
+      'Registration started. Check your email to verify your Placeify account.',
+    );
+  }
+
+  @override
+  Future<String> beginEmailRegistration({
+    required String fullName,
+    required String email,
+    required String password,
+  }) async {
     return _withConnectionRetry(
-      () => _register(
+      () => _beginEmailRegistration(
         fullName: fullName,
         email: email,
         password: password,
@@ -44,61 +63,142 @@ class ServerpodAuthRepository implements AuthRepository {
     );
   }
 
-  Future<AppUser> _register({
+  Future<String> _beginEmailRegistration({
     required String fullName,
     required String email,
     required String password,
   }) async {
     final normalizedEmail = email.trim().toLowerCase();
+    final trimmedName = fullName.trim();
+
+    // #region agent log
+    debugPrint(
+      '[AuthDebug][H1] beginEmailRegistration emailDomain='
+      '${normalizedEmail.contains('@') ? normalizedEmail.split('@').last : 'x'}',
+    );
+    try {
+      final logFile = File(
+        '/Users/anubudhathoki/Downloads/Placeify-main/.cursor/debug-81ffa2.log',
+      );
+      logFile.writeAsStringSync(
+        '${jsonEncode({
+          'sessionId': '81ffa2',
+          'runId': 'verify-e2e',
+          'hypothesisId': 'A',
+          'location': 'serverpod_auth_repository.dart:_beginEmailRegistration',
+          'message': 'startRegistration only (no finish, no session)',
+          'data': {
+            'hasName': trimmedName.isNotEmpty,
+            'passwordLen': password.length,
+            'wasAuthenticated': client.auth.isAuthenticated,
+          },
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        })}\n',
+        mode: FileMode.append,
+        flush: true,
+      );
+    } catch (_) {}
+    // #endregion
 
     try {
-      final requestId = await client.emailIdp.startRegistration(
-        email: normalizedEmail,
-      );
-      final registrationToken = await client.emailIdp.verifyRegistrationCode(
-        accountRequestId: requestId,
-        verificationCode: _devVerificationCode,
-      );
-      final authSuccess = await client.emailIdp.finishRegistration(
-        registrationToken: registrationToken,
-        password: password,
-      );
-      await client.auth.updateSignedInUser(authSuccess);
+      await client.emailIdp.startRegistration(email: normalizedEmail);
+      await _prefs.setString(_pendingEmailKey, normalizedEmail);
+      await _prefs.setString(_pendingPasswordKey, password);
+      await _prefs.setString(_pendingNameKey, trimmedName);
 
-      await client.user.updateProfile(
-        fullName.trim(),
-        phone: null,
-        address: null,
-      );
+      // Ensure we do not keep an accidental session from prior attempts.
+      if (client.auth.isAuthenticated) {
+        await client.auth.signOutDevice();
+      }
+      await _prefs.remove(_sessionEmailKey);
 
-      await _prefs.setString(_sessionEmailKey, normalizedEmail);
-      return _loadAppUser(normalizedEmail);
+      return normalizedEmail;
     } catch (error) {
       throw _mapError(error);
     }
   }
 
-  /// Signs in with the built-in demo account, registering it first if needed.
-  Future<AppUser> signInWithDemoCredentials() async {
-    try {
-      return await signIn(
-        email: DemoCredentials.email,
-        password: DemoCredentials.password,
-      );
-    } on AuthException catch (error) {
-      if (!_isMissingAccountError(error.message)) rethrow;
-
-      await register(
-        fullName: DemoCredentials.fullName,
-        email: DemoCredentials.email,
-        password: DemoCredentials.password,
-      );
-      return signIn(
-        email: DemoCredentials.email,
-        password: DemoCredentials.password,
-      );
-    }
+  @override
+  Future<void> verifyEmailRegistration({
+    required String token,
+    required String password,
+    String? fullName,
+  }) async {
+    return _withConnectionRetry(
+      () => _verifyEmailRegistration(
+        token: token,
+        password: password,
+        fullName: fullName,
+      ),
+    );
   }
+
+  Future<void> _verifyEmailRegistration({
+    required String token,
+    required String password,
+    String? fullName,
+  }) async {
+    final resolvedName = (fullName ?? _prefs.getString(_pendingNameKey) ?? '')
+        .trim();
+    await _postAuthJson(
+      '/auth/verify-email',
+      body: {
+        'token': token.trim(),
+        'password': password,
+        if (resolvedName.isNotEmpty) 'fullName': resolvedName,
+      },
+    );
+
+    await _prefs.remove(_pendingEmailKey);
+    await _prefs.remove(_pendingPasswordKey);
+    await _prefs.remove(_pendingNameKey);
+
+    if (client.auth.isAuthenticated) {
+      await client.auth.signOutDevice();
+    }
+    await _prefs.remove(_sessionEmailKey);
+
+    // #region agent log
+    try {
+      File(
+        '/Users/anubudhathoki/Downloads/Placeify-main/.cursor/debug-81ffa2.log',
+      ).writeAsStringSync(
+        '${jsonEncode({
+          'sessionId': '81ffa2',
+          'runId': 'verify-e2e',
+          'hypothesisId': 'E',
+          'location': 'serverpod_auth_repository.dart:_verifyEmailRegistration',
+          'message': 'verify completed, no session kept',
+          'data': {
+            'authenticated': client.auth.isAuthenticated,
+          },
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        })}\n',
+        mode: FileMode.append,
+        flush: true,
+      );
+    } catch (_) {}
+    // #endregion
+  }
+
+  @override
+  Future<void> resendVerificationEmail({
+    required String email,
+  }) async {
+    final normalizedEmail = email.trim().toLowerCase();
+    await _postAuthJson(
+      '/auth/resend-verification',
+      body: {'email': normalizedEmail},
+    );
+  }
+
+  /// Password saved during [beginEmailRegistration] for the magic-link finish.
+  String? get pendingRegistrationPassword =>
+      _prefs.getString(_pendingPasswordKey);
+
+  String? get pendingRegistrationEmail => _prefs.getString(_pendingEmailKey);
+
+  String? get pendingRegistrationName => _prefs.getString(_pendingNameKey);
 
   @override
   Future<AppUser> signIn({
@@ -108,6 +208,50 @@ class ServerpodAuthRepository implements AuthRepository {
     return _withConnectionRetry(
       () => _signIn(email: email, password: password),
     );
+  }
+
+  /// Signs in with the built-in demo account, registering it first if needed.
+  ///
+  /// Existing demo accounts keep working for demos. Bootstrap of a missing
+  /// demo account is limited to [DemoCredentials] in development via the IDP
+  /// test verification code — production new users use magic links only.
+  Future<AppUser> signInWithDemoCredentials() async {
+    try {
+      return await signIn(
+        email: DemoCredentials.email,
+        password: DemoCredentials.password,
+      );
+    } on AuthException catch (error) {
+      if (!_isMissingAccountError(error.message)) rethrow;
+      await _bootstrapDemoAccount();
+      return signIn(
+        email: DemoCredentials.email,
+        password: DemoCredentials.password,
+      );
+    }
+  }
+
+  Future<void> _bootstrapDemoAccount() async {
+    const code = '123456';
+    final requestId = await client.emailIdp.startRegistration(
+      email: DemoCredentials.email,
+    );
+    final registrationToken = await client.emailIdp.verifyRegistrationCode(
+      accountRequestId: requestId,
+      verificationCode: code,
+    );
+    final authSuccess = await client.emailIdp.finishRegistration(
+      registrationToken: registrationToken,
+      password: DemoCredentials.password,
+    );
+    await client.auth.updateSignedInUser(authSuccess);
+    await client.user.updateProfile(
+      DemoCredentials.fullName,
+      phone: null,
+      address: null,
+    );
+    await client.auth.signOutDevice();
+    await _prefs.remove(_sessionEmailKey);
   }
 
   Future<AppUser> _signIn({

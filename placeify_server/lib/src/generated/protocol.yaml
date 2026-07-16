@@ -38,20 +38,31 @@ admin:
   - getMyAdmin:
   - getMyProfile:
   - updateMyProfile:
-  - bootstrapFirstAdmin:
-  - promoteToAdmin:
+  - listNotifications:
+  - markNotificationRead:
+  - markAllNotificationsRead:
   - approveVendor:
   - rejectVendor:
+  - suspendVendor:
+  - getVendorReinstateTerms:
+  - reactivateVendor:
+  - suspendUser:
+  - activateUser:
   - updateUserStatus:
   - deactivateUser:
   - removeProduct:
+  - deleteProduct:
+  - restoreProduct:
   - flagProduct:
+  - setProductFeatured:
   - fileComplaint:
   - listComplaints:
+  - assignComplaint:
   - resolveComplaint:
+  - reopenComplaint:
   - getPlatformStats:
   - listUsers:
-  - listProducts:
+  - getUserDetail:
   - listVendorApplications:
   - getVendorApplication:
   - getAuditLog:
@@ -61,6 +72,9 @@ admin:
   - listRefundRequests:
   - approveRefundRequest:
   - rejectRefundRequest:
+  - listProducts:
+  - listReportedProducts:
+  - getProductDetails:
   - requirePlaceifyUser:
   - requireRole:
 ar:
@@ -102,6 +116,7 @@ product:
   - listApprovedShops:
   - listProducts:
   - listSpecialOffers:
+  - getModel3dAsset:
 refund:
   - listMyRefundRequests:
   - getRefundRequest:

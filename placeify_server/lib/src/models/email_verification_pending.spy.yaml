@@ -1,0 +1,26 @@
+### Pending email-IDP registration completed via magic link.
+### Stores only a hashed link token (never the raw token). The short-lived
+### IDP verification code is required to call verifyRegistrationCode.
+class: EmailVerificationPending
+table: email_verification_pending
+fields:
+  id: UuidValue?, defaultPersist=random_v7
+  email: String
+  accountRequestId: UuidValue
+  ### Short-lived Email IDP OTP captured when the magic link is issued.
+  verificationCode: String
+  tokenHash: String
+  expiresAt: DateTime
+  used: bool, default=false
+  createdAt: DateTime, default=now
+
+indexes:
+  email_verification_pending_token_hash:
+    fields: tokenHash
+    unique: true
+  email_verification_pending_email:
+    fields: email
+  email_verification_pending_expires_at:
+    fields: expiresAt
+  email_verification_pending_used:
+    fields: used

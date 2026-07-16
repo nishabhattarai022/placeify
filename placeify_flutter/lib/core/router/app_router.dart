@@ -25,6 +25,8 @@ import '../../features/auth/presentation/admin_login_screen.dart';
 import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
+import '../../features/auth/presentation/check_email_screen.dart';
+import '../../features/auth/presentation/verify_email_screen.dart';
 import '../../features/auth/presentation/reset_password_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/vendor/presentation/registration/vendor_registration_screen.dart';
@@ -132,7 +134,9 @@ GoRouter appRouter(Ref ref) {
               location == '/login/forgot-password' ||
               location == '/login/admin' ||
               location == '/reset-password' ||
-              location == '/register')) {
+              location == '/register' ||
+              location == '/register/check-email' ||
+              location == '/verify-email')) {
         return user.role == UserRole.admin ? AdminRoutes.dashboard : '/home';
       }
 
@@ -181,6 +185,30 @@ List<RouteBase> get _appRoutes => [
     pageBuilder: (context, state) => CustomTransitionPage(
       key: state.pageKey,
       child: const RegisterScreen(),
+      transitionsBuilder: _fadeTransition,
+      transitionDuration: AppDurations.slow,
+    ),
+  ),
+  GoRoute(
+    path: '/register/check-email',
+    name: 'checkEmail',
+    pageBuilder: (context, state) => CustomTransitionPage(
+      key: state.pageKey,
+      child: CheckEmailScreen(
+        email: state.uri.queryParameters['email'] ?? '',
+      ),
+      transitionsBuilder: _fadeTransition,
+      transitionDuration: AppDurations.slow,
+    ),
+  ),
+  GoRoute(
+    path: '/verify-email',
+    name: 'verifyEmail',
+    pageBuilder: (context, state) => CustomTransitionPage(
+      key: state.pageKey,
+      child: VerifyEmailScreen(
+        token: state.uri.queryParameters['token'] ?? '',
+      ),
       transitionsBuilder: _fadeTransition,
       transitionDuration: AppDurations.slow,
     ),

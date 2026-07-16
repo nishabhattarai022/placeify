@@ -57,14 +57,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     await HapticService.heavy();
 
     try {
-      await ref.read(currentUserProvider.notifier).registerAccount(
+      final email = await ref
+          .read(currentUserProvider.notifier)
+          .registerAccount(
             fullName: _nameController.text,
             email: _emailController.text,
             password: _passwordController.text,
           );
       if (!mounted) return;
-      PlaceifyToast.show(context, 'Account created — sign in to continue');
-      context.go('/login');
+      PlaceifyToast.show(
+        context,
+        'Registration successful. We sent a verification link to your email address.',
+      );
+      context.go(
+        '/register/check-email?email=${Uri.encodeComponent(email)}',
+      );
     } on AuthException catch (e) {
       if (mounted) PlaceifyToast.show(context, e.message);
     } catch (_) {

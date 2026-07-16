@@ -28,25 +28,81 @@ class MockAuthRepository implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    await Future<void>.delayed(const Duration(milliseconds: 400));
+    await beginEmailRegistration(
+      fullName: fullName,
+      email: email,
+      password: password,
+    );
+    throw AuthException(
+      'Registration started. Check your email to verify your Placeify account.',
+    );
+  }
 
+  @override
+  Future<String> beginEmailRegistration({
+    required String fullName,
+    required String email,
+    required String password,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 200));
     final normalizedEmail = email.trim().toLowerCase();
     final users = await _loadUsers();
-
     if (users.any((u) => u.email == normalizedEmail)) {
       throw AuthException('An account with this email already exists');
     }
+    await _prefs.setString('placeify_mock_pending_email', normalizedEmail);
+    await _prefs.setString('placeify_mock_pending_password', password);
+    await _prefs.setString('placeify_mock_pending_name', fullName.trim());
+    return normalizedEmail;
+  }
 
-    final user = _StoredUser(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      fullName: fullName.trim(),
-      email: normalizedEmail,
-      password: password,
+  @override
+  Future<void> verifyEmailRegistration({
+    required String token,
+    required String password,
+    String? fullName,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    if (token.trim().isEmpty) {
+      throw AuthException(
+        'This verification link is invalid. Request a new one.',
+      );
+    }
+    final email = _prefs.getString('placeify_mock_pending_email');
+    final storedPassword = password.isNotEmpty
+        ? password
+        : _prefs.getString('placeify_mock_pending_password');
+    final name =
+        (fullName ?? _prefs.getString('placeify_mock_pending_name') ?? '')
+            .trim();
+    if (email == null || storedPassword == null || storedPassword.isEmpty) {
+      throw AuthException(
+        'Registration details expired. Start registration again.',
+      );
+    }
+    final users = await _loadUsers();
+    if (users.any((u) => u.email == email)) {
+      throw AuthException('An account with this email already exists');
+    }
+    users.add(
+      _StoredUser(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        fullName: name.isEmpty ? email.split('@').first : name,
+        email: email,
+        password: storedPassword,
+      ),
     );
-    users.add(user);
     await _saveUsers(users);
+    await _prefs.remove('placeify_mock_pending_email');
+    await _prefs.remove('placeify_mock_pending_password');
+    await _prefs.remove('placeify_mock_pending_name');
+  }
 
-    return user.toAppUser();
+  @override
+  Future<void> resendVerificationEmail({
+    required String email,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 150));
   }
 
   @override
