@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../core/services/haptic_service.dart';
 import '../core/theme/app_fonts.dart';
+import '../core/widgets/placeify_cart_icon_button.dart';
 import '../data/furniture_categories.dart';
 import 'widgets/dark_pill_button.dart';
 
@@ -167,7 +167,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                 Positioned(
                   top: 0,
                   right: 0,
-                  child: _BrowseCartButton(
+                  child: PlaceifyCartIconButton(
                     onTap: () {
                       HapticService.light();
                       context.push('/cart');
@@ -314,42 +314,6 @@ class _BrowseScreenState extends State<BrowseScreen> {
           ],
         ),
       ],
-    );
-  }
-}
-
-class _BrowseCartButton extends StatelessWidget {
-  const _BrowseCartButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  static const double _size = 44;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: _size,
-        height: _size,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: Colors.black.withValues(alpha: 0.08),
-          ),
-        ),
-        alignment: Alignment.center,
-        child: SvgPicture.asset(
-          'assets/icons/ic_cart.svg',
-          width: 20,
-          height: 20,
-          colorFilter: const ColorFilter.mode(
-            Color(0xFF1A1A1A),
-            BlendMode.srcIn,
-          ),
-        ),
-      ),
     );
   }
 }

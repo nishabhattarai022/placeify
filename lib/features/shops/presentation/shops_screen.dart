@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:placeify/core/constants/app_colors.dart';
 import 'package:placeify/core/services/haptic_service.dart';
 import 'package:placeify/core/theme/app_fonts.dart';
+import 'package:placeify/core/widgets/placeify_cart_icon_button.dart';
 import 'package:placeify/features/shops/domain/constants/shop_strings.dart';
 import 'package:placeify/features/shops/presentation/providers/consumer_shop_provider.dart';
 import 'package:placeify/features/shops/presentation/widgets/vendor_grid_shimmer.dart';
@@ -175,7 +175,7 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
                   Positioned(
                     top: 0,
                     right: 0,
-                    child: _ShopsCartButton(
+                    child: PlaceifyCartIconButton(
                       onTap: () {
                         HapticService.light();
                         context.push('/cart');
@@ -355,44 +355,6 @@ class _ErrorState extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ── Cart button ────────────────────────────────────────────────────────────────
-
-class _ShopsCartButton extends StatelessWidget {
-  const _ShopsCartButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  static const double _size = 44;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: _size,
-        height: _size,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: Colors.black.withValues(alpha: 0.08),
-          ),
-        ),
-        alignment: Alignment.center,
-        child: SvgPicture.asset(
-          'assets/icons/ic_cart.svg',
-          width: 20,
-          height: 20,
-          colorFilter: const ColorFilter.mode(
-            Color(0xFF1A1A1A),
-            BlendMode.srcIn,
-          ),
-        ),
       ),
     );
   }
