@@ -12,6 +12,7 @@ import 'package:placeify_flutter/features/vendor/domain/constants/product_photo_
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_3d_builder_strings.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_product_3d_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product.dart';
+import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_model_3d_generation_provider.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_products_provider.dart';
 import 'package:placeify_flutter/features/vendor/presentation/widgets/vendor_list_thumbnail.dart';
 
@@ -34,7 +35,6 @@ class VendorBuild3dScreen extends ConsumerStatefulWidget {
 
 class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
   String? _selectedProductId;
-  bool _isGenerating = false;
   bool _modelReady = false;
   bool _didPreloadInitialProduct = false;
 
@@ -201,37 +201,28 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
       return;
     }
 
+    final generation = ref.read(vendorModel3dGenerationProvider.notifier);
+    if (generation.isStarting(productId)) return;
+
     HapticService.medium();
-    setState(() {
-      _isGenerating = true;
-      _modelReady = false;
-    });
-    Vendor3dModelStore.markProcessing(productId);
+    setState(() => _modelReady = false);
 
     final imageSources = Vendor3dModelStore.orderedSourcesFor(productId);
-    final error = await ref
-        .read(vendorProductsProvider.notifier)
-        .regenerateProductModel3d(productId, imageSources: imageSources);
+    final error = await generation.start(
+      productId,
+      imageSources: imageSources,
+    );
 
     if (!mounted) return;
 
     if (error != null) {
-      Vendor3dModelStore.markFailed(productId, error);
-      setState(() => _isGenerating = false);
       PlaceifyToast.show(context, error);
       return;
     }
 
     final updatedProducts = ref.read(vendorProductsProvider).value ?? [];
     final updated = _selectedProduct(updatedProducts);
-    if (updated != null) {
-      Vendor3dModelStore.preloadFromProduct(updated);
-    } else {
-      Vendor3dModelStore.markProcessing(productId);
-    }
-
     setState(() {
-      _isGenerating = false;
       _modelReady = updated?.hasArView == true &&
           updated?.model3dStatus == 'ready';
     });
@@ -244,6 +235,8 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
     final productsAsync = ref.watch(vendorProductsProvider);
     final products = productsAsync.value ?? const [];
     final selected = _selectedProduct(products);
+    final startingIds = ref.watch(vendorModel3dGenerationProvider);
+    final isStarting = selected != null && startingIds.contains(selected.id);
     final record = _record;
     final status = selected == null
         ? VendorProduct3dStatus.none
@@ -330,7 +323,7 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
                           subtitle: Vendor3dBuilderStrings.generateSectionHint,
                           child: _GeneratePanel(
                             status: status,
-                            isGenerating: _isGenerating,
+                            isPreparing: isStarting,
                             modelReady: modelReady,
                             onGenerate: _generateModel,
                           ),
@@ -342,7 +335,7 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
               },
             ),
           ),
-          if (selected != null && modelReady && !_isGenerating)
+          if (selected != null && modelReady && !isStarting)
             _BottomDoneBar(onDone: () => context.pop()),
         ],
       ),
@@ -873,19 +866,19 @@ class _DimensionStat extends StatelessWidget {
 class _GeneratePanel extends StatelessWidget {
   const _GeneratePanel({
     required this.status,
-    required this.isGenerating,
+    required this.isPreparing,
     required this.modelReady,
     required this.onGenerate,
   });
 
   final VendorProduct3dStatus status;
-  final bool isGenerating;
+  final bool isPreparing;
   final bool modelReady;
   final VoidCallback onGenerate;
 
   @override
   Widget build(BuildContext context) {
-    final showBuilding = isGenerating ||
+    final showBuilding = isPreparing ||
         status == VendorProduct3dStatus.processing;
 
     return Column(
@@ -902,8 +895,8 @@ class _GeneratePanel extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            isGenerating
-                ? Vendor3dBuilderStrings.modelProcessing
+            isPreparing
+                ? Vendor3dBuilderStrings.modelPreparing
                 : Vendor3dBuilderStrings.modelQueued,
             style: GoogleFonts.dmSans(
               fontSize: 13,

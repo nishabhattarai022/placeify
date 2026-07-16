@@ -140,6 +140,9 @@ class VendorProducts extends _$VendorProducts {
     String productId, {
     List<String>? imageSources,
   }) async {
+    // Keep this autoDispose provider alive for the whole queue call so leaving
+    // Build 3D cannot cancel photo sync / regenerate mid-flight.
+    final keepAliveLink = ref.keepAlive();
     try {
       await _setSaving(true);
       final user = await ref.read(currentUserProvider.future);
@@ -186,6 +189,7 @@ class VendorProducts extends _$VendorProducts {
       );
     } finally {
       await _setSaving(false);
+      keepAliveLink.close();
     }
   }
 

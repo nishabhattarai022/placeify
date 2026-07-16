@@ -424,12 +424,13 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
       }
 
       final sources = _orderedImageSources(imageSources ?? existing.imageUrls);
-      if (sources.length >= 4) {
+      // Only sync when there are local picks to upload. Already-hosted server
+      // photos are left alone so Generate queues Tripo immediately.
+      if (sources.length >= 4 && _hasLocalImageSource(sources)) {
         await _syncMultiviewPhotosOnServer(
           product: existing,
           dbId: dbId,
           imageSources: sources.take(4).toList(),
-          forceReupload: true,
         );
       }
 
@@ -517,6 +518,13 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
         .map((source) => source.trim())
         .where((source) => source.isNotEmpty)
         .toList();
+  }
+
+  bool _hasLocalImageSource(List<String> sources) {
+    for (final source in sources) {
+      if (_normalizeLocalImagePath(source) != null) return true;
+    }
+    return false;
   }
 
   Future<({String thumbnailUrl, List<String> viewImageUrls})>
