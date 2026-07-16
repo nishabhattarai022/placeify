@@ -58,7 +58,9 @@ abstract final class CatalogProductMapper {
 
     final categoryId = product.category?.name ?? 'chairs';
     final shopName = product.vendor?.shopName ?? 'Placeify vendor';
-    final imageUrl = await _resolvePrimaryImage(product, categoryId);
+    final imageUrls = await _resolveImageUrls(product, categoryId);
+    final imageUrl =
+        imageUrls.isNotEmpty ? imageUrls.first : _categoryAsset(categoryId);
 
     final dimensions = _dimensionsFromApi(product);
     final uiId = ProductIdCodec.fromDatabaseId(id);
@@ -79,11 +81,18 @@ abstract final class CatalogProductMapper {
       price: effectivePrice,
       originalPrice: originalPrice,
       imageUrl: imageUrl,
+      imageUrls: imageUrls,
       svgIconPath: _categoryIcons[categoryId] ?? 'assets/icons/ic_chair.svg',
       hasArView: has3dPreview,
       categoryId: categoryId,
       dimensions: dimensions,
       vendorId: product.vendorId.toString(),
+      description: product.description,
+      materials: product.materials,
+      weightKg: product.weightKg,
+      assemblyNote: product.assemblyNote,
+      careInstructions: product.careInstructions,
+      warranty: product.warranty,
     );
   }
 
@@ -129,21 +138,33 @@ abstract final class CatalogProductMapper {
     api.Product product,
     String categoryId,
   ) async {
-    final fallback = _categoryAsset(categoryId);
+    final urls = await _resolveImageUrls(product, categoryId);
+    return urls.isNotEmpty ? urls.first : _categoryAsset(categoryId);
+  }
 
-    final thumbnail = product.thumbnailUrl?.trim();
-    if (!_isBrokenThumbnail(thumbnail)) {
-      final resolved = await resolveMediaUrl(thumbnail!);
-      if (resolved.isNotEmpty) return resolved;
+  /// Returns all real uploaded images (thumbnail + view images). Never pads
+  /// with category placeholders when at least one upload exists.
+  static Future<List<String>> _resolveImageUrls(
+    api.Product product,
+    String categoryId,
+  ) async {
+    final resolved = <String>[];
+
+    Future<void> addResolved(String? raw) async {
+      final trimmed = raw?.trim();
+      if (trimmed == null || trimmed.isEmpty || _isBrokenThumbnail(trimmed)) {
+        return;
+      }
+      final url = await resolveMediaUrl(trimmed);
+      if (url.isEmpty || resolved.contains(url)) return;
+      resolved.add(url);
     }
 
+    await addResolved(product.thumbnailUrl);
     for (final viewUrl in product.viewImageUrls ?? const <String>[]) {
-      final trimmed = viewUrl.trim();
-      if (trimmed.isEmpty || _isBrokenThumbnail(trimmed)) continue;
-      final resolved = await resolveMediaUrl(trimmed);
-      if (resolved.isNotEmpty) return resolved;
+      await addResolved(viewUrl);
     }
 
-    return fallback;
+    return resolved;
   }
 }

@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../domain/cart_totals.dart';
 import '../cart_tokens.dart';
-import '../providers/cart_provider.dart';
 
 class CartOrderSummary extends StatefulWidget {
   const CartOrderSummary({

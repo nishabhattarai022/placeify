@@ -19,6 +19,10 @@ class ProductRatingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (summary.reviewCount <= 0) {
+      return const SizedBox.shrink();
+    }
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [

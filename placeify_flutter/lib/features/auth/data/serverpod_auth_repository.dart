@@ -317,8 +317,9 @@ class ServerpodAuthRepository implements AuthRepository {
     if (profile == null) {
       throw AuthException('User profile not found');
     }
-    final hasVendorShop = await _loadHasVendorShop();
-    final vendorId = hasVendorShop ? await _loadVendorId() : null;
+    // Always resolve shop id when present so client purchase policy can run.
+    final vendorId = await _loadVendorId();
+    final hasVendorShop = vendorId != null || await _loadHasVendorShop();
     final vendorStatus = _vendorStatusFromServer(
       profile,
       hasVendorShop: hasVendorShop,

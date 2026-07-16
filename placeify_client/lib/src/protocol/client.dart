@@ -458,6 +458,14 @@ class EndpointUser extends EndpointPlaceifyAuthenticated {
         {'orderId': orderId},
       );
 
+  /// Signed eSewa form fields (JSON) for an unpaid eSewa order.
+  _i3.Future<String> getEsewaPaymentForm(int orderId) =>
+      caller.callServerEndpoint<String>(
+        'user',
+        'getEsewaPaymentForm',
+        {'orderId': orderId},
+      );
+
   _i3.Future<_i12.UserOrderPaymentSummary> completePayment(int orderId) =>
       caller.callServerEndpoint<_i12.UserOrderPaymentSummary>(
         'user',
@@ -1314,6 +1322,9 @@ class EndpointRefund extends _i2.EndpointRef {
 }
 
 /// Product reviews from verified purchasers.
+///
+/// Listing is public so product pages can show real reviews without login.
+/// Submission still requires an authenticated session (enforced in the store).
 /// {@category Endpoint}
 class EndpointReview extends _i2.EndpointRef {
   EndpointReview(_i2.EndpointCaller caller) : super(caller);

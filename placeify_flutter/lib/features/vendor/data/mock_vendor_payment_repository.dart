@@ -1,7 +1,6 @@
 import 'package:placeify_flutter/features/vendor/data/config/vendor_mock_config.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/payment_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/payment_update.dart';
-import 'package:placeify_flutter/features/vendor/domain/models/vendor_payout.dart';
 import 'package:placeify_flutter/features/vendor/domain/repositories/vendor_payment_repository.dart';
 
 class MockVendorPaymentRepository implements VendorPaymentRepository {
@@ -15,39 +14,35 @@ class MockVendorPaymentRepository implements VendorPaymentRepository {
       status: PaymentStatus.paid,
       note: 'Payment received via eSewa.',
       updatedAt: DateTime(2026, 5, 28, 14, 0),
+      paymentMethodLabel: 'eSewa',
+      customerName: 'Demo Customer',
     ),
     PaymentUpdate(
       id: 'pu2',
       orderId: 'vo2',
       amount: 9800,
       status: PaymentStatus.pending,
-      note: 'Awaiting customer confirmation.',
+      note: 'Awaiting vendor confirmation.',
       updatedAt: DateTime(2026, 6, 5, 11, 0),
+      paymentMethodLabel: 'COD',
     ),
   ];
 
-  bool simulatePayoutError = false;
-
   @override
-  Future<List<VendorPayout>> getPayouts(String vendorId) async {
+  Future<VendorPaymentsOverviewData> getPaymentsOverview(String vendorId) async {
     await Future<void>.delayed(const Duration(milliseconds: 200));
-    return List.from(VendorMockConfig.payoutsFor(vendorId));
-  }
-
-  @override
-  Future<double> getPendingBalance(String vendorId) async {
-    await Future<void>.delayed(const Duration(milliseconds: 100));
-    final payouts = VendorMockConfig.payoutsFor(vendorId);
-    return payouts
-        .where((p) => p.status == PaymentStatus.pending)
-        .fold<double>(0, (sum, p) => sum + p.amount);
-  }
-
-  @override
-  Future<double> getTotalEarned(String vendorId) async {
-    await Future<void>.delayed(const Duration(milliseconds: 100));
-    if (!VendorMockConfig.usesDemoPortalData(vendorId)) return 0;
-    return VendorMockConfig.stats.revenue;
+    final paid = _paymentUpdates.where((u) => u.status == PaymentStatus.paid);
+    final pending = _paymentUpdates
+        .where((u) => u.status == PaymentStatus.pending)
+        .length;
+    final earned = paid.fold<double>(0, (sum, u) => sum + u.amount);
+    final history = paid.toList()
+      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    return VendorPaymentsOverviewData(
+      totalEarned: earned,
+      pendingPaymentCount: pending,
+      paymentHistory: history,
+    );
   }
 
   @override
@@ -80,29 +75,10 @@ class MockVendorPaymentRepository implements VendorPaymentRepository {
       status: status,
       note: note,
       updatedAt: DateTime.now(),
+      paymentMethodLabel: 'COD',
+      customerName: order.customerName,
     );
     _paymentUpdates.insert(0, update);
     return update;
-  }
-
-  @override
-  Future<VendorPayout> requestPayout(String vendorId) async {
-    await Future<void>.delayed(const Duration(milliseconds: 600));
-
-    if (simulatePayoutError) {
-      throw VendorPaymentException('Payout request failed. Try again.');
-    }
-
-    final pending = await getPendingBalance(vendorId);
-    if (pending <= 0) {
-      throw VendorPaymentException('No pending balance to request.');
-    }
-
-    return VendorPayout(
-      id: 'pay-${DateTime.now().millisecondsSinceEpoch}',
-      amount: pending,
-      status: PaymentStatus.pending,
-      reference: 'PO-${DateTime.now().millisecondsSinceEpoch}',
-    );
   }
 }

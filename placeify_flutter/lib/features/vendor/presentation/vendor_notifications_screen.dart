@@ -11,6 +11,7 @@ import 'package:placeify_flutter/core/utils/formatters.dart';
 import 'package:placeify_flutter/core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import 'package:placeify_flutter/core/widgets/placeify_dialog.dart';
 import 'package:placeify_flutter/core/widgets/shimmer_loader.dart';
+import 'package:placeify_flutter/core/widgets/toast_overlay.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_routes.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/notification_type.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_notification.dart';
@@ -97,13 +98,58 @@ class _VendorNotificationsScreenState
     });
   }
 
-  void _onNotificationTap(VendorNotification notification) {
+  Future<void> _onNotificationTap(VendorNotification notification) async {
     HapticService.light();
     ref.read(vendorNotificationsProvider.notifier).markRead(notification.id);
 
-    if (notification.type == NotificationType.order &&
-        notification.relatedId != null) {
-      context.push(VendorRoutes.orderDetail(notification.relatedId!));
+    switch (notification.type) {
+      case NotificationType.order:
+        final orderId = notification.relatedId;
+        if (orderId == null || orderId.isEmpty) {
+          PlaceifyToast.show(context, 'Order is no longer available.');
+          return;
+        }
+        openVendorOrderFromNotification(context, orderId);
+        return;
+      case NotificationType.payment:
+        final isRefund = notification.title.toLowerCase().contains('refund') ||
+            notification.body.toLowerCase().contains('refund');
+        if (isRefund &&
+            notification.relatedId != null &&
+            notification.relatedId!.isNotEmpty) {
+          openVendorOrderFromNotification(context, notification.relatedId!);
+          return;
+        }
+        if (!context.mounted) return;
+        context.push(VendorRoutes.payments);
+        return;
+      case NotificationType.product:
+        final productDbId = notification.relatedKey ?? notification.relatedId;
+        if (productDbId == null || productDbId.isEmpty) {
+          PlaceifyToast.show(context, 'Product is no longer available.');
+          return;
+        }
+        final productId =
+            productDbId.startsWith('p') ? productDbId : 'p$productDbId';
+        final reviewId = notification.relatedKey != null
+            ? notification.relatedId
+            : null;
+        final path = reviewId != null && reviewId.isNotEmpty
+            ? '/product/$productId?highlightReviewId=$reviewId'
+            : '/product/$productId';
+        if (!context.mounted) return;
+        context.push(path);
+        return;
+      case NotificationType.system:
+        if (!context.mounted) return;
+        await PlaceifyDialog.showConfirm(
+          context,
+          title: notification.title,
+          message: notification.body,
+          confirmLabel: 'OK',
+          confirmColor: AppColors.vendorForest,
+        );
+        return;
     }
   }
 

@@ -620,7 +620,7 @@ void main() {
       await paymentStore.updateOrderPaymentStatus(
         vendorSession,
         orderId,
-        PaymentTransactionStatus.succeeded,
+        PaymentTransactionStatus.paid,
         note: 'COD received at door',
       );
 

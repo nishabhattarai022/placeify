@@ -8,3 +8,5 @@ fields:
   isRead: bool, default=false
   createdAt: DateTime
   relatedId: String?
+  ### Secondary reference (e.g. productId when relatedId is a reviewId).
+  relatedKey: String?

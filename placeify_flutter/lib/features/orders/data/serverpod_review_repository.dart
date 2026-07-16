@@ -43,7 +43,6 @@ class ServerpodReviewRepository {
   }
 
   Future<List<Review>> listProductReviews(String uiProductId) async {
-    _requireAuthenticated();
     final productId = ProductIdCodec.toDatabaseId(uiProductId);
     if (productId == null) return const [];
 
@@ -70,6 +69,12 @@ class ServerpodReviewRepository {
     final text = error.toString().toLowerCase();
     if (text.contains('review_exists')) {
       return 'You already reviewed this order.';
+    }
+    if (text.contains('order_not_delivered')) {
+      return 'You can only review products after delivery.';
+    }
+    if (text.contains('product_not_in_order')) {
+      return 'That product is not part of this order.';
     }
     if (text.contains('order_not_found')) {
       return 'Order not found.';

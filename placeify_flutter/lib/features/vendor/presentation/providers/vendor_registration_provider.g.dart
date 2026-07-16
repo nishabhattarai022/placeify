@@ -46,7 +46,7 @@ final class VendorRegistrationNotifierProvider
 }
 
 String _$vendorRegistrationNotifierHash() =>
-    r'057ac30357d4957edae453dd39de6a4983ddc357';
+    r'06600cbfc7ff4bd5d56bea4d29117616e1afca2c';
 
 abstract class _$VendorRegistrationNotifier
     extends $Notifier<VendorRegistrationUiState> {

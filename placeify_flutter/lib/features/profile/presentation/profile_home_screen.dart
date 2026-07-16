@@ -8,10 +8,13 @@ import '../../../core/widgets/placeify_bottom_nav.dart';
 import '../../../core/widgets/placeify_bottom_sheet.dart';
 import '../../../core/widgets/toast_overlay.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
+import '../../orders/presentation/providers/customer_in_app_notifications_provider.dart';
+import '../../orders/presentation/providers/orders_provider.dart';
 import '../../vendor/domain/constants/vendor_routes.dart';
 import '../../vendor/domain/enums/vendor_status.dart';
 import '../../vendor/presentation/widgets/vendor_status_gate_sheets.dart';
 import '../data/profile_menu_config.dart';
+import 'providers/profile_dashboard_provider.dart';
 import 'widgets/profile_hero.dart';
 import 'widgets/profile_menu_tile.dart';
 import 'widgets/profile_orders_tile.dart';
@@ -125,6 +128,11 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Keep customer order/notification streams alive on the main profile shell.
+    ref.watch(customerInAppNotificationsProvider);
+    ref.watch(ordersProvider);
+    ref.watch(profileDashboardProvider);
+
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final userAsync = ref.watch(currentUserProvider);
     final vendorStatus = userAsync.value?.vendorStatus ?? VendorStatus.none;

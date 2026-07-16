@@ -97,7 +97,15 @@ class VendorProfileStore {
         ),
     ];
 
-    final recentOrderItems = orderItems.take(6).toList();
+    // Awaiting vendor action only (accept/reject). Lifecycle continues on Orders page.
+    final awaitingItems = [
+      for (final item in orderItems)
+        if (item.order != null &&
+            (item.order!.status == OrderStatus.pending ||
+                item.order!.status == OrderStatus.confirmed))
+          item,
+    ];
+    final recentOrderItems = awaitingItems.take(6).toList();
     final recentOrderIds = recentOrderItems.map((item) => item.orderId).toSet();
     final deliveryStages = await VendorOrderSupport.latestDeliveryStagesForOrders(
       session,

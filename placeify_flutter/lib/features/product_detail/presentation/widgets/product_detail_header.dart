@@ -36,9 +36,9 @@ class ProductDetailHeader extends ConsumerWidget {
           ),
           const Spacer(),
           _HeaderCircleButton(
-            onTap: () {
+            onTap: () async {
               HapticService.light();
-              ref.read(wishlistProvider.notifier).toggle(product.id);
+              await ref.read(wishlistProvider.notifier).toggle(product.id);
             },
             child: _StarSwitcher(isSaved: isSaved),
           ),

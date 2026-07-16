@@ -93,6 +93,11 @@ class UserEndpoint extends PlaceifyAuthenticatedEndpoint {
     return _service.getMyOrderPayment(session, orderId);
   }
 
+  /// Signed eSewa form fields (JSON) for an unpaid eSewa order.
+  Future<String> getEsewaPaymentForm(Session session, int orderId) {
+    return _service.getEsewaPaymentForm(session, orderId);
+  }
+
   Future<UserOrderPaymentSummary> completePayment(
     Session session,
     int orderId,

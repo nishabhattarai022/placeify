@@ -53,16 +53,14 @@ class _WishlistStarButtonState extends ConsumerState<WishlistStarButton>
       button: true,
       label: isSaved ? 'Remove from wishlist' : 'Save to wishlist',
       child: GestureDetector(
-        onTap: () {
+        onTap: () async {
           HapticService.medium();
-          ref.read(wishlistProvider.notifier).toggle(widget.product.id);
-          final nowSaved =
-              ref.read(wishlistProvider).containsKey(widget.product.id);
+          final result = await ref
+              .read(wishlistProvider.notifier)
+              .toggle(widget.product.id);
+          if (!context.mounted) return;
           _popController.forward(from: 0);
-          PlaceifyToast.show(
-            context,
-            nowSaved ? 'Added to wishlist' : 'Removed from wishlist',
-          );
+          PlaceifyToast.show(context, result.toastMessage);
         },
         child: ScaleTransition(
           scale: _popScale,

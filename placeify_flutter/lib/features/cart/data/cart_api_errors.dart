@@ -16,8 +16,13 @@ abstract final class CartApiErrors {
     final raw = error.toString();
     final haystack = raw.toUpperCase();
 
+    if (haystack.contains('OWN_SHOP') ||
+        haystack.contains('OWN PRODUCT') ||
+        haystack.contains('YOUR OWN')) {
+      return 'You cannot purchase your own product.';
+    }
     if (haystack.contains('CART_EMPTY')) {
-      return 'Your cart is empty. Sign in, add products from the catalog, then checkout.';
+      return 'Your cart is empty. Add products, then try again.';
     }
     if (haystack.contains('AUTH_REQUIRED') ||
         haystack.contains('UNAUTHENTICATED')) {
@@ -28,6 +33,13 @@ abstract final class CartApiErrors {
     }
     if (haystack.contains('INVALID_ADDRESS')) {
       return 'Add a shipping address in your profile before checkout.';
+    }
+    if (haystack.contains('PAYMENT_NOT_VERIFIED') ||
+        haystack.contains('COULD NOT BE VERIFIED')) {
+      return 'eSewa payment could not be verified yet. Finish payment, then try again.';
+    }
+    if (haystack.contains('ESEWA') && haystack.contains('NOT CONFIGURED')) {
+      return 'eSewa is not configured on the server yet.';
     }
 
     final colonIndex = raw.indexOf(': ');

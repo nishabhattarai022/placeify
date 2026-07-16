@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/widgets/animated_scale_tap.dart';
+import '../../../../core/widgets/placeify_image.dart';
 import '../data/home_categories_config.dart';
 import '../../data/product_reviews_repository.dart';
 import 'product_rating_row.dart';
@@ -41,11 +42,10 @@ class HomeFeaturedProductCard extends StatelessWidget {
               child: Center(
                 child: Padding(
                   padding: const EdgeInsets.all(12),
-                  child: Image.asset(
-                    product.imageAsset,
-                    height: 100,
+                  child: PlaceifyImage(
+                    source: product.imageAsset,
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => Icon(
+                    error: Icon(
                       Icons.chair_outlined,
                       size: 56,
                       color: AppColors.textMuted.withValues(alpha: 0.5),

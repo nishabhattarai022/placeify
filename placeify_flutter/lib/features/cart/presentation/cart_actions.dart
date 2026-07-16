@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:placeify_client/placeify_client.dart' hide Order, OrderItem;
 import 'package:placeify_flutter/features/orders/domain/models/order_item.dart';
 
+import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
+
+import '../../../core/config/placeify_server_client.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../core/widgets/toast_overlay.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
+import '../domain/cart_totals.dart';
+import '../domain/checkout_flow_result.dart';
 import '../domain/constants/cart_strings.dart';
 import 'providers/cart_provider.dart';
+import 'providers/checkout_order_provider.dart';
+import 'providers/checkout_payment_provider.dart';
 
 /// Adds a product to the cart, shows feedback, and optionally opens the cart.
 Future<void> addToCart(
@@ -38,26 +44,34 @@ Future<void> addToCart(
   }
 }
 
-/// Places a server order from the current cart (COD). Keeps Nisha cart UI intact.
-Future<void> checkoutCart(WidgetRef ref, BuildContext context) async {
+/// Opens checkout payment selection (does not place an order).
+Future<void> navigateToCheckout(WidgetRef ref, BuildContext context) async {
   HapticService.medium();
 
-  if (ref.read(currentUserProvider).value == null) {
+  if (ref.read(currentUserProvider).value == null ||
+      !client.auth.isAuthenticated) {
     PlaceifyToast.show(context, CartStrings.signInToCheckout);
     context.push('/login');
     return;
   }
 
-  final message = await ref.read(cartProvider.notifier).checkout(
-        paymentMethod: PaymentMethod.cod,
-      );
-  if (!context.mounted) return;
-
-  PlaceifyToast.show(context, message);
-
-  if (message.startsWith('Order #')) {
-    context.push('/profile/orders');
+  if (ref.read(cartProvider).isEmpty) {
+    PlaceifyToast.show(context, CartStrings.emptyCartCheckout);
+    return;
   }
+
+  ref.read(selectedPaymentMethodProvider.notifier).clear();
+  context.push('/cart/checkout');
+}
+
+/// Places an order using cart, totals, and selected payment method providers.
+Future<CheckoutFlowResult> confirmCheckoutOrder(
+  WidgetRef ref, {
+  required CartTotals totals,
+}) {
+  return ref
+      .read(checkoutOrderActionProvider.notifier)
+      .confirm(totals: totals);
 }
 
 /// Adds all order line items to the cart (reorder flow).

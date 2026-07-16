@@ -4,6 +4,8 @@ fields:
   id: int
   customerName: String
   productName: String
+  productId: int
+  thumbnailUrl: String?
   rating: int
   comment: String?
   createdAt: DateTime

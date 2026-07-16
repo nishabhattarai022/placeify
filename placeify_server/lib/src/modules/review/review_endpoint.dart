@@ -4,9 +4,12 @@ import '../../generated/protocol.dart';
 import 'review_service.dart';
 
 /// Product reviews from verified purchasers.
+///
+/// Listing is public so product pages can show real reviews without login.
+/// Submission still requires an authenticated session (enforced in the store).
 class ReviewEndpoint extends Endpoint {
   @override
-  bool get requireLogin => true;
+  bool get requireLogin => false;
 
   final _service = ReviewService();
 

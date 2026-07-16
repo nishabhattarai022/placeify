@@ -7,3 +7,6 @@ fields:
   status: PaymentTransactionStatus
   note: String
   updatedAt: DateTime
+  ### Optional listing fields (vendor payment history).
+  paymentMethod: PaymentMethod?
+  customerName: String?

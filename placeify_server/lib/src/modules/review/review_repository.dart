@@ -29,6 +29,24 @@ class ReviewStore {
     if (order == null || order.userId != user.id) {
       throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
     }
+    if (order.status != OrderStatus.delivered) {
+      throw PlaceifyException(
+        message: 'You can only review products after delivery.',
+        code: 'ORDER_NOT_DELIVERED',
+      );
+    }
+
+    final orderItem = await OrderItem.db.findFirstRow(
+      session,
+      where: (row) =>
+          row.orderId.equals(orderId) & row.productId.equals(productId),
+    );
+    if (orderItem == null) {
+      throw PlaceifyException(
+        message: 'That product is not part of this order.',
+        code: 'PRODUCT_NOT_IN_ORDER',
+      );
+    }
 
     final product = await Product.db.findById(
       session,
@@ -70,9 +88,10 @@ class ReviewStore {
         userId: vendorUserId,
         title: 'New product review',
         message:
-            '${user.name ?? 'A customer'} left a ${rating}-star review on ${product.name}.',
+            '${user.name ?? 'A customer'} left a $rating-star review on ${product.name}.',
         type: InAppNotificationType.productUpdate,
-        referenceId: productId,
+        referenceId: review.id,
+        referenceKey: productId.toString(),
       );
     }
 
@@ -109,6 +128,8 @@ class ReviewStore {
             id: review.id!,
             customerName: review.user?.name ?? 'Customer',
             productName: review.product?.name ?? 'Product',
+            productId: review.productId,
+            thumbnailUrl: review.product?.thumbnailUrl,
             rating: review.rating,
             comment: review.comment,
             createdAt: review.createdAt,

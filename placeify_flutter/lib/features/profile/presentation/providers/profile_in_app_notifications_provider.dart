@@ -27,17 +27,29 @@ class ProfileInAppNotificationsState {
 @riverpod
 class ProfileInAppNotifications extends _$ProfileInAppNotifications {
   static const _repository = ServerpodNotificationRepository();
+  StreamSubscription<InAppNotificationSummary>? _subscription;
 
   @override
   Future<ProfileInAppNotificationsState> build() {
+    ref.onDispose(() => _subscription?.cancel());
     if (!client.auth.isAuthenticated) {
       return Future.value(ProfileInAppNotificationsState.empty);
     }
+    unawaited(_attachRealtimeListener());
     return _load();
   }
 
-  Future<void> refresh() async {
-    state = const AsyncLoading();
+  Future<void> _attachRealtimeListener() async {
+    if (_subscription != null) return;
+    _subscription = inAppNotificationEvents.listen((_) {
+      unawaited(refresh(silent: true));
+    });
+  }
+
+  Future<void> refresh({bool silent = false}) async {
+    if (!silent) {
+      state = const AsyncLoading();
+    }
     state = await AsyncValue.guard(_load);
   }
 
@@ -61,13 +73,13 @@ class ProfileInAppNotifications extends _$ProfileInAppNotifications {
     try {
       await _repository.markInAppNotificationRead(notificationId);
     } catch (_) {}
-    unawaited(refresh());
+    unawaited(refresh(silent: true));
   }
 
   Future<void> markAllRead() async {
     try {
       await _repository.markAllInAppNotificationsRead();
     } catch (_) {}
-    unawaited(refresh());
+    unawaited(refresh(silent: true));
   }
 }

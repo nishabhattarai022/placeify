@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_radii.dart';
@@ -23,6 +22,8 @@ import 'widgets/order_item_row.dart';
 import 'widgets/order_reason_sheets.dart';
 import 'widgets/order_section_card.dart';
 import 'widgets/order_timeline.dart';
+import 'widgets/leave_review_sheet.dart';
+import 'providers/submitted_order_reviews_provider.dart';
 
 class OrderDetailScreen extends ConsumerWidget {
   const OrderDetailScreen({required this.orderId, super.key});
@@ -226,6 +227,21 @@ class _OrderDetailBody extends ConsumerWidget {
       buttons.add(button);
     }
 
+    if (order.needsEsewaPayment) {
+      final orderId = int.tryParse(order.id);
+      if (orderId != null) {
+        addButton(
+          ProfileSubmitButton(
+            label: 'Pay with eSewa',
+            onPressed: () {
+              HapticService.medium();
+              context.push('/cart/checkout/esewa/$orderId');
+            },
+          ),
+        );
+      }
+    }
+
     if (order.hasTracking && order.isActive) {
       addButton(
         ProfileSubmitButton(
@@ -265,17 +281,16 @@ class _OrderDetailBody extends ConsumerWidget {
           onPressed: () => OrderReturnSheet.show(context, ref, order),
         ),
       );
+      final alreadyReviewed =
+          ref.watch(submittedOrderReviewsProvider).contains(order.id);
       addButton(
         OutlinedButton(
-          onPressed: () {
-            HapticService.light();
-            PlaceifyToast.show(
-              context,
-              '${OrderStrings.leaveReviewAction} coming soon',
-            );
-          },
+          onPressed: alreadyReviewed
+              ? null
+              : () => LeaveReviewSheet.show(context, ref, order: order),
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.espresso,
+            disabledForegroundColor: AppColors.textMuted,
             side: const BorderSide(color: AppColors.sand, width: 1.5),
             padding: const EdgeInsets.symmetric(vertical: 14),
             shape: RoundedRectangleBorder(
@@ -285,7 +300,9 @@ class _OrderDetailBody extends ConsumerWidget {
           child: SizedBox(
             width: double.infinity,
             child: Text(
-              OrderStrings.leaveReviewAction,
+              alreadyReviewed
+                  ? OrderStrings.reviewSubmittedAction
+                  : OrderStrings.leaveReviewAction,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 15,

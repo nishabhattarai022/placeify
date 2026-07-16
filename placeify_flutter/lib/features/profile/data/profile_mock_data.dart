@@ -56,12 +56,6 @@ class NotificationPref {
 }
 
 abstract final class ProfileMockData {
-  static const stats = [
-    ProfileStat(value: '12', label: 'Orders'),
-    ProfileStat(value: '8', label: 'Wishlist'),
-    ProfileStat(value: '2', label: 'Refunds'),
-  ];
-
   static const activeRefunds = [
     ProfileRefund(
       productName: 'Astra Chair (1 unit)',

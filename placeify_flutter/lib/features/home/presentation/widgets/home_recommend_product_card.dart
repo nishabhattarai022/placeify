@@ -4,8 +4,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/services/haptic_service.dart';
-import '../../../../core/widgets/toast_overlay.dart';
-import '../../../cart/presentation/providers/cart_provider.dart';
+import '../../../../core/widgets/placeify_image.dart';
+import '../../../cart/presentation/cart_actions.dart';
 import '../data/home_categories_config.dart';
 import '../../data/product_reviews_repository.dart';
 import '../theme/home_screen_tokens.dart';
@@ -46,12 +46,7 @@ class _HomeRecommendProductCardState
   }
 
   void _onAddToCart() {
-    HapticService.medium();
-    ref.read(cartProvider.notifier).addProduct(widget.product.productId);
-    PlaceifyToast.show(
-      context,
-      '${widget.product.displayName} added to cart',
-    );
+    addToCart(ref, context, widget.product.productId, openCart: false);
   }
 
   @override
@@ -111,10 +106,10 @@ class _HomeRecommendProductCardState
                       child: SizedBox(
                         height: HomeScreenTokens.cardImageHeight,
                         width: double.infinity,
-                        child: Image.asset(
-                          product.imageAsset,
+                        child: PlaceifyImage(
+                          source: product.imageAsset,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => ColoredBox(
+                          error: ColoredBox(
                             color: HomeScreenTokens.cardBg,
                             child: Icon(
                               Icons.chair_outlined,

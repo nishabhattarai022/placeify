@@ -23,7 +23,7 @@ class PaymentStatusChip extends StatelessWidget {
       PaymentStatus.paid => (
           AppColors.sageBg,
           AppColors.sage,
-          'Paid',
+          'Payment Received',
         ),
       PaymentStatus.partial => (
           AppColors.lavenderBg,

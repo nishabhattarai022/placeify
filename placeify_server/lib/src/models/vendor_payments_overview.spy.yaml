@@ -4,3 +4,7 @@ fields:
   payouts: List<VendorPayoutSummary>
   pendingBalance: double
   totalEarned: double
+  ### Count of OrderVendorPayment rows still pending for this vendor.
+  pendingPaymentCount: int
+  ### Completed customer payments (COD + eSewa) for this vendor shop.
+  paymentHistory: List<PaymentUpdateSummary>

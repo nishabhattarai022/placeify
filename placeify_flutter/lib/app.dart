@@ -11,6 +11,7 @@ class PlaceifyApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'Placeify',
       debugShowCheckedModeBanner: false,
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
       routerConfig: ref.watch(appRouterProvider),
       theme: PlaceifyTheme.light(),
     );
