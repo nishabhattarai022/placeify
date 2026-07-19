@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/app_fonts.dart';
+import '../../../home/domain/models/product.dart';
 import '../ar_room_ui_tokens.dart';
 import 'ar_frosted_surface.dart';
 
@@ -73,6 +74,7 @@ class ArDoneButton extends StatelessWidget {
 /// Scale slider — thin track with a floating accent percent badge.
 class ArScaleControlBar extends StatelessWidget {
   const ArScaleControlBar({
+    required this.dimensions,
     required this.scaleMultiplier,
     required this.minMultiplier,
     required this.maxMultiplier,
@@ -80,6 +82,7 @@ class ArScaleControlBar extends StatelessWidget {
     super.key,
   });
 
+  final ProductDimensions dimensions;
   final double scaleMultiplier;
   final double minMultiplier;
   final double maxMultiplier;
@@ -88,6 +91,11 @@ class ArScaleControlBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final percentLabel = '${(scaleMultiplier * 100).round()}%';
+    final widthCm = dimensions.widthCm * scaleMultiplier;
+    final depthCm = dimensions.depthCm * scaleMultiplier;
+    final heightCm = dimensions.heightCm * scaleMultiplier;
+    final scaledDimensions =
+        'W ${_formatCm(widthCm)} × D ${_formatCm(depthCm)} × H ${_formatCm(heightCm)} cm';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -99,51 +107,81 @@ class ArScaleControlBar extends StatelessWidget {
       child: ArFrostedSurface(
         strong: true,
         padding: const EdgeInsets.fromLTRB(16, 12, 14, 12),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Icon(
-              Icons.straighten_rounded,
-              size: 16,
-              color: ArRoomUiTokens.overlayTextSecondary,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: SliderTheme(
-                data: SliderThemeData(
-                  trackHeight: 1.5,
-                  activeTrackColor: AppColors.accent.withValues(alpha: 0.9),
-                  inactiveTrackColor:
-                      AppColors.warmWhite.withValues(alpha: 0.16),
-                  thumbColor: AppColors.warmWhite,
-                  overlayColor: AppColors.accent.withValues(alpha: 0.12),
-                  thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
-                  overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+            Row(
+              children: [
+                Icon(
+                  Icons.straighten_rounded,
+                  size: 16,
+                  color: ArRoomUiTokens.overlayTextSecondary,
                 ),
-                child: Slider(
-                  value: scaleMultiplier,
-                  min: minMultiplier,
-                  max: maxMultiplier,
-                  divisions: 15,
-                  onChanged: onScaleChanged,
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: AppColors.accent,
-                borderRadius: BorderRadius.circular(ArRoomUiTokens.pillRadius),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                child: Text(
-                  percentLabel,
-                  style: AppFonts.dmSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.warmWhite,
-                    letterSpacing: -0.1,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: SliderTheme(
+                    data: SliderThemeData(
+                      trackHeight: 1.5,
+                      activeTrackColor: AppColors.accent.withValues(alpha: 0.9),
+                      inactiveTrackColor: AppColors.warmWhite.withValues(
+                        alpha: 0.16,
+                      ),
+                      thumbColor: AppColors.warmWhite,
+                      overlayColor: AppColors.accent.withValues(alpha: 0.12),
+                      thumbShape: const RoundSliderThumbShape(
+                        enabledThumbRadius: 5,
+                      ),
+                      overlayShape: const RoundSliderOverlayShape(
+                        overlayRadius: 14,
+                      ),
+                    ),
+                    child: Slider(
+                      value: scaleMultiplier,
+                      min: minMultiplier,
+                      max: maxMultiplier,
+                      divisions: 15,
+                      onChanged: onScaleChanged,
+                    ),
                   ),
+                ),
+                const SizedBox(width: 10),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: AppColors.accent,
+                    borderRadius: BorderRadius.circular(
+                      ArRoomUiTokens.pillRadius,
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    child: Text(
+                      percentLabel,
+                      style: AppFonts.dmSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.warmWhite,
+                        letterSpacing: -0.1,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Semantics(
+              label:
+                  'Approximate resized dimensions: width ${_formatCm(widthCm)}, depth ${_formatCm(depthCm)}, height ${_formatCm(heightCm)} centimeters',
+              child: Text(
+                'Approx. size · $scaledDimensions',
+                textAlign: TextAlign.center,
+                style: AppFonts.dmSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: ArRoomUiTokens.overlayTextSecondary,
+                  letterSpacing: -0.05,
                 ),
               ),
             ),
@@ -151,6 +189,12 @@ class ArScaleControlBar extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  static String _formatCm(double value) {
+    final rounded = value.roundToDouble();
+    if ((value - rounded).abs() < 0.05) return rounded.toInt().toString();
+    return value.toStringAsFixed(1);
   }
 }
 

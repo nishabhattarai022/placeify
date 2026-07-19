@@ -14,12 +14,14 @@ import 'package:ar_flutter_plugin_plus/models/ar_hittest_result.dart';
 import 'package:ar_flutter_plugin_plus/models/ar_node.dart';
 import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:vector_math/vector_math_64.dart' hide Colors;
 
 import '../../../../core/services/haptic_service.dart';
 import '../../ar/data/ar_snapshot_service.dart';
 import '../../ar/data/room_snapshot_store.dart';
+import '../../ar/presentation/providers/room_snapshots_provider.dart';
 import '../../cart/data/product_id_codec.dart';
 import '../../home/domain/models/product.dart';
 import '../data/ar_furniture_gesture_config.dart';
@@ -392,6 +394,7 @@ class _ArRoomScreenState extends State<ArRoomScreen>
                     if (selected != null) ...[
                       const SizedBox(height: 12),
                       ArScaleControlBar(
+                        dimensions: selected.dimensions,
                         scaleMultiplier: selected.userScaleMultiplier,
                         minMultiplier: ArFurnitureScale.minUserMultiplier,
                         maxMultiplier: ArFurnitureScale.maxUserMultiplier,
@@ -503,6 +506,9 @@ class _ArRoomScreenState extends State<ArRoomScreen>
         productName: widget.productName,
       );
       if (!mounted) return;
+      // Keep profile Saved Rooms count / gallery in sync.
+      ProviderScope.containerOf(context, listen: false)
+          .invalidate(roomSnapshotsProvider);
       HapticService.medium();
       _showTransientHint('Room shot saved');
     } catch (e, st) {

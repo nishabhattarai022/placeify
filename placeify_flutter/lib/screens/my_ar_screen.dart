@@ -8,18 +8,15 @@ import 'package:placeify_flutter/core/constants/app_colors.dart';
 import 'package:placeify_flutter/core/services/haptic_service.dart';
 import 'package:placeify_flutter/core/theme/app_fonts.dart';
 import 'package:placeify_flutter/core/widgets/placeify_bottom_sheet.dart';
-import 'package:placeify_flutter/core/widgets/toast_overlay.dart';
 import 'package:placeify_flutter/data/furniture_categories.dart';
 import 'package:placeify_flutter/features/ar/domain/constants/ar_strings.dart';
+import 'package:placeify_flutter/features/ar/presentation/ar_selection_room_launcher.dart';
 import 'package:placeify_flutter/features/ar/presentation/providers/ar_saved_products_provider.dart';
 import 'package:placeify_flutter/features/ar/presentation/widgets/ar_products_by_category_sliver.dart';
 import 'package:placeify_flutter/features/ar/presentation/widgets/my_ar_toolbar.dart';
 import 'package:placeify_flutter/features/ar/presentation/widgets/my_ar_try_in_room_bar.dart';
 import 'package:placeify_flutter/features/home/domain/models/product.dart';
 import 'package:placeify_flutter/features/home/presentation/providers/category_provider.dart';
-import 'package:placeify_flutter/features/product_detail/data/product_3d_model_resolver.dart';
-import 'package:placeify_flutter/features/product_detail/presentation/ar_room_screen.dart';
-import 'package:placeify_flutter/features/product_detail/presentation/widgets/ar_product_tray.dart';
 
 enum _MyArSort { recent, category, name }
 
@@ -95,8 +92,6 @@ class _MyArScreenState extends ConsumerState<MyArScreen> {
     ];
     if (selectedProducts.isEmpty) return;
 
-    final primary = selectedProducts.first;
-
     setState(() {
       _openingArRoom = true;
       _selectionMode = false;
@@ -104,49 +99,10 @@ class _MyArScreenState extends ConsumerState<MyArScreen> {
     });
 
     try {
-      final remoteUrl =
-          await Product3dModelResolver.ensureSrcForProduct(primary);
-      if (!mounted) return;
-      if (remoteUrl == null || remoteUrl.isEmpty) {
-        PlaceifyToast.show(
-          context,
-          '3D model is not available for ${primary.name} yet.',
-        );
-        return;
-      }
-
-      final trayCandidates = selectedProducts.length > 1
-          ? selectedProducts.skip(1)
-          : const <Product>[];
-
-      final availableProducts = <ArAddableProduct>[];
-      for (final product in trayCandidates) {
-        if (product.id == primary.id) continue;
-        if (!product.hasArView) continue;
-        await Product3dModelResolver.ensureSrcForProduct(product);
-        final addable = ArAddableProduct.tryFromProduct(product);
-        if (addable != null) availableProducts.add(addable);
-      }
-
-      if (!mounted) return;
-      final result = await ArRoomLauncher.open(
+      await ArSelectionRoomLauncher.open(
         context: context,
-        remoteModelUrl: remoteUrl,
-        productId: primary.id,
-        productName: primary.name,
-        dimensions: primary.dimensions,
-        availableProducts: availableProducts,
+        selectedProducts: selectedProducts,
       );
-
-      if (!mounted) return;
-      switch (result) {
-        case ArRoomOpenResult.permissionDenied:
-          PlaceifyToast.show(context, 'Camera permission is required for AR.');
-        case ArRoomOpenResult.modelDownloadFailed:
-          PlaceifyToast.show(context, 'Could not load the 3D model.');
-        case ArRoomOpenResult.opened:
-          break;
-      }
     } finally {
       if (mounted) setState(() => _openingArRoom = false);
     }
@@ -202,7 +158,7 @@ class _MyArScreenState extends ConsumerState<MyArScreen> {
     final entries = <({Product product, DateTime savedAt})>[];
 
     for (final entry in saved.entries) {
-      final product = ref.read(productByIdProvider(entry.key));
+      final product = ref.watch(productByIdProvider(entry.key));
       if (product == null) continue;
 
       if (query.isNotEmpty) {
@@ -228,8 +184,8 @@ class _MyArScreenState extends ConsumerState<MyArScreen> {
       case _MyArSort.name:
         entries.sort(
           (a, b) => a.product.name.toLowerCase().compareTo(
-                b.product.name.toLowerCase(),
-              ),
+            b.product.name.toLowerCase(),
+          ),
         );
     }
 
@@ -297,8 +253,8 @@ class _MyArScreenState extends ConsumerState<MyArScreen> {
                         _selectionMode && _selectedIds.isNotEmpty
                             ? ArStrings.selectedCount(_selectedIds.length)
                             : isSearching
-                                ? ArStrings.searchResults(entries.length)
-                                : ArStrings.savedCount(entries.length),
+                            ? ArStrings.searchResults(entries.length)
+                            : ArStrings.savedCount(entries.length),
                         style: AppFonts.dmSans(
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
@@ -346,8 +302,9 @@ class _MyArScreenState extends ConsumerState<MyArScreen> {
                                   )
                                 : null,
                             border: InputBorder.none,
-                            contentPadding:
-                                const EdgeInsets.symmetric(vertical: 14),
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 14,
+                            ),
                           ),
                         ),
                       ),

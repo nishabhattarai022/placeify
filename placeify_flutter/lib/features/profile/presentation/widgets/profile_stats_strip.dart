@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/services/haptic_service.dart';
-import '../../../ar/data/room_snapshot_store.dart';
+import '../../../ar/presentation/providers/room_snapshots_provider.dart';
 import '../../data/profile_mock_data.dart';
 import '../providers/profile_dashboard_provider.dart';
 
-class ProfileStatsStrip extends ConsumerStatefulWidget {
+class ProfileStatsStrip extends ConsumerWidget {
   const ProfileStatsStrip({
     required this.onStatTap,
     super.key,
@@ -15,27 +15,12 @@ class ProfileStatsStrip extends ConsumerStatefulWidget {
   final void Function(int index) onStatTap;
 
   @override
-  ConsumerState<ProfileStatsStrip> createState() => _ProfileStatsStripState();
-}
-
-class _ProfileStatsStripState extends ConsumerState<ProfileStatsStrip> {
-  int? _savedRoomCount;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadSavedRoomCount();
-  }
-
-  Future<void> _loadSavedRoomCount() async {
-    final count = (await RoomSnapshotStore().list()).length;
-    if (!mounted) return;
-    setState(() => _savedRoomCount = count);
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final dashboard = ref.watch(profileDashboardProvider).value;
+    final savedRoomCount = ref.watch(roomSnapshotsProvider).maybeWhen(
+          data: (snapshots) => '${snapshots.length}',
+          orElse: () => '—',
+        );
     final stats = [
       ProfileStat(
         value: '${dashboard?.orderCount ?? 0}',
@@ -46,7 +31,7 @@ class _ProfileStatsStripState extends ConsumerState<ProfileStatsStrip> {
         label: 'Wishlist',
       ),
       ProfileStat(
-        value: _savedRoomCount == null ? '—' : '$_savedRoomCount',
+        value: savedRoomCount,
         label: 'Saved Rooms',
       ),
       ProfileStat(
@@ -78,7 +63,7 @@ class _ProfileStatsStripState extends ConsumerState<ProfileStatsStrip> {
                     stat: stats[i],
                     onTap: () {
                       HapticService.light();
-                      widget.onStatTap(i);
+                      onStatTap(i);
                     },
                   ),
                 ),

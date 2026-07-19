@@ -7,6 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/placeify_bottom_nav.dart';
 import '../../../core/widgets/placeify_bottom_sheet.dart';
 import '../../../core/widgets/toast_overlay.dart';
+import '../../ar/presentation/providers/room_snapshots_provider.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import '../../orders/presentation/providers/customer_in_app_notifications_provider.dart';
 import '../../orders/presentation/providers/orders_provider.dart';
@@ -32,6 +33,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(currentUserProvider.notifier).refresh();
+      ref.invalidate(roomSnapshotsProvider);
     });
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(

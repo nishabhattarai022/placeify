@@ -6,7 +6,7 @@ abstract final class ArStrings {
   static const searchHint = 'Search saved items...';
   static const emptyTitle = 'No AR items yet';
   static const emptySubtitle =
-      'Tap the AR icon on products, then tap Done to save them here.';
+      'Tap the AR icon on products, then tap Save for now to keep them here.';
   static const emptyCta = 'Browse furniture';
 
   static String savedCount(int count) =>
@@ -17,8 +17,8 @@ abstract final class ArStrings {
 
   static const savedPillPrefix = 'Saved';
 
-  static const doneSingle = 'Done';
-  static String doneMultiple(int count) => 'Done · $count items';
+  static const saveForNowSingle = 'Save for now';
+  static String saveForNowMultiple(int count) => 'Save for now · $count';
 
   static const selectHint = 'Tap items to select one or more for AR preview.';
   static String selectedCount(int count) =>

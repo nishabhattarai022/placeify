@@ -1,4 +1,4 @@
 ﻿{
-    "physicalApiUrl": "http://192.168.220.170:8080",
+    "physicalApiUrl": "http://192.168.10.71:8080",
     "apiUrl": "http://localhost:8080"
 }

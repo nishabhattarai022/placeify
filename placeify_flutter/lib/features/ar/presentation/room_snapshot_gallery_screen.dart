@@ -1,6 +1,8 @@
-import 'dart:io';
+import 'dart:io' show File;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/haptic_service.dart';
@@ -8,34 +10,27 @@ import '../../../core/theme/app_fonts.dart';
 import '../../../core/widgets/bottom_nav/bottom_nav_tokens.dart';
 import '../../profile/presentation/widgets/profile_sub_hero.dart';
 import '../data/room_snapshot_store.dart';
+import 'providers/room_snapshots_provider.dart';
 
-class RoomSnapshotGalleryScreen extends StatefulWidget {
+class RoomSnapshotGalleryScreen extends ConsumerStatefulWidget {
   const RoomSnapshotGalleryScreen({super.key});
 
   @override
-  State<RoomSnapshotGalleryScreen> createState() =>
+  ConsumerState<RoomSnapshotGalleryScreen> createState() =>
       _RoomSnapshotGalleryScreenState();
 }
 
-class _RoomSnapshotGalleryScreenState extends State<RoomSnapshotGalleryScreen> {
+class _RoomSnapshotGalleryScreenState
+    extends ConsumerState<RoomSnapshotGalleryScreen> {
   final _store = RoomSnapshotStore();
-
-  List<RoomSnapshot> _snapshots = [];
-  bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadSnapshots();
-  }
-
-  Future<void> _loadSnapshots() async {
-    setState(() => _loading = true);
-    final snapshots = await _store.list();
-    if (!mounted) return;
-    setState(() {
-      _snapshots = snapshots;
-      _loading = false;
+    // Provider may be cached from a prior visit — refresh on open.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.invalidate(roomSnapshotsProvider);
     });
   }
 
@@ -83,7 +78,7 @@ class _RoomSnapshotGalleryScreenState extends State<RoomSnapshotGalleryScreen> {
     if (confirmed != true || !mounted) return;
     HapticService.medium();
     await _store.delete(snapshot);
-    await _loadSnapshots();
+    ref.invalidate(roomSnapshotsProvider);
   }
 
   void _openViewer(RoomSnapshot snapshot) {
@@ -100,9 +95,12 @@ class _RoomSnapshotGalleryScreenState extends State<RoomSnapshotGalleryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final countLabel = _loading
-        ? '…'
-        : '${_snapshots.length} room${_snapshots.length == 1 ? '' : 's'}';
+    final snapshotsAsync = ref.watch(roomSnapshotsProvider);
+    final countLabel = snapshotsAsync.maybeWhen(
+      data: (snapshots) =>
+          '${snapshots.length} room${snapshots.length == 1 ? '' : 's'}',
+      orElse: () => '…',
+    );
 
     return Scaffold(
       backgroundColor: AppColors.cream,
@@ -110,36 +108,51 @@ class _RoomSnapshotGalleryScreenState extends State<RoomSnapshotGalleryScreen> {
         children: [
           ProfileSubHero(title: 'Saved Rooms · $countLabel'),
           Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _snapshots.isEmpty
-                    ? _EmptyState(onRefresh: _loadSnapshots)
-                    : RefreshIndicator(
-                        onRefresh: _loadSnapshots,
-                        child: GridView.builder(
-                          padding: const EdgeInsets.fromLTRB(
-                            18,
-                            20,
-                            18,
-                            BottomNavTokens.scrollBottomPadding,
-                          ),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 14,
-                            crossAxisSpacing: 14,
-                            childAspectRatio: 0.82,
-                          ),
-                          itemCount: _snapshots.length,
-                          itemBuilder: (context, index) {
-                            final snapshot = _snapshots[index];
-                            return _SnapshotThumbnail(
-                              snapshot: snapshot,
-                              onTap: () => _openViewer(snapshot),
-                            );
-                          },
-                        ),
-                      ),
+            child: snapshotsAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => _ErrorState(
+                onRetry: () => ref.invalidate(roomSnapshotsProvider),
+              ),
+              data: (snapshots) {
+                if (snapshots.isEmpty) {
+                  return _EmptyState(
+                    onRefresh: () async {
+                      ref.invalidate(roomSnapshotsProvider);
+                      await ref.read(roomSnapshotsProvider.future);
+                    },
+                  );
+                }
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    ref.invalidate(roomSnapshotsProvider);
+                    await ref.read(roomSnapshotsProvider.future);
+                  },
+                  child: GridView.builder(
+                    padding: const EdgeInsets.fromLTRB(
+                      18,
+                      20,
+                      18,
+                      BottomNavTokens.scrollBottomPadding,
+                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 14,
+                      crossAxisSpacing: 14,
+                      childAspectRatio: 0.82,
+                    ),
+                    itemCount: snapshots.length,
+                    itemBuilder: (context, index) {
+                      final snapshot = snapshots[index];
+                      return _SnapshotThumbnail(
+                        snapshot: snapshot,
+                        onTap: () => _openViewer(snapshot),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -202,6 +215,42 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Could not load saved rooms.',
+              style: AppFonts.dmSans(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton(
+              onPressed: onRetry,
+              child: Text(
+                'Try again',
+                style: AppFonts.dmSans(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _SnapshotThumbnail extends StatelessWidget {
   const _SnapshotThumbnail({
     required this.snapshot,
@@ -238,17 +287,7 @@ class _SnapshotThumbnail extends StatelessWidget {
                 ),
                 child: Hero(
                   tag: snapshot.filePath,
-                  child: Image.file(
-                    File(snapshot.filePath),
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => ColoredBox(
-                      color: AppColors.creamDark,
-                      child: Icon(
-                        Icons.broken_image_outlined,
-                        color: AppColors.textMuted.withValues(alpha: 0.5),
-                      ),
-                    ),
-                  ),
+                  child: _SnapshotImage(snapshot: snapshot, fit: BoxFit.cover),
                 ),
               ),
             ),
@@ -327,8 +366,8 @@ class _RoomSnapshotViewerScreen extends StatelessWidget {
               child: InteractiveViewer(
                 minScale: 1,
                 maxScale: 4,
-                child: Image.file(
-                  File(snapshot.filePath),
+                child: _SnapshotImage(
+                  snapshot: snapshot,
                   fit: BoxFit.contain,
                   width: double.infinity,
                 ),
@@ -351,6 +390,48 @@ class _RoomSnapshotViewerScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SnapshotImage extends StatelessWidget {
+  const _SnapshotImage({
+    required this.snapshot,
+    required this.fit,
+    this.width,
+  });
+
+  final RoomSnapshot snapshot;
+  final BoxFit fit;
+  final double? width;
+
+  Widget get _broken => ColoredBox(
+        color: AppColors.creamDark,
+        child: Icon(
+          Icons.broken_image_outlined,
+          color: AppColors.textMuted.withValues(alpha: 0.5),
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final bytes = snapshot.imageBytes;
+    if (bytes != null && bytes.isNotEmpty) {
+      return Image.memory(
+        bytes,
+        fit: fit,
+        width: width,
+        errorBuilder: (context, error, stackTrace) => _broken,
+      );
+    }
+
+    if (kIsWeb) return _broken;
+
+    return Image.file(
+      File(snapshot.filePath),
+      fit: fit,
+      width: width,
+      errorBuilder: (context, error, stackTrace) => _broken,
     );
   }
 }
