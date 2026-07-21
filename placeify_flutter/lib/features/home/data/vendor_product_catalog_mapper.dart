@@ -1,5 +1,6 @@
 import '../../../core/config/resolve_media_url.dart';
 import '../../../core/utils/local_image_store.dart';
+import '../../product_detail/data/product_3d_model_resolver.dart';
 import '../../vendor/domain/models/vendor_product.dart';
 import '../domain/models/product.dart';
 
@@ -36,6 +37,11 @@ abstract final class VendorProductCatalogMapper {
         ? gallery.first
         : await _resolveImageUrl(vendor.imageUrls);
 
+    final cachedModel = Product3dModelResolver.modelUrlFor(vendor.id);
+    final has3dPreview = vendor.hasArView ||
+        vendor.model3dStatus == 'ready' ||
+        (cachedModel != null && cachedModel.isNotEmpty);
+
     return Product(
       id: vendor.id,
       name: vendor.name,
@@ -47,7 +53,7 @@ abstract final class VendorProductCatalogMapper {
       imageUrls: gallery,
       svgIconPath:
           _categoryIcons[vendor.categoryId] ?? 'assets/icons/ic_chair.svg',
-      hasArView: vendor.hasArView,
+      hasArView: has3dPreview,
       categoryId: vendor.categoryId,
       dimensions: dimensions,
       vendorId: vendor.vendorId,

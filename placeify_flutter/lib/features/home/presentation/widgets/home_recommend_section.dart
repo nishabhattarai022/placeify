@@ -107,7 +107,7 @@ class _EmptyRecommendations extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 4),
       child: Text(
-        'No recommendations for this room yet',
+        'No recommendations yet — pull down to refresh',
         style: HomeScreenTokens.productName().copyWith(
           color: Colors.black45,
           fontSize: 15,

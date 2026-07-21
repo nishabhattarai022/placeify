@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:placeify_client/placeify_client.dart' hide Product;
 import 'package:placeify_flutter/core/debug/agent_debug_log.dart';
 import 'package:placeify_flutter/features/shops/presentation/providers/consumer_shop_provider.dart';
@@ -216,15 +217,22 @@ Future<List<Product>> homeFeaturedProducts(Ref ref) async {
 @riverpod
 Future<Product?> productDetail(Ref ref, String id) async {
   final normalizedId = ProductIdCodec.normalizeUiProductId(id);
-  final catalog = ref.watch(catalogIndexProvider).value;
-  final cached = catalog?[id] ?? catalog?[normalizedId];
-  if (cached != null) return cached;
 
-  final apiProduct =
-      await ref.read(catalogRepositoryProvider).getByUiId(normalizedId);
-  if (apiProduct == null) return null;
+  // Always prefer a live API row so 3D model URLs and offers stay current.
+  try {
+    final apiProduct =
+        await ref.read(catalogRepositoryProvider).getByUiId(normalizedId);
+    if (apiProduct != null) {
+      final fresh = await CatalogProductMapper.toUiProduct(apiProduct);
+      ref.read(catalogIndexProvider.notifier).upsertProduct(fresh);
+      return fresh;
+    }
+  } catch (_) {
+    // Fall back to the in-memory catalog when the server is unreachable.
+  }
 
-  return CatalogProductMapper.toUiProduct(apiProduct);
+  final catalog = ref.read(catalogIndexProvider).value;
+  return catalog?[id] ?? catalog?[normalizedId];
 }
 
 /// Room → furniture category ids for home recommendations.
@@ -287,4 +295,36 @@ Future<void> publishProductToCustomerCatalog(
 Future<void> refreshCustomerCatalog(Ref ref) async {
   invalidateCustomerCatalog(ref);
   await ref.read(catalogIndexProvider.notifier).refresh(silent: true);
+}
+
+/// Widget-facing invalidation of consumer catalog surfaces (uses [WidgetRef]).
+void invalidateCustomerCatalogFromWidget(WidgetRef ref) {
+  ref.invalidate(catalogProductsByCategoryProvider);
+  ref.invalidate(categoryProductCountProvider);
+  ref.invalidate(catalogDiscountedProductsProvider);
+  ref.invalidate(catalogNewestProductsProvider);
+  ref.invalidate(productDetailProvider);
+  ref.invalidate(recommendedProductsProvider);
+  ref.invalidate(homeFeaturedProductsProvider);
+  ref.invalidate(marketplaceHighlightsProvider);
+  ref.invalidate(catalogProductCountProvider);
+  ref.invalidate(profileDashboardProvider);
+}
+
+/// Widget-facing full refresh of the consumer catalog (uses [WidgetRef]).
+Future<void> refreshCustomerCatalogFromWidget(WidgetRef ref) async {
+  invalidateCustomerCatalogFromWidget(ref);
+  await ref.read(catalogIndexProvider.notifier).refresh(silent: true);
+}
+
+/// Widget-facing publish of a vendor product to the consumer catalog.
+Future<void> publishProductToCustomerCatalogFromWidget(
+  WidgetRef ref,
+  VendorProduct savedProduct,
+) async {
+  final notifier = ref.read(catalogIndexProvider.notifier);
+  await notifier.upsertVendorProduct(savedProduct);
+  ref.invalidate(shopProductsProvider(savedProduct.vendorId));
+  invalidateCustomerCatalogFromWidget(ref);
+  unawaited(notifier.refresh(silent: true));
 }

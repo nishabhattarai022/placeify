@@ -10,20 +10,34 @@ final selectedRoomProvider = StateProvider<String>((ref) => 'living');
 
 @riverpod
 Future<List<RecommendProduct>> recommendedProducts(Ref ref) async {
+  ref.watch(catalogIndexProvider);
   final roomId = ref.watch(selectedRoomProvider);
-  final highlights = await ref.watch(marketplaceHighlightsProvider.future);
+  final products = ref.watch(catalogProductsProvider);
+  if (products.isEmpty) return const [];
 
-  final roomMatches = await MarketplaceHighlightsMapper.toRecommendProducts(
-    highlights.recentProducts,
+  final roomMatches = products
+      .where((product) => MarketplaceHighlightsMapper.matchesRoom(
+            product.categoryId,
+            roomId,
+          ))
+      .take(4)
+      .toList();
+
+  if (roomMatches.length >= 4) {
+    return MarketplaceHighlightsMapper.recommendFromUiProducts(
+      roomMatches,
+      roomId: roomId,
+    );
+  }
+
+  final seen = roomMatches.map((product) => product.id).toSet();
+  final filler = products
+      .where((product) => !seen.contains(product.id))
+      .take(4 - roomMatches.length);
+  final combined = [...roomMatches, ...filler];
+
+  return MarketplaceHighlightsMapper.recommendFromUiProducts(
+    combined,
     roomId: roomId,
   );
-  if (roomMatches.isNotEmpty) return roomMatches;
-
-  final general = await MarketplaceHighlightsMapper.toRecommendProducts(
-    highlights.recentProducts,
-  );
-  if (general.isNotEmpty) return general;
-
-  // Never fabricate recommend cards — empty section until live catalog exists.
-  return const [];
 }

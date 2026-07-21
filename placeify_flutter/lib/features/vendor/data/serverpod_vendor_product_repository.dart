@@ -17,6 +17,11 @@ import 'vendor_product_mapper.dart';
 class ServerpodVendorProductRepository implements VendorProductRepository {
   const ServerpodVendorProductRepository();
 
+  /// First 4 photos are the required views (front, right, back, left);
+  /// vendors may attach up to 4 more optional catalog photos.
+  static const _requiredCatalogImages = 4;
+  static const _maxCatalogImages = 8;
+
   @override
   Future<List<VendorProduct>> getProducts(String vendorId) async {
     await _ensureShopReady();
@@ -55,9 +60,11 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
   ) async {
     await _ensureShopReady();
 
-    final imagePaths = _uploadableImagePaths(product.imageUrls);
-    if (imagePaths.isEmpty) {
-      throw VendorProductActionException('Add at least one product photo.');
+    final sources = _orderedImageSources(product.imageUrls);
+    if (sources.length < _requiredCatalogImages) {
+      throw VendorProductActionException(
+        'Add the 4 required product photos: front, left, back, right.',
+      );
     }
 
     if (product.widthCm <= 0 ||
@@ -78,52 +85,12 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
         : product.name.trim();
 
     try {
-      final sources = _orderedImageSources(product.imageUrls);
-      final Product created;
-      if (sources.length >= 4) {
-        created = await _createProductWithMultiviewPhotos(
-          product: product,
-          imageSources: sources.take(4).toList(),
-          description: description,
-          materials: materials,
-        );
-      } else {
-        final imageData = await _readImageByteData(
-          imagePaths.first,
-          fileName: _resolvedFileName(imagePaths.first),
-        );
-        if (imageData == null) {
-          throw VendorProductActionException(
-            'Photo file not found. Pick it again.',
-          );
-        }
-        final pricing = _resolveUploadPricing(product);
-        final input = VendorProductUploadInput(
-          name: product.name.trim(),
-          description: description,
-          price: pricing.listPrice,
-          discountPrice: pricing.discountPrice,
-          discountPercentage: pricing.discountPercentage,
-          materials: materials,
-          widthCm: product.widthCm,
-          depthCm: product.depthCm,
-          heightCm: product.heightCm,
-          careInstructions: 'See product description for care details.',
-          categoryId: await _resolveCategoryId(product.categoryId),
-          weightKg: product.weightKg > 0 ? product.weightKg : null,
-          assemblyNote:
-              product.brand.trim().isNotEmpty ? product.brand.trim() : null,
-          warranty: product.offerLabel.trim().isNotEmpty
-              ? product.offerLabel.trim()
-              : null,
-          generateModel3d: false,
-        );
-        created = await client.vendor.uploadProduct(
-          input,
-          imageData,
-          _resolvedFileName(imagePaths.first),
-        );
-      }
+      final created = await _createProductWithMultiviewPhotos(
+        product: product,
+        imageSources: sources.take(_maxCatalogImages).toList(),
+        description: description,
+        materials: materials,
+      );
 
       return _mapUploadedProduct(
         created,
@@ -194,13 +161,13 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     try {
       final sources = _orderedImageSources(product.imageUrls);
       final Product updated;
-      if (sources.length >= 4) {
+      if (sources.length >= _requiredCatalogImages) {
         updated = await _updateProductWithMultiviewPhotos(
           product: product,
           dbId: dbId,
           description: description,
           materials: materials,
-          imageSources: sources.take(4).toList(),
+          imageSources: sources.take(_maxCatalogImages).toList(),
         );
       } else {
         final input = await _buildUploadInput(
@@ -367,7 +334,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
       dbId: dbId,
       description: description,
       materials: materials,
-      imageSources: imageSources.take(4).toList(),
+      imageSources: imageSources.take(_maxCatalogImages).toList(),
       forceReupload: forceReupload,
     );
   }
@@ -426,11 +393,12 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
       final sources = _orderedImageSources(imageSources ?? existing.imageUrls);
       // Only sync when there are local picks to upload. Already-hosted server
       // photos are left alone so Generate queues Tripo immediately.
-      if (sources.length >= 4 && _hasLocalImageSource(sources)) {
+      if (sources.length >= _requiredCatalogImages &&
+          _hasLocalImageSource(sources)) {
         await _syncMultiviewPhotosOnServer(
           product: existing,
           dbId: dbId,
-          imageSources: sources.take(4).toList(),
+          imageSources: sources.take(_maxCatalogImages).toList(),
         );
       }
 
@@ -503,16 +471,6 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     return null;
   }
 
-  List<String> _uploadableImagePaths(List<String> imageUrls) {
-    final paths = <String>[];
-    for (final source in imageUrls) {
-      final normalized = _normalizeLocalImagePath(source);
-      if (normalized == null) continue;
-      paths.add(normalized);
-    }
-    return paths;
-  }
-
   List<String> _orderedImageSources(List<String> imageUrls) {
     return imageUrls
         .map((source) => source.trim())
@@ -532,13 +490,13 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     List<String> sources, {
     bool forceReupload = false,
   }) async {
-    if (sources.length < 4) {
+    if (sources.length < _requiredCatalogImages) {
       throw VendorProductActionException(
-        'Please upload 4 photos (front, left, back, right) for 3D generation.',
+        'Please upload the 4 required photos (front, left, back, right).',
       );
     }
 
-    final slots = sources.take(4).toList();
+    final slots = sources.take(_maxCatalogImages).toList();
     final thumbnailUrl = await _ensureServerImageUrl(
       slots[0],
       removeBackground: true,

@@ -75,11 +75,10 @@ abstract final class Product3dModelResolver {
   }
 
   /// Loads the model URL from cache, or fetches the product from the server
-  /// when [product.hasArView] is true but the in-memory cache is empty.
+  /// when the in-memory cache is empty.
   static Future<String?> ensureSrcForProduct(Product product) async {
     final cached = await srcForProduct(product);
     if (cached != null && cached.isNotEmpty) return cached;
-    if (!product.hasArView) return null;
 
     final dbId = ProductIdCodec.toDatabaseId(product.id);
     if (dbId == null) return null;

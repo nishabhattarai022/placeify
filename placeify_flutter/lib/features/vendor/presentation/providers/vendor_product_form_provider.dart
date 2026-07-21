@@ -285,7 +285,9 @@ class VendorProductForm extends _$VendorProductForm {
     if (state.sku.trim().isEmpty) return 'Enter a SKU';
     if (state.categoryId.trim().isEmpty) return 'Select a category';
     if (state.materials.trim().isEmpty) return 'Enter product materials';
-    if (state.images.isEmpty) return 'Add at least one product photo';
+    if (state.images.length < VendorProductFormState.requiredImages) {
+      return 'Add the 4 required photos: front, left, back, right';
+    }
 
     final listPrice = state.parsedListPrice;
     if (listPrice == null || listPrice <= 0) {

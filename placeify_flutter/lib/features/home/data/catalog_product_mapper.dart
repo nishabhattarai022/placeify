@@ -67,7 +67,9 @@ abstract final class CatalogProductMapper {
     final effectivePrice = effectiveUnitPrice(product);
     final originalPrice = hasActiveOffer(product) ? product.price : null;
     final model3dUrl = product.model3dUrl?.trim();
-    final has3dPreview = model3dUrl != null && model3dUrl.isNotEmpty;
+    final model3dStatus = (product.model3dStatus ?? 'none').trim().toLowerCase();
+    final has3dPreview = (model3dUrl != null && model3dUrl.isNotEmpty) ||
+        model3dStatus == 'ready';
     if (has3dPreview) {
       final resolved = await resolveMediaUrl(model3dUrl);
       Product3dModelResolver.setModelUrl(uiId, resolved);

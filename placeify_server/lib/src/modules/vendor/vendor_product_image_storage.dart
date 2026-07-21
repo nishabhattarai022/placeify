@@ -92,7 +92,7 @@ class VendorProductImageStorage {
     if (urls == null || urls.isEmpty) return null;
 
     final normalized = urls
-        .take(Product3dViews.extraSlotCount)
+        .take(Product3dViews.maxStoredViewImages)
         .map((url) => url.trim())
         .toList(growable: false);
     if (normalized.every((url) => url.isEmpty)) return null;

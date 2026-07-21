@@ -15,7 +15,8 @@ import '../../../../core/services/haptic_service.dart';
 import '../../../../core/widgets/placeify_bottom_sheet.dart';
 import '../../../../core/widgets/toast_overlay.dart';
 
-/// Horizontal reorderable grid for product photos (up to 8).
+/// Horizontal reorderable grid for product photos. The first 4 are required
+/// (front, right, back, left views); up to 4 more optional photos may follow.
 class ProductImagePickerGrid extends ConsumerWidget {
   const ProductImagePickerGrid({super.key});
 
@@ -27,6 +28,10 @@ class ProductImagePickerGrid extends ConsumerWidget {
     final notifier = ref.read(vendorProductFormProvider.notifier);
     final images = form.images;
     final canAddMore = images.length < VendorProductFormState.maxImages;
+    final viewLabels = VendorProductFormState.imageViewLabels;
+    final nextViewLabel = images.length < viewLabels.length
+        ? 'Add ${viewLabels[images.length].toLowerCase()}'
+        : 'Add optional';
 
     ref.listen(vendorProductFormProvider, (previous, next) {
       if (previous?.images.length != next.images.length) {
@@ -61,7 +66,9 @@ class ProductImagePickerGrid extends ConsumerWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          'First photo is the primary listing image. Drag to reorder.',
+          'First 4 photos are required: front, left, back and right views of '
+          'the furniture. You can add up to 4 more optional photos. '
+          'Drag to reorder.',
           style: TextStyle(
             fontSize: 12,
             color: AppColors.textSecondary.withValues(alpha: 0.9),
@@ -79,6 +86,7 @@ class ProductImagePickerGrid extends ConsumerWidget {
                         alignment: Alignment.centerLeft,
                         child: canAddMore
                             ? _AddImageTile(
+                                label: nextViewLabel,
                                 onTap: () => _pickImages(context, ref),
                               )
                             : const SizedBox.shrink(),
@@ -113,10 +121,6 @@ class ProductImagePickerGrid extends ConsumerWidget {
                               index: i,
                               item: images[i],
                               onRemove: () => notifier.removeImage(images[i].id),
-                              onSetPrimary: i == 0
-                                  ? null
-                                  : () =>
-                                      notifier.setPrimaryImage(images[i].id),
                               onRemoveBg: images[i].isLocal
                                   ? () => BackgroundRemovalSheet.show(
                                         context,
@@ -132,6 +136,7 @@ class ProductImagePickerGrid extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.only(left: 10),
                   child: _AddImageTile(
+                    label: nextViewLabel,
                     onTap: () => _pickImages(context, ref),
                   ),
                 ),
@@ -215,15 +220,18 @@ class _ImageTile extends StatelessWidget {
     required this.index,
     required this.item,
     required this.onRemove,
-    this.onSetPrimary,
     this.onRemoveBg,
   });
 
   final int index;
   final VendorProductImageItem item;
   final VoidCallback onRemove;
-  final VoidCallback? onSetPrimary;
   final VoidCallback? onRemoveBg;
+
+  String get _viewLabel {
+    final labels = VendorProductFormState.imageViewLabels;
+    return index < labels.length ? labels[index] : 'Optional';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -263,30 +271,29 @@ class _ImageTile extends StatelessWidget {
                   ),
                 ),
               ),
-              if (index == 0)
-                Positioned(
-                  left: 6,
-                  bottom: 6,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 7,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.vendorForest,
-                      borderRadius: AppRadii.pill,
-                    ),
-                    child: const Text(
-                      'Primary',
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        letterSpacing: 0.04 * 9,
-                      ),
+              Positioned(
+                left: 6,
+                bottom: 6,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.vendorForest,
+                    borderRadius: AppRadii.pill,
+                  ),
+                  child: Text(
+                    _viewLabel,
+                    style: const TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      letterSpacing: 0.04 * 9,
                     ),
                   ),
                 ),
+              ),
               if (onRemoveBg != null)
                 Positioned(
                   left: 4,
@@ -304,15 +311,6 @@ class _ImageTile extends StatelessWidget {
                   onTap: onRemove,
                 ),
               ),
-              if (onSetPrimary != null)
-                Positioned(
-                  bottom: 4,
-                  right: 4,
-                  child: _CircleIconButton(
-                    icon: Icons.star_outline,
-                    onTap: onSetPrimary!,
-                  ),
-                ),
             ],
           ),
         ),
@@ -324,9 +322,11 @@ class _ImageTile extends StatelessWidget {
 class _AddImageTile extends StatelessWidget {
   const _AddImageTile({
     required this.onTap,
+    required this.label,
   });
 
   final VoidCallback onTap;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -348,18 +348,19 @@ class _AddImageTile extends StatelessWidget {
               width: 1.5,
             ),
           ),
-          child: const Column(
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              const Icon(
                 Icons.add_photo_alternate_outlined,
                 color: AppColors.vendorForest,
                 size: 26,
               ),
-              SizedBox(height: 6),
+              const SizedBox(height: 6),
               Text(
-                'Add',
-                style: TextStyle(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,

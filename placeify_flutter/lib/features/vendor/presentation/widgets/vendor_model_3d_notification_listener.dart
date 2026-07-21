@@ -6,7 +6,10 @@ import 'package:placeify_client/placeify_client.dart';
 import 'package:placeify_flutter/core/config/placeify_server_client.dart';
 import 'package:placeify_flutter/core/widgets/toast_overlay.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
+import 'package:placeify_flutter/features/cart/data/product_id_codec.dart';
+import 'package:placeify_flutter/features/home/presentation/providers/catalog_provider.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
+import 'package:placeify_flutter/features/vendor/domain/models/vendor_product.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_products_provider.dart';
 
 /// Listens for background Tripo completion and shows an in-app banner.
@@ -47,7 +50,7 @@ class _VendorModel3dNotificationListenerState
     return user?.vendorStatus == VendorStatus.approved;
   }
 
-  void _onNotification(InAppNotificationSummary notification) {
+  Future<void> _onNotification(InAppNotificationSummary notification) async {
     if (notification.type != InAppNotificationType.productUpdate) return;
     if (!_isApprovedVendor) return;
 
@@ -56,13 +59,47 @@ class _VendorModel3dNotificationListenerState
     final isModelFailed = title == '3D model failed';
     if (!isModelReady && !isModelFailed) return;
 
-    unawaited(ref.read(vendorProductsProvider.notifier).refresh());
+    await ref.read(vendorProductsProvider.notifier).refresh();
+
+    if (isModelReady) {
+      await _syncReadyProductToCustomerCatalog(notification.referenceId);
+    }
 
     if (!mounted) return;
     final message = notification.message.trim().isNotEmpty
         ? notification.message.trim()
         : title;
     PlaceifyToast.show(context, message);
+  }
+
+  Future<void> _syncReadyProductToCustomerCatalog(int? databaseProductId) async {
+    if (databaseProductId == null) {
+      await refreshCustomerCatalogFromWidget(ref);
+      return;
+    }
+
+    final uiId = ProductIdCodec.fromDatabaseId(databaseProductId);
+    final products = ref.read(vendorProductsProvider).value;
+    VendorProduct? readyProduct;
+    if (products != null) {
+      for (final product in products) {
+        if (product.id == uiId) {
+          readyProduct = product;
+          break;
+        }
+      }
+    }
+
+    if (readyProduct != null && readyProduct.model3dStatus == 'ready') {
+      try {
+        await publishProductToCustomerCatalogFromWidget(ref, readyProduct);
+        return;
+      } catch (_) {
+        // Fall back to a full catalog refresh below.
+      }
+    }
+
+    await refreshCustomerCatalogFromWidget(ref);
   }
 
   @override

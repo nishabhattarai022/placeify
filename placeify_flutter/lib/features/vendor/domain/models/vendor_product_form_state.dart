@@ -60,7 +60,12 @@ class VendorProductFormState {
   final String? submitError;
   final List<VendorProductImageItem> images;
 
+  /// The first four photos are required (front, left, back, right views —
+  /// the order the server's 3D pipeline expects); vendors may add up to four
+  /// more optional photos.
   static const maxImages = 8;
+  static const requiredImages = 4;
+  static const imageViewLabels = ['Front', 'Left', 'Back', 'Right'];
 
   bool get isEditing => editingProductId != null;
 

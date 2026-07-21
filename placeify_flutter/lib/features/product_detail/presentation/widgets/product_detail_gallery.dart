@@ -38,33 +38,55 @@ class _ProductDetailGalleryState extends State<ProductDetailGallery> {
   @override
   void initState() {
     super.initState();
-    _preview3dSrcFuture =
-        Product3dModelResolver.ensurePreviewSourceForProduct(widget.product);
+    _preview3dSrcFuture = _loadPreviewSource();
   }
 
   @override
   void didUpdateWidget(covariant ProductDetailGallery oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.product.id != widget.product.id) {
-      _preview3dSrcFuture =
-          Product3dModelResolver.ensurePreviewSourceForProduct(widget.product);
+    if (oldWidget.product.id != widget.product.id ||
+        oldWidget.product.hasArView != widget.product.hasArView) {
+      _preview3dSrcFuture = _loadPreviewSource();
     }
   }
 
-  bool get _canShow3d => Product3dModelResolver.hasPreview(widget.product);
+  Future<Product3dPreviewSource?> _loadPreviewSource() {
+    return Product3dModelResolver.ensurePreviewSourceForProduct(widget.product);
+  }
+
+  bool _canShow3d(Product3dPreviewSource? preview) {
+    if (Product3dModelResolver.hasPreview(widget.product)) return true;
+    final src = preview?.src;
+    return src != null && src.isNotEmpty;
+  }
 
   @override
   Widget build(BuildContext context) {
+    return FutureBuilder<Product3dPreviewSource?>(
+      future: _preview3dSrcFuture,
+      builder: (context, snapshot) {
+        final preview = snapshot.data;
+        final canShow3d = _canShow3d(preview);
+        return _buildGallery(context, preview: preview, canShow3d: canShow3d);
+      },
+    );
+  }
+
+  Widget _buildGallery(
+    BuildContext context, {
+    required Product3dPreviewSource? preview,
+    required bool canShow3d,
+  }) {
     final safeIndex = widget.selectedIndex.clamp(0, widget.images.length - 1);
     final heroHeight = MediaQuery.sizeOf(context).height *
         ProductDetailTokens.heroHeightFactor;
     final thumbs = widget.images.take(5).toList();
-    final show3d = _viewMode == ProductDetailViewMode.preview3d && _canShow3d;
+    final show3d = _viewMode == ProductDetailViewMode.preview3d && canShow3d;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (_canShow3d) ...[
+        if (canShow3d) ...[
           _ViewModeToggle(
             mode: _viewMode,
             onChanged: (mode) {
@@ -126,45 +148,7 @@ class _ProductDetailGalleryState extends State<ProductDetailGallery> {
                       ? ClipRRect(
                           key: const ValueKey<String>('preview-3d'),
                           borderRadius: BorderRadius.circular(20),
-                          child: FutureBuilder<Product3dPreviewSource?>(
-                            future: _preview3dSrcFuture,
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const Center(
-                                  child: CircularProgressIndicator(),
-                                );
-                              }
-                              final preview = snapshot.data;
-                              final message = preview?.unavailableMessage;
-                              final src = preview?.src;
-                              if (message != null ||
-                                  src == null ||
-                                  src.isEmpty) {
-                                return Center(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(24),
-                                    child: Text(
-                                      message ??
-                                          '3D preview is not available for this item yet.',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: ProductDetailTokens.textSecondary,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }
-                              return Product3dPreview(
-                                productId: widget.product.id,
-                                modelSrc: src,
-                                productName: widget.product.name,
-                                dimensions: widget.product.dimensions,
-                                availableProducts: widget.availableProducts,
-                              );
-                            },
-                          ),
+                          child: _buildPreviewPane(preview),
                         )
                       : ProductDetailImage(
                           key: ValueKey<String>(widget.images[safeIndex]),
@@ -196,6 +180,34 @@ class _ProductDetailGalleryState extends State<ProductDetailGallery> {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _buildPreviewPane(Product3dPreviewSource? preview) {
+    final message = preview?.unavailableMessage;
+    final src = preview?.src;
+    if (message != null || src == null || src.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            message ?? '3D preview is not available for this item yet.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              color: ProductDetailTokens.textSecondary,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Product3dPreview(
+      productId: widget.product.id,
+      modelSrc: src,
+      productName: widget.product.name,
+      dimensions: widget.product.dimensions,
+      availableProducts: widget.availableProducts,
     );
   }
 }

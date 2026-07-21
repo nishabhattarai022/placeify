@@ -255,15 +255,27 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
     if (updated != null) {
       Vendor3dModelStore.preloadFromProduct(updated);
     }
-    Vendor3dModelStore.markReady(productId);
+
+    final isAlreadyReady =
+        updated?.model3dStatus == 'ready' && (updated?.hasArView ?? false);
+    if (isAlreadyReady) {
+      Vendor3dModelStore.markReady(productId);
+    } else {
+      Vendor3dModelStore.markProcessing(productId);
+    }
 
     setState(() {
       _isGenerating = false;
-      _generateProgress = 1;
-      _modelReady = updated?.hasArView ?? true;
+      _generateProgress = isAlreadyReady ? 1 : 0;
+      _modelReady = isAlreadyReady;
     });
     HapticService.heavy();
-    PlaceifyToast.show(context, Vendor3dBuilderStrings.modelReady);
+    PlaceifyToast.show(
+      context,
+      isAlreadyReady
+          ? Vendor3dBuilderStrings.modelReady
+          : Vendor3dBuilderStrings.modelQueued,
+    );
   }
 
   Future<void> _finishAndClose() async {
@@ -1052,6 +1064,43 @@ class _GeneratePanel extends StatelessWidget {
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: AppColors.vendorForest,
+            ),
+          ),
+        ] else if (status == VendorProduct3dStatus.processing) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.vendorForest.withValues(alpha: 0.08),
+              borderRadius: AppRadii.md,
+              border: Border.all(
+                color: AppColors.vendorForest.withValues(alpha: 0.2),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.vendorForest,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    Vendor3dBuilderStrings.modelQueued,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.vendorForest,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ] else if (modelReady) ...[

@@ -67,26 +67,42 @@ abstract final class MarketplaceHighlightsMapper {
     final mapped = <RecommendProduct>[];
     for (final item in products) {
       final ui = await CatalogProductMapper.toUiProduct(item);
-      if (roomId != null && !_matchesRoom(ui.categoryId, roomId)) {
+      if (roomId != null && !matchesRoom(ui.categoryId, roomId)) {
         continue;
       }
-      mapped.add(
-        RecommendProduct(
-          id: 'rec-${ui.id}',
-          productId: ui.id,
-          displayName: ui.name,
-          displayPrice: 'NPR ${ui.price.toInt()}',
-          imageAsset: ui.imageUrl,
-          roomIds: [roomId ?? 'living'],
-          swatches: _defaultSwatches,
-        ),
-      );
+      mapped.add(_recommendFromUi(ui, roomId: roomId));
       if (mapped.length >= 4) break;
     }
     return mapped;
   }
 
-  static bool _matchesRoom(String categoryId, String roomId) {
+  /// Maps live catalog [Product] rows into home recommendation cards.
+  static List<RecommendProduct> recommendFromUiProducts(
+    List<Product> products, {
+    String? roomId,
+  }) {
+    return [
+      for (final ui in products.take(4))
+        _recommendFromUi(ui, roomId: roomId),
+    ];
+  }
+
+  static RecommendProduct _recommendFromUi(
+    Product ui, {
+    String? roomId,
+  }) {
+    return RecommendProduct(
+      id: 'rec-${ui.id}',
+      productId: ui.id,
+      displayName: ui.name,
+      displayPrice: 'NPR ${ui.price.toInt()}',
+      imageAsset: ui.imageUrl,
+      roomIds: [roomId ?? 'living'],
+      swatches: _defaultSwatches,
+    );
+  }
+
+  static bool matchesRoom(String categoryId, String roomId) {
     const roomCategories = <String, List<String>>{
       'living': ['sofas', 'chairs', 'tables'],
       'dining': ['tables', 'chairs'],
