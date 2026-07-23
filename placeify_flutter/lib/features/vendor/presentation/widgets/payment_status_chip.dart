@@ -23,16 +23,21 @@ class PaymentStatusChip extends StatelessWidget {
       PaymentStatus.paid => (
           AppColors.sageBg,
           AppColors.sage,
-          'Payment Received',
+          'Paid',
         ),
       PaymentStatus.partial => (
           AppColors.lavenderBg,
           AppColors.lavender,
           'Partial',
         ),
+      PaymentStatus.refundPending => (
+          AppColors.accentBg,
+          AppColors.onboardingAmberDark,
+          'Refund Pending',
+        ),
       PaymentStatus.refunded => (
-          AppColors.coralBg,
-          AppColors.coral,
+          AppColors.tealBg,
+          AppColors.teal,
           'Refunded',
         ),
       PaymentStatus.failed => (
@@ -54,7 +59,7 @@ class PaymentStatusChip extends StatelessWidget {
           fontSize: 11,
           fontWeight: FontWeight.w700,
           color: fg,
-          letterSpacing: 0.03 * 11,
+          letterSpacing: 0.02 * 11,
         ),
       ),
     );

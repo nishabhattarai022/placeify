@@ -25,7 +25,16 @@ abstract class UserDashboard implements _i1.SerializableModel {
     required this.arSessionCount,
     required this.refundCount,
     required this.marketplace,
-  });
+    double? totalSpend,
+    double? refundAmount,
+    int? pendingRefundCount,
+    int? codOrderCount,
+    int? onlinePaymentCount,
+  }) : totalSpend = totalSpend ?? 0.0,
+       refundAmount = refundAmount ?? 0.0,
+       pendingRefundCount = pendingRefundCount ?? 0,
+       codOrderCount = codOrderCount ?? 0,
+       onlinePaymentCount = onlinePaymentCount ?? 0;
 
   factory UserDashboard({
     required _i2.User profile,
@@ -35,6 +44,11 @@ abstract class UserDashboard implements _i1.SerializableModel {
     required int arSessionCount,
     required int refundCount,
     required _i3.MarketplaceHighlights marketplace,
+    double? totalSpend,
+    double? refundAmount,
+    int? pendingRefundCount,
+    int? codOrderCount,
+    int? onlinePaymentCount,
   }) = _UserDashboardImpl;
 
   factory UserDashboard.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -50,6 +64,11 @@ abstract class UserDashboard implements _i1.SerializableModel {
       marketplace: _i4.Protocol().deserialize<_i3.MarketplaceHighlights>(
         jsonSerialization['marketplace'],
       ),
+      totalSpend: (jsonSerialization['totalSpend'] as num?)?.toDouble(),
+      refundAmount: (jsonSerialization['refundAmount'] as num?)?.toDouble(),
+      pendingRefundCount: jsonSerialization['pendingRefundCount'] as int?,
+      codOrderCount: jsonSerialization['codOrderCount'] as int?,
+      onlinePaymentCount: jsonSerialization['onlinePaymentCount'] as int?,
     );
   }
 
@@ -68,6 +87,17 @@ abstract class UserDashboard implements _i1.SerializableModel {
   /// Live marketplace catalog slices visible to every consumer.
   _i3.MarketplaceHighlights marketplace;
 
+  /// Payment ledger aggregates (PostgreSQL).
+  double totalSpend;
+
+  double refundAmount;
+
+  int pendingRefundCount;
+
+  int codOrderCount;
+
+  int onlinePaymentCount;
+
   /// Returns a shallow copy of this [UserDashboard]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -79,6 +109,11 @@ abstract class UserDashboard implements _i1.SerializableModel {
     int? arSessionCount,
     int? refundCount,
     _i3.MarketplaceHighlights? marketplace,
+    double? totalSpend,
+    double? refundAmount,
+    int? pendingRefundCount,
+    int? codOrderCount,
+    int? onlinePaymentCount,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -91,6 +126,11 @@ abstract class UserDashboard implements _i1.SerializableModel {
       'arSessionCount': arSessionCount,
       'refundCount': refundCount,
       'marketplace': marketplace.toJson(),
+      'totalSpend': totalSpend,
+      'refundAmount': refundAmount,
+      'pendingRefundCount': pendingRefundCount,
+      'codOrderCount': codOrderCount,
+      'onlinePaymentCount': onlinePaymentCount,
     };
   }
 
@@ -109,6 +149,11 @@ class _UserDashboardImpl extends UserDashboard {
     required int arSessionCount,
     required int refundCount,
     required _i3.MarketplaceHighlights marketplace,
+    double? totalSpend,
+    double? refundAmount,
+    int? pendingRefundCount,
+    int? codOrderCount,
+    int? onlinePaymentCount,
   }) : super._(
          profile: profile,
          orderCount: orderCount,
@@ -117,6 +162,11 @@ class _UserDashboardImpl extends UserDashboard {
          arSessionCount: arSessionCount,
          refundCount: refundCount,
          marketplace: marketplace,
+         totalSpend: totalSpend,
+         refundAmount: refundAmount,
+         pendingRefundCount: pendingRefundCount,
+         codOrderCount: codOrderCount,
+         onlinePaymentCount: onlinePaymentCount,
        );
 
   /// Returns a shallow copy of this [UserDashboard]
@@ -131,6 +181,11 @@ class _UserDashboardImpl extends UserDashboard {
     int? arSessionCount,
     int? refundCount,
     _i3.MarketplaceHighlights? marketplace,
+    double? totalSpend,
+    double? refundAmount,
+    int? pendingRefundCount,
+    int? codOrderCount,
+    int? onlinePaymentCount,
   }) {
     return UserDashboard(
       profile: profile ?? this.profile.copyWith(),
@@ -140,6 +195,11 @@ class _UserDashboardImpl extends UserDashboard {
       arSessionCount: arSessionCount ?? this.arSessionCount,
       refundCount: refundCount ?? this.refundCount,
       marketplace: marketplace ?? this.marketplace.copyWith(),
+      totalSpend: totalSpend ?? this.totalSpend,
+      refundAmount: refundAmount ?? this.refundAmount,
+      pendingRefundCount: pendingRefundCount ?? this.pendingRefundCount,
+      codOrderCount: codOrderCount ?? this.codOrderCount,
+      onlinePaymentCount: onlinePaymentCount ?? this.onlinePaymentCount,
     );
   }
 }

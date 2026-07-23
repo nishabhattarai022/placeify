@@ -26,6 +26,8 @@ import '../../features/home/presentation/home_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
+import '../../features/auth/presentation/check_email_screen.dart';
+import '../../features/auth/presentation/verify_email_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/vendor/presentation/registration/vendor_registration_screen.dart';
 import '../../features/vendor/presentation/registration/vendor_registration_success_screen.dart';
@@ -73,6 +75,7 @@ import '../../features/user/presentation/user_cart_page.dart';
 import '../../features/user/presentation/user_dashboard_pages.dart';
 import '../../features/user/presentation/user_dashboard_screen.dart';
 import '../../features/user/presentation/user_orders_page.dart';
+import '../../features/user/presentation/user_payments_screen.dart';
 import '../../features/user/presentation/user_wishlist_page.dart';
 import '../../features/user/presentation/user_dashboard_shell.dart';
 import 'main_shell.dart';
@@ -184,6 +187,30 @@ List<RouteBase> get _appRoutes => [
       ),
     ),
     GoRoute(
+      path: '/register/check-email',
+      name: 'checkEmail',
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: CheckEmailScreen(
+          email: state.uri.queryParameters['email'] ?? '',
+        ),
+        transitionsBuilder: _fadeTransition,
+        transitionDuration: AppDurations.slow,
+      ),
+    ),
+    GoRoute(
+      path: '/verify-email',
+      name: 'verifyEmail',
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: VerifyEmailScreen(
+          token: state.uri.queryParameters['token'] ?? '',
+        ),
+        transitionsBuilder: _fadeTransition,
+        transitionDuration: AppDurations.slow,
+      ),
+    ),
+    GoRoute(
       path: '/login',
       name: 'login',
       pageBuilder: (context, state) => CustomTransitionPage(
@@ -247,6 +274,16 @@ List<RouteBase> get _appRoutes => [
               pageBuilder: (context, state) => CustomTransitionPage(
                 key: state.pageKey,
                 child: const UserOrdersPage(),
+                transitionsBuilder: _fadeTransition,
+                transitionDuration: AppDurations.slow,
+              ),
+            ),
+            GoRoute(
+              path: 'payments',
+              name: 'userPayments',
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const UserPaymentsScreen(),
                 transitionsBuilder: _fadeTransition,
                 transitionDuration: AppDurations.slow,
               ),

@@ -9,7 +9,10 @@ import 'src/modules/order/order_auto_cancel_future_call.dart';
 import 'src/shared/server_static_paths.dart';
 import 'src/web/middleware/uploads_cors_middleware.dart';
 import 'src/web/routes/app_config_route.dart';
+import 'src/web/routes/email_verification_routes.dart';
+import 'src/web/routes/password_reset_routes.dart';
 import 'src/web/routes/root.dart';
+import 'src/web/routes/verify_email_page_route.dart';
 
 /// The starting point of the Serverpod server.
 void run(List<String> args) async {
@@ -24,6 +27,12 @@ void run(List<String> args) async {
   // These are used by the default page.
   pod.webServer.addRoute(RootRoute(), '/');
   pod.webServer.addRoute(RootRoute(), '/index.html');
+  pod.webServer.addRoute(ForgotPasswordRoute(), '/auth/forgot-password');
+  pod.webServer.addRoute(ResetPasswordRoute(), '/auth/reset-password');
+  pod.webServer.addRoute(VerifyEmailRoute(), '/auth/verify-email');
+  pod.webServer.addRoute(ResendVerificationRoute(), '/auth/resend-verification');
+  // Magic-link landing page (works in mobile browsers; does not need Flutter web).
+  pod.webServer.addRoute(VerifyEmailPageRoute(), '/verify-email');
 
   // Serve all files in the web/static relative directory under /.
   // These are used by the default web page.

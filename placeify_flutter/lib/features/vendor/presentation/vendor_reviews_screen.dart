@@ -135,7 +135,7 @@ class _ReviewCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${review.productName} · ${Formatters.shortDate(review.createdAt)}',
+            '${review.productName} · ${review.wasEdited ? 'Edited ' : ''}${Formatters.shortDate(review.wasEdited ? review.updatedAt : review.createdAt)}',
             style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
           ),
           if (review.comment.trim().isNotEmpty) ...[

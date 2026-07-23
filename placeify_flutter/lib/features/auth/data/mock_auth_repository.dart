@@ -17,6 +17,9 @@ class MockAuthRepository implements AuthRepository {
 
   static const _usersKey = 'placeify_auth_users';
   static const _sessionEmailKey = 'placeify_auth_session_email';
+  static const _pendingEmailKey = 'placeify_pending_registration_email';
+  static const _pendingPasswordKey = 'placeify_pending_registration_password';
+  static const _pendingNameKey = 'placeify_pending_registration_name';
 
   static Future<MockAuthRepository> create() async {
     final prefs = await SharedPreferences.getInstance();
@@ -25,6 +28,22 @@ class MockAuthRepository implements AuthRepository {
 
   @override
   Future<AppUser> register({
+    required String fullName,
+    required String email,
+    required String password,
+  }) async {
+    await beginEmailRegistration(
+      fullName: fullName,
+      email: email,
+      password: password,
+    );
+    throw AuthException(
+      'Registration started. Check your email to verify your Placeify account.',
+    );
+  }
+
+  @override
+  Future<String> beginEmailRegistration({
     required String fullName,
     required String email,
     required String password,
@@ -38,16 +57,58 @@ class MockAuthRepository implements AuthRepository {
       throw AuthException('An account with this email already exists');
     }
 
-    final user = _StoredUser(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      fullName: fullName.trim(),
-      email: normalizedEmail,
-      password: password,
-    );
-    users.add(user);
-    await _saveUsers(users);
+    await _prefs.setString(_pendingEmailKey, normalizedEmail);
+    await _prefs.setString(_pendingPasswordKey, password);
+    await _prefs.setString(_pendingNameKey, fullName.trim());
+    return normalizedEmail;
+  }
 
-    return user.toAppUser();
+  @override
+  Future<void> verifyEmailRegistration({
+    required String token,
+    required String password,
+    String? fullName,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    if (token.trim().isEmpty) {
+      throw AuthException('This verification link is invalid. Request a new one.');
+    }
+
+    final email = _prefs.getString(_pendingEmailKey);
+    final pendingPassword = _prefs.getString(_pendingPasswordKey);
+    final pendingName = fullName ?? _prefs.getString(_pendingNameKey);
+    if (email == null || pendingPassword == null) {
+      throw AuthException('Start registration again from the sign-up screen.');
+    }
+    if (pendingPassword != password) {
+      throw AuthException('Incorrect password for this verification.');
+    }
+
+    final users = await _loadUsers();
+    if (users.any((u) => u.email == email)) {
+      throw AuthException('An account with this email already exists');
+    }
+
+    users.add(
+      _StoredUser(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        fullName: (pendingName ?? email.split('@').first).trim(),
+        email: email,
+        password: password,
+      ),
+    );
+    await _saveUsers(users);
+    await _prefs.remove(_pendingEmailKey);
+    await _prefs.remove(_pendingPasswordKey);
+    await _prefs.remove(_pendingNameKey);
+  }
+
+  @override
+  Future<void> resendVerificationEmail({
+    required String email,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    // Mock: no-op success for UX.
   }
 
   @override

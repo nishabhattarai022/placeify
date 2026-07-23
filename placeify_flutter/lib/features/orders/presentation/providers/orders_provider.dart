@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:placeify_client/placeify_client.dart' hide Order;
 import 'package:placeify_flutter/core/config/placeify_server_client.dart';
+import 'package:placeify_flutter/core/debug/agent_debug_log.dart';
 import 'package:placeify_flutter/core/widgets/toast_overlay.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify_flutter/features/cart/presentation/cart_actions.dart';
@@ -172,29 +173,87 @@ class Orders extends _$Orders {
   Future<bool> reorder(
     String orderId, {
     BuildContext? context,
-    bool openCart = false,
+    bool openCart = true,
   }) async {
-    final orders = state.value;
-    if (orders == null) return false;
-
-    Order? order;
-    for (final candidate in orders) {
-      if (candidate.id == orderId) {
-        order = candidate;
-        break;
+    if (!client.auth.isAuthenticated) {
+      if (context != null && context.mounted) {
+        PlaceifyToast.show(context, 'Sign in to reorder.');
       }
+      return false;
     }
-    if (order == null) return false;
 
-    reorderToCart(ref, order.items);
-
-    if (context != null && context.mounted) {
-      PlaceifyToast.show(context, OrderStrings.reorderSuccess);
-      if (openCart) {
-        context.pushNamed('cart');
+    try {
+      final userId = await ref.read(ordersUserIdProvider.future);
+      final detail = await ref.read(orderRepositoryProvider).getOrderById(
+            userId,
+            orderId,
+          );
+      if (detail == null || detail.items.isEmpty) {
+        if (context != null && context.mounted) {
+          PlaceifyToast.show(context, OrderStrings.reorderNoItems);
+        }
+        return false;
       }
+
+      // #region agent log
+      agentDebugLog(
+        location: 'orders_provider.dart:reorder',
+        message: 'Reorder loaded order detail',
+        hypothesisId: 'O1',
+        data: {
+          'orderId': orderId,
+          'itemCount': detail.items.length,
+          'productIds': detail.items
+              .map((i) => i.productId)
+              .take(8)
+              .toList(),
+        },
+      );
+      // #endregion
+
+      final result = await reorderToCart(ref, detail.items);
+
+      // #region agent log
+      agentDebugLog(
+        location: 'orders_provider.dart:reorder',
+        message: 'Reorder cart result',
+        hypothesisId: 'O2',
+        data: {
+          'addedCount': result.addedCount,
+          'skippedCount': result.skipped.length,
+          'skipped': result.skipped.take(5).toList(),
+          'openCart': openCart,
+        },
+      );
+      // #endregion
+
+      if (context != null && context.mounted) {
+        if (!result.hasAdditions && result.hasSkips) {
+          PlaceifyToast.show(
+            context,
+            OrderStrings.reorderAllSkipped(result.skipped),
+          );
+          return false;
+        }
+
+        final message = result.hasSkips
+            ? OrderStrings.reorderPartialSuccess(
+                result.addedCount,
+                result.skipped,
+              )
+            : OrderStrings.reorderSuccess;
+        PlaceifyToast.show(context, message);
+        if (openCart) {
+          context.pushNamed('cart');
+        }
+      }
+      return result.hasAdditions;
+    } catch (_) {
+      if (context != null && context.mounted) {
+        PlaceifyToast.show(context, OrderStrings.reorderFailed);
+      }
+      return false;
     }
-    return true;
   }
 }
 

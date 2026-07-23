@@ -33,30 +33,47 @@ class UserOrderStore {
       offset: offset,
     );
 
-    final summaries = <UserOrderSummary>[];
-    for (final order in orders) {
-      final orderId = order.id;
-      if (orderId == null) continue;
+    if (orders.isEmpty) return const [];
 
-      final items = await OrderItem.db.find(
-        session,
-        where: (item) => item.orderId.equals(orderId),
-        include: OrderItem.include(product: Product.include()),
-      );
+    final orderIds = <int>[
+      for (final order in orders)
+        if (order.id != null) order.id!,
+    ];
+    if (orderIds.isEmpty) return const [];
 
-      final latestDelivery = await _latestDeliveryUpdate(session, orderId);
-
-      summaries.add(
-        _buildSummary(
-          order: order,
-          items: items,
-          latestDeliveryStage: latestDelivery?.stage,
-          latestDeliveryNote: latestDelivery?.note,
-        ),
-      );
+    final allItems = await OrderItem.db.find(
+      session,
+      where: (item) => item.orderId.inSet(orderIds.toSet()),
+      include: OrderItem.include(
+        product: Product.include(vendor: Vendor.include()),
+      ),
+    );
+    final itemsByOrderId = <int, List<OrderItem>>{};
+    for (final item in allItems) {
+      itemsByOrderId.putIfAbsent(item.orderId, () => []).add(item);
     }
 
-    return summaries;
+    final allDeliveries = await OrderDeliveryUpdate.db.find(
+      session,
+      where: (row) => row.orderId.inSet(orderIds.toSet()),
+      orderBy: (row) => row.createdAt,
+      orderDescending: true,
+    );
+    final latestDeliveryByOrderId = <int, OrderDeliveryUpdate>{};
+    for (final update in allDeliveries) {
+      latestDeliveryByOrderId.putIfAbsent(update.orderId, () => update);
+    }
+
+    return [
+      for (final order in orders)
+        if (order.id != null)
+          _buildSummary(
+            order: order,
+            items: itemsByOrderId[order.id!] ?? const [],
+            latestDeliveryStage: latestDeliveryByOrderId[order.id!]?.stage,
+            latestDeliveryNote: latestDeliveryByOrderId[order.id!]?.note,
+          ),
+    ];
   }
 
   Future<UserOrderDetail> getDetail(
@@ -72,11 +89,13 @@ class UserOrderStore {
       );
     }
 
-    final items = await OrderItem.db.find(
-      session,
-      where: (item) => item.orderId.equals(orderId),
-      include: OrderItem.include(product: Product.include()),
-    );
+      final items = await OrderItem.db.find(
+        session,
+        where: (item) => item.orderId.equals(orderId),
+        include: OrderItem.include(
+          product: Product.include(vendor: Vendor.include()),
+        ),
+      );
 
     final deliveryRows = await OrderDeliveryUpdate.db.find(
       session,
@@ -93,6 +112,7 @@ class UserOrderStore {
     );
     final payment =
         await _paymentStore.getPaymentSummary(session, userId, orderId);
+    final customer = await User.db.findById(session, userId);
 
     return UserOrderDetail(
       id: summary.id,
@@ -103,6 +123,8 @@ class UserOrderStore {
       shippingAddress: order.shippingAddress,
       itemCount: summary.itemCount,
       primaryProductName: summary.primaryProductName,
+      customerName: customer?.name,
+      customerPhone: customer?.phone,
       latestDeliveryStage: summary.latestDeliveryStage,
       latestDeliveryNote: summary.latestDeliveryNote,
       orderPaymentStatus: order.paymentStatus,
@@ -114,7 +136,9 @@ class UserOrderStore {
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             lineTotal: item.unitPrice * item.quantity,
-            thumbnailUrl: item.product?.thumbnailUrl,
+            thumbnailUrl: _productImageUrl(item.product),
+            vendorName: item.product?.vendor?.shopName,
+            listUnitPrice: _listUnitPrice(item.product, item.unitPrice),
           ),
       ],
       deliveryUpdates: [
@@ -138,18 +162,76 @@ class UserOrderStore {
       session,
       where: (row) =>
           row.orderId.equals(orderId) &
-          row.statusType.equals(OrderStatusHistoryType.payment),
+          (row.statusType.equals(OrderStatusHistoryType.payment) |
+              row.statusType.equals(OrderStatusHistoryType.order)),
       orderBy: (row) => row.changedAt,
     );
 
     return [
       for (final row in history)
         UserOrderPaymentEvent(
-          status: OrderPaymentStatus.fromJson(row.newStatus),
+          status: _orderPaymentStatusFromHistory(row.newStatus),
           note: row.note,
           createdAt: row.changedAt,
+          eventKey: row.newStatus,
+          displayLabel: _timelineLabel(row.statusType, row.newStatus, row.note),
         ),
     ];
+  }
+
+  static OrderPaymentStatus _orderPaymentStatusFromHistory(String raw) {
+    return switch (raw) {
+      'paymentReceived' ||
+      'paymentConfirmed' ||
+      'paid' =>
+        OrderPaymentStatus.paymentReceived,
+      'unpaid' ||
+      'pending' ||
+      'failed' ||
+      'cancelled' ||
+      'refundPending' ||
+      'refunded' =>
+        OrderPaymentStatus.unpaid,
+      _ => OrderPaymentStatus.unpaid,
+    };
+  }
+
+  static String _timelineLabel(
+    OrderStatusHistoryType type,
+    String newStatus,
+    String? note,
+  ) {
+    final trimmed = note?.trim();
+    if (type == OrderStatusHistoryType.payment) {
+      final base = switch (newStatus) {
+        'pending' => 'Payment Initiated',
+        'paid' || 'paymentReceived' => 'Payment Completed',
+        'paymentConfirmed' => 'Payment Confirmed',
+        'refundPending' => 'Refund Pending',
+        'refunded' => 'Refund Completed',
+        'failed' => 'Payment Failed',
+        'cancelled' => 'Payment Cancelled',
+        _ => newStatus,
+      };
+      return base;
+    }
+
+    final base = switch (newStatus) {
+      'pending' => 'Order Created',
+      'confirmed' || 'accepted' => 'Vendor Accepted',
+      'processing' => 'Processing',
+      'shipped' => 'Shipped',
+      'delivered' => 'Delivered',
+      'rejected' => 'Vendor Rejected',
+      'cancelled' || 'autoCancelled' => 'Order Cancelled',
+      _ => newStatus,
+    };
+    if (trimmed != null &&
+        trimmed.isNotEmpty &&
+        newStatus == 'rejected') {
+      return base;
+    }
+    return base;
   }
 
   Future<UserOrderDetail> cancelOrder(
@@ -223,21 +305,6 @@ class UserOrderStore {
     return getDetail(session, userId, orderId);
   }
 
-  Future<OrderDeliveryUpdate?> _latestDeliveryUpdate(
-    Session session,
-    int orderId,
-  ) async {
-    final updates = await OrderDeliveryUpdate.db.find(
-      session,
-      where: (row) => row.orderId.equals(orderId),
-      orderBy: (row) => row.createdAt,
-      orderDescending: true,
-      limit: 1,
-    );
-    if (updates.isEmpty) return null;
-    return updates.first;
-  }
-
   OrderDeliveryUpdate? _pickLatestDeliveryUpdate(
     List<OrderDeliveryUpdate> updates,
   ) {
@@ -256,9 +323,11 @@ class UserOrderStore {
     String? latestDeliveryNote,
   }) {
     final orderId = order.id!;
+    final primaryProduct = items.isEmpty ? null : items.first.product;
     final primaryName = items.isEmpty
         ? null
-        : items.first.product?.name ?? 'Order item';
+        : primaryProduct?.name ?? 'Order item';
+    final primaryThumbnail = _productImageUrl(primaryProduct);
     final totalQuantity =
         items.fold<int>(0, (sum, item) => sum + item.quantity);
     final displayName = primaryName == null
@@ -275,9 +344,32 @@ class UserOrderStore {
       placedAt: order.placedAt,
       itemCount: totalQuantity,
       primaryProductName: displayName,
+      primaryThumbnailUrl: primaryThumbnail,
+      shippingAddress: order.shippingAddress,
       latestDeliveryStage: latestDeliveryStage,
       latestDeliveryNote: latestDeliveryNote,
       orderPaymentStatus: order.paymentStatus,
     );
+  }
+
+  /// Prefer product thumbnail; fall back to first extra view image.
+  static String? _productImageUrl(Product? product) {
+    if (product == null) return null;
+    final thumb = product.thumbnailUrl?.trim();
+    if (thumb != null && thumb.isNotEmpty) return thumb;
+    final views = product.viewImageUrls;
+    if (views == null || views.isEmpty) return null;
+    for (final url in views) {
+      final trimmed = url.trim();
+      if (trimmed.isNotEmpty) return trimmed;
+    }
+    return null;
+  }
+
+  static double? _listUnitPrice(Product? product, double chargedUnitPrice) {
+    if (product == null) return null;
+    final list = product.price;
+    if (list > chargedUnitPrice) return list;
+    return null;
   }
 }

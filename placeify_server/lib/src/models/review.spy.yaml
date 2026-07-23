@@ -8,6 +8,8 @@ fields:
   rating: int
   comment: String?
   createdAt: DateTime, default=now
+  ### Last edit time; equals createdAt until the customer updates the review.
+  updatedAt: DateTime, default=now
 
 indexes:
   review_user_product_order:

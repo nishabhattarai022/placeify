@@ -24,6 +24,7 @@ abstract class VendorReviewSummary
     required this.rating,
     this.comment,
     required this.createdAt,
+    required this.updatedAt,
   });
 
   factory VendorReviewSummary({
@@ -35,6 +36,7 @@ abstract class VendorReviewSummary
     required int rating,
     String? comment,
     required DateTime createdAt,
+    required DateTime updatedAt,
   }) = _VendorReviewSummaryImpl;
 
   factory VendorReviewSummary.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -48,6 +50,9 @@ abstract class VendorReviewSummary
       comment: jsonSerialization['comment'] as String?,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
+      ),
+      updatedAt: _i1.DateTimeJsonExtension.fromJson(
+        jsonSerialization['updatedAt'],
       ),
     );
   }
@@ -68,6 +73,8 @@ abstract class VendorReviewSummary
 
   DateTime createdAt;
 
+  DateTime updatedAt;
+
   /// Returns a shallow copy of this [VendorReviewSummary]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -80,6 +87,7 @@ abstract class VendorReviewSummary
     int? rating,
     String? comment,
     DateTime? createdAt,
+    DateTime? updatedAt,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -93,6 +101,7 @@ abstract class VendorReviewSummary
       'rating': rating,
       if (comment != null) 'comment': comment,
       'createdAt': createdAt.toJson(),
+      'updatedAt': updatedAt.toJson(),
     };
   }
 
@@ -108,6 +117,7 @@ abstract class VendorReviewSummary
       'rating': rating,
       if (comment != null) 'comment': comment,
       'createdAt': createdAt.toJson(),
+      'updatedAt': updatedAt.toJson(),
     };
   }
 
@@ -129,6 +139,7 @@ class _VendorReviewSummaryImpl extends VendorReviewSummary {
     required int rating,
     String? comment,
     required DateTime createdAt,
+    required DateTime updatedAt,
   }) : super._(
          id: id,
          customerName: customerName,
@@ -138,6 +149,7 @@ class _VendorReviewSummaryImpl extends VendorReviewSummary {
          rating: rating,
          comment: comment,
          createdAt: createdAt,
+         updatedAt: updatedAt,
        );
 
   /// Returns a shallow copy of this [VendorReviewSummary]
@@ -153,6 +165,7 @@ class _VendorReviewSummaryImpl extends VendorReviewSummary {
     int? rating,
     Object? comment = _Undefined,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return VendorReviewSummary(
       id: id ?? this.id,
@@ -163,6 +176,7 @@ class _VendorReviewSummaryImpl extends VendorReviewSummary {
       rating: rating ?? this.rating,
       comment: comment is String? ? comment : this.comment,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }

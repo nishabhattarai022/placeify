@@ -272,6 +272,20 @@ class UserService {
     return _paymentStore.getPaymentSummary(session, user.id!, orderId);
   }
 
+  Future<List<UserOrderPaymentSummary>> listMyPayments(
+    Session session, {
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    final user = await SessionService.requireUser(session);
+    return _paymentStore.listMyPayments(
+      session,
+      user.id!,
+      limit: limit,
+      offset: offset,
+    );
+  }
+
   Future<String> getEsewaPaymentForm(Session session, int orderId) async {
     final user = await SessionService.requireUser(session);
     return _paymentStore.getEsewaPaymentForm(session, user.id!, orderId);

@@ -30,7 +30,10 @@ class CheckoutOrderAction extends _$CheckoutOrderAction {
   @override
   bool build() => false;
 
-  Future<CheckoutFlowResult> confirm({required CartTotals totals}) async {
+  Future<CheckoutFlowResult> confirm({
+    required CartTotals totals,
+    required String shippingAddress,
+  }) async {
     // #region agent log
     agentDebugLog(
       location: 'checkout_order_provider.dart:confirm:entry',
@@ -39,6 +42,7 @@ class CheckoutOrderAction extends _$CheckoutOrderAction {
       data: {
         'refMounted': ref.mounted,
         'keepAlive': true,
+        'addressLen': shippingAddress.trim().length,
       },
       runId: 'post-fix',
     );
@@ -77,6 +81,11 @@ class CheckoutOrderAction extends _$CheckoutOrderAction {
       );
     }
 
+    final trimmedAddress = shippingAddress.trim();
+    if (trimmedAddress.isEmpty) {
+      return const CheckoutFlowFailure(CartStrings.deliveryAddressRequired);
+    }
+
     try {
       final serverItems =
           await ref.read(cartProvider.notifier).resolveServerCartForCheckout();
@@ -91,6 +100,7 @@ class CheckoutOrderAction extends _$CheckoutOrderAction {
           'serverLen': serverItems.length,
           'payment': paymentOption.name,
           'productIds': serverItems.map((e) => e.productId).take(8).toList(),
+          'addressLen': trimmedAddress.length,
         },
       );
       // #endregion
@@ -128,17 +138,6 @@ class CheckoutOrderAction extends _$CheckoutOrderAction {
         }
       }
 
-      String shippingAddress = 'Kathmandu, Nepal';
-      try {
-        final profile = await client.user.getCurrentUser();
-        final savedAddress = profile?.address?.trim();
-        if (savedAddress != null && savedAddress.isNotEmpty) {
-          shippingAddress = savedAddress;
-        }
-      } catch (error) {
-        debugPrint('[checkout] getCurrentUser failed: $error');
-      }
-
       final payload = CheckoutOrderPayload(
         items: serverItems,
         subtotal: totals.subtotal,
@@ -149,12 +148,12 @@ class CheckoutOrderAction extends _$CheckoutOrderAction {
 
       debugPrint('CHECKOUT DEBUG payload: ${payload.toJson()}');
       debugPrint(
-        'CHECKOUT DEBUG request body={shippingAddress: $shippingAddress, '
+        'CHECKOUT DEBUG request body={shippingAddressLen: ${trimmedAddress.length}, '
         'paymentMethod: ${paymentOption.apiMethod.name}}',
       );
 
       final result = await _cartRepository.checkout(
-        shippingAddress,
+        trimmedAddress,
         paymentMethod: paymentOption.apiMethod,
       );
 

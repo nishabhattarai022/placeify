@@ -223,6 +223,109 @@ class _DashboardBody extends StatelessWidget {
             subtitle: AdminStrings.platformGmvSubtitle,
             accentColor: AppColors.adminSlate,
           ),
+          const SizedBox(height: 22),
+          const Text(
+            AdminStrings.paymentOverview,
+            style: AppTypography.sectionTitle,
+          ),
+          const SizedBox(height: 12),
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: AdminStatCard(
+                    label: AdminStrings.totalTransactionsLabel,
+                    value: stats.totalTransactions.toString(),
+                    subtitle: AdminStrings.totalTransactionsSubtitle,
+                    accentColor: AppColors.adminSlate,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AdminStatCard(
+                    label: AdminStrings.dailyRevenueLabel,
+                    value: Formatters.currencyFull(stats.dailyRevenue),
+                    subtitle: AdminStrings.dailyRevenueSubtitle,
+                    accentColor: AppColors.sage,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: AdminStatCard(
+                    label: AdminStrings.monthlyRevenueLabel,
+                    value: Formatters.currencyFull(stats.monthlyRevenue),
+                    subtitle: AdminStrings.monthlyRevenueSubtitle,
+                    accentColor: AppColors.forest,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AdminStatCard(
+                    label: AdminStrings.paymentSuccessRateLabel,
+                    value: '${stats.paymentSuccessRate.toStringAsFixed(1)}%',
+                    subtitle: AdminStrings.paymentSuccessRateSubtitle,
+                    accentColor: AppColors.vendorForest,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _SecondaryMetric(
+                  label: AdminStrings.refundCountLabel,
+                  value: stats.refundCount.toString(),
+                  color: AppColors.coral,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _SecondaryMetric(
+                  label: AdminStrings.pendingRefundCountLabel,
+                  value: stats.pendingRefundCount.toString(),
+                  color: AppColors.lavender,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _SecondaryMetric(
+                  label: AdminStrings.refundValueLabel,
+                  value: Formatters.currencyFull(stats.refundValue),
+                  color: AppColors.coral,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _SecondaryMetric(
+                  label: AdminStrings.codCountLabel,
+                  value: stats.codCount.toString(),
+                  color: AppColors.bark,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _SecondaryMetric(
+                  label: AdminStrings.esewaCountLabel,
+                  value: stats.esewaCount.toString(),
+                  color: AppColors.sage,
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
           Row(
             children: [

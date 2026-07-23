@@ -93,6 +93,14 @@ class UserEndpoint extends PlaceifyAuthenticatedEndpoint {
     return _service.getMyOrderPayment(session, orderId);
   }
 
+  Future<List<UserOrderPaymentSummary>> listMyPayments(
+    Session session, {
+    int limit = 50,
+    int offset = 0,
+  }) {
+    return _service.listMyPayments(session, limit: limit, offset: offset);
+  }
+
   /// Signed eSewa form fields (JSON) for an unpaid eSewa order.
   Future<String> getEsewaPaymentForm(Session session, int orderId) {
     return _service.getEsewaPaymentForm(session, orderId);

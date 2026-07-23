@@ -30,6 +30,8 @@ abstract class Order with _$Order {
     @Default(0) double discount,
     required double total,
     required String deliveryAddress,
+    String? customerName,
+    String? customerPhone,
     String? cancellationReason,
     String? returnReason,
   }) = _Order;

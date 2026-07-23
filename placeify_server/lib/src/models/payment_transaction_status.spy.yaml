@@ -2,8 +2,9 @@ enum: PaymentTransactionStatus
 serialized: byName
 default: pending
 values:
-  -  pending
+  - pending
   - paid
   - failed
   - cancelled
+  - refundPending
   - refunded

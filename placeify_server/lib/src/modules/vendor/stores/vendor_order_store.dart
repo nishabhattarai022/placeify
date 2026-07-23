@@ -4,7 +4,9 @@ import '../../../generated/protocol.dart';
 import '../../../shared/placeify_exception.dart';
 import '../../../shared/session_service.dart';
 import '../../marketplace/marketplace_events.dart';
+import '../../notification/order_notification_service.dart';
 import '../../order/order_lifecycle_store.dart';
+import '../../payment/payment_sync.dart';
 import 'vendor_access_guard.dart';
 import 'vendor_order_support.dart';
 
@@ -193,6 +195,7 @@ class VendorOrderStore {
     }
 
     Order? rejectedOrder;
+    var refundPendingCreated = false;
     await session.db.transaction((transaction) async {
       rejectedOrder = await OrderLifecycleStore.updateOrderWithVersion(
         session,
@@ -214,6 +217,51 @@ class VendorOrderStore {
         note: trimmedReason,
         transaction: transaction,
       );
+
+      // Paid online orders cannot be auto-refunded via eSewa (no merchant
+      // refund API). Create an idempotent refund-pending settlement record.
+      final payment = await PaymentTransaction.db.findFirstRow(
+        session,
+        where: (row) => row.orderId.equals(orderId),
+        transaction: transaction,
+      );
+      if (payment != null &&
+          payment.status == PaymentTransactionStatus.paid &&
+          payment.paymentMethod != PaymentMethod.cashOnDelivery) {
+        final marked = await PaymentSync.markOrderRefundPending(
+          session,
+          orderId,
+          reason:
+              'Order rejected by vendor. Refund pending merchant portal settlement. $trimmedReason',
+          transaction: transaction,
+          changedByUserId: user.id,
+        );
+        if (marked) {
+          final existingOpen = await RefundRequest.db.findFirstRow(
+            session,
+            where: (row) =>
+                row.orderId.equals(orderId) &
+                (row.status.equals(RequestStatus.pending) |
+                    row.status.equals(RequestStatus.inProgress)),
+            transaction: transaction,
+          );
+          if (existingOpen == null) {
+            await RefundRequest.db.insertRow(
+              session,
+              RefundRequest(
+                userId: order.userId!,
+                orderId: orderId,
+                reason:
+                    'Vendor rejected order. Manual eSewa refund required. $trimmedReason',
+                refundAmount: payment.amount,
+                status: RequestStatus.pending,
+              ),
+              transaction: transaction,
+            );
+          }
+          refundPendingCreated = true;
+        }
+      }
     });
 
     if (rejectedOrder != null) {
@@ -225,6 +273,14 @@ class VendorOrderStore {
           vendorId: vendor.id!,
         ),
       );
+      if (refundPendingCreated) {
+        try {
+          await OrderNotificationService.notifyRefundPending(
+            session,
+            order: rejectedOrder!,
+          );
+        } catch (_) {}
+      }
     }
 
     return getShopOrder(session, orderId);

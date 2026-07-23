@@ -18,6 +18,16 @@ abstract class AdminStats with _$AdminStats {
     required int suspendedCount,
     @Default(<AdminAuditLogEntry>[]) List<AdminAuditLogEntry> recentActivity,
     @Default(<VendorApplication>[]) List<VendorApplication> recentApplications,
+    @Default(0) int totalTransactions,
+    @Default(0) int refundCount,
+    @Default(0) double refundValue,
+    @Default(0) int pendingRefundCount,
+    @Default(0) int successfulRefundCount,
+    @Default(0) int codCount,
+    @Default(0) int esewaCount,
+    @Default(0) double paymentSuccessRate,
+    @Default(0) double dailyRevenue,
+    @Default(0) double monthlyRevenue,
   }) = _AdminStats;
 
   factory AdminStats.fromJson(Map<String, dynamic> json) =>

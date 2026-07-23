@@ -29,6 +29,32 @@ class ReviewEndpoint extends Endpoint {
     );
   }
 
+  Future<Review?> getMyReviewForOrderItem(
+    Session session,
+    int productId,
+    int orderId,
+  ) {
+    return _service.getMyReviewForOrderItem(session, productId, orderId);
+  }
+
+  Future<Review> updateReview(
+    Session session,
+    int reviewId,
+    int rating, {
+    String? comment,
+  }) {
+    return _service.updateReview(
+      session,
+      reviewId,
+      rating,
+      comment: comment,
+    );
+  }
+
+  Future<void> deleteReview(Session session, int reviewId) {
+    return _service.deleteReview(session, reviewId);
+  }
+
   Future<List<Review>> listProductReviews(
     Session session,
     int productId, {

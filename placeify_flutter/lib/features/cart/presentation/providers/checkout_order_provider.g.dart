@@ -51,7 +51,7 @@ final class CheckoutOrderActionProvider
 }
 
 String _$checkoutOrderActionHash() =>
-    r'9ede8b57eb860fdf2e8f5a4fc6e771e2b566c3c4';
+    r'0c6b50d9724edafd5191552a48a8e4746a83e411';
 
 /// Places an order from checkout — separate from [Cart] to avoid provider cycles.
 /// keepAlive: confirm() awaits network work; autoDispose would dispose this

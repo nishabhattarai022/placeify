@@ -589,6 +589,30 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['orderId'],
                   ),
         ),
+        'listMyPayments': _i1.MethodConnector(
+          name: 'listMyPayments',
+          params: {
+            'limit': _i1.ParameterDescription(
+              name: 'limit',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'offset': _i1.ParameterDescription(
+              name: 'offset',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['user'] as _i4.UserEndpoint).listMyPayments(
+                session,
+                limit: params['limit'],
+                offset: params['offset'],
+              ),
+        ),
         'getEsewaPaymentForm': _i1.MethodConnector(
           name: 'getEsewaPaymentForm',
           params: {
@@ -2352,6 +2376,81 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['orderId'],
                     params['rating'],
                     comment: params['comment'],
+                  ),
+        ),
+        'getMyReviewForOrderItem': _i1.MethodConnector(
+          name: 'getMyReviewForOrderItem',
+          params: {
+            'productId': _i1.ParameterDescription(
+              name: 'productId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'orderId': _i1.ParameterDescription(
+              name: 'orderId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['review'] as _i15.ReviewEndpoint)
+                  .getMyReviewForOrderItem(
+                    session,
+                    params['productId'],
+                    params['orderId'],
+                  ),
+        ),
+        'updateReview': _i1.MethodConnector(
+          name: 'updateReview',
+          params: {
+            'reviewId': _i1.ParameterDescription(
+              name: 'reviewId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'rating': _i1.ParameterDescription(
+              name: 'rating',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'comment': _i1.ParameterDescription(
+              name: 'comment',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['review'] as _i15.ReviewEndpoint).updateReview(
+                    session,
+                    params['reviewId'],
+                    params['rating'],
+                    comment: params['comment'],
+                  ),
+        ),
+        'deleteReview': _i1.MethodConnector(
+          name: 'deleteReview',
+          params: {
+            'reviewId': _i1.ParameterDescription(
+              name: 'reviewId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['review'] as _i15.ReviewEndpoint).deleteReview(
+                    session,
+                    params['reviewId'],
                   ),
         ),
         'listProductReviews': _i1.MethodConnector(

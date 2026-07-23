@@ -9,3 +9,9 @@ fields:
   refundCount: int
   ### Live marketplace catalog slices visible to every consumer.
   marketplace: MarketplaceHighlights
+  ### Payment ledger aggregates (PostgreSQL).
+  totalSpend: double, default=0
+  refundAmount: double, default=0
+  pendingRefundCount: int, default=0
+  codOrderCount: int, default=0
+  onlinePaymentCount: int, default=0

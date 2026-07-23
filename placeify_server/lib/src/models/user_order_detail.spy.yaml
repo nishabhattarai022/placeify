@@ -9,6 +9,9 @@ fields:
   shippingAddress: String
   itemCount: int
   primaryProductName: String?
+  ### Snapshot contact fields from the ordering user at read time.
+  customerName: String?
+  customerPhone: String?
   latestDeliveryStage: DeliveryStage?
   latestDeliveryNote: String?
   items: List<UserOrderLineItem>

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,18 +36,51 @@ class _CheckoutPaymentScreenState extends ConsumerState<CheckoutPaymentScreen> {
   String? _validationError;
   bool _isConfirming = false;
   bool _confirmPressed = false;
+  late final TextEditingController _addressController;
+  bool _addressPrefillDone = false;
 
   static const _paymentOptions = CheckoutPaymentOption.values;
 
   @override
   void initState() {
     super.initState();
+    _addressController = TextEditingController();
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
       ),
     );
+    unawaited(_prefillAddress());
+  }
+
+  @override
+  void dispose() {
+    _addressController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _prefillAddress() async {
+    try {
+      final profile = await client.user.getCurrentUser();
+      final saved = profile?.address?.trim();
+      if (!mounted || saved == null || saved.isEmpty) {
+        _addressPrefillDone = true;
+        return;
+      }
+      // Prefer saved profile address, but keep any typed text if user already edited.
+      if (_addressController.text.trim().isEmpty) {
+        _addressController.text = saved;
+      }
+    } catch (error) {
+      debugPrint('[checkout] address prefill failed: $error');
+    } finally {
+      if (mounted) {
+        setState(() => _addressPrefillDone = true);
+      } else {
+        _addressPrefillDone = true;
+      }
+    }
   }
 
   void _showCheckoutFeedback(String message) {
@@ -113,6 +148,15 @@ class _CheckoutPaymentScreenState extends ConsumerState<CheckoutPaymentScreen> {
       return;
     }
 
+    final shippingAddress = _addressController.text.trim();
+    if (shippingAddress.isEmpty) {
+      setState(() {
+        _validationError = CartStrings.deliveryAddressRequired;
+      });
+      _showCheckoutFeedback(CartStrings.deliveryAddressRequired);
+      return;
+    }
+
     setState(() {
       _validationError = null;
       _isConfirming = true;
@@ -122,7 +166,11 @@ class _CheckoutPaymentScreenState extends ConsumerState<CheckoutPaymentScreen> {
       debugPrint(
         '[checkout] UI confirm serverUrl=$serverUrl totals=${totals.total}',
       );
-      final result = await confirmCheckoutOrder(ref, totals: totals).timeout(
+      final result = await confirmCheckoutOrder(
+        ref,
+        totals: totals,
+        shippingAddress: shippingAddress,
+      ).timeout(
         const Duration(seconds: 30),
         onTimeout: () => const CheckoutFlowFailure(
           'Checkout timed out. Please try again.',
@@ -275,6 +323,63 @@ class _CheckoutPaymentScreenState extends ConsumerState<CheckoutPaymentScreen> {
                   }),
                   const SizedBox(height: 20),
                   _SummaryCard(totals: totals),
+                  const SizedBox(height: 28),
+                  const Text(
+                    CartStrings.deliveryAddressLabel,
+                    style: CartTokens.sectionTitle,
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Used for this order only. Edit if needed before placing.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: CartTokens.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _addressController,
+                    enabled: !_isConfirming,
+                    minLines: 2,
+                    maxLines: 4,
+                    textInputAction: TextInputAction.newline,
+                    decoration: InputDecoration(
+                      hintText: CartStrings.deliveryAddressHint,
+                      filled: true,
+                      fillColor: CartTokens.cardBackground,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: CartTokens.divider),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: CartTokens.divider),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(
+                          color: CartTokens.black,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                    onChanged: (_) {
+                      if (_validationError ==
+                          CartStrings.deliveryAddressRequired) {
+                        setState(() => _validationError = null);
+                      }
+                    },
+                  ),
+                  if (!_addressPrefillDone) ...[
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Loading saved address…',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: CartTokens.textSecondary,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 28),
                   const Text('Payment Method', style: CartTokens.sectionTitle),
                   const SizedBox(height: 6),

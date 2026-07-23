@@ -458,6 +458,18 @@ class EndpointUser extends EndpointPlaceifyAuthenticated {
         {'orderId': orderId},
       );
 
+  _i3.Future<List<_i12.UserOrderPaymentSummary>> listMyPayments({
+    required int limit,
+    required int offset,
+  }) => caller.callServerEndpoint<List<_i12.UserOrderPaymentSummary>>(
+    'user',
+    'listMyPayments',
+    {
+      'limit': limit,
+      'offset': offset,
+    },
+  );
+
   /// Signed eSewa form fields (JSON) for an unpaid eSewa order.
   _i3.Future<String> getEsewaPaymentForm(int orderId) =>
       caller.callServerEndpoint<String>(
@@ -1347,6 +1359,39 @@ class EndpointReview extends _i2.EndpointRef {
       'comment': comment,
     },
   );
+
+  _i3.Future<_i57.Review?> getMyReviewForOrderItem(
+    int productId,
+    int orderId,
+  ) => caller.callServerEndpoint<_i57.Review?>(
+    'review',
+    'getMyReviewForOrderItem',
+    {
+      'productId': productId,
+      'orderId': orderId,
+    },
+  );
+
+  _i3.Future<_i57.Review> updateReview(
+    int reviewId,
+    int rating, {
+    String? comment,
+  }) => caller.callServerEndpoint<_i57.Review>(
+    'review',
+    'updateReview',
+    {
+      'reviewId': reviewId,
+      'rating': rating,
+      'comment': comment,
+    },
+  );
+
+  _i3.Future<void> deleteReview(int reviewId) =>
+      caller.callServerEndpoint<void>(
+        'review',
+        'deleteReview',
+        {'reviewId': reviewId},
+      );
 
   _i3.Future<List<_i57.Review>> listProductReviews(
     int productId, {

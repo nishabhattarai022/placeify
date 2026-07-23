@@ -22,6 +22,7 @@ user:
   - getMyOrder:
   - cancelMyOrder:
   - getMyOrderPayment:
+  - listMyPayments:
   - getEsewaPaymentForm:
   - completePayment:
   - listMyArSessions:
@@ -117,6 +118,9 @@ refund:
   - createRefundRequest:
 review:
   - submitReview:
+  - getMyReviewForOrderItem:
+  - updateReview:
+  - deleteReview:
   - listProductReviews:
 vendor:
   - getMyShop:

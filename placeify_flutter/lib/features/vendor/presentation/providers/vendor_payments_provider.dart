@@ -25,21 +25,60 @@ class VendorPaymentsData {
     required this.totalEarned,
     required this.pendingPaymentCount,
     this.paymentHistory = const [],
+    this.todayRevenue = 0,
+    this.monthlyRevenue = 0,
+    this.refundAmount = 0,
+    this.refundCount = 0,
+    this.successfulPaymentCount = 0,
+    this.codPaymentCount = 0,
+    this.esewaPaymentCount = 0,
+    this.averageOrderValue = 0,
+    this.pendingRefundCount = 0,
   });
 
   final double totalEarned;
   final int pendingPaymentCount;
   final List<PaymentUpdate> paymentHistory;
+  final double todayRevenue;
+  final double monthlyRevenue;
+  final double refundAmount;
+  final int refundCount;
+  final int successfulPaymentCount;
+  final int codPaymentCount;
+  final int esewaPaymentCount;
+  final double averageOrderValue;
+  final int pendingRefundCount;
+
+  double get netEarnings => totalEarned - refundAmount;
 
   VendorPaymentsData copyWith({
     double? totalEarned,
     int? pendingPaymentCount,
     List<PaymentUpdate>? paymentHistory,
+    double? todayRevenue,
+    double? monthlyRevenue,
+    double? refundAmount,
+    int? refundCount,
+    int? successfulPaymentCount,
+    int? codPaymentCount,
+    int? esewaPaymentCount,
+    double? averageOrderValue,
+    int? pendingRefundCount,
   }) {
     return VendorPaymentsData(
       totalEarned: totalEarned ?? this.totalEarned,
       pendingPaymentCount: pendingPaymentCount ?? this.pendingPaymentCount,
       paymentHistory: paymentHistory ?? this.paymentHistory,
+      todayRevenue: todayRevenue ?? this.todayRevenue,
+      monthlyRevenue: monthlyRevenue ?? this.monthlyRevenue,
+      refundAmount: refundAmount ?? this.refundAmount,
+      refundCount: refundCount ?? this.refundCount,
+      successfulPaymentCount:
+          successfulPaymentCount ?? this.successfulPaymentCount,
+      codPaymentCount: codPaymentCount ?? this.codPaymentCount,
+      esewaPaymentCount: esewaPaymentCount ?? this.esewaPaymentCount,
+      averageOrderValue: averageOrderValue ?? this.averageOrderValue,
+      pendingRefundCount: pendingRefundCount ?? this.pendingRefundCount,
     );
   }
 }
@@ -96,6 +135,15 @@ class VendorPayments extends _$VendorPayments {
       totalEarned: overview.totalEarned,
       pendingPaymentCount: overview.pendingPaymentCount,
       paymentHistory: overview.paymentHistory,
+      todayRevenue: overview.todayRevenue,
+      monthlyRevenue: overview.monthlyRevenue,
+      refundAmount: overview.refundAmount,
+      refundCount: overview.refundCount,
+      successfulPaymentCount: overview.successfulPaymentCount,
+      codPaymentCount: overview.codPaymentCount,
+      esewaPaymentCount: overview.esewaPaymentCount,
+      averageOrderValue: overview.averageOrderValue,
+      pendingRefundCount: overview.pendingRefundCount,
     );
   }
 

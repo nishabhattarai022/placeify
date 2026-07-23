@@ -4,9 +4,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-const _sessionId = '643556';
+const _sessionId = '382510';
 const _debugLogPath =
-    '/Users/rosikagajurel/Documents/College/placeify/.cursor/debug-643556.log';
+    '/Users/rosikagajurel/Documents/College/placeify/.cursor/debug-382510.log';
 const _ingestPath = '/ingest/de5a92ac-2b16-4b3f-8f80-d2c85552e64b';
 
 List<String> _debugEndpoints() {
@@ -26,7 +26,7 @@ void agentDebugLog({
   required String message,
   required String hypothesisId,
   Map<String, Object?> data = const {},
-  String runId = 'post-fix',
+  String runId = 'pre-fix',
 }) {
   final payload = <String, Object?>{
     'sessionId': _sessionId,

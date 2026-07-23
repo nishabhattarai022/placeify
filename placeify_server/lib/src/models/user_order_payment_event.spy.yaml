@@ -4,3 +4,7 @@ fields:
   status: OrderPaymentStatus
   note: String?
   createdAt: DateTime
+  ### Raw history key (OrderPaymentStatus or PaymentTransactionStatus name).
+  eventKey: String?
+  ### Human-readable timeline label derived from existing history.
+  displayLabel: String?

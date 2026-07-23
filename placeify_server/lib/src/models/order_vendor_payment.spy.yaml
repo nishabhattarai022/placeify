@@ -18,3 +18,11 @@ indexes:
     fields: vendorId
   order_vendor_payment_status:
     fields: status
+  order_vendor_payment_created_at:
+    fields: createdAt
+  order_vendor_payment_vendor_created:
+    fields: vendorId, createdAt
+  order_vendor_payment_vendor_status:
+    fields: vendorId, status
+  order_vendor_payment_order_id:
+    fields: orderId

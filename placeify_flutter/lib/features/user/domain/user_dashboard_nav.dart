@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 enum UserDashboardNav {
   dashboard,
   orders,
+  payments,
   cart,
   wishlist,
   refund,
@@ -17,6 +18,7 @@ extension UserDashboardNavX on UserDashboardNav {
   String get label => switch (this) {
         UserDashboardNav.dashboard => 'Dashboard',
         UserDashboardNav.orders => 'Orders',
+        UserDashboardNav.payments => 'Payments',
         UserDashboardNav.cart => 'Cart',
         UserDashboardNav.wishlist => 'Wishlist',
         UserDashboardNav.refund => 'Refund & Return',
@@ -29,6 +31,7 @@ extension UserDashboardNavX on UserDashboardNav {
   IconData get icon => switch (this) {
         UserDashboardNav.dashboard => Icons.dashboard_outlined,
         UserDashboardNav.orders => Icons.receipt_long_outlined,
+        UserDashboardNav.payments => Icons.payments_outlined,
         UserDashboardNav.cart => Icons.shopping_cart_outlined,
         UserDashboardNav.wishlist => Icons.favorite_border_rounded,
         UserDashboardNav.refund => Icons.assignment_return_outlined,
@@ -41,6 +44,7 @@ extension UserDashboardNavX on UserDashboardNav {
   String get routePath => switch (this) {
         UserDashboardNav.dashboard => '/user/dashboard',
         UserDashboardNav.orders => '/user/orders',
+        UserDashboardNav.payments => '/user/payments',
         UserDashboardNav.cart => '/user/cart',
         UserDashboardNav.wishlist => '/user/wishlist',
         UserDashboardNav.refund => '/user/refund',
@@ -53,6 +57,7 @@ extension UserDashboardNavX on UserDashboardNav {
   String get pageTitle => switch (this) {
         UserDashboardNav.dashboard => 'Dashboard',
         UserDashboardNav.orders => 'Orders',
+        UserDashboardNav.payments => 'Payments',
         UserDashboardNav.cart => 'Cart',
         UserDashboardNav.wishlist => 'Wishlist',
         UserDashboardNav.refund => 'Refund & Return',

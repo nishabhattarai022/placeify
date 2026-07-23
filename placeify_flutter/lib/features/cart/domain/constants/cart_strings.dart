@@ -7,6 +7,10 @@ abstract final class CartStrings {
   static const orderCouldNotComplete = 'The order could not be completed.';
   static const unableToPlaceOrder = 'Unable to place your order. Please try again.';
   static const selectPaymentMethod = 'Please select a payment method.';
+  static const deliveryAddressRequired =
+      'Please enter your delivery address before placing your order.';
+  static const deliveryAddressLabel = 'Delivery address';
+  static const deliveryAddressHint = 'House/street, city, landmark';
   static const paymentSuccessful =
       'Payment successful. Your order is confirmed.';
   static const paymentFailed =

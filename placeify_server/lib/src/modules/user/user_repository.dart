@@ -109,6 +109,7 @@ class UserProfileStore {
     final refundCount = await _refundStore.countForUser(session, userId);
     final cartItemCount = await _countCartItems(session, userId);
     final marketplace = await _catalogStore.marketplaceHighlights(session);
+    final paymentStats = await _customerPaymentStats(session, userId);
 
     return UserDashboard(
       profile: user,
@@ -118,6 +119,63 @@ class UserProfileStore {
       arSessionCount: arSessionCount,
       refundCount: refundCount,
       marketplace: marketplace,
+      totalSpend: paymentStats.totalSpend,
+      refundAmount: paymentStats.refundAmount,
+      pendingRefundCount: paymentStats.pendingRefundCount,
+      codOrderCount: paymentStats.codOrderCount,
+      onlinePaymentCount: paymentStats.onlinePaymentCount,
+    );
+  }
+
+  Future<
+      ({
+        double totalSpend,
+        double refundAmount,
+        int pendingRefundCount,
+        int codOrderCount,
+        int onlinePaymentCount,
+      })> _customerPaymentStats(
+    Session session,
+    UuidValue userId,
+  ) async {
+    final payments = await PaymentTransaction.db.find(
+      session,
+      where: (row) => row.userId.equals(userId),
+    );
+
+    var totalSpend = 0.0;
+    var refundAmount = 0.0;
+    var pendingRefundCount = 0;
+    var codOrderCount = 0;
+    var onlinePaymentCount = 0;
+
+    for (final payment in payments) {
+      if (payment.status == PaymentTransactionStatus.paid ||
+          payment.status == PaymentTransactionStatus.refundPending ||
+          payment.status == PaymentTransactionStatus.refunded) {
+        totalSpend += payment.amount;
+      }
+      if (payment.status == PaymentTransactionStatus.refunded) {
+        refundAmount += payment.amount;
+      }
+      if (payment.status == PaymentTransactionStatus.refundPending) {
+        pendingRefundCount += 1;
+      }
+      if (payment.paymentMethod == PaymentMethod.cashOnDelivery) {
+        codOrderCount += 1;
+      } else if (payment.paymentMethod == PaymentMethod.esewa ||
+          payment.paymentMethod == PaymentMethod.khalti ||
+          payment.paymentMethod == PaymentMethod.mockOnline) {
+        onlinePaymentCount += 1;
+      }
+    }
+
+    return (
+      totalSpend: totalSpend,
+      refundAmount: refundAmount,
+      pendingRefundCount: pendingRefundCount,
+      codOrderCount: codOrderCount,
+      onlinePaymentCount: onlinePaymentCount,
     );
   }
 }

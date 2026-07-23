@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:placeify_client/placeify_client.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/formatters.dart';
 import 'user_dashboard_mock_data.dart';
 
 abstract final class UserDashboardMappers {
@@ -43,6 +44,13 @@ abstract final class UserDashboardMappers {
         backgroundColor: AppColors.accentBg,
       ),
       UserOverviewMetric(
+        label: 'Total Spend',
+        value: Formatters.currencyFull(dashboard.totalSpend),
+        icon: Icons.payments_outlined,
+        accentColor: AppColors.forest,
+        backgroundColor: AppColors.sageBg,
+      ),
+      UserOverviewMetric(
         label: 'Wishlist Items',
         value: '${dashboard.wishlistCount}',
         icon: Icons.favorite_border_rounded,
@@ -57,11 +65,32 @@ abstract final class UserDashboardMappers {
         backgroundColor: AppColors.sageBg,
       ),
       UserOverviewMetric(
-        label: 'Refund Requests',
-        value: '${dashboard.refundCount}',
+        label: 'Refund Amount',
+        value: Formatters.currencyFull(dashboard.refundAmount),
         icon: Icons.replay_outlined,
+        accentColor: AppColors.coral,
+        backgroundColor: AppColors.coralBg,
+      ),
+      UserOverviewMetric(
+        label: 'Pending Refunds',
+        value: '${dashboard.pendingRefundCount}',
+        icon: Icons.hourglass_empty_outlined,
         accentColor: AppColors.lavender,
         backgroundColor: AppColors.lavenderBg,
+      ),
+      UserOverviewMetric(
+        label: 'COD Orders',
+        value: '${dashboard.codOrderCount}',
+        icon: Icons.local_atm_outlined,
+        accentColor: AppColors.bark,
+        backgroundColor: AppColors.creamDark,
+      ),
+      UserOverviewMetric(
+        label: 'Online Payments',
+        value: '${dashboard.onlinePaymentCount}',
+        icon: Icons.account_balance_wallet_outlined,
+        accentColor: AppColors.vendorForest,
+        backgroundColor: AppColors.sageBg,
       ),
     ];
   }

@@ -33,7 +33,7 @@ final class VendorReviewsProvider
   VendorReviews create() => VendorReviews();
 }
 
-String _$vendorReviewsHash() => r'bc1439f9ec606cf9afe9bac66afda999e5812264';
+String _$vendorReviewsHash() => r'63dd5d65edf40c9d51715300d77848e783540a56';
 
 abstract class _$VendorReviews extends $AsyncNotifier<List<VendorReview>> {
   FutureOr<List<VendorReview>> build();

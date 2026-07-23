@@ -35,8 +35,53 @@ class ServerpodReviewRepository {
         productId,
         parsedOrderId,
         rating,
-        comment: comment?.trim().isEmpty ?? true ? null : comment?.trim(),
+        comment: _trimComment(comment),
       );
+    } catch (error) {
+      throw ReviewRepositoryException(_mapError(error));
+    }
+  }
+
+  Future<Review?> getMyReviewForOrderItem({
+    required String uiProductId,
+    required String orderId,
+  }) async {
+    _requireAuthenticated();
+    final productId = ProductIdCodec.toDatabaseId(uiProductId);
+    final parsedOrderId = int.tryParse(orderId);
+    if (productId == null || parsedOrderId == null) return null;
+
+    try {
+      return await client.review.getMyReviewForOrderItem(
+        productId,
+        parsedOrderId,
+      );
+    } catch (error) {
+      throw ReviewRepositoryException(_mapError(error));
+    }
+  }
+
+  Future<Review> updateReview({
+    required int reviewId,
+    required int rating,
+    String? comment,
+  }) async {
+    _requireAuthenticated();
+    try {
+      return await client.review.updateReview(
+        reviewId,
+        rating,
+        comment: _trimComment(comment),
+      );
+    } catch (error) {
+      throw ReviewRepositoryException(_mapError(error));
+    }
+  }
+
+  Future<void> deleteReview({required int reviewId}) async {
+    _requireAuthenticated();
+    try {
+      await client.review.deleteReview(reviewId);
     } catch (error) {
       throw ReviewRepositoryException(_mapError(error));
     }
@@ -57,6 +102,12 @@ class ServerpodReviewRepository {
     }
   }
 
+  String? _trimComment(String? comment) {
+    final trimmed = comment?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    return trimmed;
+  }
+
   void _requireAuthenticated() {
     if (!client.auth.isAuthenticated) {
       throw ReviewRepositoryException('Sign in to leave a review.');
@@ -69,6 +120,9 @@ class ServerpodReviewRepository {
     final text = error.toString().toLowerCase();
     if (text.contains('review_exists')) {
       return 'You already reviewed this order.';
+    }
+    if (text.contains('review_not_found')) {
+      return 'Review not found.';
     }
     if (text.contains('order_not_delivered')) {
       return 'You can only review products after delivery.';

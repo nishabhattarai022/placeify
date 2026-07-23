@@ -184,11 +184,17 @@ abstract final class OrderNotificationService {
     required UuidValue vendorId,
   }) async {
     final orderLabel = _orderLabel(order);
+    final payment = await PaymentTransaction.db.findFirstRow(
+      session,
+      where: (row) => row.orderId.equals(order.id!),
+    );
+    final isCod = payment?.paymentMethod == PaymentMethod.cashOnDelivery;
     final body = switch (status) {
       OrderPaymentStatus.unpaid =>
         'Payment for order #$orderLabel is pending.',
-      OrderPaymentStatus.paymentReceived =>
-        'Payment for order #$orderLabel has been received.',
+      OrderPaymentStatus.paymentReceived => isCod
+          ? 'Cash on delivery payment for order #$orderLabel has been confirmed.'
+          : 'Payment for order #$orderLabel has been received.',
       OrderPaymentStatus.paymentConfirmed =>
         'Payment for order #$orderLabel has been confirmed.',
     };
@@ -196,7 +202,9 @@ abstract final class OrderNotificationService {
     await _notifyCustomer(
       session,
       order: order,
-      title: 'Payment update',
+      title: isCod && status == OrderPaymentStatus.paymentReceived
+          ? 'Cash payment confirmed'
+          : 'Payment update',
       body: body,
       type: InAppNotificationType.paymentUpdate,
       event: 'payment_${status.name}',
@@ -214,12 +222,14 @@ abstract final class OrderNotificationService {
       if (vendorUserId == null) return;
 
       final vendorBody = status == OrderPaymentStatus.paymentReceived
-          ? 'Customer has completed payment for Order #$orderLabel.'
+          ? (isCod
+              ? 'Cash payment confirmed for Order #$orderLabel.'
+              : 'Customer has completed payment for Order #$orderLabel.')
           : 'Payment for order #$orderLabel has been confirmed.';
       await _notifications.create(
         session,
         userId: vendorUserId,
-        title: 'Payment received',
+        title: isCod ? 'Cash payment confirmed' : 'Payment received',
         message: vendorBody,
         type: InAppNotificationType.paymentUpdate,
         referenceId: order.id,
@@ -252,6 +262,8 @@ abstract final class OrderNotificationService {
         'Payment for order #$orderLabel could not be processed.',
       PaymentTransactionStatus.refunded =>
         'Payment for order #$orderLabel has been refunded.',
+      PaymentTransactionStatus.refundPending =>
+        'Refund for order #$orderLabel is pending merchant portal settlement.',
       PaymentTransactionStatus.pending =>
         'Payment for order #$orderLabel is pending.',
       PaymentTransactionStatus.paid =>
@@ -395,9 +407,9 @@ abstract final class OrderNotificationService {
   }) async {
     final trimmedReason = reason?.trim();
     final body = approved
-        ? 'Your refund request for order '
-            '#${refund.orderId.toString().padLeft(5, '0')} was approved. '
-            'Payment has been marked as refunded.'
+        ? 'Your refund for order '
+            '#${refund.orderId.toString().padLeft(5, '0')} was completed. '
+            'Funds will appear per your eSewa account timeline.'
         : trimmedReason != null && trimmedReason.isNotEmpty
             ? 'Your refund request was rejected. $trimmedReason'
             : 'Your refund request was rejected.';
@@ -407,12 +419,72 @@ abstract final class OrderNotificationService {
     await _notifyCustomerByUserId(
       session,
       userId: refund.userId,
-      title: approved ? 'Refund approved' : 'Refund update',
+      title: approved ? 'Refund completed' : 'Refund update',
       body: body,
       type: InAppNotificationType.refundUpdate,
       referenceId: refund.id,
       event: approved ? 'refund_approved' : 'refund_rejected',
     );
+  }
+
+  static Future<void> notifyRefundPending(
+    Session session, {
+    required Order order,
+  }) async {
+    final orderLabel = _orderLabel(order);
+    await _notifyCustomer(
+      session,
+      order: order,
+      title: 'Refund pending',
+      body:
+          'Your order #$orderLabel was rejected after payment. '
+          'A refund is pending and will be completed through the eSewa merchant portal.',
+      type: InAppNotificationType.refundUpdate,
+      event: 'refund_pending',
+    );
+
+    // Notify all vendors on the order.
+    final items = await OrderItem.db.find(
+      session,
+      where: (row) => row.orderId.equals(order.id!),
+    );
+    final vendorIds = items.map((item) => item.vendorId).toSet();
+    for (final vendorId in vendorIds) {
+      final vendor = await Vendor.db.findById(session, vendorId);
+      final vendorUserId = vendor?.userId;
+      if (vendorUserId == null) continue;
+      await _notifications.create(
+        session,
+        userId: vendorUserId,
+        title: 'Refund pending',
+        message:
+            'Order #$orderLabel requires a manual eSewa refund after rejection.',
+        type: InAppNotificationType.refundUpdate,
+        referenceId: order.id,
+      );
+    }
+
+    // Admin visibility for manual merchant-portal settlement.
+    final admins = await User.db.find(
+      session,
+      where: (row) =>
+          row.role.equals(UserRole.admin) & row.deletedAt.equals(null),
+      limit: 50,
+    );
+    for (final admin in admins) {
+      final adminId = admin.id;
+      if (adminId == null) continue;
+      await _notifications.create(
+        session,
+        userId: adminId,
+        title: 'Refund pending (manual eSewa)',
+        message:
+            'Order #$orderLabel was rejected after online payment. '
+            'Complete the refund in the eSewa merchant portal, then mark it completed in admin refunds.',
+        type: InAppNotificationType.refundUpdate,
+        referenceId: order.id,
+      );
+    }
   }
 
   static Future<bool> _allowsPromotions(

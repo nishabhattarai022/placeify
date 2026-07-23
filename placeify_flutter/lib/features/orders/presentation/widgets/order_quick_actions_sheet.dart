@@ -124,7 +124,7 @@ class _OrderQuickActionsBody extends ConsumerWidget {
         _QuickAction(
           icon: Icons.rate_review_outlined,
           label: alreadyReviewed
-              ? OrderStrings.reviewSubmittedAction
+              ? OrderStrings.updateReviewAction
               : OrderStrings.leaveReviewAction,
           onTap: (context, ref) {
             LeaveReviewSheet.show(context, ref, order: order);

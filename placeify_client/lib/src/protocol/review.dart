@@ -29,7 +29,9 @@ abstract class Review implements _i1.SerializableModel {
     required this.rating,
     this.comment,
     DateTime? createdAt,
-  }) : createdAt = createdAt ?? DateTime.now();
+    DateTime? updatedAt,
+  }) : createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
   factory Review({
     int? id,
@@ -42,6 +44,7 @@ abstract class Review implements _i1.SerializableModel {
     required int rating,
     String? comment,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) = _ReviewImpl;
 
   factory Review.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -66,6 +69,9 @@ abstract class Review implements _i1.SerializableModel {
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
+      updatedAt: jsonSerialization['updatedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['updatedAt']),
     );
   }
 
@@ -92,6 +98,9 @@ abstract class Review implements _i1.SerializableModel {
 
   DateTime createdAt;
 
+  /// Last edit time; equals createdAt until the customer updates the review.
+  DateTime updatedAt;
+
   /// Returns a shallow copy of this [Review]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -106,6 +115,7 @@ abstract class Review implements _i1.SerializableModel {
     int? rating,
     String? comment,
     DateTime? createdAt,
+    DateTime? updatedAt,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -121,6 +131,7 @@ abstract class Review implements _i1.SerializableModel {
       'rating': rating,
       if (comment != null) 'comment': comment,
       'createdAt': createdAt.toJson(),
+      'updatedAt': updatedAt.toJson(),
     };
   }
 
@@ -144,6 +155,7 @@ class _ReviewImpl extends Review {
     required int rating,
     String? comment,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) : super._(
          id: id,
          userId: userId,
@@ -155,6 +167,7 @@ class _ReviewImpl extends Review {
          rating: rating,
          comment: comment,
          createdAt: createdAt,
+         updatedAt: updatedAt,
        );
 
   /// Returns a shallow copy of this [Review]
@@ -172,6 +185,7 @@ class _ReviewImpl extends Review {
     int? rating,
     Object? comment = _Undefined,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return Review(
       id: id is int? ? id : this.id,
@@ -184,6 +198,7 @@ class _ReviewImpl extends Review {
       rating: rating ?? this.rating,
       comment: comment is String? ? comment : this.comment,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }

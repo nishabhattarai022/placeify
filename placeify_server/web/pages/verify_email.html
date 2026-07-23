@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Verify your Placeify account</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --card: #1a222c;
+      --text: #f3f5f7;
+      --muted: #9aa7b5;
+      --accent: #c4a574;
+      --danger: #e57373;
+      --ok: #81c784;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Georgia, "Times New Roman", serif;
+      background: radial-gradient(1200px 600px at 20% -10%, #2a3340, var(--bg));
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 28px 24px;
+    }
+    h1 { font-size: 1.45rem; margin: 0 0 8px; font-weight: 600; }
+    p { color: var(--muted); line-height: 1.45; margin: 0 0 18px; font-size: 0.95rem; }
+    label { display: block; font-size: 0.85rem; margin-bottom: 6px; color: var(--text); }
+    input[type="password"] {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: #12181f;
+      color: var(--text);
+      font-size: 1rem;
+      margin-bottom: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 13px 16px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #1a140c;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:disabled { opacity: 0.6; cursor: wait; }
+    .msg { margin-top: 14px; font-size: 0.92rem; line-height: 1.4; }
+    .msg.err { color: var(--danger); }
+    .msg.ok { color: var(--ok); }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Verify your email</h1>
+    <p id="intro">Enter the password you chose during registration to activate your Placeify account.</p>
+
+    <form id="form">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required minlength="8" />
+      <button id="submit" type="submit">Activate account</button>
+    </form>
+
+    <p id="message" class="msg hidden" role="status"></p>
+  </main>
+
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const token = (params.get('token') || '').trim();
+      const form = document.getElementById('form');
+      const intro = document.getElementById('intro');
+      const message = document.getElementById('message');
+      const submit = document.getElementById('submit');
+
+      function show(text, ok) {
+        message.textContent = text;
+        message.className = 'msg ' + (ok ? 'ok' : 'err');
+        message.classList.remove('hidden');
+      }
+
+      if (!token) {
+        form.classList.add('hidden');
+        intro.textContent = 'This verification link is invalid. Request a new one from the Placeify app.';
+        show('Missing token in link.', false);
+        return;
+      }
+
+      form.addEventListener('submit', async function (event) {
+        event.preventDefault();
+        const password = document.getElementById('password').value;
+        submit.disabled = true;
+        message.classList.add('hidden');
+        try {
+          const response = await fetch('/auth/verify-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: token, password: password }),
+          });
+          const data = await response.json().catch(function () { return {}; });
+          if (!response.ok) {
+            show(data.message || 'Verification failed. Try again.', false);
+            submit.disabled = false;
+            return;
+          }
+          form.classList.add('hidden');
+          intro.textContent = 'Your email is verified. Your Placeify account is now active.';
+          show((data.message || 'Verified successfully.') + ' Open the Placeify app and sign in.', true);
+        } catch (err) {
+          show('Could not reach the server. Check that you are on the same Wi‑Fi as the Placeify server.', false);
+          submit.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

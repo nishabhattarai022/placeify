@@ -23,23 +23,38 @@ class CurrentUser extends _$CurrentUser {
     return repo.getCurrentUser();
   }
 
-  /// Creates an account and signs the user in.
-  Future<void> registerAccount({
+  /// Starts registration and emails a verification link. Does not sign in.
+  Future<String> registerAccount({
     required String fullName,
     required String email,
     required String password,
   }) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final repo = await ref.read(authRepositoryProvider.future);
-      return repo.register(
-        fullName: fullName,
-        email: email,
-        password: password,
-      );
-    });
-    if (state.hasError) throw _unwrapError(state.error!);
-    await ensurePlaceifyRealtime();
+    final repo = await ref.read(authRepositoryProvider.future);
+    return repo.beginEmailRegistration(
+      fullName: fullName,
+      email: email,
+      password: password,
+    );
+  }
+
+  Future<void> verifyEmailRegistration({
+    required String token,
+    required String password,
+    String? fullName,
+  }) async {
+    final repo = await ref.read(authRepositoryProvider.future);
+    await repo.verifyEmailRegistration(
+      token: token,
+      password: password,
+      fullName: fullName,
+    );
+  }
+
+  Future<void> resendVerificationEmail({
+    required String email,
+  }) async {
+    final repo = await ref.read(authRepositoryProvider.future);
+    await repo.resendVerificationEmail(email: email);
   }
 
   Future<AppUser> signIn({

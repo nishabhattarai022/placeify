@@ -1,6 +1,7 @@
 import 'package:placeify_client/placeify_client.dart' hide Order, OrderItem;
 
 import '../../../core/config/resolve_media_url.dart';
+import '../../cart/data/product_id_codec.dart';
 import '../domain/enums/consumer_order_status.dart';
 import '../domain/enums/payment_status.dart';
 import '../domain/models/order.dart';
@@ -19,7 +20,7 @@ abstract final class OrderApiMapper {
       status: mapStatus(summary.status, latestStage: summary.latestDeliveryStage),
       items: [
         OrderItem(
-          productId: summary.id.toString(),
+          productId: '',
           productName: summary.primaryProductName ?? 'Order item',
           productImageUrl: summary.primaryThumbnailUrl ?? '',
           brandName: '',
@@ -35,22 +36,28 @@ abstract final class OrderApiMapper {
       subtotal: summary.totalAmount,
       deliveryFee: 0,
       total: summary.totalAmount,
-      deliveryAddress: '',
+      deliveryAddress: summary.shippingAddress,
     );
   }
 
   static Order fromDetail(UserOrderDetail detail, {required String userId}) {
     final items = detail.items
         .map(
-          (line) => OrderItem(
-            productId: line.productId.toString(),
-            productName: line.productName,
-            productImageUrl: line.thumbnailUrl ?? '',
-            brandName: '',
-            sku: '${detail.orderNumber}-${line.productId}',
-            unitPrice: line.unitPrice,
-            quantity: line.quantity,
-          ),
+          (line) {
+            final listPrice = line.listUnitPrice;
+            final hasDiscount =
+                listPrice != null && listPrice > line.unitPrice;
+            return OrderItem(
+              productId: ProductIdCodec.fromDatabaseId(line.productId),
+              productName: line.productName,
+              productImageUrl: line.thumbnailUrl ?? '',
+              brandName: line.vendorName?.trim() ?? '',
+              sku: '${detail.orderNumber}-${line.productId}',
+              unitPrice: hasDiscount ? listPrice : line.unitPrice,
+              discountedPrice: hasDiscount ? line.unitPrice : null,
+              quantity: line.quantity,
+            );
+          },
         )
         .toList();
 
@@ -77,6 +84,8 @@ abstract final class OrderApiMapper {
       deliveryFee: (detail.totalAmount - subtotal).clamp(0, double.infinity),
       total: detail.totalAmount,
       deliveryAddress: detail.shippingAddress,
+      customerName: detail.customerName,
+      customerPhone: detail.customerPhone,
     );
   }
 

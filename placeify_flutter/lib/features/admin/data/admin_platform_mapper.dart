@@ -31,6 +31,16 @@ abstract final class AdminPlatformMapper {
       recentActivity: stats.recentActivity.map(toAuditLogEntry).toList(),
       recentApplications:
           stats.recentApplications.map(toVendorApplication).toList(),
+      totalTransactions: stats.totalTransactions,
+      refundCount: stats.refundCount,
+      refundValue: stats.refundValue,
+      pendingRefundCount: stats.pendingRefundCount,
+      successfulRefundCount: stats.successfulRefundCount,
+      codCount: stats.codCount,
+      esewaCount: stats.esewaCount,
+      paymentSuccessRate: stats.paymentSuccessRate,
+      dailyRevenue: stats.dailyRevenue,
+      monthlyRevenue: stats.monthlyRevenue,
     );
   }
 

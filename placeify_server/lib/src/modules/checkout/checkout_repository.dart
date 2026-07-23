@@ -46,7 +46,9 @@ class CheckoutStore {
   ) async {
     final address = request.shippingAddress.trim();
     if (address.isEmpty) {
-      throw PlaceifyException(message: 'Shipping address is required.',
+      throw PlaceifyException(
+        message:
+            'Please enter your delivery address before placing your order.',
         code: 'INVALID_ADDRESS',
       );
     }

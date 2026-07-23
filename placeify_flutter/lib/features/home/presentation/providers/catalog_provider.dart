@@ -87,6 +87,7 @@ class CatalogIndex extends _$CatalogIndex {
   Future<void> ensureProducts(Iterable<String> productIds) async {
     final current = state.value ?? {};
     final missing = productIds
+        .map(ProductIdCodec.normalizeUiProductId)
         .where((id) => id.trim().isNotEmpty && current[id] == null)
         .toSet();
     if (missing.isEmpty) return;

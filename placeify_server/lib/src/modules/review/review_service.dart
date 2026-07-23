@@ -25,6 +25,32 @@ class ReviewService {
     );
   }
 
+  Future<Review?> getMyReviewForOrderItem(
+    Session session,
+    int productId,
+    int orderId,
+  ) {
+    return _repository.getMyReviewForOrderItem(session, productId, orderId);
+  }
+
+  Future<Review> updateReview(
+    Session session,
+    int reviewId,
+    int rating, {
+    String? comment,
+  }) {
+    return _repository.updateReview(
+      session,
+      reviewId,
+      rating,
+      comment: comment,
+    );
+  }
+
+  Future<void> deleteReview(Session session, int reviewId) {
+    return _repository.deleteReview(session, reviewId);
+  }
+
   Future<List<Review>> listProductReviews(
     Session session,
     int productId, {

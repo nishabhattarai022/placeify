@@ -24,6 +24,16 @@ _AdminStats _$AdminStatsFromJson(Map<String, dynamic> json) => _AdminStats(
           ?.map((e) => VendorApplication.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const <VendorApplication>[],
+  totalTransactions: (json['totalTransactions'] as num?)?.toInt() ?? 0,
+  refundCount: (json['refundCount'] as num?)?.toInt() ?? 0,
+  refundValue: (json['refundValue'] as num?)?.toDouble() ?? 0,
+  pendingRefundCount: (json['pendingRefundCount'] as num?)?.toInt() ?? 0,
+  successfulRefundCount: (json['successfulRefundCount'] as num?)?.toInt() ?? 0,
+  codCount: (json['codCount'] as num?)?.toInt() ?? 0,
+  esewaCount: (json['esewaCount'] as num?)?.toInt() ?? 0,
+  paymentSuccessRate: (json['paymentSuccessRate'] as num?)?.toDouble() ?? 0,
+  dailyRevenue: (json['dailyRevenue'] as num?)?.toDouble() ?? 0,
+  monthlyRevenue: (json['monthlyRevenue'] as num?)?.toDouble() ?? 0,
 );
 
 Map<String, dynamic> _$AdminStatsToJson(_AdminStats instance) =>
@@ -37,4 +47,14 @@ Map<String, dynamic> _$AdminStatsToJson(_AdminStats instance) =>
       'suspendedCount': instance.suspendedCount,
       'recentActivity': instance.recentActivity,
       'recentApplications': instance.recentApplications,
+      'totalTransactions': instance.totalTransactions,
+      'refundCount': instance.refundCount,
+      'refundValue': instance.refundValue,
+      'pendingRefundCount': instance.pendingRefundCount,
+      'successfulRefundCount': instance.successfulRefundCount,
+      'codCount': instance.codCount,
+      'esewaCount': instance.esewaCount,
+      'paymentSuccessRate': instance.paymentSuccessRate,
+      'dailyRevenue': instance.dailyRevenue,
+      'monthlyRevenue': instance.monthlyRevenue,
     };

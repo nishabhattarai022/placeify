@@ -19,12 +19,16 @@ abstract class UserOrderPaymentEvent implements _i1.SerializableModel {
     required this.status,
     this.note,
     required this.createdAt,
+    this.eventKey,
+    this.displayLabel,
   });
 
   factory UserOrderPaymentEvent({
     required _i2.OrderPaymentStatus status,
     String? note,
     required DateTime createdAt,
+    String? eventKey,
+    String? displayLabel,
   }) = _UserOrderPaymentEventImpl;
 
   factory UserOrderPaymentEvent.fromJson(
@@ -38,6 +42,8 @@ abstract class UserOrderPaymentEvent implements _i1.SerializableModel {
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
+      eventKey: jsonSerialization['eventKey'] as String?,
+      displayLabel: jsonSerialization['displayLabel'] as String?,
     );
   }
 
@@ -47,6 +53,12 @@ abstract class UserOrderPaymentEvent implements _i1.SerializableModel {
 
   DateTime createdAt;
 
+  /// Raw history key (OrderPaymentStatus or PaymentTransactionStatus name).
+  String? eventKey;
+
+  /// Human-readable timeline label derived from existing history.
+  String? displayLabel;
+
   /// Returns a shallow copy of this [UserOrderPaymentEvent]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -54,6 +66,8 @@ abstract class UserOrderPaymentEvent implements _i1.SerializableModel {
     _i2.OrderPaymentStatus? status,
     String? note,
     DateTime? createdAt,
+    String? eventKey,
+    String? displayLabel,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -62,6 +76,8 @@ abstract class UserOrderPaymentEvent implements _i1.SerializableModel {
       'status': status.toJson(),
       if (note != null) 'note': note,
       'createdAt': createdAt.toJson(),
+      if (eventKey != null) 'eventKey': eventKey,
+      if (displayLabel != null) 'displayLabel': displayLabel,
     };
   }
 
@@ -78,10 +94,14 @@ class _UserOrderPaymentEventImpl extends UserOrderPaymentEvent {
     required _i2.OrderPaymentStatus status,
     String? note,
     required DateTime createdAt,
+    String? eventKey,
+    String? displayLabel,
   }) : super._(
          status: status,
          note: note,
          createdAt: createdAt,
+         eventKey: eventKey,
+         displayLabel: displayLabel,
        );
 
   /// Returns a shallow copy of this [UserOrderPaymentEvent]
@@ -92,11 +112,15 @@ class _UserOrderPaymentEventImpl extends UserOrderPaymentEvent {
     _i2.OrderPaymentStatus? status,
     Object? note = _Undefined,
     DateTime? createdAt,
+    Object? eventKey = _Undefined,
+    Object? displayLabel = _Undefined,
   }) {
     return UserOrderPaymentEvent(
       status: status ?? this.status,
       note: note is String? ? note : this.note,
       createdAt: createdAt ?? this.createdAt,
+      eventKey: eventKey is String? ? eventKey : this.eventKey,
+      displayLabel: displayLabel is String? ? displayLabel : this.displayLabel,
     );
   }
 }

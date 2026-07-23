@@ -14,7 +14,7 @@ import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'payment_transaction_status.dart' as _i2;
 import 'payment_method.dart' as _i3;
 
-/// Payment snapshot for a customer order.
+/// Payment snapshot for a customer order / payment ledger row.
 abstract class UserOrderPaymentSummary implements _i1.SerializableModel {
   UserOrderPaymentSummary._({
     required this.orderId,
@@ -23,6 +23,18 @@ abstract class UserOrderPaymentSummary implements _i1.SerializableModel {
     required this.amount,
     required this.provider,
     this.providerTransactionId,
+    this.orderNumber,
+    this.vendorName,
+    this.deliveryFee,
+    this.discount,
+    this.refundStatus,
+    this.refundAmount,
+    this.refundReason,
+    this.refundDate,
+    this.orderDate,
+    this.paymentDate,
+    this.primaryThumbnailUrl,
+    this.orderStatus,
   });
 
   factory UserOrderPaymentSummary({
@@ -32,6 +44,18 @@ abstract class UserOrderPaymentSummary implements _i1.SerializableModel {
     required double amount,
     required String provider,
     String? providerTransactionId,
+    String? orderNumber,
+    String? vendorName,
+    double? deliveryFee,
+    double? discount,
+    String? refundStatus,
+    double? refundAmount,
+    String? refundReason,
+    DateTime? refundDate,
+    DateTime? orderDate,
+    DateTime? paymentDate,
+    String? primaryThumbnailUrl,
+    String? orderStatus,
   }) = _UserOrderPaymentSummaryImpl;
 
   factory UserOrderPaymentSummary.fromJson(
@@ -49,6 +73,26 @@ abstract class UserOrderPaymentSummary implements _i1.SerializableModel {
       provider: jsonSerialization['provider'] as String,
       providerTransactionId:
           jsonSerialization['providerTransactionId'] as String?,
+      orderNumber: jsonSerialization['orderNumber'] as String?,
+      vendorName: jsonSerialization['vendorName'] as String?,
+      deliveryFee: (jsonSerialization['deliveryFee'] as num?)?.toDouble(),
+      discount: (jsonSerialization['discount'] as num?)?.toDouble(),
+      refundStatus: jsonSerialization['refundStatus'] as String?,
+      refundAmount: (jsonSerialization['refundAmount'] as num?)?.toDouble(),
+      refundReason: jsonSerialization['refundReason'] as String?,
+      refundDate: jsonSerialization['refundDate'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['refundDate']),
+      orderDate: jsonSerialization['orderDate'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['orderDate']),
+      paymentDate: jsonSerialization['paymentDate'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['paymentDate'],
+            ),
+      primaryThumbnailUrl: jsonSerialization['primaryThumbnailUrl'] as String?,
+      orderStatus: jsonSerialization['orderStatus'] as String?,
     );
   }
 
@@ -64,6 +108,30 @@ abstract class UserOrderPaymentSummary implements _i1.SerializableModel {
 
   String? providerTransactionId;
 
+  String? orderNumber;
+
+  String? vendorName;
+
+  double? deliveryFee;
+
+  double? discount;
+
+  String? refundStatus;
+
+  double? refundAmount;
+
+  String? refundReason;
+
+  DateTime? refundDate;
+
+  DateTime? orderDate;
+
+  DateTime? paymentDate;
+
+  String? primaryThumbnailUrl;
+
+  String? orderStatus;
+
   /// Returns a shallow copy of this [UserOrderPaymentSummary]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -74,6 +142,18 @@ abstract class UserOrderPaymentSummary implements _i1.SerializableModel {
     double? amount,
     String? provider,
     String? providerTransactionId,
+    String? orderNumber,
+    String? vendorName,
+    double? deliveryFee,
+    double? discount,
+    String? refundStatus,
+    double? refundAmount,
+    String? refundReason,
+    DateTime? refundDate,
+    DateTime? orderDate,
+    DateTime? paymentDate,
+    String? primaryThumbnailUrl,
+    String? orderStatus,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -86,6 +166,19 @@ abstract class UserOrderPaymentSummary implements _i1.SerializableModel {
       'provider': provider,
       if (providerTransactionId != null)
         'providerTransactionId': providerTransactionId,
+      if (orderNumber != null) 'orderNumber': orderNumber,
+      if (vendorName != null) 'vendorName': vendorName,
+      if (deliveryFee != null) 'deliveryFee': deliveryFee,
+      if (discount != null) 'discount': discount,
+      if (refundStatus != null) 'refundStatus': refundStatus,
+      if (refundAmount != null) 'refundAmount': refundAmount,
+      if (refundReason != null) 'refundReason': refundReason,
+      if (refundDate != null) 'refundDate': refundDate?.toJson(),
+      if (orderDate != null) 'orderDate': orderDate?.toJson(),
+      if (paymentDate != null) 'paymentDate': paymentDate?.toJson(),
+      if (primaryThumbnailUrl != null)
+        'primaryThumbnailUrl': primaryThumbnailUrl,
+      if (orderStatus != null) 'orderStatus': orderStatus,
     };
   }
 
@@ -105,6 +198,18 @@ class _UserOrderPaymentSummaryImpl extends UserOrderPaymentSummary {
     required double amount,
     required String provider,
     String? providerTransactionId,
+    String? orderNumber,
+    String? vendorName,
+    double? deliveryFee,
+    double? discount,
+    String? refundStatus,
+    double? refundAmount,
+    String? refundReason,
+    DateTime? refundDate,
+    DateTime? orderDate,
+    DateTime? paymentDate,
+    String? primaryThumbnailUrl,
+    String? orderStatus,
   }) : super._(
          orderId: orderId,
          status: status,
@@ -112,6 +217,18 @@ class _UserOrderPaymentSummaryImpl extends UserOrderPaymentSummary {
          amount: amount,
          provider: provider,
          providerTransactionId: providerTransactionId,
+         orderNumber: orderNumber,
+         vendorName: vendorName,
+         deliveryFee: deliveryFee,
+         discount: discount,
+         refundStatus: refundStatus,
+         refundAmount: refundAmount,
+         refundReason: refundReason,
+         refundDate: refundDate,
+         orderDate: orderDate,
+         paymentDate: paymentDate,
+         primaryThumbnailUrl: primaryThumbnailUrl,
+         orderStatus: orderStatus,
        );
 
   /// Returns a shallow copy of this [UserOrderPaymentSummary]
@@ -125,6 +242,18 @@ class _UserOrderPaymentSummaryImpl extends UserOrderPaymentSummary {
     double? amount,
     String? provider,
     Object? providerTransactionId = _Undefined,
+    Object? orderNumber = _Undefined,
+    Object? vendorName = _Undefined,
+    Object? deliveryFee = _Undefined,
+    Object? discount = _Undefined,
+    Object? refundStatus = _Undefined,
+    Object? refundAmount = _Undefined,
+    Object? refundReason = _Undefined,
+    Object? refundDate = _Undefined,
+    Object? orderDate = _Undefined,
+    Object? paymentDate = _Undefined,
+    Object? primaryThumbnailUrl = _Undefined,
+    Object? orderStatus = _Undefined,
   }) {
     return UserOrderPaymentSummary(
       orderId: orderId ?? this.orderId,
@@ -135,6 +264,20 @@ class _UserOrderPaymentSummaryImpl extends UserOrderPaymentSummary {
       providerTransactionId: providerTransactionId is String?
           ? providerTransactionId
           : this.providerTransactionId,
+      orderNumber: orderNumber is String? ? orderNumber : this.orderNumber,
+      vendorName: vendorName is String? ? vendorName : this.vendorName,
+      deliveryFee: deliveryFee is double? ? deliveryFee : this.deliveryFee,
+      discount: discount is double? ? discount : this.discount,
+      refundStatus: refundStatus is String? ? refundStatus : this.refundStatus,
+      refundAmount: refundAmount is double? ? refundAmount : this.refundAmount,
+      refundReason: refundReason is String? ? refundReason : this.refundReason,
+      refundDate: refundDate is DateTime? ? refundDate : this.refundDate,
+      orderDate: orderDate is DateTime? ? orderDate : this.orderDate,
+      paymentDate: paymentDate is DateTime? ? paymentDate : this.paymentDate,
+      primaryThumbnailUrl: primaryThumbnailUrl is String?
+          ? primaryThumbnailUrl
+          : this.primaryThumbnailUrl,
+      orderStatus: orderStatus is String? ? orderStatus : this.orderStatus,
     );
   }
 }

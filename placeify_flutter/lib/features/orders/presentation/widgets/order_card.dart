@@ -150,6 +150,20 @@ class OrderCard extends ConsumerWidget {
                                   height: 1.35,
                                 ),
                               ),
+                              if (order.deliveryAddress.trim().isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  order.deliveryAddress,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.textSecondary,
+                                    height: 1.35,
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -230,7 +244,7 @@ class OrderCard extends ConsumerWidget {
           ),
           _OrderActionButton(
             label: ref.watch(submittedOrderReviewsProvider).contains(order.id)
-                ? OrderStrings.reviewSubmittedAction
+                ? OrderStrings.updateReviewAction
                 : OrderStrings.leaveReviewAction,
             primary: false,
             onTap: () => LeaveReviewSheet.show(context, ref, order: order),
@@ -265,13 +279,18 @@ class _OrderHeroImage extends StatelessWidget {
 
   final OrderItem item;
 
-  bool get _isAsset => item.productImageUrl.startsWith('assets/');
+  bool get _isAsset => item.productImageUrl.trim().startsWith('assets/');
 
   @override
   Widget build(BuildContext context) {
+    final url = item.productImageUrl.trim();
+    if (url.isEmpty) {
+      return _fallbackIcon();
+    }
+
     if (_isAsset) {
       return Image.asset(
-        item.productImageUrl,
+        url,
         fit: BoxFit.contain,
         width: double.infinity,
         height: double.infinity,
@@ -280,7 +299,7 @@ class _OrderHeroImage extends StatelessWidget {
     }
 
     return CachedNetworkImage(
-      imageUrl: item.productImageUrl,
+      imageUrl: url,
       fit: BoxFit.cover,
       width: double.infinity,
       height: double.infinity,

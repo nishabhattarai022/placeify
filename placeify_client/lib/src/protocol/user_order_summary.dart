@@ -26,6 +26,7 @@ abstract class UserOrderSummary implements _i1.SerializableModel {
     required this.itemCount,
     this.primaryProductName,
     this.primaryThumbnailUrl,
+    required this.shippingAddress,
     this.latestDeliveryStage,
     this.latestDeliveryNote,
     required this.orderPaymentStatus,
@@ -40,6 +41,7 @@ abstract class UserOrderSummary implements _i1.SerializableModel {
     required int itemCount,
     String? primaryProductName,
     String? primaryThumbnailUrl,
+    required String shippingAddress,
     _i3.DeliveryStage? latestDeliveryStage,
     String? latestDeliveryNote,
     required _i4.OrderPaymentStatus orderPaymentStatus,
@@ -57,6 +59,7 @@ abstract class UserOrderSummary implements _i1.SerializableModel {
       itemCount: jsonSerialization['itemCount'] as int,
       primaryProductName: jsonSerialization['primaryProductName'] as String?,
       primaryThumbnailUrl: jsonSerialization['primaryThumbnailUrl'] as String?,
+      shippingAddress: jsonSerialization['shippingAddress'] as String,
       latestDeliveryStage: jsonSerialization['latestDeliveryStage'] == null
           ? null
           : _i3.DeliveryStage.fromJson(
@@ -85,6 +88,9 @@ abstract class UserOrderSummary implements _i1.SerializableModel {
 
   String? primaryThumbnailUrl;
 
+  /// Snapshot from Order.shippingAddress (not live profile address).
+  String shippingAddress;
+
   _i3.DeliveryStage? latestDeliveryStage;
 
   String? latestDeliveryNote;
@@ -103,6 +109,7 @@ abstract class UserOrderSummary implements _i1.SerializableModel {
     int? itemCount,
     String? primaryProductName,
     String? primaryThumbnailUrl,
+    String? shippingAddress,
     _i3.DeliveryStage? latestDeliveryStage,
     String? latestDeliveryNote,
     _i4.OrderPaymentStatus? orderPaymentStatus,
@@ -120,6 +127,7 @@ abstract class UserOrderSummary implements _i1.SerializableModel {
       if (primaryProductName != null) 'primaryProductName': primaryProductName,
       if (primaryThumbnailUrl != null)
         'primaryThumbnailUrl': primaryThumbnailUrl,
+      'shippingAddress': shippingAddress,
       if (latestDeliveryStage != null)
         'latestDeliveryStage': latestDeliveryStage?.toJson(),
       if (latestDeliveryNote != null) 'latestDeliveryNote': latestDeliveryNote,
@@ -145,6 +153,7 @@ class _UserOrderSummaryImpl extends UserOrderSummary {
     required int itemCount,
     String? primaryProductName,
     String? primaryThumbnailUrl,
+    required String shippingAddress,
     _i3.DeliveryStage? latestDeliveryStage,
     String? latestDeliveryNote,
     required _i4.OrderPaymentStatus orderPaymentStatus,
@@ -157,6 +166,7 @@ class _UserOrderSummaryImpl extends UserOrderSummary {
          itemCount: itemCount,
          primaryProductName: primaryProductName,
          primaryThumbnailUrl: primaryThumbnailUrl,
+         shippingAddress: shippingAddress,
          latestDeliveryStage: latestDeliveryStage,
          latestDeliveryNote: latestDeliveryNote,
          orderPaymentStatus: orderPaymentStatus,
@@ -175,6 +185,7 @@ class _UserOrderSummaryImpl extends UserOrderSummary {
     int? itemCount,
     Object? primaryProductName = _Undefined,
     Object? primaryThumbnailUrl = _Undefined,
+    String? shippingAddress,
     Object? latestDeliveryStage = _Undefined,
     Object? latestDeliveryNote = _Undefined,
     _i4.OrderPaymentStatus? orderPaymentStatus,
@@ -192,6 +203,7 @@ class _UserOrderSummaryImpl extends UserOrderSummary {
       primaryThumbnailUrl: primaryThumbnailUrl is String?
           ? primaryThumbnailUrl
           : this.primaryThumbnailUrl,
+      shippingAddress: shippingAddress ?? this.shippingAddress,
       latestDeliveryStage: latestDeliveryStage is _i3.DeliveryStage?
           ? latestDeliveryStage
           : this.latestDeliveryStage,

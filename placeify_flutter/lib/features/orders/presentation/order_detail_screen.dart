@@ -22,6 +22,7 @@ import 'widgets/order_item_row.dart';
 import 'widgets/order_reason_sheets.dart';
 import 'widgets/order_section_card.dart';
 import 'widgets/order_timeline.dart';
+import 'widgets/payment_lifecycle_timeline.dart';
 import 'widgets/leave_review_sheet.dart';
 import 'providers/submitted_order_reviews_provider.dart';
 
@@ -124,6 +125,11 @@ class _OrderDetailBody extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               OrderSectionCard(
+                title: 'Payment timeline',
+                child: PaymentLifecycleTimeline(orderId: order.id),
+              ),
+              const SizedBox(height: 12),
+              OrderSectionCard(
                 title: OrderStrings.itemsSectionTitle,
                 child: Column(
                   children: [
@@ -186,6 +192,48 @@ class _OrderDetailBody extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               OrderSectionCard(
+                title: OrderStrings.deliveryDetailsTitle,
+                child: Column(
+                  children: [
+                    _SummaryRow(
+                      label: OrderStrings.orderDateLabel,
+                      value: Formatters.shortDate(order.placedAt),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          OrderStrings.deliveryStatusLabel,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        ConsumerOrderStatusChip(status: order.status),
+                      ],
+                    ),
+                    if (order.customerName != null &&
+                        order.customerName!.trim().isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      _SummaryRow(
+                        label: OrderStrings.customerNameLabel,
+                        value: order.customerName!.trim(),
+                      ),
+                    ],
+                    if (order.customerPhone != null &&
+                        order.customerPhone!.trim().isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      _SummaryRow(
+                        label: OrderStrings.customerPhoneLabel,
+                        value: order.customerPhone!.trim(),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              OrderSectionCard(
                 title: OrderStrings.addressSectionTitle,
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,7 +246,9 @@ class _OrderDetailBody extends ConsumerWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        order.deliveryAddress,
+                        order.deliveryAddress.trim().isEmpty
+                            ? '—'
+                            : order.deliveryAddress,
                         style: const TextStyle(
                           fontSize: 14,
                           color: AppColors.textPrimary,
@@ -283,11 +333,12 @@ class _OrderDetailBody extends ConsumerWidget {
       );
       final alreadyReviewed =
           ref.watch(submittedOrderReviewsProvider).contains(order.id);
+      // #region agent log
+      // Detail used to disable this button when alreadyReviewed — that blocked edits.
+      // #endregion
       addButton(
         OutlinedButton(
-          onPressed: alreadyReviewed
-              ? null
-              : () => LeaveReviewSheet.show(context, ref, order: order),
+          onPressed: () => LeaveReviewSheet.show(context, ref, order: order),
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.espresso,
             disabledForegroundColor: AppColors.textMuted,
@@ -301,7 +352,7 @@ class _OrderDetailBody extends ConsumerWidget {
             width: double.infinity,
             child: Text(
               alreadyReviewed
-                  ? OrderStrings.reviewSubmittedAction
+                  ? OrderStrings.updateReviewAction
                   : OrderStrings.leaveReviewAction,
               textAlign: TextAlign.center,
               style: const TextStyle(

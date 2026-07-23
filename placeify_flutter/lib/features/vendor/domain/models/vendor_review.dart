@@ -7,6 +7,7 @@ class VendorReview {
     required this.rating,
     required this.comment,
     required this.createdAt,
+    required this.updatedAt,
     this.thumbnailUrl,
     this.vendorReply,
   });
@@ -19,5 +20,9 @@ class VendorReview {
   final int rating;
   final String comment;
   final DateTime createdAt;
+  final DateTime updatedAt;
   final String? vendorReply;
+
+  bool get wasEdited =>
+      updatedAt.toUtc().difference(createdAt.toUtc()).inSeconds.abs() >= 1;
 }

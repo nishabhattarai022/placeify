@@ -77,6 +77,7 @@ class AdminPlatformStore {
       pagination: PaginationInput(page: 1, pageSize: 5),
     );
     final recentActivity = await getAuditLog(session, limit: 4);
+    final paymentStats = await _platformPaymentStats(session);
 
     return AdminPlatformStats(
       totalVendors: approvedCount,
@@ -90,6 +91,95 @@ class AdminPlatformStore {
       recentActivity: recentActivity,
       signupSeries: const [],
       recentApplications: recentApplications,
+      totalTransactions: paymentStats.totalTransactions,
+      refundCount: paymentStats.refundCount,
+      refundValue: paymentStats.refundValue,
+      pendingRefundCount: paymentStats.pendingRefundCount,
+      successfulRefundCount: paymentStats.successfulRefundCount,
+      codCount: paymentStats.codCount,
+      esewaCount: paymentStats.esewaCount,
+      paymentSuccessRate: paymentStats.paymentSuccessRate,
+      dailyRevenue: paymentStats.dailyRevenue,
+      monthlyRevenue: paymentStats.monthlyRevenue,
+    );
+  }
+
+  Future<
+      ({
+        int totalTransactions,
+        int refundCount,
+        double refundValue,
+        int pendingRefundCount,
+        int successfulRefundCount,
+        int codCount,
+        int esewaCount,
+        double paymentSuccessRate,
+        double dailyRevenue,
+        double monthlyRevenue,
+      })> _platformPaymentStats(Session session) async {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final startOfMonth = DateTime(now.year, now.month, 1);
+
+    final payments = await PaymentTransaction.db.find(session);
+    final totalTransactions = payments.length;
+    var refundCount = 0;
+    var refundValue = 0.0;
+    var pendingRefundCount = 0;
+    var successfulRefundCount = 0;
+    var codCount = 0;
+    var esewaCount = 0;
+    var paidCount = 0;
+    var failedCount = 0;
+    var dailyRevenue = 0.0;
+    var monthlyRevenue = 0.0;
+
+    for (final payment in payments) {
+      if (payment.paymentMethod == PaymentMethod.cashOnDelivery) {
+        codCount += 1;
+      } else if (payment.paymentMethod == PaymentMethod.esewa) {
+        esewaCount += 1;
+      }
+
+      if (payment.status == PaymentTransactionStatus.refunded) {
+        refundCount += 1;
+        successfulRefundCount += 1;
+        refundValue += payment.amount;
+      } else if (payment.status == PaymentTransactionStatus.refundPending) {
+        pendingRefundCount += 1;
+        refundCount += 1;
+      }
+
+      if (payment.status == PaymentTransactionStatus.paid ||
+          payment.status == PaymentTransactionStatus.refundPending ||
+          payment.status == PaymentTransactionStatus.refunded) {
+        paidCount += 1;
+        if (!payment.updatedAt.isBefore(startOfDay)) {
+          dailyRevenue += payment.amount;
+        }
+        if (!payment.updatedAt.isBefore(startOfMonth)) {
+          monthlyRevenue += payment.amount;
+        }
+      } else if (payment.status == PaymentTransactionStatus.failed) {
+        failedCount += 1;
+      }
+    }
+
+    final decided = paidCount + failedCount;
+    final paymentSuccessRate =
+        decided == 0 ? 0.0 : (paidCount / decided) * 100;
+
+    return (
+      totalTransactions: totalTransactions,
+      refundCount: refundCount,
+      refundValue: refundValue,
+      pendingRefundCount: pendingRefundCount,
+      successfulRefundCount: successfulRefundCount,
+      codCount: codCount,
+      esewaCount: esewaCount,
+      paymentSuccessRate: paymentSuccessRate,
+      dailyRevenue: dailyRevenue,
+      monthlyRevenue: monthlyRevenue,
     );
   }
 

@@ -349,12 +349,12 @@ class Cart extends _$Cart {
 
       final profile = await client.user.getCurrentUser();
       final savedAddress = profile?.address?.trim();
-      final shippingAddress = savedAddress != null && savedAddress.isNotEmpty
-          ? savedAddress
-          : 'Kathmandu, Nepal';
+      if (savedAddress == null || savedAddress.isEmpty) {
+        return CartStrings.deliveryAddressRequired;
+      }
 
       await _cartRepository.checkout(
-        shippingAddress,
+        savedAddress,
         paymentMethod: paymentMethod,
       );
 

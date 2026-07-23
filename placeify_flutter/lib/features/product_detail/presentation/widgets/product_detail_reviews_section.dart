@@ -225,7 +225,7 @@ class _ReviewTile extends StatelessWidget {
           ],
           const SizedBox(height: 6),
           Text(
-            RelativeTime.format(review.createdAt),
+            _reviewTimestampLabel(review),
             style: TextStyle(
               fontSize: 11,
               color: AppColors.textMuted.withValues(alpha: 0.85),
@@ -234,5 +234,15 @@ class _ReviewTile extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _reviewTimestampLabel(Review review) {
+    final created = review.createdAt.toUtc();
+    final updated = review.updatedAt.toUtc();
+    final wasEdited = updated.difference(created).inSeconds.abs() >= 1;
+    if (wasEdited) {
+      return 'Edited ${RelativeTime.format(updated)}';
+    }
+    return RelativeTime.format(created);
   }
 }

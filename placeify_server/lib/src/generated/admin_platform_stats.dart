@@ -30,7 +30,26 @@ abstract class AdminPlatformStats
     required this.recentActivity,
     required this.signupSeries,
     required this.recentApplications,
-  });
+    int? totalTransactions,
+    int? refundCount,
+    double? refundValue,
+    int? pendingRefundCount,
+    int? successfulRefundCount,
+    int? codCount,
+    int? esewaCount,
+    double? paymentSuccessRate,
+    double? dailyRevenue,
+    double? monthlyRevenue,
+  }) : totalTransactions = totalTransactions ?? 0,
+       refundCount = refundCount ?? 0,
+       refundValue = refundValue ?? 0.0,
+       pendingRefundCount = pendingRefundCount ?? 0,
+       successfulRefundCount = successfulRefundCount ?? 0,
+       codCount = codCount ?? 0,
+       esewaCount = esewaCount ?? 0,
+       paymentSuccessRate = paymentSuccessRate ?? 0.0,
+       dailyRevenue = dailyRevenue ?? 0.0,
+       monthlyRevenue = monthlyRevenue ?? 0.0;
 
   factory AdminPlatformStats({
     required int totalVendors,
@@ -44,6 +63,16 @@ abstract class AdminPlatformStats
     required List<_i2.AdminAuditLogSummary> recentActivity,
     required List<double> signupSeries,
     required List<_i3.VendorApplicationSummary> recentApplications,
+    int? totalTransactions,
+    int? refundCount,
+    double? refundValue,
+    int? pendingRefundCount,
+    int? successfulRefundCount,
+    int? codCount,
+    int? esewaCount,
+    double? paymentSuccessRate,
+    double? dailyRevenue,
+    double? monthlyRevenue,
   }) = _AdminPlatformStatsImpl;
 
   factory AdminPlatformStats.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -67,6 +96,17 @@ abstract class AdminPlatformStats
           .deserialize<List<_i3.VendorApplicationSummary>>(
             jsonSerialization['recentApplications'],
           ),
+      totalTransactions: jsonSerialization['totalTransactions'] as int?,
+      refundCount: jsonSerialization['refundCount'] as int?,
+      refundValue: (jsonSerialization['refundValue'] as num?)?.toDouble(),
+      pendingRefundCount: jsonSerialization['pendingRefundCount'] as int?,
+      successfulRefundCount: jsonSerialization['successfulRefundCount'] as int?,
+      codCount: jsonSerialization['codCount'] as int?,
+      esewaCount: jsonSerialization['esewaCount'] as int?,
+      paymentSuccessRate: (jsonSerialization['paymentSuccessRate'] as num?)
+          ?.toDouble(),
+      dailyRevenue: (jsonSerialization['dailyRevenue'] as num?)?.toDouble(),
+      monthlyRevenue: (jsonSerialization['monthlyRevenue'] as num?)?.toDouble(),
     );
   }
 
@@ -92,6 +132,27 @@ abstract class AdminPlatformStats
 
   List<_i3.VendorApplicationSummary> recentApplications;
 
+  /// Payment ledger aggregates (PostgreSQL).
+  int totalTransactions;
+
+  int refundCount;
+
+  double refundValue;
+
+  int pendingRefundCount;
+
+  int successfulRefundCount;
+
+  int codCount;
+
+  int esewaCount;
+
+  double paymentSuccessRate;
+
+  double dailyRevenue;
+
+  double monthlyRevenue;
+
   /// Returns a shallow copy of this [AdminPlatformStats]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -107,6 +168,16 @@ abstract class AdminPlatformStats
     List<_i2.AdminAuditLogSummary>? recentActivity,
     List<double>? signupSeries,
     List<_i3.VendorApplicationSummary>? recentApplications,
+    int? totalTransactions,
+    int? refundCount,
+    double? refundValue,
+    int? pendingRefundCount,
+    int? successfulRefundCount,
+    int? codCount,
+    int? esewaCount,
+    double? paymentSuccessRate,
+    double? dailyRevenue,
+    double? monthlyRevenue,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -125,6 +196,16 @@ abstract class AdminPlatformStats
       'recentApplications': recentApplications.toJson(
         valueToJson: (v) => v.toJson(),
       ),
+      'totalTransactions': totalTransactions,
+      'refundCount': refundCount,
+      'refundValue': refundValue,
+      'pendingRefundCount': pendingRefundCount,
+      'successfulRefundCount': successfulRefundCount,
+      'codCount': codCount,
+      'esewaCount': esewaCount,
+      'paymentSuccessRate': paymentSuccessRate,
+      'dailyRevenue': dailyRevenue,
+      'monthlyRevenue': monthlyRevenue,
     };
   }
 
@@ -147,6 +228,16 @@ abstract class AdminPlatformStats
       'recentApplications': recentApplications.toJson(
         valueToJson: (v) => v.toJsonForProtocol(),
       ),
+      'totalTransactions': totalTransactions,
+      'refundCount': refundCount,
+      'refundValue': refundValue,
+      'pendingRefundCount': pendingRefundCount,
+      'successfulRefundCount': successfulRefundCount,
+      'codCount': codCount,
+      'esewaCount': esewaCount,
+      'paymentSuccessRate': paymentSuccessRate,
+      'dailyRevenue': dailyRevenue,
+      'monthlyRevenue': monthlyRevenue,
     };
   }
 
@@ -169,6 +260,16 @@ class _AdminPlatformStatsImpl extends AdminPlatformStats {
     required List<_i2.AdminAuditLogSummary> recentActivity,
     required List<double> signupSeries,
     required List<_i3.VendorApplicationSummary> recentApplications,
+    int? totalTransactions,
+    int? refundCount,
+    double? refundValue,
+    int? pendingRefundCount,
+    int? successfulRefundCount,
+    int? codCount,
+    int? esewaCount,
+    double? paymentSuccessRate,
+    double? dailyRevenue,
+    double? monthlyRevenue,
   }) : super._(
          totalVendors: totalVendors,
          totalCustomers: totalCustomers,
@@ -181,6 +282,16 @@ class _AdminPlatformStatsImpl extends AdminPlatformStats {
          recentActivity: recentActivity,
          signupSeries: signupSeries,
          recentApplications: recentApplications,
+         totalTransactions: totalTransactions,
+         refundCount: refundCount,
+         refundValue: refundValue,
+         pendingRefundCount: pendingRefundCount,
+         successfulRefundCount: successfulRefundCount,
+         codCount: codCount,
+         esewaCount: esewaCount,
+         paymentSuccessRate: paymentSuccessRate,
+         dailyRevenue: dailyRevenue,
+         monthlyRevenue: monthlyRevenue,
        );
 
   /// Returns a shallow copy of this [AdminPlatformStats]
@@ -199,6 +310,16 @@ class _AdminPlatformStatsImpl extends AdminPlatformStats {
     List<_i2.AdminAuditLogSummary>? recentActivity,
     List<double>? signupSeries,
     List<_i3.VendorApplicationSummary>? recentApplications,
+    int? totalTransactions,
+    int? refundCount,
+    double? refundValue,
+    int? pendingRefundCount,
+    int? successfulRefundCount,
+    int? codCount,
+    int? esewaCount,
+    double? paymentSuccessRate,
+    double? dailyRevenue,
+    double? monthlyRevenue,
   }) {
     return AdminPlatformStats(
       totalVendors: totalVendors ?? this.totalVendors,
@@ -216,6 +337,17 @@ class _AdminPlatformStatsImpl extends AdminPlatformStats {
       recentApplications:
           recentApplications ??
           this.recentApplications.map((e0) => e0.copyWith()).toList(),
+      totalTransactions: totalTransactions ?? this.totalTransactions,
+      refundCount: refundCount ?? this.refundCount,
+      refundValue: refundValue ?? this.refundValue,
+      pendingRefundCount: pendingRefundCount ?? this.pendingRefundCount,
+      successfulRefundCount:
+          successfulRefundCount ?? this.successfulRefundCount,
+      codCount: codCount ?? this.codCount,
+      esewaCount: esewaCount ?? this.esewaCount,
+      paymentSuccessRate: paymentSuccessRate ?? this.paymentSuccessRate,
+      dailyRevenue: dailyRevenue ?? this.dailyRevenue,
+      monthlyRevenue: monthlyRevenue ?? this.monthlyRevenue,
     );
   }
 }

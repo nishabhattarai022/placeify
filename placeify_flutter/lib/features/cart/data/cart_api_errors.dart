@@ -1,3 +1,4 @@
+import '../domain/constants/cart_strings.dart';
 import 'package:placeify_client/placeify_client.dart';
 
 /// Maps cart/checkout API failures to user-visible messages.
@@ -32,7 +33,7 @@ abstract final class CartApiErrors {
       return 'That product is no longer available.';
     }
     if (haystack.contains('INVALID_ADDRESS')) {
-      return 'Add a shipping address in your profile before checkout.';
+      return CartStrings.deliveryAddressRequired;
     }
     if (haystack.contains('PAYMENT_NOT_VERIFIED') ||
         haystack.contains('COULD NOT BE VERIFIED')) {

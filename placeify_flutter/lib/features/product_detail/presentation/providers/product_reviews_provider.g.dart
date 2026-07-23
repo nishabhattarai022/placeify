@@ -97,7 +97,7 @@ final class ProductReviewsProvider
   }
 }
 
-String _$productReviewsHash() => r'a8c179825748cb33a017ed472793af1b117b90ad';
+String _$productReviewsHash() => r'29a602e01f3f9c360c74cd10a38a22f4947f24f8';
 
 final class ProductReviewsFamily extends $Family
     with

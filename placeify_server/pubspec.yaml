@@ -12,6 +12,7 @@ dependencies:
   crypto: ^3.0.6
   http: ^1.2.2
   image: ^4.5.4
+  mailer: ^6.5.0
   serverpod: 3.4.8
   serverpod_auth_core_server: 3.4.8
   serverpod_auth_idp_server: 3.4.8

@@ -12,3 +12,14 @@ fields:
   recentActivity: List<AdminAuditLogSummary>
   signupSeries: List<double>
   recentApplications: List<VendorApplicationSummary>
+  ### Payment ledger aggregates (PostgreSQL).
+  totalTransactions: int, default=0
+  refundCount: int, default=0
+  refundValue: double, default=0
+  pendingRefundCount: int, default=0
+  successfulRefundCount: int, default=0
+  codCount: int, default=0
+  esewaCount: int, default=0
+  paymentSuccessRate: double, default=0
+  dailyRevenue: double, default=0
+  monthlyRevenue: double, default=0

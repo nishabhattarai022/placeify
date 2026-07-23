@@ -9,3 +9,4 @@ fields:
   rating: int
   comment: String?
   createdAt: DateTime
+  updatedAt: DateTime

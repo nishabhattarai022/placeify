@@ -15,9 +15,29 @@ class UserPaymentStore {
     UuidValue userId,
     int orderId,
   ) async {
-    await _requireOwnedOrder(session, userId, orderId);
+    final order = await _requireOwnedOrder(session, userId, orderId);
     final payment = await _requirePayment(session, orderId);
-    return _toSummary(payment);
+    final items = await OrderItem.db.find(
+      session,
+      where: (row) => row.orderId.equals(orderId),
+      include: OrderItem.include(
+        product: Product.include(vendor: Vendor.include()),
+      ),
+      limit: 1,
+    );
+    final refund = await RefundRequest.db.findFirstRow(
+      session,
+      where: (row) => row.orderId.equals(orderId),
+      orderBy: (row) => row.updatedAt,
+      orderDescending: true,
+    );
+    return _toSummary(
+      payment,
+      order: order,
+      vendorName: items.firstOrNull?.product?.vendor?.shopName,
+      primaryThumbnailUrl: items.firstOrNull?.product?.thumbnailUrl,
+      refund: refund,
+    );
   }
 
   /// Signed eSewa ePay v2 form fields for an unpaid esewa order.
@@ -287,7 +307,13 @@ class UserPaymentStore {
     return payment;
   }
 
-  UserOrderPaymentSummary _toSummary(PaymentTransaction payment) {
+  UserOrderPaymentSummary _toSummary(
+    PaymentTransaction payment, {
+    Order? order,
+    String? vendorName,
+    String? primaryThumbnailUrl,
+    RefundRequest? refund,
+  }) {
     return UserOrderPaymentSummary(
       orderId: payment.orderId,
       status: payment.status,
@@ -295,6 +321,95 @@ class UserPaymentStore {
       amount: payment.amount,
       provider: payment.provider,
       providerTransactionId: payment.providerTransactionId,
+      orderNumber: payment.orderId.toString().padLeft(5, '0'),
+      vendorName: vendorName,
+      deliveryFee: null,
+      discount: null,
+      refundStatus: refund?.status.name ??
+          (payment.status == PaymentTransactionStatus.refundPending
+              ? 'pending'
+              : payment.status == PaymentTransactionStatus.refunded
+                  ? 'completed'
+                  : null),
+      refundAmount: refund?.refundAmount,
+      refundReason: refund?.reason,
+      refundDate: refund?.status == RequestStatus.completed
+          ? refund?.updatedAt
+          : null,
+      orderDate: order?.placedAt,
+      paymentDate: payment.status == PaymentTransactionStatus.paid ||
+              payment.status == PaymentTransactionStatus.refundPending ||
+              payment.status == PaymentTransactionStatus.refunded
+          ? payment.updatedAt
+          : null,
+      primaryThumbnailUrl: primaryThumbnailUrl,
+      orderStatus: order?.status.name,
     );
+  }
+
+  Future<List<UserOrderPaymentSummary>> listMyPayments(
+    Session session,
+    UuidValue userId, {
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    final payments = await PaymentTransaction.db.find(
+      session,
+      where: (row) => row.userId.equals(userId),
+      orderBy: (row) => row.createdAt,
+      orderDescending: true,
+      limit: limit.clamp(1, 100),
+      offset: offset < 0 ? 0 : offset,
+    );
+    if (payments.isEmpty) return const [];
+
+    final orderIds = {for (final p in payments) p.orderId};
+    final orders = await Order.db.find(
+      session,
+      where: (row) => row.id.inSet(orderIds),
+    );
+    final orderById = {for (final o in orders) o.id!: o};
+
+    final items = await OrderItem.db.find(
+      session,
+      where: (row) => row.orderId.inSet(orderIds),
+      include: OrderItem.include(
+        product: Product.include(vendor: Vendor.include()),
+      ),
+    );
+    final vendorNameByOrder = <int, String>{};
+    final thumbByOrder = <int, String?>{};
+    for (final item in items) {
+      vendorNameByOrder.putIfAbsent(
+        item.orderId,
+        () => item.product?.vendor?.shopName ?? 'Vendor',
+      );
+      thumbByOrder.putIfAbsent(
+        item.orderId,
+        () => item.product?.thumbnailUrl,
+      );
+    }
+
+    final refunds = await RefundRequest.db.find(
+      session,
+      where: (row) => row.orderId.inSet(orderIds),
+      orderBy: (row) => row.updatedAt,
+      orderDescending: true,
+    );
+    final refundByOrder = <int, RefundRequest>{};
+    for (final refund in refunds) {
+      refundByOrder.putIfAbsent(refund.orderId, () => refund);
+    }
+
+    return [
+      for (final payment in payments)
+        _toSummary(
+          payment,
+          order: orderById[payment.orderId],
+          vendorName: vendorNameByOrder[payment.orderId],
+          primaryThumbnailUrl: thumbByOrder[payment.orderId],
+          refund: refundByOrder[payment.orderId],
+        ),
+    ];
   }
 }

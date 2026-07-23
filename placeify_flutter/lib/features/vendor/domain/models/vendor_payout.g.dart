@@ -30,6 +30,7 @@ const _$PaymentStatusEnumMap = {
   PaymentStatus.pending: 'pending',
   PaymentStatus.paid: 'paid',
   PaymentStatus.partial: 'partial',
+  PaymentStatus.refundPending: 'refundPending',
   PaymentStatus.refunded: 'refunded',
   PaymentStatus.failed: 'failed',
 };

@@ -55,11 +55,13 @@ class OrderItemRow extends ConsumerWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  item.brandName,
-                  style: AppTypography.brandName,
-                ),
+                if (item.brandName.trim().isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    item.brandName,
+                    style: AppTypography.brandName,
+                  ),
+                ],
                 if (item.dimensionsLabel.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(
@@ -82,7 +84,9 @@ class OrderItemRow extends ConsumerWidget {
                 ],
                 const SizedBox(height: 6),
                 Text(
-                  'Qty ${item.quantity} × ${Formatters.currencyFull(item.effectiveUnitPrice)}',
+                  item.discountedPrice != null
+                      ? 'Qty ${item.quantity} × ${Formatters.currencyFull(item.discountedPrice!)}  (was ${Formatters.currencyFull(item.unitPrice)})'
+                      : 'Qty ${item.quantity} × ${Formatters.currencyFull(item.effectiveUnitPrice)}',
                   style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
@@ -125,14 +129,19 @@ class _OrderItemImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fit =
-        imageUrl.startsWith('assets/') ? BoxFit.contain : BoxFit.cover;
+    final trimmed = imageUrl.trim();
+    if (trimmed.isEmpty) {
+      return _fallbackIcon();
+    }
 
-    if (imageUrl.startsWith('assets/')) {
+    final fit =
+        trimmed.startsWith('assets/') ? BoxFit.contain : BoxFit.cover;
+
+    if (trimmed.startsWith('assets/')) {
       return Padding(
         padding: const EdgeInsets.all(8),
         child: Image.asset(
-          imageUrl,
+          trimmed,
           fit: fit,
           errorBuilder: (_, __, ___) => _fallbackIcon(),
         ),
@@ -140,7 +149,7 @@ class _OrderItemImage extends StatelessWidget {
     }
 
     return CachedNetworkImage(
-      imageUrl: imageUrl,
+      imageUrl: trimmed,
       fit: fit,
       placeholder: (_, __) => const ShimmerLoader(),
       errorWidget: (_, __, ___) => _fallbackIcon(),

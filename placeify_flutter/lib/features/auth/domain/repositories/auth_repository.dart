@@ -11,6 +11,25 @@ abstract interface class AuthRepository {
     required String password,
   });
 
+  /// Starts Email IDP registration and emails a magic link.
+  /// Does not create a session or Placeify User until [verifyEmailRegistration].
+  Future<String> beginEmailRegistration({
+    required String fullName,
+    required String email,
+    required String password,
+  });
+
+  /// Completes registration after the user opens the verification link.
+  Future<void> verifyEmailRegistration({
+    required String token,
+    required String password,
+    String? fullName,
+  });
+
+  Future<void> resendVerificationEmail({
+    required String email,
+  });
+
   Future<AppUser> signIn({
     required String email,
     required String password,

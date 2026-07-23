@@ -71,6 +71,11 @@ abstract final class OrderStrings {
   static const itemsSectionTitle = 'Items';
   static const summarySectionTitle = 'Order summary';
   static const addressSectionTitle = 'Delivery address';
+  static const deliveryDetailsTitle = 'Delivery details';
+  static const customerNameLabel = 'Customer';
+  static const customerPhoneLabel = 'Phone';
+  static const orderDateLabel = 'Order date';
+  static const deliveryStatusLabel = 'Delivery status';
   static const subtotalLabel = 'Subtotal';
   static const deliveryFeeLabel = 'Delivery';
   static const discountLabel = 'Discount';
@@ -93,8 +98,25 @@ abstract final class OrderStrings {
   // — Card & quick actions —
   static const trackAction = 'Track order';
   static const reorderAction = 'Reorder';
+  static const reorderSuccess = 'Items added to cart';
+  static const reorderFailed = 'Could not reorder. Please try again.';
+  static const reorderNoItems = 'No items found for this order.';
+
+  static String reorderPartialSuccess(int addedCount, List<String> skipped) {
+    final skipText = skipped.take(3).join('\n');
+    final more = skipped.length > 3 ? '\n+${skipped.length - 3} more' : '';
+    return 'Added $addedCount item(s). Skipped:\n$skipText$more';
+  }
+
+  static String reorderAllSkipped(List<String> skipped) {
+    final skipText = skipped.take(3).join('\n');
+    final more = skipped.length > 3 ? '\n+${skipped.length - 3} more' : '';
+    return 'Nothing could be reordered:\n$skipText$more';
+  }
+
   static const leaveReviewAction = 'Leave review';
-  static const reviewSubmittedAction = 'Review submitted';
+  static const reviewSubmittedAction = 'Update review';
+  static const updateReviewAction = 'Update review';
   static const viewReturnAction = 'View return';
   static const cancelAction = 'Cancel order';
   static const requestReturnAction = 'Request return';
@@ -143,7 +165,6 @@ abstract final class OrderStrings {
   ];
 
   // — Toasts —
-  static const reorderSuccess = 'Items added to cart';
   static const cancelSuccess = 'Order cancelled';
   static const returnSuccess = 'Return request submitted';
   static const cancelFailed = 'Could not cancel order';

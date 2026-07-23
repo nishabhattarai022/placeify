@@ -30,7 +30,9 @@ abstract class Review implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     required this.rating,
     this.comment,
     DateTime? createdAt,
-  }) : createdAt = createdAt ?? DateTime.now();
+    DateTime? updatedAt,
+  }) : createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
   factory Review({
     int? id,
@@ -43,6 +45,7 @@ abstract class Review implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     required int rating,
     String? comment,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) = _ReviewImpl;
 
   factory Review.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -67,6 +70,9 @@ abstract class Review implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
+      updatedAt: jsonSerialization['updatedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['updatedAt']),
     );
   }
 
@@ -95,6 +101,9 @@ abstract class Review implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
 
   DateTime createdAt;
 
+  /// Last edit time; equals createdAt until the customer updates the review.
+  DateTime updatedAt;
+
   @override
   _i1.Table<int?> get table => t;
 
@@ -112,6 +121,7 @@ abstract class Review implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     int? rating,
     String? comment,
     DateTime? createdAt,
+    DateTime? updatedAt,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -127,6 +137,7 @@ abstract class Review implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       'rating': rating,
       if (comment != null) 'comment': comment,
       'createdAt': createdAt.toJson(),
+      'updatedAt': updatedAt.toJson(),
     };
   }
 
@@ -144,6 +155,7 @@ abstract class Review implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       'rating': rating,
       if (comment != null) 'comment': comment,
       'createdAt': createdAt.toJson(),
+      'updatedAt': updatedAt.toJson(),
     };
   }
 
@@ -199,6 +211,7 @@ class _ReviewImpl extends Review {
     required int rating,
     String? comment,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) : super._(
          id: id,
          userId: userId,
@@ -210,6 +223,7 @@ class _ReviewImpl extends Review {
          rating: rating,
          comment: comment,
          createdAt: createdAt,
+         updatedAt: updatedAt,
        );
 
   /// Returns a shallow copy of this [Review]
@@ -227,6 +241,7 @@ class _ReviewImpl extends Review {
     int? rating,
     Object? comment = _Undefined,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return Review(
       id: id is int? ? id : this.id,
@@ -239,6 +254,7 @@ class _ReviewImpl extends Review {
       rating: rating ?? this.rating,
       comment: comment is String? ? comment : this.comment,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }
@@ -277,6 +293,12 @@ class ReviewUpdateTable extends _i1.UpdateTable<ReviewTable> {
         table.createdAt,
         value,
       );
+
+  _i1.ColumnValue<DateTime, DateTime> updatedAt(DateTime value) =>
+      _i1.ColumnValue(
+        table.updatedAt,
+        value,
+      );
 }
 
 class ReviewTable extends _i1.Table<int?> {
@@ -307,6 +329,11 @@ class ReviewTable extends _i1.Table<int?> {
       this,
       hasDefault: true,
     );
+    updatedAt = _i1.ColumnDateTime(
+      'updatedAt',
+      this,
+      hasDefault: true,
+    );
   }
 
   late final ReviewUpdateTable updateTable;
@@ -328,6 +355,9 @@ class ReviewTable extends _i1.Table<int?> {
   late final _i1.ColumnString comment;
 
   late final _i1.ColumnDateTime createdAt;
+
+  /// Last edit time; equals createdAt until the customer updates the review.
+  late final _i1.ColumnDateTime updatedAt;
 
   _i2.UserTable get user {
     if (_user != null) return _user!;
@@ -377,6 +407,7 @@ class ReviewTable extends _i1.Table<int?> {
     rating,
     comment,
     createdAt,
+    updatedAt,
   ];
 
   @override

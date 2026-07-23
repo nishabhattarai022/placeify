@@ -40,6 +40,51 @@ class ProductReviews extends _$ProductReviews {
     }
   }
 
+  Future<Review?> loadMyReviewForOrder(String orderId) async {
+    try {
+      return await ref
+          .read(reviewRepositoryProvider)
+          .getMyReviewForOrderItem(
+            uiProductId: productId,
+            orderId: orderId,
+          );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<String?> updateMyReview({
+    required int reviewId,
+    required int rating,
+    String? comment,
+  }) async {
+    try {
+      await ref.read(reviewRepositoryProvider).updateReview(
+            reviewId: reviewId,
+            rating: rating,
+            comment: comment,
+          );
+      ref.invalidateSelf();
+      return null;
+    } on ReviewRepositoryException catch (error) {
+      return error.message;
+    } catch (_) {
+      return 'Could not update review.';
+    }
+  }
+
+  Future<String?> deleteMyReview({required int reviewId}) async {
+    try {
+      await ref.read(reviewRepositoryProvider).deleteReview(reviewId: reviewId);
+      ref.invalidateSelf();
+      return null;
+    } on ReviewRepositoryException catch (error) {
+      return error.message;
+    } catch (_) {
+      return 'Could not delete review.';
+    }
+  }
+
   Future<void> refresh() async {
     ref.invalidateSelf();
     await future;

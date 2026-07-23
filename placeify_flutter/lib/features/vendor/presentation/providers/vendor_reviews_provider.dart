@@ -53,6 +53,7 @@ class VendorReviews extends _$VendorReviews {
           rating: summary.rating,
           comment: summary.comment ?? '',
           createdAt: summary.createdAt,
+          updatedAt: summary.updatedAt,
         ),
     ];
   }

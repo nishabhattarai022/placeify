@@ -23,6 +23,7 @@ abstract class VendorPayout with _$VendorPayout {
         PaymentStatus.pending => 'Pending',
         PaymentStatus.paid => 'Paid',
         PaymentStatus.partial => 'Partial',
+        PaymentStatus.refundPending => 'Refund Pending',
         PaymentStatus.refunded => 'Refunded',
         PaymentStatus.failed => 'Failed',
       };
