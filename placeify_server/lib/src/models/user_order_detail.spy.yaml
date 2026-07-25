@@ -9,6 +9,9 @@ fields:
   shippingAddress: String
   itemCount: int
   primaryProductName: String?
+  ### Primary vendor for chat (first line item).
+  vendorId: UuidValue?
+  vendorName: String?
   ### Snapshot contact fields from the ordering user at read time.
   customerName: String?
   customerPhone: String?

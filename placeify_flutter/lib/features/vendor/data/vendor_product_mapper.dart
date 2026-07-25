@@ -52,7 +52,7 @@ abstract final class VendorProductMapper {
       stock: 0,
       imageUrls: imageUrls,
       categoryId: product.category?.name ?? 'chairs',
-      isActive: product.status == api.ProductStatus.active,
+      isActive: !product.isDeleted && product.status == api.ProductStatus.active,
       createdAt: product.createdAt,
       description: product.description,
       brand: product.assemblyNote ?? product.vendor?.shopName ?? '',

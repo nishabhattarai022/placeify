@@ -22,7 +22,10 @@ class VendorProductImageStorage {
       fileData.lengthInBytes,
     );
     if (bytes.isEmpty) {
-      throw PlaceifyException(message: 'Image file is empty.', code: 'INVALID_FILE');
+      throw PlaceifyException(
+        message: 'Image file is empty.',
+        code: 'INVALID_FILE',
+      );
     }
     if (bytes.length > 8 * 1024 * 1024) {
       throw PlaceifyException(

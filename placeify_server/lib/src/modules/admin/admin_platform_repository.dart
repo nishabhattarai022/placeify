@@ -10,7 +10,7 @@ import 'admin_vendor_lifecycle.dart';
 /// Read-side admin platform queries backed by PostgreSQL.
 class AdminPlatformStore {
   AdminPlatformStore({AdminStore? adminStore})
-      : _adminStore = adminStore ?? AdminStore();
+    : _adminStore = adminStore ?? AdminStore();
 
   final AdminStore _adminStore;
 
@@ -105,18 +105,20 @@ class AdminPlatformStore {
   }
 
   Future<
-      ({
-        int totalTransactions,
-        int refundCount,
-        double refundValue,
-        int pendingRefundCount,
-        int successfulRefundCount,
-        int codCount,
-        int esewaCount,
-        double paymentSuccessRate,
-        double dailyRevenue,
-        double monthlyRevenue,
-      })> _platformPaymentStats(Session session) async {
+    ({
+      int totalTransactions,
+      int refundCount,
+      double refundValue,
+      int pendingRefundCount,
+      int successfulRefundCount,
+      int codCount,
+      int esewaCount,
+      double paymentSuccessRate,
+      double dailyRevenue,
+      double monthlyRevenue,
+    })
+  >
+  _platformPaymentStats(Session session) async {
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
     final startOfMonth = DateTime(now.year, now.month, 1);
@@ -166,8 +168,7 @@ class AdminPlatformStore {
     }
 
     final decided = paidCount + failedCount;
-    final paymentSuccessRate =
-        decided == 0 ? 0.0 : (paidCount / decided) * 100;
+    final paymentSuccessRate = decided == 0 ? 0.0 : (paidCount / decided) * 100;
 
     return (
       totalTransactions: totalTransactions,
@@ -257,7 +258,9 @@ class AdminPlatformStore {
         return expression;
       },
     );
-    final vendorByUserId = {for (final vendor in vendors) vendor.userId: vendor};
+    final vendorByUserId = {
+      for (final vendor in vendors) vendor.userId: vendor,
+    };
 
     return [
       for (final user in users)
@@ -385,7 +388,9 @@ class AdminPlatformStore {
       state: addressParts.state,
       postalCode: addressParts.postalCode,
       country: vendor.country ?? addressParts.country,
-      category: VendorShopCategoryCodec.decode(vendor.shopCategory ?? '').join(', '),
+      category: VendorShopCategoryCodec.decode(
+        vendor.shopCategory ?? '',
+      ).join(', '),
       description: vendor.description ?? '',
       businessLicenseUrl: documentUrl(VendorDocumentType.businessLicense),
       governmentIdUrl: documentUrl(VendorDocumentType.governmentId),
@@ -416,9 +421,7 @@ class AdminPlatformStore {
       offset: paging.offset,
     );
 
-    return entries
-        .map(AdminActionAuditLog.toSummary)
-        .toList(growable: false);
+    return entries.map(AdminActionAuditLog.toSummary).toList(growable: false);
   }
 
   static const _adminNotificationTypes = {
@@ -463,8 +466,7 @@ class AdminPlatformStore {
     return switch (type) {
       InAppNotificationType.vendorApplication => profile.newApplicationAlerts,
       InAppNotificationType.systemAlert ||
-      InAppNotificationType.vendorFlagged =>
-        profile.systemAlerts,
+      InAppNotificationType.vendorFlagged => profile.systemAlerts,
       _ => true,
     };
   }
@@ -497,8 +499,14 @@ class AdminPlatformStore {
     }
   }
 
-  ({String street, String city, String state, String postalCode, String country})
-      _parseAddress(String? raw) {
+  ({
+    String street,
+    String city,
+    String state,
+    String postalCode,
+    String country,
+  })
+  _parseAddress(String? raw) {
     if (raw == null || raw.trim().isEmpty) {
       return (
         street: '',
@@ -561,10 +569,14 @@ class AdminPlatformStore {
         switch (input.visibility) {
           case AdminProductVisibilityFilter.active:
             expression =
-                expression & row.isDeleted.equals(false) & row.status.equals(ProductStatus.active);
+                expression &
+                row.isDeleted.equals(false) &
+                row.status.equals(ProductStatus.active);
           case AdminProductVisibilityFilter.removed:
-            expression = expression &
-                (row.isDeleted.equals(true) | row.status.equals(ProductStatus.removed));
+            expression =
+                expression &
+                (row.isDeleted.equals(true) |
+                    row.status.equals(ProductStatus.removed));
           case AdminProductVisibilityFilter.all:
             break;
         }
@@ -652,8 +664,9 @@ class AdminPlatformStore {
 
     final vendor = product.vendor;
     final owner = vendor?.user;
-    final latestComplaintAt =
-        complaintSummaries.isEmpty ? null : complaintSummaries.first.createdAt;
+    final latestComplaintAt = complaintSummaries.isEmpty
+        ? null
+        : complaintSummaries.first.createdAt;
 
     return AdminProductDetail(
       productId: product.id!,
@@ -744,7 +757,9 @@ class AdminPlatformStore {
       final createdAt = complaint.createdAt;
       complaintStats[productId] = (
         count: (current?.count ?? 0) + 1,
-        latest: latest == null || createdAt.isAfter(latest) ? createdAt : latest,
+        latest: latest == null || createdAt.isAfter(latest)
+            ? createdAt
+            : latest,
       );
     }
 

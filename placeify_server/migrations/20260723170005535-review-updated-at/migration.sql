@@ -3,7 +3,7 @@ BEGIN;
 --
 -- ACTION ALTER TABLE
 --
-ALTER TABLE "review" ADD COLUMN "updatedAt" timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "review" ADD COLUMN IF NOT EXISTS "updatedAt" timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
 --
 -- MIGRATION VERSION FOR placeify

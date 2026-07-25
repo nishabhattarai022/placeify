@@ -26,7 +26,7 @@ abstract class VendorOperatingDay with _$VendorOperatingDay {
       _$VendorOperatingDayFromJson(json);
 }
 
-/// Default 7-day schedule for mock seed and legacy JSON migration.
+/// Default 7-day schedule for new profiles and legacy JSON migration.
 List<VendorOperatingDay> defaultVendorWeekSchedule({
   String weekdayOpen = '10:00',
   String weekdayClose = '18:00',

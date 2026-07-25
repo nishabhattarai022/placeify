@@ -33,19 +33,8 @@ class UserPayments extends _$UserPayments {
       limit: _pageSize,
       offset: 0,
     );
-    final records = <UserPaymentRecord>[];
-    for (final summary in summaries) {
-      records.add(await UserPaymentMappers.toRecord(summary));
-    }
-    records.sort((a, b) {
-      final aDate = a.paymentDate ??
-          a.orderDate ??
-          DateTime.fromMillisecondsSinceEpoch(0);
-      final bDate = b.paymentDate ??
-          b.orderDate ??
-          DateTime.fromMillisecondsSinceEpoch(0);
-      return bDate.compareTo(aDate);
-    });
-    return records;
+    return [
+      for (final summary in summaries) UserPaymentMappers.toRecord(summary),
+    ];
   }
 }

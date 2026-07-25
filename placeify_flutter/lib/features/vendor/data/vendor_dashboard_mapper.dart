@@ -96,12 +96,6 @@ abstract final class VendorDashboardMapper {
       buckets[buckets.length - 1 - monthsAgo] += summary.lineTotal;
     }
 
-    if (buckets.every((value) => value == 0) && dashboard.revenue > 0) {
-      // Spread total revenue across recent months for chart visibility.
-      final share = dashboard.revenue / buckets.length;
-      return List<double>.filled(buckets.length, share);
-    }
-
     return buckets;
   }
 

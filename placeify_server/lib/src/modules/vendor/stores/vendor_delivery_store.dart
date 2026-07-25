@@ -3,19 +3,19 @@ import 'dart:typed_data';
 import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../../generated/protocol.dart';
-import '../../../shared/placeify_exception.dart';
 import '../../../shared/session_service.dart';
 import '../../marketplace/marketplace_events.dart';
 import '../../order/order_lifecycle_store.dart';
 import 'vendor_access_guard.dart';
 import 'vendor_order_support.dart';
 
-typedef VendorDeliveryImagePersister = Future<String> Function(
-  Session session,
-  ByteData fileData,
-  String fileName, {
-  required bool removeBackground,
-});
+typedef VendorDeliveryImagePersister =
+    Future<String> Function(
+      Session session,
+      ByteData fileData,
+      String fileName, {
+      required bool removeBackground,
+    });
 
 /// Vendor delivery stage updates and proof uploads.
 class VendorDeliveryStore {
@@ -23,9 +23,9 @@ class VendorDeliveryStore {
     VendorAccessGuard? access,
     MarketplaceEventDispatcher? events,
     VendorDeliveryImagePersister? persistImage,
-  })  : _access = access ?? VendorAccessGuard(),
-        _events = events ?? marketplaceEventDispatcher,
-        _persistImage = persistImage;
+  }) : _access = access ?? VendorAccessGuard(),
+       _events = events ?? marketplaceEventDispatcher,
+       _persistImage = persistImage;
 
   final VendorAccessGuard _access;
   final MarketplaceEventDispatcher _events;
@@ -69,7 +69,9 @@ class VendorDeliveryStore {
 
     if (order.status == OrderStatus.rejected ||
         order.status == OrderStatus.cancelled ||
-        order.status == OrderStatus.autoCancelled) {
+        order.status == OrderStatus.autoCancelled ||
+        order.status == OrderStatus.returnRequested ||
+        order.status == OrderStatus.refunded) {
       throw PlaceifyException(
         message: 'Delivery updates are not available for this order.',
         code: 'INVALID_ORDER_STATUS',
@@ -83,7 +85,9 @@ class VendorDeliveryStore {
       );
     }
 
-    final nextDeliveryStatus = OrderLifecycleStore.deliveryStatusForStage(stage);
+    final nextDeliveryStatus = OrderLifecycleStore.deliveryStatusForStage(
+      stage,
+    );
     if (nextDeliveryStatus == null) {
       throw PlaceifyException(
         message: 'This delivery stage cannot be applied.',
@@ -101,8 +105,11 @@ class VendorDeliveryStore {
       );
     }
 
-    final existing =
-        await VendorOrderSupport.deliveryUpdatesFor(session, vendor.id!, orderId);
+    final existing = await VendorOrderSupport.deliveryUpdatesFor(
+      session,
+      vendor.id!,
+      orderId,
+    );
     final expected = VendorOrderSupport.nextDeliveryStage(existing);
     if (expected == null) {
       throw PlaceifyException(
@@ -146,7 +153,9 @@ class VendorDeliveryStore {
         order,
         (current) => current.copyWith(
           deliveryStatus: nextDeliveryStatus,
-          status: OrderLifecycleStore.orderStatusForDelivery(nextDeliveryStatus),
+          status: OrderLifecycleStore.orderStatusForDelivery(
+            nextDeliveryStatus,
+          ),
         ),
         transaction: transaction,
       );
@@ -162,8 +171,9 @@ class VendorDeliveryStore {
         transaction: transaction,
       );
 
-      final nextOrderStatus =
-          OrderLifecycleStore.orderStatusForDelivery(nextDeliveryStatus);
+      final nextOrderStatus = OrderLifecycleStore.orderStatusForDelivery(
+        nextDeliveryStatus,
+      );
       if (order.status != nextOrderStatus) {
         await OrderLifecycleStore.appendHistory(
           session,

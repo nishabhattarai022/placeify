@@ -143,13 +143,13 @@ class _EmptyWishlistState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'No saved items yet',
+              'Your wishlist is empty.',
               style: AppTypography.sectionTitle.copyWith(fontSize: 18),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              'Browse the catalog and save products to your wishlist.',
+              'Browse the catalog and save products you like.',
               textAlign: TextAlign.center,
               style: AppTypography.metricLabel.copyWith(
                 color: AppColors.textSecondary,

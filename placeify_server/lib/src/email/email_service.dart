@@ -171,7 +171,8 @@ If you did not make this change, contact support immediately.
     required String textBody,
     required String htmlBody,
   }) async {
-    final provider = _password(session, 'emailProvider')?.trim().toLowerCase() ??
+    final provider =
+        _password(session, 'emailProvider')?.trim().toLowerCase() ??
         (_isProductionLike(session) ? 'resend' : 'console');
 
     switch (provider) {
@@ -257,9 +258,10 @@ If you did not make this change, contact support immediately.
   }) async {
     final host = _password(session, 'smtpHost') ?? 'smtp.gmail.com';
     final portStr = _password(session, 'smtpPort') ?? '465';
-    final user = _password(session, 'smtpUser') ??
-        _password(session, 'gmailUser');
-    final password = _password(session, 'smtpPassword') ??
+    final user =
+        _password(session, 'smtpUser') ?? _password(session, 'gmailUser');
+    final password =
+        _password(session, 'smtpPassword') ??
         _password(session, 'gmailAppPassword');
     final from = _password(session, 'emailFrom');
     final secureFlag = _password(session, 'smtpSecure')?.trim().toLowerCase();
@@ -290,7 +292,10 @@ If you did not make this change, contact support immediately.
     );
 
     final message = mailer.Message()
-      ..from = mailer.Address(_extractEmailAddress(from), _extractDisplayName(from))
+      ..from = mailer.Address(
+        _extractEmailAddress(from),
+        _extractDisplayName(from),
+      )
       ..recipients.add(to)
       ..subject = subject
       ..text = textBody

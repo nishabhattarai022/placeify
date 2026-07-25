@@ -18,15 +18,40 @@ class AdminNotifications extends _$AdminNotifications {
     return repo.getNotifications();
   }
 
+  /// Marks one notification read without forcing a full reload (avoids UI freeze).
   Future<void> markAsRead(String notificationId) async {
-    final repo = await ref.read(adminRepositoryProvider.future);
-    await repo.markNotificationRead(notificationId);
-    ref.invalidateSelf();
+    final current = state.asData?.value;
+    if (current != null) {
+      state = AsyncData([
+        for (final notification in current)
+          if (notification.id == notificationId)
+            notification.copyWith(read: true)
+          else
+            notification,
+      ]);
+    }
+
+    try {
+      final repo = await ref.read(adminRepositoryProvider.future);
+      await repo.markNotificationRead(notificationId);
+    } catch (_) {
+      // Keep optimistic UI; next refresh reconciles.
+    }
   }
 
   Future<void> markAllAsRead() async {
-    final repo = await ref.read(adminRepositoryProvider.future);
-    await repo.markAllNotificationsRead();
-    ref.invalidateSelf();
+    final current = state.asData?.value;
+    if (current != null) {
+      state = AsyncData([
+        for (final notification in current) notification.copyWith(read: true),
+      ]);
+    }
+
+    try {
+      final repo = await ref.read(adminRepositoryProvider.future);
+      await repo.markAllNotificationsRead();
+    } catch (_) {
+      ref.invalidateSelf();
+    }
   }
 }

@@ -44,7 +44,8 @@ abstract final class CatalogSeed {
         session,
         where: (row) => row.name.equals(name),
       );
-      categories[name] = existing ??
+      categories[name] =
+          existing ??
           await Category.db.insertRow(
             session,
             Category(
@@ -54,45 +55,45 @@ abstract final class CatalogSeed {
           );
     }
 
-    final seeds = <
-        ({String name, String category, double price, String description})>[
-      (
-        name: 'Astra',
-        category: 'chairs',
-        price: 56,
-        description: 'Modern accent chair',
-      ),
-      (
-        name: 'Brixon',
-        category: 'chairs',
-        price: 85,
-        description: 'Lounge chair',
-      ),
-      (
-        name: 'Brixon Pro',
-        category: 'chairs',
-        price: 94,
-        description: 'Premium lounge chair',
-      ),
-      (
-        name: 'Harmony',
-        category: 'chairs',
-        price: 110,
-        description: 'Rattan modern chair',
-      ),
-      (
-        name: 'Nordic Side Table',
-        category: 'tables',
-        price: 78,
-        description: 'Minimal side table',
-      ),
-      (
-        name: 'Floor Lamp Oden',
-        category: 'lights',
-        price: 45,
-        description: 'Scandinavian floor lamp',
-      ),
-    ];
+    final seeds =
+        <({String name, String category, double price, String description})>[
+          (
+            name: 'Astra',
+            category: 'chairs',
+            price: 56,
+            description: 'Modern accent chair',
+          ),
+          (
+            name: 'Brixon',
+            category: 'chairs',
+            price: 85,
+            description: 'Lounge chair',
+          ),
+          (
+            name: 'Brixon Pro',
+            category: 'chairs',
+            price: 94,
+            description: 'Premium lounge chair',
+          ),
+          (
+            name: 'Harmony',
+            category: 'chairs',
+            price: 110,
+            description: 'Rattan modern chair',
+          ),
+          (
+            name: 'Nordic Side Table',
+            category: 'tables',
+            price: 78,
+            description: 'Minimal side table',
+          ),
+          (
+            name: 'Floor Lamp Oden',
+            category: 'lights',
+            price: 45,
+            description: 'Scandinavian floor lamp',
+          ),
+        ];
 
     for (final seed in seeds) {
       final category = categories[seed.category];
@@ -122,7 +123,8 @@ abstract final class CatalogSeed {
       orderBy: (row) => row.createdAt,
     );
     if (owner == null) {
-      throw PlaceifyException(message: 'Register at least one user before loading the catalog.',
+      throw PlaceifyException(
+        message: 'Register at least one user before loading the catalog.',
         code: 'CATALOG_SEED_REQUIRES_USER',
       );
     }

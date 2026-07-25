@@ -1,8 +1,9 @@
 import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
-import 'package:http/http.dart' as http;
 import 'package:serverpod/serverpod.dart';
+
+import 'esewa_status_api.dart';
 
 /// eSewa ePay v2 form signing and status verification (RC / production).
 ///
@@ -51,10 +52,14 @@ abstract final class EsewaGateway {
     required String productCode,
     required String secretKey,
   }) {
-    final message = 'total_amount=$totalAmount,'
+    final message =
+        'total_amount=$totalAmount,'
         'transaction_uuid=$transactionUuid,'
         'product_code=$productCode';
-    final digest = Hmac(sha256, utf8.encode(secretKey)).convert(utf8.encode(message));
+    final digest = Hmac(
+      sha256,
+      utf8.encode(secretKey),
+    ).convert(utf8.encode(message));
     return base64Encode(digest.bytes);
   }
 
@@ -84,7 +89,9 @@ abstract final class EsewaGateway {
       'failure_url': failureRedirectUrl,
       'signed_field_names': 'total_amount,transaction_uuid,product_code',
       'signature': signature,
-      'payment_url': isTestProductCode(productCode) ? testPaymentUrl : livePaymentUrl,
+      'payment_url': isTestProductCode(productCode)
+          ? testPaymentUrl
+          : livePaymentUrl,
     };
   }
 
@@ -94,31 +101,11 @@ abstract final class EsewaGateway {
     required double amount,
     required String transactionUuid,
   }) async {
-    final credentials = requireCredentials(session);
-    final statusBase = isTestProductCode(credentials.productCode)
-        ? testStatusUrl
-        : liveStatusUrl;
-    final uri = Uri.parse(statusBase).replace(
-      queryParameters: {
-        'product_code': credentials.productCode,
-        'total_amount': formatAmount(amount),
-        'transaction_uuid': transactionUuid,
-      },
+    final result = await EsewaStatusApi.fetchTransactionStatus(
+      session: session,
+      amount: amount,
+      transactionUuid: transactionUuid,
     );
-
-    final response = await http.get(uri).timeout(const Duration(seconds: 20));
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      return false;
-    }
-
-    try {
-      final body = jsonDecode(response.body);
-      if (body is! Map) return false;
-      final status = '${body['status'] ?? body['transaction_status'] ?? ''}'
-          .toUpperCase();
-      return status == 'COMPLETE' || status == 'COMPLETED';
-    } catch (_) {
-      return false;
-    }
+    return result.isComplete;
   }
 }

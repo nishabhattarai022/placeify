@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/services/haptic_service.dart';
-import '../../data/profile_mock_data.dart';
-import '../providers/profile_dashboard_provider.dart';
+import '../../domain/models/profile_ui_models.dart';
+import '../../../home/presentation/providers/wishlist_provider.dart';
+import '../../../orders/presentation/providers/orders_provider.dart';
+import '../providers/profile_refunds_provider.dart';
 
+/// Header stats — same live sources as Account Overview / detail pages.
 class ProfileStatsStrip extends ConsumerWidget {
   const ProfileStatsStrip({
     required this.onStatTap,
@@ -15,20 +18,17 @@ class ProfileStatsStrip extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dashboard = ref.watch(profileDashboardProvider).value;
+    final orderCount = ref.watch(ordersCountProvider);
+    final wishlistCount = ref.watch(wishlistProvider).length;
+    final refundCount = ref.watch(profileRefundsProvider).maybeWhen(
+          data: (state) => state.active.length + state.completed.length,
+          orElse: () => 0,
+        );
+
     final stats = [
-      ProfileStat(
-        value: '${dashboard?.orderCount ?? 0}',
-        label: 'Orders',
-      ),
-      ProfileStat(
-        value: '${dashboard?.wishlistCount ?? 0}',
-        label: 'Wishlist',
-      ),
-      ProfileStat(
-        value: '${dashboard?.refundCount ?? 0}',
-        label: 'Refunds',
-      ),
+      ProfileStat(value: '$orderCount', label: 'Orders'),
+      ProfileStat(value: '$wishlistCount', label: 'Wishlist'),
+      ProfileStat(value: '$refundCount', label: 'Refunds'),
     ];
 
     return Padding(

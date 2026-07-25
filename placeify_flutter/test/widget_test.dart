@@ -1,20 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:placeify_flutter/features/cart/presentation/providers/cart_provider.dart';
-import 'package:placeify_flutter/features/home/data/mock_product_repository.dart';
+import 'package:placeify_flutter/features/cart/domain/cart_line_item.dart';
+import 'package:placeify_flutter/features/cart/domain/cart_totals_calculator.dart';
+import 'package:placeify_flutter/features/home/domain/constants/product_categories.dart';
 import 'package:placeify_flutter/features/home/domain/models/product.dart';
-import 'package:placeify_flutter/features/vendor/data/mock_vendor_repository.dart';
 
 void main() {
-  test('mock product repository has catalog data', () {
-    expect(MockProductRepository.categories.length, 6);
-    expect(MockProductRepository.products.length, 18);
-    expect(
-      MockProductRepository.products.firstWhere((p) => p.id == 'p4').name,
-      'Harmony Chair',
-    );
+  test('product categories are defined for catalog browsing', () {
+    expect(ProductCategories.all.length, greaterThanOrEqualTo(6));
+    expect(ProductCategories.byId('chairs'), isNotNull);
   });
 
-  test('computeCartTotals applies product discounts to summary', () {
+  test('cart totals calculator sums line item prices', () {
     const product = Product(
       id: 'sale-1',
       name: 'Sale Chair',
@@ -29,17 +25,14 @@ void main() {
       dimensions: ProductDimensions(widthCm: 70, depthCm: 68, heightCm: 85),
     );
 
-    final totals = computeCartTotals([(product: product, quantity: 2)]);
+    final totals = CartTotalsCalculator.compute(
+      const [CartLineItem(productId: 'sale-1', quantity: 2)],
+      (id) => id == product.id ? product : null,
+    );
 
     expect(product.isOnSale, isTrue);
-    expect(totals.subtotal, 2000);
-    expect(totals.discount, 400);
+    expect(totals.subtotal, 1600);
+    expect(totals.discount, 0);
     expect(totals.total, 1600);
-  });
-
-  test('mock vendor repository has dashboard data', () {
-    expect(MockVendorRepository.orders.length, 9);
-    expect(MockVendorRepository.topProducts.length, 3);
-    expect(MockVendorRepository.revenue, 8400);
   });
 }

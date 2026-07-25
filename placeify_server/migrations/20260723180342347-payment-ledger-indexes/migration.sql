@@ -3,16 +3,16 @@ BEGIN;
 --
 -- ACTION ALTER TABLE
 --
-CREATE INDEX "order_vendor_payment_created_at" ON "order_vendor_payment" USING btree ("createdAt");
-CREATE INDEX "order_vendor_payment_vendor_created" ON "order_vendor_payment" USING btree ("vendorId", "createdAt");
-CREATE INDEX "order_vendor_payment_vendor_status" ON "order_vendor_payment" USING btree ("vendorId", "status");
-CREATE INDEX "order_vendor_payment_order_id" ON "order_vendor_payment" USING btree ("orderId");
+CREATE INDEX IF NOT EXISTS "order_vendor_payment_created_at" ON "order_vendor_payment" USING btree ("createdAt");
+CREATE INDEX IF NOT EXISTS "order_vendor_payment_vendor_created" ON "order_vendor_payment" USING btree ("vendorId", "createdAt");
+CREATE INDEX IF NOT EXISTS "order_vendor_payment_vendor_status" ON "order_vendor_payment" USING btree ("vendorId", "status");
+CREATE INDEX IF NOT EXISTS "order_vendor_payment_order_id" ON "order_vendor_payment" USING btree ("orderId");
 --
 -- ACTION ALTER TABLE
 --
-CREATE INDEX "payment_transaction_created_at" ON "payment_transaction" USING btree ("createdAt");
-CREATE INDEX "payment_transaction_user_created" ON "payment_transaction" USING btree ("userId", "createdAt");
-CREATE INDEX "payment_transaction_status_created" ON "payment_transaction" USING btree ("status", "createdAt");
+CREATE INDEX IF NOT EXISTS "payment_transaction_created_at" ON "payment_transaction" USING btree ("createdAt");
+CREATE INDEX IF NOT EXISTS "payment_transaction_user_created" ON "payment_transaction" USING btree ("userId", "createdAt");
+CREATE INDEX IF NOT EXISTS "payment_transaction_status_created" ON "payment_transaction" USING btree ("status", "createdAt");
 
 --
 -- MIGRATION VERSION FOR placeify

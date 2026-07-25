@@ -235,8 +235,7 @@ class Product3dGenerator {
     }
 
     final fileName = 'product_$productId.glb';
-    final outputPath =
-        '${outputDir.path}${Platform.pathSeparator}$fileName';
+    final outputPath = '${outputDir.path}${Platform.pathSeparator}$fileName';
     await File(outputPath).writeAsBytes(bytes);
 
     // Version query busts client/WebView caches after regenerate (same file path).

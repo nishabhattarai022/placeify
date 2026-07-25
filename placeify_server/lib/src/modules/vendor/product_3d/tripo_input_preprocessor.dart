@@ -25,7 +25,7 @@ final class PreparedTripoFrame {
 /// Centers furniture on white background without unnecessary downscaling.
 class TripoInputPreprocessor {
   TripoInputPreprocessor({ProductImageProcessor? imageProcessor})
-      : _imageProcessor = imageProcessor ?? ProductImageProcessor();
+    : _imageProcessor = imageProcessor ?? ProductImageProcessor();
 
   /// Max edge length sent to Tripo — only downscale above this (no upscaling).
   static const maxTripoEdge = 4096;
@@ -55,12 +55,15 @@ class TripoInputPreprocessor {
     for (final bytes in sources) {
       final image = img.decodeImage(bytes);
       if (image == null) {
-        throw TripoInputPreprocessorException('Could not decode multiview image.');
+        throw TripoInputPreprocessorException(
+          'Could not decode multiview image.',
+        );
       }
       decoded.add(image);
     }
 
-    final labels = viewLabels ??
+    final labels =
+        viewLabels ??
         List<String>.generate(sources.length, (index) => 'view_$index');
     final normalized = normalizeExposureAcrossViews(
       decoded,
@@ -85,7 +88,8 @@ class TripoInputPreprocessor {
   }) {
     if (views.isEmpty) return views;
 
-    final labels = viewLabels ??
+    final labels =
+        viewLabels ??
         List<String>.generate(views.length, (index) => 'view_$index');
     final stats = views.map(_subjectColorStats).toList();
     final reference = stats.first;
@@ -167,7 +171,10 @@ class TripoInputPreprocessor {
     return prepareCatalogFrame(processed.bytes);
   }
 
-  PreparedTripoFrame _prepareFrame(img.Image source, {required int sourceBytes}) {
+  PreparedTripoFrame _prepareFrame(
+    img.Image source, {
+    required int sourceBytes,
+  }) {
     final framed = _centerOnSquareCanvas(source);
     final usePng = _shouldUsePng(source);
     final encoded = usePng
@@ -215,7 +222,8 @@ class TripoInputPreprocessor {
     }
 
     final maxSubject = canvasSize - (margin * 2);
-    final needsDownscale = subject.width > maxSubject || subject.height > maxSubject;
+    final needsDownscale =
+        subject.width > maxSubject || subject.height > maxSubject;
     final placed = needsDownscale
         ? img.copyResize(
             subject,

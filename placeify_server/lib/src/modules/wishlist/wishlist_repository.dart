@@ -3,11 +3,12 @@ import 'package:serverpod/serverpod.dart';
 import '../../generated/protocol.dart';
 import '../../shared/pagination_helper.dart';
 import '../../shared/session_service.dart';
+import '../product/product_catalog_policy.dart';
 import '../product/product_repository.dart';
 
 class WishlistStore {
   WishlistStore({CatalogRepository? productRepository})
-      : _productRepository = productRepository ?? CatalogRepository();
+    : _productRepository = productRepository ?? CatalogRepository();
 
   final CatalogRepository _productRepository;
 
@@ -31,7 +32,7 @@ class WishlistStore {
       where: (row) => row.userId.equals(user.id!),
       include: WishlistItem.include(
         product: Product.include(
-          vendor: Vendor.include(),
+          vendor: Vendor.include(user: User.include()),
           category: Category.include(),
         ),
       ),
@@ -41,8 +42,20 @@ class WishlistStore {
       offset: paging.offset,
     );
 
+    final visible = items
+        .where((item) {
+          final product = item.product;
+          if (product == null) return false;
+          return ProductCatalogPolicy.isConsumerVisibleProduct(
+            product,
+            vendorUser: product.vendor?.user,
+            vendor: product.vendor,
+          );
+        })
+        .toList(growable: false);
+
     return WishlistPage(
-      items: items,
+      items: visible,
       total: total,
       page: paging.page,
       pageSize: paging.pageSize,

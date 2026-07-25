@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/config/vendor_mock_config.dart';
 import '../../domain/models/vendor_product.dart';
 import 'vendor_products_provider.dart';
 
@@ -20,6 +19,6 @@ final vendorProductImageUrlProvider =
 
   return productsAsync.maybeWhen(
     data: (products) => _imageFromProducts(products, productId),
-    orElse: () => VendorMockConfig.productImageFor(productId),
+    orElse: () => null,
   );
 });

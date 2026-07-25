@@ -1,6 +1,7 @@
 import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
+import '../../shared/order_display_number.dart';
 import '../../shared/placeify_exception.dart';
 import '../notification/order_notification_service.dart';
 import '../order/order_lifecycle_store.dart';
@@ -8,7 +9,7 @@ import 'user_payment_store.dart';
 
 class UserOrderStore {
   UserOrderStore({UserPaymentStore? paymentStore})
-      : _paymentStore = paymentStore ?? UserPaymentStore();
+    : _paymentStore = paymentStore ?? UserPaymentStore();
 
   final UserPaymentStore _paymentStore;
   Future<List<UserOrderSummary>> listSummaries(
@@ -60,8 +61,12 @@ class UserOrderStore {
       orderDescending: true,
     );
     final latestDeliveryByOrderId = <int, OrderDeliveryUpdate>{};
+    final deliveredAtByOrderId = <int, DateTime>{};
     for (final update in allDeliveries) {
       latestDeliveryByOrderId.putIfAbsent(update.orderId, () => update);
+      if (update.stage == DeliveryStage.delivered) {
+        deliveredAtByOrderId.putIfAbsent(update.orderId, () => update.createdAt);
+      }
     }
 
     return [
@@ -72,6 +77,7 @@ class UserOrderStore {
             items: itemsByOrderId[order.id!] ?? const [],
             latestDeliveryStage: latestDeliveryByOrderId[order.id!]?.stage,
             latestDeliveryNote: latestDeliveryByOrderId[order.id!]?.note,
+            deliveredAt: deliveredAtByOrderId[order.id!],
           ),
     ];
   }
@@ -89,13 +95,13 @@ class UserOrderStore {
       );
     }
 
-      final items = await OrderItem.db.find(
-        session,
-        where: (item) => item.orderId.equals(orderId),
-        include: OrderItem.include(
-          product: Product.include(vendor: Vendor.include()),
-        ),
-      );
+    final items = await OrderItem.db.find(
+      session,
+      where: (item) => item.orderId.equals(orderId),
+      include: OrderItem.include(
+        product: Product.include(vendor: Vendor.include()),
+      ),
+    );
 
     final deliveryRows = await OrderDeliveryUpdate.db.find(
       session,
@@ -104,15 +110,28 @@ class UserOrderStore {
     );
 
     final latestDelivery = _pickLatestDeliveryUpdate(deliveryRows);
+    DateTime? deliveredAt;
+    for (final row in deliveryRows.reversed) {
+      if (row.stage == DeliveryStage.delivered) {
+        deliveredAt = row.createdAt;
+        break;
+      }
+    }
     final summary = _buildSummary(
       order: order,
       items: items,
       latestDeliveryStage: latestDelivery?.stage,
       latestDeliveryNote: latestDelivery?.note,
+      deliveredAt: deliveredAt,
     );
-    final payment =
-        await _paymentStore.getPaymentSummary(session, userId, orderId);
+    final payment = await _paymentStore.getPaymentSummary(
+      session,
+      userId,
+      orderId,
+    );
     final customer = await User.db.findById(session, userId);
+    final primaryItem = items.isEmpty ? null : items.first;
+    final primaryVendorName = primaryItem?.product?.vendor?.shopName;
 
     return UserOrderDetail(
       id: summary.id,
@@ -123,6 +142,8 @@ class UserOrderStore {
       shippingAddress: order.shippingAddress,
       itemCount: summary.itemCount,
       primaryProductName: summary.primaryProductName,
+      vendorId: primaryItem?.vendorId,
+      vendorName: primaryVendorName,
       customerName: customer?.name,
       customerPhone: customer?.phone,
       latestDeliveryStage: summary.latestDeliveryStage,
@@ -137,6 +158,7 @@ class UserOrderStore {
             unitPrice: item.unitPrice,
             lineTotal: item.unitPrice * item.quantity,
             thumbnailUrl: _productImageUrl(item.product),
+            vendorId: item.vendorId,
             vendorName: item.product?.vendor?.shopName,
             listUnitPrice: _listUnitPrice(item.product, item.unitPrice),
           ),
@@ -183,15 +205,13 @@ class UserOrderStore {
     return switch (raw) {
       'paymentReceived' ||
       'paymentConfirmed' ||
-      'paid' =>
-        OrderPaymentStatus.paymentReceived,
+      'paid' => OrderPaymentStatus.paymentReceived,
       'unpaid' ||
       'pending' ||
       'failed' ||
       'cancelled' ||
       'refundPending' ||
-      'refunded' =>
-        OrderPaymentStatus.unpaid,
+      'refunded' => OrderPaymentStatus.unpaid,
       _ => OrderPaymentStatus.unpaid,
     };
   }
@@ -226,9 +246,7 @@ class UserOrderStore {
       'cancelled' || 'autoCancelled' => 'Order Cancelled',
       _ => newStatus,
     };
-    if (trimmed != null &&
-        trimmed.isNotEmpty &&
-        newStatus == 'rejected') {
+    if (trimmed != null && trimmed.isNotEmpty && newStatus == 'rejected') {
       return base;
     }
     return base;
@@ -321,6 +339,7 @@ class UserOrderStore {
     required List<OrderItem> items,
     DeliveryStage? latestDeliveryStage,
     String? latestDeliveryNote,
+    DateTime? deliveredAt,
   }) {
     final orderId = order.id!;
     final primaryProduct = items.isEmpty ? null : items.first.product;
@@ -328,20 +347,23 @@ class UserOrderStore {
         ? null
         : primaryProduct?.name ?? 'Order item';
     final primaryThumbnail = _productImageUrl(primaryProduct);
-    final totalQuantity =
-        items.fold<int>(0, (sum, item) => sum + item.quantity);
+    final totalQuantity = items.fold<int>(
+      0,
+      (sum, item) => sum + item.quantity,
+    );
     final displayName = primaryName == null
         ? null
         : totalQuantity > 1
-            ? '$primaryName × $totalQuantity'
-            : primaryName;
+        ? '$primaryName × $totalQuantity'
+        : primaryName;
 
     return UserOrderSummary(
       id: orderId,
-      orderNumber: orderId.toString().padLeft(5, '0'),
+      orderNumber: OrderDisplayNumber.format(orderId),
       status: order.status,
       totalAmount: order.totalAmount,
       placedAt: order.placedAt,
+      deliveredAt: deliveredAt,
       itemCount: totalQuantity,
       primaryProductName: displayName,
       primaryThumbnailUrl: primaryThumbnail,

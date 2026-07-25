@@ -1,0 +1,8 @@
+### Paginated chat messages for a conversation thread.
+class: ChatMessagePage
+fields:
+  items: List<ChatMessage>
+  totalCount: int
+  page: int
+  pageSize: int
+  hasMore: bool

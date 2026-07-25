@@ -12,6 +12,7 @@ import '../../../../core/theme/app_fonts.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/animated_scale_tap.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
+import '../../../cart/presentation/cart_actions.dart';
 import '../../../home/presentation/chairs_catalog_tokens.dart';
 import '../../domain/constants/order_strings.dart';
 import '../../domain/enums/consumer_order_status.dart';
@@ -41,78 +42,78 @@ class OrderCard extends ConsumerWidget {
 
     return GestureDetector(
       onLongPress: onLongPress,
-      child: AnimatedScaleTap(
-        onTap: () {
-          HapticService.light();
-          context.pushNamed(
-            'profileOrderDetail',
-            pathParameters: {'orderId': order.id},
-          );
-        },
-        child: Container(
-          decoration: BoxDecoration(
-            color: ChairsCatalogTokens.imageWell,
-            borderRadius:
-                BorderRadius.circular(ChairsCatalogTokens.wideCardRadius),
-            boxShadow: ChairsCatalogTokens.cardShadow,
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Stack(
-                clipBehavior: Clip.none,
+      child: Container(
+        decoration: BoxDecoration(
+          color: ChairsCatalogTokens.imageWell,
+          borderRadius:
+              BorderRadius.circular(ChairsCatalogTokens.wideCardRadius),
+          boxShadow: ChairsCatalogTokens.cardShadow,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AnimatedScaleTap(
+              onTap: () {
+                HapticService.light();
+                context.pushNamed(
+                  'profileOrderDetail',
+                  pathParameters: {'orderId': order.id},
+                );
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  AspectRatio(
-                    aspectRatio: 16 / 10,
-                    child: ColoredBox(
-                      color: AppColors.cream,
-                      child: _OrderHeroImage(item: heroItem),
-                    ),
-                  ),
-                  Positioned(
-                    top: 12,
-                    right: 12,
-                    child: ConsumerOrderStatusChip(status: order.status),
-                  ),
-                  if (extraItems > 0)
-                    Positioned(
-                      left: 12,
-                      bottom: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.92),
-                          borderRadius: BorderRadius.circular(999),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.08),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          OrderStrings.moreItemsLabel(extraItems),
-                          style: GoogleFonts.dmSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.espresso,
-                          ),
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      AspectRatio(
+                        aspectRatio: 16 / 10,
+                        child: ColoredBox(
+                          color: AppColors.cream,
+                          child: _OrderHeroImage(item: heroItem),
                         ),
                       ),
-                    ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+                      Positioned(
+                        top: 12,
+                        right: 12,
+                        child: ConsumerOrderStatusChip(status: order.status),
+                      ),
+                      if (extraItems > 0)
+                        Positioned(
+                          left: 12,
+                          bottom: 12,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.92),
+                              borderRadius: BorderRadius.circular(999),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.08),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Text(
+                              OrderStrings.moreItemsLabel(extraItems),
+                              style: GoogleFonts.dmSans(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.espresso,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                    child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
@@ -193,12 +194,35 @@ class OrderCard extends ConsumerWidget {
                         ),
                       ],
                     ),
+                  ),
+                ],
+              ),
+            ),
+            if (order.isDelivered || _contextualActions(context, ref).isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (order.isDelivered)
+                      for (final item in order.items)
+                        _DeliveredOrderLine(
+                          item: item,
+                          onAddToCart: () => addToCart(
+                            ref,
+                            context,
+                            item.productId,
+                            quantity: item.quantity,
+                            openCart: false,
+                          ),
+                        ),
                     ..._buildActions(context, ref),
                   ],
                 ),
-              ),
-            ],
-          ),
+              )
+            else
+              const SizedBox(height: 16),
+          ],
         ),
       ),
     );
@@ -360,6 +384,68 @@ class _OrderActionButton extends StatelessWidget {
             color: primary ? Colors.white : AppColors.espresso,
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _DeliveredOrderLine extends StatelessWidget {
+  const _DeliveredOrderLine({
+    required this.item,
+    required this.onAddToCart,
+  });
+
+  final OrderItem item;
+  final VoidCallback onAddToCart;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              item.productName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.dmSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Semantics(
+            button: true,
+            label: OrderStrings.addToCartAction,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  HapticService.light();
+                  onAddToCart();
+                },
+                borderRadius: BorderRadius.circular(10),
+                child: Ink(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.sand, width: 1.5),
+                    color: Colors.white,
+                  ),
+                  child: const Icon(
+                    Icons.add_shopping_cart_outlined,
+                    size: 16,
+                    color: AppColors.espresso,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

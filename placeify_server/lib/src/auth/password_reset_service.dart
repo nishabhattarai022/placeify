@@ -9,6 +9,7 @@ import 'package:serverpod_auth_idp_server/providers/email.dart';
 import '../email/email_service.dart';
 import '../generated/protocol.dart';
 import 'auth_email_resolver.dart';
+import 'email_verification_service.dart';
 import 'password_reset_rate_limiter.dart';
 
 class PasswordResetService {
@@ -20,7 +21,6 @@ class PasswordResetService {
       'The password reset request is invalid or has expired.';
 
   static const _tokenExpiry = Duration(minutes: 30);
-  static const _defaultFrontendUrl = 'http://localhost:8082';
 
   Future<void> forgotPassword(
     Session session, {
@@ -77,7 +77,7 @@ class PasswordResetService {
     await EmailService.sendPasswordResetLinkEmail(
       session,
       to: normalizedEmail,
-      resetUrl: _buildResetUrl(session, rawToken),
+      resetUrl: await _buildResetUrl(session, rawToken),
     );
   }
 
@@ -206,13 +206,8 @@ class PasswordResetService {
     return normalized;
   }
 
-  String _buildResetUrl(Session session, String rawToken) {
-    final configured = session.passwords['frontendUrl']?.trim();
-    final envUrl = const String.fromEnvironment('FRONTEND_URL');
-    final baseUrl = configured?.isNotEmpty == true
-        ? configured!
-        : (envUrl.isNotEmpty ? envUrl : _defaultFrontendUrl);
-
+  Future<String> _buildResetUrl(Session session, String rawToken) async {
+    final baseUrl = await resolveFrontendBaseUrl(session);
     final uri = Uri.parse(baseUrl);
     final query = Map<String, String>.from(uri.queryParameters)
       ..['token'] = rawToken;

@@ -1,16 +1,18 @@
 import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
-import '../../shared/placeify_exception.dart';
+import '../../shared/refund_destination.dart';
 import '../../shared/session_service.dart';
 import '../notification/order_notification_service.dart';
-import '../payment/payment_sync.dart';
+import '../payment/esewa_refund_service.dart';
+import '../refund/refund_repository.dart';
 import 'admin_action_audit_log.dart';
 import 'admin_repository.dart';
 
 /// Admin finance operations: payout approval and refund resolution.
 class AdminFinanceStore {
-  AdminFinanceStore({AdminStore? adminStore}) : _adminStore = adminStore ?? AdminStore();
+  AdminFinanceStore({AdminStore? adminStore})
+    : _adminStore = adminStore ?? AdminStore();
 
   final AdminStore _adminStore;
 
@@ -104,7 +106,8 @@ class AdminFinanceStore {
     return AdminVendorPayoutSummary(
       id: updated.id!,
       vendorId: updated.vendorId,
-      businessName: updated.vendor?.shopName ?? payout.vendor?.shopName ?? 'Vendor',
+      businessName:
+          updated.vendor?.shopName ?? payout.vendor?.shopName ?? 'Vendor',
       amount: updated.amount,
       status: updated.status,
       reference: updated.reference,
@@ -164,7 +167,8 @@ class AdminFinanceStore {
     return AdminVendorPayoutSummary(
       id: updated.id!,
       vendorId: updated.vendorId,
-      businessName: updated.vendor?.shopName ?? payout.vendor?.shopName ?? 'Vendor',
+      businessName:
+          updated.vendor?.shopName ?? payout.vendor?.shopName ?? 'Vendor',
       amount: updated.amount,
       status: updated.status,
       reference: updated.reference,
@@ -182,6 +186,7 @@ class AdminFinanceStore {
   }) async {
     await _requireAdmin(session);
     final paging = _resolvePagination(pagination);
+    final autoConfigured = EsewaRefundService.isInitiateConfigured(session);
 
     final rows = await RefundRequest.db.find(
       session,
@@ -193,21 +198,24 @@ class AdminFinanceStore {
       offset: paging.offset,
     );
 
-    return [
-      for (final row in rows)
-        if (row.id != null)
-          AdminRefundRequestSummary(
-            id: row.id!,
-            orderId: row.orderId,
-            userId: row.userId,
-            customerName: row.user?.name ?? 'Customer',
-            customerEmail: row.user?.email ?? '',
-            reason: row.reason,
-            refundAmount: row.refundAmount,
-            status: row.status,
-            createdAt: row.createdAt,
-          ),
-    ];
+    final summaries = <AdminRefundRequestSummary>[];
+    for (final row in rows) {
+      if (row.id == null) continue;
+      final payment = await PaymentTransaction.db.findFirstRow(
+        session,
+        where: (tx) => tx.orderId.equals(row.orderId),
+      );
+      summaries.add(
+        _toAdminSummary(
+          row,
+          customerName: row.user?.name ?? 'Customer',
+          customerEmail: row.user?.email ?? '',
+          payment: payment,
+          automaticInitiateConfigured: autoConfigured,
+        ),
+      );
+    }
+    return summaries;
   }
 
   Future<AdminRefundRequestSummary> approveRefundRequest(
@@ -220,16 +228,94 @@ class AdminFinanceStore {
 
   Future<AdminRefundRequestSummary> rejectRefundRequest(
     Session session,
-    int refundId,
-  ) async {
+    int refundId, {
+    String? reason,
+  }) async {
     await _requireAdmin(session);
-    return _resolveRefund(session, refundId, approve: false);
+    return _resolveRefund(session, refundId, approve: false, reason: reason);
+  }
+
+  /// Status check + auto-complete when eSewa reports FULL_REFUND.
+  Future<AdminRefundRequestSummary> checkEsewaRefundStatus(
+    Session session,
+    int refundId,
+  ) {
+    return _runEsewaStatusAction(
+      session,
+      refundId,
+      requireFullRefundToComplete: false,
+      actionType: AdminActionType.checkEsewaRefundStatus,
+    );
+  }
+
+  /// Explicit UI alias for [checkEsewaRefundStatus].
+  Future<AdminRefundRequestSummary> retryEsewaRefundStatusCheck(
+    Session session,
+    int refundId,
+  ) {
+    return checkEsewaRefundStatus(session, refundId);
+  }
+
+  /// Completes only when status API returns FULL_REFUND.
+  Future<AdminRefundRequestSummary> completeManualEsewaSettlement(
+    Session session,
+    int refundId,
+  ) {
+    return _runEsewaStatusAction(
+      session,
+      refundId,
+      requireFullRefundToComplete: true,
+      actionType: AdminActionType.completeManualEsewaSettlement,
+    );
+  }
+
+  Future<AdminRefundRequestSummary> _runEsewaStatusAction(
+    Session session,
+    int refundId, {
+    required bool requireFullRefundToComplete,
+    required AdminActionType actionType,
+  }) async {
+    final admin = await _requireAdmin(session);
+    final adminUser = await SessionService.requireUser(session);
+    final existing = await RefundRequest.db.findById(
+      session,
+      refundId,
+      include: RefundRequest.include(user: User.include()),
+    );
+    if (existing == null) {
+      throw PlaceifyException(
+        message: 'Refund request not found.',
+        code: 'NOT_FOUND',
+      );
+    }
+    final previousStatus = existing.status.name;
+
+    final updated = await EsewaRefundService.checkAndMaybeComplete(
+      session,
+      refundId,
+      actorUserId: adminUser.id,
+      requireFullRefundToComplete: requireFullRefundToComplete,
+    );
+
+    await AdminActionAuditLog.record(
+      session,
+      actorAdminId: admin.id!,
+      actionType: actionType,
+      targetRefundId: refundId,
+      targetUserId: updated.userId,
+      previousStatus: previousStatus,
+      newStatus: updated.status.name,
+      note: updated.gatewayStatus,
+    );
+
+    return _summaryForRefund(session, updated, fallback: existing);
   }
 
   Future<AdminRefundRequestSummary> _resolveRefund(
     Session session,
     int refundId, {
     required bool approve,
+    String? reason,
   }) async {
     final admin = await _requireAdmin(session);
     final row = await RefundRequest.db.findById(
@@ -238,7 +324,10 @@ class AdminFinanceStore {
       include: RefundRequest.include(user: User.include()),
     );
     if (row == null) {
-      throw PlaceifyException(message: 'Refund request not found.', code: 'NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Refund request not found.',
+        code: 'NOT_FOUND',
+      );
     }
     if (row.status != RequestStatus.pending &&
         row.status != RequestStatus.inProgress) {
@@ -250,38 +339,34 @@ class AdminFinanceStore {
 
     final adminUser = await SessionService.requireUser(session);
     final previousStatus = row.status.name;
-    final newStatus =
-        approve ? RequestStatus.completed : RequestStatus.rejected;
 
     final updated = await session.db.transaction((transaction) async {
-      final resolved = await RefundRequest.db.updateRow(
-        session,
-        row.copyWith(
-          status: newStatus,
-          updatedAt: DateTime.now(),
-        ),
-        transaction: transaction,
-      );
-
-      if (approve) {
-        await PaymentSync.markOrderRefunded(
-          session,
-          row.orderId,
-          transaction: transaction,
-          changedByUserId: adminUser.id,
-        );
-      }
+      final resolved = approve
+          ? await RefundStore.applyApprovalSettlement(
+              session,
+              row: row,
+              actorUserId: adminUser.id!,
+              transaction: transaction,
+            )
+          : await RefundStore.applyRejection(
+              session,
+              row: row,
+              actorUserId: adminUser.id!,
+              reason: reason ?? 'Rejected by admin.',
+              transaction: transaction,
+            );
 
       await AdminActionAuditLog.record(
         session,
         actorAdminId: admin.id!,
-        actionType:
-            approve ? AdminActionType.approveRefund : AdminActionType.rejectRefund,
+        actionType: approve
+            ? AdminActionType.approveRefund
+            : AdminActionType.rejectRefund,
         targetRefundId: refundId,
         targetUserId: row.userId,
         previousStatus: previousStatus,
-        newStatus: newStatus.name,
-        reason: row.reason,
+        newStatus: resolved.status.name,
+        reason: approve ? row.reason : (reason ?? resolved.rejectionReason),
         transaction: transaction,
       );
 
@@ -293,19 +378,66 @@ class AdminFinanceStore {
         session,
         refund: updated,
         approved: approve,
+        reason: reason ?? updated.rejectionReason,
+        completed: approve && updated.status == RequestStatus.completed,
       );
     } catch (_) {}
 
+    return _summaryForRefund(session, updated, fallback: row);
+  }
+
+  Future<AdminRefundRequestSummary> _summaryForRefund(
+    Session session,
+    RefundRequest updated, {
+    required RefundRequest fallback,
+  }) async {
+    final payment = await PaymentTransaction.db.findFirstRow(
+      session,
+      where: (tx) => tx.orderId.equals(updated.orderId),
+    );
+    return _toAdminSummary(
+      updated,
+      customerName: updated.user?.name ?? fallback.user?.name ?? 'Customer',
+      customerEmail: updated.user?.email ?? fallback.user?.email ?? '',
+      payment: payment,
+      automaticInitiateConfigured:
+          EsewaRefundService.isInitiateConfigured(session),
+    );
+  }
+
+  AdminRefundRequestSummary _toAdminSummary(
+    RefundRequest row, {
+    required String customerName,
+    required String customerEmail,
+    required PaymentTransaction? payment,
+    required bool automaticInitiateConfigured,
+  }) {
+    final method = payment?.paymentMethod;
+    final processing = row.status == RequestStatus.inProgress &&
+        method == PaymentMethod.esewa;
     return AdminRefundRequestSummary(
-      id: updated.id!,
-      orderId: updated.orderId,
-      userId: updated.userId,
-      customerName: updated.user?.name ?? row.user?.name ?? 'Customer',
-      customerEmail: updated.user?.email ?? row.user?.email ?? '',
-      reason: updated.reason,
-      refundAmount: updated.refundAmount,
-      status: updated.status,
-      createdAt: updated.createdAt,
+      id: row.id!,
+      orderId: row.orderId,
+      userId: row.userId,
+      customerName: customerName,
+      customerEmail: customerEmail,
+      reason: row.reason,
+      refundAmount: row.refundAmount,
+      status: row.status,
+      createdAt: row.createdAt,
+      paymentMethod: method,
+      paymentStatus: payment?.status,
+      destinationLabel: RefundDestination.labelFor(
+        method,
+        processing: processing,
+      ),
+      gatewayStatus: row.gatewayStatus,
+      gatewayReference: row.gatewayReference,
+      gatewayResponse: row.gatewayResponse,
+      refundCompletedAt: row.refundCompletedAt,
+      lastGatewayCheckAt: row.lastGatewayCheckAt,
+      settlementMode: row.settlementMode,
+      automaticInitiateConfigured: automaticInitiateConfigured,
     );
   }
 

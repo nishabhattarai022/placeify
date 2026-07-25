@@ -6,3 +6,4 @@ values:
   - shipped
   - outForDelivery
   - delivered
+  - rejected

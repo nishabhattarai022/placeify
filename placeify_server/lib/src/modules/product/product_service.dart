@@ -13,15 +13,16 @@ class ProductService {
   ProductService({
     CatalogRepository? repository,
     VendorService? vendorService,
-  })  : _repository = repository ?? CatalogRepository(),
-        _vendorService = vendorService ?? VendorService();
+  }) : _repository = repository ?? CatalogRepository(),
+       _vendorService = vendorService ?? VendorService();
 
   final CatalogRepository _repository;
   final VendorService _vendorService;
 
   Future<void> _ensureCatalog(Session session) async {
     try {
-      await CatalogSeed.ensureDemoCatalog(session);
+      // Categories only — never auto-insert demo products into production catalogs.
+      await CatalogSeed.ensureCategories(session);
     } on PlaceifyException catch (error) {
       if (error.code != 'CATALOG_SEED_REQUIRES_USER') rethrow;
     }
@@ -59,7 +60,9 @@ class ProductService {
     return _vendorService.listApprovedShops(session, query: query);
   }
 
-  Future<MarketplaceHighlights> getMarketplaceHighlights(Session session) async {
+  Future<MarketplaceHighlights> getMarketplaceHighlights(
+    Session session,
+  ) async {
     await _ensureCatalog(session);
     return _repository.marketplaceHighlights(session);
   }

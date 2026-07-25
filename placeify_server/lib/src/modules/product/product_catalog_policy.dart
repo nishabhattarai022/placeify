@@ -81,7 +81,8 @@ abstract final class ProductCatalogPolicy {
       }
       if (query != null && query.isNotEmpty) {
         final pattern = '%$query%';
-        expression = expression &
+        expression =
+            expression &
             (row.name.ilike(pattern) | row.description.ilike(pattern));
       }
 

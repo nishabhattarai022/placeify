@@ -3,7 +3,7 @@ import 'package:test/test.dart';
 
 void main() {
   group('Vendor order delivery stages', () {
-    test('defines the five stages used by the vendor delivery UI', () {
+    test('defines all delivery stages used by the vendor delivery UI', () {
       expect(
         DeliveryStage.values,
         [
@@ -12,6 +12,7 @@ void main() {
           DeliveryStage.shipped,
           DeliveryStage.outForDelivery,
           DeliveryStage.delivered,
+          DeliveryStage.rejected,
         ],
       );
     });

@@ -8,8 +8,8 @@ abstract final class TripoApiKeyConfig {
   static const apiKeyEnv = 'PLACEIFY_TRIPO_API_KEY';
 
   static String? apiKey() => YamlApiKeyConfig.read(
-        configFileName: configFileName,
-        fieldName: 'apiKey',
-        envVarName: apiKeyEnv,
-      );
+    configFileName: configFileName,
+    fieldName: 'apiKey',
+    envVarName: apiKeyEnv,
+  );
 }

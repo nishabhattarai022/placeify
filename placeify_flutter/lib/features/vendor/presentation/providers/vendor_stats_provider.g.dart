@@ -33,7 +33,7 @@ final class VendorStatsProvider
   VendorStats create() => VendorStats();
 }
 
-String _$vendorStatsHash() => r'1fc5169c0fc2fdb3b7eed0d52108629f6f64b0b5';
+String _$vendorStatsHash() => r'a0219b9a58e09c44019b64e7d3cc335d3bceb8b5';
 
 abstract class _$VendorStats extends $AsyncNotifier<VendorDashboardData> {
   FutureOr<VendorDashboardData> build();

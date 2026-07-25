@@ -25,6 +25,7 @@ import 'widgets/order_timeline.dart';
 import 'widgets/payment_lifecycle_timeline.dart';
 import 'widgets/leave_review_sheet.dart';
 import 'providers/submitted_order_reviews_provider.dart';
+import 'package:placeify_flutter/features/messaging/presentation/conversations_screen.dart';
 
 class OrderDetailScreen extends ConsumerWidget {
   const OrderDetailScreen({required this.orderId, super.key});
@@ -115,6 +116,17 @@ class _OrderDetailBody extends ConsumerWidget {
                         ],
                       ),
                     ),
+                    if (order.vendorId.trim().isNotEmpty &&
+                        order.vendorId != '0')
+                      TextButton.icon(
+                        onPressed: () => openChatWithVendor(
+                          context,
+                          ref,
+                          order.vendorId,
+                        ),
+                        icon: const Icon(Icons.chat_bubble_outline, size: 16),
+                        label: const Text('Chat'),
+                      ),
                   ],
                 ),
               ),
@@ -133,7 +145,11 @@ class _OrderDetailBody extends ConsumerWidget {
                 title: OrderStrings.itemsSectionTitle,
                 child: Column(
                   children: [
-                    for (final item in order.items) OrderItemRow(item: item),
+                    for (final item in order.items)
+                      OrderItemRow(
+                        item: item,
+                        showAddToCart: order.isDelivered,
+                      ),
                   ],
                 ),
               ),

@@ -45,7 +45,8 @@ class CatalogRepository {
     if (input.categoryName != null && input.categoryName!.trim().isNotEmpty) {
       final category = await Category.db.findFirstRow(
         session,
-        where: (row) => row.name.equals(input.categoryName!.trim().toLowerCase()),
+        where: (row) =>
+            row.name.equals(input.categoryName!.trim().toLowerCase()),
       );
       categoryId = category?.id;
       if (categoryId == null) {
@@ -169,16 +170,15 @@ class CatalogRepository {
       orderDescending: true,
       limit: ProductCatalogPolicy.defaultRecentLimit * 2,
     );
-    final offerProducts = offerCandidates
-        .where(ProductPricing.hasActiveOffer)
-        .toList()
-      ..sort((a, b) {
-        final discountA = _discountFraction(a);
-        final discountB = _discountFraction(b);
-        final compare = discountB.compareTo(discountA);
-        if (compare != 0) return compare;
-        return b.createdAt.compareTo(a.createdAt);
-      });
+    final offerProducts =
+        offerCandidates.where(ProductPricing.hasActiveOffer).toList()
+          ..sort((a, b) {
+            final discountA = _discountFraction(a);
+            final discountB = _discountFraction(b);
+            final compare = discountB.compareTo(discountA);
+            if (compare != 0) return compare;
+            return b.createdAt.compareTo(a.createdAt);
+          });
     final trimmedOffers = offerProducts
         .take(ProductCatalogPolicy.defaultOfferLimit)
         .toList(growable: false);

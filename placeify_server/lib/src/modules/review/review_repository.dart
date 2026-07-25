@@ -6,7 +6,7 @@ import '../notification/in_app_notification_store.dart';
 
 class ReviewStore {
   ReviewStore({InAppNotificationStore? notifications})
-      : _notifications = notifications ?? InAppNotificationStore();
+    : _notifications = notifications ?? InAppNotificationStore();
 
   final InAppNotificationStore _notifications;
 
@@ -18,7 +18,8 @@ class ReviewStore {
     String? comment,
   }) async {
     if (rating < 1 || rating > 5) {
-      throw PlaceifyException(message: 'Rating must be between 1 and 5.',
+      throw PlaceifyException(
+        message: 'Rating must be between 1 and 5.',
         code: 'INVALID_RATING',
       );
     }
@@ -26,7 +27,10 @@ class ReviewStore {
     final user = await SessionService.requireUser(session);
     final order = await Order.db.findById(session, orderId);
     if (order == null || order.userId != user.id) {
-      throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Order not found.',
+        code: 'ORDER_NOT_FOUND',
+      );
     }
     if (order.status != OrderStatus.delivered) {
       throw PlaceifyException(
@@ -53,7 +57,10 @@ class ReviewStore {
       include: Product.include(vendor: Vendor.include()),
     );
     if (product == null || product.status != ProductStatus.active) {
-      throw PlaceifyException(message: 'Product not found.', code: 'PRODUCT_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Product not found.',
+        code: 'PRODUCT_NOT_FOUND',
+      );
     }
 
     final existing = await Review.db.findFirstRow(
@@ -64,7 +71,8 @@ class ReviewStore {
           row.orderId.equals(orderId),
     );
     if (existing != null) {
-      throw PlaceifyException(message: 'You already reviewed this order item.',
+      throw PlaceifyException(
+        message: 'You already reviewed this order item.',
         code: 'REVIEW_EXISTS',
       );
     }
@@ -88,8 +96,7 @@ class ReviewStore {
         session,
         userId: vendorUserId,
         title: 'New product review',
-        message:
-            '${user.name} left a $rating-star review on ${product.name}.',
+        message: '${user.name} left a $rating-star review on ${product.name}.',
         type: InAppNotificationType.productUpdate,
         referenceId: review.id,
         referenceKey: productId.toString(),
@@ -194,8 +201,7 @@ class ReviewStore {
       session,
       where: (row) => row.vendorId.equals(vendorId),
     );
-    final productIds =
-        products.map((p) => p.id).whereType<int>().toSet();
+    final productIds = products.map((p) => p.id).whereType<int>().toSet();
     if (productIds.isEmpty) {
       final vendor = await Vendor.db.findById(session, vendorId);
       if (vendor != null) {
@@ -210,8 +216,7 @@ class ReviewStore {
     );
     final average = reviews.isEmpty
         ? 0.0
-        : reviews.fold<double>(0, (sum, r) => sum + r.rating) /
-            reviews.length;
+        : reviews.fold<double>(0, (sum, r) => sum + r.rating) / reviews.length;
 
     final vendor = await Vendor.db.findById(session, vendorId);
     if (vendor != null) {
@@ -232,7 +237,10 @@ class ReviewStore {
       session,
       where: (row) => row.vendorId.equals(vendorId),
     );
-    final productIds = products.map((product) => product.id).whereType<int>().toList();
+    final productIds = products
+        .map((product) => product.id)
+        .whereType<int>()
+        .toList();
     if (productIds.isEmpty) return const [];
 
     final reviews = await Review.db.find(

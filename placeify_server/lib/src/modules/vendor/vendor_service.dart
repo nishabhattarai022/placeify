@@ -7,7 +7,7 @@ import 'vendor_repository.dart';
 
 class VendorService {
   VendorService({VendorStore? repository})
-      : _repository = repository ?? VendorStore();
+    : _repository = repository ?? VendorStore();
 
   final VendorStore _repository;
 

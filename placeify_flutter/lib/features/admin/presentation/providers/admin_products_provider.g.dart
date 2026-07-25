@@ -211,7 +211,7 @@ final class AdminProductActionsProvider
 }
 
 String _$adminProductActionsHash() =>
-    r'd348292b39f1adbabd278b628064dd09a6ca7b57';
+    r'8cd36f5994952f5b8a36db9be2a47db0299734a0';
 
 abstract class _$AdminProductActions extends $AsyncNotifier<void> {
   FutureOr<void> build();

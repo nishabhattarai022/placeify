@@ -12,10 +12,10 @@ class AdminService {
     AdminModerationStore? moderation,
     AdminPlatformStore? platform,
     AdminFinanceStore? finance,
-  })  : _repository = repository ?? AdminStore(),
-        _moderation = moderation ?? AdminModerationStore(),
-        _platform = platform ?? AdminPlatformStore(),
-        _finance = finance ?? AdminFinanceStore();
+  }) : _repository = repository ?? AdminStore(),
+       _moderation = moderation ?? AdminModerationStore(),
+       _platform = platform ?? AdminPlatformStore(),
+       _finance = finance ?? AdminFinanceStore();
 
   final AdminStore _repository;
   final AdminModerationStore _moderation;
@@ -164,7 +164,11 @@ class AdminService {
     int productId, {
     required bool featured,
   }) {
-    return _moderation.setProductFeatured(session, productId, featured: featured);
+    return _moderation.setProductFeatured(
+      session,
+      productId,
+      featured: featured,
+    );
   }
 
   Future<Complaint> fileComplaint(
@@ -325,9 +329,31 @@ class AdminService {
 
   Future<AdminRefundRequestSummary> rejectRefundRequest(
     Session session,
+    int refundId, {
+    String? reason,
+  }) {
+    return _finance.rejectRefundRequest(session, refundId, reason: reason);
+  }
+
+  Future<AdminRefundRequestSummary> checkEsewaRefundStatus(
+    Session session,
     int refundId,
   ) {
-    return _finance.rejectRefundRequest(session, refundId);
+    return _finance.checkEsewaRefundStatus(session, refundId);
+  }
+
+  Future<AdminRefundRequestSummary> retryEsewaRefundStatusCheck(
+    Session session,
+    int refundId,
+  ) {
+    return _finance.retryEsewaRefundStatusCheck(session, refundId);
+  }
+
+  Future<AdminRefundRequestSummary> completeManualEsewaSettlement(
+    Session session,
+    int refundId,
+  ) {
+    return _finance.completeManualEsewaSettlement(session, refundId);
   }
 
   Future<List<AdminProductSummary>> listProducts(

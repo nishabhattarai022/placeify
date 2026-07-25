@@ -1,5 +1,5 @@
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
-import 'package:placeify_flutter/features/vendor/data/mock_vendor_repository.dart';
+import 'package:placeify_flutter/features/vendor/data/vendor_order_exceptions.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/delivery_update.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_order.dart';

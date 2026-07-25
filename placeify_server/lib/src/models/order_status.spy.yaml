@@ -9,5 +9,7 @@ values:
   - processing
   - shipped
   - delivered
+  - returnRequested
+  - refunded
   - cancelled
   - autoCancelled

@@ -5,7 +5,7 @@ import 'ar_repository.dart';
 
 class ArService {
   ArService({ArSessionStore? repository})
-      : _repository = repository ?? ArSessionStore();
+    : _repository = repository ?? ArSessionStore();
 
   final ArSessionStore _repository;
 

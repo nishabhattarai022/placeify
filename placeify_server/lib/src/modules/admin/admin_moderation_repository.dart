@@ -15,8 +15,8 @@ class AdminModerationStore {
   AdminModerationStore({
     AdminStore? adminStore,
     InAppNotificationStore? notifications,
-  })  : _adminStore = adminStore ?? AdminStore(),
-        _notifications = notifications ?? InAppNotificationStore();
+  }) : _adminStore = adminStore ?? AdminStore(),
+       _notifications = notifications ?? InAppNotificationStore();
 
   final AdminStore _adminStore;
   final InAppNotificationStore _notifications;
@@ -440,7 +440,10 @@ class AdminModerationStore {
     final actorUser = await SessionService.requireUser(session);
     final user = await User.db.findById(session, targetUserId);
     if (user == null) {
-      throw PlaceifyException(message: 'User not found.', code: 'USER_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'User not found.',
+        code: 'USER_NOT_FOUND',
+      );
     }
 
     AdminUserGuard.ensureCanModifyUser(actor: actorUser, target: user);
@@ -483,7 +486,10 @@ class AdminModerationStore {
     final actorUser = await SessionService.requireUser(session);
     final user = await User.db.findById(session, targetUserId);
     if (user == null) {
-      throw PlaceifyException(message: 'User not found.', code: 'USER_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'User not found.',
+        code: 'USER_NOT_FOUND',
+      );
     }
 
     AdminUserGuard.ensureCanModifyUser(actor: actorUser, target: user);
@@ -496,8 +502,8 @@ class AdminModerationStore {
     final restoredRole = user.role == UserRole.admin
         ? UserRole.admin
         : vendor != null && user.role == UserRole.vendor
-            ? UserRole.vendor
-            : UserRole.consumer;
+        ? UserRole.vendor
+        : UserRole.consumer;
 
     final previousStatus = user.status.name;
     final now = DateTime.now();
@@ -540,7 +546,10 @@ class AdminModerationStore {
     final actorUser = await SessionService.requireUser(session);
     final user = await User.db.findById(session, targetUserId);
     if (user == null) {
-      throw PlaceifyException(message: 'User not found.', code: 'USER_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'User not found.',
+        code: 'USER_NOT_FOUND',
+      );
     }
 
     AdminUserGuard.ensureCanChangeStatus(
@@ -583,7 +592,10 @@ class AdminModerationStore {
     final actorUser = await SessionService.requireUser(session);
     final user = await User.db.findById(session, targetUserId);
     if (user == null) {
-      throw PlaceifyException(message: 'User not found.', code: 'USER_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'User not found.',
+        code: 'USER_NOT_FOUND',
+      );
     }
 
     AdminUserGuard.ensureCanModifyUser(actor: actorUser, target: user);
@@ -626,7 +638,10 @@ class AdminModerationStore {
     final admin = await _requireAdminProfile(session);
     final product = await Product.db.findById(session, productId);
     if (product == null) {
-      throw PlaceifyException(message: 'Product not found.', code: 'PRODUCT_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Product not found.',
+        code: 'PRODUCT_NOT_FOUND',
+      );
     }
 
     final trimmedReason = reason.trim();
@@ -637,7 +652,8 @@ class AdminModerationStore {
       );
     }
 
-    if (product.status == ProductStatus.removed && product.removedById != null) {
+    if (product.status == ProductStatus.removed &&
+        product.removedById != null) {
       throw PlaceifyException(
         message: 'Product is already removed.',
         code: 'PRODUCT_ALREADY_REMOVED',
@@ -652,6 +668,8 @@ class AdminModerationStore {
         session,
         product.copyWith(
           status: ProductStatus.removed,
+          isDeleted: true,
+          deletedAt: now,
           removedReason: trimmedReason,
           removedById: admin.id,
           removedAt: now,
@@ -680,7 +698,10 @@ class AdminModerationStore {
     final admin = await _requireAdminProfile(session);
     final product = await Product.db.findById(session, productId);
     if (product == null) {
-      throw PlaceifyException(message: 'Product not found.', code: 'PRODUCT_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Product not found.',
+        code: 'PRODUCT_NOT_FOUND',
+      );
     }
     if (product.isDeleted) return product;
 
@@ -715,7 +736,10 @@ class AdminModerationStore {
     final admin = await _requireAdminProfile(session);
     final product = await Product.db.findById(session, productId);
     if (product == null) {
-      throw PlaceifyException(message: 'Product not found.', code: 'PRODUCT_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Product not found.',
+        code: 'PRODUCT_NOT_FOUND',
+      );
     }
 
     if (!product.isDeleted &&
@@ -764,7 +788,10 @@ class AdminModerationStore {
     final admin = await _requireAdminProfile(session);
     final product = await Product.db.findById(session, productId);
     if (product == null) {
-      throw PlaceifyException(message: 'Product not found.', code: 'PRODUCT_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Product not found.',
+        code: 'PRODUCT_NOT_FOUND',
+      );
     }
 
     final previousStatus = product.status.name;
@@ -813,7 +840,10 @@ class AdminModerationStore {
     final admin = await _requireAdminProfile(session);
     final product = await Product.db.findById(session, productId);
     if (product == null) {
-      throw PlaceifyException(message: 'Product not found.', code: 'PRODUCT_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Product not found.',
+        code: 'PRODUCT_NOT_FOUND',
+      );
     }
 
     if (product.featured == featured) return product;
@@ -853,7 +883,10 @@ class AdminModerationStore {
     final reporter = await SessionService.requireUser(session);
     final product = await Product.db.findById(session, productId);
     if (product == null) {
-      throw PlaceifyException(message: 'Product not found.', code: 'PRODUCT_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Product not found.',
+        code: 'PRODUCT_NOT_FOUND',
+      );
     }
 
     final trimmedReason = reason.trim();
@@ -886,9 +919,7 @@ class AdminModerationStore {
 
     return Complaint.db.find(
       session,
-      where: status == null
-          ? null
-          : (row) => row.status.equals(status),
+      where: status == null ? null : (row) => row.status.equals(status),
       include: Complaint.include(
         product: Product.include(vendor: Vendor.include()),
         reportedBy: User.include(),
@@ -956,7 +987,10 @@ class AdminModerationStore {
     });
   }
 
-  Future<Complaint> resolveComplaint(Session session, UuidValue complaintId) async {
+  Future<Complaint> resolveComplaint(
+    Session session,
+    UuidValue complaintId,
+  ) async {
     final admin = await _requireAdminProfile(session);
     final complaint = await Complaint.db.findById(session, complaintId);
     if (complaint == null) {

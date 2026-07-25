@@ -1,0 +1,29 @@
+### One-to-one customer ↔ vendor conversation.
+class: Conversation
+table: conversation
+fields:
+  id: UuidValue?, defaultPersist=random_v7
+  customerId: UuidValue
+  vendorId: UuidValue
+  lastMessage: String?
+  lastMessageTime: DateTime?
+  lastSenderId: UuidValue?
+  unreadCustomerCount: int, default=0
+  unreadVendorCount: int, default=0
+  ### Soft-delete for the customer side of the inbox.
+  customerDeletedAt: DateTime?
+  ### Soft-delete for the vendor side of the inbox.
+  vendorDeletedAt: DateTime?
+  createdAt: DateTime, default=now
+  updatedAt: DateTime, default=now
+
+indexes:
+  conversation_customer_vendor:
+    fields: customerId, vendorId
+    unique: true
+  conversation_customer_id:
+    fields: customerId
+  conversation_vendor_id:
+    fields: vendorId
+  conversation_last_message_time:
+    fields: lastMessageTime

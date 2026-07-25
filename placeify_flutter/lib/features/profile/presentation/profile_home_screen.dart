@@ -8,13 +8,17 @@ import '../../../core/widgets/placeify_bottom_nav.dart';
 import '../../../core/widgets/placeify_bottom_sheet.dart';
 import '../../../core/widgets/toast_overlay.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
+import '../../home/presentation/providers/wishlist_provider.dart';
+import '../../messaging/presentation/providers/messaging_providers.dart';
 import '../../orders/presentation/providers/customer_in_app_notifications_provider.dart';
 import '../../orders/presentation/providers/orders_provider.dart';
 import '../../vendor/domain/constants/vendor_routes.dart';
 import '../../vendor/domain/enums/vendor_status.dart';
 import '../../vendor/presentation/widgets/vendor_status_gate_sheets.dart';
+import '../data/password_last_changed.dart';
 import '../data/profile_menu_config.dart';
-import 'providers/profile_dashboard_provider.dart';
+import '../data/refund_menu_subtitle.dart';
+import 'providers/profile_refunds_provider.dart';
 import 'widgets/profile_hero.dart';
 import 'widgets/profile_menu_tile.dart';
 import 'widgets/profile_orders_tile.dart';
@@ -32,6 +36,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(currentUserProvider.notifier).refresh();
+      _loadPasswordChangedAt();
     });
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
@@ -39,6 +44,14 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
         statusBarIconBrightness: Brightness.light,
       ),
     );
+  }
+
+  Future<void> _loadPasswordChangedAt() async {
+    final email = ref.read(currentUserProvider).value?.email;
+    if (email == null || email.isEmpty) return;
+    final changedAt = await loadPasswordChangedAt(email);
+    if (!mounted) return;
+    ref.read(passwordChangedAtProvider.notifier).state = changedAt;
   }
 
   void _showMoreMenu() {
@@ -93,6 +106,8 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
         context.go('/bookmarks');
       case ProfileMenuRoute.refund:
         context.pushNamed('profileRefund');
+      case ProfileMenuRoute.messages:
+        context.push('/messages');
       case ProfileMenuRoute.notifications:
         context.pushNamed('profileNotifications');
       case ProfileMenuRoute.password:
@@ -126,17 +141,45 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
     context.go('/splash');
   }
 
+  List<ProfileMenuItemData> _accountOverviewItems() {
+    // Same sources as [ProfileStatsStrip] / detail pages — never dashboard-only.
+    final wishlistCount = ref.watch(wishlistProvider).length;
+    final refundSubtitle = readRefundMenuSubtitle(ref);
+    final passwordSubtitle = passwordLastChangedSubtitle(
+      ref.watch(passwordChangedAtProvider),
+    );
+    final unreadMessages =
+        ref.watch(messagingUnreadCountProvider(asVendor: false)).value ?? 0;
+
+    ref.watch(profileRefundsProvider);
+
+    return [
+      ProfileMenuItems.wishlist(
+        subtitle: formatWishlistMenuSubtitle(wishlistCount),
+      ),
+      ProfileMenuItems.refund(subtitle: refundSubtitle),
+      ProfileMenuItems.messages(
+        badge: unreadMessages > 0 ? '$unreadMessages' : null,
+      ),
+      ProfileMenuItems.notifications,
+      ProfileMenuItems.password(subtitle: passwordSubtitle),
+      ProfileMenuItems.editProfile,
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Keep customer order/notification streams alive on the main profile shell.
+    // Keep customer order/notification/message streams alive on profile.
     ref.watch(customerInAppNotificationsProvider);
     ref.watch(ordersProvider);
-    ref.watch(profileDashboardProvider);
+    ref.watch(wishlistProvider);
+    ref.watch(messagingUnreadCountProvider(asVendor: false));
 
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final userAsync = ref.watch(currentUserProvider);
     final vendorStatus = userAsync.value?.vendorStatus ?? VendorStatus.none;
     final vendorTile = ProfileMenuItems.vendorTile(vendorStatus);
+    final overviewItems = _accountOverviewItems();
 
     return Scaffold(
       backgroundColor: AppColors.cream,
@@ -183,19 +226,15 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
                         ProfileOrdersTile(
                           onTap: () => _onMenuTap(ProfileMenuRoute.orders),
                         ),
-                        for (var i = 0;
-                            i < ProfileMenuItems.accountOverview.length;
-                            i++) ...[
+                        for (var i = 0; i < overviewItems.length; i++) ...[
                           if (i == 2)
                             const Divider(
                               height: 16,
                               color: AppColors.creamDark,
                             ),
                           ProfileMenuTile(
-                            item: ProfileMenuItems.accountOverview[i],
-                            onTap: () => _onMenuTap(
-                              ProfileMenuItems.accountOverview[i].route,
-                            ),
+                            item: overviewItems[i],
+                            onTap: () => _onMenuTap(overviewItems[i].route),
                           ),
                         ],
                         const Divider(

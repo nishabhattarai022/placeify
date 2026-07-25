@@ -1,17 +1,54 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import 'package:placeify_flutter/features/messaging/presentation/providers/messaging_providers.dart';
+import 'package:placeify_flutter/features/orders/presentation/providers/customer_in_app_notifications_provider.dart';
+import 'package:placeify_flutter/features/orders/presentation/providers/orders_provider.dart';
+import 'package:placeify_flutter/features/profile/presentation/providers/profile_dashboard_provider.dart';
+import 'package:placeify_flutter/features/profile/presentation/providers/profile_refunds_provider.dart';
 import 'package:placeify_flutter/features/admin/domain/constants/admin_routes.dart';
 import 'package:placeify_flutter/features/ar/presentation/widgets/ar_selection_done_bar.dart';
 import 'package:placeify_flutter/features/shops/domain/constants/shop_routes.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_routes.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
+import '../config/placeify_server_client.dart';
 import '../widgets/placeify_bottom_nav.dart';
 
-class MainShell extends ConsumerWidget {
+class MainShell extends ConsumerStatefulWidget {
   const MainShell({required this.child, super.key});
 
   final Widget child;
+
+  @override
+  ConsumerState<MainShell> createState() => _MainShellState();
+}
+
+class _MainShellState extends ConsumerState<MainShell>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    if (!client.auth.isAuthenticated) return;
+    ref.read(customerInAppNotificationsProvider.notifier).refresh(silent: true);
+    ref.read(ordersProvider.notifier).refresh(silent: true);
+    ref.read(profileDashboardProvider.notifier).refresh(silent: true);
+    ref.invalidate(profileRefundsProvider);
+    ref.invalidate(messagingUnreadCountProvider(asVendor: false));
+    ref.invalidate(conversationInboxProvider(asVendor: false));
+  }
 
   int _consumerActiveIndex(String location) {
     if (location == '/home') return 0;
@@ -58,6 +95,7 @@ class MainShell extends ConsumerWidget {
     if (location.startsWith(AdminRoutes.prefix)) return false;
     if (location.startsWith('/vendor')) return false;
     if (location.startsWith('/product/')) return false;
+    if (location.startsWith('/messages')) return false;
     if (location.startsWith('${ShopRoutes.shops}/')) return false;
     if (location.startsWith('/browse/category')) return false;
     if (location == '/cart') return false;
@@ -79,7 +117,7 @@ class MainShell extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
     final showConsumerNav = _showConsumerNav(location);
     final showVendorNav = _showVendorNav(location);
@@ -91,7 +129,7 @@ class MainShell extends ConsumerWidget {
       body: Stack(
         clipBehavior: Clip.none,
         children: [
-          child,
+          widget.child,
           ArSelectionDoneBar(showAboveNav: showConsumerNav),
         ],
       ),

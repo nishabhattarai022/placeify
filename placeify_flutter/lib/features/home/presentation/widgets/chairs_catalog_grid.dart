@@ -6,7 +6,6 @@ import '../chairs_catalog_tokens.dart';
 import '../providers/catalog_provider.dart';
 import 'chairs_catalog_compact_card.dart';
 import 'chairs_catalog_wide_card.dart';
-import 'showcase_showroom_card.dart';
 
 /// Staggered chairs showcase driven by the live catalog (not mock `p*` ids).
 class ChairsCatalogGrid extends ConsumerWidget {
@@ -22,7 +21,16 @@ class ChairsCatalogGrid extends ConsumerWidget {
 
     final products = ref.watch(catalogProductsByCategoryProvider(categoryId));
     if (products.isEmpty) {
-      return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32),
+        child: Text(
+          'No products found.',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.black.withValues(alpha: 0.45),
+          ),
+        ),
+      );
     }
 
     Product? at(int index) =>
@@ -65,9 +73,7 @@ class ChairsCatalogGrid extends ConsumerWidget {
                     height: ChairsCatalogTokens.compactCardHeight,
                     child: ChairsCatalogCompactCard(product: p1),
                   ),
-                const SizedBox(height: ChairsCatalogTokens.columnGap),
-                const ShowcaseShowroomCard(),
-                const SizedBox(height: ChairsCatalogTokens.columnGap),
+                if (p1 != null) const SizedBox(height: ChairsCatalogTokens.columnGap),
                 if (p2 != null)
                   SizedBox(
                     height: ChairsCatalogTokens.compactCardHeight,

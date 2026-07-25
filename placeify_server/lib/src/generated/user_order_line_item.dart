@@ -22,6 +22,7 @@ abstract class UserOrderLineItem
     required this.unitPrice,
     required this.lineTotal,
     this.thumbnailUrl,
+    this.vendorId,
     this.vendorName,
     this.listUnitPrice,
   });
@@ -33,6 +34,7 @@ abstract class UserOrderLineItem
     required double unitPrice,
     required double lineTotal,
     String? thumbnailUrl,
+    _i1.UuidValue? vendorId,
     String? vendorName,
     double? listUnitPrice,
   }) = _UserOrderLineItemImpl;
@@ -45,6 +47,9 @@ abstract class UserOrderLineItem
       unitPrice: (jsonSerialization['unitPrice'] as num).toDouble(),
       lineTotal: (jsonSerialization['lineTotal'] as num).toDouble(),
       thumbnailUrl: jsonSerialization['thumbnailUrl'] as String?,
+      vendorId: jsonSerialization['vendorId'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(jsonSerialization['vendorId']),
       vendorName: jsonSerialization['vendorName'] as String?,
       listUnitPrice: (jsonSerialization['listUnitPrice'] as num?)?.toDouble(),
     );
@@ -62,6 +67,8 @@ abstract class UserOrderLineItem
 
   String? thumbnailUrl;
 
+  _i1.UuidValue? vendorId;
+
   String? vendorName;
 
   /// Catalog list price at read time (for discount display when higher than unitPrice).
@@ -77,6 +84,7 @@ abstract class UserOrderLineItem
     double? unitPrice,
     double? lineTotal,
     String? thumbnailUrl,
+    _i1.UuidValue? vendorId,
     String? vendorName,
     double? listUnitPrice,
   });
@@ -90,6 +98,7 @@ abstract class UserOrderLineItem
       'unitPrice': unitPrice,
       'lineTotal': lineTotal,
       if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
+      if (vendorId != null) 'vendorId': vendorId?.toJson(),
       if (vendorName != null) 'vendorName': vendorName,
       if (listUnitPrice != null) 'listUnitPrice': listUnitPrice,
     };
@@ -105,6 +114,7 @@ abstract class UserOrderLineItem
       'unitPrice': unitPrice,
       'lineTotal': lineTotal,
       if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
+      if (vendorId != null) 'vendorId': vendorId?.toJson(),
       if (vendorName != null) 'vendorName': vendorName,
       if (listUnitPrice != null) 'listUnitPrice': listUnitPrice,
     };
@@ -126,6 +136,7 @@ class _UserOrderLineItemImpl extends UserOrderLineItem {
     required double unitPrice,
     required double lineTotal,
     String? thumbnailUrl,
+    _i1.UuidValue? vendorId,
     String? vendorName,
     double? listUnitPrice,
   }) : super._(
@@ -135,6 +146,7 @@ class _UserOrderLineItemImpl extends UserOrderLineItem {
          unitPrice: unitPrice,
          lineTotal: lineTotal,
          thumbnailUrl: thumbnailUrl,
+         vendorId: vendorId,
          vendorName: vendorName,
          listUnitPrice: listUnitPrice,
        );
@@ -150,6 +162,7 @@ class _UserOrderLineItemImpl extends UserOrderLineItem {
     double? unitPrice,
     double? lineTotal,
     Object? thumbnailUrl = _Undefined,
+    Object? vendorId = _Undefined,
     Object? vendorName = _Undefined,
     Object? listUnitPrice = _Undefined,
   }) {
@@ -160,6 +173,7 @@ class _UserOrderLineItemImpl extends UserOrderLineItem {
       unitPrice: unitPrice ?? this.unitPrice,
       lineTotal: lineTotal ?? this.lineTotal,
       thumbnailUrl: thumbnailUrl is String? ? thumbnailUrl : this.thumbnailUrl,
+      vendorId: vendorId is _i1.UuidValue? ? vendorId : this.vendorId,
       vendorName: vendorName is String? ? vendorName : this.vendorName,
       listUnitPrice: listUnitPrice is double?
           ? listUnitPrice

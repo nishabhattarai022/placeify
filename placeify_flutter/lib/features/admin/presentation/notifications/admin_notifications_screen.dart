@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -19,6 +21,31 @@ import 'package:placeify_flutter/features/profile/presentation/widgets/profile_s
 
 class AdminNotificationsScreen extends ConsumerWidget {
   const AdminNotificationsScreen({super.key});
+
+  void _openNotification(
+    BuildContext context,
+    WidgetRef ref,
+    AdminNotification notification,
+  ) {
+    HapticService.light();
+
+    if (!notification.read) {
+      unawaited(
+        ref.read(adminNotificationsProvider.notifier).markAsRead(notification.id),
+      );
+    }
+
+    final linkedId = notification.linkedVendorId?.trim();
+    if (linkedId == null || linkedId.isEmpty) return;
+
+    // Notifications sits outside the admin shell; push() into a
+    // StatefulShellRoute branch from here can hang the navigator.
+    if (notification.type == AdminNotificationType.newApplication) {
+      context.go(AdminRoutes.approvalDetail(linkedId));
+    } else if (notification.type == AdminNotificationType.vendorFlagged) {
+      context.go(AdminRoutes.vendorDetail(linkedId));
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -44,11 +71,13 @@ class AdminNotificationsScreen extends ConsumerWidget {
                     8,
                   ),
                   child: TextButton(
-                    onPressed: () async {
+                    onPressed: () {
                       HapticService.light();
-                      await ref
-                          .read(adminNotificationsProvider.notifier)
-                          .markAllAsRead();
+                      unawaited(
+                        ref
+                            .read(adminNotificationsProvider.notifier)
+                            .markAllAsRead(),
+                      );
                     },
                     child: const Text(
                       AdminStrings.markAllRead,
@@ -74,13 +103,13 @@ class AdminNotificationsScreen extends ConsumerWidget {
                   BottomNavTokens.scrollBottomPadding,
                 ),
                 itemCount: 6,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (_, __) => const SizedBox(
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
+                itemBuilder: (_, _) => const SizedBox(
                   height: 88,
                   child: ShimmerLoader(borderRadius: AppRadii.md),
                 ),
               ),
-              error: (_, __) => Center(
+              error: (_, _) => Center(
                 child: TextButton(
                   onPressed: () =>
                       ref.read(adminNotificationsProvider.notifier).refresh(),
@@ -112,37 +141,13 @@ class AdminNotificationsScreen extends ConsumerWidget {
                       BottomNavTokens.scrollBottomPadding,
                     ),
                     itemCount: notifications.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
                       final notification = notifications[index];
                       return _NotificationTile(
                         notification: notification,
-                        onTap: () async {
-                          HapticService.light();
-                          if (!notification.read) {
-                            await ref
-                                .read(adminNotificationsProvider.notifier)
-                                .markAsRead(notification.id);
-                          }
-                          if (!context.mounted) return;
-                          if (notification.type ==
-                                  AdminNotificationType.newApplication &&
-                              notification.linkedVendorId != null) {
-                            context.push(
-                              AdminRoutes.approvalDetail(
-                                notification.linkedVendorId!,
-                              ),
-                            );
-                          } else if (notification.type ==
-                                  AdminNotificationType.vendorFlagged &&
-                              notification.linkedVendorId != null) {
-                            context.push(
-                              AdminRoutes.vendorDetail(
-                                notification.linkedVendorId!,
-                              ),
-                            );
-                          }
-                        },
+                        onTap: () =>
+                            _openNotification(context, ref, notification),
                       );
                     },
                   ),
@@ -180,7 +185,9 @@ class _NotificationTile extends StatelessWidget {
             color: isUnread ? AppColors.warmWhite : AppColors.cream,
             borderRadius: AppRadii.md,
             border: Border.all(
-              color: isUnread ? AppColors.espresso.withValues(alpha: 0.12) : AppColors.creamDark,
+              color: isUnread
+                  ? AppColors.espresso.withValues(alpha: 0.12)
+                  : AppColors.creamDark,
               width: 1.5,
             ),
           ),

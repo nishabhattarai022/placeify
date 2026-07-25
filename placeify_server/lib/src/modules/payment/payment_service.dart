@@ -5,7 +5,7 @@ import 'payment_repository.dart';
 
 class PaymentService {
   PaymentService({PaymentStore? repository})
-      : _repository = repository ?? PaymentStore();
+    : _repository = repository ?? PaymentStore();
 
   final PaymentStore _repository;
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:placeify_flutter/features/admin/domain/constants/admin_routes.dart';
 import 'package:placeify_flutter/features/admin/presentation/dashboard/admin_dashboard_screen.dart';
+import 'package:placeify_flutter/features/admin/presentation/finance/admin_refunds_screen.dart';
 import 'package:placeify_flutter/features/admin/presentation/guards/admin_auth_guard.dart';
 import 'package:placeify_flutter/features/admin/presentation/notifications/admin_notifications_screen.dart';
 import 'package:placeify_flutter/features/admin/presentation/products/admin_product_detail_screen.dart';
@@ -68,6 +69,8 @@ import '../../features/profile/presentation/profile_refund_screen.dart';
 import '../../features/profile/presentation/profile_settings_screen.dart';
 import '../../features/profile/presentation/profile_wishlist_screen.dart';
 import '../../features/product_detail/presentation/product_detail_screen.dart';
+import '../../features/messaging/presentation/conversations_screen.dart';
+import '../../features/messaging/presentation/chat_screen.dart';
 import '../../features/cart/presentation/cart_screen.dart';
 import '../../features/cart/presentation/checkout_payment_screen.dart';
 import '../../features/cart/presentation/esewa_payment_screen.dart';
@@ -508,6 +511,28 @@ List<RouteBase> get _appRoutes => [
           ),
         ),
         GoRoute(
+          path: '/messages',
+          name: 'messages',
+          pageBuilder: (context, state) => _slidePage(
+            key: ValueKey<String>(state.uri.toString()),
+            child: const ConversationsScreen(),
+          ),
+          routes: [
+            GoRoute(
+              path: ':conversationId',
+              name: 'messageChat',
+              pageBuilder: (context, state) {
+                final conversationId =
+                    state.pathParameters['conversationId']!;
+                return _slidePage(
+                  key: ValueKey<String>('chat-$conversationId'),
+                  child: ChatScreen(conversationId: conversationId),
+                );
+              },
+            ),
+          ],
+        ),
+        GoRoute(
           path: '/profile/augmented-reality',
           name: 'profileAugmentedReality',
           pageBuilder: (context, state) {
@@ -775,6 +800,14 @@ List<RouteBase> get _appRoutes => [
             child: const AdminAuditLogScreen(),
           ),
         ),
+        GoRoute(
+          path: AdminRoutes.refunds,
+          name: 'adminRefunds',
+          pageBuilder: (context, state) => _slidePage(
+            key: ValueKey<String>(state.uri.toString()),
+            child: const AdminRefundsScreen(),
+          ),
+        ),
         StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell) =>
               VendorShell(navigationShell: navigationShell),
@@ -813,6 +846,33 @@ List<RouteBase> get _appRoutes => [
                         key: ValueKey<String>(state.uri.toString()),
                         child: const VendorNotificationsScreen(),
                       ),
+                    ),
+                    GoRoute(
+                      path: 'messages',
+                      name: 'vendorMessages',
+                      pageBuilder: (context, state) => _slidePage(
+                        key: ValueKey<String>(state.uri.toString()),
+                        child: const ConversationsScreen(asVendor: true),
+                      ),
+                      routes: [
+                        GoRoute(
+                          path: ':conversationId',
+                          name: 'vendorMessageChat',
+                          pageBuilder: (context, state) {
+                            final conversationId =
+                                state.pathParameters['conversationId']!;
+                            return _slidePage(
+                              key: ValueKey<String>(
+                                'vendor-chat-$conversationId',
+                              ),
+                              child: ChatScreen(
+                                conversationId: conversationId,
+                                asVendor: true,
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),

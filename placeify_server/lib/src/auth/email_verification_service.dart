@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
@@ -9,6 +10,80 @@ import 'package:serverpod_auth_idp_server/providers/email.dart';
 import '../email/email_service.dart';
 import '../generated/protocol.dart';
 import 'password_reset_rate_limiter.dart';
+
+/// Resolves the public base URL used in auth emails (verify / reset).
+///
+/// In development, loopback and private LAN hosts are rewritten to the
+/// machine's current LAN IPv4 so phones on the same Wi‑Fi can open links.
+Future<String> resolveFrontendBaseUrl(Session session) async {
+  const defaultFrontendUrl = 'http://localhost:8082';
+  final configured = session.passwords['frontendUrl']?.trim();
+  final envUrl = const String.fromEnvironment('FRONTEND_URL');
+
+  String base;
+  if (configured != null && configured.isNotEmpty) {
+    base = configured;
+  } else if (envUrl.isNotEmpty) {
+    base = envUrl;
+  } else {
+    final web = session.serverpod.config.webServer;
+    if (web != null) {
+      base = '${web.publicScheme}://${web.publicHost}:${web.publicPort}';
+    } else {
+      base = defaultFrontendUrl;
+    }
+  }
+
+  if (session.serverpod.runMode != ServerpodRunMode.development) {
+    return base;
+  }
+
+  return _withCurrentLanHostIfLocal(base);
+}
+
+Future<String> _withCurrentLanHostIfLocal(String baseUrl) async {
+  final uri = Uri.tryParse(baseUrl);
+  if (uri == null || uri.host.isEmpty) return baseUrl;
+  if (!_isDevLocalOrPrivateHost(uri.host)) return baseUrl;
+
+  final lanIp = await _detectLanIpv4();
+  if (lanIp == null) return baseUrl;
+  return uri.replace(host: lanIp).toString();
+}
+
+bool _isDevLocalOrPrivateHost(String host) {
+  if (host == 'localhost' || host == '127.0.0.1' || host == '::1') {
+    return true;
+  }
+  if (host.startsWith('192.168.') || host.startsWith('10.')) {
+    return true;
+  }
+  final parts = host.split('.');
+  if (parts.length == 4) {
+    final a = int.tryParse(parts[0]);
+    final b = int.tryParse(parts[1]);
+    if (a == 172 && b != null && b >= 16 && b <= 31) {
+      return true;
+    }
+  }
+  return false;
+}
+
+Future<String?> _detectLanIpv4() async {
+  final interfaces = await NetworkInterface.list(
+    type: InternetAddressType.IPv4,
+    includeLinkLocal: false,
+  );
+  for (final interface in interfaces) {
+    for (final address in interface.addresses) {
+      if (address.isLoopback) continue;
+      final ip = address.address;
+      if (ip.startsWith('169.254.')) continue;
+      if (_isDevLocalOrPrivateHost(ip)) return ip;
+    }
+  }
+  return null;
+}
 
 /// Completes Serverpod Email IDP registration via a password-reset-style
 /// magic link. Does not replace Email IDP — it bridges link click →
@@ -24,7 +99,6 @@ class EmailVerificationService {
       'This verification link has expired. Request a new one.';
 
   static const _defaultTokenExpiry = Duration(hours: 24);
-  static const _defaultFrontendUrl = 'http://localhost:8082';
 
   /// Called from [sendRegistrationVerificationCode] to issue a magic link.
   Future<void> issueMagicLink(
@@ -66,7 +140,7 @@ class EmailVerificationService {
       transaction: transaction,
     );
 
-    final verifyUrl = _buildVerifyUrl(session, rawToken);
+    final verifyUrl = await _buildVerifyUrl(session, rawToken);
     session.log(
       '[EmailVerification] Link for $normalizedEmail: $verifyUrl',
       level: LogLevel.info,
@@ -76,7 +150,6 @@ class EmailVerificationService {
       to: normalizedEmail,
       verifyUrl: verifyUrl,
     );
-
   }
 
   Future<Map<String, Object?>> verifyEmail(
@@ -109,8 +182,7 @@ class EmailVerificationService {
 
     final pending = await EmailVerificationPending.db.findFirstRow(
       session,
-      where: (row) =>
-          row.tokenHash.equals(tokenHash) & row.used.equals(false),
+      where: (row) => row.tokenHash.equals(tokenHash) & row.used.equals(false),
     );
 
     if (pending == null) {
@@ -204,7 +276,6 @@ class EmailVerificationService {
       );
     }
 
-
     return {
       'message': successMessage,
       'code': 'EMAIL_VERIFIED',
@@ -277,14 +348,8 @@ class EmailVerificationService {
     return Duration(hours: hours);
   }
 
-  String _buildVerifyUrl(Session session, String rawToken) {
-    final configured = session.passwords['frontendUrl']?.trim();
-    final envUrl = const String.fromEnvironment('FRONTEND_URL');
-
-    final baseUrl = configured?.isNotEmpty == true
-        ? configured!
-        : (envUrl.isNotEmpty ? envUrl : _defaultFrontendUrl);
-
+  Future<String> _buildVerifyUrl(Session session, String rawToken) async {
+    final baseUrl = await resolveFrontendBaseUrl(session);
     final uri = Uri.parse(baseUrl);
     final query = Map<String, String>.from(uri.queryParameters)
       ..['token'] = rawToken;

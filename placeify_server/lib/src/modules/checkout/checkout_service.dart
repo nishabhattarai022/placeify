@@ -5,7 +5,7 @@ import 'checkout_repository.dart';
 
 class CheckoutService {
   CheckoutService({CheckoutStore? repository})
-      : _repository = repository ?? CheckoutStore();
+    : _repository = repository ?? CheckoutStore();
 
   final CheckoutStore _repository;
 

@@ -42,7 +42,7 @@ final class CustomerInAppNotificationsProvider
 }
 
 String _$customerInAppNotificationsHash() =>
-    r'b99b654c296ba22c56178a1988e07081856bd68e';
+    r'7e7ac3353e1b4841f72c3d9211359c842b8e709b';
 
 /// Customer in-app notifications backed by Serverpod streaming.
 
@@ -72,3 +72,46 @@ abstract class _$CustomerInAppNotifications
     element.handleCreate(ref, build);
   }
 }
+
+@ProviderFor(customerNotificationBadgeCount)
+final customerNotificationBadgeCountProvider =
+    CustomerNotificationBadgeCountProvider._();
+
+final class CustomerNotificationBadgeCountProvider
+    extends $FunctionalProvider<int, int, int>
+    with $Provider<int> {
+  CustomerNotificationBadgeCountProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'customerNotificationBadgeCountProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$customerNotificationBadgeCountHash();
+
+  @$internal
+  @override
+  $ProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  int create(Ref ref) {
+    return customerNotificationBadgeCount(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
+  }
+}
+
+String _$customerNotificationBadgeCountHash() =>
+    r'5aebbda89020350f2365c015d292087301d6b7ca';

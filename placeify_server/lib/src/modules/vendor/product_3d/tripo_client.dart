@@ -11,6 +11,7 @@ import 'aws_s3_put.dart';
 /// API key: [TripoApiKeyConfig.configFileName] or [TripoApiKeyConfig.apiKeyEnv].
 abstract final class TripoClient {
   static const _baseUrl = 'https://api.tripo3d.ai/v2/openapi';
+
   /// v2.5 multiview — fast generation with photo-aligned standard textures (~1–2 min).
   static const _modelVersion = 'v2.5-20250123';
   static const _pollInterval = Duration(seconds: 2);
@@ -63,7 +64,10 @@ abstract final class TripoClient {
       viewCount: 1,
     );
 
-    session.log('Tripo image_to_model task created: $taskId', level: LogLevel.info);
+    session.log(
+      'Tripo image_to_model task created: $taskId',
+      level: LogLevel.info,
+    );
 
     return _pollForModelUrl(session, apiKey, taskId);
   }
@@ -190,7 +194,9 @@ abstract final class TripoClient {
         contentType: _contentTypeForFormat(imageFormat),
       );
     } on AwsS3PutException catch (error) {
-      throw TripoClientException('Image upload to Tripo failed: ${error.message}');
+      throw TripoClientException(
+        'Image upload to Tripo failed: ${error.message}',
+      );
     }
 
     session.log(
@@ -319,8 +325,7 @@ abstract final class TripoClient {
       final status = data['status'] as String? ?? 'unknown';
       final progress = data['progress'];
 
-      final progressSuffix =
-          progress != null ? ', progress=$progress%' : '';
+      final progressSuffix = progress != null ? ', progress=$progress%' : '';
       session.log(
         'Tripo task $taskId poll ${attempt + 1}/$_maxPollAttempts: '
         '$status (${elapsed.inSeconds}s elapsed$progressSuffix)',
@@ -410,7 +415,7 @@ abstract final class TripoClient {
     return switch (code) {
       2010 =>
         'Tripo API credits are used up. Create a new free key at '
-        'platform.tripo3d.ai/api-keys or add credits to your account.',
+            'platform.tripo3d.ai/api-keys or add credits to your account.',
       1004 => 'Tripo API key is invalid. Check config/tripo_api_key.yaml.',
       _ => '$message (Tripo code: $code)',
     };
@@ -424,9 +429,9 @@ abstract final class TripoClient {
   }
 
   static Map<String, String> _headers(String apiKey) => {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $apiKey',
-      };
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer $apiKey',
+  };
 
   static Map<String, dynamic> _decodeResponse(http.Response response) {
     Map<String, dynamic> body;

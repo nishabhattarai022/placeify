@@ -270,7 +270,7 @@ class _WishlistEmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             const Text(
-              'No saved items yet',
+              'Your wishlist is empty.',
               style: TextStyle(
                 fontFamily: 'Fraunces',
                 fontSize: 22,

@@ -7,7 +7,6 @@ import 'package:placeify_flutter/core/utils/formatters.dart';
 import 'package:placeify_flutter/features/admin/domain/constants/admin_routes.dart';
 import 'package:placeify_flutter/features/admin/domain/models/vendor_application.dart';
 import 'package:placeify_flutter/features/admin/presentation/widgets/admin_status_chip.dart';
-import 'package:placeify_flutter/features/vendor/data/config/vendor_mock_config.dart';
 
 class AdminVendorRow extends StatefulWidget {
   const AdminVendorRow({
@@ -27,10 +26,7 @@ class _AdminVendorRowState extends State<AdminVendorRow> {
   @override
   Widget build(BuildContext context) {
     final vendor = widget.vendor;
-    final productCount = VendorMockConfig.productsFor(vendor.vendorId).length;
-    final orderCount = VendorMockConfig.ordersFor(vendor.vendorId).length;
-    final meta =
-        '${Formatters.shortDate(vendor.submittedAt)} · $productCount products · $orderCount orders';
+    final meta = Formatters.shortDate(vendor.submittedAt);
 
     return GestureDetector(
       onTap: () {

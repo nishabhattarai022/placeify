@@ -14,6 +14,9 @@ String readRefundMenuSubtitle(
         data: (state) => formatRefundMenuSubtitle(
           pendingTotal: state.pendingTotal,
           activeCount: state.active.length,
+          approvedCount: state.completed
+              .where((refund) => refund.isCompleted)
+              .length,
         ),
         orElse: () => fallback,
       );
@@ -22,7 +25,28 @@ String readRefundMenuSubtitle(
 String formatRefundMenuSubtitle({
   required double pendingTotal,
   required int activeCount,
+  int approvedCount = 0,
 }) {
-  final activeLabel = activeCount == 1 ? '1 active' : '$activeCount active';
-  return '${Formatters.currencyDecimal(pendingTotal)} pending · $activeLabel';
+  if (activeCount <= 0 && pendingTotal <= 0) {
+    return 'No active refunds';
+  }
+
+  final parts = <String>[];
+  if (pendingTotal > 0) {
+    parts.add('${Formatters.currencyDecimal(pendingTotal)} pending');
+  }
+  if (activeCount > 0) {
+    parts.add(activeCount == 1 ? '1 active' : '$activeCount active');
+  }
+  if (approvedCount > 0) {
+    parts.add(
+      approvedCount == 1 ? '1 approved' : '$approvedCount approved',
+    );
+  }
+  return parts.join(' · ');
+}
+
+String formatWishlistMenuSubtitle(int count) {
+  if (count <= 0) return 'No saved items';
+  return count == 1 ? '1 saved item' : '$count saved items';
 }

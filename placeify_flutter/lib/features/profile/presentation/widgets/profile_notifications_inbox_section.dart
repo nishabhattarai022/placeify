@@ -1,24 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:placeify_client/placeify_client.dart';
+import 'package:placeify_flutter/features/messaging/domain/constants/messaging_routes.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/relative_time.dart';
-import '../providers/profile_in_app_notifications_provider.dart';
+import '../../../orders/presentation/providers/customer_in_app_notifications_provider.dart';
 
 class ProfileNotificationsInboxSection extends ConsumerWidget {
   const ProfileNotificationsInboxSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final inboxAsync = ref.watch(profileInAppNotificationsProvider);
+    final inboxAsync = ref.watch(customerInAppNotificationsProvider);
 
     return inboxAsync.when(
       loading: () => const Padding(
         padding: EdgeInsets.only(bottom: 20),
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (_, __) => const Padding(
+      error: (_, _) => const Padding(
         padding: EdgeInsets.only(bottom: 20),
         child: Text(
           'Could not load notifications.',
@@ -44,7 +46,7 @@ class ProfileNotificationsInboxSection extends ConsumerWidget {
                 if (state.unreadCount > 0)
                   TextButton(
                     onPressed: () => ref
-                        .read(profileInAppNotificationsProvider.notifier)
+                        .read(customerInAppNotificationsProvider.notifier)
                         .markAllRead(),
                     child: const Text('Mark all read'),
                   ),
@@ -55,7 +57,7 @@ class ProfileNotificationsInboxSection extends ConsumerWidget {
               const Padding(
                 padding: EdgeInsets.only(bottom: 20),
                 child: Text(
-                  'No notifications yet.',
+                  'No notifications.',
                   style: TextStyle(color: AppColors.textMuted, fontSize: 13),
                 ),
               )
@@ -66,8 +68,15 @@ class ProfileNotificationsInboxSection extends ConsumerWidget {
                   onTap: () {
                     if (!notification.isRead) {
                       ref
-                          .read(profileInAppNotificationsProvider.notifier)
+                          .read(customerInAppNotificationsProvider.notifier)
                           .markRead(notification.id);
+                    }
+                    if (notification.type == InAppNotificationType.chatMessage &&
+                        notification.referenceKey != null &&
+                        notification.referenceKey!.isNotEmpty) {
+                      context.push(
+                        MessagingRoutes.chat(notification.referenceKey!),
+                      );
                     }
                   },
                 ),

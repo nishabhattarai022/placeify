@@ -5,8 +5,11 @@ fields:
   status: PaymentTransactionStatus
   paymentMethod: PaymentMethod
   amount: double
+  currency: String
   provider: String
   providerTransactionId: String?
+  note: String?
+  createdAt: DateTime
   orderNumber: String?
   vendorName: String?
   deliveryFee: double?

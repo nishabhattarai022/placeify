@@ -16,7 +16,7 @@ abstract final class CartDisplayConfig {
     'p1': 245,
   };
 
-  /// Promo discount rate applied to subtotal (matches prior mock ratio ~19.32%).
+  /// Promo discount rate applied to subtotal.
   static const double discountRate = 566 / 2930;
 
   static String nameFor(String productId, String fallback) =>

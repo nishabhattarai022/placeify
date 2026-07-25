@@ -6,7 +6,7 @@ import '../product/product_repository.dart';
 
 class ArSessionStore {
   ArSessionStore({CatalogRepository? productRepository})
-      : _productRepository = productRepository ?? CatalogRepository();
+    : _productRepository = productRepository ?? CatalogRepository();
 
   final CatalogRepository _productRepository;
 

@@ -1,8 +1,5 @@
-import 'package:placeify_flutter/features/admin/data/config/admin_seed_data.dart';
-import 'package:placeify_flutter/features/home/data/mock_product_repository.dart';
+import 'package:placeify_flutter/features/home/domain/constants/product_categories.dart';
 import 'package:placeify_flutter/features/home/domain/models/product.dart';
-import 'package:placeify_flutter/features/shops/data/consumer_shop_seed.dart';
-import 'package:placeify_flutter/features/vendor/data/config/vendor_mock_config.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product.dart';
 
 /// Maps vendor inventory to consumer-facing [Product] rows with namespaced IDs.
@@ -34,40 +31,6 @@ abstract final class VendorProductMapper {
     return (vendorId: vendorId, productId: productId);
   }
 
-  static Iterable<String> get searchableVendorIds sync* {
-    yield VendorMockConfig.demoVendorId;
-    yield AdminSeedData.approvedVendorId;
-    yield* AdminSeedData.catalogShopVendorIds;
-    yield* ConsumerShopSeed.catalogVendorIds;
-  }
-
-  static VendorProduct? resolveVendorProduct(String consumerProductId) {
-    if (!isShopProductId(consumerProductId)) return null;
-
-    for (final vendorId in searchableVendorIds) {
-      final prefix = '$_idPrefix$vendorId-';
-      if (!consumerProductId.startsWith(prefix)) continue;
-      final productId = consumerProductId.substring(prefix.length);
-      final product = _vendorProductById(vendorId, productId);
-      if (product != null) return product;
-    }
-    return null;
-  }
-
-  static VendorProduct? _vendorProductById(String vendorId, String productId) {
-    if (VendorMockConfig.isKnownVendor(vendorId) ||
-        VendorMockConfig.usesDemoPortalData(vendorId)) {
-      final product = VendorMockConfig.productById(productId);
-      if (product != null) return product;
-    }
-    if (ConsumerShopSeed.hasSeedProducts(vendorId)) {
-      for (final product in ConsumerShopSeed.productsFor(vendorId)) {
-        if (product.id == productId) return product;
-      }
-    }
-    return null;
-  }
-
   static Product toConsumerProduct(VendorProduct vendorProduct) {
     final imageUrl = vendorProduct.imageUrls.isNotEmpty
         ? vendorProduct.imageUrls.first
@@ -79,16 +42,14 @@ abstract final class VendorProductMapper {
         productId: vendorProduct.id,
       ),
       name: vendorProduct.name,
-      brand: vendorProduct.brand.isNotEmpty
-          ? vendorProduct.brand
-          : 'Placeify Vendor',
+      brand: vendorProduct.brand.isNotEmpty ? vendorProduct.brand : 'Shop',
       sku: vendorProduct.sku,
       price: vendorProduct.price,
       originalPrice: vendorProduct.originalPrice,
       imageUrl: imageUrl,
-      imageUrls: vendorProduct.imageUrls
-          .where((url) => url.trim().isNotEmpty)
-          .toList(growable: false),
+      imageUrls: vendorProduct.imageUrls.isNotEmpty
+          ? vendorProduct.imageUrls
+          : [imageUrl],
       svgIconPath: _svgIconForCategory(vendorProduct.categoryId),
       hasArView: vendorProduct.hasArView,
       categoryId: vendorProduct.categoryId,
@@ -114,12 +75,8 @@ abstract final class VendorProductMapper {
   }
 
   static String _svgIconForCategory(String categoryId) {
-    for (final category in MockProductRepository.categories) {
-      if (category.id == categoryId) {
-        return category.svgIconAssetPath;
-      }
-    }
-    return 'assets/icons/ic_chair.svg';
+    return ProductCategories.byId(categoryId)?.svgIconAssetPath ??
+        'assets/icons/ic_chair.svg';
   }
 
   static String fallbackImageForCategory(String categoryId) {

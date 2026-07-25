@@ -31,6 +31,8 @@ abstract class UserOrderDetail implements _i1.SerializableModel {
     required this.shippingAddress,
     required this.itemCount,
     this.primaryProductName,
+    this.vendorId,
+    this.vendorName,
     this.customerName,
     this.customerPhone,
     this.latestDeliveryStage,
@@ -51,6 +53,8 @@ abstract class UserOrderDetail implements _i1.SerializableModel {
     required String shippingAddress,
     required int itemCount,
     String? primaryProductName,
+    _i1.UuidValue? vendorId,
+    String? vendorName,
     String? customerName,
     String? customerPhone,
     _i3.DeliveryStage? latestDeliveryStage,
@@ -74,6 +78,10 @@ abstract class UserOrderDetail implements _i1.SerializableModel {
       shippingAddress: jsonSerialization['shippingAddress'] as String,
       itemCount: jsonSerialization['itemCount'] as int,
       primaryProductName: jsonSerialization['primaryProductName'] as String?,
+      vendorId: jsonSerialization['vendorId'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(jsonSerialization['vendorId']),
+      vendorName: jsonSerialization['vendorName'] as String?,
       customerName: jsonSerialization['customerName'] as String?,
       customerPhone: jsonSerialization['customerPhone'] as String?,
       latestDeliveryStage: jsonSerialization['latestDeliveryStage'] == null
@@ -118,6 +126,11 @@ abstract class UserOrderDetail implements _i1.SerializableModel {
 
   String? primaryProductName;
 
+  /// Primary vendor for chat (first line item).
+  _i1.UuidValue? vendorId;
+
+  String? vendorName;
+
   /// Snapshot contact fields from the ordering user at read time.
   String? customerName;
 
@@ -149,6 +162,8 @@ abstract class UserOrderDetail implements _i1.SerializableModel {
     String? shippingAddress,
     int? itemCount,
     String? primaryProductName,
+    _i1.UuidValue? vendorId,
+    String? vendorName,
     String? customerName,
     String? customerPhone,
     _i3.DeliveryStage? latestDeliveryStage,
@@ -171,6 +186,8 @@ abstract class UserOrderDetail implements _i1.SerializableModel {
       'shippingAddress': shippingAddress,
       'itemCount': itemCount,
       if (primaryProductName != null) 'primaryProductName': primaryProductName,
+      if (vendorId != null) 'vendorId': vendorId?.toJson(),
+      if (vendorName != null) 'vendorName': vendorName,
       if (customerName != null) 'customerName': customerName,
       if (customerPhone != null) 'customerPhone': customerPhone,
       if (latestDeliveryStage != null)
@@ -202,6 +219,8 @@ class _UserOrderDetailImpl extends UserOrderDetail {
     required String shippingAddress,
     required int itemCount,
     String? primaryProductName,
+    _i1.UuidValue? vendorId,
+    String? vendorName,
     String? customerName,
     String? customerPhone,
     _i3.DeliveryStage? latestDeliveryStage,
@@ -220,6 +239,8 @@ class _UserOrderDetailImpl extends UserOrderDetail {
          shippingAddress: shippingAddress,
          itemCount: itemCount,
          primaryProductName: primaryProductName,
+         vendorId: vendorId,
+         vendorName: vendorName,
          customerName: customerName,
          customerPhone: customerPhone,
          latestDeliveryStage: latestDeliveryStage,
@@ -244,6 +265,8 @@ class _UserOrderDetailImpl extends UserOrderDetail {
     String? shippingAddress,
     int? itemCount,
     Object? primaryProductName = _Undefined,
+    Object? vendorId = _Undefined,
+    Object? vendorName = _Undefined,
     Object? customerName = _Undefined,
     Object? customerPhone = _Undefined,
     Object? latestDeliveryStage = _Undefined,
@@ -265,6 +288,8 @@ class _UserOrderDetailImpl extends UserOrderDetail {
       primaryProductName: primaryProductName is String?
           ? primaryProductName
           : this.primaryProductName,
+      vendorId: vendorId is _i1.UuidValue? ? vendorId : this.vendorId,
+      vendorName: vendorName is String? ? vendorName : this.vendorName,
       customerName: customerName is String? ? customerName : this.customerName,
       customerPhone: customerPhone is String?
           ? customerPhone

@@ -29,6 +29,14 @@ abstract class RefundRequest
     required this.reason,
     _i2.RequestStatus? status,
     required this.refundAmount,
+    this.rejectionReason,
+    this.resolvedByUserId,
+    this.gatewayStatus,
+    this.gatewayReference,
+    this.gatewayResponse,
+    this.refundCompletedAt,
+    this.lastGatewayCheckAt,
+    this.settlementMode,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : status = status ?? _i2.RequestStatus.pending,
@@ -44,6 +52,14 @@ abstract class RefundRequest
     required String reason,
     _i2.RequestStatus? status,
     required double refundAmount,
+    String? rejectionReason,
+    _i1.UuidValue? resolvedByUserId,
+    String? gatewayStatus,
+    String? gatewayReference,
+    String? gatewayResponse,
+    DateTime? refundCompletedAt,
+    DateTime? lastGatewayCheckAt,
+    String? settlementMode,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) = _RefundRequestImpl;
@@ -64,6 +80,26 @@ abstract class RefundRequest
           ? null
           : _i2.RequestStatus.fromJson((jsonSerialization['status'] as String)),
       refundAmount: (jsonSerialization['refundAmount'] as num).toDouble(),
+      rejectionReason: jsonSerialization['rejectionReason'] as String?,
+      resolvedByUserId: jsonSerialization['resolvedByUserId'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(
+              jsonSerialization['resolvedByUserId'],
+            ),
+      gatewayStatus: jsonSerialization['gatewayStatus'] as String?,
+      gatewayReference: jsonSerialization['gatewayReference'] as String?,
+      gatewayResponse: jsonSerialization['gatewayResponse'] as String?,
+      refundCompletedAt: jsonSerialization['refundCompletedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['refundCompletedAt'],
+            ),
+      lastGatewayCheckAt: jsonSerialization['lastGatewayCheckAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['lastGatewayCheckAt'],
+            ),
+      settlementMode: jsonSerialization['settlementMode'] as String?,
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
@@ -94,6 +130,23 @@ abstract class RefundRequest
 
   double refundAmount;
 
+  String? rejectionReason;
+
+  _i1.UuidValue? resolvedByUserId;
+
+  String? gatewayStatus;
+
+  String? gatewayReference;
+
+  String? gatewayResponse;
+
+  DateTime? refundCompletedAt;
+
+  DateTime? lastGatewayCheckAt;
+
+  /// manual_portal | auto_api (future Mode A)
+  String? settlementMode;
+
   DateTime createdAt;
 
   DateTime updatedAt;
@@ -113,6 +166,14 @@ abstract class RefundRequest
     String? reason,
     _i2.RequestStatus? status,
     double? refundAmount,
+    String? rejectionReason,
+    _i1.UuidValue? resolvedByUserId,
+    String? gatewayStatus,
+    String? gatewayReference,
+    String? gatewayResponse,
+    DateTime? refundCompletedAt,
+    DateTime? lastGatewayCheckAt,
+    String? settlementMode,
     DateTime? createdAt,
     DateTime? updatedAt,
   });
@@ -128,6 +189,17 @@ abstract class RefundRequest
       'reason': reason,
       'status': status.toJson(),
       'refundAmount': refundAmount,
+      if (rejectionReason != null) 'rejectionReason': rejectionReason,
+      if (resolvedByUserId != null)
+        'resolvedByUserId': resolvedByUserId?.toJson(),
+      if (gatewayStatus != null) 'gatewayStatus': gatewayStatus,
+      if (gatewayReference != null) 'gatewayReference': gatewayReference,
+      if (gatewayResponse != null) 'gatewayResponse': gatewayResponse,
+      if (refundCompletedAt != null)
+        'refundCompletedAt': refundCompletedAt?.toJson(),
+      if (lastGatewayCheckAt != null)
+        'lastGatewayCheckAt': lastGatewayCheckAt?.toJson(),
+      if (settlementMode != null) 'settlementMode': settlementMode,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
     };
@@ -145,6 +217,17 @@ abstract class RefundRequest
       'reason': reason,
       'status': status.toJson(),
       'refundAmount': refundAmount,
+      if (rejectionReason != null) 'rejectionReason': rejectionReason,
+      if (resolvedByUserId != null)
+        'resolvedByUserId': resolvedByUserId?.toJson(),
+      if (gatewayStatus != null) 'gatewayStatus': gatewayStatus,
+      if (gatewayReference != null) 'gatewayReference': gatewayReference,
+      if (gatewayResponse != null) 'gatewayResponse': gatewayResponse,
+      if (refundCompletedAt != null)
+        'refundCompletedAt': refundCompletedAt?.toJson(),
+      if (lastGatewayCheckAt != null)
+        'lastGatewayCheckAt': lastGatewayCheckAt?.toJson(),
+      if (settlementMode != null) 'settlementMode': settlementMode,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
     };
@@ -198,6 +281,14 @@ class _RefundRequestImpl extends RefundRequest {
     required String reason,
     _i2.RequestStatus? status,
     required double refundAmount,
+    String? rejectionReason,
+    _i1.UuidValue? resolvedByUserId,
+    String? gatewayStatus,
+    String? gatewayReference,
+    String? gatewayResponse,
+    DateTime? refundCompletedAt,
+    DateTime? lastGatewayCheckAt,
+    String? settlementMode,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : super._(
@@ -209,6 +300,14 @@ class _RefundRequestImpl extends RefundRequest {
          reason: reason,
          status: status,
          refundAmount: refundAmount,
+         rejectionReason: rejectionReason,
+         resolvedByUserId: resolvedByUserId,
+         gatewayStatus: gatewayStatus,
+         gatewayReference: gatewayReference,
+         gatewayResponse: gatewayResponse,
+         refundCompletedAt: refundCompletedAt,
+         lastGatewayCheckAt: lastGatewayCheckAt,
+         settlementMode: settlementMode,
          createdAt: createdAt,
          updatedAt: updatedAt,
        );
@@ -226,6 +325,14 @@ class _RefundRequestImpl extends RefundRequest {
     String? reason,
     _i2.RequestStatus? status,
     double? refundAmount,
+    Object? rejectionReason = _Undefined,
+    Object? resolvedByUserId = _Undefined,
+    Object? gatewayStatus = _Undefined,
+    Object? gatewayReference = _Undefined,
+    Object? gatewayResponse = _Undefined,
+    Object? refundCompletedAt = _Undefined,
+    Object? lastGatewayCheckAt = _Undefined,
+    Object? settlementMode = _Undefined,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -238,6 +345,30 @@ class _RefundRequestImpl extends RefundRequest {
       reason: reason ?? this.reason,
       status: status ?? this.status,
       refundAmount: refundAmount ?? this.refundAmount,
+      rejectionReason: rejectionReason is String?
+          ? rejectionReason
+          : this.rejectionReason,
+      resolvedByUserId: resolvedByUserId is _i1.UuidValue?
+          ? resolvedByUserId
+          : this.resolvedByUserId,
+      gatewayStatus: gatewayStatus is String?
+          ? gatewayStatus
+          : this.gatewayStatus,
+      gatewayReference: gatewayReference is String?
+          ? gatewayReference
+          : this.gatewayReference,
+      gatewayResponse: gatewayResponse is String?
+          ? gatewayResponse
+          : this.gatewayResponse,
+      refundCompletedAt: refundCompletedAt is DateTime?
+          ? refundCompletedAt
+          : this.refundCompletedAt,
+      lastGatewayCheckAt: lastGatewayCheckAt is DateTime?
+          ? lastGatewayCheckAt
+          : this.lastGatewayCheckAt,
+      settlementMode: settlementMode is String?
+          ? settlementMode
+          : this.settlementMode,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -274,6 +405,55 @@ class RefundRequestUpdateTable extends _i1.UpdateTable<RefundRequestTable> {
     table.refundAmount,
     value,
   );
+
+  _i1.ColumnValue<String, String> rejectionReason(String? value) =>
+      _i1.ColumnValue(
+        table.rejectionReason,
+        value,
+      );
+
+  _i1.ColumnValue<_i1.UuidValue, _i1.UuidValue> resolvedByUserId(
+    _i1.UuidValue? value,
+  ) => _i1.ColumnValue(
+    table.resolvedByUserId,
+    value,
+  );
+
+  _i1.ColumnValue<String, String> gatewayStatus(String? value) =>
+      _i1.ColumnValue(
+        table.gatewayStatus,
+        value,
+      );
+
+  _i1.ColumnValue<String, String> gatewayReference(String? value) =>
+      _i1.ColumnValue(
+        table.gatewayReference,
+        value,
+      );
+
+  _i1.ColumnValue<String, String> gatewayResponse(String? value) =>
+      _i1.ColumnValue(
+        table.gatewayResponse,
+        value,
+      );
+
+  _i1.ColumnValue<DateTime, DateTime> refundCompletedAt(DateTime? value) =>
+      _i1.ColumnValue(
+        table.refundCompletedAt,
+        value,
+      );
+
+  _i1.ColumnValue<DateTime, DateTime> lastGatewayCheckAt(DateTime? value) =>
+      _i1.ColumnValue(
+        table.lastGatewayCheckAt,
+        value,
+      );
+
+  _i1.ColumnValue<String, String> settlementMode(String? value) =>
+      _i1.ColumnValue(
+        table.settlementMode,
+        value,
+      );
 
   _i1.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
       _i1.ColumnValue(
@@ -314,6 +494,38 @@ class RefundRequestTable extends _i1.Table<int?> {
       'refundAmount',
       this,
     );
+    rejectionReason = _i1.ColumnString(
+      'rejectionReason',
+      this,
+    );
+    resolvedByUserId = _i1.ColumnUuid(
+      'resolvedByUserId',
+      this,
+    );
+    gatewayStatus = _i1.ColumnString(
+      'gatewayStatus',
+      this,
+    );
+    gatewayReference = _i1.ColumnString(
+      'gatewayReference',
+      this,
+    );
+    gatewayResponse = _i1.ColumnString(
+      'gatewayResponse',
+      this,
+    );
+    refundCompletedAt = _i1.ColumnDateTime(
+      'refundCompletedAt',
+      this,
+    );
+    lastGatewayCheckAt = _i1.ColumnDateTime(
+      'lastGatewayCheckAt',
+      this,
+    );
+    settlementMode = _i1.ColumnString(
+      'settlementMode',
+      this,
+    );
     createdAt = _i1.ColumnDateTime(
       'createdAt',
       this,
@@ -341,6 +553,23 @@ class RefundRequestTable extends _i1.Table<int?> {
   late final _i1.ColumnEnum<_i2.RequestStatus> status;
 
   late final _i1.ColumnDouble refundAmount;
+
+  late final _i1.ColumnString rejectionReason;
+
+  late final _i1.ColumnUuid resolvedByUserId;
+
+  late final _i1.ColumnString gatewayStatus;
+
+  late final _i1.ColumnString gatewayReference;
+
+  late final _i1.ColumnString gatewayResponse;
+
+  late final _i1.ColumnDateTime refundCompletedAt;
+
+  late final _i1.ColumnDateTime lastGatewayCheckAt;
+
+  /// manual_portal | auto_api (future Mode A)
+  late final _i1.ColumnString settlementMode;
 
   late final _i1.ColumnDateTime createdAt;
 
@@ -380,6 +609,14 @@ class RefundRequestTable extends _i1.Table<int?> {
     reason,
     status,
     refundAmount,
+    rejectionReason,
+    resolvedByUserId,
+    gatewayStatus,
+    gatewayReference,
+    gatewayResponse,
+    refundCompletedAt,
+    lastGatewayCheckAt,
+    settlementMode,
     createdAt,
     updatedAt,
   ];

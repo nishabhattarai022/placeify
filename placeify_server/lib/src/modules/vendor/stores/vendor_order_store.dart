@@ -1,12 +1,9 @@
 import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../../generated/protocol.dart';
-import '../../../shared/placeify_exception.dart';
 import '../../../shared/session_service.dart';
 import '../../marketplace/marketplace_events.dart';
-import '../../notification/order_notification_service.dart';
 import '../../order/order_lifecycle_store.dart';
-import '../../payment/payment_sync.dart';
 import 'vendor_access_guard.dart';
 import 'vendor_order_support.dart';
 
@@ -15,8 +12,8 @@ class VendorOrderStore {
   VendorOrderStore({
     VendorAccessGuard? access,
     MarketplaceEventDispatcher? events,
-  })  : _access = access ?? VendorAccessGuard(),
-        _events = events ?? marketplaceEventDispatcher;
+  }) : _access = access ?? VendorAccessGuard(),
+       _events = events ?? marketplaceEventDispatcher;
 
   final VendorAccessGuard _access;
   final MarketplaceEventDispatcher _events;
@@ -28,8 +25,12 @@ class VendorOrderStore {
     OrderStatus? status,
   }) async {
     final vendor = await _access.requireOwnedVendor(session);
-    final orderItems =
-        await VendorOrderSupport.loadVendorOrderItems(session, vendor.id!);
+
+    final orderItems = await VendorOrderSupport.loadVendorOrderItems(
+      session,
+      vendor.id!,
+    );
+
     final orders = VendorOrderSupport.groupVendorShopOrders(orderItems);
 
     final filtered = status == null
@@ -51,15 +52,21 @@ class VendorOrderStore {
     ];
 
     if (offset >= enriched.length) return [];
+
     final end = offset + limit;
+
     return enriched.sublist(
       offset,
       end > enriched.length ? enriched.length : end,
     );
   }
 
-  Future<VendorShopOrder> getShopOrder(Session session, int orderId) async {
+  Future<VendorShopOrder> getShopOrder(
+    Session session,
+    int orderId,
+  ) async {
     final vendor = await _access.requireOwnedVendor(session);
+
     final orderItems = await OrderItem.db.find(
       session,
       where: (row) =>
@@ -79,6 +86,7 @@ class VendorOrderStore {
     }
 
     final orders = VendorOrderSupport.groupVendorShopOrders(orderItems);
+
     if (orders.isEmpty) {
       throw PlaceifyException(
         message: 'Order not found.',
@@ -91,15 +99,20 @@ class VendorOrderStore {
       vendor.id!,
       {orderId},
     );
+
     return VendorOrderSupport.withDeliveryStage(
       orders.first,
       stages[orderId],
     );
   }
 
-  Future<VendorShopOrder> acceptShopOrder(Session session, int orderId) async {
+  Future<VendorShopOrder> acceptShopOrder(
+    Session session,
+    int orderId,
+  ) async {
     final vendor = await _access.requireOwnedVendor(session);
     final user = await SessionService.requireUser(session);
+
     final order = await VendorOrderSupport.requireMutableVendorOrder(
       session,
       vendor.id!,
@@ -115,6 +128,7 @@ class VendorOrderStore {
     }
 
     Order? acceptedOrder;
+
     await session.db.transaction((transaction) async {
       acceptedOrder = await OrderLifecycleStore.updateOrderWithVersion(
         session,
@@ -136,13 +150,16 @@ class VendorOrderStore {
         transaction: transaction,
       );
 
-      final existingUpdates = await OrderDeliveryUpdate.db.find(
+      final existingOrderPlaced = await OrderDeliveryUpdate.db.findFirstRow(
         session,
         where: (row) =>
-            row.orderId.equals(orderId) & row.vendorId.equals(vendor.id!),
+            row.orderId.equals(orderId) &
+            row.vendorId.equals(vendor.id!) &
+            row.stage.equals(DeliveryStage.orderPlaced),
         transaction: transaction,
       );
-      if (existingUpdates.isEmpty) {
+
+      if (existingOrderPlaced == null) {
         await OrderDeliveryUpdate.db.insertRow(
           session,
           OrderDeliveryUpdate(
@@ -153,15 +170,31 @@ class VendorOrderStore {
           ),
           transaction: transaction,
         );
+      } else {
+        await OrderDeliveryUpdate.db.updateRow(
+          session,
+          existingOrderPlaced.copyWith(
+            note: 'Order confirmed by vendor.',
+          ),
+          transaction: transaction,
+        );
       }
     });
 
-    if (acceptedOrder != null) {
-      await _events.dispatch(
-        session,
-        OrderAcceptedEvent(order: acceptedOrder!, vendorId: vendor.id!),
+    if (acceptedOrder == null) {
+      throw PlaceifyException(
+        message: 'Failed to accept order.',
+        code: 'ORDER_ACCEPT_FAILED',
       );
     }
+
+    await _events.dispatch(
+      session,
+      OrderAcceptedEvent(
+        order: acceptedOrder!,
+        vendorId: vendor.id!,
+      ),
+    );
 
     return getShopOrder(session, orderId);
   }
@@ -173,19 +206,13 @@ class VendorOrderStore {
   ) async {
     final vendor = await _access.requireOwnedVendor(session);
     final user = await SessionService.requireUser(session);
-    final trimmedReason = reason.trim();
-    if (trimmedReason.isEmpty) {
-      throw PlaceifyException(
-        message: 'A rejection reason is required.',
-        code: 'INVALID_REJECTION_REASON',
-      );
-    }
 
     final order = await VendorOrderSupport.requireMutableVendorOrder(
       session,
       vendor.id!,
       orderId,
     );
+
     if (order.status != OrderStatus.pending &&
         order.status != OrderStatus.confirmed) {
       throw PlaceifyException(
@@ -195,14 +222,14 @@ class VendorOrderStore {
     }
 
     Order? rejectedOrder;
-    var refundPendingCreated = false;
+
     await session.db.transaction((transaction) async {
       rejectedOrder = await OrderLifecycleStore.updateOrderWithVersion(
         session,
         order,
         (current) => current.copyWith(
           status: OrderStatus.rejected,
-          rejectionReason: trimmedReason,
+          rejectionReason: reason,
         ),
         transaction: transaction,
       );
@@ -214,74 +241,43 @@ class VendorOrderStore {
         previousStatus: order.status.name,
         newStatus: OrderStatus.rejected.name,
         changedByUserId: user.id,
-        note: trimmedReason,
         transaction: transaction,
       );
 
-      // Paid online orders cannot be auto-refunded via eSewa (no merchant
-      // refund API). Create an idempotent refund-pending settlement record.
-      final payment = await PaymentTransaction.db.findFirstRow(
+      await OrderDeliveryUpdate.db.insertRow(
         session,
-        where: (row) => row.orderId.equals(orderId),
+        OrderDeliveryUpdate(
+          orderId: orderId,
+          vendorId: vendor.id!,
+          stage: DeliveryStage.rejected,
+          note: 'Order rejected by vendor: $reason',
+        ),
         transaction: transaction,
       );
-      if (payment != null &&
-          payment.status == PaymentTransactionStatus.paid &&
-          payment.paymentMethod != PaymentMethod.cashOnDelivery) {
-        final marked = await PaymentSync.markOrderRefundPending(
-          session,
-          orderId,
-          reason:
-              'Order rejected by vendor. Refund pending merchant portal settlement. $trimmedReason',
-          transaction: transaction,
-          changedByUserId: user.id,
-        );
-        if (marked) {
-          final existingOpen = await RefundRequest.db.findFirstRow(
-            session,
-            where: (row) =>
-                row.orderId.equals(orderId) &
-                (row.status.equals(RequestStatus.pending) |
-                    row.status.equals(RequestStatus.inProgress)),
-            transaction: transaction,
-          );
-          if (existingOpen == null) {
-            await RefundRequest.db.insertRow(
-              session,
-              RefundRequest(
-                userId: order.userId!,
-                orderId: orderId,
-                reason:
-                    'Vendor rejected order. Manual eSewa refund required. $trimmedReason',
-                refundAmount: payment.amount,
-                status: RequestStatus.pending,
-              ),
-              transaction: transaction,
-            );
-          }
-          refundPendingCreated = true;
-        }
-      }
     });
 
-    if (rejectedOrder != null) {
-      await _events.dispatch(
-        session,
-        OrderRejectedEvent(
-          order: rejectedOrder!,
-          reason: trimmedReason,
-          vendorId: vendor.id!,
-        ),
+    if (rejectedOrder == null) {
+      throw PlaceifyException(
+        message: 'Failed to reject order.',
+        code: 'ORDER_REJECT_FAILED',
       );
-      if (refundPendingCreated) {
-        try {
-          await OrderNotificationService.notifyRefundPending(
-            session,
-            order: rejectedOrder!,
-          );
-        } catch (_) {}
-      }
     }
+
+    session.log(
+      'Dispatching OrderRejectedEvent '
+      'orderId=${rejectedOrder!.id} '
+      'userId=${rejectedOrder!.userId} '
+      'reason=$reason',
+    );
+
+    await _events.dispatch(
+      session,
+      OrderRejectedEvent(
+        order: rejectedOrder!,
+        reason: reason,
+        vendorId: vendor.id!,
+      ),
+    );
 
     return getShopOrder(session, orderId);
   }

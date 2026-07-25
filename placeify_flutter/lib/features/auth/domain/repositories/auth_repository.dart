@@ -3,7 +3,7 @@ import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart
 import '../models/app_user.dart';
 import '../models/consumer_profile_details.dart';
 
-/// Auth API contract (mock implementation persists locally until a real API exists).
+/// Auth API contract backed by Serverpod email/JWT authentication.
 abstract interface class AuthRepository {
   Future<AppUser> register({
     required String fullName,

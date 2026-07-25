@@ -71,6 +71,7 @@ abstract final class UserOrderMappers {
         DeliveryStage.shipped => 'Shipped',
         DeliveryStage.outForDelivery => 'Out for delivery',
         DeliveryStage.delivered => 'Delivered',
+        DeliveryStage.rejected => 'Rejected',
       };
     }
 
@@ -82,6 +83,8 @@ abstract final class UserOrderMappers {
       OrderStatus.processing => 'Processing',
       OrderStatus.shipped => 'Shipped',
       OrderStatus.delivered => 'Delivered',
+      OrderStatus.returnRequested => 'Return requested',
+      OrderStatus.refunded => 'Refunded',
       OrderStatus.cancelled => 'Cancelled',
       OrderStatus.autoCancelled => 'Auto cancelled',
     };
@@ -94,23 +97,24 @@ abstract final class UserOrderMappers {
       OrderStatus.pending ||
       OrderStatus.confirmed ||
       OrderStatus.accepted ||
-      OrderStatus.processing =>
-        (
-          background: AppColors.accentBg,
-          foreground: AppColors.accent,
-        ),
-      OrderStatus.shipped => (
-          background: AppColors.sageBg,
-          foreground: AppColors.sage,
-        ),
-      OrderStatus.delivered => (
-          background: AppColors.tealBg,
-          foreground: AppColors.teal,
-        ),
-      OrderStatus.cancelled || OrderStatus.rejected || OrderStatus.autoCancelled => (
-          background: const Color(0x1A9B4A2A),
-          foreground: AppColors.rust,
-        ),
+      OrderStatus.processing => (
+        background: AppColors.accentBg,
+        foreground: AppColors.accent,
+      ),
+      OrderStatus.shipped || OrderStatus.returnRequested => (
+        background: AppColors.sageBg,
+        foreground: AppColors.sage,
+      ),
+      OrderStatus.delivered || OrderStatus.refunded => (
+        background: AppColors.tealBg,
+        foreground: AppColors.teal,
+      ),
+      OrderStatus.cancelled ||
+      OrderStatus.rejected ||
+      OrderStatus.autoCancelled => (
+        background: const Color(0x1A9B4A2A),
+        foreground: AppColors.rust,
+      ),
     };
   }
 
@@ -122,6 +126,7 @@ abstract final class UserOrderMappers {
         DeliveryStage.shipped => 1,
         DeliveryStage.outForDelivery => 1,
         DeliveryStage.delivered => 2,
+        DeliveryStage.rejected => 0,
       };
     }
 
@@ -130,11 +135,13 @@ abstract final class UserOrderMappers {
       OrderStatus.confirmed || OrderStatus.accepted => 0,
       OrderStatus.processing => 1,
       OrderStatus.shipped => 1,
-      OrderStatus.delivered => 2,
+      OrderStatus.delivered ||
+      OrderStatus.returnRequested ||
+      OrderStatus.refunded =>
+        2,
       OrderStatus.cancelled ||
       OrderStatus.rejected ||
-      OrderStatus.autoCancelled =>
-        0,
+      OrderStatus.autoCancelled => 0,
     };
   }
 
@@ -151,8 +158,7 @@ abstract final class UserOrderMappers {
       OrderStatus.accepted ||
       OrderStatus.processing ||
       OrderStatus.shipped ||
-      OrderStatus.delivered =>
-        true,
+      OrderStatus.delivered => true,
       _ => false,
     };
   }
@@ -170,6 +176,7 @@ abstract final class UserOrderMappers {
       DeliveryStage.shipped => 'Your order is on the way',
       DeliveryStage.outForDelivery => 'Out for delivery',
       DeliveryStage.delivered => 'Delivered',
+      DeliveryStage.rejected => 'Order rejected by the shop',
     };
   }
 }

@@ -8,7 +8,9 @@ abstract final class ProductPricing {
     if (listPrice <= 0) return listPrice;
 
     final discountPrice = product.discountPrice;
-    if (discountPrice != null && discountPrice > 0 && discountPrice < listPrice) {
+    if (discountPrice != null &&
+        discountPrice > 0 &&
+        discountPrice < listPrice) {
       return discountPrice;
     }
 
@@ -29,7 +31,8 @@ abstract final class ProductPricing {
   static bool isFeatured(Product product) => product.featured;
 
   /// Normalizes optional discount inputs for persistence.
-  static ({double? discountPrice, double? discountPercentage}) normalizeDiscounts({
+  static ({double? discountPrice, double? discountPercentage})
+  normalizeDiscounts({
     required double listPrice,
     double? discountPrice,
     double? discountPercentage,
@@ -39,7 +42,9 @@ abstract final class ProductPricing {
     }
 
     double? normalizedPrice;
-    if (discountPrice != null && discountPrice > 0 && discountPrice < listPrice) {
+    if (discountPrice != null &&
+        discountPrice > 0 &&
+        discountPrice < listPrice) {
       normalizedPrice = discountPrice;
     }
 

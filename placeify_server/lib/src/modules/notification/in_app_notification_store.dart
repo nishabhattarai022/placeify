@@ -83,8 +83,7 @@ class InAppNotificationStore {
       final allow = switch (type) {
         InAppNotificationType.vendorApplication => admin.newApplicationAlerts,
         InAppNotificationType.systemAlert ||
-        InAppNotificationType.vendorFlagged =>
-          admin.systemAlerts,
+        InAppNotificationType.vendorFlagged => admin.systemAlerts,
         _ => true,
       };
       if (!allow) continue;

@@ -33,7 +33,7 @@ final class UserPaymentsProvider
   UserPayments create() => UserPayments();
 }
 
-String _$userPaymentsHash() => r'bc617c441f32011786f704c3e1ef86d55859a4e8';
+String _$userPaymentsHash() => r'cd3e5170ff2af60f548817c73c317ce04db4a308';
 
 abstract class _$UserPayments extends $AsyncNotifier<List<UserPaymentRecord>> {
   FutureOr<List<UserPaymentRecord>> build();

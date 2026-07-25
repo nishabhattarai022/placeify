@@ -12,7 +12,6 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../splash/presentation/widgets/onboarding/primary_cta_button.dart';
 import '../constants/auth_assets.dart';
-import '../constants/demo_credentials.dart';
 import 'widgets/auth_text_field.dart';
 import 'widgets/foggy_image_background.dart';
 
@@ -45,34 +44,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  Future<void> _signInWithDemo() async {
-    _emailController.text = DemoCredentials.email;
-    _passwordController.text = DemoCredentials.password;
-    await _submit();
-  }
-
-  Future<void> _signInWithDemoAdmin() async {
-    _emailController.text = DemoCredentials.adminEmail;
-    _passwordController.text = DemoCredentials.adminPassword;
-    if (_isSubmitting) return;
-
-    setState(() => _isSubmitting = true);
-    await HapticService.heavy();
-
-    try {
-      final user =
-          await ref.read(currentUserProvider.notifier).signInWithDemoAdminCredentials();
-      if (!mounted) return;
-      context.go(user.postLoginDestination);
-    } on AuthException catch (e) {
-      if (mounted) PlaceifyToast.show(context, e.message);
-    } catch (_) {
-      if (mounted) PlaceifyToast.show(context, 'Log in failed. Try again.');
-    } finally {
-      if (mounted) setState(() => _isSubmitting = false);
-    }
   }
 
   Future<void> _submit() async {
@@ -203,7 +174,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           SizedBox(height: topPadding > 0 ? 36 : 40),
                           AuthTextField(
                             label: 'Email',
-                            hint: DemoCredentials.email,
+                            hint: 'you@example.com',
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
@@ -245,61 +216,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          Text(
-                            DemoCredentials.hint,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              color: AppColors.onboardingTextBody.withValues(
-                                alpha: 0.75,
-                              ),
-                            ),
-                          ),
                           const SizedBox(height: 32),
                           PrimaryCtaButton(
                             label: _isSubmitting ? 'Logging in...' : 'Log In',
                             onTap: _submit,
-                          ),
-                          const SizedBox(height: 12),
-                          Center(
-                            child: TextButton(
-                              onPressed: _isSubmitting
-                                  ? null
-                                  : () {
-                                      HapticService.light();
-                                      _signInWithDemo();
-                                    },
-                              child: const Text(
-                                'Use demo account',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.onboardingAmber,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Center(
-                            child: TextButton(
-                              onPressed: _isSubmitting
-                                  ? null
-                                  : () {
-                                      HapticService.light();
-                                      _signInWithDemoAdmin();
-                                    },
-                              child: Text(
-                                'Demo Admin Access',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.onboardingTextBody.withValues(
-                                    alpha: 0.65,
-                                  ),
-                                ),
-                              ),
-                            ),
                           ),
                           const SizedBox(height: 8),
                           Center(

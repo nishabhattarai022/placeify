@@ -16,7 +16,7 @@ import '../../orders/presentation/providers/orders_provider.dart';
 import '../../profile/presentation/providers/profile_dashboard_provider.dart';
 import '../data/user_dashboard_mappers.dart';
 import '../data/user_dashboard_marketplace_mapper.dart';
-import '../data/user_dashboard_mock_data.dart';
+import '../domain/models/user_overview_metric.dart';
 import 'widgets/user_dashboard_marketplace_row.dart';
 import 'widgets/user_dashboard_order_update_banner.dart';
 import 'widgets/user_dashboard_recent_orders.dart';
@@ -86,9 +86,19 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen> {
         final pendingOrders = ordersAsync.whenOrNull(
           data: UserDashboardMappers.countPendingOrders,
         );
+        final deliveredOrders = ordersAsync.whenOrNull(
+          data: (orders) => orders
+              .where((order) => order.status == OrderStatus.delivered)
+              .length,
+        );
+        final notificationCount = notificationsAsync.whenOrNull(
+          data: (state) => state.unreadCount,
+        );
         final metrics = UserDashboardMappers.overviewMetrics(
           dashboard,
           pendingOrders: pendingOrders,
+          deliveredOrders: deliveredOrders,
+          notificationCount: notificationCount,
         );
 
         return RefreshIndicator(

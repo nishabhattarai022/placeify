@@ -17,7 +17,8 @@ enum DeliveryStage implements _i1.SerializableModel {
   packed,
   shipped,
   outForDelivery,
-  delivered;
+  delivered,
+  rejected;
 
   static DeliveryStage fromJson(String name) {
     switch (name) {
@@ -31,6 +32,8 @@ enum DeliveryStage implements _i1.SerializableModel {
         return DeliveryStage.outForDelivery;
       case 'delivered':
         return DeliveryStage.delivered;
+      case 'rejected':
+        return DeliveryStage.rejected;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "DeliveryStage"',

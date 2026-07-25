@@ -23,7 +23,8 @@ enum InAppNotificationType implements _i1.SerializableModel {
   refundUpdate,
   vendorApplication,
   vendorFlagged,
-  systemAlert;
+  systemAlert,
+  chatMessage;
 
   static InAppNotificationType fromJson(String name) {
     switch (name) {
@@ -49,6 +50,8 @@ enum InAppNotificationType implements _i1.SerializableModel {
         return InAppNotificationType.vendorFlagged;
       case 'systemAlert':
         return InAppNotificationType.systemAlert;
+      case 'chatMessage':
+        return InAppNotificationType.chatMessage;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "InAppNotificationType"',

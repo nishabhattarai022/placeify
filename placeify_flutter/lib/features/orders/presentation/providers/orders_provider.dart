@@ -14,6 +14,7 @@ import 'package:placeify_flutter/features/orders/domain/enums/consumer_order_sta
 import 'package:placeify_flutter/features/orders/domain/enums/order_list_filter.dart';
 import 'package:placeify_flutter/features/orders/domain/models/order.dart';
 import 'package:placeify_flutter/features/orders/domain/repositories/order_repository.dart';
+import 'package:placeify_flutter/features/profile/presentation/providers/profile_dashboard_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
@@ -160,6 +161,7 @@ class Orders extends _$Orders {
       synced[index] = updated;
       state = AsyncData(synced);
       ref.invalidate(orderByIdProvider(orderId));
+      ref.invalidate(profileDashboardProvider);
       return null;
     } on StateError catch (e) {
       state = previous;

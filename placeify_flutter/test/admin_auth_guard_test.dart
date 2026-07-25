@@ -7,7 +7,7 @@ void main() {
   test('AdminAuthGuard allows admin UI role on /admin', () {
     const user = AppUser(
       id: '1',
-      fullName: 'Demo Admin',
+      fullName: 'Admin',
       email: 'admin@placeify.com',
       role: UserRole.admin,
     );

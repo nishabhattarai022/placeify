@@ -1,5 +1,5 @@
+import 'package:placeify_flutter/features/home/domain/constants/product_categories.dart';
 import 'package:flutter/material.dart';
-import 'package:placeify_flutter/features/home/data/mock_product_repository.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/services/haptic_service.dart';
@@ -32,7 +32,7 @@ abstract final class VendorProductCategoryFilterSheet {
                 Navigator.pop(sheetContext, null);
               },
             ),
-            for (final category in MockProductRepository.categories)
+            for (final category in ProductCategories.all)
               PlaceifySelectTile(
                 label: category.label,
                 selected: currentCategoryId == category.id,

@@ -96,26 +96,6 @@ class _DiscountedProductsSectionState
       data: (liveProducts) {
         final products =
             MarketplaceHighlightsMapper.fromUiProducts(liveProducts);
-        // #region agent log
-        agentDebugLog(
-          location: 'discounted_products_section.dart:data',
-          message: 'Special offers data resolved',
-          hypothesisId: 'A',
-          data: {
-            'liveCount': liveProducts.length,
-            'onSaleCount': products.length,
-            'firstId': products.isNotEmpty ? products.first.id : null,
-            'firstName': products.isNotEmpty ? products.first.name : null,
-            'firstImage': products.isNotEmpty ? products.first.imagePath : null,
-            'usesMockSeed': products.isNotEmpty &&
-                products.first.imagePath.contains('catalog-seed'),
-            'mockNames': products
-                .take(3)
-                .map((p) => p.name)
-                .toList(growable: false),
-          },
-        );
-        // #endregion
         if (products.isEmpty) return const SizedBox.shrink();
 
         if (!identical(_products, products)) {

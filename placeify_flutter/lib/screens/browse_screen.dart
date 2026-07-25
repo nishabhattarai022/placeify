@@ -57,8 +57,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
 
     final categoryCount = furnitureCategories.length;
     final liveItemCount = ref.watch(catalogProductCountProvider);
-    final itemCount =
-        liveItemCount > 0 ? liveItemCount : furnitureCatalogItemCount;
+    final itemCount = liveItemCount;
 
     final topInset = MediaQuery.paddingOf(context).top;
 
@@ -202,13 +201,37 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
     );
   }
 
+  List<(FurnitureCategory, int)> _categoriesWithCounts() {
+    return [
+      for (final category in furnitureCategories)
+        (
+          category,
+          ref.watch(categoryProductCountProvider(category.id)),
+        ),
+    ];
+  }
+
   Widget _buildSearchResults(List<FurnitureCategory> filtered) {
-    if (filtered.isEmpty) {
+    final query = _query.trim().toLowerCase();
+    final products = ref
+        .watch(catalogProductsProvider)
+        .where(
+          (product) =>
+              product.name.toLowerCase().contains(query) ||
+              product.brand.toLowerCase().contains(query) ||
+              product.categoryId.toLowerCase().contains(query),
+        )
+        .toList();
+    final categoryMatches = _categoriesWithCounts()
+        .where((entry) => filtered.any((c) => c.id == entry.$1.id))
+        .toList();
+
+    if (products.isEmpty && categoryMatches.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 48),
         child: Center(
           child: Text(
-            'No categories found',
+            'No products found.',
             style: GoogleFonts.dmSans(
               fontSize: 14,
               color: Colors.black38,
@@ -219,13 +242,51 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
     }
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (var i = 0; i < filtered.length; i++) ...[
-          if (i > 0) const SizedBox(height: 10),
-          _SearchCategoryRow(
-            category: filtered[i],
-            onTap: () => _openCategory(filtered[i]),
+        if (products.isNotEmpty) ...[
+          Text(
+            'Products',
+            style: GoogleFonts.dmSans(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.black54,
+            ),
           ),
+          const SizedBox(height: 10),
+          for (var i = 0; i < products.length; i++) ...[
+            if (i > 0) const SizedBox(height: 10),
+            _SearchProductRow(
+              name: products[i].name,
+              subtitle: products[i].brand.isNotEmpty
+                  ? products[i].brand
+                  : products[i].categoryId,
+              onTap: () {
+                HapticService.light();
+                context.push('/product/${products[i].id}');
+              },
+            ),
+          ],
+          const SizedBox(height: 20),
+        ],
+        if (categoryMatches.isNotEmpty) ...[
+          Text(
+            'Categories',
+            style: GoogleFonts.dmSans(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.black54,
+            ),
+          ),
+          const SizedBox(height: 10),
+          for (var i = 0; i < categoryMatches.length; i++) ...[
+            if (i > 0) const SizedBox(height: 10),
+            _SearchCategoryRow(
+              category: categoryMatches[i].$1,
+              itemCount: categoryMatches[i].$2,
+              onTap: () => _openCategory(categoryMatches[i].$1),
+            ),
+          ],
         ],
       ],
     );
@@ -250,6 +311,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
               Expanded(
                 child: _CategoryCard(
                   category: chairs,
+                  itemCount: ref.watch(categoryProductCountProvider(chairs.id)),
                   height: _kBentoTallCard,
                   onTap: () => _openCategory(chairs),
                 ),
@@ -260,12 +322,14 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                   children: [
                     _CategoryCard(
                       category: sofas,
+                  itemCount: ref.watch(categoryProductCountProvider(sofas.id)),
                       height: _kBentoShortCard,
                       onTap: () => _openCategory(sofas),
                     ),
                     const SizedBox(height: 12),
                     _CategoryCard(
                       category: desks,
+                  itemCount: ref.watch(categoryProductCountProvider(desks.id)),
                       height: _kBentoShortCard,
                       onTap: () => _openCategory(desks),
                     ),
@@ -278,6 +342,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
         const SizedBox(height: 12),
         _CategoryCard(
           category: tables,
+                  itemCount: ref.watch(categoryProductCountProvider(tables.id)),
           height: _kBentoShortCard,
           isWide: true,
           showTag: 'Most popular',
@@ -290,6 +355,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
             Expanded(
               child: _CategoryCard(
                 category: beds,
+                  itemCount: ref.watch(categoryProductCountProvider(beds.id)),
                 height: _kBentoMediumCard,
                 onTap: () => _openCategory(beds),
               ),
@@ -298,6 +364,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
             Expanded(
               child: _CategoryCard(
                 category: storage,
+                  itemCount: ref.watch(categoryProductCountProvider(storage.id)),
                 height: _kBentoMediumCard,
                 onTap: () => _openCategory(storage),
               ),
@@ -310,6 +377,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
             Expanded(
               child: _CategoryCard(
                 category: lighting,
+                  itemCount: ref.watch(categoryProductCountProvider(lighting.id)),
                 height: _kBentoSlimCard,
                 onTap: () => _openCategory(lighting),
               ),
@@ -318,6 +386,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
             Expanded(
               child: _CategoryCard(
                 category: outdoor,
+                  itemCount: ref.watch(categoryProductCountProvider(outdoor.id)),
                 height: _kBentoSlimCard,
                 onTap: () => _openCategory(outdoor),
               ),
@@ -368,6 +437,7 @@ class _BrowseCartButton extends StatelessWidget {
 class _CategoryCard extends StatelessWidget {
   const _CategoryCard({
     required this.category,
+    required this.itemCount,
     required this.onTap,
     required this.height,
     this.isWide = false,
@@ -376,6 +446,7 @@ class _CategoryCard extends StatelessWidget {
   });
 
   final FurnitureCategory category;
+  final int itemCount;
   final VoidCallback onTap;
   final double height;
   final bool isWide;
@@ -480,7 +551,7 @@ class _CategoryCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        '${category.itemCount} items',
+                        '$itemCount items',
                         style: GoogleFonts.dmSans(
                           fontSize: 11,
                           color: Colors.white60,
@@ -508,13 +579,82 @@ class _CategoryCard extends StatelessWidget {
   }
 }
 
+
+class _SearchProductRow extends StatelessWidget {
+  const _SearchProductRow({
+    required this.name,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final String name;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        height: 60,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.black.withValues(alpha: 0.06),
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 12,
+                      color: Colors.black38,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: Colors.black.withValues(alpha: 0.35),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _SearchCategoryRow extends StatelessWidget {
   const _SearchCategoryRow({
     required this.category,
+    required this.itemCount,
     required this.onTap,
   });
 
   final FurnitureCategory category;
+  final int itemCount;
   final VoidCallback onTap;
 
   @override
@@ -566,7 +706,7 @@ class _SearchCategoryRow extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '${category.itemCount} items',
+                    '$itemCount items',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.dmSans(

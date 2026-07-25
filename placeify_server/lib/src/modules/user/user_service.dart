@@ -19,9 +19,9 @@ class UserService {
     UserProfileStore? repository,
     UserOrderStore? orderStore,
     UserPaymentStore? paymentStore,
-  })  : _repository = repository ?? UserProfileStore(),
-        _orderStore = orderStore ?? UserOrderStore(),
-        _paymentStore = paymentStore ?? UserPaymentStore();
+  }) : _repository = repository ?? UserProfileStore(),
+       _orderStore = orderStore ?? UserOrderStore(),
+       _paymentStore = paymentStore ?? UserPaymentStore();
 
   final UserProfileStore _repository;
   final UserOrderStore _orderStore;
@@ -112,8 +112,9 @@ class UserService {
     String? phone,
     String? address,
   }) async {
-    final authUserId =
-        UuidValue.fromString(session.authenticated!.userIdentifier);
+    final authUserId = UuidValue.fromString(
+      session.authenticated!.userIdentifier,
+    );
     return _repository.upsertProfile(
       session,
       authUserId,
@@ -155,7 +156,8 @@ class UserService {
     );
     if (shop == null) {
       throw PlaceifyException(
-        message: 'Complete vendor registration before switching to vendor mode.',
+        message:
+            'Complete vendor registration before switching to vendor mode.',
         code: 'SHOP_NOT_FOUND',
       );
     }

@@ -87,12 +87,15 @@ class _HomeSearchBar extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: GestureDetector(
-              onTap: () => PlaceifyToast.show(context, 'Search coming soon'),
+              onTap: () {
+                HapticService.light();
+                context.go('/browse');
+              },
               behavior: HitTestBehavior.opaque,
               child: const Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Search...',
+                  'Search furniture...',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w400,

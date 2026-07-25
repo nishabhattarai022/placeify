@@ -9,8 +9,8 @@ class NotificationService {
   NotificationService({
     NotificationStore? repository,
     InAppNotificationStore? inAppNotifications,
-  })  : _repository = repository ?? NotificationStore(),
-        _inAppNotifications = inAppNotifications ?? InAppNotificationStore();
+  }) : _repository = repository ?? NotificationStore(),
+       _inAppNotifications = inAppNotifications ?? InAppNotificationStore();
 
   final NotificationStore _repository;
   final InAppNotificationStore _inAppNotifications;

@@ -7,7 +7,7 @@ import '../../notification/in_app_notification_store.dart';
 /// Vendor in-app notification reads and read-state updates.
 class VendorNotificationStore {
   VendorNotificationStore({InAppNotificationStore? notifications})
-      : _notifications = notifications ?? InAppNotificationStore();
+    : _notifications = notifications ?? InAppNotificationStore();
 
   final InAppNotificationStore _notifications;
 
@@ -16,7 +16,11 @@ class VendorNotificationStore {
     int limit = 50,
   }) async {
     final user = await SessionService.requireUser(session);
-    final rows = await _notifications.listForUser(session, user.id!, limit: limit);
+    final rows = await _notifications.listForUser(
+      session,
+      user.id!,
+      limit: limit,
+    );
 
     return [
       for (final row in rows)
@@ -40,8 +44,9 @@ class VendorNotificationStore {
       InAppNotificationType.orderAccepted => false,
       InAppNotificationType.deliveryUpdate => false,
       InAppNotificationType.orderPlaced => row.title == 'New order received',
-      InAppNotificationType.orderCancelled =>
-        row.message.contains('cancelled by the customer'),
+      InAppNotificationType.orderCancelled => row.message.contains(
+        'cancelled by the customer',
+      ),
       _ => true,
     };
   }
@@ -62,14 +67,17 @@ class VendorNotificationStore {
       InAppNotificationType.orderAccepted => VendorNotificationType.order,
       InAppNotificationType.orderCancelled => VendorNotificationType.order,
       InAppNotificationType.deliveryUpdate => VendorNotificationType.order,
+
       InAppNotificationType.paymentUpdate => VendorNotificationType.payment,
+      InAppNotificationType.refundUpdate => VendorNotificationType.payment,
+
       InAppNotificationType.productUpdate => VendorNotificationType.product,
       InAppNotificationType.promotionUpdate => VendorNotificationType.product,
-      InAppNotificationType.refundUpdate => VendorNotificationType.payment,
+      InAppNotificationType.chatMessage => VendorNotificationType.product,
+
       InAppNotificationType.vendorApplication ||
       InAppNotificationType.vendorFlagged ||
-      InAppNotificationType.systemAlert =>
-        VendorNotificationType.product,
+      InAppNotificationType.systemAlert => VendorNotificationType.product,
     };
   }
 }

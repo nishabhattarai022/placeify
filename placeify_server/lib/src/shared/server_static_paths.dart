@@ -38,14 +38,19 @@ abstract final class ServerStaticPaths {
 
   static File fileFromUrlPath(String urlPath) {
     final withoutQuery = urlPath.split('?').first;
-    final normalized =
-        withoutQuery.startsWith('/') ? withoutQuery.substring(1) : withoutQuery;
+    final normalized = withoutQuery.startsWith('/')
+        ? withoutQuery.substring(1)
+        : withoutQuery;
     final segments = normalized.split('/').where((s) => s.isNotEmpty);
     return File(_joinAll([root, ...segments]));
   }
 
-  static String _join(String base, String part1,
-      [String? part2, String? part3]) {
+  static String _join(
+    String base,
+    String part1, [
+    String? part2,
+    String? part3,
+  ]) {
     return _joinAll([base, part1, part2, part3].whereType<String>());
   }
 

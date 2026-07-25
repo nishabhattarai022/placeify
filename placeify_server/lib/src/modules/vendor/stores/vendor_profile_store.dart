@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../../generated/protocol.dart';
+import '../../../shared/order_display_number.dart';
 import '../../../shared/placeify_exception.dart';
 import '../../../shared/session_service.dart';
 import '../../notification/in_app_notification_store.dart';
@@ -24,8 +25,8 @@ class VendorProfileStore {
   VendorProfileStore({
     VendorAccessGuard? access,
     VendorProductImageStorage? imageStorage,
-  })  : _access = access ?? VendorAccessGuard(),
-        _imageStorage = imageStorage ?? VendorProductImageStorage();
+  }) : _access = access ?? VendorAccessGuard(),
+       _imageStorage = imageStorage ?? VendorProductImageStorage();
 
   final VendorAccessGuard _access;
   final VendorProductImageStorage _imageStorage;
@@ -48,16 +49,21 @@ class VendorProfileStore {
       session,
       where: (row) => row.vendorId.equals(vendorId),
     );
-    final activeProducts =
-        products.where((p) => p.status == ProductStatus.active).length;
+    final activeProducts = products
+        .where((p) => p.status == ProductStatus.active)
+        .length;
 
-    final orderItems =
-        await VendorOrderSupport.loadVendorOrderItems(session, vendorId);
+    final orderItems = await VendorOrderSupport.loadVendorOrderItems(
+      session,
+      vendorId,
+    );
     final deliveredOrderIds = VendorSalesMetricsCalculator.deliveredItems(
       orderItems,
     ).map((item) => item.orderId).toSet();
-    final refundedOrderIds =
-        await _loadCompletedRefundOrderIds(session, deliveredOrderIds);
+    final refundedOrderIds = await _loadCompletedRefundOrderIds(
+      session,
+      deliveredOrderIds,
+    );
     final sales = VendorSalesMetricsCalculator.compute(
       orderItems: orderItems,
       completedRefundOrderIds: refundedOrderIds,
@@ -107,11 +113,12 @@ class VendorProfileStore {
     ];
     final recentOrderItems = awaitingItems.take(6).toList();
     final recentOrderIds = recentOrderItems.map((item) => item.orderId).toSet();
-    final deliveryStages = await VendorOrderSupport.latestDeliveryStagesForOrders(
-      session,
-      vendorId,
-      recentOrderIds,
-    );
+    final deliveryStages =
+        await VendorOrderSupport.latestDeliveryStagesForOrders(
+          session,
+          vendorId,
+          recentOrderIds,
+        );
 
     final recentOrders = <VendorOrderSummary>[
       for (final item in recentOrderItems)
@@ -120,7 +127,7 @@ class VendorProfileStore {
             orderItemId: item.id!,
             productId: item.productId,
             orderId: item.orderId,
-            orderNumber: item.orderId.toString().padLeft(5, '0'),
+            orderNumber: OrderDisplayNumber.format(item.orderId),
             productName: item.product?.name ?? 'Product',
             quantity: item.quantity,
             lineTotal: item.unitPrice * item.quantity,
@@ -246,7 +253,9 @@ class VendorProfileStore {
         code: 'MISSING_REQUIRED_FIELD',
       );
     }
-    final normalizedCategory = VendorShopCategoryCodec.normalize(trimmedCategory);
+    final normalizedCategory = VendorShopCategoryCodec.normalize(
+      trimmedCategory,
+    );
 
     final trimmedContactEmail = contactEmail?.trim();
     if (trimmedContactEmail != null && trimmedContactEmail.isNotEmpty) {
@@ -384,8 +393,7 @@ class VendorProfileStore {
       );
     }
 
-    final ownerSegment =
-        vendor?.id?.toString() ?? 'user_${user.id.toString()}';
+    final ownerSegment = vendor?.id?.toString() ?? 'user_${user.id.toString()}';
     final fileUrl = await VendorDocumentStorage.persist(
       session: session,
       ownerSegment: ownerSegment,
@@ -396,8 +404,7 @@ class VendorProfileStore {
     final existing = await VendorDocument.db.findFirstRow(
       session,
       where: (row) =>
-          row.userId.equals(user.id!) &
-          row.documentType.equals(documentType),
+          row.userId.equals(user.id!) & row.documentType.equals(documentType),
     );
 
     if (existing != null) {
@@ -491,8 +498,10 @@ class VendorProfileStore {
   }
 
   Future<VendorProfileDetail> getMyProfile(Session session) async {
-    final vendor =
-        await _access.requireOwnedVendor(session, allowSuspended: true);
+    final vendor = await _access.requireOwnedVendor(
+      session,
+      allowSuspended: true,
+    );
     return _loadProfileDetail(session, vendor, includeNotificationPrefs: true);
   }
 
@@ -718,8 +727,7 @@ class VendorProfileStore {
     User? user,
     bool includeNotificationPrefs = false,
   }) async {
-    final resolvedUser =
-        user ?? await User.db.findById(session, vendor.userId);
+    final resolvedUser = user ?? await User.db.findById(session, vendor.userId);
     if (resolvedUser == null) {
       throw PlaceifyException(
         message: 'User account not found.',
@@ -730,8 +738,9 @@ class VendorProfileStore {
     final metrics = await _loadVendorMetrics(session, vendor.id!);
     NotificationPreference? notificationPreferences;
     if (includeNotificationPrefs) {
-      notificationPreferences =
-          await NotificationStore().getPreferences(session);
+      notificationPreferences = await NotificationStore().getPreferences(
+        session,
+      );
     }
 
     return VendorProfileMapper.toDetail(
@@ -776,8 +785,10 @@ class VendorProfileStore {
       orderItems,
     ).map((item) => item.orderId).toSet();
 
-    final refundedOrderIds =
-        await _loadCompletedRefundOrderIds(session, deliveredOrderIds);
+    final refundedOrderIds = await _loadCompletedRefundOrderIds(
+      session,
+      deliveredOrderIds,
+    );
 
     return VendorSalesMetricsCalculator.compute(
       orderItems: orderItems,

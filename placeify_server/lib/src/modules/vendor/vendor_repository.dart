@@ -28,44 +28,49 @@ class VendorStore {
     VendorRefundStore? refunds,
     VendorProductImageStorage? imageStorage,
     ReviewStore? reviews,
-  })  : _notifications = notifications ?? InAppNotificationStore(),
-        _access = access ?? VendorAccessGuard(),
-        _events = events ?? marketplaceEventDispatcher,
-        _imageStorage = imageStorage ?? VendorProductImageStorage(),
-        _vendorNotifications = vendorNotifications ??
-            VendorNotificationStore(notifications: notifications),
-        _orders = orders ??
-            VendorOrderStore(
-              access: access ?? VendorAccessGuard(),
-              events: events ?? marketplaceEventDispatcher,
-            ),
-        _delivery = delivery ??
-            VendorDeliveryStore(
-              access: access ?? VendorAccessGuard(),
-              events: events ?? marketplaceEventDispatcher,
-              persistImage: (session, fileData, fileName,
-                      {required removeBackground}) =>
-                  (imageStorage ?? VendorProductImageStorage())
-                      .persistProductImage(
-                    session,
-                    fileData,
-                    fileName,
-                    removeBackground: removeBackground,
-                  ),
-            ),
-        _products = products ??
-            VendorProductStore(
-              events: events ?? marketplaceEventDispatcher,
-              access: access ?? VendorAccessGuard(),
-              imageStorage: imageStorage ?? VendorProductImageStorage(),
-            ),
-        _profile = profile ??
-            VendorProfileStore(
-              access: access ?? VendorAccessGuard(),
-              imageStorage: imageStorage ?? VendorProductImageStorage(),
-            ),
-        _refunds = refunds ?? VendorRefundStore(access: access),
-        _reviews = reviews ?? ReviewStore();
+  }) : _notifications = notifications ?? InAppNotificationStore(),
+       _access = access ?? VendorAccessGuard(),
+       _events = events ?? marketplaceEventDispatcher,
+       _imageStorage = imageStorage ?? VendorProductImageStorage(),
+       _vendorNotifications =
+           vendorNotifications ??
+           VendorNotificationStore(notifications: notifications),
+       _orders =
+           orders ??
+           VendorOrderStore(
+             access: access ?? VendorAccessGuard(),
+             events: events ?? marketplaceEventDispatcher,
+           ),
+       _delivery =
+           delivery ??
+           VendorDeliveryStore(
+             access: access ?? VendorAccessGuard(),
+             events: events ?? marketplaceEventDispatcher,
+             persistImage:
+                 (session, fileData, fileName, {required removeBackground}) =>
+                     (imageStorage ?? VendorProductImageStorage())
+                         .persistProductImage(
+                           session,
+                           fileData,
+                           fileName,
+                           removeBackground: removeBackground,
+                         ),
+           ),
+       _products =
+           products ??
+           VendorProductStore(
+             events: events ?? marketplaceEventDispatcher,
+             access: access ?? VendorAccessGuard(),
+             imageStorage: imageStorage ?? VendorProductImageStorage(),
+           ),
+       _profile =
+           profile ??
+           VendorProfileStore(
+             access: access ?? VendorAccessGuard(),
+             imageStorage: imageStorage ?? VendorProductImageStorage(),
+           ),
+       _refunds = refunds ?? VendorRefundStore(access: access),
+       _reviews = reviews ?? ReviewStore();
 
   final InAppNotificationStore _notifications;
   final VendorAccessGuard _access;
@@ -102,20 +107,19 @@ class VendorStore {
     String? shopCategory,
     String? contactEmail,
     VendorBankDetailsInput? bankDetails,
-  }) =>
-      _profile.createShop(
-        session,
-        shopName,
-        description: description,
-        logoUrl: logoUrl,
-        phone: phone,
-        address: address,
-        city: city,
-        country: country,
-        shopCategory: shopCategory,
-        contactEmail: contactEmail,
-        bankDetails: bankDetails,
-      );
+  }) => _profile.createShop(
+    session,
+    shopName,
+    description: description,
+    logoUrl: logoUrl,
+    phone: phone,
+    address: address,
+    city: city,
+    country: country,
+    shopCategory: shopCategory,
+    contactEmail: contactEmail,
+    bankDetails: bankDetails,
+  );
 
   Future<VendorBankDetails?> getMyBankDetails(Session session) =>
       _profile.getMyBankDetails(session);
@@ -123,25 +127,26 @@ class VendorStore {
   Future<VendorBankDetails> saveMyBankDetails(
     Session session,
     VendorBankDetailsInput input,
-  ) =>
-      _profile.saveMyBankDetails(session, input);
+  ) => _profile.saveMyBankDetails(session, input);
 
   Future<String> uploadDocument(
     Session session,
     VendorDocumentType documentType,
     ByteData fileData,
     String fileName,
-  ) =>
-      _profile.uploadDocument(session, documentType, fileData, fileName);
+  ) => _profile.uploadDocument(session, documentType, fileData, fileName);
 
   Future<Vendor> updateShop(
     Session session,
     String shopName, {
     String? description,
     String? logoUrl,
-  }) =>
-      _profile.updateShop(session, shopName,
-          description: description, logoUrl: logoUrl);
+  }) => _profile.updateShop(
+    session,
+    shopName,
+    description: description,
+    logoUrl: logoUrl,
+  );
 
   Future<VendorProfileDetail> getMyProfile(Session session) =>
       _profile.getMyProfile(session);
@@ -149,41 +154,35 @@ class VendorStore {
   Future<VendorProfileDetail> submitSuspensionAppeal(
     Session session,
     String message,
-  ) =>
-      _profile.submitSuspensionAppeal(session, message);
+  ) => _profile.submitSuspensionAppeal(session, message);
 
   Future<VendorProfileDetail?> getShopProfile(
     Session session,
     UuidValue vendorId,
-  ) =>
-      _profile.getShopProfile(session, vendorId);
+  ) => _profile.getShopProfile(session, vendorId);
 
   Future<VendorProfileDetail> updateMyProfile(
     Session session,
     VendorProfileUpdateInput input,
-  ) =>
-      _profile.updateMyProfile(session, input);
+  ) => _profile.updateMyProfile(session, input);
 
   Future<String> uploadShopLogo(
     Session session,
     ByteData fileData,
     String fileName,
-  ) =>
-      _profile.uploadShopLogo(session, fileData, fileName);
+  ) => _profile.uploadShopLogo(session, fileData, fileName);
 
   Future<String> uploadShopBanner(
     Session session,
     ByteData fileData,
     String fileName,
-  ) =>
-      _profile.uploadShopBanner(session, fileData, fileName);
+  ) => _profile.uploadShopBanner(session, fileData, fileName);
 
   Future<String> uploadShopCover(
     Session session,
     ByteData fileData,
     String fileName,
-  ) =>
-      _profile.uploadShopCover(session, fileData, fileName);
+  ) => _profile.uploadShopCover(session, fileData, fileName);
 
   Future<List<Product>> listMyProducts(Session session) =>
       _products.listMyProducts(session);
@@ -205,72 +204,66 @@ class VendorStore {
     String? model3dUrl,
     String? thumbnailUrl,
     List<String>? viewImageUrls,
-  }) =>
-      _products.createProduct(
-        session,
-        name,
-        description,
-        price,
-        categoryId: categoryId,
-        materials: materials,
-        widthCm: widthCm,
-        depthCm: depthCm,
-        heightCm: heightCm,
-        weightKg: weightKg,
-        assemblyNote: assemblyNote,
-        careInstructions: careInstructions,
-        warranty: warranty,
-        model3dUrl: model3dUrl,
-        thumbnailUrl: thumbnailUrl,
-        viewImageUrls: viewImageUrls,
-      );
+  }) => _products.createProduct(
+    session,
+    name,
+    description,
+    price,
+    categoryId: categoryId,
+    materials: materials,
+    widthCm: widthCm,
+    depthCm: depthCm,
+    heightCm: heightCm,
+    weightKg: weightKg,
+    assemblyNote: assemblyNote,
+    careInstructions: careInstructions,
+    warranty: warranty,
+    model3dUrl: model3dUrl,
+    thumbnailUrl: thumbnailUrl,
+    viewImageUrls: viewImageUrls,
+  );
 
   Future<Product> uploadProduct(
     Session session,
     VendorProductUploadInput input,
     ByteData imageData,
     String imageFileName,
-  ) =>
-      _products.uploadProduct(session, input, imageData, imageFileName);
+  ) => _products.uploadProduct(session, input, imageData, imageFileName);
 
   Future<Product> regenerateProductModel3d(
     Session session,
     int productId,
-  ) =>
-      _products.regenerateProductModel3d(session, productId);
+  ) => _products.regenerateProductModel3d(session, productId);
 
   Future<Product> updateProductThumbnail(
     Session session,
     int productId,
     String thumbnailUrl,
-  ) =>
-      _products.updateProductThumbnail(session, productId, thumbnailUrl);
+  ) => _products.updateProductThumbnail(session, productId, thumbnailUrl);
 
   Future<String> uploadProductImage(
     Session session,
     ByteData fileData,
     String fileName, {
     bool removeBackground = false,
-  }) =>
-      _products.uploadProductImage(
-        session,
-        fileData,
-        fileName,
-        removeBackground: removeBackground,
-      );
+  }) => _products.uploadProductImage(
+    session,
+    fileData,
+    fileName,
+    removeBackground: removeBackground,
+  );
 
   Future<List<VendorShopOrder>> listShopOrders(
     Session session, {
     int limit = 50,
     int offset = 0,
     OrderStatus? status,
-  }) =>
-      _orders.listShopOrders(
-        session,
-        limit: limit,
-        offset: offset,
-        status: status,
-      );
+  }) => _orders.listShopOrders(
+    session,
+    limit: limit,
+    offset: offset,
+    status: status,
+  );
 
   Future<VendorShopOrder> getShopOrder(Session session, int orderId) =>
       _orders.getShopOrder(session, orderId);
@@ -282,14 +275,12 @@ class VendorStore {
     Session session,
     int orderId,
     String reason,
-  ) =>
-      _orders.rejectShopOrder(session, orderId, reason);
+  ) => _orders.rejectShopOrder(session, orderId, reason);
 
   Future<List<OrderDeliveryUpdate>> listDeliveryUpdates(
     Session session,
     int orderId,
-  ) =>
-      _delivery.listDeliveryUpdates(session, orderId);
+  ) => _delivery.listDeliveryUpdates(session, orderId);
 
   Future<OrderDeliveryUpdate> submitDeliveryUpdate(
     Session session,
@@ -297,27 +288,24 @@ class VendorStore {
     DeliveryStage stage, {
     String? note,
     String? photoUrl,
-  }) =>
-      _delivery.submitDeliveryUpdate(
-        session,
-        orderId,
-        stage,
-        note: note,
-        photoUrl: photoUrl,
-      );
+  }) => _delivery.submitDeliveryUpdate(
+    session,
+    orderId,
+    stage,
+    note: note,
+    photoUrl: photoUrl,
+  );
 
   Future<String> uploadDeliveryProof(
     Session session,
     ByteData fileData,
     String fileName,
-  ) =>
-      _delivery.uploadDeliveryProof(session, fileData, fileName);
+  ) => _delivery.uploadDeliveryProof(session, fileData, fileName);
 
   Future<List<VendorNotificationSummary>> listNotifications(
     Session session, {
     int limit = 50,
-  }) =>
-      _vendorNotifications.listNotifications(session, limit: limit);
+  }) => _vendorNotifications.listNotifications(session, limit: limit);
 
   Future<void> markNotificationRead(Session session, int notificationId) =>
       _vendorNotifications.markNotificationRead(session, notificationId);
@@ -328,8 +316,7 @@ class VendorStore {
   Future<List<ShopListingSummary>> listApprovedShops(
     Session session, {
     String? query,
-  }) =>
-      _profile.listApprovedShops(session, query: query);
+  }) => _profile.listApprovedShops(session, query: query);
 
   Future<Product> deleteProduct(Session session, int productId) =>
       _products.deleteProduct(session, productId);
@@ -342,21 +329,18 @@ class VendorStore {
 
   Future<List<RefundRequestSummary>> listPendingRefundRequests(
     Session session,
-  ) =>
-      _refunds.listPending(session);
+  ) => _refunds.listPending(session);
 
   Future<RefundRequestSummary> approveRefundRequest(
     Session session,
     int refundId,
-  ) =>
-      _refunds.approve(session, refundId);
+  ) => _refunds.approve(session, refundId);
 
   Future<RefundRequestSummary> rejectRefundRequest(
     Session session,
     int refundId, {
     String? reason,
-  }) =>
-      _refunds.reject(session, refundId, reason: reason);
+  }) => _refunds.reject(session, refundId, reason: reason);
 
   Future<List<VendorReviewSummary>> listShopReviews(
     Session session, {

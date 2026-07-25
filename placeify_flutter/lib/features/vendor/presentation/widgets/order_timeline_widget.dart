@@ -23,7 +23,7 @@ class OrderTimelineWidget extends StatelessWidget {
   final List<DeliveryUpdate> deliveryUpdates;
   final bool vendorEditable;
 
-  static const _stages = DeliveryStage.values;
+  static const _stages = DeliveryStage.progression;
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +64,10 @@ class OrderTimelineWidget extends StatelessWidget {
       OrderStatus.accepted => 1,
       OrderStatus.processing => 1,
       OrderStatus.shipped => 3,
-      OrderStatus.delivered => _stages.length,
+      OrderStatus.delivered ||
+      OrderStatus.returnRequested ||
+      OrderStatus.refunded =>
+        _stages.length,
       OrderStatus.rejected || OrderStatus.cancelled => 0,
     };
   }
@@ -76,6 +79,7 @@ class OrderTimelineWidget extends StatelessWidget {
       DeliveryStage.shipped => 'Shipped',
       DeliveryStage.outForDelivery => 'Out for Delivery',
       DeliveryStage.delivered => 'Delivered',
+      DeliveryStage.rejected => 'Rejected',
     };
   }
 

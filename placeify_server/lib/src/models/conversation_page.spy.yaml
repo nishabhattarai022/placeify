@@ -1,0 +1,8 @@
+### Paginated conversation inbox.
+class: ConversationPage
+fields:
+  items: List<ConversationSummary>
+  totalCount: int
+  page: int
+  pageSize: int
+  hasMore: bool

@@ -1,7 +1,7 @@
 import 'package:placeify_client/placeify_client.dart';
 
 import '../../cart/data/product_id_codec.dart';
-import 'profile_mock_data.dart';
+import '../domain/models/profile_ui_models.dart';
 
 abstract final class ProfileArMapper {
   static ProfileArSession fromSummary(UserArSessionSummary summary) {

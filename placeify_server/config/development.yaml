@@ -1,6 +1,11 @@
 # This is the configuration file for your local development environment. By
 # default, it runs a single server on port 8080. To set up your server, you will
 # need to add the name of the database you are connecting to and the user name.
+# eSewa credentials (Serverpod passwords — never expose to Flutter clients):
+#   esewaProductCode / esewaSecretKey — ePay form signing + status enquiry
+#   esewaRefundEndpoint / esewaRefundSecretKey — Mode A placeholders (empty = Mode B)
+# See docs/esewa_refunds.md and config/passwords.yaml.example.
+
 # The password for the database is stored in the config/passwords.yaml.
 #
 # When running your server locally, the server ports are the same as the public

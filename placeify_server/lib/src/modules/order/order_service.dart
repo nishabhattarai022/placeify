@@ -5,7 +5,7 @@ import 'order_repository.dart';
 
 class OrderService {
   OrderService({OrderStore? repository})
-      : _repository = repository ?? OrderStore();
+    : _repository = repository ?? OrderStore();
 
   final OrderStore _repository;
 

@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:placeify_client/placeify_client.dart' hide Order;
 import 'package:placeify_flutter/core/config/placeify_server_client.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
-import 'package:placeify_flutter/features/vendor/data/config/vendor_mock_config.dart';
 import 'package:placeify_flutter/features/vendor/data/vendor_dashboard_mapper.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_dashboard_data.dart';
@@ -54,7 +53,7 @@ class VendorStats extends _$VendorStats {
       stats: VendorDashboardMapper.statsFromDashboard(dashboard).copyWith(
         pendingRefundCount: dashboard.pendingRefundCount,
       ),
-      revenueSeries: VendorMockConfig.revenueSeriesFor(vendorId),
+      revenueSeries: VendorDashboardMapper.revenueSeriesFromDashboard(dashboard),
       recentOrders: VendorDashboardMapper.recentOrdersFromDashboard(
         dashboard,
         vendorId: vendorId,

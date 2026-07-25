@@ -86,7 +86,7 @@ abstract final class CatalogProductMapper {
       hasArView: has3dPreview,
       categoryId: categoryId,
       dimensions: dimensions,
-      vendorId: product.vendorId.toString(),
+      vendorId: product.vendorId.uuid,
       description: product.description,
       materials: product.materials,
       weightKg: product.weightKg,

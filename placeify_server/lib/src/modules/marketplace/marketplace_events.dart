@@ -122,21 +122,22 @@ final class OrderAutoCancelledEvent extends MarketplaceEvent {
   final Order order;
 }
 
-typedef MarketplaceEventHandler = Future<void> Function(
-  Session session,
-  MarketplaceEvent event,
-);
+typedef MarketplaceEventHandler =
+    Future<void> Function(
+      Session session,
+      MarketplaceEvent event,
+    );
 
 /// Dispatches domain events to registered handlers (notifications, analytics, etc.).
 class MarketplaceEventDispatcher {
   MarketplaceEventDispatcher({List<MarketplaceEventHandler>? handlers})
-      : _handlers = handlers ?? defaultHandlers;
+    : _handlers = handlers ?? defaultHandlers;
 
   final List<MarketplaceEventHandler> _handlers;
 
   static List<MarketplaceEventHandler> get defaultHandlers => [
-        marketplaceNotificationHandler,
-      ];
+    marketplaceNotificationHandler,
+  ];
 
   Future<void> dispatch(Session session, MarketplaceEvent event) async {
     for (final handler in _handlers) {

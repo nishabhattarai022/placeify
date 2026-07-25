@@ -5,7 +5,7 @@ import 'wishlist_repository.dart';
 
 class WishlistService {
   WishlistService({WishlistStore? repository})
-      : _repository = repository ?? WishlistStore();
+    : _repository = repository ?? WishlistStore();
 
   final WishlistStore _repository;
 

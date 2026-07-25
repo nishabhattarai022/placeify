@@ -111,7 +111,7 @@ Future<ReorderToCartResult> reorderToCart(Ref ref, List<OrderItem> items) async 
     final product = index[uiId];
     if (product == null) {
       skipped.add(
-        '${item.productName}: no longer available',
+        '${item.productName}: This product is no longer available.',
       );
       // #region agent log
       agentDebugLog(

@@ -14,12 +14,16 @@ import '../product/product_pricing.dart';
 
 class CheckoutStore {
   CheckoutStore({PaymentStore? paymentStore})
-      : _paymentStore = paymentStore ?? PaymentStore();
+    : _paymentStore = paymentStore ?? PaymentStore();
 
   final PaymentStore _paymentStore;
 
   // #region agent log
-  void _dbg(String message, Map<String, Object?> data, {String hypothesisId = 'H4'}) {
+  void _dbg(
+    String message,
+    Map<String, Object?> data, {
+    String hypothesisId = 'H4',
+  }) {
     try {
       File(
         '/Users/rosikagajurel/Documents/College/placeify/.cursor/debug-643556.log',
@@ -80,7 +84,10 @@ class CheckoutStore {
         'paymentMethod': paymentMethod.name,
       }, hypothesisId: 'H3');
       // #endregion
-      throw PlaceifyException(message: 'Your cart is empty.', code: 'CART_EMPTY');
+      throw PlaceifyException(
+        message: 'Your cart is empty.',
+        code: 'CART_EMPTY',
+      );
     }
 
     final totalAmount = cartItems.fold<double>(
@@ -95,7 +102,10 @@ class CheckoutStore {
       },
     );
 
-    final itemCount = cartItems.fold<int>(0, (sum, item) => sum + item.quantity);
+    final itemCount = cartItems.fold<int>(
+      0,
+      (sum, item) => sum + item.quantity,
+    );
     final vendorIds = <UuidValue>{};
 
     final placedAt = DateTime.now();
@@ -129,7 +139,8 @@ class CheckoutStore {
       for (final item in cartItems) {
         final product = item.product;
         if (product == null || product.id == null) {
-          throw PlaceifyException(message: 'A cart item references a missing product.',
+          throw PlaceifyException(
+            message: 'A cart item references a missing product.',
             code: 'PRODUCT_NOT_FOUND',
           );
         }

@@ -1,7 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../vendor/domain/enums/vendor_status.dart';
-import '../../constants/demo_credentials.dart';
 import '../../data/serverpod_auth_repository.dart';
 import '../../domain/models/app_user.dart';
 import '../../domain/models/consumer_profile_details.dart';
@@ -65,40 +64,6 @@ class CurrentUser extends _$CurrentUser {
     state = await AsyncValue.guard(() async {
       final repo = await ref.read(authRepositoryProvider.future);
       return repo.signIn(email: email, password: password);
-    });
-    if (state.hasError) throw _unwrapError(state.error!);
-    await ensurePlaceifyRealtime();
-    return _requireSignedInUser();
-  }
-
-  Future<AppUser> signInWithDemoCredentials() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final repo = await ref.read(authRepositoryProvider.future);
-      if (repo is ServerpodAuthRepository) {
-        return repo.signInWithDemoCredentials();
-      }
-      return repo.signIn(
-        email: DemoCredentials.email,
-        password: DemoCredentials.password,
-      );
-    });
-    if (state.hasError) throw _unwrapError(state.error!);
-    await ensurePlaceifyRealtime();
-    return _requireSignedInUser();
-  }
-
-  Future<AppUser> signInWithDemoAdminCredentials() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final repo = await ref.read(authRepositoryProvider.future);
-      if (repo is ServerpodAuthRepository) {
-        return repo.signInWithDemoAdminCredentials();
-      }
-      return repo.signIn(
-        email: DemoCredentials.adminEmail,
-        password: DemoCredentials.adminPassword,
-      );
     });
     if (state.hasError) throw _unwrapError(state.error!);
     await ensurePlaceifyRealtime();

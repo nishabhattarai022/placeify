@@ -22,8 +22,11 @@ abstract class UserOrderPaymentSummary
     required this.status,
     required this.paymentMethod,
     required this.amount,
+    required this.currency,
     required this.provider,
     this.providerTransactionId,
+    this.note,
+    required this.createdAt,
     this.orderNumber,
     this.vendorName,
     this.deliveryFee,
@@ -43,8 +46,11 @@ abstract class UserOrderPaymentSummary
     required _i2.PaymentTransactionStatus status,
     required _i3.PaymentMethod paymentMethod,
     required double amount,
+    required String currency,
     required String provider,
     String? providerTransactionId,
+    String? note,
+    required DateTime createdAt,
     String? orderNumber,
     String? vendorName,
     double? deliveryFee,
@@ -71,9 +77,14 @@ abstract class UserOrderPaymentSummary
         (jsonSerialization['paymentMethod'] as String),
       ),
       amount: (jsonSerialization['amount'] as num).toDouble(),
+      currency: jsonSerialization['currency'] as String,
       provider: jsonSerialization['provider'] as String,
       providerTransactionId:
           jsonSerialization['providerTransactionId'] as String?,
+      note: jsonSerialization['note'] as String?,
+      createdAt: _i1.DateTimeJsonExtension.fromJson(
+        jsonSerialization['createdAt'],
+      ),
       orderNumber: jsonSerialization['orderNumber'] as String?,
       vendorName: jsonSerialization['vendorName'] as String?,
       deliveryFee: (jsonSerialization['deliveryFee'] as num?)?.toDouble(),
@@ -105,9 +116,15 @@ abstract class UserOrderPaymentSummary
 
   double amount;
 
+  String currency;
+
   String provider;
 
   String? providerTransactionId;
+
+  String? note;
+
+  DateTime createdAt;
 
   String? orderNumber;
 
@@ -141,8 +158,11 @@ abstract class UserOrderPaymentSummary
     _i2.PaymentTransactionStatus? status,
     _i3.PaymentMethod? paymentMethod,
     double? amount,
+    String? currency,
     String? provider,
     String? providerTransactionId,
+    String? note,
+    DateTime? createdAt,
     String? orderNumber,
     String? vendorName,
     double? deliveryFee,
@@ -164,9 +184,12 @@ abstract class UserOrderPaymentSummary
       'status': status.toJson(),
       'paymentMethod': paymentMethod.toJson(),
       'amount': amount,
+      'currency': currency,
       'provider': provider,
       if (providerTransactionId != null)
         'providerTransactionId': providerTransactionId,
+      if (note != null) 'note': note,
+      'createdAt': createdAt.toJson(),
       if (orderNumber != null) 'orderNumber': orderNumber,
       if (vendorName != null) 'vendorName': vendorName,
       if (deliveryFee != null) 'deliveryFee': deliveryFee,
@@ -191,9 +214,12 @@ abstract class UserOrderPaymentSummary
       'status': status.toJson(),
       'paymentMethod': paymentMethod.toJson(),
       'amount': amount,
+      'currency': currency,
       'provider': provider,
       if (providerTransactionId != null)
         'providerTransactionId': providerTransactionId,
+      if (note != null) 'note': note,
+      'createdAt': createdAt.toJson(),
       if (orderNumber != null) 'orderNumber': orderNumber,
       if (vendorName != null) 'vendorName': vendorName,
       if (deliveryFee != null) 'deliveryFee': deliveryFee,
@@ -224,8 +250,11 @@ class _UserOrderPaymentSummaryImpl extends UserOrderPaymentSummary {
     required _i2.PaymentTransactionStatus status,
     required _i3.PaymentMethod paymentMethod,
     required double amount,
+    required String currency,
     required String provider,
     String? providerTransactionId,
+    String? note,
+    required DateTime createdAt,
     String? orderNumber,
     String? vendorName,
     double? deliveryFee,
@@ -243,8 +272,11 @@ class _UserOrderPaymentSummaryImpl extends UserOrderPaymentSummary {
          status: status,
          paymentMethod: paymentMethod,
          amount: amount,
+         currency: currency,
          provider: provider,
          providerTransactionId: providerTransactionId,
+         note: note,
+         createdAt: createdAt,
          orderNumber: orderNumber,
          vendorName: vendorName,
          deliveryFee: deliveryFee,
@@ -268,8 +300,11 @@ class _UserOrderPaymentSummaryImpl extends UserOrderPaymentSummary {
     _i2.PaymentTransactionStatus? status,
     _i3.PaymentMethod? paymentMethod,
     double? amount,
+    String? currency,
     String? provider,
     Object? providerTransactionId = _Undefined,
+    Object? note = _Undefined,
+    DateTime? createdAt,
     Object? orderNumber = _Undefined,
     Object? vendorName = _Undefined,
     Object? deliveryFee = _Undefined,
@@ -288,10 +323,13 @@ class _UserOrderPaymentSummaryImpl extends UserOrderPaymentSummary {
       status: status ?? this.status,
       paymentMethod: paymentMethod ?? this.paymentMethod,
       amount: amount ?? this.amount,
+      currency: currency ?? this.currency,
       provider: provider ?? this.provider,
       providerTransactionId: providerTransactionId is String?
           ? providerTransactionId
           : this.providerTransactionId,
+      note: note is String? ? note : this.note,
+      createdAt: createdAt ?? this.createdAt,
       orderNumber: orderNumber is String? ? orderNumber : this.orderNumber,
       vendorName: vendorName is String? ? vendorName : this.vendorName,
       deliveryFee: deliveryFee is double? ? deliveryFee : this.deliveryFee,

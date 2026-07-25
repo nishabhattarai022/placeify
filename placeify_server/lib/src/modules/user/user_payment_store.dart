@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
+import '../../shared/order_display_number.dart';
 import '../marketplace/marketplace_events.dart';
 import '../order/order_lifecycle_store.dart';
 import '../payment/esewa_gateway.dart';
@@ -319,25 +320,30 @@ class UserPaymentStore {
       status: payment.status,
       paymentMethod: payment.paymentMethod,
       amount: payment.amount,
+      currency: payment.currency,
       provider: payment.provider,
       providerTransactionId: payment.providerTransactionId,
-      orderNumber: payment.orderId.toString().padLeft(5, '0'),
+      note: payment.note,
+      createdAt: payment.createdAt,
+      orderNumber: OrderDisplayNumber.format(payment.orderId),
       vendorName: vendorName,
       deliveryFee: null,
       discount: null,
-      refundStatus: refund?.status.name ??
+      refundStatus:
+          refund?.status.name ??
           (payment.status == PaymentTransactionStatus.refundPending
               ? 'pending'
               : payment.status == PaymentTransactionStatus.refunded
-                  ? 'completed'
-                  : null),
+              ? 'completed'
+              : null),
       refundAmount: refund?.refundAmount,
       refundReason: refund?.reason,
       refundDate: refund?.status == RequestStatus.completed
           ? refund?.updatedAt
           : null,
       orderDate: order?.placedAt,
-      paymentDate: payment.status == PaymentTransactionStatus.paid ||
+      paymentDate:
+          payment.status == PaymentTransactionStatus.paid ||
               payment.status == PaymentTransactionStatus.refundPending ||
               payment.status == PaymentTransactionStatus.refunded
           ? payment.updatedAt

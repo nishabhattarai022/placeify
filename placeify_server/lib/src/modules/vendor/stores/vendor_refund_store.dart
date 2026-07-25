@@ -4,13 +4,13 @@ import '../../../generated/protocol.dart';
 import '../../../shared/placeify_exception.dart';
 import '../../../shared/session_service.dart';
 import '../../notification/order_notification_service.dart';
-import '../../payment/payment_sync.dart';
+import '../../refund/refund_repository.dart';
 import 'vendor_access_guard.dart';
 
 /// Vendor-scoped refund review for orders containing the seller's items.
 class VendorRefundStore {
   VendorRefundStore({VendorAccessGuard? access})
-      : _access = access ?? VendorAccessGuard();
+    : _access = access ?? VendorAccessGuard();
 
   final VendorAccessGuard _access;
 
@@ -58,24 +58,19 @@ class VendorRefundStore {
 
     final rows = await RefundRequest.db.find(
       session,
-      where: (row) => row.status.equals(RequestStatus.pending),
+      where: (row) =>
+          row.status.equals(RequestStatus.pending) |
+          row.status.equals(RequestStatus.inProgress),
       orderBy: (row) => row.createdAt,
       orderDescending: true,
     );
 
-    return [
-      for (final row in rows)
-        if (row.id != null && orderIds.contains(row.orderId))
-          RefundRequestSummary(
-            id: row.id!,
-            orderId: row.orderId,
-            orderNumber: row.orderId.toString().padLeft(5, '0'),
-            status: row.status,
-            refundAmount: row.refundAmount,
-            reason: row.reason,
-            createdAt: row.createdAt,
-          ),
-    ];
+    final summaries = <RefundRequestSummary>[];
+    for (final row in rows) {
+      if (row.id == null || !orderIds.contains(row.orderId)) continue;
+      summaries.add(await RefundStore.toSummary(session, row));
+    }
+    return summaries;
   }
 
   Future<RefundRequestSummary> _resolve(
@@ -111,43 +106,32 @@ class VendorRefundStore {
     }
 
     final updated = await session.db.transaction((transaction) async {
-      final resolved = await RefundRequest.db.updateRow(
-        session,
-        row.copyWith(
-          status: approve ? RequestStatus.completed : RequestStatus.rejected,
-          updatedAt: DateTime.now(),
-        ),
-        transaction: transaction,
-      );
-
       if (approve) {
-        await PaymentSync.markOrderRefunded(
+        return RefundStore.applyApprovalSettlement(
           session,
-          row.orderId,
+          row: row,
+          actorUserId: user.id!,
           transaction: transaction,
-          changedByUserId: user.id,
         );
       }
-
-      return resolved;
+      return RefundStore.applyRejection(
+        session,
+        row: row,
+        actorUserId: user.id!,
+        reason: reason,
+        transaction: transaction,
+      );
     });
 
     await OrderNotificationService.notifyRefundDecision(
       session,
       refund: updated,
       approved: approve,
-      reason: reason,
+      reason: reason ?? updated.rejectionReason,
+      completed: approve && updated.status == RequestStatus.completed,
     );
 
-    return RefundRequestSummary(
-      id: updated.id!,
-      orderId: updated.orderId,
-      orderNumber: updated.orderId.toString().padLeft(5, '0'),
-      status: updated.status,
-      refundAmount: updated.refundAmount,
-      reason: updated.reason,
-      createdAt: updated.createdAt,
-    );
+    return RefundStore.toSummary(session, updated);
   }
 
   Future<Set<int>> _orderIdsForVendor(

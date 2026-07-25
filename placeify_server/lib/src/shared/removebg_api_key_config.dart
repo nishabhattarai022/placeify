@@ -6,8 +6,8 @@ abstract final class RemoveBgApiKeyConfig {
   static const apiKeyEnv = 'PLACEIFY_REMOVEBG_API_KEY';
 
   static String? apiKey() => YamlApiKeyConfig.read(
-        configFileName: configFileName,
-        fieldName: 'apiKey',
-        envVarName: apiKeyEnv,
-      );
+    configFileName: configFileName,
+    fieldName: 'apiKey',
+    envVarName: apiKeyEnv,
+  );
 }

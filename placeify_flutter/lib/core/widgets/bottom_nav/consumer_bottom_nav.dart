@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../services/haptic_service.dart';
 import 'bottom_nav_pill_widgets.dart';
 
 /// Floating black pill nav: white "Home" chip + 4 dark circular icon buttons.
-class ConsumerBottomNav extends StatelessWidget {
+///
+/// Tabs: Home · AR · Browse (shop) · Wishlist · Profile
+class ConsumerBottomNav extends ConsumerWidget {
   const ConsumerBottomNav({
     required this.activeIndex,
     super.key,
@@ -20,7 +23,7 @@ class ConsumerBottomNav extends StatelessWidget {
   static void _goProfile(BuildContext context) => context.go('/profile');
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final index = activeIndex;
 
     return BottomNavBarShell(
@@ -58,7 +61,7 @@ class ConsumerBottomNav extends StatelessWidget {
         BottomNavIconButton(
           icon: Icons.star_outline,
           isSelected: index == 3,
-          semanticLabel: 'Bookmarks',
+          semanticLabel: 'Wishlist',
           onTap: () {
             HapticService.light();
             _goBookmarks(context);

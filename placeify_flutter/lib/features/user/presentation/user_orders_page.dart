@@ -143,7 +143,7 @@ class _EmptyOrdersState extends StatelessWidget {
         : 'No orders yet';
     final description = hasOrders
         ? 'Try another filter to see more orders.'
-        : 'Browse products and checkout to start your order history.';
+        : "You haven't placed any orders yet.";
 
     return Center(
       child: Padding(

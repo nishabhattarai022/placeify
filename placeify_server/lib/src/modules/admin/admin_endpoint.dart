@@ -306,9 +306,31 @@ class AdminEndpoint extends PlaceifyAuthenticatedEndpoint {
 
   Future<AdminRefundRequestSummary> rejectRefundRequest(
     Session session,
+    int refundId, {
+    String? reason,
+  }) {
+    return _service.rejectRefundRequest(session, refundId, reason: reason);
+  }
+
+  Future<AdminRefundRequestSummary> checkEsewaRefundStatus(
+    Session session,
     int refundId,
   ) {
-    return _service.rejectRefundRequest(session, refundId);
+    return _service.checkEsewaRefundStatus(session, refundId);
+  }
+
+  Future<AdminRefundRequestSummary> retryEsewaRefundStatusCheck(
+    Session session,
+    int refundId,
+  ) {
+    return _service.retryEsewaRefundStatusCheck(session, refundId);
+  }
+
+  Future<AdminRefundRequestSummary> completeManualEsewaSettlement(
+    Session session,
+    int refundId,
+  ) {
+    return _service.completeManualEsewaSettlement(session, refundId);
   }
 
   Future<List<AdminProductSummary>> listProducts(

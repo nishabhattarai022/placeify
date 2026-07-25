@@ -7,4 +7,14 @@ enum DeliveryStage {
   shipped,
   outForDelivery,
   delivered,
+  rejected;
+
+  /// Linear fulfillment path (excludes terminal [rejected]).
+  static const List<DeliveryStage> progression = [
+    DeliveryStage.orderPlaced,
+    DeliveryStage.packed,
+    DeliveryStage.shipped,
+    DeliveryStage.outForDelivery,
+    DeliveryStage.delivered,
+  ];
 }

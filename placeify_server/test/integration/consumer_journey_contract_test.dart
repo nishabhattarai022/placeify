@@ -80,7 +80,7 @@ void main() {
           auth.session,
           CheckoutRequest(
             shippingAddress: 'Kathmandu, Nepal',
-            paymentMethod: PaymentMethod.cod,
+            paymentMethod: PaymentMethod.cashOnDelivery,
           ),
         );
         expect(checkout.itemCount, 2);
@@ -109,7 +109,7 @@ void main() {
         expect(detail.items.first.productId, productId);
         expect(detail.items.first.quantity, 2);
         expect(detail.payment.status, PaymentTransactionStatus.pending);
-        expect(detail.payment.paymentMethod, PaymentMethod.cod);
+        expect(detail.payment.paymentMethod, PaymentMethod.cashOnDelivery);
 
         final payment = await endpoints.user.getMyOrderPayment(
           auth.session,

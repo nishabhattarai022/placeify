@@ -28,8 +28,10 @@ abstract final class Product3dImagePaths {
   }
 
   static String? _catalogBasePath(String catalogUrlPath) {
-    final match =
-        RegExp(r'^(.*)\.jpe?g$', caseSensitive: false).firstMatch(catalogUrlPath);
+    final match = RegExp(
+      r'^(.*)\.jpe?g$',
+      caseSensitive: false,
+    ).firstMatch(catalogUrlPath);
     return match?.group(1);
   }
 }

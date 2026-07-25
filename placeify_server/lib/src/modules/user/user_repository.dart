@@ -12,10 +12,10 @@ class UserProfileStore {
     ArSessionStore? arSessionStore,
     RefundStore? refundStore,
     CatalogRepository? catalogStore,
-  })  : _wishlistStore = wishlistStore ?? WishlistStore(),
-        _arSessionStore = arSessionStore ?? ArSessionStore(),
-        _refundStore = refundStore ?? RefundStore(),
-        _catalogStore = catalogStore ?? CatalogRepository();
+  }) : _wishlistStore = wishlistStore ?? WishlistStore(),
+       _arSessionStore = arSessionStore ?? ArSessionStore(),
+       _refundStore = refundStore ?? RefundStore(),
+       _catalogStore = catalogStore ?? CatalogRepository();
 
   final WishlistStore _wishlistStore;
   final ArSessionStore _arSessionStore;
@@ -128,13 +128,15 @@ class UserProfileStore {
   }
 
   Future<
-      ({
-        double totalSpend,
-        double refundAmount,
-        int pendingRefundCount,
-        int codOrderCount,
-        int onlinePaymentCount,
-      })> _customerPaymentStats(
+    ({
+      double totalSpend,
+      double refundAmount,
+      int pendingRefundCount,
+      int codOrderCount,
+      int onlinePaymentCount,
+    })
+  >
+  _customerPaymentStats(
     Session session,
     UuidValue userId,
   ) async {

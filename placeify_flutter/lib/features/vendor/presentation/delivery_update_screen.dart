@@ -8,7 +8,7 @@ import 'package:placeify_flutter/features/profile/presentation/widgets/profile_s
 import 'package:placeify_flutter/features/profile/presentation/widgets/shared/profile_form_field.dart';
 import 'package:placeify_flutter/features/profile/presentation/widgets/shared/profile_submit_button.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
-import 'package:placeify_flutter/features/vendor/data/mock_vendor_repository.dart';
+import 'package:placeify_flutter/features/vendor/data/vendor_order_exceptions.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/delivery_stage.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/order_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/delivery_update.dart';
@@ -107,6 +107,7 @@ class _DeliveryUpdateScreenState extends ConsumerState<DeliveryUpdateScreen> {
       DeliveryStage.shipped => 'Shipped',
       DeliveryStage.outForDelivery => 'Out for Delivery',
       DeliveryStage.delivered => 'Delivered',
+      DeliveryStage.rejected => 'Rejected',
     };
   }
 
@@ -183,12 +184,12 @@ class _DeliveryUpdateScreenState extends ConsumerState<DeliveryUpdateScreen> {
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
-                          children: DeliveryStage.values.map((stage) {
+                          children: DeliveryStage.progression.map((stage) {
                             final isNext = stage == nextStage;
                             final isSelected = _selectedStage == stage;
-                            final isPast = DeliveryStage.values
+                            final isPast = DeliveryStage.progression
                                     .indexOf(stage) <
-                                DeliveryStage.values.indexOf(nextStage);
+                                DeliveryStage.progression.indexOf(nextStage);
 
                             return FilterChip(
                               label: Text(_stageLabel(stage)),
@@ -348,13 +349,14 @@ class _DeliveryUpdateScreenState extends ConsumerState<DeliveryUpdateScreen> {
 
     var maxIndex = -1;
     for (final update in updates) {
-      final index = DeliveryStage.values.indexOf(update.stage);
+      if (update.stage == DeliveryStage.rejected) return null;
+      final index = DeliveryStage.progression.indexOf(update.stage);
       if (index > maxIndex) maxIndex = index;
     }
 
     final nextIndex = maxIndex + 1;
-    if (nextIndex >= DeliveryStage.values.length) return null;
-    return DeliveryStage.values[nextIndex];
+    if (nextIndex >= DeliveryStage.progression.length) return null;
+    return DeliveryStage.progression[nextIndex];
   }
 }
 

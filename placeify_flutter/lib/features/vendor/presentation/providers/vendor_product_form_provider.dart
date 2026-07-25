@@ -3,8 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:placeify_flutter/core/services/background_removal_service.dart';
 import 'package:placeify_flutter/core/utils/local_image_store.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
-import 'package:placeify_flutter/features/vendor/data/mock_vendor_product_repository.dart'
-    show VendorProductActionException;
+import 'package:placeify_flutter/features/vendor/domain/exceptions/vendor_product_action_exception.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_form_state.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_image_item.dart';

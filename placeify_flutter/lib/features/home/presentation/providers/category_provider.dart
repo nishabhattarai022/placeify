@@ -58,7 +58,7 @@ Product? productById(Ref ref, String id) {
   final shopProduct = ref.watch(shopProductByConsumerIdProvider(id)).value;
   if (shopProduct != null) return shopProduct;
 
-  // Never fall back to mock/demo catalog — cart/wishlist must stay on live IDs.
+  // Prefer live catalog IDs so cart/wishlist stay consistent with the backend.
   return null;
 }
 

@@ -27,7 +27,7 @@ class ServerpodConsumerShopRepository implements ConsumerShopRepository {
     if (profile == null) return null;
 
     return ShopListing(
-      vendorId: profile.id.toString(),
+      vendorId: profile.id.uuid,
       businessName: profile.businessName,
       locality: profile.city.isNotEmpty ? profile.city : profile.address,
       tags: VendorShopCategoryCodec.decode(profile.category),
@@ -60,7 +60,7 @@ class ServerpodConsumerShopRepository implements ConsumerShopRepository {
 
   ShopListing _toListing(ShopListingSummary shop) {
     return ShopListing(
-      vendorId: shop.vendorId.toString(),
+      vendorId: shop.vendorId.uuid,
       businessName: shop.businessName,
       locality: shop.locality,
       tags: shop.tags,

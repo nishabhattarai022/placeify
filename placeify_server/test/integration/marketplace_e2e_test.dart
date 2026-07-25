@@ -392,7 +392,7 @@ void main() {
         customerSession,
         CheckoutRequest(
           shippingAddress: 'Kathmandu, Nepal',
-          paymentMethod: PaymentMethod.cod,
+          paymentMethod: PaymentMethod.cashOnDelivery,
         ),
       );
 
@@ -457,7 +457,7 @@ void main() {
         customerSession,
         CheckoutRequest(
           shippingAddress: 'Kathmandu, Nepal',
-          paymentMethod: PaymentMethod.cod,
+          paymentMethod: PaymentMethod.cashOnDelivery,
         ),
       );
 
@@ -525,7 +525,7 @@ void main() {
         customerSession,
         CheckoutRequest(
           shippingAddress: 'Kathmandu, Nepal',
-          paymentMethod: PaymentMethod.cod,
+          paymentMethod: PaymentMethod.cashOnDelivery,
         ),
       );
       final orderId = checkout.order.id!;
@@ -611,7 +611,7 @@ void main() {
         customerSession,
         CheckoutRequest(
           shippingAddress: 'Kathmandu, Nepal',
-          paymentMethod: PaymentMethod.cod,
+          paymentMethod: PaymentMethod.cashOnDelivery,
         ),
       );
       final orderId = checkout.order.id!;

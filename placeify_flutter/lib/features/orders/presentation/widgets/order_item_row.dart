@@ -9,6 +9,7 @@ import '../../../../core/constants/app_typography.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
+import '../../../cart/presentation/cart_actions.dart';
 import '../../../home/presentation/providers/category_provider.dart';
 import '../../domain/constants/order_strings.dart';
 import '../../domain/models/order_item.dart';
@@ -16,12 +17,24 @@ import '../../domain/models/order_item.dart';
 class OrderItemRow extends ConsumerWidget {
   const OrderItemRow({
     required this.item,
+    this.showAddToCart = false,
     super.key,
   });
 
   final OrderItem item;
+  final bool showAddToCart;
 
   static const _imageSize = 80.0;
+
+  Future<void> _addToCart(BuildContext context, WidgetRef ref) async {
+    await addToCart(
+      ref,
+      context,
+      item.productId,
+      quantity: item.quantity,
+      openCart: false,
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -112,11 +125,60 @@ class OrderItemRow extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Text(
-            Formatters.currencyFull(item.lineTotal),
-            style: AppTypography.productName,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                Formatters.currencyFull(item.lineTotal),
+                style: AppTypography.productName,
+              ),
+              if (showAddToCart) ...[
+                const SizedBox(height: 8),
+                _AddToCartIconButton(
+                  onTap: () => _addToCart(context, ref),
+                ),
+              ],
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AddToCartIconButton extends StatelessWidget {
+  const _AddToCartIconButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: OrderStrings.addToCartAction,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticService.light();
+            onTap();
+          },
+          borderRadius: BorderRadius.circular(10),
+          child: Ink(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.sand, width: 1.5),
+              color: Colors.white,
+            ),
+            child: const Icon(
+              Icons.add_shopping_cart_outlined,
+              size: 18,
+              color: AppColors.espresso,
+            ),
+          ),
+        ),
       ),
     );
   }

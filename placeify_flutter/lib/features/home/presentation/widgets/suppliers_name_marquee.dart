@@ -2,20 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:placeify_flutter/core/services/haptic_service.dart';
-import 'package:placeify_flutter/features/shops/data/local_supplier_vendor_map.dart';
 import 'package:placeify_flutter/features/shops/domain/constants/shop_routes.dart';
+import 'package:placeify_flutter/features/shops/domain/models/shop_listing.dart';
 
-import '../../data/local_suppliers_config.dart';
 import '../theme/home_screen_tokens.dart';
 
-/// Auto-scrolling horizontal showcase of local supplier names.
+/// Auto-scrolling horizontal showcase of supplier / shop names.
 class SuppliersNameMarquee extends StatefulWidget {
   const SuppliersNameMarquee({
     required this.suppliers,
     super.key,
   });
 
-  final List<LocalSupplier> suppliers;
+  final List<ShopListing> suppliers;
 
   @override
   State<SuppliersNameMarquee> createState() => _SuppliersNameMarqueeState();
@@ -31,7 +30,7 @@ class _SuppliersNameMarqueeState extends State<SuppliersNameMarquee>
   late AnimationController _controller;
   double _loopWidth = 0;
 
-  List<LocalSupplier> get _items => widget.suppliers;
+  List<ShopListing> get _items => widget.suppliers;
 
   @override
   void initState() {
@@ -41,6 +40,14 @@ class _SuppliersNameMarqueeState extends State<SuppliersNameMarquee>
       duration: const Duration(seconds: 28),
     );
     WidgetsBinding.instance.addPostFrameCallback((_) => _measureLoop());
+  }
+
+  @override
+  void didUpdateWidget(covariant SuppliersNameMarquee oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.suppliers != widget.suppliers) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _measureLoop());
+    }
   }
 
   void _measureLoop() {
@@ -75,7 +82,7 @@ class _SuppliersNameMarqueeState extends State<SuppliersNameMarquee>
         for (var i = 0; i < _items.length; i++) ...[
           if (i > 0) const SizedBox(width: _chipGap),
           _SupplierNameChip(
-            supplier: _items[i],
+            shop: _items[i],
             onTap: () => _onSupplierTap(context, _items[i]),
           ),
         ],
@@ -83,14 +90,9 @@ class _SuppliersNameMarqueeState extends State<SuppliersNameMarquee>
     );
   }
 
-  void _onSupplierTap(BuildContext context, LocalSupplier supplier) {
+  void _onSupplierTap(BuildContext context, ShopListing shop) {
     HapticService.light();
-    final vendorId = LocalSupplierVendorMap.vendorIdForSupplier(supplier.id);
-    if (vendorId != null) {
-      context.push(ShopRoutes.shopDetail(vendorId));
-      return;
-    }
-    context.go(ShopRoutes.shops);
+    context.push(ShopRoutes.shopDetail(shop.vendorId));
   }
 
   @override
@@ -181,15 +183,19 @@ class _SuppliersNameMarqueeState extends State<SuppliersNameMarquee>
 
 class _SupplierNameChip extends StatelessWidget {
   const _SupplierNameChip({
-    required this.supplier,
+    required this.shop,
     required this.onTap,
   });
 
-  final LocalSupplier supplier;
+  final ShopListing shop;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final capability = shop.tags.isNotEmpty
+        ? shop.tags.first
+        : '${shop.productCount} products';
+
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -208,7 +214,7 @@ class _SupplierNameChip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              supplier.name,
+              shop.businessName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.dmSans(
@@ -221,7 +227,7 @@ class _SupplierNameChip extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              '${supplier.locality} · ${supplier.capability}',
+              '${shop.locality} · $capability',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.dmSans(

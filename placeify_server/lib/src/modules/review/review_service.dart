@@ -5,7 +5,7 @@ import 'review_repository.dart';
 
 class ReviewService {
   ReviewService({ReviewStore? repository})
-      : _repository = repository ?? ReviewStore();
+    : _repository = repository ?? ReviewStore();
 
   final ReviewStore _repository;
 

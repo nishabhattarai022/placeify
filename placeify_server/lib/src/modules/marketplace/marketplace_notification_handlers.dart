@@ -17,23 +17,33 @@ Future<void> marketplaceNotificationHandler(
         customerName: event.customerName,
         itemCount: event.itemCount,
       );
+
     case CustomerOrderPlacedEvent():
       await OrderNotificationService.notifyCustomerOrderPlaced(
         session,
         order: event.order,
       );
+
     case OrderAcceptedEvent():
       await OrderNotificationService.notifyOrderAccepted(
         session,
         order: event.order,
         vendorId: event.vendorId,
       );
+
     case OrderRejectedEvent():
+      session.log(
+        'OrderRejectedEvent received '
+        'orderId=${event.order.id} reason=${event.reason}',
+        level: LogLevel.info,
+      );
+
       await OrderNotificationService.notifyOrderRejected(
         session,
         order: event.order,
         reason: event.reason,
       );
+
     case DeliveryUpdatedEvent():
       await OrderNotificationService.notifyDeliveryStage(
         session,
@@ -41,9 +51,10 @@ Future<void> marketplaceNotificationHandler(
         stage: event.stage,
         vendorId: event.vendorId,
       );
+
     case OrderDeliveredEvent():
-      // DeliveryUpdatedEvent already notifies the customer for delivered orders.
       break;
+
     case OrderCancelledForVendorEvent():
       await OrderNotificationService.notifyVendorOrderCancelled(
         session,
@@ -51,6 +62,7 @@ Future<void> marketplaceNotificationHandler(
         vendorId: event.vendorId,
         reason: event.reason,
       );
+
     case PaymentStatusChangedEvent():
       await OrderNotificationService.notifyPaymentStatus(
         session,
@@ -58,17 +70,20 @@ Future<void> marketplaceNotificationHandler(
         status: event.status,
         vendorId: event.vendorId,
       );
+
     case OrderAutoCancelledEvent():
       await OrderNotificationService.notifyOrderAutoCancelled(
         session,
         order: event.order,
       );
+
     case ProductCreatedEvent():
       await OrderNotificationService.notifyConsumersNewProduct(
         session,
         product: event.product,
         vendorName: await _vendorName(session, event.vendorId),
       );
+
     case DiscountActivatedEvent():
       await OrderNotificationService.notifyConsumersSpecialOffer(
         session,
@@ -78,7 +93,14 @@ Future<void> marketplaceNotificationHandler(
   }
 }
 
-Future<String> _vendorName(Session session, UuidValue vendorId) async {
-  final vendor = await Vendor.db.findById(session, vendorId);
+Future<String> _vendorName(
+  Session session,
+  UuidValue vendorId,
+) async {
+  final vendor = await Vendor.db.findById(
+    session,
+    vendorId,
+  );
+
   return vendor?.shopName ?? 'A vendor';
 }

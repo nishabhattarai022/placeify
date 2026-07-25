@@ -303,7 +303,7 @@ class _EmptyRoomCategoryState extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            'No $categoryName products yet.',
+            'No products found.',
             textAlign: TextAlign.center,
             style: GoogleFonts.dmSans(
               fontSize: 15,

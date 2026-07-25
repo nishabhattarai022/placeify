@@ -1,9 +1,7 @@
-import 'package:placeify_flutter/features/admin/data/config/admin_seed_data.dart';
 import 'package:placeify_flutter/features/shops/domain/models/shop_listing.dart';
-import 'package:placeify_flutter/features/vendor/data/config/vendor_mock_config.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_profile.dart';
 
-/// Consumer-facing storefront copy keyed by vendor ID.
+/// Consumer-facing storefront copy derived from live shop/profile data.
 class ShopListingDetails {
   const ShopListingDetails({
     required this.description,
@@ -16,128 +14,32 @@ class ShopListingDetails {
   final List<String> highlights;
 
   static ShopListingDetails forShop(ShopListing shop) {
-    return _catalog[shop.vendorId] ?? _fallbackFromListing(shop);
-  }
-
-  static ShopListingDetails forProfile(VendorProfile profile) {
-    return _catalog[profile.id] ?? _fallback(profile);
-  }
-
-  static final Map<String, ShopListingDetails> _catalog = {
-    VendorMockConfig.demoVendorId: const ShopListingDetails(
-      establishedYear: 2018,
-      highlights: [
-        'Sal & oak wood',
-        'Linen upholstery',
-        'Made in Kathmandu',
-        'Custom sizing',
-      ],
-      description:
-          'Harmony Home Furnishings began as a Lazimpat workshop building chairs '
-          'and tables from locally sourced sal wood. Each frame is kiln-dried and '
-          'hand-finished, then paired with performance linen suited to Nepali '
-          'humidity. Browse ready-to-ship pieces or request custom dimensions for '
-          'compact city apartments.',
-    ),
-    AdminSeedData.approvedVendorId: const ShopListingDetails(
-      establishedYear: 2019,
-      highlights: [
-        'Solid hardwood',
-        'Vegan suede seating',
-        'Lazimpat studio',
-        'Family-owned',
-      ],
-      description:
-          'Founded by Maya Rai, this Lazimpat studio focuses on modern seating and '
-          'dining for urban Nepali homes. We combine sustainably harvested hardwoods '
-          'with vegan suede and clean silhouettes — warm craftsmanship without heavy '
-          'ornament. Most pieces ship within 7–10 days across Kathmandu Valley.',
-    ),
-    AdminSeedData.shopVendorNestId: const ShopListingDetails(
-      establishedYear: 2017,
-      highlights: [
-        'Pokhara workshop',
-        'Solid oak beds',
-        'Custom woodwork',
-        'Valley delivery',
-      ],
-      description:
-          'Nepal Nest Furniture builds bedroom and dining pieces from timber sourced '
-          'along the Gandaki corridor. Our Lakeside workshop specializes in platform '
-          'beds, benches, and storage designed for humid mountain climates. '
-          'Most orders are ready within two weeks.',
-    ),
-    AdminSeedData.shopVendorHimalayaId: const ShopListingDetails(
-      establishedYear: 2020,
-      highlights: [
-        'Himalayan motifs',
-        'Artisan decor',
-        'Hand-finished',
-        'Durbar Marg studio',
-      ],
-      description:
-          'Himalayan Home Decor curates accent pieces that blend contemporary interiors '
-          'with motifs from the high Himalayas. From table lamps to wall hangings, each '
-          'item is selected or crafted by Nepali artisans and finished for everyday use.',
-    ),
-    AdminSeedData.shopVendorCraftsId: const ShopListingDetails(
-      establishedYear: 2015,
-      highlights: [
-        'Thamel atelier',
-        'Handicrafts',
-        'Brass & lokta',
-        'Heritage designs',
-      ],
-      description:
-          'Kathmandu Crafts Co. preserves traditional Newari and Tibetan craft techniques '
-          'for modern homes. Browse hand-painted panels, hammered metalwork, and lokta '
-          'paper goods — each piece supports local artisan families in the Valley.',
-    ),
-    AdminSeedData.shopVendorUrbanId: const ShopListingDetails(
-      establishedYear: 2021,
-      highlights: [
-        'Compact layouts',
-        'Modern seating',
-        'Lalitpur studio',
-        'Apartment-friendly',
-      ],
-      description:
-          'Urban Loft Studio designs furniture for Kathmandu and Lalitpur apartments where '
-          'space is tight but style matters. Slim desks, modular sofas, and vertical '
-          'storage help city dwellers furnish efficiently without sacrificing comfort.',
-    ),
-  };
-
-  static ShopListingDetails _fallbackFromListing(ShopListing shop) {
-    final tags = shop.tags;
+    final locality = shop.locality.trim();
+    final tags = shop.tags.where((t) => t.trim().isNotEmpty).take(4).toList();
     return ShopListingDetails(
-      establishedYear: 2020,
+      establishedYear: DateTime.now().year,
       highlights: tags.isNotEmpty
           ? tags
-          : const ['Handcrafted furniture', 'Local workshop'],
-      description:
-          '${shop.businessName} is a Placeify partner based in ${shop.locality}, '
-          'offering thoughtfully made furniture for modern Nepali homes. '
-          'Each piece is built with durable materials and practical designs '
-          'meant to last beyond seasonal trends.',
+          : const ['Quality craftsmanship', 'Reliable delivery'],
+      description: locality.isEmpty
+          ? '${shop.businessName} offers furniture for your home and workspace.'
+          : '${shop.businessName} serves customers from $locality with curated '
+              'furniture pieces.',
     );
   }
 
-  static ShopListingDetails _fallback(VendorProfile profile) {
-    final year = profile.createdAt.year;
-    final tags = profile.tags;
-    final bio = profile.bio.trim();
-
+  static ShopListingDetails forProfile(VendorProfile profile) {
+    final address = profile.address.trim();
+    final tags = profile.tags.where((t) => t.trim().isNotEmpty).take(4).toList();
     return ShopListingDetails(
-      establishedYear: year,
+      establishedYear: profile.createdAt.year,
       highlights: tags.isNotEmpty
           ? tags
-          : const ['Handcrafted furniture', 'Local workshop'],
-      description: bio.isNotEmpty
-          ? bio
-          : 'A Placeify partner workshop offering thoughtfully made furniture for '
-              'modern Nepali homes. Established in $year, we focus on durable '
-              'materials and practical designs built to last.',
+          : const ['Quality craftsmanship', 'Reliable delivery'],
+      description: address.isEmpty
+          ? '${profile.businessName} offers furniture for your home and workspace.'
+          : '${profile.businessName} based at $address offers curated furniture '
+              'pieces for your home and workspace.',
     );
   }
 }

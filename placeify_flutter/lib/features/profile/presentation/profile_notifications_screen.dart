@@ -8,7 +8,7 @@ import '../../../core/widgets/toast_overlay.dart';
 import '../data/profile_constants.dart';
 import '../data/profile_notification_mapper.dart';
 import '../domain/constants/notification_strings.dart';
-import 'providers/profile_in_app_notifications_provider.dart';
+import '../../orders/presentation/providers/customer_in_app_notifications_provider.dart';
 import 'providers/profile_notifications_provider.dart';
 import 'widgets/profile_list_screen_header.dart';
 import 'widgets/profile_notifications_inbox_section.dart';
@@ -23,7 +23,7 @@ class ProfileNotificationsScreen extends ConsumerWidget {
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final prefsAsync = ref.watch(profileNotificationsProvider);
     final inboxUnread = ref
-            .watch(profileInAppNotificationsProvider)
+            .watch(customerInAppNotificationsProvider)
             .value
             ?.unreadCount ??
         0;

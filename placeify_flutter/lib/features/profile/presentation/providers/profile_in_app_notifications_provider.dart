@@ -41,12 +41,39 @@ class ProfileInAppNotifications extends _$ProfileInAppNotifications {
 
   Future<void> _attachRealtimeListener() async {
     if (_subscription != null) return;
-    _subscription = inAppNotificationEvents.listen((_) {
+    await ensurePlaceifyRealtime();
+    _subscription = inAppNotificationEvents.listen((notification) {
+      _applyIncoming(notification);
       unawaited(refresh(silent: true));
     });
   }
 
+  void _applyIncoming(InAppNotificationSummary notification) {
+    final current = state.asData?.value;
+    if (current == null) return;
+
+    final alreadyKnown =
+        current.notifications.any((row) => row.id == notification.id);
+    final withoutDup = current.notifications
+        .where((row) => row.id != notification.id)
+        .toList(growable: false);
+    final nextUnread = alreadyKnown || notification.isRead
+        ? current.unreadCount
+        : current.unreadCount + 1;
+
+    state = AsyncData(
+      ProfileInAppNotificationsState(
+        notifications: [notification, ...withoutDup],
+        unreadCount: nextUnread,
+      ),
+    );
+  }
+
   Future<void> refresh({bool silent = false}) async {
+    if (!client.auth.isAuthenticated) {
+      state = const AsyncData(ProfileInAppNotificationsState.empty);
+      return;
+    }
     if (!silent) {
       state = const AsyncLoading();
     }
@@ -57,19 +84,33 @@ class ProfileInAppNotifications extends _$ProfileInAppNotifications {
     if (!client.auth.isAuthenticated) {
       return ProfileInAppNotificationsState.empty;
     }
-    try {
-      final notifications = await _repository.listInAppNotifications();
-      final unreadCount = await _repository.unreadInAppNotificationCount();
-      return ProfileInAppNotificationsState(
-        notifications: notifications,
-        unreadCount: unreadCount,
-      );
-    } on NotificationRepositoryException {
-      rethrow;
-    }
+    final notifications = await _repository.listInAppNotifications();
+    final unreadCount = await _repository.unreadInAppNotificationCount();
+    return ProfileInAppNotificationsState(
+      notifications: notifications,
+      unreadCount: unreadCount,
+    );
   }
 
   Future<void> markRead(int notificationId) async {
+    final current = state.asData?.value;
+    if (current != null) {
+      final wasUnread = current.notifications.any(
+        (row) => row.id == notificationId && !row.isRead,
+      );
+      state = AsyncData(
+        ProfileInAppNotificationsState(
+          notifications: [
+            for (final row in current.notifications)
+              if (row.id == notificationId) row.copyWith(isRead: true) else row,
+          ],
+          unreadCount: wasUnread
+              ? (current.unreadCount - 1).clamp(0, 9999)
+              : current.unreadCount,
+        ),
+      );
+    }
+
     try {
       await _repository.markInAppNotificationRead(notificationId);
     } catch (_) {}
@@ -77,6 +118,18 @@ class ProfileInAppNotifications extends _$ProfileInAppNotifications {
   }
 
   Future<void> markAllRead() async {
+    final current = state.asData?.value;
+    if (current != null) {
+      state = AsyncData(
+        ProfileInAppNotificationsState(
+          notifications: [
+            for (final row in current.notifications) row.copyWith(isRead: true),
+          ],
+          unreadCount: 0,
+        ),
+      );
+    }
+
     try {
       await _repository.markAllInAppNotificationsRead();
     } catch (_) {}

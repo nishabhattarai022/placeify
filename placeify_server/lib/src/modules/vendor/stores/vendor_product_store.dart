@@ -18,9 +18,9 @@ class VendorProductStore {
     MarketplaceEventDispatcher? events,
     VendorAccessGuard? access,
     VendorProductImageStorage? imageStorage,
-  })  : _events = events ?? marketplaceEventDispatcher,
-        _access = access ?? VendorAccessGuard(),
-        _images = imageStorage ?? VendorProductImageStorage();
+  }) : _events = events ?? marketplaceEventDispatcher,
+       _access = access ?? VendorAccessGuard(),
+       _images = imageStorage ?? VendorProductImageStorage();
 
   final MarketplaceEventDispatcher _events;
   final VendorAccessGuard _access;
@@ -71,7 +71,8 @@ class VendorProductStore {
     final vendor = await _access.requireOwnedVendor(session);
     return Product.db.find(
       session,
-      where: (row) => row.vendorId.equals(vendor.id!),
+      where: (row) =>
+          row.vendorId.equals(vendor.id!) & row.isDeleted.equals(false),
       include: Product.include(category: Category.include()),
       orderBy: (row) => row.createdAt,
       orderDescending: true,
@@ -277,6 +278,14 @@ class VendorProductStore {
       throw PlaceifyException(
         message: 'Name and description are required.',
         code: 'INVALID_PRODUCT',
+      );
+    }
+
+    if (input.isActive && product.removedById != null) {
+      throw PlaceifyException(
+        message:
+            'This product was removed by an admin and cannot be reactivated. Contact support.',
+        code: 'PRODUCT_ADMIN_REMOVED',
       );
     }
     if (input.price <= 0) {
@@ -504,7 +513,9 @@ class VendorProductStore {
 
   Future<Product> deleteProduct(Session session, int productId) async {
     final product = await _requireMutableProduct(session, productId);
-    if (product.isDeleted) return product;
+    if (product.isDeleted && product.status == ProductStatus.removed) {
+      return product;
+    }
 
     final now = DateTime.now();
     return Product.db.updateRow(
@@ -512,6 +523,9 @@ class VendorProductStore {
       product.copyWith(
         isDeleted: true,
         deletedAt: now,
+        status: ProductStatus.removed,
+        removedReason: product.removedReason ?? 'Deleted by vendor',
+        removedAt: product.removedAt ?? now,
         updatedAt: now,
       ),
     );

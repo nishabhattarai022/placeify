@@ -7,7 +7,9 @@ import 'order_auto_cancel_service.dart';
 class OrderAutoCancelFutureCall extends FutureCall<OrderAutoCancelTrigger> {
   @override
   Future<void> invoke(Session session, OrderAutoCancelTrigger? _) async {
-    final result = await OrderAutoCancelService().cancelExpiredPendingOrders(session);
+    final result = await OrderAutoCancelService().cancelExpiredPendingOrders(
+      session,
+    );
 
     session.log(
       'OrderAutoCancelFutureCall scanned=${result.scanned} '

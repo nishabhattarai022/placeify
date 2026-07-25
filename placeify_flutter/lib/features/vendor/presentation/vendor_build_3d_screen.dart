@@ -5,8 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:placeify_flutter/features/home/data/mock_product_repository.dart';
 import 'package:placeify_flutter/features/profile/presentation/widgets/profile_sub_hero.dart';
+import 'package:placeify_flutter/features/home/domain/constants/product_categories.dart';
 import 'package:placeify_flutter/features/vendor/data/vendor_3d_model_store.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/product_photo_capture.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_3d_builder_strings.dart';
@@ -645,7 +645,7 @@ class _ProductOptionTile extends StatelessWidget {
   }
 
   static String _iconForCategory(String categoryId) {
-    for (final category in MockProductRepository.categories) {
+    for (final category in ProductCategories.all) {
       if (category.id == categoryId) return category.svgIconAssetPath;
     }
     return 'assets/icons/ic_chair.svg';

@@ -3,7 +3,7 @@ import 'package:placeify_client/placeify_client.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/formatters.dart';
-import 'user_dashboard_mock_data.dart';
+import '../domain/models/user_overview_metric.dart';
 
 abstract final class UserDashboardMappers {
   static int countPendingOrders(List<UserOrderSummary> orders) {
@@ -25,8 +25,14 @@ abstract final class UserDashboardMappers {
   static List<UserOverviewMetric> overviewMetrics(
     UserDashboard dashboard, {
     int? pendingOrders,
+    int? deliveredOrders,
+    int? notificationCount,
   }) {
     final pendingLabel = pendingOrders == null ? '...' : '$pendingOrders';
+    final deliveredLabel =
+        deliveredOrders == null ? '...' : '$deliveredOrders';
+    final notificationsLabel =
+        notificationCount == null ? '...' : '$notificationCount';
 
     return [
       UserOverviewMetric(
@@ -44,18 +50,32 @@ abstract final class UserDashboardMappers {
         backgroundColor: AppColors.accentBg,
       ),
       UserOverviewMetric(
+        label: 'Delivered Orders',
+        value: deliveredLabel,
+        icon: Icons.check_circle_outline,
+        accentColor: AppColors.forest,
+        backgroundColor: AppColors.sageBg,
+      ),
+      UserOverviewMetric(
+        label: 'Wishlist Count',
+        value: '${dashboard.wishlistCount}',
+        icon: Icons.favorite_border_rounded,
+        accentColor: AppColors.coral,
+        backgroundColor: AppColors.coralBg,
+      ),
+      UserOverviewMetric(
+        label: 'Notifications',
+        value: notificationsLabel,
+        icon: Icons.notifications_outlined,
+        accentColor: AppColors.lavender,
+        backgroundColor: AppColors.lavenderBg,
+      ),
+      UserOverviewMetric(
         label: 'Total Spend',
         value: Formatters.currencyFull(dashboard.totalSpend),
         icon: Icons.payments_outlined,
         accentColor: AppColors.forest,
         backgroundColor: AppColors.sageBg,
-      ),
-      UserOverviewMetric(
-        label: 'Wishlist Items',
-        value: '${dashboard.wishlistCount}',
-        icon: Icons.favorite_border_rounded,
-        accentColor: AppColors.coral,
-        backgroundColor: AppColors.coralBg,
       ),
       UserOverviewMetric(
         label: 'Cart Items',
@@ -77,20 +97,6 @@ abstract final class UserDashboardMappers {
         icon: Icons.hourglass_empty_outlined,
         accentColor: AppColors.lavender,
         backgroundColor: AppColors.lavenderBg,
-      ),
-      UserOverviewMetric(
-        label: 'COD Orders',
-        value: '${dashboard.codOrderCount}',
-        icon: Icons.local_atm_outlined,
-        accentColor: AppColors.bark,
-        backgroundColor: AppColors.creamDark,
-      ),
-      UserOverviewMetric(
-        label: 'Online Payments',
-        value: '${dashboard.onlinePaymentCount}',
-        icon: Icons.account_balance_wallet_outlined,
-        accentColor: AppColors.vendorForest,
-        backgroundColor: AppColors.sageBg,
       ),
     ];
   }

@@ -10,7 +10,7 @@ import '../../../core/utils/local_image_store.dart';
 import '../../cart/data/product_id_codec.dart';
 import '../domain/models/vendor_product.dart';
 import '../domain/repositories/vendor_product_repository.dart';
-import 'mock_vendor_product_repository.dart' show VendorProductActionException;
+import 'package:placeify_flutter/features/vendor/domain/exceptions/vendor_product_action_exception.dart';
 import 'vendor_product_mapper.dart';
 
 /// Serverpod-backed vendor product catalog (create/list via [client.vendor]).
@@ -399,9 +399,14 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     String vendorId,
     List<String> productIds,
   ) async {
-    throw VendorProductActionException(
-      'Deleting products on the server is not supported yet.',
-    );
+    await _ensureShopReady();
+    for (final productId in productIds) {
+      final dbId = ProductIdCodec.toDatabaseId(productId);
+      if (dbId == null) {
+        throw VendorProductActionException('Product not found.');
+      }
+      await client.vendor.deleteProduct(dbId);
+    }
   }
 
   @override

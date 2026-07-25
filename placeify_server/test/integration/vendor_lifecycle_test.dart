@@ -214,7 +214,7 @@ void main() {
         customer.session.build(),
         CheckoutRequest(
           shippingAddress: 'Kathmandu, Nepal',
-          paymentMethod: PaymentMethod.cod,
+          paymentMethod: PaymentMethod.cashOnDelivery,
         ),
       );
 

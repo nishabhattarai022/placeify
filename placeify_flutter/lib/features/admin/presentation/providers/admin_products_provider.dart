@@ -41,6 +41,7 @@ class AdminProductActions extends _$AdminProductActions {
       final repo = ref.read(adminProductRepositoryProvider);
       await repo.removeProduct(productId, reason: reason);
       ref.invalidate(adminProductDetailProvider(productId));
+      ref.invalidate(adminProductsListProvider);
       return null;
     } catch (error) {
       return error.toString();
@@ -52,6 +53,7 @@ class AdminProductActions extends _$AdminProductActions {
       final repo = ref.read(adminProductRepositoryProvider);
       await repo.restoreProduct(productId);
       ref.invalidate(adminProductDetailProvider(productId));
+      ref.invalidate(adminProductsListProvider);
       return null;
     } catch (error) {
       return error.toString();

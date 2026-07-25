@@ -55,15 +55,17 @@ class Cart extends _$Cart {
     return const [];
   }
 
-  Future<void> _refreshFromServer() async {
+  Future<void> _refreshFromServer({bool allowEmptyOverwrite = false}) async {
     if (!client.auth.isAuthenticated) return;
     try {
       final before = state.length;
       final localBefore = [...state];
       final fetched = await _cartRepository.fetchItems();
-      // Never clobber a non-empty local cart with an empty server snapshot.
-      // That race empties checkout mid-flow and yields silent / CART_EMPTY failures.
-      if (fetched.isEmpty && localBefore.isNotEmpty) {
+      // Never clobber a non-empty local cart with an empty server snapshot —
+      // except after an intentional remove/clear where empty is expected.
+      if (!allowEmptyOverwrite &&
+          fetched.isEmpty &&
+          localBefore.isNotEmpty) {
         // #region agent log
         agentDebugLog(
           location: 'cart_provider.dart:_refreshFromServer:skipEmpty',
@@ -229,7 +231,7 @@ class Cart extends _$Cart {
     final catalog = ref.read(catalogIndexProvider).value;
     final product = catalog?[normalizedId] ?? catalog?[productId];
     if (product == null) {
-      return 'This product is not available. Refresh and try again.';
+      return 'This product is no longer available.';
     }
     if (!VendorPurchasePolicy.canPurchase(
       user: user,
@@ -308,12 +310,18 @@ class Cart extends _$Cart {
       return null;
     }
 
+    final previous = state;
+    // Optimistic update so the last item (empty cart) is not blocked by the
+    // empty-server skip guard in [_refreshFromServer].
+    state = state.where((e) => e.productId != productId).toList();
+
     try {
       await _cartRepository.removeProduct(productId);
-      await _refreshFromServer();
+      await _refreshFromServer(allowEmptyOverwrite: true);
       return null;
     } catch (error) {
-      await _refreshFromServer();
+      state = previous;
+      await _refreshFromServer(allowEmptyOverwrite: true);
       return CartApiErrors.message(error);
     }
   }

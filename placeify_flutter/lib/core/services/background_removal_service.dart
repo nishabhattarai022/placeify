@@ -5,13 +5,13 @@ import 'package:flutter/foundation.dart';
 import '../utils/local_image_reader.dart';
 import '../utils/local_image_store.dart';
 
-/// Wraps remove.bg API — mock delay in prototype; swap implementation for production.
+/// Local background-prep helper used by vendor product image tools.
 class BackgroundRemovalService {
   BackgroundRemovalService({this.simulateFailure = false});
 
   static const maxFileSizeBytes = 12 * 1024 * 1024;
 
-  /// When true, [removeBackground] throws after the mock delay.
+  /// When true, [removeBackground] throws after processing validation.
   bool simulateFailure;
 
   Future<BackgroundRemovalResult> removeBackground({

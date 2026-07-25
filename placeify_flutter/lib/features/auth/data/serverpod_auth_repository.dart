@@ -10,7 +10,6 @@ import '../../../core/config/placeify_server_client.dart';
 import '../../../core/config/resolve_server_url.dart';
 import '../../admin/domain/enums/user_role.dart' as ui_role;
 import '../../vendor/domain/enums/vendor_status.dart';
-import '../constants/demo_credentials.dart';
 import '../domain/models/app_user.dart';
 import '../domain/models/consumer_profile_details.dart';
 import '../domain/repositories/auth_repository.dart';
@@ -26,6 +25,7 @@ class ServerpodAuthRepository implements AuthRepository {
   static const _pendingPasswordKey = 'placeify_pending_registration_password';
   static const _pendingNameKey = 'placeify_pending_registration_name';
   static const _devVerificationCode = '123456';
+  static const _adminBootstrapEmail = 'admin@placeify.com';
 
   static Future<ServerpodAuthRepository> create() async {
     final prefs = await SharedPreferences.getInstance();
@@ -150,77 +150,6 @@ class ServerpodAuthRepository implements AuthRepository {
 
   String? get pendingRegistrationName => _prefs.getString(_pendingNameKey);
 
-  /// Signs in with the built-in demo account, registering it first if needed.
-  Future<AppUser> signInWithDemoCredentials() async {
-    try {
-      return await signIn(
-        email: DemoCredentials.email,
-        password: DemoCredentials.password,
-      );
-    } on AuthException catch (error) {
-      if (!_isMissingAccountError(error.message)) rethrow;
-
-      await _bootstrapDemoAccount(
-        email: DemoCredentials.email,
-        password: DemoCredentials.password,
-        fullName: DemoCredentials.fullName,
-      );
-      return signIn(
-        email: DemoCredentials.email,
-        password: DemoCredentials.password,
-      );
-    }
-  }
-
-  /// Signs in with the demo admin account for local admin dashboard access.
-  Future<AppUser> signInWithDemoAdminCredentials() async {
-    try {
-      await signIn(
-        email: DemoCredentials.adminEmail,
-        password: DemoCredentials.adminPassword,
-      );
-    } on AuthException catch (error) {
-      if (!_isMissingAccountError(error.message)) rethrow;
-
-      await _bootstrapDemoAccount(
-        email: DemoCredentials.adminEmail,
-        password: DemoCredentials.adminPassword,
-        fullName: DemoCredentials.adminFullName,
-      );
-      await signIn(
-        email: DemoCredentials.adminEmail,
-        password: DemoCredentials.adminPassword,
-      );
-    }
-
-    return _loadAppUser(DemoCredentials.adminEmail);
-  }
-
-  /// Demo-only bootstrap via fixed IDP verification code (not used for real users).
-  Future<void> _bootstrapDemoAccount({
-    required String email,
-    required String password,
-    required String fullName,
-  }) async {
-    final requestId = await client.emailIdp.startRegistration(email: email);
-    final registrationToken = await client.emailIdp.verifyRegistrationCode(
-      accountRequestId: requestId,
-      verificationCode: _devVerificationCode,
-    );
-    final authSuccess = await client.emailIdp.finishRegistration(
-      registrationToken: registrationToken,
-      password: password,
-    );
-    await client.auth.updateSignedInUser(authSuccess);
-    await client.user.updateProfile(
-      fullName,
-      phone: null,
-      address: null,
-    );
-    await client.auth.signOutDevice();
-    await _prefs.remove(_sessionEmailKey);
-  }
-
   @override
   Future<AppUser> signIn({
     required String email,
@@ -317,11 +246,35 @@ class ServerpodAuthRepository implements AuthRepository {
       if (profile == null) return null;
 
       final email = profile.email ?? _prefs.getString(_sessionEmailKey) ?? '';
+      final extras = ConsumerProfileDetails.decodeAddressPayload(
+        profile.address,
+      );
+      final firstName = extras.firstName.trim();
+      final lastName = extras.lastName.trim();
       return ConsumerProfileDetails(
         fullName: profile.name,
         email: email,
+        firstName: firstName.isNotEmpty
+            ? firstName
+            : _splitName(profile.name).$1,
+        lastName: lastName.isNotEmpty
+            ? lastName
+            : _splitName(profile.name).$2,
         phone: profile.phone ?? '',
-        city: profile.address ?? '',
+        city: extras.city,
+        username: extras.username,
+        bio: extras.bio,
+        gender: extras.gender,
+        dateOfBirth: extras.dateOfBirth,
+        addressLine1: extras.addressLine1,
+        addressLine2: extras.addressLine2,
+        district: extras.district,
+        province: extras.province,
+        postalCode: extras.postalCode,
+        country: extras.country,
+        preferredLanguage: extras.preferredLanguage,
+        defaultDeliveryAddress: extras.defaultDeliveryAddress,
+        profileImageUrl: profile.profileImageUrl ?? '',
       );
     } catch (error) {
       throw _mapError(error);
@@ -334,9 +287,27 @@ class ServerpodAuthRepository implements AuthRepository {
 
     try {
       await client.user.updateProfile(
-        profile.fullName.trim(),
+        profile.resolvedFullName.isEmpty
+            ? profile.fullName.trim()
+            : profile.resolvedFullName,
         phone: profile.phone.trim().isEmpty ? null : profile.phone.trim(),
-        address: profile.city.trim().isEmpty ? null : profile.city.trim(),
+        address: ConsumerProfileDetails.encodeAddressPayload(
+          city: profile.city.trim(),
+          username: profile.username.trim(),
+          bio: profile.bio.trim(),
+          firstName: profile.firstName.trim(),
+          lastName: profile.lastName.trim(),
+          gender: profile.gender.trim(),
+          dateOfBirth: profile.dateOfBirth.trim(),
+          addressLine1: profile.addressLine1.trim(),
+          addressLine2: profile.addressLine2.trim(),
+          district: profile.district.trim(),
+          province: profile.province.trim(),
+          postalCode: profile.postalCode.trim(),
+          country: profile.country.trim(),
+          preferredLanguage: profile.preferredLanguage.trim(),
+          defaultDeliveryAddress: profile.defaultDeliveryAddress.trim(),
+        ),
       );
 
       final email = _prefs.getString(_sessionEmailKey) ?? profile.email;
@@ -497,8 +468,7 @@ class ServerpodAuthRepository implements AuthRepository {
   }
 
   Future<void> _ensureDemoAdminIfNeeded(String email) async {
-    if (email.trim().toLowerCase() !=
-        DemoCredentials.adminEmail.trim().toLowerCase()) {
+    if (email.trim().toLowerCase() != _adminBootstrapEmail) {
       return;
     }
     try {
@@ -633,13 +603,6 @@ class ServerpodAuthRepository implements AuthRepository {
     return AuthException('Something went wrong. Please try again.');
   }
 
-  bool _isMissingAccountError(String message) {
-    final normalized = message.toLowerCase();
-    return normalized.contains('no account') ||
-        normalized.contains('password is wrong') ||
-        normalized.contains('invalidcredentials');
-  }
-
   bool _isConnectionError(String message) {
     return message.contains('socketexception') ||
         message.contains('connection refused') ||
@@ -717,5 +680,12 @@ class ServerpodAuthRepository implements AuthRepository {
     } catch (error) {
       throw _mapError(error);
     }
+  }
+
+  static (String, String) _splitName(String fullName) {
+    final parts = fullName.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty || parts.first.isEmpty) return ('', '');
+    if (parts.length == 1) return (parts.first, '');
+    return (parts.first, parts.sublist(1).join(' '));
   }
 }

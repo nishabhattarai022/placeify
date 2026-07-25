@@ -73,7 +73,7 @@ extension VendorCategoryInfoX on VendorCategoryInfo {
   String get categoriesLabel => categories.join(', ');
 }
 
-/// Step 4 — uploaded document local paths (mock; real API would use remote URLs).
+/// Step 4 — uploaded document local paths before remote upload.
 @freezed
 abstract class VendorDocuments with _$VendorDocuments {
   const factory VendorDocuments({

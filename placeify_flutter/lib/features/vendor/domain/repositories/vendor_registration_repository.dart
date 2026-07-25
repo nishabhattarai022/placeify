@@ -1,6 +1,6 @@
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_registration.dart';
 
-/// Vendor onboarding submission contract (mock persists locally until a real API exists).
+/// Vendor onboarding submission contract.
 abstract interface class VendorRegistrationRepository {
   /// When true, [submitRegistration] throws to simulate a network failure.
   bool get simulateNetworkError;

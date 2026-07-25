@@ -12,7 +12,7 @@ import '../../data/product_reviews_repository.dart';
 import '../../domain/models/product.dart';
 import '../widgets/product_rating_row.dart';
 
-/// Product tile for the category showcase masonry grid (mock layout).
+/// Product tile for the category showcase masonry grid.
 class ShowcaseProductCard extends ConsumerWidget {
   const ShowcaseProductCard({
     required this.product,

@@ -5,7 +5,7 @@ import 'refund_repository.dart';
 
 class RefundService {
   RefundService({RefundStore? repository})
-      : _repository = repository ?? RefundStore();
+    : _repository = repository ?? RefundStore();
 
   final RefundStore _repository;
 

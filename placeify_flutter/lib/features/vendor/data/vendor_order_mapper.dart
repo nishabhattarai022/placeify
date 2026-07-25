@@ -48,6 +48,8 @@ abstract final class VendorOrderMapper {
       api.OrderStatus.processing => domain.OrderStatus.processing,
       api.OrderStatus.shipped => domain.OrderStatus.shipped,
       api.OrderStatus.delivered => domain.OrderStatus.delivered,
+      api.OrderStatus.returnRequested => domain.OrderStatus.returnRequested,
+      api.OrderStatus.refunded => domain.OrderStatus.refunded,
       api.OrderStatus.cancelled => domain.OrderStatus.cancelled,
       api.OrderStatus.autoCancelled => domain.OrderStatus.cancelled,
     };
@@ -60,6 +62,7 @@ abstract final class VendorOrderMapper {
       api.DeliveryStage.shipped => domain.DeliveryStage.shipped,
       api.DeliveryStage.outForDelivery => domain.DeliveryStage.outForDelivery,
       api.DeliveryStage.delivered => domain.DeliveryStage.delivered,
+      api.DeliveryStage.rejected => domain.DeliveryStage.rejected,
     };
   }
 
@@ -70,6 +73,7 @@ abstract final class VendorOrderMapper {
       domain.DeliveryStage.shipped => api.DeliveryStage.shipped,
       domain.DeliveryStage.outForDelivery => api.DeliveryStage.outForDelivery,
       domain.DeliveryStage.delivered => api.DeliveryStage.delivered,
+      domain.DeliveryStage.rejected => api.DeliveryStage.rejected,
     };
   }
 

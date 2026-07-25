@@ -70,6 +70,9 @@ admin:
   - listRefundRequests:
   - approveRefundRequest:
   - rejectRefundRequest:
+  - checkEsewaRefundStatus:
+  - retryEsewaRefundStatusCheck:
+  - completeManualEsewaSettlement:
   - listProducts:
   - listReportedProducts:
   - getProductDetails:
@@ -86,6 +89,17 @@ cart:
   - clearCart:
 checkout:
   - checkout:
+messaging:
+  - getOrCreateConversation:
+  - listConversations:
+  - getConversation:
+  - sendMessage:
+  - listMessages:
+  - markRead:
+  - deleteConversation:
+  - unreadTotal:
+  - watchMessages:
+  - watchInbox:
 notification:
   - getPreferences:
   - updatePreferences:

@@ -6,6 +6,7 @@ import 'src/auth/auth_services_setup.dart';
 import 'src/generated/endpoints.dart';
 import 'src/generated/protocol.dart';
 import 'src/modules/order/order_auto_cancel_future_call.dart';
+import 'src/modules/payment/esewa_refund_status_future_call.dart';
 import 'src/shared/server_static_paths.dart';
 import 'src/web/middleware/uploads_cors_middleware.dart';
 import 'src/web/routes/app_config_route.dart';
@@ -22,6 +23,7 @@ void run(List<String> args) async {
   setupPlaceifyAuthServices(pod, args: args);
 
   pod.registerFutureCall(OrderAutoCancelFutureCall(), 'orderAutoCancel');
+  pod.registerFutureCall(EsewaRefundStatusFutureCall(), 'esewaRefundStatus');
 
   // Setup a default page at the web root.
   // These are used by the default page.
@@ -30,7 +32,10 @@ void run(List<String> args) async {
   pod.webServer.addRoute(ForgotPasswordRoute(), '/auth/forgot-password');
   pod.webServer.addRoute(ResetPasswordRoute(), '/auth/reset-password');
   pod.webServer.addRoute(VerifyEmailRoute(), '/auth/verify-email');
-  pod.webServer.addRoute(ResendVerificationRoute(), '/auth/resend-verification');
+  pod.webServer.addRoute(
+    ResendVerificationRoute(),
+    '/auth/resend-verification',
+  );
   // Magic-link landing page (works in mobile browsers; does not need Flutter web).
   pod.webServer.addRoute(VerifyEmailPageRoute(), '/verify-email');
 
@@ -77,7 +82,17 @@ void run(List<String> args) async {
 
   await pod.futureCallAtTime(
     'orderAutoCancel',
-    OrderAutoCancelTrigger(scheduledAt: DateTime.now().add(const Duration(days: 1))),
+    OrderAutoCancelTrigger(
+      scheduledAt: DateTime.now().add(const Duration(days: 1)),
+    ),
     DateTime.now().add(const Duration(seconds: 5)),
+  );
+
+  await pod.futureCallAtTime(
+    'esewaRefundStatus',
+    EsewaRefundStatusTrigger(
+      scheduledAt: DateTime.now().add(const Duration(minutes: 15)),
+    ),
+    DateTime.now().add(const Duration(minutes: 1)),
   );
 }

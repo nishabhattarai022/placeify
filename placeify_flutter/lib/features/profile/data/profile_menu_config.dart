@@ -12,15 +12,13 @@ abstract final class ProfileMenuConfig {
   static const double sheetTopRadius = 28;
   static const double avatarSize = 100;
   static const double headerOverlap = 0;
-
-  static const int wishlistCount = 8;
-  static const int refundsCount = 2;
 }
 
 enum ProfileMenuRoute {
   orders,
   wishlist,
   refund,
+  messages,
   notifications,
   password,
   editProfile,
@@ -55,48 +53,68 @@ class ProfileMenuItemData {
 }
 
 abstract final class ProfileMenuItems {
-  static const List<ProfileMenuItemData> accountOverview = [
-    ProfileMenuItemData(
+  static ProfileMenuItemData wishlist({required String subtitle}) {
+    return ProfileMenuItemData(
       title: 'Wishlist',
-      subtitle: '8 saved items',
+      subtitle: subtitle,
       icon: Icons.star_border_rounded,
       iconColor: AppColors.coral,
       backgroundColor: AppColors.coralBg,
       route: ProfileMenuRoute.wishlist,
-    ),
-    ProfileMenuItemData(
+    );
+  }
+
+  static ProfileMenuItemData refund({required String subtitle}) {
+    return ProfileMenuItemData(
       title: 'Refund & Returns',
-      subtitle: 'NPR 45.00 pending · 2 active',
+      subtitle: subtitle,
       icon: Icons.paid_outlined,
       iconColor: AppColors.lavender,
       backgroundColor: AppColors.lavenderBg,
       route: ProfileMenuRoute.refund,
-    ),
-    ProfileMenuItemData(
-      title: 'Notifications',
-      subtitle: 'Manage alerts & reminders',
-      icon: Icons.notifications_outlined,
-      iconColor: AppColors.accent,
-      backgroundColor: AppColors.accentBg,
-      route: ProfileMenuRoute.notifications,
-    ),
-    ProfileMenuItemData(
+    );
+  }
+
+  static ProfileMenuItemData messages({String? badge}) {
+    return ProfileMenuItemData(
+      title: 'Messages',
+      subtitle: 'Chat with vendors',
+      icon: Icons.chat_bubble_outline_rounded,
+      iconColor: AppColors.adminSlate,
+      backgroundColor: AppColors.adminSlateBg,
+      route: ProfileMenuRoute.messages,
+      badge: badge,
+    );
+  }
+
+  static const ProfileMenuItemData notifications = ProfileMenuItemData(
+    title: 'Notifications',
+    subtitle: 'Manage alerts & reminders',
+    icon: Icons.notifications_outlined,
+    iconColor: AppColors.accent,
+    backgroundColor: AppColors.accentBg,
+    route: ProfileMenuRoute.notifications,
+  );
+
+  static ProfileMenuItemData password({required String subtitle}) {
+    return ProfileMenuItemData(
       title: 'Change Password',
-      subtitle: 'Last changed 3 months ago',
+      subtitle: subtitle,
       icon: Icons.lock_outline_rounded,
       iconColor: AppColors.coral,
       backgroundColor: AppColors.coralBg,
       route: ProfileMenuRoute.password,
-    ),
-    ProfileMenuItemData(
-      title: 'Edit Profile',
-      subtitle: 'Name, email, phone & bio',
-      icon: Icons.person_outline_rounded,
-      iconColor: AppColors.sage,
-      backgroundColor: AppColors.sageBg,
-      route: ProfileMenuRoute.editProfile,
-    ),
-  ];
+    );
+  }
+
+  static const ProfileMenuItemData editProfile = ProfileMenuItemData(
+    title: 'Edit Profile',
+    subtitle: 'Name, contact, address & bio',
+    icon: Icons.person_outline_rounded,
+    iconColor: AppColors.sage,
+    backgroundColor: AppColors.sageBg,
+    route: ProfileMenuRoute.editProfile,
+  );
 
   static const ProfileMenuItemData signOut = ProfileMenuItemData(
     title: 'Sign Out',

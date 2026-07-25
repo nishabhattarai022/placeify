@@ -17,19 +17,20 @@ class MiniBarChart extends StatelessWidget {
     }
 
     final maxHeight = heights.reduce((a, b) => a > b ? a : b);
-    final normalized = maxHeight == 0
-        ? List<double>.filled(heights.length, 0.08)
-        : heights;
+    // Avoid a flat stub "line" when there is no revenue data yet.
+    if (maxHeight <= 0) {
+      return const SizedBox(height: 50);
+    }
 
     return SizedBox(
       height: 50,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
-        children: List.generate(normalized.length, (i) {
+        children: List.generate(heights.length, (i) {
           return Expanded(
             child: _MiniBar(
-              heightFraction: normalized[i],
-              isActive: i == normalized.length - 1,
+              heightFraction: heights[i] / maxHeight,
+              isActive: i == heights.length - 1,
               delay: Duration(milliseconds: 100 + i * 60),
             ),
           );

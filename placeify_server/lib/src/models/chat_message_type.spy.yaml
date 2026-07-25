@@ -1,0 +1,6 @@
+enum: ChatMessageType
+serialized: byName
+values:
+  - text
+  - image
+  - system

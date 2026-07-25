@@ -51,7 +51,7 @@ abstract final class OrderStrings {
 
   static String emptySubtitle(OrderListFilter filter) => switch (filter) {
         OrderListFilter.all =>
-          'When you place an order, it will show up here.',
+          "You haven't placed any orders yet.",
         OrderListFilter.active =>
           'Orders on the way or being prepared will appear here.',
         OrderListFilter.delivered =>
@@ -98,6 +98,8 @@ abstract final class OrderStrings {
   // — Card & quick actions —
   static const trackAction = 'Track order';
   static const reorderAction = 'Reorder';
+  static const addToCartAction = 'Add to cart';
+  static const productUnavailable = 'This product is no longer available.';
   static const reorderSuccess = 'Items added to cart';
   static const reorderFailed = 'Could not reorder. Please try again.';
   static const reorderNoItems = 'No items found for this order.';

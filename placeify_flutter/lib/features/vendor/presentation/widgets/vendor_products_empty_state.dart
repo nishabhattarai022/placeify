@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:placeify_flutter/features/home/data/mock_product_repository.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_routes.dart';
+import 'package:placeify_flutter/features/home/domain/constants/product_categories.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radii.dart';
@@ -181,7 +181,7 @@ class _EmptyStateButton extends StatelessWidget {
 
 String vendorProductCategoryLabel(String? categoryId) {
   if (categoryId == null) return 'All categories';
-  for (final category in MockProductRepository.categories) {
+  for (final category in ProductCategories.all) {
     if (category.id == categoryId) return category.label;
   }
   return categoryId;

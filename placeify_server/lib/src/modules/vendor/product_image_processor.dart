@@ -91,7 +91,12 @@ class ProductImageProcessor {
       level: LogLevel.info,
     );
 
-    final cutout = await _removeBackgroundBestEffort(session, apiKey, bytes, fileName);
+    final cutout = await _removeBackgroundBestEffort(
+      session,
+      apiKey,
+      bytes,
+      fileName,
+    );
 
     final Uint8List catalogBytes;
     final bool backgroundRemoved;
@@ -181,7 +186,9 @@ class ProductImageProcessor {
     final resized = img.copyResize(decoded, width: _maxTripoWidth);
     final encoded = switch (ext) {
       '.png' => Uint8List.fromList(img.encodePng(resized)),
-      _ => Uint8List.fromList(img.encodeJpg(resized, quality: _tripoJpegQuality)),
+      _ => Uint8List.fromList(
+        img.encodeJpg(resized, quality: _tripoJpegQuality),
+      ),
     };
 
     return ProcessedProductImage(

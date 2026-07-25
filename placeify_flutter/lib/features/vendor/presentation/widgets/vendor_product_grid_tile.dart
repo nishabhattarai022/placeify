@@ -1,5 +1,5 @@
+import 'package:placeify_flutter/features/home/domain/constants/product_categories.dart';
 import 'package:flutter/material.dart';
-import 'package:placeify_flutter/features/home/data/mock_product_repository.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radii.dart';
@@ -144,7 +144,7 @@ class VendorProductGridTile extends StatelessWidget {
   }
 
   static String _iconForCategory(String categoryId) {
-    for (final category in MockProductRepository.categories) {
+    for (final category in ProductCategories.all) {
       if (category.id == categoryId) return category.svgIconAssetPath;
     }
     return 'assets/icons/ic_chair.svg';

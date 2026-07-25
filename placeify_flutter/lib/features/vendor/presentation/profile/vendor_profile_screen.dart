@@ -17,6 +17,7 @@ import 'package:placeify_flutter/core/widgets/shimmer_loader.dart';
 import 'package:placeify_flutter/core/widgets/toast_overlay.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_profile_strings.dart';
+import 'package:placeify_flutter/features/vendor/domain/constants/vendor_routes.dart';
 import 'package:placeify_flutter/features/vendor/domain/constants/vendor_settings_strings.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_profile.dart';
@@ -652,6 +653,13 @@ class _VendorProfileScreenState extends ConsumerState<VendorProfileScreen> {
               : null,
         ),
         const SizedBox(height: 14),
+        _InboxLink(
+          onTap: () {
+            HapticService.light();
+            context.push(VendorRoutes.messages);
+          },
+        ),
+        const SizedBox(height: 10),
         _SettingsLink(onTap: _openSettings),
         if (!isEditMode) ...[
           const SizedBox(height: 10),
@@ -687,6 +695,48 @@ class _SettingsLink extends StatelessWidget {
             Expanded(
               child: Text(
                 VendorProfileStrings.storeSettings,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.espresso,
+                ),
+              ),
+            ),
+            Icon(Icons.chevron_right, color: AppColors.textMuted),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InboxLink extends StatelessWidget {
+  const _InboxLink({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedScaleTap(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.creamDark, width: 1.5),
+        ),
+        child: const Row(
+          children: [
+            Icon(
+              Icons.chat_bubble_outline_rounded,
+              color: AppColors.espresso,
+              size: 20,
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Customer inbox',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,

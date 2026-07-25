@@ -5,7 +5,7 @@ import 'cart_repository.dart';
 
 class CartService {
   CartService({CartStore? repository})
-      : _repository = repository ?? CartStore();
+    : _repository = repository ?? CartStore();
 
   final CartStore _repository;
 

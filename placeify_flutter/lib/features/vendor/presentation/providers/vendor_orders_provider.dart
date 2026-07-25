@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:placeify_client/placeify_client.dart' hide Order, OrderStatus;
 import 'package:placeify_flutter/core/config/placeify_server_client.dart';
 import 'package:placeify_flutter/features/auth/presentation/providers/auth_provider.dart';
-import 'package:placeify_flutter/features/vendor/data/mock_vendor_repository.dart';
+import 'package:placeify_flutter/features/vendor/data/vendor_order_exceptions.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/order_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_order.dart';

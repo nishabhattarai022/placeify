@@ -55,9 +55,10 @@ abstract final class AwsS3Put {
     ].join('\n');
 
     final signingKey = _signingKey(secretKey, dateStamp, region, service);
-    final signature = Hmac(sha256, signingKey)
-        .convert(utf8.encode(stringToSign))
-        .toString();
+    final signature = Hmac(
+      sha256,
+      signingKey,
+    ).convert(utf8.encode(stringToSign)).toString();
 
     final authorization = [
       'AWS4-HMAC-SHA256 Credential=$accessKey/$credentialScope,',

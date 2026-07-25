@@ -27,11 +27,11 @@ class OrderStatusChip extends StatelessWidget {
           AppColors.sage.withValues(alpha: 0.14),
           AppColors.sage,
         ),
-      OrderStatus.shipped => (
+      OrderStatus.shipped || OrderStatus.returnRequested => (
           AppColors.sage.withValues(alpha: 0.14),
           AppColors.sage,
         ),
-      OrderStatus.delivered => (
+      OrderStatus.delivered || OrderStatus.refunded => (
           AppColors.tealBg,
           AppColors.teal,
         ),

@@ -53,8 +53,9 @@ abstract final class UserProfileImageStorage {
     final baseName = sanitized.replaceAll(RegExp(r'\.[^.]+$'), '');
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final storedName = '${timestamp}_$baseName$extension';
-    await File('${ownerDir.path}${Platform.pathSeparator}$storedName')
-        .writeAsBytes(bytes);
+    await File(
+      '${ownerDir.path}${Platform.pathSeparator}$storedName',
+    ).writeAsBytes(bytes);
 
     return '/uploads/profiles/${userId.uuid}/$storedName';
   }

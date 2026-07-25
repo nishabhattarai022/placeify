@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:placeify_flutter/features/home/data/mock_product_repository.dart';
 import 'package:placeify_flutter/features/profile/presentation/widgets/shared/profile_form_field.dart';
+import 'package:placeify_flutter/features/home/domain/constants/product_categories.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_form_state.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product_image_item.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_product_form_provider.dart';
@@ -942,7 +942,7 @@ class _CategoryPicker extends StatelessWidget {
 
   String get _label {
     if (categoryId.isEmpty) return 'Select a category';
-    for (final category in MockProductRepository.categories) {
+    for (final category in ProductCategories.all) {
       if (category.id == categoryId) return category.label;
     }
     return categoryId;
@@ -961,7 +961,7 @@ class _CategoryPicker extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const PlaceifyBottomSheetHeader(title: 'Select category'),
-                for (final category in MockProductRepository.categories)
+                for (final category in ProductCategories.all)
                   PlaceifySelectTile(
                     label: category.label,
                     selected: categoryId == category.id,

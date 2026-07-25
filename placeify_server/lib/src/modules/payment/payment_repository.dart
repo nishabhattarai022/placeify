@@ -1,6 +1,7 @@
 import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
+import '../../shared/order_display_number.dart';
 import '../../shared/session_service.dart';
 import '../marketplace/marketplace_events.dart';
 import '../notification/order_notification_service.dart';
@@ -11,7 +12,7 @@ import 'payment_sync.dart';
 /// Payment transactions and vendor payout persistence.
 class PaymentStore {
   PaymentStore({VendorStore? vendorStore})
-      : _vendorStore = vendorStore ?? VendorStore();
+    : _vendorStore = vendorStore ?? VendorStore();
 
   final VendorStore _vendorStore;
 
@@ -179,7 +180,7 @@ class PaymentStore {
             paymentMethod: txByOrderId[row.orderId]?.paymentMethod,
             customerName: row.order?.user?.name,
             customerEmail: row.order?.user?.email,
-            orderNumber: row.orderId.toString().padLeft(5, '0'),
+            orderNumber: OrderDisplayNumber.format(row.orderId),
             orderStatus: row.order?.status.name,
             transactionId: txByOrderId[row.orderId]?.id?.toString(),
             providerTransactionId:
@@ -198,8 +199,8 @@ class PaymentStore {
               }
               return null;
             }(),
-            refundDate: refundByOrderId[row.orderId]?.status ==
-                    RequestStatus.completed
+            refundDate:
+                refundByOrderId[row.orderId]?.status == RequestStatus.completed
                 ? refundByOrderId[row.orderId]?.updatedAt
                 : null,
             createdAt: txByOrderId[row.orderId]?.createdAt ?? row.createdAt,
@@ -208,17 +209,19 @@ class PaymentStore {
   }
 
   Future<
-      ({
-        double todayRevenue,
-        double monthlyRevenue,
-        double refundAmount,
-        int refundCount,
-        int successfulPaymentCount,
-        int codPaymentCount,
-        int esewaPaymentCount,
-        double averageOrderValue,
-        int pendingRefundCount,
-      })> _vendorPaymentAnalytics(
+    ({
+      double todayRevenue,
+      double monthlyRevenue,
+      double refundAmount,
+      int refundCount,
+      int successfulPaymentCount,
+      int codPaymentCount,
+      int esewaPaymentCount,
+      double averageOrderValue,
+      int pendingRefundCount,
+    })
+  >
+  _vendorPaymentAnalytics(
     Session session,
     UuidValue vendorId,
   ) async {
@@ -258,8 +261,10 @@ class PaymentStore {
       }
     }
 
-    final refundAmount =
-        refunded.fold<double>(0, (sum, row) => sum + row.amount);
+    final refundAmount = refunded.fold<double>(
+      0,
+      (sum, row) => sum + row.amount,
+    );
 
     final orderIds = {for (final row in paid) row.orderId};
     var codPaymentCount = 0;
@@ -278,10 +283,8 @@ class PaymentStore {
       }
     }
 
-    final totalPaid =
-        paid.fold<double>(0, (sum, row) => sum + row.amount);
-    final averageOrderValue =
-        paid.isEmpty ? 0.0 : totalPaid / paid.length;
+    final totalPaid = paid.fold<double>(0, (sum, row) => sum + row.amount);
+    final averageOrderValue = paid.isEmpty ? 0.0 : totalPaid / paid.length;
 
     return (
       todayRevenue: todayRevenue,
@@ -337,8 +340,7 @@ class PaymentStore {
 
   static PaymentTransactionStatus _paymentStatusFromHistory(String newStatus) {
     return switch (newStatus) {
-      'paymentReceived' || 'paymentConfirmed' =>
-        PaymentTransactionStatus.paid,
+      'paymentReceived' || 'paymentConfirmed' => PaymentTransactionStatus.paid,
       _ => PaymentTransactionStatus.fromJson(newStatus),
     };
   }
@@ -355,7 +357,10 @@ class PaymentStore {
 
     final order = await Order.db.findById(session, orderId);
     if (order == null) {
-      throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Order not found.',
+        code: 'ORDER_NOT_FOUND',
+      );
     }
 
     if (!_isEligibleForPaymentUpdate(order.status)) {
@@ -616,7 +621,10 @@ class PaymentStore {
           row.orderId.equals(orderId) & row.vendorId.equals(vendorId),
     );
     if (item == null) {
-      throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Order not found.',
+        code: 'ORDER_NOT_FOUND',
+      );
     }
   }
 
@@ -625,14 +633,14 @@ class PaymentStore {
       OrderStatus.accepted ||
       OrderStatus.processing ||
       OrderStatus.shipped ||
-      OrderStatus.delivered =>
-        true,
+      OrderStatus.delivered => true,
       OrderStatus.pending ||
       OrderStatus.confirmed ||
       OrderStatus.rejected ||
       OrderStatus.cancelled ||
-      OrderStatus.autoCancelled =>
-        false,
+      OrderStatus.autoCancelled ||
+      OrderStatus.returnRequested ||
+      OrderStatus.refunded => false,
     };
   }
 

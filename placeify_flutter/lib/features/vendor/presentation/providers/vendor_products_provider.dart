@@ -2,13 +2,9 @@ import 'package:placeify_flutter/features/auth/presentation/providers/auth_provi
 import 'package:placeify_flutter/features/home/presentation/providers/catalog_provider.dart';
 import 'package:placeify_flutter/features/product_detail/data/product_3d_model_loader.dart';
 import 'package:placeify_flutter/features/product_detail/data/product_3d_model_resolver.dart';
-import 'package:placeify_flutter/features/vendor/data/mock_vendor_product_repository.dart'
-    show VendorProductActionException;
-import 'package:placeify_flutter/features/vendor/data/serverpod_vendor_product_repository.dart';
+import 'package:placeify_flutter/features/vendor/domain/exceptions/vendor_product_action_exception.dart';
 import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart';
 import 'package:placeify_flutter/features/vendor/domain/models/vendor_product.dart';
-import 'package:placeify_flutter/features/vendor/domain/repositories/vendor_product_repository.dart';
-import 'package:placeify_flutter/features/shops/presentation/providers/consumer_shop_provider.dart';
 import 'package:placeify_flutter/features/vendor/presentation/providers/vendor_profile_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 

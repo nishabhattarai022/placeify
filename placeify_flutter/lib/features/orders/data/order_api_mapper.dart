@@ -31,6 +31,7 @@ abstract final class OrderApiMapper {
       ],
       statusHistory: const [],
       placedAt: summary.placedAt,
+      deliveredAt: summary.deliveredAt,
       paymentStatus: mapOrderPaymentStatus(summary.orderPaymentStatus),
       paymentMethod: '',
       subtotal: summary.totalAmount,
@@ -65,12 +66,24 @@ abstract final class OrderApiMapper {
 
     final payment = detail.payment;
 
+    final vendorId = detail.vendorId?.uuid ??
+        (detail.items.isNotEmpty ? detail.items.first.vendorId?.uuid : null) ??
+        '';
+    final vendorName = detail.vendorName?.trim().isNotEmpty == true
+        ? detail.vendorName!.trim()
+        : detail.items
+                .map((line) => line.vendorName?.trim())
+                .whereType<String>()
+                .where((name) => name.isNotEmpty)
+                .firstOrNull ??
+            'Vendor';
+
     return Order(
       id: detail.id.toString(),
       orderNumber: detail.orderNumber,
       userId: userId,
-      vendorId: '0',
-      vendorName: detail.primaryProductName ?? 'Vendor',
+      vendorId: vendorId,
+      vendorName: vendorName,
       status: mapStatus(detail.status, latestStage: detail.latestDeliveryStage),
       items: items,
       statusHistory: _historyFromDetail(detail),
@@ -109,7 +122,7 @@ abstract final class OrderApiMapper {
   static String paymentMethodLabel(PaymentMethod method) {
     return switch (method) {
       PaymentMethod.cashOnDelivery => 'Cash on delivery',
-      PaymentMethod.mockOnline => 'Card (mock online)',
+      PaymentMethod.mockOnline => 'Card',
       PaymentMethod.esewa => 'eSewa',
       PaymentMethod.khalti => 'Khalti',
     };
@@ -123,6 +136,12 @@ abstract final class OrderApiMapper {
         status == OrderStatus.rejected ||
         status == OrderStatus.autoCancelled) {
       return ConsumerOrderStatus.cancelled;
+    }
+    if (status == OrderStatus.returnRequested) {
+      return ConsumerOrderStatus.returnRequested;
+    }
+    if (status == OrderStatus.refunded) {
+      return ConsumerOrderStatus.returned;
     }
     if (status == OrderStatus.delivered) {
       return ConsumerOrderStatus.delivered;
@@ -154,6 +173,7 @@ abstract final class OrderApiMapper {
       DeliveryStage.shipped => ConsumerOrderStatus.inTransit,
       DeliveryStage.outForDelivery => ConsumerOrderStatus.outForDelivery,
       DeliveryStage.delivered => ConsumerOrderStatus.delivered,
+      DeliveryStage.rejected => ConsumerOrderStatus.cancelled,
     };
   }
 
@@ -164,6 +184,7 @@ abstract final class OrderApiMapper {
       DeliveryStage.shipped => 'Shipped',
       DeliveryStage.outForDelivery => 'Out for delivery',
       DeliveryStage.delivered => 'Delivered',
+      DeliveryStage.rejected => 'Rejected',
     };
   }
 

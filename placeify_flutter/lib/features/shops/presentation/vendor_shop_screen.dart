@@ -6,6 +6,7 @@ import 'package:placeify_flutter/core/constants/app_spacing.dart';
 import 'package:placeify_flutter/core/services/haptic_service.dart';
 import 'package:placeify_flutter/core/widgets/placeify_bottom_sheet.dart';
 import 'package:placeify_flutter/features/home/domain/models/product.dart';
+import 'package:placeify_flutter/features/messaging/presentation/conversations_screen.dart';
 import 'package:placeify_flutter/features/shops/domain/constants/shop_routes.dart';
 import 'package:placeify_flutter/features/shops/domain/constants/shop_strings.dart';
 import 'package:placeify_flutter/features/shops/domain/models/shop_listing.dart';
@@ -129,7 +130,7 @@ class _VendorShopScreenState extends ConsumerState<VendorShopScreen> {
   }
 }
 
-class _VendorShopScaffold extends StatelessWidget {
+class _VendorShopScaffold extends ConsumerWidget {
   const _VendorShopScaffold({
     required this.shop,
     required this.products,
@@ -141,7 +142,7 @@ class _VendorShopScaffold extends StatelessWidget {
   final VoidCallback onOpenSortSheet;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final count = products.length;
 
     return CustomScrollView(
@@ -167,6 +168,16 @@ class _VendorShopScaffold extends StatelessWidget {
                         minWidth: 40,
                         minHeight: 40,
                       ),
+                    ),
+                    const Spacer(),
+                    TextButton.icon(
+                      onPressed: () => openChatWithVendor(
+                        context,
+                        ref,
+                        shop.vendorId,
+                      ),
+                      icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                      label: const Text('Chat'),
                     ),
                   ],
                 ),

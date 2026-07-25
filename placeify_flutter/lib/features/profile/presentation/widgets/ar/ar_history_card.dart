@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/services/haptic_service.dart';
-import '../../../data/profile_mock_data.dart';
+import '../../../domain/models/profile_ui_models.dart';
 
 class ArHistoryCard extends StatelessWidget {
   const ArHistoryCard({required this.session, super.key});

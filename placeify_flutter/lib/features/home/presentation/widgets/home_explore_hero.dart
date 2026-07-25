@@ -4,7 +4,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/services/haptic_service.dart';
+import '../../../../core/widgets/bottom_nav/bottom_nav_pill_widgets.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../orders/presentation/providers/customer_in_app_notifications_provider.dart';
 import '../../../vendor/domain/constants/vendor_routes.dart';
 import '../../../vendor/domain/enums/vendor_status.dart';
 import '../theme/home_screen_tokens.dart';
@@ -64,6 +66,11 @@ class HomeExploreHero extends ConsumerWidget {
               left: HomeScreenTokens.screenPadding,
               child: const _VendorDashboardButton(),
             ),
+          Positioned(
+            top: topInset,
+            right: HomeScreenTokens.screenPadding,
+            child: const _HomeNotificationButton(),
+          ),
           Align(
             alignment: const Alignment(
               0,
@@ -109,6 +116,55 @@ class _VendorDashboardButton extends StatelessWidget {
               Icons.dashboard_outlined,
               size: HomeScreenTokens.vendorDashboardIconSize,
               color: Colors.black,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeNotificationButton extends ConsumerWidget {
+  const _HomeNotificationButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final badgeCount = ref.watch(customerNotificationBadgeCountProvider);
+
+    return Semantics(
+      button: true,
+      label: 'Notifications',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticService.light();
+            context.pushNamed('profileNotifications');
+          },
+          customBorder: const CircleBorder(),
+          child: Ink(
+            width: HomeScreenTokens.vendorDashboardButtonSize,
+            height: HomeScreenTokens.vendorDashboardButtonSize,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                const Icon(
+                  Icons.notifications_outlined,
+                  size: HomeScreenTokens.vendorDashboardIconSize,
+                  color: Colors.black,
+                ),
+                if (badgeCount > 0)
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: BottomNavNotificationBadge(count: badgeCount),
+                  ),
+              ],
             ),
           ),
         ),

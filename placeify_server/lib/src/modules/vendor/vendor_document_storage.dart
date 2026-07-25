@@ -65,8 +65,10 @@ abstract final class VendorDocumentStorage {
   }
 
   static String? _extension(String fileName) {
-    final match = RegExp(r'\.(pdf|jpe?g|png)$', caseSensitive: false)
-        .firstMatch(fileName);
+    final match = RegExp(
+      r'\.(pdf|jpe?g|png)$',
+      caseSensitive: false,
+    ).firstMatch(fileName);
     if (match == null) return null;
     final ext = match.group(1)!.toLowerCase();
     return ext == 'jpeg' ? '.jpg' : '.$ext';
