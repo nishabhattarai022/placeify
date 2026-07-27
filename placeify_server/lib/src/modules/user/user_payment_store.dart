@@ -7,6 +7,7 @@ import '../../shared/order_display_number.dart';
 import '../marketplace/marketplace_events.dart';
 import '../order/order_lifecycle_store.dart';
 import '../payment/esewa_gateway.dart';
+import '../payment/esewa_status_api.dart';
 import '../payment/payment_sync.dart';
 
 /// Customer payment reads and gateway completion for placed orders.
@@ -79,7 +80,15 @@ class UserPaymentStore {
       );
     }
 
-    final credentials = EsewaGateway.requireCredentials(session);
+    late final ({String productCode, String secretKey}) credentials;
+    try {
+      credentials = EsewaGateway.requireCredentials(session);
+    } on StateError {
+      throw PlaceifyException(
+        message: 'eSewa is not configured on the server yet.',
+        code: 'ESEWA_NOT_CONFIGURED',
+      );
+    }
     final transactionUuid = _esewaTransactionUuid(orderId, payment);
 
     if (payment.providerTransactionId != transactionUuid) {
@@ -142,12 +151,27 @@ class UserPaymentStore {
     }
 
     if (payment.paymentMethod == PaymentMethod.esewa) {
-      final verified = await EsewaGateway.isPaymentComplete(
+      final status = await EsewaStatusApi.fetchTransactionStatus(
         session: session,
         amount: payment.amount,
         transactionUuid: payment.providerTransactionId,
       );
-      if (!verified) {
+      if (status.errorMessage != null) {
+        final lower = status.errorMessage!.toLowerCase();
+        final unavailable = (status.httpStatusCode != null &&
+                status.httpStatusCode! >= 500) ||
+            lower.contains('timed out') ||
+            lower.contains('unreachable') ||
+            lower.contains('failed');
+        throw PlaceifyException(
+          message: unavailable
+              ? 'eSewa is temporarily unavailable. Please try again later.'
+              : 'eSewa payment could not be verified yet. '
+                  'Finish payment in eSewa, then try again.',
+          code: unavailable ? 'ESEWA_UNAVAILABLE' : 'PAYMENT_NOT_VERIFIED',
+        );
+      }
+      if (!status.isComplete) {
         throw PlaceifyException(
           message:
               'eSewa payment could not be verified yet. '

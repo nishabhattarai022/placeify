@@ -10,6 +10,7 @@ import '../../../core/debug/agent_debug_log.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../core/utils/formatters.dart';
+import '../../auth/domain/models/consumer_profile_details.dart';
 import '../data/cart_api_errors.dart';
 import '../domain/checkout_flow_result.dart';
 import '../domain/checkout_payment_option.dart';
@@ -63,12 +64,14 @@ class _CheckoutPaymentScreenState extends ConsumerState<CheckoutPaymentScreen> {
   Future<void> _prefillAddress() async {
     try {
       final profile = await client.user.getCurrentUser();
-      final saved = profile?.address?.trim();
-      if (!mounted || saved == null || saved.isEmpty) {
+      final saved = ConsumerProfileDetails.decodeAddressPayload(
+        profile?.address,
+      ).formattedDeliveryAddress;
+      if (!mounted || saved.isEmpty) {
         _addressPrefillDone = true;
         return;
       }
-      // Prefer saved profile address, but keep any typed text if user already edited.
+      // Prefer saved delivery address, but keep any typed text if user already edited.
       if (_addressController.text.trim().isEmpty) {
         _addressController.text = saved;
       }
@@ -330,7 +333,7 @@ class _CheckoutPaymentScreenState extends ConsumerState<CheckoutPaymentScreen> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Used for this order only. Edit if needed before placing.',
+                    'Enter where this order should be delivered. You can edit the suggestion before placing.',
                     style: TextStyle(
                       fontSize: 14,
                       color: CartTokens.textSecondary,

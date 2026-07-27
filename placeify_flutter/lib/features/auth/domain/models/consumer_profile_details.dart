@@ -129,9 +129,8 @@ class ConsumerProfileDetails {
         }
       } catch (_) {}
     }
-    // Legacy plain-text address → treat as city / address line 1.
+    // Legacy plain-text address → treat as a delivery address line.
     return ConsumerAddressExtras(
-      city: value,
       addressLine1: value,
     );
   }
@@ -242,4 +241,57 @@ class ConsumerAddressExtras {
   final String country;
   final String preferredLanguage;
   final String defaultDeliveryAddress;
+
+  /// Human-readable shipping address for checkout (never the raw JSON blob).
+  ///
+  /// Priority order:
+  ///   1. `defaultDeliveryAddress` if set
+  ///   2. Composed from addressLine1 / addressLine2 / city / district / province / postal / country
+  ///      — city and district are skipped when already present in addressLine1 or addressLine2
+  ///        to prevent the same place name showing up twice.
+  String get formattedDeliveryAddress {
+    final preferred = defaultDeliveryAddress.trim();
+    if (preferred.isNotEmpty) return preferred;
+
+    final line1 = addressLine1.trim();
+    final line2 = addressLine2.trim();
+    final cityVal = city.trim();
+    final districtVal = district.trim();
+    final provinceVal = province.trim();
+    final postalVal = postalCode.trim();
+    final countryVal = country.trim();
+
+    // Build a searchable set of what the street lines already contain so we
+    // don't repeat the same token in the city/district sub-line.
+    final alreadyPresent = '${line1.toLowerCase()} ${line2.toLowerCase()}';
+    bool alreadyIn(String part) =>
+        part.isNotEmpty && alreadyPresent.contains(part.toLowerCase());
+
+    // Also skip district when it is the same value as city (common in Nepal
+    // where city == district, e.g. Kathmandu / Kathmandu).
+    final cityDistrictParts = <String>[];
+    if (cityVal.isNotEmpty && !alreadyIn(cityVal)) {
+      cityDistrictParts.add(cityVal);
+    }
+    if (districtVal.isNotEmpty &&
+        !alreadyIn(districtVal) &&
+        districtVal.toLowerCase() != cityVal.toLowerCase()) {
+      cityDistrictParts.add(districtVal);
+    }
+
+    final cityDistrict = cityDistrictParts.join(', ');
+    final provincePostal = [provinceVal, postalVal]
+        .where((p) => p.isNotEmpty)
+        .join(' ');
+
+    final lines = <String>[
+      line1,
+      line2,
+      cityDistrict,
+      provincePostal,
+      countryVal,
+    ].where((p) => p.isNotEmpty).toList();
+
+    return lines.join('\n');
+  }
 }

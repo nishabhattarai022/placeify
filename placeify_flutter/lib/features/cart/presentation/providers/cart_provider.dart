@@ -9,6 +9,7 @@ import '../../../../core/config/placeify_server_client.dart';
 import '../../../../core/debug/agent_debug_log.dart';
 import '../../../../core/utils/vendor_purchase_policy.dart';
 import '../../../auth/domain/models/app_user_extensions.dart';
+import '../../../auth/domain/models/consumer_profile_details.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../home/presentation/providers/catalog_provider.dart';
 import '../../../orders/presentation/providers/orders_provider.dart';
@@ -356,8 +357,10 @@ class Cart extends _$Cart {
       }
 
       final profile = await client.user.getCurrentUser();
-      final savedAddress = profile?.address?.trim();
-      if (savedAddress == null || savedAddress.isEmpty) {
+      final savedAddress = ConsumerProfileDetails.decodeAddressPayload(
+        profile?.address,
+      ).formattedDeliveryAddress;
+      if (savedAddress.isEmpty) {
         return CartStrings.deliveryAddressRequired;
       }
 

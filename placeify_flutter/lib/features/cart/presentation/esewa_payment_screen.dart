@@ -72,6 +72,26 @@ class _EsewaPaymentScreenState extends ConsumerState<EsewaPaymentScreen> {
                 _handleRedirect(url);
               }
             },
+            onWebResourceError: (error) {
+              if (!mounted) return;
+              // Ignore subresource noise; only fail the main eSewa document.
+              if (error.isForMainFrame == false) return;
+              setState(() {
+                _controller = null;
+                _loadingForm = false;
+                _error = CartStrings.esewaUnavailable;
+              });
+            },
+            onHttpError: (error) {
+              if (!mounted) return;
+              final code = error.response?.statusCode;
+              if (code == null || code < 500) return;
+              setState(() {
+                _controller = null;
+                _loadingForm = false;
+                _error = CartStrings.esewaUnavailable;
+              });
+            },
           ),
         )
         ..loadHtmlString(html, baseUrl: paymentUrl);

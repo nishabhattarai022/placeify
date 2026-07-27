@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:serverpod/serverpod.dart';
@@ -91,6 +93,30 @@ abstract final class EsewaStatusApi {
           errorMessage: 'Failed to parse eSewa status JSON',
         );
       }
+    } on TimeoutException catch (error) {
+      return EsewaTransactionStatusResult(
+        status: '',
+        rawBody: '',
+        errorMessage: 'eSewa timed out: $error',
+      );
+    } on SocketException catch (error) {
+      return EsewaTransactionStatusResult(
+        status: '',
+        rawBody: '',
+        errorMessage: 'eSewa unreachable: $error',
+      );
+    } on http.ClientException catch (error) {
+      return EsewaTransactionStatusResult(
+        status: '',
+        rawBody: '',
+        errorMessage: 'eSewa unreachable: $error',
+      );
+    } catch (error) {
+      return EsewaTransactionStatusResult(
+        status: '',
+        rawBody: '',
+        errorMessage: 'eSewa request failed: $error',
+      );
     } finally {
       if (ownsClient) client.close();
     }
