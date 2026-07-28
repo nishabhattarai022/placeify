@@ -47,6 +47,16 @@ abstract final class Formatters {
     return '${_months[date.month - 1]} ${date.day}';
   }
 
+  static String shortDateTime(DateTime date) {
+    final local = date.toLocal();
+    final hour24 = local.hour;
+    final period = hour24 >= 12 ? 'PM' : 'AM';
+    final hour12 = hour24 % 12 == 0 ? 12 : hour24 % 12;
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '${_months[local.month - 1]} ${local.day}, ${local.year} · '
+        '$hour12:$minute $period';
+  }
+
   static String orderMeta(String orderNumber, DateTime date) {
     return 'Order #$orderNumber · ${shortDate(date)}';
   }

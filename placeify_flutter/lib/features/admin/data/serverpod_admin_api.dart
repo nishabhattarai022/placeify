@@ -209,6 +209,34 @@ class ServerpodAdminApi {
     }
   }
 
+  Future<AdminRefundRequestSummary> checkEsewaRefundStatus(int refundId) async {
+    try {
+      return await client.admin.checkEsewaRefundStatus(refundId);
+    } catch (error) {
+      throw AdminApiException(_mapError(error));
+    }
+  }
+
+  Future<AdminRefundRequestSummary> retryEsewaRefundStatusCheck(
+    int refundId,
+  ) async {
+    try {
+      return await client.admin.retryEsewaRefundStatusCheck(refundId);
+    } catch (error) {
+      throw AdminApiException(_mapError(error));
+    }
+  }
+
+  Future<AdminRefundRequestSummary> completeManualEsewaSettlement(
+    int refundId,
+  ) async {
+    try {
+      return await client.admin.completeManualEsewaSettlement(refundId);
+    } catch (error) {
+      throw AdminApiException(_mapError(error));
+    }
+  }
+
   String _mapError(Object error) {
     if (error is AdminApiException) return error.message;
     if (error is PlaceifyException) return error.message;

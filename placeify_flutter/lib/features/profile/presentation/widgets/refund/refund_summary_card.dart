@@ -2,21 +2,28 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/theme/app_fonts.dart';
-import '../../../../../core/widgets/toast_overlay.dart';
+import '../../../../../core/utils/formatters.dart';
 import '../../../domain/constants/refund_strings.dart';
-import '../shared/profile_action_button.dart';
 import '../../../../home/presentation/chairs_catalog_tokens.dart';
 
 class RefundSummaryCard extends StatelessWidget {
   const RefundSummaryCard({
     required this.activeRequestCount,
+    required this.pendingTotal,
+    required this.completedTotal,
+    this.destinationPreview,
     super.key,
   });
 
   final int activeRequestCount;
+  final double pendingTotal;
+  final double completedTotal;
+  final String? destinationPreview;
 
   @override
   Widget build(BuildContext context) {
+    final hasActive = activeRequestCount > 0 || pendingTotal > 0;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       padding: const EdgeInsets.all(18),
@@ -26,6 +33,7 @@ class RefundSummaryCard extends StatelessWidget {
         boxShadow: ChairsCatalogTokens.cardShadow,
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,23 +52,26 @@ class RefundSummaryCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'NPR 45.00',
+                      hasActive
+                          ? Formatters.currencyDecimal(pendingTotal)
+                          : RefundStrings.noActiveRefunds,
                       style: AppFonts.dmSans(
-                        fontSize: 34,
+                        fontSize: hasActive ? 34 : 22,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
                         height: 1.1,
                         letterSpacing: -0.5,
                       ),
                     ),
-                    Text(
-                      RefundStrings.activeRequestsCount(activeRequestCount),
-                      style: AppFonts.dmSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.textMuted,
+                    if (hasActive)
+                      Text(
+                        RefundStrings.activeRequestsCount(activeRequestCount),
+                        style: AppFonts.dmSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.textMuted,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -68,7 +79,7 @@ class RefundSummaryCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    RefundStrings.walletCreditLabel,
+                    RefundStrings.completedCreditLabel,
                     style: AppFonts.dmSans(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
@@ -77,7 +88,7 @@ class RefundSummaryCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'NPR 20.00',
+                    Formatters.currencyDecimal(completedTotal),
                     style: AppFonts.dmSans(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
@@ -86,7 +97,7 @@ class RefundSummaryCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    RefundStrings.walletReadyLabel,
+                    RefundStrings.completedCreditHint,
                     style: AppFonts.dmSans(
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
@@ -97,32 +108,17 @@ class RefundSummaryCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: ProfileActionButton(
-                  label: RefundStrings.toCard,
-                  icon: Icons.credit_card_outlined,
-                  onTap: () => PlaceifyToast.show(
-                    context,
-                    RefundStrings.refundToCardToast,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ProfileActionButton(
-                  label: RefundStrings.toWallet,
-                  icon: Icons.account_balance_wallet_outlined,
-                  primary: false,
-                  onTap: () => PlaceifyToast.show(
-                    context,
-                    RefundStrings.addedToWalletToast,
-                  ),
-                ),
-              ),
-            ],
+          const SizedBox(height: 14),
+          Text(
+            destinationPreview?.trim().isNotEmpty == true
+                ? destinationPreview!
+                : RefundStrings.destinationHint,
+            style: AppFonts.dmSans(
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textMuted,
+              height: 1.35,
+            ),
           ),
         ],
       ),

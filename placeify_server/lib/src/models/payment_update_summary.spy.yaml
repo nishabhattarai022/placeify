@@ -1,4 +1,4 @@
-### Payment status update for a vendor order audit trail.
+### Payment status update for a vendor order audit trail / payment ledger row.
 class: PaymentUpdateSummary
 fields:
   id: int
@@ -10,3 +10,14 @@ fields:
   ### Optional listing fields (vendor payment history).
   paymentMethod: PaymentMethod?
   customerName: String?
+  customerEmail: String?
+  orderNumber: String?
+  orderStatus: String?
+  transactionId: String?
+  providerTransactionId: String?
+  deliveryFee: double?
+  discount: double?
+  vendorEarnings: double?
+  refundStatus: String?
+  refundDate: DateTime?
+  createdAt: DateTime?

@@ -15,13 +15,14 @@ abstract final class TripoClient {
   static const _modelVersion = 'v2.5-20250123';
   static const _pollInterval = Duration(seconds: 2);
   static const _maxPollAttempts = 90;
+  static const _requestTimeout = Duration(seconds: 60);
 
-  /// Fast profile: photo-aligned diffuse textures (no PBR — avoids specular wash-out).
+  /// PBR profile: metallic-roughness maps for realistic preview + AR lighting.
   static const _baseTextureParams = <String, dynamic>{
     'texture': true,
-    'pbr': false,
+    'pbr': true,
     'texture_alignment': 'original_image',
-    'texture_quality': 'standard',
+    'texture_quality': 'detailed',
     'orientation': 'align_image',
     'enable_image_autofix': false,
     'export_uv': false,
@@ -209,11 +210,13 @@ abstract final class TripoClient {
     String apiKey,
     String format,
   ) async {
-    final response = await http.post(
-      Uri.parse('$_baseUrl/upload/sts/token'),
-      headers: _headers(apiKey),
-      body: jsonEncode({'format': format}),
-    );
+    final response = await http
+        .post(
+          Uri.parse('$_baseUrl/upload/sts/token'),
+          headers: _headers(apiKey),
+          body: jsonEncode({'format': format}),
+        )
+        .timeout(_requestTimeout);
     final body = _decodeResponse(response);
     final data = _dataMap(body);
 
@@ -234,22 +237,24 @@ abstract final class TripoClient {
     required String fileType,
     required int viewCount,
   }) async {
-    final response = await http.post(
-      Uri.parse('$_baseUrl/task'),
-      headers: _headers(apiKey),
-      body: jsonEncode({
-        'type': 'image_to_model',
-        'model_version': _modelVersion,
-        'file': {
-          'type': fileType,
-          'object': {
-            'bucket': bucket,
-            'key': key,
-          },
-        },
-        ..._taskParams(viewCount: viewCount),
-      }),
-    );
+    final response = await http
+        .post(
+          Uri.parse('$_baseUrl/task'),
+          headers: _headers(apiKey),
+          body: jsonEncode({
+            'type': 'image_to_model',
+            'model_version': _modelVersion,
+            'file': {
+              'type': fileType,
+              'object': {
+                'bucket': bucket,
+                'key': key,
+              },
+            },
+            ..._taskParams(viewCount: viewCount),
+          }),
+        )
+        .timeout(_requestTimeout);
     final body = _decodeResponse(response);
     final data = _dataMap(body);
     final taskId = data['task_id'] as String?;
@@ -279,16 +284,18 @@ abstract final class TripoClient {
       });
     }
 
-    final response = await http.post(
-      Uri.parse('$_baseUrl/task'),
-      headers: _headers(apiKey),
-      body: jsonEncode({
-        'type': 'multiview_to_model',
-        'model_version': _modelVersion,
-        'files': files,
-        ...taskParams,
-      }),
-    );
+    final response = await http
+        .post(
+          Uri.parse('$_baseUrl/task'),
+          headers: _headers(apiKey),
+          body: jsonEncode({
+            'type': 'multiview_to_model',
+            'model_version': _modelVersion,
+            'files': files,
+            ...taskParams,
+          }),
+        )
+        .timeout(_requestTimeout);
     final body = _decodeResponse(response);
     final data = _dataMap(body);
     final taskId = data['task_id'] as String?;
@@ -310,10 +317,12 @@ abstract final class TripoClient {
       }
 
       final elapsed = DateTime.now().difference(pollStarted);
-      final response = await http.get(
-        Uri.parse('$_baseUrl/task/$taskId'),
-        headers: _headers(apiKey),
-      );
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/task/$taskId'),
+            headers: _headers(apiKey),
+          )
+          .timeout(_requestTimeout);
       final body = _decodeResponse(response);
       final data = _dataMap(body);
       final status = data['status'] as String? ?? 'unknown';
@@ -370,8 +379,8 @@ abstract final class TripoClient {
   }
 
   static String? _pickModelUrl(Map<String, dynamic> output) {
-    // Prefer fully textured model (HD diffuse + PBR when enabled).
-    for (final key in ['model', 'pbr_model', 'base_model']) {
+    // Prefer PBR export when available (metallic-roughness workflow).
+    for (final key in ['pbr_model', 'model', 'base_model']) {
       final url = _extractUrl(output[key]);
       if (url != null) return url;
     }

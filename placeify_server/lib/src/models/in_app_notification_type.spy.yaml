@@ -12,3 +12,4 @@ values:
   - vendorApplication
   - vendorFlagged
   - systemAlert
+  - chatMessage

@@ -267,6 +267,10 @@ class _ArRoomScreenState extends State<ArRoomScreen>
   _PlacedFurniture? get _selectedItem =>
       _selectedNodeName != null ? _placed[_selectedNodeName] : null;
 
+  bool get _canRemoveSelectedPlacedItem =>
+      _selectedItem != null &&
+      (_placed.length > 1 || widget.availableProducts.length > 1);
+
   Animation<double> get _revealProgress =>
       _activeRevealController ?? const AlwaysStoppedAnimation<double>(0);
 
@@ -368,14 +372,14 @@ class _ArRoomScreenState extends State<ArRoomScreen>
                           Expanded(
                             // Slightly more room than a lone icon button;
                             // carousel still keeps the majority of the row.
-                            flex: widget.availableProducts.isEmpty ? 1 : 2,
+                            flex: widget.availableProducts.length <= 1 ? 1 : 2,
                             child: ArSaveRoomShotBar(
                               compact: true,
                               enabled: !_isCapturing,
                               onCapture: _onCaptureTap,
                             ),
                           ),
-                          if (widget.availableProducts.isNotEmpty) ...[
+                          if (widget.availableProducts.length > 1) ...[
                             const SizedBox(width: 10),
                             Expanded(
                               flex: 5,
@@ -401,6 +405,16 @@ class _ArRoomScreenState extends State<ArRoomScreen>
                         onScaleChanged: (value) =>
                             _onScaleSliderChanged(selected, value),
                       ),
+                      if (_canRemoveSelectedPlacedItem) ...[
+                        const SizedBox(height: 4),
+                        ArRemovePlacedButton(
+                          enabled: !_isPlacing &&
+                              !_isDragging &&
+                              !_isRotating &&
+                              !_modelLoading,
+                          onRemove: () => unawaited(_removeSelectedPlacedItem()),
+                        ),
+                      ],
                     ],
                   ],
                 ],
@@ -910,6 +924,38 @@ class _ArRoomScreenState extends State<ArRoomScreen>
       );
     });
     await _loadPendingModel();
+  }
+
+  Future<void> _removeSelectedPlacedItem() async {
+    final nodeName = _selectedNodeName;
+    if (nodeName == null || !_canRemoveSelectedPlacedItem) return;
+
+    final item = _placed[nodeName];
+    if (item == null) return;
+
+    final objectManager = _objectManager;
+    final anchorManager = _anchorManager;
+    if (objectManager == null || anchorManager == null) return;
+
+    HapticService.medium();
+
+    await objectManager.removeNode(item.node);
+    await anchorManager.removeAnchor(item.anchor);
+
+    if (_activeRevealController == item.revealController) {
+      _activeRevealController = null;
+    }
+    item.revealController.dispose();
+
+    if (!mounted) return;
+
+    setState(() {
+      _placed.remove(nodeName);
+      _selectedNodeName =
+          _placed.isEmpty ? null : _placed.keys.last;
+    });
+
+    _showTransientHint('Removed ${item.productName}');
   }
 
   Future<void> _removeAllFurniture({

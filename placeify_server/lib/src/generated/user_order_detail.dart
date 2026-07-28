@@ -32,6 +32,10 @@ abstract class UserOrderDetail
     required this.shippingAddress,
     required this.itemCount,
     this.primaryProductName,
+    this.vendorId,
+    this.vendorName,
+    this.customerName,
+    this.customerPhone,
     this.latestDeliveryStage,
     this.latestDeliveryNote,
     required this.items,
@@ -50,6 +54,10 @@ abstract class UserOrderDetail
     required String shippingAddress,
     required int itemCount,
     String? primaryProductName,
+    _i1.UuidValue? vendorId,
+    String? vendorName,
+    String? customerName,
+    String? customerPhone,
     _i3.DeliveryStage? latestDeliveryStage,
     String? latestDeliveryNote,
     required List<_i4.UserOrderLineItem> items,
@@ -71,6 +79,12 @@ abstract class UserOrderDetail
       shippingAddress: jsonSerialization['shippingAddress'] as String,
       itemCount: jsonSerialization['itemCount'] as int,
       primaryProductName: jsonSerialization['primaryProductName'] as String?,
+      vendorId: jsonSerialization['vendorId'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(jsonSerialization['vendorId']),
+      vendorName: jsonSerialization['vendorName'] as String?,
+      customerName: jsonSerialization['customerName'] as String?,
+      customerPhone: jsonSerialization['customerPhone'] as String?,
       latestDeliveryStage: jsonSerialization['latestDeliveryStage'] == null
           ? null
           : _i3.DeliveryStage.fromJson(
@@ -113,6 +127,16 @@ abstract class UserOrderDetail
 
   String? primaryProductName;
 
+  /// Primary vendor for chat (first line item).
+  _i1.UuidValue? vendorId;
+
+  String? vendorName;
+
+  /// Snapshot contact fields from the ordering user at read time.
+  String? customerName;
+
+  String? customerPhone;
+
   _i3.DeliveryStage? latestDeliveryStage;
 
   String? latestDeliveryNote;
@@ -139,6 +163,10 @@ abstract class UserOrderDetail
     String? shippingAddress,
     int? itemCount,
     String? primaryProductName,
+    _i1.UuidValue? vendorId,
+    String? vendorName,
+    String? customerName,
+    String? customerPhone,
     _i3.DeliveryStage? latestDeliveryStage,
     String? latestDeliveryNote,
     List<_i4.UserOrderLineItem>? items,
@@ -159,6 +187,10 @@ abstract class UserOrderDetail
       'shippingAddress': shippingAddress,
       'itemCount': itemCount,
       if (primaryProductName != null) 'primaryProductName': primaryProductName,
+      if (vendorId != null) 'vendorId': vendorId?.toJson(),
+      if (vendorName != null) 'vendorName': vendorName,
+      if (customerName != null) 'customerName': customerName,
+      if (customerPhone != null) 'customerPhone': customerPhone,
       if (latestDeliveryStage != null)
         'latestDeliveryStage': latestDeliveryStage?.toJson(),
       if (latestDeliveryNote != null) 'latestDeliveryNote': latestDeliveryNote,
@@ -182,6 +214,10 @@ abstract class UserOrderDetail
       'shippingAddress': shippingAddress,
       'itemCount': itemCount,
       if (primaryProductName != null) 'primaryProductName': primaryProductName,
+      if (vendorId != null) 'vendorId': vendorId?.toJson(),
+      if (vendorName != null) 'vendorName': vendorName,
+      if (customerName != null) 'customerName': customerName,
+      if (customerPhone != null) 'customerPhone': customerPhone,
       if (latestDeliveryStage != null)
         'latestDeliveryStage': latestDeliveryStage?.toJson(),
       if (latestDeliveryNote != null) 'latestDeliveryNote': latestDeliveryNote,
@@ -215,6 +251,10 @@ class _UserOrderDetailImpl extends UserOrderDetail {
     required String shippingAddress,
     required int itemCount,
     String? primaryProductName,
+    _i1.UuidValue? vendorId,
+    String? vendorName,
+    String? customerName,
+    String? customerPhone,
     _i3.DeliveryStage? latestDeliveryStage,
     String? latestDeliveryNote,
     required List<_i4.UserOrderLineItem> items,
@@ -231,6 +271,10 @@ class _UserOrderDetailImpl extends UserOrderDetail {
          shippingAddress: shippingAddress,
          itemCount: itemCount,
          primaryProductName: primaryProductName,
+         vendorId: vendorId,
+         vendorName: vendorName,
+         customerName: customerName,
+         customerPhone: customerPhone,
          latestDeliveryStage: latestDeliveryStage,
          latestDeliveryNote: latestDeliveryNote,
          items: items,
@@ -253,6 +297,10 @@ class _UserOrderDetailImpl extends UserOrderDetail {
     String? shippingAddress,
     int? itemCount,
     Object? primaryProductName = _Undefined,
+    Object? vendorId = _Undefined,
+    Object? vendorName = _Undefined,
+    Object? customerName = _Undefined,
+    Object? customerPhone = _Undefined,
     Object? latestDeliveryStage = _Undefined,
     Object? latestDeliveryNote = _Undefined,
     List<_i4.UserOrderLineItem>? items,
@@ -272,6 +320,12 @@ class _UserOrderDetailImpl extends UserOrderDetail {
       primaryProductName: primaryProductName is String?
           ? primaryProductName
           : this.primaryProductName,
+      vendorId: vendorId is _i1.UuidValue? ? vendorId : this.vendorId,
+      vendorName: vendorName is String? ? vendorName : this.vendorName,
+      customerName: customerName is String? ? customerName : this.customerName,
+      customerPhone: customerPhone is String?
+          ? customerPhone
+          : this.customerPhone,
       latestDeliveryStage: latestDeliveryStage is _i3.DeliveryStage?
           ? latestDeliveryStage
           : this.latestDeliveryStage,

@@ -29,9 +29,11 @@ abstract final class ArSelectionRoomLauncher {
     }
 
     final availableProducts = <ArAddableProduct>[];
-    for (final product in selectedProducts.skip(1)) {
-      if (product.id == primary.id || !product.hasArView) continue;
-      await Product3dModelResolver.ensureSrcForProduct(product);
+    for (final product in selectedProducts) {
+      if (!product.hasArView) continue;
+      if (product.id != primary.id) {
+        await Product3dModelResolver.ensureSrcForProduct(product);
+      }
       final addable = ArAddableProduct.tryFromProduct(product);
       if (addable != null) availableProducts.add(addable);
     }

@@ -8,7 +8,9 @@ abstract class PlaceifyAuthenticatedEndpoint extends Endpoint {
   bool get requireLogin => true;
 
   Future<User> requirePlaceifyUser(Session session) async {
-    final authUserId = UuidValue.fromString(session.authenticated!.userIdentifier);
+    final authUserId = UuidValue.fromString(
+      session.authenticated!.userIdentifier,
+    );
     final user = await User.db.findFirstRow(
       session,
       where: (row) => row.authUserId.equals(authUserId),

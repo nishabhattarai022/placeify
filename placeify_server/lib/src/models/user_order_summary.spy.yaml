@@ -6,9 +6,13 @@ fields:
   status: OrderStatus
   totalAmount: double
   placedAt: DateTime
+  ### When status is delivered, timestamp of the delivery update if known.
+  deliveredAt: DateTime?
   itemCount: int
   primaryProductName: String?
   primaryThumbnailUrl: String?
+  ### Snapshot from Order.shippingAddress (not live profile address).
+  shippingAddress: String
   latestDeliveryStage: DeliveryStage?
   latestDeliveryNote: String?
   orderPaymentStatus: OrderPaymentStatus

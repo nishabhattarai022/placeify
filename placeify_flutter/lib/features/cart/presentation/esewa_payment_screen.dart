@@ -56,6 +56,7 @@ class _EsewaPaymentScreenState extends ConsumerState<EsewaPaymentScreen> {
       }
 
       final html = _buildAutoSubmitHtml(paymentUrl, fields);
+      final postBody = _encodeFormBody(fields);
       final controller = WebViewController()
         ..setJavaScriptMode(JavaScriptMode.unrestricted)
         ..setNavigationDelegate(
@@ -72,9 +73,47 @@ class _EsewaPaymentScreenState extends ConsumerState<EsewaPaymentScreen> {
                 _handleRedirect(url);
               }
             },
+            onWebResourceError: (error) {
+              if (!mounted) return;
+              // Ignore subresource noise; only fail the main eSewa document.
+              if (error.isForMainFrame == false) return;
+              setState(() {
+                _controller = null;
+                _loadingForm = false;
+                _error = CartStrings.esewaUnavailable;
+              });
+            },
+            onHttpError: (error) {
+              if (!mounted) return;
+              final code = error.response?.statusCode;
+              if (code == null) return;
+              if (code == 404 || code >= 500) {
+                setState(() {
+                  _controller = null;
+                  _loadingForm = false;
+                  _error = CartStrings.esewaUnavailable;
+                });
+              }
+            },
           ),
-        )
-        ..loadHtmlString(html, baseUrl: paymentUrl);
+        );
+
+      try {
+        await controller.loadRequest(
+          Uri.parse(paymentUrl),
+          method: LoadRequestMethod.post,
+          headers: const {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: Uint8List.fromList(utf8.encode(postBody)),
+        );
+      } catch (_) {
+        // Some Android WebViews ignore POST headers; HTML auto-submit fallback.
+        await controller.loadHtmlString(
+          html,
+          baseUrl: 'https://placeify.local/',
+        );
+      }
 
       if (!mounted) return;
       setState(() {
@@ -106,6 +145,15 @@ class _EsewaPaymentScreenState extends ConsumerState<EsewaPaymentScreen> {
       return true;
     }
     return false;
+  }
+
+  String _encodeFormBody(Map<String, String> fields) {
+    return fields.entries
+        .map(
+          (entry) =>
+              '${Uri.encodeQueryComponent(entry.key)}=${Uri.encodeQueryComponent(entry.value)}',
+        )
+        .join('&');
   }
 
   String _buildAutoSubmitHtml(String action, Map<String, String> fields) {

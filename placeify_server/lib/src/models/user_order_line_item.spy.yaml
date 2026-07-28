@@ -7,3 +7,7 @@ fields:
   unitPrice: double
   lineTotal: double
   thumbnailUrl: String?
+  vendorId: UuidValue?
+  vendorName: String?
+  ### Catalog list price at read time (for discount display when higher than unitPrice).
+  listUnitPrice: double?

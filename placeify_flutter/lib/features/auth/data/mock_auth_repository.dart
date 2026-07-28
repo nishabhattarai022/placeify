@@ -51,6 +51,32 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<String> beginEmailRegistration({
+    required String fullName,
+    required String email,
+    required String password,
+  }) async {
+    await register(fullName: fullName, email: email, password: password);
+    return email.trim().toLowerCase();
+  }
+
+  @override
+  Future<void> verifyEmailRegistration({
+    required String token,
+    required String password,
+    String? fullName,
+  }) async {
+    // Mock mode treats registration as immediately verified.
+  }
+
+  @override
+  Future<void> resendVerificationEmail({
+    required String email,
+  }) async {
+    // No-op in mock mode.
+  }
+
+  @override
   Future<AppUser> signIn({
     required String email,
     required String password,

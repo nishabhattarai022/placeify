@@ -8,6 +8,7 @@ abstract final class AdminRoutes {
   static const notifications = '/admin/notifications';
   static const settings = '/admin/settings';
   static const auditLog = '/admin/audit-log';
+  static const refunds = '/admin/refunds';
 
   static String approvalDetail(String applicationId) =>
       '$approvals/$applicationId';

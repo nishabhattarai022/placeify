@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:placeify_flutter/features/admin/domain/constants/admin_routes.dart';
 import 'package:placeify_flutter/features/admin/presentation/dashboard/admin_dashboard_screen.dart';
+import 'package:placeify_flutter/features/admin/presentation/finance/admin_refunds_screen.dart';
 import 'package:placeify_flutter/features/admin/presentation/guards/admin_auth_guard.dart';
 import 'package:placeify_flutter/features/admin/presentation/notifications/admin_notifications_screen.dart';
 import 'package:placeify_flutter/features/admin/presentation/products/admin_product_detail_screen.dart';
@@ -26,6 +27,8 @@ import '../../features/home/presentation/home_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
+import '../../features/auth/presentation/check_email_screen.dart';
+import '../../features/auth/presentation/verify_email_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/vendor/presentation/registration/vendor_registration_screen.dart';
 import '../../features/vendor/presentation/registration/vendor_registration_success_screen.dart';
@@ -67,6 +70,8 @@ import '../../features/profile/presentation/profile_refund_screen.dart';
 import '../../features/profile/presentation/profile_settings_screen.dart';
 import '../../features/profile/presentation/profile_wishlist_screen.dart';
 import '../../features/product_detail/presentation/product_detail_screen.dart';
+import '../../features/messaging/presentation/conversations_screen.dart';
+import '../../features/messaging/presentation/chat_screen.dart';
 import '../../features/cart/presentation/cart_screen.dart';
 import '../../features/cart/presentation/checkout_payment_screen.dart';
 import '../../features/cart/presentation/esewa_payment_screen.dart';
@@ -74,6 +79,7 @@ import '../../features/user/presentation/user_cart_page.dart';
 import '../../features/user/presentation/user_dashboard_pages.dart';
 import '../../features/user/presentation/user_dashboard_screen.dart';
 import '../../features/user/presentation/user_orders_page.dart';
+import '../../features/user/presentation/user_payments_screen.dart';
 import '../../features/user/presentation/user_wishlist_page.dart';
 import '../../features/user/presentation/user_dashboard_shell.dart';
 import 'main_shell.dart';
@@ -185,6 +191,30 @@ List<RouteBase> get _appRoutes => [
       ),
     ),
     GoRoute(
+      path: '/register/check-email',
+      name: 'checkEmail',
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: CheckEmailScreen(
+          email: state.uri.queryParameters['email'] ?? '',
+        ),
+        transitionsBuilder: _fadeTransition,
+        transitionDuration: AppDurations.slow,
+      ),
+    ),
+    GoRoute(
+      path: '/verify-email',
+      name: 'verifyEmail',
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: VerifyEmailScreen(
+          token: state.uri.queryParameters['token'] ?? '',
+        ),
+        transitionsBuilder: _fadeTransition,
+        transitionDuration: AppDurations.slow,
+      ),
+    ),
+    GoRoute(
       path: '/login',
       name: 'login',
       pageBuilder: (context, state) => CustomTransitionPage(
@@ -248,6 +278,16 @@ List<RouteBase> get _appRoutes => [
               pageBuilder: (context, state) => CustomTransitionPage(
                 key: state.pageKey,
                 child: const UserOrdersPage(),
+                transitionsBuilder: _fadeTransition,
+                transitionDuration: AppDurations.slow,
+              ),
+            ),
+            GoRoute(
+              path: 'payments',
+              name: 'userPayments',
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const UserPaymentsScreen(),
                 transitionsBuilder: _fadeTransition,
                 transitionDuration: AppDurations.slow,
               ),
@@ -478,6 +518,28 @@ List<RouteBase> get _appRoutes => [
             key: ValueKey<String>(state.uri.toString()),
             child: const RoomSnapshotGalleryScreen(),
           ),
+        ),
+        GoRoute(
+          path: '/messages',
+          name: 'messages',
+          pageBuilder: (context, state) => _slidePage(
+            key: ValueKey<String>(state.uri.toString()),
+            child: const ConversationsScreen(),
+          ),
+          routes: [
+            GoRoute(
+              path: ':conversationId',
+              name: 'messageChat',
+              pageBuilder: (context, state) {
+                final conversationId =
+                    state.pathParameters['conversationId']!;
+                return _slidePage(
+                  key: ValueKey<String>('chat-$conversationId'),
+                  child: ChatScreen(conversationId: conversationId),
+                );
+              },
+            ),
+          ],
         ),
         GoRoute(
           path: '/profile/augmented-reality',
@@ -747,6 +809,14 @@ List<RouteBase> get _appRoutes => [
             child: const AdminAuditLogScreen(),
           ),
         ),
+        GoRoute(
+          path: AdminRoutes.refunds,
+          name: 'adminRefunds',
+          pageBuilder: (context, state) => _slidePage(
+            key: ValueKey<String>(state.uri.toString()),
+            child: const AdminRefundsScreen(),
+          ),
+        ),
         StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell) =>
               VendorShell(navigationShell: navigationShell),
@@ -911,6 +981,33 @@ List<RouteBase> get _appRoutes => [
                         key: ValueKey<String>(state.uri.toString()),
                         child: const VendorSettingsScreen(),
                       ),
+                    ),
+                    GoRoute(
+                      path: 'messages',
+                      name: 'vendorMessages',
+                      pageBuilder: (context, state) => _slidePage(
+                        key: ValueKey<String>(state.uri.toString()),
+                        child: const ConversationsScreen(asVendor: true),
+                      ),
+                      routes: [
+                        GoRoute(
+                          path: ':conversationId',
+                          name: 'vendorMessageChat',
+                          pageBuilder: (context, state) {
+                            final conversationId =
+                                state.pathParameters['conversationId']!;
+                            return _slidePage(
+                              key: ValueKey<String>(
+                                'vendor-chat-$conversationId',
+                              ),
+                              child: ChatScreen(
+                                conversationId: conversationId,
+                                asVendor: true,
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),

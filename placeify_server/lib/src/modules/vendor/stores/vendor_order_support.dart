@@ -1,7 +1,7 @@
 import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../../generated/protocol.dart';
-import '../../../shared/placeify_exception.dart';
+import '../../../shared/order_display_number.dart';
 
 /// Shared order queries and grouping used by vendor order and delivery stores.
 abstract final class VendorOrderSupport {
@@ -11,13 +11,19 @@ abstract final class VendorOrderSupport {
     int orderId,
   ) async {
     await assertVendorOwnsOrder(session, vendorId, orderId);
-    final order = await Order.db.findById(session, orderId);
+
+    final order = await Order.db.findById(
+      session,
+      orderId,
+    );
+
     if (order == null) {
       throw PlaceifyException(
         message: 'Order not found.',
         code: 'ORDER_NOT_FOUND',
       );
     }
+
     return order;
   }
 
@@ -31,6 +37,7 @@ abstract final class VendorOrderSupport {
       where: (row) =>
           row.vendorId.equals(vendorId) & row.orderId.equals(orderId),
     );
+
     if (ownsOrder == null) {
       throw PlaceifyException(
         message: 'Order not found.',
@@ -52,27 +59,38 @@ abstract final class VendorOrderSupport {
     );
   }
 
-  static DeliveryStage? nextDeliveryStage(List<OrderDeliveryUpdate> existing) {
-    if (existing.isEmpty) return DeliveryStage.orderPlaced;
-
-    var maxIndex = -1;
-    for (final update in existing) {
-      final index = DeliveryStage.values.indexOf(update.stage);
-      if (index > maxIndex) maxIndex = index;
+  /// Returns the next allowed delivery stage.
+  static DeliveryStage? nextDeliveryStage(
+    List<OrderDeliveryUpdate> existing,
+  ) {
+    if (existing.isEmpty) {
+      return DeliveryStage.orderPlaced;
     }
 
-    final nextIndex = maxIndex + 1;
-    if (nextIndex >= DeliveryStage.values.length) return null;
-    return DeliveryStage.values[nextIndex];
+    final latest = existing.reduce(
+      (a, b) => a.createdAt.isAfter(b.createdAt) ? a : b,
+    );
+
+    return switch (latest.stage) {
+      DeliveryStage.orderPlaced => DeliveryStage.packed,
+      DeliveryStage.packed => DeliveryStage.shipped,
+      DeliveryStage.shipped => DeliveryStage.outForDelivery,
+      DeliveryStage.outForDelivery => DeliveryStage.delivered,
+      DeliveryStage.delivered => null,
+      DeliveryStage.rejected => null,
+    };
   }
 
-  static String stageLabel(DeliveryStage stage) {
+  static String stageLabel(
+    DeliveryStage stage,
+  ) {
     return switch (stage) {
       DeliveryStage.orderPlaced => 'Order placed',
       DeliveryStage.packed => 'Packed',
       DeliveryStage.shipped => 'Shipped',
       DeliveryStage.outForDelivery => 'Out for delivery',
       DeliveryStage.delivered => 'Delivered',
+      DeliveryStage.rejected => 'Rejected',
     };
   }
 
@@ -81,7 +99,9 @@ abstract final class VendorOrderSupport {
     UuidValue vendorId,
     Set<int> orderIds,
   ) async {
-    if (orderIds.isEmpty) return const {};
+    if (orderIds.isEmpty) {
+      return const {};
+    }
 
     final updates = await OrderDeliveryUpdate.db.find(
       session,
@@ -89,25 +109,36 @@ abstract final class VendorOrderSupport {
       orderBy: (row) => row.createdAt,
     );
 
-    final stages = <int, DeliveryStage>{};
+    final latestUpdates = <int, OrderDeliveryUpdate>{};
+
     for (final update in updates) {
-      if (!orderIds.contains(update.orderId)) continue;
-      final current = stages[update.orderId];
-      if (current == null ||
-          DeliveryStage.values.indexOf(update.stage) >
-              DeliveryStage.values.indexOf(current)) {
-        stages[update.orderId] = update.stage;
+      if (!orderIds.contains(update.orderId)) {
+        continue;
+      }
+
+      final previous = latestUpdates[update.orderId];
+
+      if (previous == null || update.createdAt.isAfter(previous.createdAt)) {
+        latestUpdates[update.orderId] = update;
       }
     }
-    return stages;
+
+    return {
+      for (final entry in latestUpdates.entries) entry.key: entry.value.stage,
+    };
   }
 
   static VendorShopOrder withDeliveryStage(
     VendorShopOrder order,
     DeliveryStage? stage,
   ) {
-    if (stage == null) return order;
-    return order.copyWith(currentDeliveryStage: stage);
+    if (stage == null) {
+      return order;
+    }
+
+    return order.copyWith(
+      currentDeliveryStage: stage,
+    );
   }
 
   static Future<List<OrderItem>> loadVendorOrderItems(
@@ -118,7 +149,9 @@ abstract final class VendorOrderSupport {
       session,
       where: (row) => row.vendorId.equals(vendorId),
       include: OrderItem.include(
-        order: Order.include(user: User.include()),
+        order: Order.include(
+          user: User.include(),
+        ),
         product: Product.include(),
       ),
       orderDescending: true,
@@ -126,17 +159,25 @@ abstract final class VendorOrderSupport {
     );
   }
 
-  static List<VendorShopOrder> groupVendorShopOrders(List<OrderItem> orderItems) {
+  static List<VendorShopOrder> groupVendorShopOrders(
+    List<OrderItem> orderItems,
+  ) {
     final grouped = <int, List<OrderItem>>{};
+
     for (final item in orderItems) {
       grouped.putIfAbsent(item.orderId, () => []).add(item);
     }
 
     final orders = <VendorShopOrder>[];
+
     for (final entry in grouped.entries) {
       final items = entry.value;
+
       final order = items.first.order;
-      if (order == null) continue;
+
+      if (order == null) {
+        continue;
+      }
 
       final lineItems = <VendorOrderLineItem>[
         for (final item in items)
@@ -156,6 +197,7 @@ abstract final class VendorOrderSupport {
         0,
         (sum, item) => sum + item.lineTotal,
       );
+
       final itemCount = lineItems.fold<int>(
         0,
         (sum, item) => sum + item.quantity,
@@ -164,7 +206,7 @@ abstract final class VendorOrderSupport {
       orders.add(
         VendorShopOrder(
           orderId: entry.key,
-          orderNumber: entry.key.toString().padLeft(5, '0'),
+          orderNumber: OrderDisplayNumber.format(entry.key),
           status: order.status,
           placedAt: order.placedAt,
           customerName: order.user?.name ?? 'Customer',
@@ -179,7 +221,10 @@ abstract final class VendorOrderSupport {
       );
     }
 
-    orders.sort((a, b) => b.placedAt.compareTo(a.placedAt));
+    orders.sort(
+      (a, b) => b.placedAt.compareTo(a.placedAt),
+    );
+
     return orders;
   }
 }

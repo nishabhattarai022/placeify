@@ -100,6 +100,7 @@ abstract final class PaymentSync {
       transaction: transaction,
     );
     for (final allocation in allocations) {
+      if (allocation.status == PaymentTransactionStatus.refunded) continue;
       await OrderVendorPayment.db.updateRow(
         session,
         allocation.copyWith(
@@ -116,11 +117,13 @@ abstract final class PaymentSync {
       where: (row) => row.orderId.equals(orderId),
       transaction: transaction,
     );
-    if (payment != null) {
+    if (payment != null &&
+        payment.status != PaymentTransactionStatus.refunded) {
       await PaymentTransaction.db.updateRow(
         session,
         payment.copyWith(
           status: PaymentTransactionStatus.refunded,
+          note: payment.note ?? 'Refund completed via merchant portal.',
           updatedAt: DateTime.now(),
         ),
         transaction: transaction,
@@ -139,6 +142,86 @@ abstract final class PaymentSync {
     );
   }
 
+  /// Marks a paid order as refund-pending (manual eSewa merchant portal settlement).
+  /// Idempotent: safe if already refundPending or refunded.
+  static Future<bool> markOrderRefundPending(
+    Session session,
+    int orderId, {
+    required String reason,
+    Transaction? transaction,
+    UuidValue? changedByUserId,
+  }) async {
+    await ensureAllocationsForOrder(
+      session,
+      orderId,
+      transaction: transaction,
+    );
+
+    final payment = await PaymentTransaction.db.findFirstRow(
+      session,
+      where: (row) => row.orderId.equals(orderId),
+      transaction: transaction,
+    );
+    if (payment == null) return false;
+    if (payment.status == PaymentTransactionStatus.refunded ||
+        payment.status == PaymentTransactionStatus.refundPending) {
+      return false;
+    }
+    if (payment.status != PaymentTransactionStatus.paid) {
+      return false;
+    }
+
+    final order = await Order.db.findById(
+      session,
+      orderId,
+      transaction: transaction,
+    );
+    if (order == null) return false;
+
+    final allocations = await OrderVendorPayment.db.find(
+      session,
+      where: (row) => row.orderId.equals(orderId),
+      transaction: transaction,
+    );
+    for (final allocation in allocations) {
+      if (allocation.status == PaymentTransactionStatus.refunded ||
+          allocation.status == PaymentTransactionStatus.refundPending) {
+        continue;
+      }
+      await OrderVendorPayment.db.updateRow(
+        session,
+        allocation.copyWith(
+          status: PaymentTransactionStatus.refundPending,
+          note: reason,
+          updatedAt: DateTime.now(),
+        ),
+        transaction: transaction,
+      );
+    }
+
+    await PaymentTransaction.db.updateRow(
+      session,
+      payment.copyWith(
+        status: PaymentTransactionStatus.refundPending,
+        note: reason,
+        updatedAt: DateTime.now(),
+      ),
+      transaction: transaction,
+    );
+
+    await OrderLifecycleStore.appendHistory(
+      session,
+      orderId,
+      statusType: OrderStatusHistoryType.payment,
+      previousStatus: PaymentTransactionStatus.paid.name,
+      newStatus: PaymentTransactionStatus.refundPending.name,
+      changedByUserId: changedByUserId,
+      note: reason,
+      transaction: transaction,
+    );
+    return true;
+  }
+
   static PaymentTransactionStatus _aggregateStatus(
     Iterable<PaymentTransactionStatus> statuses,
   ) {
@@ -149,6 +232,11 @@ abstract final class PaymentSync {
     }
     if (values.any((status) => status == PaymentTransactionStatus.refunded)) {
       return PaymentTransactionStatus.refunded;
+    }
+    if (values.any(
+      (status) => status == PaymentTransactionStatus.refundPending,
+    )) {
+      return PaymentTransactionStatus.refundPending;
     }
     if (values.every((status) => status == PaymentTransactionStatus.failed)) {
       return PaymentTransactionStatus.failed;

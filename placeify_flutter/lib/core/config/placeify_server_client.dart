@@ -138,9 +138,25 @@ Future<void> reconnectPlaceifyClient({bool forceRefresh = true}) async {
 }
 
 /// Default endpoint timeout. Keep short so login/catalog fail fast when the
-/// server is unreachable. Build 3D no longer needs a long client timeout
-/// because Tripo runs in a server background job.
+/// server is unreachable. Build 3D uses [runWithExtendedVendorTimeout] because
+/// photo sync may call remove.bg several times before queueing Tripo.
 const Duration placeifyRequestTimeout = Duration(seconds: 20);
+
+/// Longer timeout for vendor photo sync + Tripo queue (multiview uploads).
+const Duration placeifyVendorUploadTimeout = Duration(minutes: 3);
+
+/// Runs [action] with a longer-lived client for multiview photo sync / Build 3D.
+Future<T> runWithExtendedVendorTimeout<T>(
+  Future<T> Function(Client api) action,
+) async {
+  final extended = Client(
+    serverUrl,
+    connectionTimeout: placeifyVendorUploadTimeout,
+  )
+    ..connectivityMonitor = FlutterConnectivityMonitor()
+    ..authSessionManager = _authSessionManager;
+  return action(extended);
+}
 
 Future<void> _createClient({required bool forceRefresh}) async {
   await resetPlaceifyRealtime();

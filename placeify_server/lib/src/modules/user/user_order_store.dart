@@ -275,6 +275,7 @@ class UserOrderStore {
       placedAt: order.placedAt,
       itemCount: totalQuantity,
       primaryProductName: displayName,
+      shippingAddress: order.shippingAddress,
       latestDeliveryStage: latestDeliveryStage,
       latestDeliveryNote: latestDeliveryNote,
       orderPaymentStatus: order.paymentStatus,

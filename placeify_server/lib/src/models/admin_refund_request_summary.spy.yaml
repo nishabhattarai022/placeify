@@ -10,3 +10,13 @@ fields:
   refundAmount: double
   status: RequestStatus
   createdAt: DateTime
+  paymentMethod: PaymentMethod?
+  paymentStatus: PaymentTransactionStatus?
+  destinationLabel: String?
+  gatewayStatus: String?
+  gatewayReference: String?
+  gatewayResponse: String?
+  refundCompletedAt: DateTime?
+  lastGatewayCheckAt: DateTime?
+  settlementMode: String?
+  automaticInitiateConfigured: bool

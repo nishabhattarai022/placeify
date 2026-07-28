@@ -32,4 +32,5 @@ const _$DeliveryStageEnumMap = {
   DeliveryStage.shipped: 'shipped',
   DeliveryStage.outForDelivery: 'outForDelivery',
   DeliveryStage.delivered: 'delivered',
+  DeliveryStage.rejected: 'rejected',
 };

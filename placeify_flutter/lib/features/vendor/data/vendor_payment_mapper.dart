@@ -14,6 +14,17 @@ abstract final class VendorPaymentMapper {
       updatedAt: summary.updatedAt,
       paymentMethodLabel: _paymentMethodLabel(summary.paymentMethod),
       customerName: summary.customerName,
+      customerEmail: summary.customerEmail,
+      orderNumber: summary.orderNumber,
+      orderStatus: summary.orderStatus,
+      transactionId: summary.transactionId,
+      providerTransactionId: summary.providerTransactionId,
+      deliveryFee: summary.deliveryFee,
+      discount: summary.discount,
+      vendorEarnings: summary.vendorEarnings,
+      refundStatus: summary.refundStatus,
+      refundDate: summary.refundDate,
+      createdAt: summary.createdAt,
     );
   }
 
@@ -32,15 +43,22 @@ abstract final class VendorPaymentMapper {
       PaymentStatus.pending => api.PaymentTransactionStatus.pending,
       PaymentStatus.paid => api.PaymentTransactionStatus.paid,
       PaymentStatus.partial => api.PaymentTransactionStatus.pending,
+      PaymentStatus.refundPending => api.PaymentTransactionStatus.refundPending,
       PaymentStatus.refunded => api.PaymentTransactionStatus.refunded,
       PaymentStatus.failed => api.PaymentTransactionStatus.failed,
     };
   }
 
+  static PaymentStatus fromTransactionStatus(
+    api.PaymentTransactionStatus status,
+  ) =>
+      _toPaymentStatus(status);
+
   static PaymentStatus _toPaymentStatus(api.PaymentTransactionStatus status) {
     return switch (status) {
       api.PaymentTransactionStatus.pending => PaymentStatus.pending,
       api.PaymentTransactionStatus.paid => PaymentStatus.paid,
+      api.PaymentTransactionStatus.refundPending => PaymentStatus.refundPending,
       api.PaymentTransactionStatus.refunded => PaymentStatus.refunded,
       api.PaymentTransactionStatus.failed => PaymentStatus.failed,
       api.PaymentTransactionStatus.cancelled => PaymentStatus.failed,

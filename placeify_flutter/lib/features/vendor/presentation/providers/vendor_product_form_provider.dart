@@ -39,6 +39,11 @@ class VendorProductForm extends _$VendorProductForm {
 
     if (state.editingProductId != null) {
       state = VendorProductFormState.initial();
+      return;
+    }
+
+    if (state.isSubmitting) {
+      state = state.copyWith(isSubmitting: false, clearSubmitError: true);
     }
   }
 

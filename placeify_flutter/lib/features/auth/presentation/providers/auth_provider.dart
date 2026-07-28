@@ -25,23 +25,38 @@ class CurrentUser extends _$CurrentUser {
     return repo.getCurrentUser();
   }
 
-  /// Creates an account and signs the user in.
-  Future<void> registerAccount({
+  /// Starts registration and emails a verification link. Does not sign in.
+  Future<String> registerAccount({
     required String fullName,
     required String email,
     required String password,
   }) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final repo = await ref.read(authRepositoryProvider.future);
-      return repo.register(
-        fullName: fullName,
-        email: email,
-        password: password,
-      );
-    });
-    if (state.hasError) throw _unwrapError(state.error!);
-    unawaited(ensurePlaceifyRealtime());
+    final repo = await ref.read(authRepositoryProvider.future);
+    return repo.beginEmailRegistration(
+      fullName: fullName,
+      email: email,
+      password: password,
+    );
+  }
+
+  Future<void> verifyEmailRegistration({
+    required String token,
+    required String password,
+    String? fullName,
+  }) async {
+    final repo = await ref.read(authRepositoryProvider.future);
+    await repo.verifyEmailRegistration(
+      token: token,
+      password: password,
+      fullName: fullName,
+    );
+  }
+
+  Future<void> resendVerificationEmail({
+    required String email,
+  }) async {
+    final repo = await ref.read(authRepositoryProvider.future);
+    await repo.resendVerificationEmail(email: email);
   }
 
   Future<AppUser> signIn({
@@ -54,24 +69,7 @@ class CurrentUser extends _$CurrentUser {
       return repo.signIn(email: email, password: password);
     });
     if (state.hasError) throw _unwrapError(state.error!);
-    unawaited(ensurePlaceifyRealtime());
-    return _requireSignedInUser();
-  }
-
-  Future<AppUser> signInWithDemoCredentials() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final repo = await ref.read(authRepositoryProvider.future);
-      if (repo is ServerpodAuthRepository) {
-        return repo.signInWithDemoCredentials();
-      }
-      return repo.signIn(
-        email: DemoCredentials.email,
-        password: DemoCredentials.password,
-      );
-    });
-    if (state.hasError) throw _unwrapError(state.error!);
-    unawaited(ensurePlaceifyRealtime());
+    await ensurePlaceifyRealtime();
     return _requireSignedInUser();
   }
 
@@ -80,7 +78,10 @@ class CurrentUser extends _$CurrentUser {
     state = await AsyncValue.guard(() async {
       final repo = await ref.read(authRepositoryProvider.future);
       if (repo is ServerpodAuthRepository) {
-        return repo.signInWithDemoAdminCredentials();
+        return repo.signIn(
+          email: DemoCredentials.adminEmail,
+          password: DemoCredentials.adminPassword,
+        );
       }
       return repo.signIn(
         email: DemoCredentials.adminEmail,

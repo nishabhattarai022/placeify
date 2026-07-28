@@ -23,9 +23,11 @@ abstract class UserOrderSummary implements _i1.SerializableModel {
     required this.status,
     required this.totalAmount,
     required this.placedAt,
+    this.deliveredAt,
     required this.itemCount,
     this.primaryProductName,
     this.primaryThumbnailUrl,
+    required this.shippingAddress,
     this.latestDeliveryStage,
     this.latestDeliveryNote,
     required this.orderPaymentStatus,
@@ -37,9 +39,11 @@ abstract class UserOrderSummary implements _i1.SerializableModel {
     required _i2.OrderStatus status,
     required double totalAmount,
     required DateTime placedAt,
+    DateTime? deliveredAt,
     required int itemCount,
     String? primaryProductName,
     String? primaryThumbnailUrl,
+    required String shippingAddress,
     _i3.DeliveryStage? latestDeliveryStage,
     String? latestDeliveryNote,
     required _i4.OrderPaymentStatus orderPaymentStatus,
@@ -54,9 +58,15 @@ abstract class UserOrderSummary implements _i1.SerializableModel {
       placedAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['placedAt'],
       ),
+      deliveredAt: jsonSerialization['deliveredAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['deliveredAt'],
+            ),
       itemCount: jsonSerialization['itemCount'] as int,
       primaryProductName: jsonSerialization['primaryProductName'] as String?,
       primaryThumbnailUrl: jsonSerialization['primaryThumbnailUrl'] as String?,
+      shippingAddress: jsonSerialization['shippingAddress'] as String,
       latestDeliveryStage: jsonSerialization['latestDeliveryStage'] == null
           ? null
           : _i3.DeliveryStage.fromJson(
@@ -79,11 +89,17 @@ abstract class UserOrderSummary implements _i1.SerializableModel {
 
   DateTime placedAt;
 
+  /// When status is delivered, timestamp of the delivery update if known.
+  DateTime? deliveredAt;
+
   int itemCount;
 
   String? primaryProductName;
 
   String? primaryThumbnailUrl;
+
+  /// Snapshot from Order.shippingAddress (not live profile address).
+  String shippingAddress;
 
   _i3.DeliveryStage? latestDeliveryStage;
 
@@ -100,9 +116,11 @@ abstract class UserOrderSummary implements _i1.SerializableModel {
     _i2.OrderStatus? status,
     double? totalAmount,
     DateTime? placedAt,
+    DateTime? deliveredAt,
     int? itemCount,
     String? primaryProductName,
     String? primaryThumbnailUrl,
+    String? shippingAddress,
     _i3.DeliveryStage? latestDeliveryStage,
     String? latestDeliveryNote,
     _i4.OrderPaymentStatus? orderPaymentStatus,
@@ -116,10 +134,12 @@ abstract class UserOrderSummary implements _i1.SerializableModel {
       'status': status.toJson(),
       'totalAmount': totalAmount,
       'placedAt': placedAt.toJson(),
+      if (deliveredAt != null) 'deliveredAt': deliveredAt?.toJson(),
       'itemCount': itemCount,
       if (primaryProductName != null) 'primaryProductName': primaryProductName,
       if (primaryThumbnailUrl != null)
         'primaryThumbnailUrl': primaryThumbnailUrl,
+      'shippingAddress': shippingAddress,
       if (latestDeliveryStage != null)
         'latestDeliveryStage': latestDeliveryStage?.toJson(),
       if (latestDeliveryNote != null) 'latestDeliveryNote': latestDeliveryNote,
@@ -142,9 +162,11 @@ class _UserOrderSummaryImpl extends UserOrderSummary {
     required _i2.OrderStatus status,
     required double totalAmount,
     required DateTime placedAt,
+    DateTime? deliveredAt,
     required int itemCount,
     String? primaryProductName,
     String? primaryThumbnailUrl,
+    required String shippingAddress,
     _i3.DeliveryStage? latestDeliveryStage,
     String? latestDeliveryNote,
     required _i4.OrderPaymentStatus orderPaymentStatus,
@@ -154,9 +176,11 @@ class _UserOrderSummaryImpl extends UserOrderSummary {
          status: status,
          totalAmount: totalAmount,
          placedAt: placedAt,
+         deliveredAt: deliveredAt,
          itemCount: itemCount,
          primaryProductName: primaryProductName,
          primaryThumbnailUrl: primaryThumbnailUrl,
+         shippingAddress: shippingAddress,
          latestDeliveryStage: latestDeliveryStage,
          latestDeliveryNote: latestDeliveryNote,
          orderPaymentStatus: orderPaymentStatus,
@@ -172,9 +196,11 @@ class _UserOrderSummaryImpl extends UserOrderSummary {
     _i2.OrderStatus? status,
     double? totalAmount,
     DateTime? placedAt,
+    Object? deliveredAt = _Undefined,
     int? itemCount,
     Object? primaryProductName = _Undefined,
     Object? primaryThumbnailUrl = _Undefined,
+    String? shippingAddress,
     Object? latestDeliveryStage = _Undefined,
     Object? latestDeliveryNote = _Undefined,
     _i4.OrderPaymentStatus? orderPaymentStatus,
@@ -185,6 +211,7 @@ class _UserOrderSummaryImpl extends UserOrderSummary {
       status: status ?? this.status,
       totalAmount: totalAmount ?? this.totalAmount,
       placedAt: placedAt ?? this.placedAt,
+      deliveredAt: deliveredAt is DateTime? ? deliveredAt : this.deliveredAt,
       itemCount: itemCount ?? this.itemCount,
       primaryProductName: primaryProductName is String?
           ? primaryProductName
@@ -192,6 +219,7 @@ class _UserOrderSummaryImpl extends UserOrderSummary {
       primaryThumbnailUrl: primaryThumbnailUrl is String?
           ? primaryThumbnailUrl
           : this.primaryThumbnailUrl,
+      shippingAddress: shippingAddress ?? this.shippingAddress,
       latestDeliveryStage: latestDeliveryStage is _i3.DeliveryStage?
           ? latestDeliveryStage
           : this.latestDeliveryStage,

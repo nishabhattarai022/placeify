@@ -7,6 +7,15 @@ fields:
   reason: String
   status: RequestStatus, default=pending
   refundAmount: double
+  rejectionReason: String?
+  resolvedByUserId: UuidValue?
+  gatewayStatus: String?
+  gatewayReference: String?
+  gatewayResponse: String?
+  refundCompletedAt: DateTime?
+  lastGatewayCheckAt: DateTime?
+  ### manual_portal | auto_api (future Mode A)
+  settlementMode: String?
   createdAt: DateTime, default=now
   updatedAt: DateTime, default=now
 

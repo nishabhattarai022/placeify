@@ -18,6 +18,15 @@ class ServerpodVendorPaymentRepository implements VendorPaymentRepository {
       pendingPaymentCount: overview.pendingPaymentCount,
       paymentHistory:
           overview.paymentHistory.map(VendorPaymentMapper.toUpdate).toList(),
+      todayRevenue: overview.todayRevenue,
+      monthlyRevenue: overview.monthlyRevenue,
+      refundAmount: overview.refundAmount,
+      refundCount: overview.refundCount,
+      successfulPaymentCount: overview.successfulPaymentCount,
+      codPaymentCount: overview.codPaymentCount,
+      esewaPaymentCount: overview.esewaPaymentCount,
+      averageOrderValue: overview.averageOrderValue,
+      pendingRefundCount: overview.pendingRefundCount,
     );
   }
 

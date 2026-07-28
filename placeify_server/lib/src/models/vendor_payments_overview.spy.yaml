@@ -6,5 +6,15 @@ fields:
   totalEarned: double
   ### Count of OrderVendorPayment rows still pending for this vendor.
   pendingPaymentCount: int
-  ### Completed customer payments (COD + eSewa) for this vendor shop.
+  ### Customer payments (COD + eSewa) for this vendor shop.
   paymentHistory: List<PaymentUpdateSummary>
+  ### Analytics (PostgreSQL aggregates).
+  todayRevenue: double, default=0
+  monthlyRevenue: double, default=0
+  refundAmount: double, default=0
+  refundCount: int, default=0
+  successfulPaymentCount: int, default=0
+  codPaymentCount: int, default=0
+  esewaPaymentCount: int, default=0
+  averageOrderValue: double, default=0
+  pendingRefundCount: int, default=0

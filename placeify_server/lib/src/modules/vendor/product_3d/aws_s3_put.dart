@@ -66,18 +66,20 @@ abstract final class AwsS3Put {
     ].join(' ');
 
     final url = Uri.https(hostHeader, normalizedKey);
-    final response = await http.put(
-      url,
-      headers: {
-        'Content-Type': contentType,
-        'Host': hostHeader,
-        'x-amz-content-sha256': payloadHash,
-        'x-amz-date': amzDate,
-        'x-amz-security-token': sessionToken,
-        'Authorization': authorization,
-      },
-      body: body,
-    );
+    final response = await http
+        .put(
+          url,
+          headers: {
+            'Content-Type': contentType,
+            'Host': hostHeader,
+            'x-amz-content-sha256': payloadHash,
+            'x-amz-date': amzDate,
+            'x-amz-security-token': sessionToken,
+            'Authorization': authorization,
+          },
+          body: body,
+        )
+        .timeout(const Duration(seconds: 90));
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw AwsS3PutException(

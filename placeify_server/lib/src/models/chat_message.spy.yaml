@@ -1,0 +1,20 @@
+### Direct message within a customer ↔ vendor conversation.
+class: ChatMessage
+table: chat_message
+fields:
+  id: UuidValue?, defaultPersist=random_v7
+  conversationId: UuidValue
+  senderId: UuidValue
+  receiverId: UuidValue
+  message: String
+  messageType: ChatMessageType, default=text
+  isRead: bool, default=false
+  createdAt: DateTime, default=now
+
+indexes:
+  chat_message_conversation_id:
+    fields: conversationId
+  chat_message_conversation_created:
+    fields: conversationId, createdAt
+  chat_message_receiver_unread:
+    fields: receiverId, isRead

@@ -33,7 +33,9 @@ enum AdminActionType implements _i1.SerializableModel {
   approvePayout,
   failPayout,
   approveRefund,
-  rejectRefund;
+  rejectRefund,
+  checkEsewaRefundStatus,
+  completeManualEsewaSettlement;
 
   static AdminActionType fromJson(String name) {
     switch (name) {
@@ -77,6 +79,10 @@ enum AdminActionType implements _i1.SerializableModel {
         return AdminActionType.approveRefund;
       case 'rejectRefund':
         return AdminActionType.rejectRefund;
+      case 'checkEsewaRefundStatus':
+        return AdminActionType.checkEsewaRefundStatus;
+      case 'completeManualEsewaSettlement':
+        return AdminActionType.completeManualEsewaSettlement;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "AdminActionType"',

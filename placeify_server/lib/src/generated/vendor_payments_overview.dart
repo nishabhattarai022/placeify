@@ -24,7 +24,24 @@ abstract class VendorPaymentsOverview
     required this.totalEarned,
     required this.pendingPaymentCount,
     required this.paymentHistory,
-  });
+    double? todayRevenue,
+    double? monthlyRevenue,
+    double? refundAmount,
+    int? refundCount,
+    int? successfulPaymentCount,
+    int? codPaymentCount,
+    int? esewaPaymentCount,
+    double? averageOrderValue,
+    int? pendingRefundCount,
+  }) : todayRevenue = todayRevenue ?? 0.0,
+       monthlyRevenue = monthlyRevenue ?? 0.0,
+       refundAmount = refundAmount ?? 0.0,
+       refundCount = refundCount ?? 0,
+       successfulPaymentCount = successfulPaymentCount ?? 0,
+       codPaymentCount = codPaymentCount ?? 0,
+       esewaPaymentCount = esewaPaymentCount ?? 0,
+       averageOrderValue = averageOrderValue ?? 0.0,
+       pendingRefundCount = pendingRefundCount ?? 0;
 
   factory VendorPaymentsOverview({
     required List<_i2.VendorPayoutSummary> payouts,
@@ -32,6 +49,15 @@ abstract class VendorPaymentsOverview
     required double totalEarned,
     required int pendingPaymentCount,
     required List<_i3.PaymentUpdateSummary> paymentHistory,
+    double? todayRevenue,
+    double? monthlyRevenue,
+    double? refundAmount,
+    int? refundCount,
+    int? successfulPaymentCount,
+    int? codPaymentCount,
+    int? esewaPaymentCount,
+    double? averageOrderValue,
+    int? pendingRefundCount,
   }) = _VendorPaymentsOverviewImpl;
 
   factory VendorPaymentsOverview.fromJson(
@@ -48,6 +74,17 @@ abstract class VendorPaymentsOverview
           .deserialize<List<_i3.PaymentUpdateSummary>>(
             jsonSerialization['paymentHistory'],
           ),
+      todayRevenue: (jsonSerialization['todayRevenue'] as num?)?.toDouble(),
+      monthlyRevenue: (jsonSerialization['monthlyRevenue'] as num?)?.toDouble(),
+      refundAmount: (jsonSerialization['refundAmount'] as num?)?.toDouble(),
+      refundCount: jsonSerialization['refundCount'] as int?,
+      successfulPaymentCount:
+          jsonSerialization['successfulPaymentCount'] as int?,
+      codPaymentCount: jsonSerialization['codPaymentCount'] as int?,
+      esewaPaymentCount: jsonSerialization['esewaPaymentCount'] as int?,
+      averageOrderValue: (jsonSerialization['averageOrderValue'] as num?)
+          ?.toDouble(),
+      pendingRefundCount: jsonSerialization['pendingRefundCount'] as int?,
     );
   }
 
@@ -60,8 +97,27 @@ abstract class VendorPaymentsOverview
   /// Count of OrderVendorPayment rows still pending for this vendor.
   int pendingPaymentCount;
 
-  /// Completed customer payments (COD + eSewa) for this vendor shop.
+  /// Customer payments (COD + eSewa) for this vendor shop.
   List<_i3.PaymentUpdateSummary> paymentHistory;
+
+  /// Analytics (PostgreSQL aggregates).
+  double todayRevenue;
+
+  double monthlyRevenue;
+
+  double refundAmount;
+
+  int refundCount;
+
+  int successfulPaymentCount;
+
+  int codPaymentCount;
+
+  int esewaPaymentCount;
+
+  double averageOrderValue;
+
+  int pendingRefundCount;
 
   /// Returns a shallow copy of this [VendorPaymentsOverview]
   /// with some or all fields replaced by the given arguments.
@@ -72,6 +128,15 @@ abstract class VendorPaymentsOverview
     double? totalEarned,
     int? pendingPaymentCount,
     List<_i3.PaymentUpdateSummary>? paymentHistory,
+    double? todayRevenue,
+    double? monthlyRevenue,
+    double? refundAmount,
+    int? refundCount,
+    int? successfulPaymentCount,
+    int? codPaymentCount,
+    int? esewaPaymentCount,
+    double? averageOrderValue,
+    int? pendingRefundCount,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -82,6 +147,15 @@ abstract class VendorPaymentsOverview
       'totalEarned': totalEarned,
       'pendingPaymentCount': pendingPaymentCount,
       'paymentHistory': paymentHistory.toJson(valueToJson: (v) => v.toJson()),
+      'todayRevenue': todayRevenue,
+      'monthlyRevenue': monthlyRevenue,
+      'refundAmount': refundAmount,
+      'refundCount': refundCount,
+      'successfulPaymentCount': successfulPaymentCount,
+      'codPaymentCount': codPaymentCount,
+      'esewaPaymentCount': esewaPaymentCount,
+      'averageOrderValue': averageOrderValue,
+      'pendingRefundCount': pendingRefundCount,
     };
   }
 
@@ -96,6 +170,15 @@ abstract class VendorPaymentsOverview
       'paymentHistory': paymentHistory.toJson(
         valueToJson: (v) => v.toJsonForProtocol(),
       ),
+      'todayRevenue': todayRevenue,
+      'monthlyRevenue': monthlyRevenue,
+      'refundAmount': refundAmount,
+      'refundCount': refundCount,
+      'successfulPaymentCount': successfulPaymentCount,
+      'codPaymentCount': codPaymentCount,
+      'esewaPaymentCount': esewaPaymentCount,
+      'averageOrderValue': averageOrderValue,
+      'pendingRefundCount': pendingRefundCount,
     };
   }
 
@@ -112,12 +195,30 @@ class _VendorPaymentsOverviewImpl extends VendorPaymentsOverview {
     required double totalEarned,
     required int pendingPaymentCount,
     required List<_i3.PaymentUpdateSummary> paymentHistory,
+    double? todayRevenue,
+    double? monthlyRevenue,
+    double? refundAmount,
+    int? refundCount,
+    int? successfulPaymentCount,
+    int? codPaymentCount,
+    int? esewaPaymentCount,
+    double? averageOrderValue,
+    int? pendingRefundCount,
   }) : super._(
          payouts: payouts,
          pendingBalance: pendingBalance,
          totalEarned: totalEarned,
          pendingPaymentCount: pendingPaymentCount,
          paymentHistory: paymentHistory,
+         todayRevenue: todayRevenue,
+         monthlyRevenue: monthlyRevenue,
+         refundAmount: refundAmount,
+         refundCount: refundCount,
+         successfulPaymentCount: successfulPaymentCount,
+         codPaymentCount: codPaymentCount,
+         esewaPaymentCount: esewaPaymentCount,
+         averageOrderValue: averageOrderValue,
+         pendingRefundCount: pendingRefundCount,
        );
 
   /// Returns a shallow copy of this [VendorPaymentsOverview]
@@ -130,6 +231,15 @@ class _VendorPaymentsOverviewImpl extends VendorPaymentsOverview {
     double? totalEarned,
     int? pendingPaymentCount,
     List<_i3.PaymentUpdateSummary>? paymentHistory,
+    double? todayRevenue,
+    double? monthlyRevenue,
+    double? refundAmount,
+    int? refundCount,
+    int? successfulPaymentCount,
+    int? codPaymentCount,
+    int? esewaPaymentCount,
+    double? averageOrderValue,
+    int? pendingRefundCount,
   }) {
     return VendorPaymentsOverview(
       payouts: payouts ?? this.payouts.map((e0) => e0.copyWith()).toList(),
@@ -139,6 +249,16 @@ class _VendorPaymentsOverviewImpl extends VendorPaymentsOverview {
       paymentHistory:
           paymentHistory ??
           this.paymentHistory.map((e0) => e0.copyWith()).toList(),
+      todayRevenue: todayRevenue ?? this.todayRevenue,
+      monthlyRevenue: monthlyRevenue ?? this.monthlyRevenue,
+      refundAmount: refundAmount ?? this.refundAmount,
+      refundCount: refundCount ?? this.refundCount,
+      successfulPaymentCount:
+          successfulPaymentCount ?? this.successfulPaymentCount,
+      codPaymentCount: codPaymentCount ?? this.codPaymentCount,
+      esewaPaymentCount: esewaPaymentCount ?? this.esewaPaymentCount,
+      averageOrderValue: averageOrderValue ?? this.averageOrderValue,
+      pendingRefundCount: pendingRefundCount ?? this.pendingRefundCount,
     );
   }
 }

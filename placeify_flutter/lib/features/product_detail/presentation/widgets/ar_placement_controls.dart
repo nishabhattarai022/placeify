@@ -198,6 +198,65 @@ class ArScaleControlBar extends StatelessWidget {
   }
 }
 
+/// Removes the currently selected placed item from the AR room.
+class ArRemovePlacedButton extends StatelessWidget {
+  const ArRemovePlacedButton({
+    required this.onRemove,
+    this.enabled = true,
+    super.key,
+  });
+
+  final VoidCallback? onRemove;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        ArRoomUiTokens.screenPadding,
+        0,
+        ArRoomUiTokens.screenPadding,
+        8,
+      ),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: enabled ? onRemove : null,
+        child: Opacity(
+          opacity: enabled ? 1 : 0.5,
+          child: ArFrostedSurface(
+            strong: true,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.delete_outline_rounded,
+                  size: 18,
+                  color: enabled
+                      ? ArRoomUiTokens.overlayTextPrimary
+                      : ArRoomUiTokens.overlayTextMuted,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Move to trash',
+                  style: AppFonts.dmSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: enabled
+                        ? ArRoomUiTokens.overlayTextPrimary
+                        : ArRoomUiTokens.overlayTextMuted,
+                    letterSpacing: -0.15,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Frosted save-room-shot control (camera icon + label).
 ///
 /// Use [compact] when sharing a row with the product carousel (no outer

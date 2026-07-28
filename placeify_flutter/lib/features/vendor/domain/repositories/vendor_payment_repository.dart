@@ -20,11 +20,31 @@ class VendorPaymentsOverviewData {
     required this.totalEarned,
     required this.pendingPaymentCount,
     required this.paymentHistory,
+    this.todayRevenue = 0,
+    this.monthlyRevenue = 0,
+    this.refundAmount = 0,
+    this.refundCount = 0,
+    this.successfulPaymentCount = 0,
+    this.codPaymentCount = 0,
+    this.esewaPaymentCount = 0,
+    this.averageOrderValue = 0,
+    this.pendingRefundCount = 0,
   });
 
   final double totalEarned;
   final int pendingPaymentCount;
   final List<PaymentUpdate> paymentHistory;
+  final double todayRevenue;
+  final double monthlyRevenue;
+  final double refundAmount;
+  final int refundCount;
+  final int successfulPaymentCount;
+  final int codPaymentCount;
+  final int esewaPaymentCount;
+  final double averageOrderValue;
+  final int pendingRefundCount;
+
+  double get netEarnings => totalEarned - refundAmount;
 }
 
 class VendorPaymentException implements Exception {

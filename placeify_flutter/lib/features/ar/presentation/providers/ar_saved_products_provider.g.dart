@@ -44,7 +44,7 @@ final class ArSavedProductsProvider
   }
 }
 
-String _$arSavedProductsHash() => r'd0cf7a06ad1e4ae1b2537e128fc651cc5de6652e';
+String _$arSavedProductsHash() => r'20fbf1c98f20c8c598e77baab367d4004e79f51b';
 
 /// Product id → time saved (newest first when listed).
 

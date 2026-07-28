@@ -21,6 +21,9 @@ abstract class UserOrderLineItem implements _i1.SerializableModel {
     required this.unitPrice,
     required this.lineTotal,
     this.thumbnailUrl,
+    this.vendorId,
+    this.vendorName,
+    this.listUnitPrice,
   });
 
   factory UserOrderLineItem({
@@ -30,6 +33,9 @@ abstract class UserOrderLineItem implements _i1.SerializableModel {
     required double unitPrice,
     required double lineTotal,
     String? thumbnailUrl,
+    _i1.UuidValue? vendorId,
+    String? vendorName,
+    double? listUnitPrice,
   }) = _UserOrderLineItemImpl;
 
   factory UserOrderLineItem.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -40,6 +46,11 @@ abstract class UserOrderLineItem implements _i1.SerializableModel {
       unitPrice: (jsonSerialization['unitPrice'] as num).toDouble(),
       lineTotal: (jsonSerialization['lineTotal'] as num).toDouble(),
       thumbnailUrl: jsonSerialization['thumbnailUrl'] as String?,
+      vendorId: jsonSerialization['vendorId'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(jsonSerialization['vendorId']),
+      vendorName: jsonSerialization['vendorName'] as String?,
+      listUnitPrice: (jsonSerialization['listUnitPrice'] as num?)?.toDouble(),
     );
   }
 
@@ -55,6 +66,13 @@ abstract class UserOrderLineItem implements _i1.SerializableModel {
 
   String? thumbnailUrl;
 
+  _i1.UuidValue? vendorId;
+
+  String? vendorName;
+
+  /// Catalog list price at read time (for discount display when higher than unitPrice).
+  double? listUnitPrice;
+
   /// Returns a shallow copy of this [UserOrderLineItem]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -65,6 +83,9 @@ abstract class UserOrderLineItem implements _i1.SerializableModel {
     double? unitPrice,
     double? lineTotal,
     String? thumbnailUrl,
+    _i1.UuidValue? vendorId,
+    String? vendorName,
+    double? listUnitPrice,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -76,6 +97,9 @@ abstract class UserOrderLineItem implements _i1.SerializableModel {
       'unitPrice': unitPrice,
       'lineTotal': lineTotal,
       if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
+      if (vendorId != null) 'vendorId': vendorId?.toJson(),
+      if (vendorName != null) 'vendorName': vendorName,
+      if (listUnitPrice != null) 'listUnitPrice': listUnitPrice,
     };
   }
 
@@ -95,6 +119,9 @@ class _UserOrderLineItemImpl extends UserOrderLineItem {
     required double unitPrice,
     required double lineTotal,
     String? thumbnailUrl,
+    _i1.UuidValue? vendorId,
+    String? vendorName,
+    double? listUnitPrice,
   }) : super._(
          productId: productId,
          productName: productName,
@@ -102,6 +129,9 @@ class _UserOrderLineItemImpl extends UserOrderLineItem {
          unitPrice: unitPrice,
          lineTotal: lineTotal,
          thumbnailUrl: thumbnailUrl,
+         vendorId: vendorId,
+         vendorName: vendorName,
+         listUnitPrice: listUnitPrice,
        );
 
   /// Returns a shallow copy of this [UserOrderLineItem]
@@ -115,6 +145,9 @@ class _UserOrderLineItemImpl extends UserOrderLineItem {
     double? unitPrice,
     double? lineTotal,
     Object? thumbnailUrl = _Undefined,
+    Object? vendorId = _Undefined,
+    Object? vendorName = _Undefined,
+    Object? listUnitPrice = _Undefined,
   }) {
     return UserOrderLineItem(
       productId: productId ?? this.productId,
@@ -123,6 +156,11 @@ class _UserOrderLineItemImpl extends UserOrderLineItem {
       unitPrice: unitPrice ?? this.unitPrice,
       lineTotal: lineTotal ?? this.lineTotal,
       thumbnailUrl: thumbnailUrl is String? ? thumbnailUrl : this.thumbnailUrl,
+      vendorId: vendorId is _i1.UuidValue? ? vendorId : this.vendorId,
+      vendorName: vendorName is String? ? vendorName : this.vendorName,
+      listUnitPrice: listUnitPrice is double?
+          ? listUnitPrice
+          : this.listUnitPrice,
     );
   }
 }

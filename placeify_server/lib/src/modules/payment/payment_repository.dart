@@ -1,18 +1,18 @@
 import 'package:serverpod/serverpod.dart' hide Order;
 
 import '../../generated/protocol.dart';
+import '../../shared/order_display_number.dart';
 import '../../shared/session_service.dart';
 import '../marketplace/marketplace_events.dart';
 import '../notification/order_notification_service.dart';
 import '../order/order_lifecycle_store.dart';
 import '../vendor/vendor_repository.dart';
-import 'esewa_gateway.dart';
 import 'payment_sync.dart';
 
 /// Payment transactions and vendor payout persistence.
 class PaymentStore {
   PaymentStore({VendorStore? vendorStore})
-      : _vendorStore = vendorStore ?? VendorStore();
+    : _vendorStore = vendorStore ?? VendorStore();
 
   final VendorStore _vendorStore;
 
@@ -25,9 +25,6 @@ class PaymentStore {
     Transaction? transaction,
   }) async {
     final provider = _providerForMethod(paymentMethod);
-    final providerTransactionId = paymentMethod == PaymentMethod.esewa
-        ? EsewaGateway.newTransactionUuid(orderId)
-        : '$provider-$orderId-${DateTime.now().microsecondsSinceEpoch}';
     final payment = await PaymentTransaction.db.insertRow(
       session,
       PaymentTransaction(
@@ -35,10 +32,21 @@ class PaymentStore {
         userId: userId,
         provider: provider,
         paymentMethod: paymentMethod,
-        providerTransactionId: providerTransactionId,
+        providerTransactionId:
+            '$provider-$orderId-${DateTime.now().microsecondsSinceEpoch}',
         amount: amount,
         status: PaymentTransactionStatus.pending,
       ),
+      transaction: transaction,
+    );
+
+    await OrderLifecycleStore.appendHistory(
+      session,
+      orderId,
+      statusType: OrderStatusHistoryType.payment,
+      newStatus: PaymentTransactionStatus.pending.name,
+      changedByUserId: userId,
+      note: 'Payment initiated.',
       transaction: transaction,
     );
 
@@ -89,6 +97,7 @@ class PaymentStore {
     final pendingBalance = rawBalance < 0 ? 0.0 : rawBalance;
 
     final paymentHistory = await _listVendorPaymentHistory(session, vendorId);
+    final analytics = await _vendorPaymentAnalytics(session, vendorId);
 
     return VendorPaymentsOverview(
       payouts: [
@@ -107,22 +116,29 @@ class PaymentStore {
       totalEarned: totalEarned,
       pendingPaymentCount: pendingPaymentCount,
       paymentHistory: paymentHistory,
+      todayRevenue: analytics.todayRevenue,
+      monthlyRevenue: analytics.monthlyRevenue,
+      refundAmount: analytics.refundAmount,
+      refundCount: analytics.refundCount,
+      successfulPaymentCount: analytics.successfulPaymentCount,
+      codPaymentCount: analytics.codPaymentCount,
+      esewaPaymentCount: analytics.esewaPaymentCount,
+      averageOrderValue: analytics.averageOrderValue,
+      pendingRefundCount: analytics.pendingRefundCount,
     );
   }
 
-  /// Completed (paid) customer payments for this vendor — COD + eSewa.
-  /// One [OrderVendorPayment] row per order; no duplicates.
+  /// Vendor payment ledger rows (paid, pending, refund pending, refunded).
   Future<List<PaymentUpdateSummary>> _listVendorPaymentHistory(
     Session session,
     UuidValue vendorId,
   ) async {
     final allocations = await OrderVendorPayment.db.find(
       session,
-      where: (row) =>
-          row.vendorId.equals(vendorId) &
-          row.status.equals(PaymentTransactionStatus.paid),
+      where: (row) => row.vendorId.equals(vendorId),
       orderBy: (row) => row.updatedAt,
       orderDescending: true,
+      limit: 200,
       include: OrderVendorPayment.include(
         order: Order.include(user: User.include()),
       ),
@@ -132,14 +148,24 @@ class PaymentStore {
 
     final orderIds = {
       for (final row in allocations) row.orderId,
-    }.toList();
+    }.toSet();
     final transactions = await PaymentTransaction.db.find(
       session,
-      where: (row) => row.orderId.inSet(orderIds.toSet()),
+      where: (row) => row.orderId.inSet(orderIds),
     );
-    final methodByOrderId = <int, PaymentMethod>{
-      for (final tx in transactions) tx.orderId: tx.paymentMethod,
+    final txByOrderId = <int, PaymentTransaction>{
+      for (final tx in transactions) tx.orderId: tx,
     };
+    final refunds = await RefundRequest.db.find(
+      session,
+      where: (row) => row.orderId.inSet(orderIds),
+      orderBy: (row) => row.updatedAt,
+      orderDescending: true,
+    );
+    final refundByOrderId = <int, RefundRequest>{};
+    for (final refund in refunds) {
+      refundByOrderId.putIfAbsent(refund.orderId, () => refund);
+    }
 
     return [
       for (final row in allocations)
@@ -147,14 +173,130 @@ class PaymentStore {
           PaymentUpdateSummary(
             id: row.id!,
             orderId: row.orderId,
-            amount: row.amount,
+            amount: row.order?.totalAmount ?? row.amount,
             status: row.status,
             note: row.note ?? '',
             updatedAt: row.updatedAt,
-            paymentMethod: methodByOrderId[row.orderId],
+            paymentMethod: txByOrderId[row.orderId]?.paymentMethod,
             customerName: row.order?.user?.name,
+            customerEmail: row.order?.user?.email,
+            orderNumber: OrderDisplayNumber.format(row.orderId),
+            orderStatus: row.order?.status.name,
+            transactionId: txByOrderId[row.orderId]?.id?.toString(),
+            providerTransactionId:
+                txByOrderId[row.orderId]?.providerTransactionId,
+            deliveryFee: null,
+            discount: null,
+            vendorEarnings: row.amount,
+            refundStatus: () {
+              final refund = refundByOrderId[row.orderId];
+              if (refund != null) return refund.status.name;
+              if (row.status == PaymentTransactionStatus.refundPending) {
+                return 'pending';
+              }
+              if (row.status == PaymentTransactionStatus.refunded) {
+                return 'completed';
+              }
+              return null;
+            }(),
+            refundDate:
+                refundByOrderId[row.orderId]?.status == RequestStatus.completed
+                ? refundByOrderId[row.orderId]?.updatedAt
+                : null,
+            createdAt: txByOrderId[row.orderId]?.createdAt ?? row.createdAt,
           ),
     ];
+  }
+
+  Future<
+    ({
+      double todayRevenue,
+      double monthlyRevenue,
+      double refundAmount,
+      int refundCount,
+      int successfulPaymentCount,
+      int codPaymentCount,
+      int esewaPaymentCount,
+      double averageOrderValue,
+      int pendingRefundCount,
+    })
+  >
+  _vendorPaymentAnalytics(
+    Session session,
+    UuidValue vendorId,
+  ) async {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final startOfMonth = DateTime(now.year, now.month, 1);
+
+    final paid = await OrderVendorPayment.db.find(
+      session,
+      where: (row) =>
+          row.vendorId.equals(vendorId) &
+          row.status.equals(PaymentTransactionStatus.paid),
+    );
+    final refunded = await OrderVendorPayment.db.find(
+      session,
+      where: (row) =>
+          row.vendorId.equals(vendorId) &
+          row.status.equals(PaymentTransactionStatus.refunded),
+    );
+    final pendingRefunds = await OrderVendorPayment.db.count(
+      session,
+      where: (row) =>
+          row.vendorId.equals(vendorId) &
+          row.status.equals(PaymentTransactionStatus.refundPending),
+    );
+
+    var todayRevenue = 0.0;
+    var monthlyRevenue = 0.0;
+    var successfulPaymentCount = 0;
+    for (final row in paid) {
+      successfulPaymentCount += 1;
+      if (!row.updatedAt.isBefore(startOfDay)) {
+        todayRevenue += row.amount;
+      }
+      if (!row.updatedAt.isBefore(startOfMonth)) {
+        monthlyRevenue += row.amount;
+      }
+    }
+
+    final refundAmount = refunded.fold<double>(
+      0,
+      (sum, row) => sum + row.amount,
+    );
+
+    final orderIds = {for (final row in paid) row.orderId};
+    var codPaymentCount = 0;
+    var esewaPaymentCount = 0;
+    if (orderIds.isNotEmpty) {
+      final txs = await PaymentTransaction.db.find(
+        session,
+        where: (row) => row.orderId.inSet(orderIds),
+      );
+      for (final tx in txs) {
+        if (tx.paymentMethod == PaymentMethod.cashOnDelivery) {
+          codPaymentCount += 1;
+        } else if (tx.paymentMethod == PaymentMethod.esewa) {
+          esewaPaymentCount += 1;
+        }
+      }
+    }
+
+    final totalPaid = paid.fold<double>(0, (sum, row) => sum + row.amount);
+    final averageOrderValue = paid.isEmpty ? 0.0 : totalPaid / paid.length;
+
+    return (
+      todayRevenue: todayRevenue,
+      monthlyRevenue: monthlyRevenue,
+      refundAmount: refundAmount,
+      refundCount: refunded.length,
+      successfulPaymentCount: successfulPaymentCount,
+      codPaymentCount: codPaymentCount,
+      esewaPaymentCount: esewaPaymentCount,
+      averageOrderValue: averageOrderValue,
+      pendingRefundCount: pendingRefunds,
+    );
   }
 
   Future<List<PaymentUpdateSummary>> listUpdatesForOrder(
@@ -198,8 +340,7 @@ class PaymentStore {
 
   static PaymentTransactionStatus _paymentStatusFromHistory(String newStatus) {
     return switch (newStatus) {
-      'paymentReceived' || 'paymentConfirmed' =>
-        PaymentTransactionStatus.paid,
+      'paymentReceived' || 'paymentConfirmed' => PaymentTransactionStatus.paid,
       _ => PaymentTransactionStatus.fromJson(newStatus),
     };
   }
@@ -216,7 +357,10 @@ class PaymentStore {
 
     final order = await Order.db.findById(session, orderId);
     if (order == null) {
-      throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Order not found.',
+        code: 'ORDER_NOT_FOUND',
+      );
     }
 
     if (!_isEligibleForPaymentUpdate(order.status)) {
@@ -263,6 +407,22 @@ class PaymentStore {
 
       if (status == PaymentTransactionStatus.paid) {
         if (currentPaymentStatus != OrderPaymentStatus.unpaid) {
+          throw PlaceifyException(
+            message:
+                'Payment has already been updated and cannot be changed again.',
+            code: 'PAYMENT_LOCKED',
+          );
+        }
+
+        final existingTx = await PaymentTransaction.db.findFirstRow(
+          session,
+          where: (row) => row.orderId.equals(orderId),
+          transaction: transaction,
+        );
+        if (existingTx != null &&
+            (existingTx.status == PaymentTransactionStatus.paid ||
+                existingTx.status == PaymentTransactionStatus.refundPending ||
+                existingTx.status == PaymentTransactionStatus.refunded)) {
           throw PlaceifyException(
             message:
                 'Payment has already been updated and cannot be changed again.',
@@ -461,7 +621,10 @@ class PaymentStore {
           row.orderId.equals(orderId) & row.vendorId.equals(vendorId),
     );
     if (item == null) {
-      throw PlaceifyException(message: 'Order not found.', code: 'ORDER_NOT_FOUND');
+      throw PlaceifyException(
+        message: 'Order not found.',
+        code: 'ORDER_NOT_FOUND',
+      );
     }
   }
 
@@ -470,14 +633,14 @@ class PaymentStore {
       OrderStatus.accepted ||
       OrderStatus.processing ||
       OrderStatus.shipped ||
-      OrderStatus.delivered =>
-        true,
+      OrderStatus.delivered => true,
       OrderStatus.pending ||
       OrderStatus.confirmed ||
       OrderStatus.rejected ||
       OrderStatus.cancelled ||
-      OrderStatus.autoCancelled =>
-        false,
+      OrderStatus.autoCancelled ||
+      OrderStatus.returnRequested ||
+      OrderStatus.refunded => false,
     };
   }
 
@@ -485,6 +648,8 @@ class PaymentStore {
     return switch (status) {
       PaymentTransactionStatus.paid => 'Payment marked as received.',
       PaymentTransactionStatus.failed => 'Payment marked as failed.',
+      PaymentTransactionStatus.refundPending =>
+        'Refund pending merchant portal settlement.',
       PaymentTransactionStatus.refunded => 'Payment marked as refunded.',
       PaymentTransactionStatus.pending => 'Payment marked as pending.',
       PaymentTransactionStatus.cancelled => 'Payment cancelled.',

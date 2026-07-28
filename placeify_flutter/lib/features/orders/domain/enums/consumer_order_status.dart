@@ -26,7 +26,7 @@ extension ConsumerOrderStatusX on ConsumerOrderStatus {
         ConsumerOrderStatus.delivered => 'Delivered',
         ConsumerOrderStatus.cancelled => 'Cancelled',
         ConsumerOrderStatus.returnRequested => 'Return requested',
-        ConsumerOrderStatus.returned => 'Returned',
+        ConsumerOrderStatus.returned => 'Refunded',
       };
 
   bool get isTerminal => switch (this) {

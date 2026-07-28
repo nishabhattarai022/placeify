@@ -4,12 +4,10 @@ import 'dart:typed_data';
 import 'package:serverpod/serverpod.dart';
 
 import '../../../generated/protocol.dart';
-import '../../../shared/placeify_exception.dart';
 import '../../../shared/session_service.dart';
 import '../../marketplace/marketplace_events.dart';
 import '../../product/catalog_seed.dart';
 import '../../product/product_pricing.dart';
-import '../product_3d/product_3d_generation_future_call.dart';
 import '../product_3d/product_model_3d_status.dart';
 import '../vendor_product_image_storage.dart';
 import 'vendor_access_guard.dart';
@@ -411,14 +409,19 @@ class VendorProductStore {
       ),
     );
 
-    // Run off the request session so regenerate returns immediately and
-    // cannot fail the HTTP call if scheduling/background setup has issues.
-    unawaited(
-      runProduct3dGenerationInBackground(session.serverpod, productId),
+    // Persist via Serverpod FutureCall so Tripo work survives client disconnect
+    // and is retried if the server process restarts mid-job.
+    await session.serverpod.futureCallAtTime(
+      'product3dGeneration',
+      Product3dGenerationTrigger(
+        productId: productId,
+        requestedAt: now,
+      ),
+      now,
     );
 
     session.log(
-      'Started background Tripo generation for product $productId',
+      'Queued Tripo generation for product $productId',
       level: LogLevel.info,
     );
 

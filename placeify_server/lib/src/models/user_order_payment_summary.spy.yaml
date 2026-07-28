@@ -1,9 +1,24 @@
-### Payment snapshot for a customer order.
+### Payment snapshot for a customer order / payment ledger row.
 class: UserOrderPaymentSummary
 fields:
   orderId: int
   status: PaymentTransactionStatus
   paymentMethod: PaymentMethod
   amount: double
+  currency: String
   provider: String
   providerTransactionId: String?
+  note: String?
+  createdAt: DateTime
+  orderNumber: String?
+  vendorName: String?
+  deliveryFee: double?
+  discount: double?
+  refundStatus: String?
+  refundAmount: double?
+  refundReason: String?
+  refundDate: DateTime?
+  orderDate: DateTime?
+  paymentDate: DateTime?
+  primaryThumbnailUrl: String?
+  orderStatus: String?

@@ -1,17 +1,16 @@
 import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
-import 'package:http/http.dart' as http;
 import 'package:serverpod/serverpod.dart';
 
-import '../../generated/protocol.dart';
+import 'esewa_status_api.dart';
 
 /// eSewa ePay v2 form signing and status verification (RC / production).
 ///
 /// Uses `esewaProductCode` and `esewaSecretKey` from Serverpod passwords.
 abstract final class EsewaGateway {
   static const testPaymentUrl =
-      'https://rc-epay.esewa.com.np/api/epay/main/v2/form';
+      'https://rc.esewa.com.np/api/epay/main/v2/form';
   static const livePaymentUrl =
       'https://epay.esewa.com.np/api/epay/main/v2/form';
   static const testStatusUrl =
@@ -29,24 +28,17 @@ abstract final class EsewaGateway {
   static ({String productCode, String secretKey}) requireCredentials(
     Session session,
   ) {
-    final productCode = _password(session, 'esewaProductCode');
-    final secretKey = _password(session, 'esewaSecretKey');
-    if (productCode == null || secretKey == null) {
-      throw PlaceifyException(
-        message:
-            'eSewa is not configured on the server. '
-            'Add esewaProductCode and esewaSecretKey to config/passwords.yaml, '
-            'then restart the server.',
-        code: 'ESEWA_NOT_CONFIGURED',
+    final productCode = session.passwords['esewaProductCode']?.trim();
+    final secretKey = session.passwords['esewaSecretKey']?.trim();
+    if (productCode == null ||
+        productCode.isEmpty ||
+        secretKey == null ||
+        secretKey.isEmpty) {
+      throw StateError(
+        'eSewa credentials are not configured (esewaProductCode / esewaSecretKey).',
       );
     }
     return (productCode: productCode, secretKey: secretKey);
-  }
-
-  static String? _password(Session session, String key) {
-    final value = session.passwords[key]?.trim();
-    if (value == null || value.isEmpty) return null;
-    return value;
   }
 
   static String formatAmount(double amount) {
@@ -60,10 +52,14 @@ abstract final class EsewaGateway {
     required String productCode,
     required String secretKey,
   }) {
-    final message = 'total_amount=$totalAmount,'
+    final message =
+        'total_amount=$totalAmount,'
         'transaction_uuid=$transactionUuid,'
         'product_code=$productCode';
-    final digest = Hmac(sha256, utf8.encode(secretKey)).convert(utf8.encode(message));
+    final digest = Hmac(
+      sha256,
+      utf8.encode(secretKey),
+    ).convert(utf8.encode(message));
     return base64Encode(digest.bytes);
   }
 
@@ -83,25 +79,20 @@ abstract final class EsewaGateway {
 
     return {
       'amount': totalAmount,
-      'tax_amount': '0.00',
+      'tax_amount': '0',
       'total_amount': totalAmount,
       'transaction_uuid': transactionUuid,
       'product_code': productCode,
-      'product_service_charge': '0.00',
-      'product_delivery_charge': '0.00',
+      'product_service_charge': '0',
+      'product_delivery_charge': '0',
       'success_url': successRedirectUrl,
       'failure_url': failureRedirectUrl,
       'signed_field_names': 'total_amount,transaction_uuid,product_code',
       'signature': signature,
-      'payment_url':
-          isTestProductCode(productCode) ? testPaymentUrl : livePaymentUrl,
+      'payment_url': isTestProductCode(productCode)
+          ? testPaymentUrl
+          : livePaymentUrl,
     };
-  }
-
-  /// eSewa allows alphanumeric + hyphen only; keep ids short and unique.
-  static String newTransactionUuid(int orderId) {
-    final stamp = DateTime.now().microsecondsSinceEpoch.toRadixString(36);
-    return 'PF-$orderId-$stamp';
   }
 
   /// Returns true when eSewa reports the transaction as complete.
@@ -110,38 +101,11 @@ abstract final class EsewaGateway {
     required double amount,
     required String transactionUuid,
   }) async {
-    final credentials = requireCredentials(session);
-    final statusBase = isTestProductCode(credentials.productCode)
-        ? testStatusUrl
-        : liveStatusUrl;
-    final uri = Uri.parse(statusBase).replace(
-      queryParameters: {
-        'product_code': credentials.productCode,
-        'total_amount': formatAmount(amount),
-        'transaction_uuid': transactionUuid,
-      },
+    final result = await EsewaStatusApi.fetchTransactionStatus(
+      session: session,
+      amount: amount,
+      transactionUuid: transactionUuid,
     );
-
-    try {
-      final response =
-          await http.get(uri).timeout(const Duration(seconds: 20));
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        return false;
-      }
-
-      final body = jsonDecode(response.body);
-      if (body is! Map) return false;
-      final status = '${body['status'] ?? body['transaction_status'] ?? ''}'
-          .toUpperCase();
-      return status == 'COMPLETE' || status == 'COMPLETED';
-    } catch (error, stackTrace) {
-      session.log(
-        'eSewa status check failed uuid=$transactionUuid error=$error',
-        level: LogLevel.warning,
-        exception: error,
-        stackTrace: stackTrace,
-      );
-      return false;
-    }
+    return result.isComplete;
   }
 }

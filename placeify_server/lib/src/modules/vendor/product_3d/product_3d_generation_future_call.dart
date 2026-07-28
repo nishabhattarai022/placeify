@@ -155,6 +155,32 @@ class Product3dGenerationFutureCall
       );
       return;
     }
-    await Product3dGenerationRunner.run(session, productId);
+
+    try {
+      await Product3dGenerationRunner.run(session, productId);
+    } catch (error, stackTrace) {
+      session.log(
+        'Product3dGenerationFutureCall crashed for product $productId: $error',
+        level: LogLevel.error,
+        exception: error,
+        stackTrace: stackTrace,
+      );
+      try {
+        final product = await Product.db.findById(session, productId);
+        if (product != null &&
+            product.model3dStatus == ProductModel3dStatus.building) {
+          await Product.db.updateRow(
+            session,
+            product.copyWith(
+              model3dStatus: ProductModel3dStatus.failed,
+              model3dError: error.toString(),
+              updatedAt: DateTime.now(),
+            ),
+          );
+        }
+      } catch (_) {
+        // Best-effort status update only.
+      }
+    }
   }
 }

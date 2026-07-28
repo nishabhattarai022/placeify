@@ -1,6 +1,7 @@
 import 'package:placeify_client/placeify_client.dart' hide Order, OrderItem;
 
 import '../../../core/config/resolve_media_url.dart';
+import '../../cart/data/product_id_codec.dart';
 import '../domain/enums/consumer_order_status.dart';
 import '../domain/enums/payment_status.dart';
 import '../domain/models/order.dart';
@@ -19,7 +20,7 @@ abstract final class OrderApiMapper {
       status: mapStatus(summary.status, latestStage: summary.latestDeliveryStage),
       items: [
         OrderItem(
-          productId: summary.id.toString(),
+          productId: '',
           productName: summary.primaryProductName ?? 'Order item',
           productImageUrl: summary.primaryThumbnailUrl ?? '',
           brandName: '',
@@ -30,27 +31,34 @@ abstract final class OrderApiMapper {
       ],
       statusHistory: const [],
       placedAt: summary.placedAt,
+      deliveredAt: summary.deliveredAt,
       paymentStatus: mapOrderPaymentStatus(summary.orderPaymentStatus),
       paymentMethod: '',
       subtotal: summary.totalAmount,
       deliveryFee: 0,
       total: summary.totalAmount,
-      deliveryAddress: '',
+      deliveryAddress: summary.shippingAddress,
     );
   }
 
   static Order fromDetail(UserOrderDetail detail, {required String userId}) {
     final items = detail.items
         .map(
-          (line) => OrderItem(
-            productId: line.productId.toString(),
-            productName: line.productName,
-            productImageUrl: line.thumbnailUrl ?? '',
-            brandName: '',
-            sku: '${detail.orderNumber}-${line.productId}',
-            unitPrice: line.unitPrice,
-            quantity: line.quantity,
-          ),
+          (line) {
+            final listPrice = line.listUnitPrice;
+            final hasDiscount =
+                listPrice != null && listPrice > line.unitPrice;
+            return OrderItem(
+              productId: ProductIdCodec.fromDatabaseId(line.productId),
+              productName: line.productName,
+              productImageUrl: line.thumbnailUrl ?? '',
+              brandName: line.vendorName?.trim() ?? '',
+              sku: '${detail.orderNumber}-${line.productId}',
+              unitPrice: hasDiscount ? listPrice : line.unitPrice,
+              discountedPrice: hasDiscount ? line.unitPrice : null,
+              quantity: line.quantity,
+            );
+          },
         )
         .toList();
 
@@ -58,12 +66,24 @@ abstract final class OrderApiMapper {
 
     final payment = detail.payment;
 
+    final vendorId = detail.vendorId?.uuid ??
+        (detail.items.isNotEmpty ? detail.items.first.vendorId?.uuid : null) ??
+        '';
+    final vendorName = detail.vendorName?.trim().isNotEmpty == true
+        ? detail.vendorName!.trim()
+        : detail.items
+                .map((line) => line.vendorName?.trim())
+                .whereType<String>()
+                .where((name) => name.isNotEmpty)
+                .firstOrNull ??
+            'Vendor';
+
     return Order(
       id: detail.id.toString(),
       orderNumber: detail.orderNumber,
       userId: userId,
-      vendorId: '0',
-      vendorName: detail.primaryProductName ?? 'Vendor',
+      vendorId: vendorId,
+      vendorName: vendorName,
       status: mapStatus(detail.status, latestStage: detail.latestDeliveryStage),
       items: items,
       statusHistory: _historyFromDetail(detail),
@@ -77,6 +97,8 @@ abstract final class OrderApiMapper {
       deliveryFee: (detail.totalAmount - subtotal).clamp(0, double.infinity),
       total: detail.totalAmount,
       deliveryAddress: detail.shippingAddress,
+      customerName: detail.customerName,
+      customerPhone: detail.customerPhone,
     );
   }
 
@@ -100,7 +122,7 @@ abstract final class OrderApiMapper {
   static String paymentMethodLabel(PaymentMethod method) {
     return switch (method) {
       PaymentMethod.cashOnDelivery => 'Cash on delivery',
-      PaymentMethod.mockOnline => 'Card (mock online)',
+      PaymentMethod.mockOnline => 'Card',
       PaymentMethod.esewa => 'eSewa',
       PaymentMethod.khalti => 'Khalti',
     };
@@ -114,6 +136,12 @@ abstract final class OrderApiMapper {
         status == OrderStatus.rejected ||
         status == OrderStatus.autoCancelled) {
       return ConsumerOrderStatus.cancelled;
+    }
+    if (status == OrderStatus.returnRequested) {
+      return ConsumerOrderStatus.returnRequested;
+    }
+    if (status == OrderStatus.refunded) {
+      return ConsumerOrderStatus.returned;
     }
     if (status == OrderStatus.delivered) {
       return ConsumerOrderStatus.delivered;
@@ -145,6 +173,7 @@ abstract final class OrderApiMapper {
       DeliveryStage.shipped => ConsumerOrderStatus.inTransit,
       DeliveryStage.outForDelivery => ConsumerOrderStatus.outForDelivery,
       DeliveryStage.delivered => ConsumerOrderStatus.delivered,
+      DeliveryStage.rejected => ConsumerOrderStatus.cancelled,
     };
   }
 
@@ -155,6 +184,7 @@ abstract final class OrderApiMapper {
       DeliveryStage.shipped => 'Shipped',
       DeliveryStage.outForDelivery => 'Out for delivery',
       DeliveryStage.delivered => 'Delivered',
+      DeliveryStage.rejected => 'Rejected',
     };
   }
 

@@ -98,8 +98,9 @@ class _Product3dPreviewState extends State<Product3dPreview> {
               cameraControls: true,
               disableZoom: false,
               interactionPrompt: InteractionPrompt.auto,
-              exposure: 0.75,
-              shadowIntensity: 0.6,
+              // Match AR PBR rendering — neutral exposure, no wash-out.
+              exposure: 1.0,
+              shadowIntensity: 1.0,
               environmentImage: 'neutral',
             ),
           ),

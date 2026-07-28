@@ -107,6 +107,7 @@ class _DeliveryUpdateScreenState extends ConsumerState<DeliveryUpdateScreen> {
       DeliveryStage.shipped => 'Shipped',
       DeliveryStage.outForDelivery => 'Out for Delivery',
       DeliveryStage.delivered => 'Delivered',
+      DeliveryStage.rejected => 'Rejected',
     };
   }
 

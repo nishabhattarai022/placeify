@@ -34,6 +34,8 @@ abstract class VendorOrder with _$VendorOrder {
   String get displayStatusLabel {
     if (status == OrderStatus.rejected) return 'Rejected';
     if (status == OrderStatus.cancelled) return 'Cancelled';
+    if (status == OrderStatus.returnRequested) return 'Return requested';
+    if (status == OrderStatus.refunded) return 'Refunded';
     if (currentDeliveryStage != null) {
       return _deliveryStageLabel(currentDeliveryStage!);
     }
@@ -43,6 +45,8 @@ abstract class VendorOrder with _$VendorOrder {
       OrderStatus.processing => 'Packed',
       OrderStatus.shipped => 'Shipped',
       OrderStatus.delivered => 'Delivered',
+      OrderStatus.returnRequested => 'Return requested',
+      OrderStatus.refunded => 'Refunded',
       OrderStatus.rejected => 'Rejected',
       OrderStatus.cancelled => 'Cancelled',
     };
@@ -57,6 +61,7 @@ abstract class VendorOrder with _$VendorOrder {
       DeliveryStage.shipped => 'Shipped',
       DeliveryStage.outForDelivery => 'Out for Delivery',
       DeliveryStage.delivered => 'Delivered',
+      DeliveryStage.rejected => 'Rejected',
     };
   }
 }

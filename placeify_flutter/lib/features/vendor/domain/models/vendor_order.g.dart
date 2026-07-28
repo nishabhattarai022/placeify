@@ -53,6 +53,8 @@ const _$OrderStatusEnumMap = {
   OrderStatus.processing: 'processing',
   OrderStatus.shipped: 'shipped',
   OrderStatus.delivered: 'delivered',
+  OrderStatus.returnRequested: 'returnRequested',
+  OrderStatus.refunded: 'refunded',
   OrderStatus.cancelled: 'cancelled',
 };
 
@@ -68,4 +70,5 @@ const _$DeliveryStageEnumMap = {
   DeliveryStage.shipped: 'shipped',
   DeliveryStage.outForDelivery: 'outForDelivery',
   DeliveryStage.delivered: 'delivered',
+  DeliveryStage.rejected: 'rejected',
 };

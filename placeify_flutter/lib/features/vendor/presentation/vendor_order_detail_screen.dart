@@ -315,6 +315,7 @@ class _PaymentAuditRow extends StatelessWidget {
       PaymentStatus.pending => 'Pending',
       PaymentStatus.paid => 'Received',
       PaymentStatus.partial => 'Partial',
+      PaymentStatus.refundPending => 'Refund Pending',
       PaymentStatus.refunded => 'Refunded',
       PaymentStatus.failed => 'Failed',
     };

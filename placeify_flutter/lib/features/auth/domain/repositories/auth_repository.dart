@@ -3,12 +3,31 @@ import 'package:placeify_flutter/features/vendor/domain/enums/vendor_status.dart
 import '../models/app_user.dart';
 import '../models/consumer_profile_details.dart';
 
-/// Auth API contract (mock implementation persists locally until a real API exists).
+/// Auth API contract backed by Serverpod email/JWT authentication.
 abstract interface class AuthRepository {
   Future<AppUser> register({
     required String fullName,
     required String email,
     required String password,
+  });
+
+  /// Starts Email IDP registration and emails a magic link.
+  /// Does not create a session or Placeify User until [verifyEmailRegistration].
+  Future<String> beginEmailRegistration({
+    required String fullName,
+    required String email,
+    required String password,
+  });
+
+  /// Completes registration after the user opens the verification link.
+  Future<void> verifyEmailRegistration({
+    required String token,
+    required String password,
+    String? fullName,
+  });
+
+  Future<void> resendVerificationEmail({
+    required String email,
   });
 
   Future<AppUser> signIn({

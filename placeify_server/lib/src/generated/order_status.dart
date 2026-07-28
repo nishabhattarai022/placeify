@@ -20,6 +20,8 @@ enum OrderStatus implements _i1.SerializableModel {
   processing,
   shipped,
   delivered,
+  returnRequested,
+  refunded,
   cancelled,
   autoCancelled;
 
@@ -39,6 +41,10 @@ enum OrderStatus implements _i1.SerializableModel {
         return OrderStatus.shipped;
       case 'delivered':
         return OrderStatus.delivered;
+      case 'returnRequested':
+        return OrderStatus.returnRequested;
+      case 'refunded':
+        return OrderStatus.refunded;
       case 'cancelled':
         return OrderStatus.cancelled;
       case 'autoCancelled':

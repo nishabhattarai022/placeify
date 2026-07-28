@@ -34,6 +34,8 @@ _Order _$OrderFromJson(Map<String, dynamic> json) => _Order(
   discount: (json['discount'] as num?)?.toDouble() ?? 0,
   total: (json['total'] as num).toDouble(),
   deliveryAddress: json['deliveryAddress'] as String,
+  customerName: json['customerName'] as String?,
+  customerPhone: json['customerPhone'] as String?,
   cancellationReason: json['cancellationReason'] as String?,
   returnReason: json['returnReason'] as String?,
 );
@@ -58,6 +60,8 @@ Map<String, dynamic> _$OrderToJson(_Order instance) => <String, dynamic>{
   'discount': instance.discount,
   'total': instance.total,
   'deliveryAddress': instance.deliveryAddress,
+  'customerName': instance.customerName,
+  'customerPhone': instance.customerPhone,
   'cancellationReason': instance.cancellationReason,
   'returnReason': instance.returnReason,
 };

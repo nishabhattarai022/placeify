@@ -22,3 +22,5 @@ values:
   - failPayout
   - approveRefund
   - rejectRefund
+  - checkEsewaRefundStatus
+  - completeManualEsewaSettlement

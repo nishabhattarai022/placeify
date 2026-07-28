@@ -1,0 +1,4 @@
+### Payload for the eSewa refund status poller future call.
+class: EsewaRefundStatusTrigger
+fields:
+  scheduledAt: DateTime?

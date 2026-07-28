@@ -13,7 +13,9 @@ bool canVendorUpdatePayment(OrderStatus status) {
       true,
     OrderStatus.pending ||
     OrderStatus.rejected ||
-    OrderStatus.cancelled =>
+    OrderStatus.cancelled ||
+    OrderStatus.returnRequested ||
+    OrderStatus.refunded =>
       false,
   };
 }

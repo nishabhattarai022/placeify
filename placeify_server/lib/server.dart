@@ -6,10 +6,15 @@ import 'src/auth/auth_services_setup.dart';
 import 'src/generated/endpoints.dart';
 import 'src/generated/protocol.dart';
 import 'src/modules/order/order_auto_cancel_future_call.dart';
+import 'src/modules/payment/esewa_refund_status_future_call.dart';
+import 'src/modules/vendor/product_3d/product_3d_generation_future_call.dart';
 import 'src/shared/server_static_paths.dart';
 import 'src/web/middleware/uploads_cors_middleware.dart';
 import 'src/web/routes/app_config_route.dart';
+import 'src/web/routes/email_verification_routes.dart';
+import 'src/web/routes/password_reset_routes.dart';
 import 'src/web/routes/root.dart';
+import 'src/web/routes/verify_email_page_route.dart';
 
 /// The starting point of the Serverpod server.
 void run(List<String> args) async {
@@ -19,12 +24,24 @@ void run(List<String> args) async {
   setupPlaceifyAuthServices(pod, args: args);
 
   pod.registerFutureCall(OrderAutoCancelFutureCall(), 'orderAutoCancel');
-  // Product3dGenerationFutureCall is registered by generated FutureCalls.
+  pod.registerFutureCall(EsewaRefundStatusFutureCall(), 'esewaRefundStatus');
+  pod.registerFutureCall(
+    Product3dGenerationFutureCall(),
+    'product3dGeneration',
+  );
 
   // Setup a default page at the web root.
   // These are used by the default page.
   pod.webServer.addRoute(RootRoute(), '/');
   pod.webServer.addRoute(RootRoute(), '/index.html');
+  pod.webServer.addRoute(ForgotPasswordRoute(), '/auth/forgot-password');
+  pod.webServer.addRoute(ResetPasswordRoute(), '/auth/reset-password');
+  pod.webServer.addRoute(VerifyEmailRoute(), '/auth/verify-email');
+  pod.webServer.addRoute(
+    ResendVerificationRoute(),
+    '/auth/resend-verification',
+  );
+  pod.webServer.addRoute(VerifyEmailPageRoute(), '/verify-email');
 
   // Serve all files in the web/static relative directory under /.
   // These are used by the default web page.
@@ -69,7 +86,17 @@ void run(List<String> args) async {
 
   await pod.futureCallAtTime(
     'orderAutoCancel',
-    OrderAutoCancelTrigger(scheduledAt: DateTime.now().add(const Duration(days: 1))),
+    OrderAutoCancelTrigger(
+      scheduledAt: DateTime.now().add(const Duration(days: 1)),
+    ),
     DateTime.now().add(const Duration(seconds: 5)),
+  );
+
+  await pod.futureCallAtTime(
+    'esewaRefundStatus',
+    EsewaRefundStatusTrigger(
+      scheduledAt: DateTime.now().add(const Duration(minutes: 15)),
+    ),
+    DateTime.now().add(const Duration(minutes: 1)),
   );
 }

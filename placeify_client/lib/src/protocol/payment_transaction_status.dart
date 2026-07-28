@@ -17,6 +17,7 @@ enum PaymentTransactionStatus implements _i1.SerializableModel {
   paid,
   failed,
   cancelled,
+  refundPending,
   refunded;
 
   static PaymentTransactionStatus fromJson(String name) {
@@ -29,6 +30,8 @@ enum PaymentTransactionStatus implements _i1.SerializableModel {
         return PaymentTransactionStatus.failed;
       case 'cancelled':
         return PaymentTransactionStatus.cancelled;
+      case 'refundPending':
+        return PaymentTransactionStatus.refundPending;
       case 'refunded':
         return PaymentTransactionStatus.refunded;
       default:

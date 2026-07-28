@@ -5,6 +5,7 @@ enum PaymentStatus {
   pending,
   paid,
   partial,
+  refundPending,
   refunded,
   failed,
 }

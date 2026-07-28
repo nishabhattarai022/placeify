@@ -108,25 +108,32 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     required String description,
     required String materials,
   }) async {
-    final multiview = await _uploadMultiviewUrlsFromSources(imageSources);
+    return runWithExtendedVendorTimeout((api) async {
+      final multiview = await _uploadMultiviewUrlsFromSources(
+        imageSources,
+        api: api,
+      );
 
-    return client.vendor.createProduct(
-      product.name.trim(),
-      description,
-      product.price,
-      categoryId: await _resolveCategoryId(product.categoryId),
-      materials: materials,
-      widthCm: product.widthCm,
-      depthCm: product.depthCm,
-      heightCm: product.heightCm,
-      weightKg: product.weightKg > 0 ? product.weightKg : null,
-      assemblyNote: product.brand.trim().isNotEmpty ? product.brand.trim() : null,
-      careInstructions: 'See product description for care details.',
-      warranty:
-          product.offerLabel.trim().isNotEmpty ? product.offerLabel.trim() : null,
-      thumbnailUrl: multiview.thumbnailUrl,
-      viewImageUrls: multiview.viewImageUrls,
-    );
+      return api.vendor.createProduct(
+        product.name.trim(),
+        description,
+        product.price,
+        categoryId: await _resolveCategoryId(product.categoryId),
+        materials: materials,
+        widthCm: product.widthCm,
+        depthCm: product.depthCm,
+        heightCm: product.heightCm,
+        weightKg: product.weightKg > 0 ? product.weightKg : null,
+        assemblyNote:
+            product.brand.trim().isNotEmpty ? product.brand.trim() : null,
+        careInstructions: 'See product description for care details.',
+        warranty: product.offerLabel.trim().isNotEmpty
+            ? product.offerLabel.trim()
+            : null,
+        thumbnailUrl: multiview.thumbnailUrl,
+        viewImageUrls: multiview.viewImageUrls,
+      );
+    });
   }
 
   @override
@@ -284,10 +291,12 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     required String description,
     required String materials,
     required List<String> imageSources,
+    Client? api,
     bool forceReupload = false,
   }) async {
     final multiview = await _uploadMultiviewUrlsFromSources(
       imageSources,
+      api: api,
       forceReupload: forceReupload,
     );
     final input = await _buildUploadInput(
@@ -312,7 +321,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
       }
     }
 
-    return client.vendor.uploadProduct(
+    return (api ?? client).vendor.uploadProduct(
       input,
       imageData,
       imageFileName,
@@ -323,6 +332,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     required VendorProduct product,
     required int dbId,
     required List<String> imageSources,
+    Client? api,
     bool forceReupload = false,
   }) async {
     final description = product.description.trim().isNotEmpty
@@ -330,6 +340,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
         : product.name.trim();
     final materials = product.materials.trim();
     await _updateProductWithMultiviewPhotos(
+      api: api,
       product: product,
       dbId: dbId,
       description: description,
@@ -391,18 +402,19 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
       }
 
       final sources = _orderedImageSources(imageSources ?? existing.imageUrls);
-      // Only sync when there are local picks to upload. Already-hosted server
-      // photos are left alone so Generate queues Tripo immediately.
-      if (sources.length >= _requiredCatalogImages &&
-          _hasLocalImageSource(sources)) {
-        await _syncMultiviewPhotosOnServer(
-          product: existing,
-          dbId: dbId,
-          imageSources: sources.take(_maxCatalogImages).toList(),
-        );
-      }
+      final updated = await runWithExtendedVendorTimeout((api) async {
+        if (sources.length >= _requiredCatalogImages) {
+          await _syncMultiviewPhotosOnServer(
+            api: api,
+            product: existing,
+            dbId: dbId,
+            imageSources: sources.take(_maxCatalogImages).toList(),
+            forceReupload: !_hasLocalImageSource(sources),
+          );
+        }
 
-      final updated = await client.vendor.regenerateProductModel3d(dbId);
+        return api.vendor.regenerateProductModel3d(dbId);
+      });
       return VendorProductMapper.fromApiProduct(
         updated,
         vendorId: vendorId,
@@ -488,6 +500,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
   Future<({String thumbnailUrl, List<String> viewImageUrls})>
       _uploadMultiviewUrlsFromSources(
     List<String> sources, {
+    Client? api,
     bool forceReupload = false,
   }) async {
     if (sources.length < _requiredCatalogImages) {
@@ -497,22 +510,18 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     }
 
     final slots = sources.take(_maxCatalogImages).toList();
-    final thumbnailUrl = await _ensureServerImageUrl(
-      slots[0],
-      removeBackground: true,
-      forceReupload: forceReupload,
-    );
-
-    final viewImageUrls = <String>[];
-    for (final source in slots.skip(1)) {
-      viewImageUrls.add(
-        await _ensureServerImageUrl(
+    final uploaded = await Future.wait([
+      for (final source in slots)
+        _ensureServerImageUrl(
           source,
-          removeBackground: false,
+          api: api,
+          removeBackground: true,
           forceReupload: forceReupload,
         ),
-      );
-    }
+    ]);
+
+    final thumbnailUrl = uploaded.first;
+    final viewImageUrls = uploaded.skip(1).toList();
 
     if (viewImageUrls.length < 3) {
       throw VendorProductActionException(
@@ -525,9 +534,11 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
 
   Future<String> _ensureServerImageUrl(
     String source, {
+    Client? api,
     required bool removeBackground,
     bool forceReupload = false,
   }) async {
+    final vendorApi = api ?? client;
     final localPath = _normalizeLocalImagePath(source);
     if (localPath != null) {
       final imageData = await _readImageByteData(
@@ -539,7 +550,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
           'Photo file not found. Pick it again.',
         );
       }
-      return client.vendor.uploadProductImage(
+      return vendorApi.vendor.uploadProductImage(
         imageData,
         _resolvedFileName(localPath),
         removeBackground: removeBackground,
@@ -549,7 +560,11 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     final existing = _serverPathFromSource(source);
     if (existing != null) {
       if (!forceReupload) return existing;
-      return _reuploadServerImage(existing, removeBackground: removeBackground);
+      return _reuploadServerImage(
+        existing,
+        api: vendorApi,
+        removeBackground: removeBackground,
+      );
     }
 
     throw VendorProductActionException('Photo file not found. Pick it again.');
@@ -557,6 +572,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
 
   Future<String> _reuploadServerImage(
     String serverPath, {
+    Client? api,
     required bool removeBackground,
   }) async {
     final url = await resolveMediaUrl(serverPath);
@@ -572,7 +588,7 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     }
 
     final fileName = _fileNameFromPath(serverPath);
-    return client.vendor.uploadProductImage(
+    return (api ?? client).vendor.uploadProductImage(
       ByteData.view(
         response.bodyBytes.buffer,
         response.bodyBytes.offsetInBytes,

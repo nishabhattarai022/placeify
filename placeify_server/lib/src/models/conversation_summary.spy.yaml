@@ -1,0 +1,15 @@
+### Inbox row for conversation lists (customer or vendor perspective).
+class: ConversationSummary
+fields:
+  id: UuidValue
+  customerId: UuidValue
+  vendorId: UuidValue
+  peerUserId: UuidValue
+  peerName: String
+  peerAvatarUrl: String?
+  lastMessage: String?
+  lastMessageTime: DateTime?
+  lastSenderId: UuidValue?
+  unreadCount: int
+  createdAt: DateTime
+  updatedAt: DateTime

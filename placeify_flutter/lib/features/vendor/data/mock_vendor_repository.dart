@@ -210,6 +210,7 @@ class MockVendorRepository implements VendorRepository {
       DeliveryStage.shipped => 'Shipped',
       DeliveryStage.outForDelivery => 'Out for Delivery',
       DeliveryStage.delivered => 'Delivered',
+      DeliveryStage.rejected => 'Rejected',
     };
   }
 

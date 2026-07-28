@@ -691,6 +691,7 @@ abstract final class VendorMockConfig {
       DeliveryStage.shipped => OrderStatus.shipped,
       DeliveryStage.outForDelivery => OrderStatus.shipped,
       DeliveryStage.delivered => OrderStatus.delivered,
+      DeliveryStage.rejected => OrderStatus.rejected,
     };
   }
 

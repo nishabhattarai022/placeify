@@ -8,5 +8,7 @@ enum OrderStatus {
   processing,
   shipped,
   delivered,
+  returnRequested,
+  refunded,
   cancelled,
 }

@@ -46,6 +46,10 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
   final _categoryKey = GlobalKey<FormFieldState<String>>();
   final _listPriceKey = GlobalKey<FormFieldState<String>>();
   final _stockKey = GlobalKey<FormFieldState<String>>();
+  final _materialsKey = GlobalKey<FormFieldState<String>>();
+  final _widthKey = GlobalKey<FormFieldState<String>>();
+  final _heightKey = GlobalKey<FormFieldState<String>>();
+  final _depthKey = GlobalKey<FormFieldState<String>>();
 
   late final TextEditingController _name;
   late final TextEditingController _description;
@@ -179,7 +183,11 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
       _nameKey,
       _skuKey,
       _categoryKey,
+      _materialsKey,
       _listPriceKey,
+      _widthKey,
+      _heightKey,
+      _depthKey,
       _stockKey,
     ];
     for (final key in keys) {
@@ -195,14 +203,28 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
     }
   }
 
+  bool _validateForm({required bool showToast}) {
+    _flushControllersToNotifier();
+    final notifier = ref.read(vendorProductFormProvider.notifier);
+    final formValid = _formKey.currentState?.validate() ?? false;
+    final providerError = notifier.validate();
+
+    if (formValid && providerError == null) return true;
+
+    _scrollToFirstError();
+    if (showToast && mounted) {
+      PlaceifyToast.show(
+        context,
+        providerError ?? 'Please fix the highlighted fields.',
+      );
+    }
+    return false;
+  }
+
   Future<void> _onUpload() async {
     await HapticService.light();
     if (!mounted) return;
-    _flushControllersToNotifier();
-    if (!(_formKey.currentState?.validate() ?? false)) {
-      _scrollToFirstError();
-      return;
-    }
+    if (!_validateForm(showToast: true)) return;
 
     final saved = await ref.read(vendorProductFormProvider.notifier).submit();
     if (!mounted) return;
@@ -227,11 +249,7 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
       PlaceifyToast.show(context, VendorStrings.noChangesToSave);
       return;
     }
-    _flushControllersToNotifier();
-    if (!(_formKey.currentState?.validate() ?? false)) {
-      _scrollToFirstError();
-      return;
-    }
+    if (!_validateForm(showToast: true)) return;
 
     final saved = await ref
         .read(vendorProductFormProvider.notifier)
@@ -490,8 +508,13 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                 ProfileFormField(
                   label: 'Materials',
                   child: ProfileTextInput(
+                    fieldKey: _materialsKey,
                     controller: _materials,
                     hint: 'e.g. Solid oak, linen upholstery',
+                    validator: (value) =>
+                        value == null || value.trim().isEmpty
+                            ? 'Enter product materials'
+                            : null,
                     onChanged: (value) {
                       notifier.update(
                         (state) => state.copyWith(materials: value),
@@ -705,6 +728,7 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                       child: ProfileFormField(
                         label: 'Width ($unitLabel)',
                         child: ProfileTextInput(
+                          fieldKey: _widthKey,
                           controller: _width,
                           hint: '0',
                           keyboardType: const TextInputType.numberWithOptions(
@@ -715,6 +739,16 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                               RegExp(r'[0-9.]'),
                             ),
                           ],
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Enter width';
+                            }
+                            final parsed = double.tryParse(value.trim());
+                            if (parsed == null || parsed <= 0) {
+                              return 'Enter a valid width greater than zero';
+                            }
+                            return null;
+                          },
                           onChanged: (value) {
                             notifier.update(
                               (state) => state.copyWith(width: value),
@@ -729,6 +763,7 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                       child: ProfileFormField(
                         label: 'Height ($unitLabel)',
                         child: ProfileTextInput(
+                          fieldKey: _heightKey,
                           controller: _height,
                           hint: '0',
                           keyboardType: const TextInputType.numberWithOptions(
@@ -739,6 +774,16 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                               RegExp(r'[0-9.]'),
                             ),
                           ],
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Enter height';
+                            }
+                            final parsed = double.tryParse(value.trim());
+                            if (parsed == null || parsed <= 0) {
+                              return 'Enter a valid height greater than zero';
+                            }
+                            return null;
+                          },
                           onChanged: (value) {
                             notifier.update(
                               (state) => state.copyWith(height: value),
@@ -753,6 +798,7 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                 ProfileFormField(
                   label: 'Depth ($unitLabel)',
                   child: ProfileTextInput(
+                    fieldKey: _depthKey,
                     controller: _depth,
                     hint: '0',
                     keyboardType: const TextInputType.numberWithOptions(
@@ -761,6 +807,16 @@ class _VendorProductFormScreenState extends ConsumerState<VendorProductFormScree
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                     ],
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Enter depth';
+                      }
+                      final parsed = double.tryParse(value.trim());
+                      if (parsed == null || parsed <= 0) {
+                        return 'Enter a valid depth greater than zero';
+                      }
+                      return null;
+                    },
                     onChanged: (value) {
                       notifier.update((state) => state.copyWith(depth: value));
                       _markDirty();
