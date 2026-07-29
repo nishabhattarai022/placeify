@@ -1,4 +1,3 @@
-/// Tuning for IKEA Place–style AR furniture gestures.
 abstract final class ArFurnitureGestureConfig {
   /// Multiplier applied to [ScaleUpdateDetails.rotation] (radians).
   static const rotationSensitivity = 0.85;

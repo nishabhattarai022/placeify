@@ -9,6 +9,7 @@ import '../order/order_lifecycle_store.dart';
 import '../payment/esewa_gateway.dart';
 import '../payment/esewa_status_api.dart';
 import '../payment/payment_sync.dart';
+import '../../web/routes/esewa_payment_route.dart';
 
 /// Customer payment reads and gateway completion for placed orders.
 class UserPaymentStore {
@@ -108,8 +109,16 @@ class UserPaymentStore {
       secretKey: credentials.secretKey,
     );
 
+    final bootstrapUrl = await buildEsewaBootstrapUrl(
+      session,
+      orderId: orderId,
+      transactionUuid: transactionUuid,
+      secretKey: credentials.secretKey,
+    );
+
     return jsonEncode({
       'orderId': orderId,
+      'bootstrapUrl': bootstrapUrl,
       ...fields,
     });
   }
@@ -162,7 +171,8 @@ class UserPaymentStore {
                 status.httpStatusCode! >= 500) ||
             lower.contains('timed out') ||
             lower.contains('unreachable') ||
-            lower.contains('failed');
+            lower.contains('socketexception') ||
+            lower.contains('clientexception');
         throw PlaceifyException(
           message: unavailable
               ? 'eSewa is temporarily unavailable. Please try again later.'

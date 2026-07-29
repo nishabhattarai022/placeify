@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../core/config/placeify_server_client.dart';
@@ -29,8 +30,10 @@ class EsewaPaymentScreen extends ConsumerStatefulWidget {
 class _EsewaPaymentScreenState extends ConsumerState<EsewaPaymentScreen> {
   WebViewController? _controller;
   String? _error;
+  String? _bootstrapUrl;
   bool _loadingForm = true;
   bool _finishing = false;
+  bool _awaitingBrowserPayment = false;
 
   @override
   void initState() {
@@ -38,25 +41,62 @@ class _EsewaPaymentScreenState extends ConsumerState<EsewaPaymentScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _startPayment());
   }
 
-  Future<void> _startPayment() async {
+  Future<void> _startPayment({bool preferBrowser = false}) async {
+    setState(() {
+      _loadingForm = true;
+      _error = null;
+      _controller = null;
+      _awaitingBrowserPayment = false;
+    });
+
     try {
       final raw = await client.user.getEsewaPaymentForm(widget.orderId);
       final decoded = jsonDecode(raw);
       if (decoded is! Map) {
         throw StateError('Invalid eSewa form payload.');
       }
+
+      final map = Map<String, dynamic>.from(decoded);
+      final paymentUrl = '${map['payment_url'] ?? ''}'.trim();
+      final bootstrapUrl = '${map['bootstrapUrl'] ?? ''}'.trim();
       final fields = <String, String>{
-        for (final entry in decoded.entries)
-          if (entry.key != 'orderId' && entry.key != 'payment_url')
-            entry.key.toString(): '${entry.value}',
+        for (final entry in map.entries)
+          if (entry.key != 'orderId' &&
+              entry.key != 'payment_url' &&
+              entry.key != 'bootstrapUrl')
+            entry.key: '${entry.value}',
       };
-      final paymentUrl = '${decoded['payment_url'] ?? ''}';
+
       if (paymentUrl.isEmpty || fields.isEmpty) {
         throw StateError('eSewa payment form is incomplete.');
       }
 
-      final html = _buildAutoSubmitHtml(paymentUrl, fields);
-      final postBody = _encodeFormBody(fields);
+      _bootstrapUrl = bootstrapUrl.isNotEmpty ? bootstrapUrl : null;
+
+      if (preferBrowser || kIsWeb) {
+        final opened = await _openBootstrapInBrowser(
+          bootstrapUrl: _bootstrapUrl,
+          paymentUrl: paymentUrl,
+          fields: fields,
+        );
+        if (!opened) {
+          throw StateError(
+            'Could not open eSewa in your browser. '
+            'Allow pop-ups, then tap Retry.',
+          );
+        }
+        if (!mounted) return;
+        setState(() {
+          _loadingForm = false;
+          _awaitingBrowserPayment = true;
+          _error =
+              'Complete payment in the browser tab that just opened, '
+              'then return here and tap "I paid — verify order".';
+        });
+        return;
+      }
+
+      final html = EsewaGatewayHtml.buildAutoSubmitHtml(paymentUrl, fields);
       final controller = WebViewController()
         ..setJavaScriptMode(JavaScriptMode.unrestricted)
         ..setNavigationDelegate(
@@ -75,7 +115,6 @@ class _EsewaPaymentScreenState extends ConsumerState<EsewaPaymentScreen> {
             },
             onWebResourceError: (error) {
               if (!mounted) return;
-              // Ignore subresource noise; only fail the main eSewa document.
               if (error.isForMainFrame == false) return;
               setState(() {
                 _controller = null;
@@ -98,22 +137,11 @@ class _EsewaPaymentScreenState extends ConsumerState<EsewaPaymentScreen> {
           ),
         );
 
-      try {
-        await controller.loadRequest(
-          Uri.parse(paymentUrl),
-          method: LoadRequestMethod.post,
-          headers: const {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: Uint8List.fromList(utf8.encode(postBody)),
-        );
-      } catch (_) {
-        // Some Android WebViews ignore POST headers; HTML auto-submit fallback.
-        await controller.loadHtmlString(
-          html,
-          baseUrl: 'https://placeify.local/',
-        );
-      }
+      // HTML auto-submit is the most reliable cross-platform way to POST to eSewa.
+      await controller.loadHtmlString(
+        html,
+        baseUrl: 'https://placeify.local/',
+      );
 
       if (!mounted) return;
       setState(() {
@@ -124,12 +152,70 @@ class _EsewaPaymentScreenState extends ConsumerState<EsewaPaymentScreen> {
     } catch (error, stackTrace) {
       debugPrint('[esewa] form load failed: $error');
       debugPrint('$stackTrace');
+      agentDebugLog(
+        location: 'esewa_payment_screen.dart:_startPayment',
+        message: 'eSewa bootstrap failed',
+        hypothesisId: 'H8',
+        data: {
+          'orderId': widget.orderId,
+          'error': error.toString(),
+          'kIsWeb': kIsWeb,
+          'hasBootstrapUrl': _bootstrapUrl != null,
+        },
+      );
       if (!mounted) return;
       setState(() {
         _loadingForm = false;
         _error = CartApiErrors.message(
           error,
           fallback: CartStrings.paymentFailed,
+        );
+      });
+    }
+  }
+
+  Future<bool> _openBootstrapInBrowser({
+    required String? bootstrapUrl,
+    required String paymentUrl,
+    required Map<String, String> fields,
+  }) async {
+    final target = bootstrapUrl?.trim();
+    if (target != null && target.isNotEmpty) {
+      final uri = Uri.tryParse(target);
+      if (uri != null && await canLaunchUrl(uri)) {
+        return launchUrl(uri, webOnlyWindowName: '_blank');
+      }
+    }
+
+    // Last-resort data URL when the web bootstrap route is unavailable.
+    final html = EsewaGatewayHtml.buildAutoSubmitHtml(paymentUrl, fields);
+    final dataUri = Uri.dataFromString(
+      html,
+      mimeType: 'text/html',
+      encoding: utf8,
+    );
+    if (await canLaunchUrl(dataUri)) {
+      return launchUrl(dataUri, webOnlyWindowName: '_blank');
+    }
+    return false;
+  }
+
+  Future<void> _verifyAfterBrowserPayment() async {
+    setState(() {
+      _loadingForm = true;
+      _error = null;
+    });
+    try {
+      await client.user.completePayment(widget.orderId);
+      if (!mounted) return;
+      await _onPaymentSuccess(skipCompletePayment: true);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loadingForm = false;
+        _error = CartApiErrors.message(
+          error,
+          fallback: CartStrings.esewaNotVerified,
         );
       });
     }
@@ -147,43 +233,6 @@ class _EsewaPaymentScreenState extends ConsumerState<EsewaPaymentScreen> {
     return false;
   }
 
-  String _encodeFormBody(Map<String, String> fields) {
-    return fields.entries
-        .map(
-          (entry) =>
-              '${Uri.encodeQueryComponent(entry.key)}=${Uri.encodeQueryComponent(entry.value)}',
-        )
-        .join('&');
-  }
-
-  String _buildAutoSubmitHtml(String action, Map<String, String> fields) {
-    final inputs = fields.entries
-        .map(
-          (e) =>
-              '<input type="hidden" name="${_escape(e.key)}" value="${_escape(e.value)}" />',
-        )
-        .join('\n');
-    return '''
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>eSewa Payment</title>
-  </head>
-  <body onload="document.getElementById('esewa-form').submit();">
-    <p style="font-family: sans-serif; text-align: center; margin-top: 48px;">
-      Redirecting to eSewa…
-    </p>
-    <form id="esewa-form" action="${_escape(action)}" method="POST">
-      $inputs
-    </form>
-  </body>
-</html>
-''';
-  }
-
-  String _escape(String value) => const HtmlEscape().convert(value);
-
   bool _isSuccessUrl(String url) =>
       url.contains('placeify.local/esewa/success') ||
       url.contains('/esewa/success');
@@ -192,13 +241,13 @@ class _EsewaPaymentScreenState extends ConsumerState<EsewaPaymentScreen> {
       url.contains('placeify.local/esewa/failure') ||
       url.contains('/esewa/failure');
 
-  Future<void> _onPaymentSuccess() async {
+  Future<void> _onPaymentSuccess({bool skipCompletePayment = false}) async {
     if (_finishing) return;
     _finishing = true;
     try {
-      // Verify with backend before treating payment as complete.
-      await client.user.completePayment(widget.orderId);
-      // #region agent log
+      if (!skipCompletePayment) {
+        await client.user.completePayment(widget.orderId);
+      }
       agentDebugLog(
         location: 'esewa_payment_screen.dart:_onPaymentSuccess',
         message: 'completePayment succeeded',
@@ -209,14 +258,12 @@ class _EsewaPaymentScreenState extends ConsumerState<EsewaPaymentScreen> {
         },
         runId: 'post-fix',
       );
-      // #endregion
       ref.read(cartProvider.notifier).replaceItems(const []);
       ref.invalidate(ordersProvider);
       ref.invalidate(orderByIdProvider('${widget.orderId}'));
       ref.invalidate(profileDashboardProvider);
       ref.invalidate(profileOrdersProvider);
 
-      // Prefer SnackBar — toast Overlay can throw on root navigator context.
       final messenger = rootScaffoldMessengerKey.currentState;
       if (messenger != null) {
         messenger
@@ -233,7 +280,6 @@ class _EsewaPaymentScreenState extends ConsumerState<EsewaPaymentScreen> {
       context.go('/profile/orders/${widget.orderId}');
     } catch (error) {
       _finishing = false;
-      // #region agent log
       agentDebugLog(
         location: 'esewa_payment_screen.dart:_onPaymentSuccess:catch',
         message: 'completePayment failed',
@@ -241,23 +287,14 @@ class _EsewaPaymentScreenState extends ConsumerState<EsewaPaymentScreen> {
         data: {'orderId': widget.orderId, 'error': error.toString()},
         runId: 'pre-fix',
       );
-      // #endregion
-      final messenger = rootScaffoldMessengerKey.currentState;
-      if (messenger != null) {
-        messenger
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(
-              content: Text(
-                CartApiErrors.message(
-                  error,
-                  fallback: CartStrings.paymentFailed,
-                ),
-              ),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-      }
+      if (!mounted) return;
+      setState(() {
+        _loadingForm = false;
+        _error = CartApiErrors.message(
+          error,
+          fallback: CartStrings.esewaNotVerified,
+        );
+      });
     }
   }
 
@@ -275,8 +312,6 @@ class _EsewaPaymentScreenState extends ConsumerState<EsewaPaymentScreen> {
           ),
         );
     }
-    // Server already cleared cart when the unpaid order was created; keep local
-    // cart empty and send the customer to the unpaid order to retry payment.
     await ref.read(cartProvider.notifier).refresh();
     ref.invalidate(ordersProvider);
     ref.invalidate(orderByIdProvider('${widget.orderId}'));
@@ -286,6 +321,9 @@ class _EsewaPaymentScreenState extends ConsumerState<EsewaPaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final waitingForBrowser =
+        !_loadingForm && _awaitingBrowserPayment && _controller == null;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('eSewa Payment'),
@@ -312,16 +350,30 @@ class _EsewaPaymentScreenState extends ConsumerState<EsewaPaymentScreen> {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
-                        FilledButton(
-                          onPressed: () {
-                            setState(() {
-                              _loadingForm = true;
-                              _error = null;
-                            });
-                            _startPayment();
-                          },
-                          child: const Text('Retry'),
-                        ),
+                        if (waitingForBrowser) ...[
+                          FilledButton(
+                            onPressed: _verifyAfterBrowserPayment,
+                            child: const Text('I paid — verify order'),
+                          ),
+                          const SizedBox(height: 8),
+                          OutlinedButton(
+                            onPressed: () => _startPayment(preferBrowser: true),
+                            child: const Text('Re-open eSewa'),
+                          ),
+                        ] else ...[
+                          FilledButton(
+                            onPressed: () => _startPayment(),
+                            child: const Text('Retry'),
+                          ),
+                          if (_bootstrapUrl != null) ...[
+                            const SizedBox(height: 8),
+                            OutlinedButton(
+                              onPressed: () =>
+                                  _startPayment(preferBrowser: true),
+                              child: const Text('Open eSewa in browser'),
+                            ),
+                          ],
+                        ],
                         const SizedBox(height: 8),
                         TextButton(
                           onPressed: () =>
@@ -334,5 +386,41 @@ class _EsewaPaymentScreenState extends ConsumerState<EsewaPaymentScreen> {
                 )
               : WebViewWidget(controller: _controller!),
     );
+  }
+}
+
+/// Client-side HTML builder mirroring the server eSewa bootstrap page.
+abstract final class EsewaGatewayHtml {
+  static String buildAutoSubmitHtml(
+    String action,
+    Map<String, String> fields,
+  ) {
+    String escape(String value) => const HtmlEscape().convert(value);
+
+    final inputs = fields.entries
+        .map(
+          (entry) =>
+              '<input type="hidden" name="${escape(entry.key)}" '
+              'value="${escape(entry.value)}" />',
+        )
+        .join('\n');
+    return '''
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>eSewa Payment</title>
+  </head>
+  <body onload="document.getElementById('esewa-form').submit();">
+    <p style="font-family: sans-serif; text-align: center; margin-top: 48px;">
+      Redirecting to eSewa…
+    </p>
+    <form id="esewa-form" action="${escape(action)}" method="POST">
+      $inputs
+    </form>
+  </body>
+</html>
+''';
   }
 }

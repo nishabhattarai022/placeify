@@ -2,8 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart' show consolidateHttpClientResponseBytes, kIsWeb;
 import 'package:path_provider/path_provider.dart';
-import 'package:placeify_client/placeify_client.dart';
-
 import '../../../core/config/placeify_server_client.dart';
 import '../../cart/data/product_id_codec.dart';
 

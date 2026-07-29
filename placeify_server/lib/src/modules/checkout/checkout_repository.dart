@@ -56,7 +56,14 @@ class CheckoutStore {
 
     if (paymentMethod == PaymentMethod.esewa) {
       // Fail before creating an unpaid order if eSewa cannot be started.
-      EsewaGateway.requireCredentials(session);
+      try {
+        EsewaGateway.requireCredentials(session);
+      } on StateError {
+        throw PlaceifyException(
+          message: 'eSewa is not configured on the server yet.',
+          code: 'ESEWA_NOT_CONFIGURED',
+        );
+      }
     }
 
     final user = await SessionService.requireUser(session);

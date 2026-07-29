@@ -12,6 +12,7 @@ import 'src/shared/server_static_paths.dart';
 import 'src/web/middleware/uploads_cors_middleware.dart';
 import 'src/web/routes/app_config_route.dart';
 import 'src/web/routes/email_verification_routes.dart';
+import 'src/web/routes/esewa_payment_route.dart';
 import 'src/web/routes/password_reset_routes.dart';
 import 'src/web/routes/root.dart';
 import 'src/web/routes/verify_email_page_route.dart';
@@ -42,6 +43,7 @@ void run(List<String> args) async {
     '/auth/resend-verification',
   );
   pod.webServer.addRoute(VerifyEmailPageRoute(), '/verify-email');
+  pod.webServer.addRoute(EsewaPaymentRoute(), '/pay/esewa');
 
   // Serve all files in the web/static relative directory under /.
   // These are used by the default web page.

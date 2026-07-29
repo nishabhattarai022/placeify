@@ -25,6 +25,71 @@ abstract final class EsewaGateway {
   static bool isTestProductCode(String productCode) =>
       productCode.toUpperCase().contains('TEST');
 
+  /// HMAC for short-lived `/pay/esewa` bootstrap links (in-app + browser fallback).
+  static String signBootstrap({
+    required int orderId,
+    required String transactionUuid,
+    required String secretKey,
+  }) {
+    final message = 'bootstrap:$orderId:$transactionUuid';
+    final digest = Hmac(
+      sha256,
+      utf8.encode(secretKey),
+    ).convert(utf8.encode(message));
+    return base64Url.encode(digest.bytes).replaceAll('=', '');
+  }
+
+  static bool verifyBootstrapSig({
+    required int orderId,
+    required String transactionUuid,
+    required String secretKey,
+    required String signature,
+  }) {
+    if (signature.trim().isEmpty) return false;
+    final expected = signBootstrap(
+      orderId: orderId,
+      transactionUuid: transactionUuid,
+      secretKey: secretKey,
+    );
+    return expected == signature.trim();
+  }
+
+  static String buildAutoSubmitHtml(
+    String action,
+    Map<String, String> fields,
+  ) {
+    String escape(String value) {
+      return const HtmlEscape().convert(value);
+    }
+
+    final inputs = fields.entries
+        .where((entry) => entry.key != 'payment_url')
+        .map(
+          (entry) =>
+              '<input type="hidden" name="${escape(entry.key)}" '
+              'value="${escape(entry.value)}" />',
+        )
+        .join('\n');
+    return '''
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>eSewa Payment</title>
+  </head>
+  <body onload="document.getElementById('esewa-form').submit();">
+    <p style="font-family: sans-serif; text-align: center; margin-top: 48px;">
+      Redirecting to eSewa…
+    </p>
+    <form id="esewa-form" action="${escape(action)}" method="POST">
+      $inputs
+    </form>
+  </body>
+</html>
+''';
+  }
+
   static ({String productCode, String secretKey}) requireCredentials(
     Session session,
   ) {

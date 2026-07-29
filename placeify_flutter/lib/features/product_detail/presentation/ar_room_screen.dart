@@ -88,7 +88,6 @@ class _PendingPlacement {
   String? modelUri;
 }
 
-/// Full-screen AR furniture placement (IKEA Place–style workflow).
 /// Supports placing any number of products — including repeats — in the
 /// same session via the persistent product carousel.
 class ArRoomScreen extends StatefulWidget {
@@ -108,9 +107,7 @@ class ArRoomScreen extends StatefulWidget {
   final ProductDimensions dimensions;
   final ArLocalModelFile? preloadedModel;
 
-  /// Other catalog products the user can add to the room from the
-  /// persistent carousel. Pass everything reasonable to offer here (e.g.
-  /// same category, or the whole catalog).
+ 
   final List<ArAddableProduct> availableProducts;
 
   static bool get hasNativeAr {

@@ -31,5 +31,32 @@ void main() {
         'https://epay.esewa.com.np/api/epay/main/v2/form',
       );
     });
+
+    test('bootstrap signatures are stable and verifiable', () {
+      const secret = '8gBm/:&EnhH.1/q';
+      final sig = EsewaGateway.signBootstrap(
+        orderId: 42,
+        transactionUuid: 'esewa-42-test',
+        secretKey: secret,
+      );
+      expect(
+        EsewaGateway.verifyBootstrapSig(
+          orderId: 42,
+          transactionUuid: 'esewa-42-test',
+          secretKey: secret,
+          signature: sig,
+        ),
+        isTrue,
+      );
+      expect(
+        EsewaGateway.verifyBootstrapSig(
+          orderId: 42,
+          transactionUuid: 'esewa-42-test',
+          secretKey: 'wrong-secret',
+          signature: sig,
+        ),
+        isFalse,
+      );
+    });
   });
 }
