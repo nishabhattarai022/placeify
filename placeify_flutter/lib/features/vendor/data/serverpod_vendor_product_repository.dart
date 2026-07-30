@@ -510,18 +510,24 @@ class ServerpodVendorProductRepository implements VendorProductRepository {
     }
 
     final slots = sources.take(_maxCatalogImages).toList();
-    final uploaded = await Future.wait([
-      for (final source in slots)
-        _ensureServerImageUrl(
+    final thumbnailUrl = await _ensureServerImageUrl(
+      slots[0],
+      api: api,
+      removeBackground: true,
+      forceReupload: forceReupload,
+    );
+
+    final viewImageUrls = <String>[];
+    for (final source in slots.skip(1)) {
+      viewImageUrls.add(
+        await _ensureServerImageUrl(
           source,
           api: api,
-          removeBackground: true,
+          removeBackground: false,
           forceReupload: forceReupload,
         ),
-    ]);
-
-    final thumbnailUrl = uploaded.first;
-    final viewImageUrls = uploaded.skip(1).toList();
+      );
+    }
 
     if (viewImageUrls.length < 3) {
       throw VendorProductActionException(

@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,7 +18,9 @@ import '../../../../core/constants/app_radii.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/debug/agent_debug_log.dart';
 import '../../../../core/services/haptic_service.dart';
+import '../../../../core/utils/local_image_store.dart';
 import '../../../../core/widgets/bottom_nav/bottom_nav_tokens.dart';
+import '../../../../core/widgets/local_image_preview.dart';
 import '../../../../core/widgets/toast_overlay.dart';
 
 class VendorBuild3dScreen extends ConsumerStatefulWidget {
@@ -184,8 +184,15 @@ class _VendorBuild3dScreenState extends ConsumerState<VendorBuild3dScreen> {
       );
       if (picked == null || !mounted) return;
 
+      final bytes = await picked.readAsBytes();
+      final rawName = picked.name.trim();
+      final fileName = rawName.isNotEmpty ? rawName : 'product.jpg';
+      // Android gallery paths are often temporary and cannot be re-read at
+      // upload time — keep bytes in memory like the product upload form.
+      final uri = LocalImageStore.register(bytes, fileName);
+
       setState(() {
-        Vendor3dModelStore.setAngleSource(productId, angle, picked.path);
+        Vendor3dModelStore.setAngleSource(productId, angle, uri);
       });
     } catch (_) {
       if (mounted) {
@@ -528,6 +535,7 @@ class _SelectedProductBuildPanel extends StatelessWidget {
             progress: progress,
             modelReady: modelReady,
             modelFileName: record?.modelFileName,
+            errorMessage: record?.errorMessage,
             onGenerate: onGenerate,
           ),
         ),
@@ -889,20 +897,11 @@ class _AnglePhotoPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (source.startsWith('http')) {
-      return Image.network(
-        source,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const _PhotoPreviewFallback(),
-      );
-    }
-
-    final file = File(source);
-    if (file.existsSync()) {
-      return Image.file(file, fit: BoxFit.cover);
-    }
-
-    return const _PhotoPreviewFallback();
+    return LocalImagePreview(
+      source: source,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => const _PhotoPreviewFallback(),
+    );
   }
 }
 
@@ -1025,6 +1024,12 @@ class _DimensionStat extends StatelessWidget {
   }
 }
 
+String _failureMessage(String? errorMessage) {
+  final trimmed = errorMessage?.trim();
+  if (trimmed != null && trimmed.isNotEmpty) return trimmed;
+  return Vendor3dBuilderStrings.modelFailed;
+}
+
 class _GeneratePanel extends StatelessWidget {
   const _GeneratePanel({
     required this.status,
@@ -1033,6 +1038,7 @@ class _GeneratePanel extends StatelessWidget {
     required this.modelReady,
     required this.onGenerate,
     this.modelFileName,
+    this.errorMessage,
   });
 
   final VendorProduct3dStatus status;
@@ -1040,6 +1046,7 @@ class _GeneratePanel extends StatelessWidget {
   final double progress;
   final bool modelReady;
   final String? modelFileName;
+  final String? errorMessage;
   final VoidCallback onGenerate;
 
   @override
@@ -1161,7 +1168,7 @@ class _GeneratePanel extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 14),
               child: Text(
-                Vendor3dBuilderStrings.modelFailed,
+                _failureMessage(errorMessage),
                 style: GoogleFonts.dmSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,

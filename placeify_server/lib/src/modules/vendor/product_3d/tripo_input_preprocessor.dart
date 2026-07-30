@@ -31,7 +31,7 @@ class TripoInputPreprocessor {
   static const maxTripoEdge = 4096;
   static const marginRatio = 0.08;
   static const jpegQuality = 98;
-  static final _backgroundColor = img.ColorRgb8(255, 255, 255);
+  static final _backgroundColor = img.ColorRgb8(200, 200, 200);
 
   /// Max per-channel / luminance scale (±40%) to avoid overcorrecting real lighting.
   static const minAdjustmentScale = 0.6;

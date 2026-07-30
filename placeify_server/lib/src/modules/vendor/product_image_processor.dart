@@ -33,8 +33,11 @@ class VendorProductImages {
 
 /// Removes backgrounds via remove.bg for catalog; keeps originals for Tripo 3D.
 class ProductImageProcessor {
-  ProductImageProcessor({http.Client? httpClient})
-    : _httpClient = httpClient ?? http.Client();
+  ProductImageProcessor({
+    http.Client? httpClient,
+    String? apiKeyOverride,
+  })  : _httpClient = httpClient ?? http.Client(),
+        _apiKeyOverride = apiKeyOverride;
 
   static const _removeBgUrl = 'https://api.remove.bg/v1.0/removebg';
   static const _maxCatalogWidth = 1600;
@@ -44,6 +47,7 @@ class ProductImageProcessor {
   static final _white = img.ColorRgb8(255, 255, 255);
 
   final http.Client _httpClient;
+  final String? _apiKeyOverride;
 
   /// Removes the background, composites on white, and returns catalog-ready JPEG.
   Future<ProcessedProductImage> processForCatalog(
@@ -67,7 +71,7 @@ class ProductImageProcessor {
     String fileName, {
     required String fileExtension,
   }) async {
-    final apiKey = RemoveBgApiKeyConfig.apiKey();
+    final apiKey = _apiKeyOverride ?? RemoveBgApiKeyConfig.apiKey();
     if (apiKey == null || apiKey.isEmpty) {
       session.log(
         'remove.bg API key not configured — saving catalog fallback without '
@@ -129,29 +133,31 @@ class ProductImageProcessor {
     );
   }
 
-  /// Tries `product` then `auto`; returns null when segmentation fails.
+  /// Uses remove.bg `product` mode only — same segmentation as the front photo.
+  ///
+  /// Side/back views often fail `product` and previously fell back to `auto`, which
+  /// over-segments thin furniture legs and erodes mesh-friendly detail.
   Future<Uint8List?> _removeBackgroundBestEffort(
     Session session,
     String apiKey,
     Uint8List bytes,
     String fileName,
   ) async {
-    for (final type in ['product', 'auto']) {
-      final result = await _callRemoveBg(
-        apiKey,
-        bytes,
-        fileName,
-        type: type,
-      );
-      if (result != null) {
-        session.log('remove.bg succeeded (type=$type)', level: LogLevel.info);
-        return result;
-      }
-      session.log(
-        'remove.bg type=$type could not segment image — trying next mode',
-        level: LogLevel.warning,
-      );
+    const type = 'product';
+    final result = await _callRemoveBg(
+      apiKey,
+      bytes,
+      fileName,
+      type: type,
+    );
+    if (result != null) {
+      session.log('remove.bg succeeded (type=$type)', level: LogLevel.info);
+      return result;
     }
+    session.log(
+      'remove.bg type=$type could not segment image — using catalog fallback',
+      level: LogLevel.warning,
+    );
     return null;
   }
 
@@ -220,7 +226,8 @@ class ProductImageProcessor {
       ..fields['size'] = 'auto'
       ..fields['type'] = type
       ..fields['format'] = 'png'
-      ..fields['bg_color'] = 'FFFFFF'
+      ..fields['crop'] = 'false'
+      ..fields['semitransparency'] = 'true'
       ..files.add(
         http.MultipartFile.fromBytes(
           'image_file',
